@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `3115`
+- API entries: `3128`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,14 +32,14 @@ platform notes.
 | `alloc` | 848 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 853 | stable candidate |
-| `hosted` | 1227 | platform-backed |
+| `hosted` | 1240 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 28 |
-| `fn` | 1148 |
-| `method` | 1536 |
+| `fn` | 1156 |
+| `method` | 1541 |
 | `module` | 39 |
 | `struct` | 166 |
 | `trait` | 39 |
@@ -66,7 +66,7 @@ platform notes.
 | `std::env` | `hosted` | 72 |
 | `std::error` | `core` | 37 |
 | `std::fmt` | `core` | 57 |
-| `std::fs` | `hosted` | 265 |
+| `std::fs` | `hosted` | 278 |
 | `std::hash` | `alloc` | 24 |
 | `std::input` | `hosted` | 6 |
 | `std::io` | `hosted` | 91 |
@@ -1725,6 +1725,10 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::fs::is_file` | check-prelude std-fs-metadata direct regular-file predicate; docs/stdlib/modules/fs.md |
 | `fn std::fs::is_other` | check-prelude std-fs-metadata direct other-kind predicate; docs/stdlib/modules/fs.md |
 | `fn std::fs::is_symlink` | check-prelude std-fs-symlink-metadata no-follow direct symlink-kind predicate; docs/stdlib/modules/fs.md |
+| `fn std::fs::lock_exclusive` | check-prelude std-fs-lock Result-returning hosted advisory exclusive file lock helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::lock_exclusive_raw` | check-prelude std-fs-lock raw Result-returning hosted advisory exclusive file lock helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::lock_shared` | check-prelude std-fs-lock Result-returning hosted advisory shared file lock helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::lock_shared_raw` | check-prelude std-fs-lock raw Result-returning hosted advisory shared file lock helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::metadata` | check-prelude std-fs-query-result Result-returning target-following metadata helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::metadata_optional` | check-prelude std-fs-query-result Option-returning target-following metadata compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::metadata_raw_result` | check-prelude std-fs-query-result raw Result-returning target-following metadata compatibility helper; docs/stdlib/modules/fs.md |
@@ -1828,6 +1832,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::fs::try_copy` | check-prelude std-fs-create-truncate-copy Option-returning copy byte-count helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::try_create` | check-prelude std-fs-create-truncate-copy Option-returning create helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::try_file_type` | check-prelude std-fs-metadata Option-returning path kind helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::try_lock_exclusive` | check-prelude std-fs-lock nonblocking hosted advisory exclusive file lock helper returning acquired flag or Error; docs/stdlib/modules/fs.md |
+| `fn std::fs::try_lock_shared` | check-prelude std-fs-lock nonblocking hosted advisory shared file lock helper returning acquired flag or Error; docs/stdlib/modules/fs.md |
 | `fn std::fs::try_metadata` | check-prelude std-fs-metadata Option-returning target-following stat-backed metadata helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::try_mode` | check-prelude std-fs-mode Option-returning permission-mode helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::try_open` | check-prelude std-fs-open-modes Option-returning mode-string open helper; docs/stdlib/modules/fs.md |
@@ -1844,6 +1850,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::fs::try_read_to_string` | check-prelude std-fs-try-read Option-returning whole-file byte-string read helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::try_symlink_metadata` | check-prelude std-fs-symlink-metadata Option-returning no-follow metadata helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::try_write` | check-prelude std-fs-read-write Option-returning write byte-count helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::unlock` | check-prelude std-fs-lock Result-returning hosted advisory file unlock helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::unlock_raw` | check-prelude std-fs-lock raw Result-returning hosted advisory file unlock helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::write` | check-prelude std-fs-read-write Result-returning whole-file truncating write helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::write_bool` | check-prelude std-fs-read-result bool whole-file truncating write compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::write_byte` | check-prelude std-fs-basic Result-returning file byte write helper; docs/stdlib/modules/fs.md |
@@ -1890,12 +1898,17 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::fs::File::descriptor` | check-prelude std-os-fd non-owning std::os::Fd view over a file handle; docs/stdlib/modules/fs.md |
 | `method std::fs::File::invalid` | check-prelude std-fs-basic invalid file fallback constructor; docs/stdlib/modules/fs.md |
 | `method std::fs::File::is_open` | check-prelude std-fs-basic open-handle predicate; docs/stdlib/modules/fs.md |
+| `method std::fs::File::lock_exclusive` | check-prelude std-fs-lock Result-returning hosted advisory exclusive file lock method; docs/stdlib/modules/fs.md |
+| `method std::fs::File::lock_shared` | check-prelude std-fs-lock Result-returning hosted advisory shared file lock method; docs/stdlib/modules/fs.md |
 | `method std::fs::File::position` | check-prelude std-fs-seek Result-returning file position method; docs/stdlib/modules/fs.md |
 | `method std::fs::File::position_or` | check-prelude std-fs-seek fallback file position compatibility method; docs/stdlib/modules/fs.md |
 | `method std::fs::File::read_byte` | check-prelude std-fs-basic value file handle byte read method; docs/stdlib/modules/fs.md |
 | `method std::fs::File::seek` | check-prelude std-fs-seek Result-returning file seek method; docs/stdlib/modules/fs.md |
 | `method std::fs::File::seek_unchecked` | check-prelude std-fs-seek unchecked file seek compatibility method; docs/stdlib/modules/fs.md |
+| `method std::fs::File::try_lock_exclusive` | check-prelude std-fs-lock nonblocking hosted advisory exclusive file lock method returning acquired flag or Error; docs/stdlib/modules/fs.md |
+| `method std::fs::File::try_lock_shared` | check-prelude std-fs-lock nonblocking hosted advisory shared file lock method returning acquired flag or Error; docs/stdlib/modules/fs.md |
 | `method std::fs::File::try_read_byte` | check-prelude std-fs-try-byte value file handle Option-returning byte read method; docs/stdlib/modules/fs.md |
+| `method std::fs::File::unlock` | check-prelude std-fs-lock Result-returning hosted advisory file unlock method; docs/stdlib/modules/fs.md |
 | `method std::fs::File::write_byte` | check-prelude std-fs-basic Result-returning file byte write method; docs/stdlib/modules/fs.md |
 | `method std::fs::File::write_byte_unchecked` | check-prelude std-fs-basic unchecked file byte write compatibility method; docs/stdlib/modules/fs.md |
 | `method std::fs::File::write_bytes` | check-prelude std-fs-basic Result-returning file slice write method; docs/stdlib/modules/fs.md |

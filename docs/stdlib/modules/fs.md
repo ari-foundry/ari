@@ -28,8 +28,9 @@ use natural names such as `open`, `create`, `read`, `read_to_string`,
 `read_dir`, `read_dir_entries`, `read_dir_names`, `create_dir`,
 `create_dir_all`, `remove_file`, `remove_dir`, `remove_dir_all`, `rename`,
 `hard_link`, `symbolic_link`, `temp_file`, `temp_dir`, `position`, `seek`,
-`close`, and `close_dir`, and they return `Result[..., fs::Error]` unless the
-operation is only a predicate such as `exists`, `can_read`, or `is_file`.
+`close`, `lock_shared`, `lock_exclusive`, `unlock`, and `close_dir`, and they
+return `Result[..., fs::Error]` unless the operation is only a predicate such
+as `exists`, `can_read`, or `is_file`.
 
 Suffixes are reserved for non-default behavior. `_optional` and older `try_*`
 helpers discard error details and return `Option`; `_or_default` helpers keep
@@ -57,6 +58,7 @@ Common natural API shapes:
 | Files and moves | `remove_file(path) -> Result[(), Error]`, `rename(source, target) -> Result[(), Error]`, `copy(source, target) -> Result[i64, Error]` | `remove_bool`, `rename_bool`, `copy_bool`, `try_copy`, raw/result aliases |
 | Paths and directories | `canonicalize(ref mut zone, path) -> Result[PathBuf, Error]`, `read_dir(ref mut zone, path) -> Result[Vec[DirEntry], Error]` | `_optional`, `try_*`, `_unchecked`, migration `*_result` aliases |
 | Temporary paths | `temp_file(ref mut zone) -> Result[TempFile, Error]`, `temp_file_in(ref mut zone, prefix) -> Result[TempFile, Error]`, `temp_dir(ref mut zone) -> Result[TempDir, Error]`, `temp_dir_in(ref mut zone, prefix) -> Result[TempDir, Error]` | Use `TempFile::close`, `TempFile::remove`, `TempFile::close_and_remove`, and `TempDir::remove` for cleanup. |
+| Advisory locks | `lock_shared(file) -> Result[(), Error]`, `lock_exclusive(file) -> Result[(), Error]`, `try_lock_shared(file) -> Result[bool, Error]`, `try_lock_exclusive(file) -> Result[bool, Error]`, `unlock(file) -> Result[(), Error]` | `*_raw` variants expose packed integer errors. |
 
 ## API
 
@@ -198,6 +200,14 @@ fs::try_open_append(path)
 fs::close(file)
 fs::close_raw(file)
 fs::close_unchecked(file)
+fs::lock_shared(file)
+fs::lock_shared_raw(file)
+fs::try_lock_shared(file)
+fs::lock_exclusive(file)
+fs::lock_exclusive_raw(file)
+fs::try_lock_exclusive(file)
+fs::unlock(file)
+fs::unlock_raw(file)
 fs::read_byte(file)
 fs::try_read_byte(file)
 fs::write_byte(file, value)
@@ -267,6 +277,11 @@ file.descriptor()
 file.is_open()
 file.close()
 file.close_unchecked()
+file.lock_shared()
+file.try_lock_shared()
+file.lock_exclusive()
+file.try_lock_exclusive()
+file.unlock()
 file.read_byte()
 file.try_read_byte()
 file.write_byte(value)
@@ -785,7 +800,7 @@ branching is enough, and `entry.metadata_unchecked()` or
 | create directory | Current: Result-first single-directory `create_dir(path)`, `create_dir_result(path)` migration alias, `create_dir_bool(path)` boolean compatibility, raw compatibility `create_dir_raw_result(path)`, idempotent `ensure_dir(path)`, Result-first recursive `create_dir_all(path)`, `create_dir_all_bool(path)` boolean compatibility, raw compatibility `create_dir_all_raw_result(path)`, and `ensure_dir_all(path)` for missing parent directories. |
 | temporary files | Current: Result-first `temp_file(ref mut zone)` / `temp_file_in(ref mut zone, prefix)` and `temp_dir(ref mut zone)` / `temp_dir_in(ref mut zone, prefix)` wrappers over the hosted POSIX `mkstemp`/`mkdtemp` implementation. `TempFile` owns the descriptor and path buffer, `TempDir` owns the path buffer, and callers should explicitly close/remove the resource when they want recoverable cleanup errors. |
 | path manipulation | Current: source lexical helpers in `std::path`, borrowed `PathBytes`/`Path` views, and owned POSIX `PathBuf` as a `std::string::String` alias; platform-specific owned paths remain roadmap. |
-| file locking | Optional roadmap: advisory locking after platform behavior is documented. |
+| file locking | Current: hosted POSIX advisory locks through `flock(2)` with shared, exclusive, nonblocking try, and unlock helpers on `File`; Windows and mandatory-locking policy remain roadmap. |
 
 Temporary files and directories are exposed from `std::fs` because ordinary
 filesystem code should not need to reach through `std::process` for scratch
@@ -795,6 +810,15 @@ buffer, while `TempDir` owns the allocated path buffer. `TempFile::close()`,
 `TempFile::remove()`, `TempFile::close_and_remove()`, and `TempDir::remove()`
 return `Result[(), Error]`; call them explicitly when cleanup failures matter.
 Drop cleanup is best-effort and cannot report errors.
+
+File locks are advisory hosted locks. `lock_shared(file)` and
+`lock_exclusive(file)` block according to the host `flock(2)` behavior until
+the lock can be acquired or an OS error is reported. `try_lock_shared(file)` and
+`try_lock_exclusive(file)` use the nonblocking host flag and return
+`Ok(false)` when the lock would block; invalid handles and other OS failures
+return `Err(Error)`. `unlock(file)` releases the lock associated with the file
+descriptor. Closing the file also releases host locks, but call `unlock` when
+the release point needs to be visible in source.
 
 ## Examples
 

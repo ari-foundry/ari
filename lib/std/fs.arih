@@ -87,6 +87,7 @@ pub extern "ari" fn read_byte(file: File) -> i64 = "ari_builtin_fs_read_byte";
 pub extern "ari" fn write_byte_unchecked(file: File, value: u8) -> bool = "ari_builtin_fs_write_byte";
 extern "ari" fn position_unchecked(file: File) -> i64 = "ari_builtin_fs_position";
 pub extern "ari" fn seek_unchecked(file: File, position: i64) -> bool = "ari_builtin_fs_seek";
+extern "C" fn raw_flock(fd: c_int, operation: c_int) -> c_int = "flock";
 extern "ari" fn metadata_size_raw(path: string) -> i64 = "ari_builtin_fs_metadata_size";
 extern "ari" fn metadata_kind_raw(path: string) -> i64 = "ari_builtin_fs_metadata_kind";
 extern "ari" fn metadata_mode_raw(path: string) -> i64 = "ari_builtin_fs_metadata_mode";
@@ -1330,6 +1331,63 @@ pub fn close(file: File) -> std::Result[(), std::error::Error] {
   return std::error::from_raw_result<()>(close_raw(file));
 }
 
+fn lock_operation_raw(file: File, operation: i64) -> std::Result[(), i64] {
+  if !file.is_open() {
+    return std::Err<(), i64>(invalid_input_error_raw());
+  }
+  if raw_flock(file.fd as c_int, operation as c_int) == 0 {
+    return std::Ok<(), i64>(());
+  }
+  return std::Err<(), i64>(last_errno_error_raw());
+}
+
+fn try_lock_operation(file: File, operation: i64) -> std::Result[bool, std::error::Error] {
+  match lock_operation_raw(file, operation + 4) {
+    std::Ok(_) => {
+      return std::Ok<bool, std::error::Error>(true);
+    }
+    std::Err(raw) => {
+      let reason = std::error::from_raw(raw);
+      if reason.is_kind(std::error::WouldBlock) {
+        return std::Ok<bool, std::error::Error>(false);
+      }
+      return std::Err<bool, std::error::Error>(reason);
+    }
+  }
+}
+
+pub fn lock_shared_raw(file: File) -> std::Result[(), i64] {
+  return lock_operation_raw(file, 1);
+}
+
+pub fn lock_shared(file: File) -> std::Result[(), std::error::Error] {
+  return std::error::from_raw_result<()>(lock_shared_raw(file));
+}
+
+pub fn try_lock_shared(file: File) -> std::Result[bool, std::error::Error] {
+  return try_lock_operation(file, 1);
+}
+
+pub fn lock_exclusive_raw(file: File) -> std::Result[(), i64] {
+  return lock_operation_raw(file, 2);
+}
+
+pub fn lock_exclusive(file: File) -> std::Result[(), std::error::Error] {
+  return std::error::from_raw_result<()>(lock_exclusive_raw(file));
+}
+
+pub fn try_lock_exclusive(file: File) -> std::Result[bool, std::error::Error] {
+  return try_lock_operation(file, 2);
+}
+
+pub fn unlock_raw(file: File) -> std::Result[(), i64] {
+  return lock_operation_raw(file, 8);
+}
+
+pub fn unlock(file: File) -> std::Result[(), std::error::Error] {
+  return std::error::from_raw_result<()>(unlock_raw(file));
+}
+
 pub fn write_byte_raw(file: File, value: u8) -> std::Result[(), i64] {
   if !file.is_open() {
     return std::Err<(), i64>(invalid_input_error_raw());
@@ -1810,6 +1868,26 @@ pub impl std::fs::File {
 
   fn close_unchecked(self) -> bool {
     return close_unchecked(self);
+  }
+
+  fn lock_shared(self) -> std::Result[(), std::error::Error] {
+    return lock_shared(self);
+  }
+
+  fn try_lock_shared(self) -> std::Result[bool, std::error::Error] {
+    return try_lock_shared(self);
+  }
+
+  fn lock_exclusive(self) -> std::Result[(), std::error::Error] {
+    return lock_exclusive(self);
+  }
+
+  fn try_lock_exclusive(self) -> std::Result[bool, std::error::Error] {
+    return try_lock_exclusive(self);
+  }
+
+  fn unlock(self) -> std::Result[(), std::error::Error] {
+    return unlock(self);
   }
 
   fn read_byte(self) -> i64 {

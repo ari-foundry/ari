@@ -1060,6 +1060,14 @@ check-prelude: $(TARGET)
 	grep -F -q "OpenOptions8inherent15open_raw_result" $(BUILD_DIR)/prelude/std-fs-open-result.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-open-result.ari -o $(BUILD_DIR)/prelude/std-fs-open-result.elf
 	$(BUILD_DIR)/prelude/std-fs-open-result.elf; code=$$?; test $$code -eq 255
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-lock.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-lock.ll
+	grep -q 'declare i32 @"flock"' $(BUILD_DIR)/prelude/std-fs-lock.ll
+	grep -q 'std2fs11lock_shared' $(BUILD_DIR)/prelude/std-fs-lock.ll
+	grep -q 'std2fs14lock_exclusive' $(BUILD_DIR)/prelude/std-fs-lock.ll
+	grep -q 'std2fs6unlock' $(BUILD_DIR)/prelude/std-fs-lock.ll
+	grep -q 'File8inherent15try_lock_shared' $(BUILD_DIR)/prelude/std-fs-lock.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-lock.ari -o $(BUILD_DIR)/prelude/std-fs-lock.elf
+	$(BUILD_DIR)/prelude/std-fs-lock.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-temp.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-temp.ll
 	grep -q 'std2fs9temp_file' $(BUILD_DIR)/prelude/std-fs-temp.ll
 	grep -q 'std2fs12temp_file_in' $(BUILD_DIR)/prelude/std-fs-temp.ll
