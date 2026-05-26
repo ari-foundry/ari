@@ -10,6 +10,9 @@ struct FlushFailWriter {
   mut flushed: bool,
 }
 
+struct FailingReader {
+}
+
 impl io::Writer for MemoryWriter {
   fn write_byte(self: ref mut Self, value: u8) -> bool {
     if self.position >= self.data.len {
@@ -53,6 +56,12 @@ impl io::Writer for FlushFailWriter {
   }
 }
 
+impl io::Reader for FailingReader {
+  fn read_byte(self: ref mut Self) -> i64 {
+    return -2;
+  }
+}
+
 fn error_is(value: error::Error, kind: error::Kind) -> bool {
   return value.is_kind(kind) && value.code() == 0;
 }
@@ -81,6 +90,16 @@ fn count_ok(value: Result[i64, error::Error], expected: i64) -> bool {
 fn count_error_is(value: Result[i64, error::Error], kind: error::Kind) -> bool {
   match value {
     Ok(_) => { return false; }
+    Err(reason) => { return error_is(reason, kind); }
+  }
+}
+
+fn string_error_is(value: Result[String, error::Error], kind: error::Kind) -> bool {
+  match value {
+    Ok(text) => {
+      drop text;
+      return false;
+    }
     Err(reason) => { return error_is(reason, kind); }
   }
 }
@@ -209,6 +228,25 @@ fn main() -> i64 {
   assert(io::ReadByteEof.is_eof());
   assert(error_is(io::ReadByteError(error::new(error::BrokenPipe)).error().unwrap(), error::BrokenPipe));
   assert(io::ReadByteValue(83u8).byte().contains(83u8));
+
+  var failing_reader = FailingReader {};
+  assert(io::read_one<FailingReader>(ref mut failing_reader).is_error());
+  var failing_read = FailingReader {};
+  var failing_read_output = [0u8];
+  assert(count_error_is(io::read<FailingReader>(ref mut failing_read, failing_read_output.as_slice()), error::BrokenPipe));
+  var failing_exact = FailingReader {};
+  assert(unit_error_is(io::read_exact<FailingReader>(ref mut failing_exact, failing_read_output.as_slice().as_ptr(), 1), error::BrokenPipe));
+  var failing_copy = FailingReader {};
+  var failing_copy_output = [0u8];
+  var failing_copy_writer = MemoryWriter { data: failing_copy_output.as_slice(), position: 0, flushed: false };
+  assert(count_error_is(io::copy<FailingReader, MemoryWriter>(ref mut failing_copy, ref mut failing_copy_writer), error::BrokenPipe));
+  assert(!failing_copy_writer.flushed);
+  var failing_zone = zone::create(128);
+  var failing_text = FailingReader {};
+  assert(string_error_is(io::read_to_string<FailingReader>(ref mut failing_zone, ref mut failing_text), error::BrokenPipe));
+  var failing_line = FailingReader {};
+  assert(string_error_is(io::read_line_from<FailingReader>(ref mut failing_zone, ref mut failing_line), error::BrokenPipe));
+  zone::destroy(failing_zone);
 
   var read_source = [84u8, 85u8];
   var read_reader = io::cursor(read_source.as_slice());

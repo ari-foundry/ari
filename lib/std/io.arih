@@ -254,8 +254,11 @@ pub impl std::io::ReadByte {
 
 pub fn read_one[R: Reader](reader: ref mut R) -> std::io::ReadByte {
   let value = reader.read_byte();
-  if value < 0 {
+  if value == -1 {
     return std::io::ReadByteEof;
+  }
+  if value < -1 {
+    return std::io::ReadByteError(std::io::broken_pipe_error());
   }
   return std::io::ReadByteValue(value as u8);
 }
@@ -288,12 +291,18 @@ pub fn read_exact[R: Reader](reader: ref mut R, output: ptr u8, len: i64) -> std
   }
   var index = 0;
   while index < len {
-    let value = reader.read_byte();
-    if value < 0 {
-      return std::Err<(), std::error::Error>(std::io::unexpected_eof_error());
+    match std::io::read_one<R>(reader) {
+      ReadByteValue(value) => {
+        std::mem::ptr_store(std::mem::ptr_add(output, index), value);
+        index = index + 1;
+      }
+      ReadByteEof => {
+        return std::Err<(), std::error::Error>(std::io::unexpected_eof_error());
+      }
+      ReadByteError(reason) => {
+        return std::Err<(), std::error::Error>(reason);
+      }
     }
-    std::mem::ptr_store(std::mem::ptr_add(output, index), value as u8);
-    index = index + 1;
   }
   return std::Ok<(), std::error::Error>(());
 }
@@ -323,39 +332,69 @@ pub fn read_to_string_unchecked[R: Reader](zone: ref mut Zone, reader: ref mut R
 }
 
 pub fn read_to_string[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::Result[std::string::String, std::error::Error] {
-  return std::Ok<std::string::String, std::error::Error>(
-    std::io::read_to_string_unchecked<R>(zone, reader)
-  );
+  var output = std::string::new(zone, 16);
+  while true {
+    match std::io::read_one<R>(reader) {
+      ReadByteValue(value) => {
+        output.push_in(zone, value);
+      }
+      ReadByteEof => {
+        return std::Ok<std::string::String, std::error::Error>(output);
+      }
+      ReadByteError(reason) => {
+        drop output;
+        return std::Err<std::string::String, std::error::Error>(reason);
+      }
+    }
+  }
+  return std::Ok<std::string::String, std::error::Error>(output);
 }
 
 pub fn read_line_from[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::Result[std::string::String, std::error::Error] {
   var output = std::string::new(zone, 16);
-  var value = reader.read_byte();
-  while value >= 0 {
-    output.push_in(zone, value as u8);
-    if value == 10 {
-      return std::Ok<std::string::String, std::error::Error>(output);
+  while true {
+    match std::io::read_one<R>(reader) {
+      ReadByteValue(value) => {
+        output.push_in(zone, value);
+        if value == 10u8 {
+          return std::Ok<std::string::String, std::error::Error>(output);
+        }
+      }
+      ReadByteEof => {
+        return std::Ok<std::string::String, std::error::Error>(output);
+      }
+      ReadByteError(reason) => {
+        drop output;
+        return std::Err<std::string::String, std::error::Error>(reason);
+      }
     }
-    value = reader.read_byte();
   }
   return std::Ok<std::string::String, std::error::Error>(output);
 }
 
 pub fn copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -> std::Result[i64, std::error::Error] {
   var copied = 0;
-  var value = reader.read_byte();
-  while value >= 0 {
-    if !writer.write_byte(value as u8) {
-      return std::Err<i64, std::error::Error>(std::io::broken_pipe_error());
+  while true {
+    match std::io::read_one<R>(reader) {
+      ReadByteValue(value) => {
+        if !writer.write_byte(value) {
+          return std::Err<i64, std::error::Error>(std::io::broken_pipe_error());
+        }
+        copied = copied + 1;
+      }
+      ReadByteEof => {
+        match writer.flush() {
+          std::Err(flush_reason) => {
+            return std::Err<i64, std::error::Error>(flush_reason);
+          }
+          std::Ok(_) => {}
+        }
+        return std::Ok<i64, std::error::Error>(copied);
+      }
+      ReadByteError(read_reason) => {
+        return std::Err<i64, std::error::Error>(read_reason);
+      }
     }
-    copied = copied + 1;
-    value = reader.read_byte();
-  }
-  match writer.flush() {
-    std::Err(reason) => {
-      return std::Err<i64, std::error::Error>(reason);
-    }
-    std::Ok(_) => {}
   }
   return std::Ok<i64, std::error::Error>(copied);
 }
@@ -401,18 +440,30 @@ pub fn flush_unchecked[W: Writer](writer: ref mut W) -> bool {
   return flush<W>(writer).is_ok();
 }
 
-fn fill_buffer[R: Reader](reader: ref mut std::io::BufReader[R]) -> bool {
+fn fill_buffer[R: Reader](reader: ref mut std::io::BufReader[R]) -> i64 {
   reader.start = 0;
   reader.end = 0;
   while reader.end < reader.buffer.len {
-    let value = reader.inner.read_byte();
-    if value < 0 {
-      return reader.end > 0;
+    match std::io::read_one<R>(ref mut reader.inner) {
+      ReadByteValue(value) => {
+        std::mem::ptr_store(std::mem::ptr_add(reader.buffer.data, reader.end), value);
+        reader.end = reader.end + 1;
+      }
+      ReadByteEof => {
+        if reader.end > 0 {
+          return 1;
+        }
+        return 0;
+      }
+      ReadByteError(_) => {
+        if reader.end > 0 {
+          return 1;
+        }
+        return -1;
+      }
     }
-    std::mem::ptr_store(std::mem::ptr_add(reader.buffer.data, reader.end), value as u8);
-    reader.end = reader.end + 1;
   }
-  return true;
+  return 1;
 }
 
 fn flush_buffer[W: Writer](writer: ref mut std::io::BufWriter[W]) -> bool {
@@ -653,7 +704,7 @@ impl std::io::Writer for std::io::Stderr {
 impl std::io::Reader for std::io::PipeReader {
   pub fn read_byte(self: ref mut Self) -> i64 {
     if !self.handle.is_open() {
-      return -1;
+      return -2;
     }
     return std::io::read_fd_byte(self.handle.raw());
   }
@@ -719,7 +770,11 @@ impl std::io::Seek for std::io::Cursor {
 impl[R: std::io::Reader] std::io::Reader for std::io::BufReader[R] {
   pub fn read_byte(self: ref mut Self) -> i64 {
     if self.start >= self.end {
-      if !std::io::fill_buffer<R>(self) {
+      let filled = std::io::fill_buffer<R>(self);
+      if filled < 0 {
+        return -2;
+      }
+      if filled == 0 {
         return -1;
       }
     }

@@ -784,6 +784,11 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std2io25write_all__G_MemoryWriter' $(BUILD_DIR)/prelude/std-io-result.ll
 	grep -q '_ARNv3std2io24flush__G_FlushFailWriter' $(BUILD_DIR)/prelude/std-io-result.ll
 	grep -q '_ARNv3std2io36copy__G_std__io__Cursor_MemoryWriter' $(BUILD_DIR)/prelude/std-io-result.ll
+	grep -q '_ARNv3std2io25read_one__G_FailingReader' $(BUILD_DIR)/prelude/std-io-result.ll
+	grep -q '_ARNv3std2io27read_exact__G_FailingReader' $(BUILD_DIR)/prelude/std-io-result.ll
+	grep -q '_ARNv3std2io31read_to_string__G_FailingReader' $(BUILD_DIR)/prelude/std-io-result.ll
+	grep -q '_ARNv3std2io31read_line_from__G_FailingReader' $(BUILD_DIR)/prelude/std-io-result.ll
+	grep -q '_ARNv3std2io34copy__G_FailingReader_MemoryWriter' $(BUILD_DIR)/prelude/std-io-result.ll
 	grep -q '_ARNv3std2io39read_exact_unchecked__G_std__io__Cursor' $(BUILD_DIR)/prelude/std-io-result.ll
 	grep -q '_ARNv3std2io35write_all_unchecked__G_MemoryWriter' $(BUILD_DIR)/prelude/std-io-result.ll
 	grep -q '_ARNv3std2io31flush_unchecked__G_MemoryWriter' $(BUILD_DIR)/prelude/std-io-result.ll

@@ -172,42 +172,50 @@ read_line()
 read_line_owned(ref mut zone)
 ```
 
-`Reader.read_byte` returns the next byte as `i64` or `-1` at EOF. That sentinel
-matches the existing runtime hook and remains the compatibility layer.
+`Reader.read_byte` returns the next byte as `i64`, `-1` at EOF, or a value
+below `-1` when an adapter detects a real read failure through today's scalar
+hook. That sentinel contract matches the existing runtime hook and remains the
+compatibility layer.
 `read_one(ref mut reader)` wraps one low-level byte read in `ReadByte`:
 `ReadByteValue(byte)` for a byte, `ReadByteEof` for ordinary end-of-stream,
-and `ReadByteError(error)` when an adapter can detect a real failure before
-calling the raw hook. Generic readers backed only by `Reader::read_byte`
-currently map negative sentinels to `ReadByteEof`; `PipeReader::read_one`
-returns `ReadByteError(BrokenPipe)` after its descriptor has been closed.
+and `ReadByteError(error)` when an adapter reports a real failure. Generic
+readers backed only by `Reader::read_byte` map `-1` to EOF and values below
+`-1` to the current adapter error category, `Error(BrokenPipe)`. `PipeReader`
+returns that error after its descriptor has been closed.
 Use `is_byte()`, `is_eof()`, `is_error()`, `byte()`, and `error()` for compact
 branching.
 `read(ref mut reader, output)` fills up to `output.len` bytes and returns
 `Ok(count)`. EOF before any bytes is `Ok(0)`, EOF after a prefix is
 `Ok(prefix_len)`, and adapter-detected errors return `Err(error)` when no byte
-has been produced yet. `read_exact` is stricter: it returns `Ok(())` only when
-every requested byte was copied into `output`, and
-`Err(Error(UnexpectedEof))` when EOF arrives early. Negative lengths return
-`Err(Error(InvalidInput))`. `read_exact_unchecked` is the bool compatibility
-wrapper over that result shape.
+has been produced yet. If a prefix has already been copied, `read` returns the
+prefix count and lets the next call observe the failure, matching ordinary
+partial-read behavior. `read_exact` is stricter: it returns `Ok(())` only when
+every requested byte was copied into `output`, `Err(Error(UnexpectedEof))` when
+EOF arrives early, and the adapter error when the low-level reader reports a
+real failure. Negative lengths return `Err(Error(InvalidInput))`.
+`read_exact_unchecked` is the bool compatibility wrapper over that result
+shape.
 `read_all(ref mut zone, ref mut reader)` repeatedly reads until EOF and returns
 a zone-backed `Vec[u8]`. Use it when the caller wants the whole remaining byte
 stream and can make allocation explicit through the zone.
 `read_line_from(ref mut zone, ref mut reader)` reads through the first newline
 or EOF and returns a zone-backed `String`. EOF after some bytes is success;
-EOF before any bytes returns an empty `String`. Reader methods named
+EOF before any bytes returns an empty `String`; adapter-detected read failures
+drop the partial line and return `Err(error)`. Reader methods named
 `read_line(zone)` are available on `Stdin`, `Cursor`, `BufReader`, and
 `PipeReader`.
 `read_to_string(ref mut zone, ref mut reader)` follows the same EOF rule but
 collects the whole remaining stream into an owned `std::string::String` inside
-`Result`. Ari strings are byte-backed, so this helper does not validate UTF-8;
-call `text.try_utf8()` when a caller needs a validated UTF-8 view.
+`Result`. Adapter-detected read failures drop the partial string and return
+`Err(error)`. Ari strings are byte-backed, so this helper does not validate
+UTF-8; call `text.try_utf8()` when a caller needs a validated UTF-8 view.
 `read_to_string_unchecked` is the compatibility helper for older call sites
 that intentionally discard the `Result` wrapper.
 `copy(ref mut reader, ref mut writer)` streams from any `Reader` into any
 `Writer`, flushes the writer after EOF, and returns `Ok(byte_count)` when all
-writes and the final flush succeed. A failed byte write returns
-`Err(Error(BrokenPipe))`; a failed final flush returns the writer's flush
+reads, writes, and the final flush succeed. A failed read returns the reader
+adapter error without flushing, a failed byte write returns
+`Err(Error(BrokenPipe))`, and a failed final flush returns the writer's flush
 error.
 `try_copy` is the `Option[i64]` compatibility wrapper, and `copy_unchecked` is
 the bool wrapper for call sites that only care whether the whole stream moved.
