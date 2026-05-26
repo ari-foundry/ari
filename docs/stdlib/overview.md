@@ -45,7 +45,7 @@ API evolution.
 | `std::c` | C ABI boundary helpers. | `CStr`, `CString`, `Library`, `Symbol`, `from_string`, `from_ptr`, `from_slice_in`, `from_cstr_in`, `is_null`, `errno`, `error`, `open`, `main_program`, `symbol`, `function`, `close`, `last_error`, `lazy`, `now`, `local`, `global`. |
 | `std::target` | Compiler-known target and platform facts. | `triple`, `arch`, `os`, `env`, `pointer_bits`, `uses_elf`, `uses_dwarf`, `syscall_abi`, Linux API-family predicates. |
 | `std::env` | User-facing process argument, environment-variable, OS-string, and path-state helpers. | `arg_count`, `args`, `args_os`, `try_arg`, `try_arg_os`, `program_name`, `program_name_os`, Option-returning `var`, `var_os`, Result-returning `get`, `get_os`, `set_var`, `remove_var`, `set`, `remove`, compatibility `try_get`, `try_get_os`, `get_or_default`, `get_os_or_default`, `set_unchecked`, `remove_unchecked`, Result-returning `current_dir`, `current_dir_os`, `current_dir_path`, `set_current_dir`, `executable_path`, `executable_path_os`, `executable_path_path`, `home_dir`, plus `_optional`, `_or_default`, `_raw`, and `_unchecked` path compatibility helpers. |
-| `std::process` | Current-process helpers and POSIX child-process control. | `id`, `uid`, `gid`, `exit`, `abort`, `success`, `failure`, `ExitCode`, typed `Signal`, direct `Error` helpers `fork`, `wait_status`, `wait`, raw compatibility `fork_raw`, `wait_raw`, `Arg`, `EnvVar`, `Command`, `Child`, `ChildStdin`/`ChildStdout`/`ChildStderr`, `ExitStatus`, `Output`, `TempFile`, `TempDir`, `arg`, `arg_bytes`, `env_var`, `env_var_bytes`, `command`, `command_with_args`, `kill`, `kill_signal`, `terminate`, command `arg`/`arg_bytes`/`args`/`env`/`env_bytes`/`env_var`/`current_dir`/`current_dir_path`/`with_arg`/`with_env`/`with_current_dir`/`spawn`/`status`/`exit_status`/`output`/`output_in`/`exec`, current/executable path wrappers, temp file/dir constructors, status/output/child accessors. |
+| `std::process` | Current-process helpers and POSIX child-process control. | `id`, `uid`, `gid`, `exit`, `abort`, `success`, `failure`, `ExitCode`, typed `Signal`, direct `Error` helpers `fork`, `wait_status`, `wait`, raw compatibility `fork_raw`, `wait_raw`, `Arg`, `EnvVar`, `Command`, `Child`, `ChildStdin`/`ChildStdout`/`ChildStderr`, `ExitStatus`, `Output`, `TempFile`, `TempDir`, `arg`, `arg_bytes`, `env_var`, `env_var_bytes`, `command`, `command_with_args`, `kill`, `kill_signal`, `terminate`, command `arg`/`arg_bytes`/`args`/`env`/`env_bytes`/`env_var`/`clear_env`/`inherit_env`/`current_dir`/`current_dir_path`/`with_arg`/`with_env`/`with_clear_env`/`with_inherit_env`/`with_current_dir`/`spawn`/`status`/`exit_status`/`output`/`output_in`/`exec`, current/executable path wrappers, temp file/dir constructors, status/output/child accessors. |
 | `std::thread` | Function-pointer thread spawn/join, runtime ids, sleep/yield hints, and hosted parallelism. | `ThreadId`, raw `Thread`, `JoinHandle`, `JoinError`, `Builder`, `ThreadLocal`, Result-returning `spawn`, `join`, `available_parallelism`, `detach`, advisory `is_finished`, `yield_now`, `sleep`, `id`, `id_raw`, `current`, `is_main`, and raw/compatibility helpers. |
 | `std::sync` | Small explicit synchronization primitives. | `Ordering`, `AtomicI64`, `AtomicBool`, `AtomicUsize`, `AtomicPtr`, `Mutex`, `RwLock`, `Once`, `OnceLock`, `Condvar`, `Barrier`, `Channel`, `Sender`, `Receiver`, atomic helpers, lock helpers, `call_once`, `channel`, `mpsc_channel`. |
 | `std::cell` | Interior mutability and one-time initialization. | `Cell`, `RefCell`, `Ref`, `RefMut`, `OnceCell`, `Lazy`. |
@@ -289,13 +289,13 @@ status/root helpers are source Ari. POSIX child-process slices now include
 `fork`/`wait_status`/`wait` direct `Error` helpers, raw compatibility
 `fork_raw`/`wait_raw`, source branch/error predicates, and a `Command`
 builder for argument passing, environment setup, working-directory setup,
-`arg`, `env_var`, `spawn`, `status`, `exit_status`, `output`, `output_in`,
-`exec`, `Child` handles, typed `ExitStatus`/`ExitCode` values, typed
-`Signal`, `Output` handles, stdout/stderr capture for small outputs,
-child-stream endpoint aliases, current/executable path wrappers, temp file/dir
-constructors, and `kill`/`kill_signal`. Large-stream readiness, stdin
-redirection, richer platform status fields, and Windows process mapping remain
-roadmap work.
+`arg`, `env_var`, explicit inherited-or-cleared environment policy,
+`spawn`, `status`, `exit_status`, `output`, `output_in`, `exec`, `Child`
+handles, typed `ExitStatus`/`ExitCode` values, typed `Signal`, `Output`
+handles, stdout/stderr capture for small outputs, child-stream endpoint
+aliases, current/executable path wrappers, temp file/dir constructors, and
+`kill`/`kill_signal`. Large-stream readiness, stdin redirection, richer
+platform status fields, and Windows process mapping remain roadmap work.
 
 `std::thread` is the first thread slice. `spawn`, `join`, `detach`,
 `is_finished`, `yield_now`, and the raw parallelism hook are runtime-backed

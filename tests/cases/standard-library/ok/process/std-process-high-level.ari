@@ -1,8 +1,8 @@
 // Covers the high-level process polish layer: explicit-zone mutating Command
 // builders, by-value chainable Command builders, byte-boundary argv/env/cwd
-// helpers, typed ExitCode and
-// Signal wrappers, child-stream aliases, current path wrappers, and temp
-// file/temp dir constructors.
+// helpers, environment clear/inherit policy, typed ExitCode and Signal
+// wrappers, child-stream aliases, current path wrappers, and temp file/temp
+// dir constructors.
 fn status_is(value: Result[process::ExitStatus, error::Error], expected: i64) -> bool {
   match value {
     Ok(status) => { return status.exited() && status.code_or(-1) == expected; }
@@ -35,6 +35,29 @@ fn main() -> i64 {
     .with_current_dir("build/prelude");
   if status_is(cmd.status(), 12) {
     score = score + 11;
+  }
+
+  var clear_env_cmd = process::Command::new("/usr/bin/env")
+    .with_clear_env()
+    .with_inherit_env()
+    .with_clear_env()
+    .with_env(ref mut zone, "ARI_ONLY", "yes");
+  match clear_env_cmd.output(ref mut zone) {
+    Ok(clear_output_value) => {
+      var clear_output = clear_output_value;
+      match clear_output.stdout_string(ref mut zone) {
+        Ok(text) => {
+          if clear_output.is_success() &&
+             text.contains_text("ARI_ONLY=yes") &&
+             !text.contains_text("PATH=") &&
+             clear_output.stderr().len == 0 {
+            score = score + 73;
+          }
+        }
+        Err(_) => {}
+      }
+    }
+    Err(_) => {}
   }
 
   var out_cmd = process::Command::new("sh");
@@ -167,6 +190,6 @@ fn main() -> i64 {
     Err(_) => {}
   }
 
-  assert_eq_i64(score, 622);
+  assert_eq_i64(score, 695);
   return score;
 }

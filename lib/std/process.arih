@@ -16,6 +16,7 @@ extern "C" fn raw_waitpid(pid: c_int, status: ptr c_int, options: c_int) -> c_in
 extern "C" fn raw_execvp(path: ptr c_char, argv: ptr c_void) -> c_int = "execvp";
 extern "C" fn raw_kill(pid: c_int, signal: c_int) -> c_int = "kill";
 extern "C" fn raw_setenv(name: ptr c_char, value: ptr c_char, overwrite: c_int) -> c_int = "setenv";
+extern "C" fn raw_clearenv() -> c_int = "clearenv";
 extern "C" fn raw_chdir(path: ptr c_char) -> c_int = "chdir";
 extern "C" fn raw_dup2(source: c_int, target: c_int) -> c_int = "dup2";
 extern "C" fn raw_mkstemp(template_path: ptr c_char) -> c_int = "mkstemp";
@@ -344,6 +345,23 @@ fn empty_env() -> std::Slice[std::process::EnvVar] {
   return std::Slice<std::process::EnvVar> { data: 0u64 as ptr std::process::EnvVar, len: 0 };
 }
 
+fn clear_env_marker() -> std::Slice[std::process::EnvVar] {
+  return std::Slice<std::process::EnvVar> { data: 0u64 as ptr std::process::EnvVar, len: -1 };
+}
+
+// A negative env_values length means "clear the child environment first"; the
+// encoded count is -len - 1 so zero explicit assignments can still be marked.
+fn command_clears_env(command: ref std::process::Command) -> bool {
+  return command.env_values.len < 0;
+}
+
+fn command_env_count(command: ref std::process::Command) -> i64 {
+  if std::process::command_clears_env(command) {
+    return 0 - command.env_values.len - 1;
+  }
+  return command.env_values.len;
+}
+
 fn argv_capacity(command: ref std::process::Command) -> i64 {
   return ((command.arg_values.len + 2) * std::mem::size_of<u64>()) + 64;
 }
@@ -367,9 +385,20 @@ fn build_argv(zone: ref mut Zone, command: ref std::process::Command) -> ptr c_v
 }
 
 fn apply_setup(command: ref std::process::Command) -> std::Result[(), std::error::Error] {
+  if std::process::command_clears_env(command) {
+    if raw_clearenv() != 0 {
+      return std::Err<(), std::error::Error>(std::c::error());
+    }
+  }
+
+  let env_count = std::process::command_env_count(command);
+  let env_values = std::Slice<std::process::EnvVar> {
+    data: command.env_values.data,
+    len: env_count,
+  };
   var env_index = 0;
-  while env_index < command.env_values.len {
-    let env_value = command.env_values[env_index];
+  while env_index < env_count {
+    let env_value = env_values[env_index];
     if raw_setenv(env_value.name.as_ptr(), env_value.value.as_ptr(), 1 as c_int) != 0 {
       return std::Err<(), std::error::Error>(std::c::error());
     }
@@ -768,6 +797,32 @@ pub impl std::process::Command {
     self.env_values = values;
   }
 
+  fn clear_env(self: ref mut Self) -> void {
+    var count = self.env_values.len;
+    if count < 0 {
+      count = 0 - count - 1;
+    }
+    if count == 0 {
+      self.env_values = std::process::clear_env_marker();
+      return;
+    }
+    self.env_values = std::Slice<std::process::EnvVar> {
+      data: self.env_values.data,
+      len: 0 - count - 1,
+    };
+  }
+
+  fn inherit_env(self: ref mut Self) -> void {
+    var count = self.env_values.len;
+    if count < 0 {
+      count = 0 - count - 1;
+    }
+    self.env_values = std::Slice<std::process::EnvVar> {
+      data: self.env_values.data,
+      len: count,
+    };
+  }
+
   fn env(self: ref mut Self, zone: ref mut Zone, name: string, value: string) -> void {
     self.env_value(zone, std::process::env_var(name, value));
   }
@@ -777,7 +832,11 @@ pub impl std::process::Command {
   }
 
   fn env_value(self: ref mut Self, zone: ref mut Zone, value: std::process::EnvVar) -> void {
-    let old_len = self.env_values.len;
+    var old_len = self.env_values.len;
+    let clear_first = old_len < 0;
+    if old_len < 0 {
+      old_len = 0 - old_len - 1;
+    }
     let storage = std::zone::alloc_array<std::process::EnvVar>(zone, old_len + 1);
     var index = 0;
     while index < old_len {
@@ -785,7 +844,12 @@ pub impl std::process::Command {
       index = index + 1;
     }
     ptr_store(ptr_add(storage, old_len), value);
-    self.env_values = std::Slice<std::process::EnvVar> { data: storage, len: old_len + 1 };
+    var next_len = old_len + 1;
+    if clear_first {
+      next_len = 0 - next_len - 1;
+    }
+    let next_env = std::Slice<std::process::EnvVar> { data: storage, len: next_len };
+    self.env_values = next_env;
   }
 
   fn env_bytes(
@@ -834,6 +898,18 @@ pub impl std::process::Command {
   fn with_env(self, zone: ref mut Zone, name: string, value: string) -> std::process::Command {
     var command = self;
     command.env(zone, name, value);
+    return command;
+  }
+
+  fn with_clear_env(self) -> std::process::Command {
+    var command = self;
+    command.clear_env();
+    return command;
+  }
+
+  fn with_inherit_env(self) -> std::process::Command {
+    var command = self;
+    command.inherit_env();
     return command;
   }
 

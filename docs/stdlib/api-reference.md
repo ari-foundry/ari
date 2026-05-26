@@ -622,16 +622,20 @@ Command::arg(zone, value)
 Command::arg_bytes(zone, value)
 Command::arg_value(zone, value)
 Command::args(args)
+Command::clear_env()
 Command::env(zone, name, value)
 Command::env_bytes(zone, name, value)
 Command::env_values(env_values)
 Command::env_var(zone, name, value)
 Command::env_value(zone, value)
+Command::inherit_env()
 Command::current_dir(path)
 Command::current_dir_bytes(zone, path)
 Command::current_dir_path(zone, path)
 Command::with_arg(zone, value)
+Command::with_clear_env()
 Command::with_env(zone, name, value)
+Command::with_inherit_env()
 Command::with_current_dir(path)
 Command::spawn()
 Command::status()
@@ -732,9 +736,18 @@ var cmd = process::Command::new("sh")
 let status = cmd.status();
 ```
 
-The `with_arg`, `with_env`, and `with_current_dir` helpers are by-value
-chainable forms. The mutating `arg`/`env` forms still return `void` because
-they take both `ref mut Command` and `ref mut Zone`.
+The `with_arg`, `with_env`, `with_clear_env`, `with_inherit_env`, and
+`with_current_dir` helpers are by-value chainable forms. The mutating
+`arg`/`env` forms still return `void` because they take both `ref mut Command`
+and `ref mut Zone`.
+
+Child environments inherit the parent environment by default. Use
+`clear_env()` or `with_clear_env()` before `env(...)`/`with_env(...)` when a
+tool should start from an empty environment and add back only selected values.
+Use `inherit_env()` or `with_inherit_env()` to return to the default inherited
+policy while preserving the configured assignment list. On the current
+Linux/POSIX path, clear setup uses `clearenv(3)` in the child immediately
+before applying configured `setenv(3)` assignments and `execvp`.
 
 `status()` spawns and waits, returning typed `ExitStatus` so natural fallible
 process APIs preserve signal termination detail. `status_code()` is the
@@ -776,9 +789,9 @@ success check, and `stdout()` / `stderr()` for borrowed `Slice[u8]` views.
 `stdout_string(zone)` and `stderr_string(zone)` validate the captured bytes as
 UTF-8, copy them into a zone-owned `String`, and return `Error(InvalidData)` for
 non-UTF-8 output. This slice is meant for small outputs today; large concurrent
-streams, stdin redirection, environment-clear policy, parent-visible child
-setup errors, portable Windows mapping, and platform-specific status detail are
-still future process-library work.
+streams, stdin redirection, parent-visible child setup errors, portable Windows
+mapping, and platform-specific status detail are still future process-library
+work.
 
 `ChildStdin`, `ChildStdout`, and `ChildStderr` name the current pipe endpoint
 types used by future streaming process IO. `current_dir`,

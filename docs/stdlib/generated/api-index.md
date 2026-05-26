@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `3009`
+- API entries: `3013`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,14 +32,14 @@ platform notes.
 | `alloc` | 842 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 767 | stable candidate |
-| `hosted` | 1213 | platform-backed |
+| `hosted` | 1217 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 25 |
 | `fn` | 1076 |
-| `method` | 1512 |
+| `method` | 1516 |
 | `module` | 39 |
 | `struct` | 161 |
 | `trait` | 39 |
@@ -79,7 +79,7 @@ platform notes.
 | `std::os` | `platform` | 50 |
 | `std::parse` | `core` | 45 |
 | `std::path` | `core` | 83 |
-| `std::process` | `hosted` | 139 |
+| `std::process` | `hosted` | 143 |
 | `std::random` | `alloc/hosted` | 36 |
 | `std::rc` | `alloc` | 32 |
 | `std::result` | `core` | 12 |
@@ -2999,6 +2999,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::process::Command::arg_bytes` | check-prelude std-process-high-level Result-returning explicit-zone argv append helper for owned byte text; docs/stdlib/modules/process.md |
 | `method std::process::Command::arg_value` | check-prelude std-process-high-level explicit-zone Arg append helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::args` | check-prelude std-process-command replace command argument slice; docs/stdlib/modules/process.md |
+| `method std::process::Command::clear_env` | check-prelude std-process-high-level child environment clearing policy helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::current_dir` | check-prelude std-process-command child working-directory setup; docs/stdlib/modules/process.md |
 | `method std::process::Command::current_dir_bytes` | check-prelude std-process-high-level Result-returning child working-directory setup from owned byte text; docs/stdlib/modules/process.md |
 | `method std::process::Command::current_dir_path` | check-prelude std-process-high-level Result-returning child working-directory setup from PathBytes; docs/stdlib/modules/process.md |
@@ -3009,6 +3010,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::process::Command::env_var` | check-prelude std-process-high-level explicit-zone environment append compatibility helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::exec` | check-prelude std-process-command replace current process with command; docs/stdlib/modules/process.md |
 | `method std::process::Command::exit_status` | check-prelude std-process-exit-status spawn and wait for typed ExitStatus; docs/stdlib/modules/process.md |
+| `method std::process::Command::inherit_env` | check-prelude std-process-high-level child environment inheritance policy helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::new` | check-prelude std-process-command associated Command constructor; docs/stdlib/modules/process.md |
 | `method std::process::Command::output` | check-prelude std-process-high-level natural output capture alias; docs/stdlib/modules/process.md |
 | `method std::process::Command::output_in` | check-prelude std-process-output zone-backed stdout/stderr capture helper; docs/stdlib/modules/process.md |
@@ -3017,8 +3019,10 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::process::Command::status_code` | check-prelude std-process-command explicit normal-exit-code compatibility helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::with_arg` | check-prelude std-process-high-level by-value chainable single argv append helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::with_args` | check-prelude std-process-command associated Command constructor with argv slice; docs/stdlib/modules/process.md |
+| `method std::process::Command::with_clear_env` | check-prelude std-process-high-level by-value child environment clearing policy helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::with_current_dir` | check-prelude std-process-high-level by-value chainable child working-directory setup helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::with_env` | check-prelude std-process-high-level by-value chainable environment append helper; docs/stdlib/modules/process.md |
+| `method std::process::Command::with_inherit_env` | check-prelude std-process-high-level by-value child environment inheritance policy helper; docs/stdlib/modules/process.md |
 | `method std::process::ExitCode::code` | check-prelude std-process-high-level typed exit code accessor; docs/stdlib/modules/process.md |
 | `method std::process::ExitCode::exit` | check-prelude std-process-high-level typed process exit helper; docs/stdlib/modules/process.md |
 | `method std::process::ExitCode::is_failure` | check-prelude std-process-high-level typed failure predicate; docs/stdlib/modules/process.md |

@@ -1576,9 +1576,13 @@ check-prelude: $(TARGET)
 	grep -F -q "std__process__Command8inherent9arg_bytes" $(BUILD_DIR)/prelude/std-process-high-level.ll
 	grep -F -q "std__process__Command8inherent3env" $(BUILD_DIR)/prelude/std-process-high-level.ll
 	grep -F -q "std__process__Command8inherent9env_bytes" $(BUILD_DIR)/prelude/std-process-high-level.ll
+	grep -F -q "std__process__Command8inherent9clear_env" $(BUILD_DIR)/prelude/std-process-high-level.ll
+	grep -F -q "std__process__Command8inherent11inherit_env" $(BUILD_DIR)/prelude/std-process-high-level.ll
 	grep -F -q "std__process__Command8inherent16current_dir_path" $(BUILD_DIR)/prelude/std-process-high-level.ll
 	grep -F -q "std__process__Command8inherent8with_arg" $(BUILD_DIR)/prelude/std-process-high-level.ll
 	grep -F -q "std__process__Command8inherent8with_env" $(BUILD_DIR)/prelude/std-process-high-level.ll
+	grep -F -q "std__process__Command8inherent14with_clear_env" $(BUILD_DIR)/prelude/std-process-high-level.ll
+	grep -F -q "std__process__Command8inherent16with_inherit_env" $(BUILD_DIR)/prelude/std-process-high-level.ll
 	grep -F -q "std__process__Command8inherent16with_current_dir" $(BUILD_DIR)/prelude/std-process-high-level.ll
 	grep -F -q "std7process9arg_bytes" $(BUILD_DIR)/prelude/std-process-high-level.ll
 	grep -F -q "std7process13env_var_bytes" $(BUILD_DIR)/prelude/std-process-high-level.ll
@@ -1587,8 +1591,9 @@ check-prelude: $(TARGET)
 	grep -F -q "std7process11kill_signal" $(BUILD_DIR)/prelude/std-process-high-level.ll
 	grep -F -q '@"mkstemp"' $(BUILD_DIR)/prelude/std-process-high-level.ll
 	grep -F -q '@"mkdtemp"' $(BUILD_DIR)/prelude/std-process-high-level.ll
+	grep -F -q '@"clearenv"' $(BUILD_DIR)/prelude/std-process-high-level.ll
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-high-level.ari -o $(BUILD_DIR)/prelude/std-process-high-level.elf
-	$(BUILD_DIR)/prelude/std-process-high-level.elf; code=$$?; test $$code -eq 110
+	$(BUILD_DIR)/prelude/std-process-high-level.elf; code=$$?; test $$code -eq 183
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-basic.elf; $(BUILD_DIR)/prelude/std-process-basic.elf; code=$$?; test $$code -eq 53; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-identity.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-identity.elf; $(BUILD_DIR)/prelude/std-process-identity.elf; code=$$?; test $$code -eq 26; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-exit.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-exit.elf; $(BUILD_DIR)/prelude/std-process-exit.elf; code=$$?; test $$code -eq 42; fi

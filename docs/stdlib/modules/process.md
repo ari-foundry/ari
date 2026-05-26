@@ -6,10 +6,12 @@ terminates explicitly with `exit` or `abort`, uses natural status helper names
 in source Ari, and on the current Linux/LLVM path can fork/wait directly or use
 the `Command` builder for `arg`, `args`, `env`, `env_values`, `env_var`,
 `arg_bytes`, `env_bytes`, `current_dir`, `current_dir_path`,
-by-value `with_arg`/`with_env`/`with_current_dir` chaining, `spawn`, `status`,
-`status_code`, `output`, `output_in`, `exec`, typed `ExitStatus` and `ExitCode`
-inspection, typed signal helpers, small stdout/stderr capture, child-stream
-endpoint aliases, current path wrappers, and temp file/temp dir creation.
+by-value `with_arg`/`with_env`/`with_clear_env`/`with_inherit_env`/
+`with_current_dir` chaining, explicit child environment inheritance or clearing
+policy, `spawn`, `status`, `status_code`, `output`, `output_in`, `exec`, typed
+`ExitStatus` and `ExitCode` inspection, typed signal helpers, small
+stdout/stderr capture, child-stream endpoint aliases, current path wrappers,
+and temp file/temp dir creation.
 
 ## Current API
 
@@ -84,16 +86,20 @@ Command::arg(zone, value)
 Command::arg_bytes(zone, value) -> Result[(), process::Error]
 Command::arg_value(zone, value)
 Command::args(args)
+Command::clear_env()
 Command::env(zone, name, value)
 Command::env_bytes(zone, name, value) -> Result[(), process::Error]
 Command::env_values(env_values)
 Command::env_var(zone, name, value)
 Command::env_value(zone, value)
+Command::inherit_env()
 Command::current_dir(path)
 Command::current_dir_bytes(zone, path) -> Result[(), process::Error]
 Command::current_dir_path(zone, path) -> Result[(), process::Error]
 Command::with_arg(zone, value)
+Command::with_clear_env()
 Command::with_env(zone, name, value)
+Command::with_inherit_env()
 Command::with_current_dir(path)
 Command::spawn()
 Command::status() -> Result[process::ExitStatus, process::Error]
@@ -244,14 +250,21 @@ if `execvp` returns, Ari reports the host error.
 
 `spawn`, `status`, `status_code`, `exit_status`, and `output` inherit the
 parent process stdin/stdout/stderr by default unless a helper explicitly says it
-captures output. Child environment policy is also inherited by default:
-`env`/`env_values` add or overwrite selected variables, and there is not yet an
-environment-clear mode. `current_dir` is applied in the child just before
-`exec`. For `exec()` in the current process, setup failures return `Error`. For
-fork-based `spawn`/`status`/`output`, setup or `execvp` failure happens in the
-child and currently appears to the parent as exit status `127`; richer
-parent-visible setup errors require a future error-reporting pipe in the
-process runtime.
+captures output. Child environment policy is inherited by default:
+`env`/`env_values` add or overwrite selected variables in the inherited
+environment. Call `clear_env()` before `env(...)`, or use
+`with_clear_env().with_env(...)`, when a tool should start from an empty
+environment and then opt selected variables back in. Call `inherit_env()` or
+`with_inherit_env()` to return to the default inherited-environment policy
+without losing already configured environment assignments. On the current
+Linux/POSIX runtime path, clearing uses `clearenv(3)` in the child setup just
+before `execvp`; assignment uses `setenv(3)` after any clear step, so explicit
+`env(...)` values remain visible to the child. `current_dir` is applied in the
+child just before `exec`. For `exec()` in the current process, setup failures
+return `Error`. For fork-based `spawn`/`status`/`output`, setup or `execvp`
+failure happens in the child and currently appears to the parent as exit status
+`127`; richer parent-visible setup errors require a future error-reporting pipe
+in the process runtime.
 
 The module-level wrappers `process::spawn(ref command)`,
 `process::status(ref command)`, `process::status_code(ref command)`,
@@ -493,16 +506,17 @@ fn main() -> i64 {
   runtime hooks today. The API shape is intended to stay portable, but Windows
   mapping still needs a separate implementation.
 - `Command` currently supports `arg`, `args`, `arg_bytes`, `env`, `env_var`,
-  `env_bytes`, by-value `with_arg`/`with_env`/`with_current_dir`, `spawn`,
-  `status`, `exit_status`, `output`, `output_in`, `exec`, inherited stdio by
-  default, inherited environment plus selected assignments, working-directory
-  setup, captured stdout and stderr, typed status inspection, and `Child`
-  wait/kill/signal helpers.
+  `env_bytes`, `clear_env`, `inherit_env`, by-value
+  `with_arg`/`with_env`/`with_clear_env`/`with_inherit_env`/
+  `with_current_dir`, `spawn`, `status`, `exit_status`, `output`,
+  `output_in`, `exec`, inherited stdio by default, inherited or cleared
+  environment plus selected assignments, working-directory setup, captured
+  stdout and stderr, typed status inspection, and `Child` wait/kill/signal
+  helpers.
   `output_in` is intended for small captured outputs today: large concurrent
   stdout/stderr streams need future readiness/nonblocking draining to avoid
-  pipe-buffer backpressure. Explicit stdin redirection, inherited/cleared
-  environment policies, and portable platform-specific status detail are future
-  work.
+  pipe-buffer backpressure. Explicit stdin redirection and portable
+  platform-specific status detail are future work.
 - Exit runs through the host process immediately. Do not expect Ari destructors
   or zone cleanup to run after `process::exit`.
 - Abort also terminates immediately through the host runtime and should be
