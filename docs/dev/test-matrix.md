@@ -1175,7 +1175,8 @@ Checklist:
       binary/octal/decimal/hex formatting, width, integer precision,
       fallible width/precision validation, left/right/center alignment,
       alternate prefixes, debug text quoting, explicit-zone strings, generic
-      Display `write_value`, and `std::io::Writer` output plus generic Display stdout
+      Display `write_value`, writer-backed `write_concat2`/`write_concat3`,
+      and `std::io::Writer` output plus generic Display stdout
       `print_value`/`println_value`
 - [x] source `std::fmt::Debug` has built-in impl coverage for `i64`, `u64`,
       `char`, `bool`, `f32`, `f64`, lowercase `string`, and owned

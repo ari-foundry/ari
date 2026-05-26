@@ -412,6 +412,10 @@ fn std::fmt::with_precision|check-prelude std-fmt-format-spec integer precision 
 fn std::fmt::with_width|check-prelude std-fmt-format-spec width spec helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_boolean[W: std::io::Writer]|check-prelude std-fmt-format-spec Result-returning Writer-backed bool formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_boolean_bool[W: std::io::Writer]|check-prelude std-fmt-format-spec bool compatibility Writer-backed bool formatting helper; docs/stdlib/modules/fmt.md
+fn std::fmt::write_concat2|check-prelude std-fmt-format-spec Result-returning two-value Writer-backed Display concatenation helper; docs/stdlib/modules/fmt.md
+fn std::fmt::write_concat2_bool|check-prelude std-fmt-format-spec bool compatibility two-value Writer-backed Display concatenation helper; docs/stdlib/modules/fmt.md
+fn std::fmt::write_concat3|check-prelude std-fmt-format-spec Result-returning three-value Writer-backed Display concatenation helper; docs/stdlib/modules/fmt.md
+fn std::fmt::write_concat3_bool|check-prelude std-fmt-format-spec bool compatibility three-value Writer-backed Display concatenation helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_debug[W: std::io::Writer, T: std::fmt::Debug]|check-prelude std-fmt-debug-values Result-returning generic Writer-backed Debug formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_debug_bool[W: std::io::Writer, T: std::fmt::Debug]|check-prelude std-fmt-debug-values bool compatibility generic Writer-backed Debug formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_integer[W: std::io::Writer]|check-prelude std-fmt-format-spec Result-returning Writer-backed signed integer formatting helper; docs/stdlib/modules/fmt.md

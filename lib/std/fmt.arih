@@ -510,6 +510,74 @@ pub fn concat3[A: std::fmt::Display, B: std::fmt::Display, C: std::fmt::Display]
   return output;
 }
 
+pub fn write_concat2[
+  W: std::io::Writer,
+  A: std::fmt::Display,
+  B: std::fmt::Display
+](
+  writer: ref mut W,
+  zone: ref mut Zone,
+  first: A,
+  second: B
+) -> std::Result[(), std::error::Error] {
+  match std::fmt::write_value<W, A>(writer, zone, first) {
+    std::Ok(_) => {}
+    std::Err(reason) => {
+      return std::Err<(), std::error::Error>(reason);
+    }
+  }
+  return std::fmt::write_value<W, B>(writer, zone, second);
+}
+
+pub fn write_concat2_bool[
+  W: std::io::Writer,
+  A: std::fmt::Display,
+  B: std::fmt::Display
+](
+  writer: ref mut W,
+  zone: ref mut Zone,
+  first: A,
+  second: B
+) -> bool {
+  return std::fmt::write_concat2<W, A, B>(writer, zone, first, second).is_ok();
+}
+
+pub fn write_concat3[
+  W: std::io::Writer,
+  A: std::fmt::Display,
+  B: std::fmt::Display,
+  C: std::fmt::Display
+](
+  writer: ref mut W,
+  zone: ref mut Zone,
+  first: A,
+  second: B,
+  third: C
+) -> std::Result[(), std::error::Error] {
+  match std::fmt::write_concat2<W, A, B>(writer, zone, first, second) {
+    std::Ok(_) => {}
+    std::Err(reason) => {
+      return std::Err<(), std::error::Error>(reason);
+    }
+  }
+  return std::fmt::write_value<W, C>(writer, zone, third);
+}
+
+pub fn write_concat3_bool[
+  W: std::io::Writer,
+  A: std::fmt::Display,
+  B: std::fmt::Display,
+  C: std::fmt::Display
+](
+  writer: ref mut W,
+  zone: ref mut Zone,
+  first: A,
+  second: B,
+  third: C
+) -> bool {
+  return std::fmt::write_concat3<W, A, B, C>(writer, zone, first, second, third).is_ok();
+}
+
 pub fn write_debug[W: std::io::Writer, T: std::fmt::Debug](writer: ref mut W, zone: ref mut Zone, value: T) -> std::Result[(), std::error::Error] {
   var text = value.debug_in(zone);
   return std::io::write_all<W>(writer, text.as_slice());

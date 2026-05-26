@@ -3422,6 +3422,10 @@ fmt::format_value<T: Display>(ref mut zone, value)
 fmt::debug_value<T: Debug>(ref mut zone, value)
 fmt::concat2<A: Display, B: Display>(ref mut zone, first, second)
 fmt::concat3<A: Display, B: Display, C: Display>(ref mut zone, first, second, third)
+fmt::write_concat2<W: io::Writer, A: Display, B: Display>(ref mut writer, ref mut zone, first, second)
+fmt::write_concat2_bool<W: io::Writer, A: Display, B: Display>(ref mut writer, ref mut zone, first, second)
+fmt::write_concat3<W: io::Writer, A: Display, B: Display, C: Display>(ref mut writer, ref mut zone, first, second, third)
+fmt::write_concat3_bool<W: io::Writer, A: Display, B: Display, C: Display>(ref mut writer, ref mut zone, first, second, third)
 fmt::write_unsigned<W: io::Writer>(ref mut writer, ref mut zone, value, spec)
 fmt::write_unsigned_bool<W: io::Writer>(ref mut writer, ref mut zone, value, spec)
 fmt::write_integer<W: io::Writer>(ref mut writer, ref mut zone, value)
@@ -3461,6 +3465,11 @@ output should use that policy.
 strings from `Display` values, which is handy for CLI messages such as
 `"Compiling " + name` while Ari keeps general string interpolation and hidden
 allocation out of the language.
+`fmt::write_concat2` and `fmt::write_concat3` write the same short
+`Display`-driven message shape directly into an `io::Writer`, returning the
+first writer error instead of allocating one combined output string. Their
+`_bool` variants are compatibility wrappers for call sites that deliberately
+discard the failure reason.
 
 The executable formatting path is still macro-based: `print!`, `println!`,
 `eprintln!`, and `format_in!(ref mut zone, "...", values...)`. `{}` uses

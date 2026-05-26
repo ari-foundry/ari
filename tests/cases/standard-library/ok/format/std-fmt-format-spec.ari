@@ -151,6 +151,31 @@ fn main() -> i64 {
     score = score + 1;
   }
 
+  var concat2_buffer = [0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8];
+  var concat2_writer = MemoryWriter { data: concat2_buffer.as_slice(), position: 0 };
+  let concat_name = std::string::from(ref mut zone, "ari");
+  if fmt::write_concat2<MemoryWriter, string, String>(ref mut concat2_writer, ref mut zone, "name=", concat_name).is_ok() {
+    if concat2_buffer[0] == 'n' && concat2_buffer[4] == '=' && concat2_buffer[7] == 'i' && concat2_writer.position == 8 {
+      score = score + 1;
+    }
+  }
+
+  var concat3_buffer = [0u8, 0u8, 0u8];
+  var concat3_writer = MemoryWriter { data: concat3_buffer.as_slice(), position: 0 };
+  if fmt::write_concat3_bool<MemoryWriter, string, i64, string>(ref mut concat3_writer, ref mut zone, "v", 7, "!") {
+    if concat3_buffer[0] == 'v' && concat3_buffer[1] == '7' && concat3_buffer[2] == '!' && concat3_writer.position == 3 {
+      score = score + 1;
+    }
+  }
+
+  var short_concat_buffer = [0u8, 0u8];
+  var short_concat_writer = MemoryWriter { data: short_concat_buffer.as_slice(), position: 0 };
+  if fmt::write_concat3<MemoryWriter, string, string, string>(ref mut short_concat_writer, ref mut zone, "ab", "c", "d").is_err() {
+    if short_concat_writer.position == 2 && short_concat_buffer[0] == 'a' && short_concat_buffer[1] == 'b' {
+      score = score + 1;
+    }
+  }
+
   zone::destroy(zone);
   return score;
 }

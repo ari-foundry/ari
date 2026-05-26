@@ -49,6 +49,10 @@ format_value[T: Display](zone: ref mut Zone, value: T) -> String
 debug_value[T: Debug](zone: ref mut Zone, value: T) -> String
 concat2[A: Display, B: Display](zone: ref mut Zone, first: A, second: B) -> String
 concat3[A: Display, B: Display, C: Display](zone: ref mut Zone, first: A, second: B, third: C) -> String
+write_concat2[W: io::Writer, A: Display, B: Display](writer: ref mut W, zone: ref mut Zone, first: A, second: B) -> Result[(), Error]
+write_concat2_bool[W: io::Writer, A: Display, B: Display](writer: ref mut W, zone: ref mut Zone, first: A, second: B) -> bool
+write_concat3[W: io::Writer, A: Display, B: Display, C: Display](writer: ref mut W, zone: ref mut Zone, first: A, second: B, third: C) -> Result[(), Error]
+write_concat3_bool[W: io::Writer, A: Display, B: Display, C: Display](writer: ref mut W, zone: ref mut Zone, first: A, second: B, third: C) -> bool
 
 write_unsigned[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: u64, spec: FormatSpec) -> Result[(), Error]
 write_unsigned_bool[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: u64, spec: FormatSpec) -> bool
@@ -172,6 +176,24 @@ zone::destroy(zone);
 These helpers still allocate through the explicit zone and use `Display`, so
 they follow the same text policy as `format_in!`, `print_value`, and
 `String.append_value`.
+Use `write_concat2` and `write_concat3` when the destination is already an
+`io::Writer` and the caller wants to stream a short status message without
+constructing one combined `String` first:
+
+```ari
+var stdout = io::stdout();
+fmt::write_concat3<io::Stdout, string, String, string>(
+  ref mut stdout,
+  ref mut zone,
+  "Compiling ",
+  name,
+  "\n",
+).unwrap();
+```
+
+These helpers write each `Display` value in order and return the first writer
+error. The `_bool` variants are compatibility wrappers for call sites that
+intentionally discard the failure reason.
 
 ## Formatting Macros
 
@@ -214,6 +236,8 @@ The source helpers complement the macros:
   clearer than calling `value.format_in(zone)` directly.
 - Use `concat2` and `concat3` for small CLI/status strings such as
   `"Compiling " + name` while Ari does not have general string interpolation.
+- Use `write_concat2` and `write_concat3` for the same short CLI/status message
+  shape when the destination is already an `io::Writer`.
 - Use `Display::format_in` for standard display values and user-defined values
   that participate in `{}`.
 - Use `Debug::debug_in`, `{:?}`, and `debug_value` for diagnostic output that
@@ -253,8 +277,7 @@ The source helpers complement the macros:
   generic bounds, not as a suffix, unless the compiler/runtime primitive truly
   requires a distinct symbol.
 - Custom formatter objects, allocator-returning `format!` without an explicit
-  zone, and zero-copy writer streaming without a temporary formatted string
-  remain roadmap work.
+  zone, and full literal-template writer streaming remain roadmap work.
 
 ## Tests
 
