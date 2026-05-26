@@ -1,0 +1,82 @@
+// Covers read_dir_info, which snapshots each DirEntry together with the
+// per-entry metadata/file-type results callers otherwise have to query one by
+// one.
+fn cleanup(root: string, file_path: string, link_path: string) -> void {
+  fs::remove_file_bool(link_path);
+  fs::remove_file_bool(file_path);
+  fs::remove_dir_bool(root);
+}
+
+fn main() -> i64 {
+  let root = "build/prelude/std-fs-dir-entry-info.tmp";
+  let file_path = "build/prelude/std-fs-dir-entry-info.tmp/data.txt";
+  let link_path = "build/prelude/std-fs-dir-entry-info.tmp/broken-link";
+  let missing_target = "missing-target";
+
+  cleanup(root, file_path, link_path);
+  var score = 0;
+
+  if fs::create_dir(root).is_ok() {
+    score = score + 1;
+  }
+  if fs::write_string(file_path, "data").is_ok() {
+    score = score + 2;
+  }
+  if fs::symbolic_link(missing_target, link_path).is_ok() {
+    score = score + 4;
+  }
+
+  var zone = zone::create(4096);
+  match fs::read_dir_info(ref mut zone, root) {
+    Ok(infos) => {
+      if infos.len() == 2 {
+        score = score + 8;
+      }
+
+      var index = 0;
+      while index < infos.len() {
+        let info = infos.get(index);
+        if info.name_equals("data.txt") {
+          if info.path_equals(file_path) &&
+             info.metadata_ok() &&
+             info.symlink_metadata_ok() &&
+             info.file_type_ok() &&
+             info.entry().is_file() {
+            score = score + 16;
+          }
+        }
+
+        if info.name_equals("broken-link") {
+          if info.path_equals(link_path) &&
+             info.metadata_err() &&
+             info.file_type_err() &&
+             info.symlink_metadata_ok() &&
+             info.entry().is_symlink() {
+            score = score + 32;
+          }
+        }
+        index = index + 1;
+      }
+    }
+    Err(_) => {}
+  }
+
+  if fs::read_dir_info_optional(ref mut zone, root).is_some() &&
+     fs::try_read_dir_info(ref mut zone, root).is_some() {
+    score = score + 64;
+  }
+
+  match fs::read_dir_info_detailed(ref mut zone, "build/prelude/std-fs-dir-entry-info.missing") {
+    Ok(_) => {}
+    Err(reason) => {
+      if reason.path_equals("build/prelude/std-fs-dir-entry-info.missing") &&
+         reason.reason().is_not_found() {
+        score = score + 128;
+      }
+    }
+  }
+
+  zone::destroy(zone);
+  cleanup(root, file_path, link_path);
+  return score;
+}

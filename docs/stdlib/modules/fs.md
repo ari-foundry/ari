@@ -14,12 +14,13 @@ directory as failure, recursively create missing directory parents, read
 directory entry names through an explicit `Dir` handle, collect `DirEntry`
 values with names, joined paths, lazy metadata helpers, and natural
 `Error`-returning directory query forms, query basic file metadata with
-`Option` or `Result[..., Error]`, ask direct path-kind predicates such as `is_file`
-and `is_dir`, read and change POSIX permission bits, resolve an existing path
-to an absolute canonical path with `Option` or `Result` failure details, create
-hosted temporary files and directories, pass `File` handles to generic `std::io::Reader`
-and `std::io::Writer` helpers, inspect and move a file cursor through
-`std::io::Seek`, close the handle, and remove a file.
+`Option` or `Result[..., Error]`, inspect POSIX owner and group ids, use an
+explicit portable creation-time policy, ask direct path-kind predicates such as
+`is_file` and `is_dir`, read and change POSIX permission bits, resolve an
+existing path to an absolute canonical path with `Option` or `Result` failure
+details, create hosted temporary files and directories, pass `File` handles to
+generic `std::io::Reader` and `std::io::Writer` helpers, inspect and move a
+file cursor through `std::io::Seek`, close the handle, and remove a file.
 
 The default spelling rule is Result-first: recoverable filesystem operations
 use natural names such as `open`, `create`, `read`, `read_to_string`,
@@ -58,8 +59,83 @@ Common natural API shapes:
 | Directories | `create_dir(path) -> Result[(), Error]`, `create_dir_all(path) -> Result[(), Error]`, `remove_dir(path) -> Result[(), Error]`, `remove_dir_all(path) -> Result[(), Error]` | `*_bool`, `*_unchecked`, `_optional`/`try_*`, `_raw` |
 | Files and moves | `remove_file(path) -> Result[(), Error]`, `rename(source, target) -> Result[(), Error]`, `copy(source, target) -> Result[i64, Error]` | `remove_bool`, `rename_bool`, `copy_bool`, `try_copy`, `_raw` |
 | Paths and directories | `canonicalize(ref mut zone, path) -> Result[PathBuf, Error]`, `read_dir(ref mut zone, path) -> Result[Vec[DirEntry], Error]` | `_optional`, `try_*`, `_unchecked`, `_raw` where raw host errno is useful |
+| Detailed diagnostics | `metadata_detailed(path) -> Result[Metadata, PathError]`, `rename_detailed(source, target) -> Result[(), TwoPathError]`, `read_dir_info(ref mut zone, path) -> Result[Vec[DirEntryInfo], Error]` | Use the natural API for ordinary `Error`; detailed helpers add operation/path context or per-entry metadata snapshots. |
+| Metadata ownership/time | `metadata(path) -> Result[Metadata, Error]`, then `metadata.owner()`, `metadata.group()`, `metadata.created()` | `created()`/`birth_time()` return `Option[SystemTime]`; on the current hosted POSIX slice they return `None`, and `created_or_changed()` falls back to status-change time. |
 | Temporary paths | `temp_file(ref mut zone) -> Result[TempFile, Error]`, `temp_file_in(ref mut zone, prefix) -> Result[TempFile, Error]`, `temp_dir(ref mut zone) -> Result[TempDir, Error]`, `temp_dir_in(ref mut zone, prefix) -> Result[TempDir, Error]` | Use `TempFile::close`, `TempFile::remove`, `TempFile::close_and_remove`, and `TempDir::remove` for cleanup. |
 | Advisory locks | `lock_shared(file) -> Result[(), Error]`, `lock_exclusive(file) -> Result[(), Error]`, `try_lock_shared(file) -> Result[bool, Error]`, `try_lock_exclusive(file) -> Result[bool, Error]`, `unlock(file) -> Result[(), Error]` | `*_raw` variants expose packed integer errors. |
+
+## Detailed Errors And Directory Snapshots
+
+The natural filesystem APIs intentionally return the shared compact
+`std::error::Error`, because that is what `?`-style propagation and ordinary
+hosted programs want. When a tool needs to report exactly which path and
+operation failed, use the `_detailed` helpers:
+
+```ari
+match fs::metadata_detailed("Ari.toml") {
+  Ok(info) => {
+    println(info.len());
+  }
+  Err(problem) => {
+    if problem.reason().is_not_found() {
+      // `problem.operation()` is `fs::FsMetadata`.
+      // `problem.path()` is the failing path argument.
+      println("Ari.toml not found");
+    }
+  }
+}
+```
+
+`PathError` stores the `Operation`, the failing path argument, and the wrapped
+`Error`. It is used by single-path helpers such as `open_detailed`,
+`create_detailed`, `read_detailed`, `read_bytes_detailed`, `write_detailed`,
+`write_string_detailed`, `append_detailed`, `remove_file_detailed`,
+`remove_dir_detailed`, `remove_dir_all_detailed`, `create_dir_detailed`,
+`create_dir_all_detailed`, `metadata_detailed`,
+`symlink_metadata_detailed`, `file_type_detailed`, `mode_detailed`,
+`canonicalize_detailed`, `read_link_detailed`, `read_dir_detailed`, and
+`read_dir_info_detailed`.
+
+`TwoPathError` stores the `Operation`, source path, target path, and wrapped
+`Error`. It is used by `rename_detailed` and `copy_detailed`. Both detailed
+error structs expose `operation()`, `reason()`, `kind()`, and `code()`;
+`PathError` also exposes `path()`/`path_equals()`, while `TwoPathError`
+exposes `source()`/`source_equals()` and `target()`/`target_equals()`.
+
+Directory listing has two layers:
+
+- `read_dir(ref mut zone, path)` returns `Vec[DirEntry]`. Each entry stores
+  its zone-owned name and joined path, and metadata remains lazy through
+  `entry.metadata()`, `entry.symlink_metadata()`, and `entry.file_type()`.
+- `read_dir_info(ref mut zone, path)` returns `Vec[DirEntryInfo]`. Each item
+  contains the `DirEntry` plus the three per-entry `Result` snapshots, so a
+  caller can keep going when one broken symlink or permission-denied entry
+  fails metadata lookup. `metadata_ok()`, `metadata_err()`,
+  `symlink_metadata_ok()`, `symlink_metadata_err()`, `file_type_ok()`, and
+  `file_type_err()` are convenience predicates over those stored results.
+
+`read_dir_info` still returns `Err(Error)` when the directory itself cannot be
+opened, read, or closed. Per-entry failures are represented inside
+`DirEntryInfo` values after the directory listing succeeds.
+
+## Metadata Ownership And Creation Time
+
+`metadata(path)` follows symlinks; `symlink_metadata(path)` queries the link
+itself. Both produce `Metadata` with:
+
+- `len()` for byte length.
+- `file_type()` and `is_file()`/`is_dir()`/`is_symlink()`/`is_other()`.
+- `permissions()` for access-style booleans.
+- `accessed()`, `modified()`, and `changed()` timestamps.
+- `owner()`/`owner_id()`/`uid()` and `group()`/`group_id()`/`gid()` for POSIX
+  numeric owner and group ids.
+
+The current hosted runtime targets Linux/POSIX metadata. POSIX `stat` exposes
+status-change time (`changed`) but not a portable creation/birth timestamp.
+`created()` and `birth_time()` therefore return `Option[SystemTime]` and are
+`None` on this slice. `created_or_changed()` is the explicit fallback for code
+that wants the best available creation-like timestamp without hiding the
+policy.
 
 ## API
 
@@ -68,6 +144,10 @@ fs::Error
 fs::ErrorKind
 fs::TempFile
 fs::TempDir
+fs::Operation
+fs::PathError
+fs::TwoPathError
+fs::DirEntryInfo
 fs::exists(path)
 fs::can_read(path)
 fs::can_write(path)
@@ -78,16 +158,19 @@ fs::temp_file_in(ref mut zone, prefix)
 fs::temp_dir(ref mut zone)
 fs::temp_dir_in(ref mut zone, prefix)
 fs::metadata(path)
+fs::metadata_detailed(path)
 fs::metadata_optional(path)
 fs::metadata_unchecked(path)
 fs::metadata_raw(path)
 fs::try_metadata(path)
 fs::symlink_metadata(path)
+fs::symlink_metadata_detailed(path)
 fs::symlink_metadata_optional(path)
 fs::symlink_metadata_unchecked(path)
 fs::symlink_metadata_raw(path)
 fs::try_symlink_metadata(path)
 fs::file_type(path)
+fs::file_type_detailed(path)
 fs::file_type_optional(path)
 fs::file_type_raw(path)
 fs::file_type_unchecked(path)
@@ -97,6 +180,7 @@ fs::is_dir(path)
 fs::is_symlink(path)
 fs::is_other(path)
 fs::mode(path)
+fs::mode_detailed(path)
 fs::mode_optional(path)
 fs::mode_raw(path)
 fs::mode_unchecked(path)
@@ -104,15 +188,18 @@ fs::try_mode(path)
 fs::set_mode(path, mode)
 fs::set_permissions(path, permissions)
 fs::canonicalize(ref mut zone, path)
+fs::canonicalize_detailed(ref mut zone, path)
 fs::canonicalize_optional(ref mut zone, path)
 fs::canonicalize_unchecked(ref mut zone, path)
 fs::try_canonicalize(ref mut zone, path)
 fs::remove(path)
 fs::remove_file(path)
+fs::remove_file_detailed(path)
 fs::remove_bool(path)
 fs::remove_file_bool(path)
 fs::remove_unchecked(path)
 fs::rename(source, target)
+fs::rename_detailed(source, target)
 fs::rename_bool(source, target)
 fs::rename_unchecked(source, target)
 fs::hard_link(existing, link_path)
@@ -124,31 +211,37 @@ fs::symbolic_link_bool(target, link_path)
 fs::symbolic_link_raw(target, link_path)
 fs::symbolic_link_unchecked(target, link_path)
 fs::read_link(ref mut zone, path)
+fs::read_link_detailed(ref mut zone, path)
 fs::read_link_optional(ref mut zone, path)
 fs::read_link_unchecked(ref mut zone, path)
 fs::try_read_link(ref mut zone, path)
 fs::ensure_file(path)
 fs::create_dir(path)
+fs::create_dir_detailed(path)
 fs::create_dir_bool(path)
 fs::create_dir_raw(path)
 fs::create_dir_unchecked(path)
 fs::ensure_dir(path)
 fs::create_dir_all(path)
+fs::create_dir_all_detailed(path)
 fs::create_dir_all_bool(path)
 fs::create_dir_all_raw(path)
 fs::create_dir_all_unchecked(path)
 fs::ensure_dir_all(path)
 fs::remove_dir(path)
+fs::remove_dir_detailed(path)
 fs::remove_dir_bool(path)
 fs::remove_dir_raw(path)
 fs::remove_dir_unchecked(path)
 fs::remove_dir_all(path)
+fs::remove_dir_all_detailed(path)
 fs::remove_dir_all_bool(path)
 fs::open_dir(path)
 fs::open_dir_raw(path)
 fs::open_dir_unchecked(path)
 fs::try_open_dir(path)
 fs::read_dir(ref mut zone, path)
+fs::read_dir_detailed(ref mut zone, path)
 fs::read_dir_optional(ref mut zone, path)
 fs::read_dir_unchecked(ref mut zone, path)
 fs::try_read_dir(ref mut zone, path)
@@ -160,6 +253,11 @@ fs::read_dir_entries(ref mut zone, path)
 fs::read_dir_entries_optional(ref mut zone, path)
 fs::read_dir_entries_unchecked(ref mut zone, path)
 fs::try_read_dir_entries(ref mut zone, path)
+fs::read_dir_info(ref mut zone, path)
+fs::read_dir_info_detailed(ref mut zone, path)
+fs::read_dir_info_optional(ref mut zone, path)
+fs::read_dir_info_unchecked(ref mut zone, path)
+fs::try_read_dir_info(ref mut zone, path)
 fs::read_dir_next(ref mut zone, dir)
 fs::close_dir(dir)
 fs::close_dir_raw(dir)
@@ -212,25 +310,31 @@ fs::seek(file, position)
 fs::seek_raw(file, position)
 fs::seek_unchecked(file, position)
 fs::read(ref mut zone, path)
+fs::read_detailed(ref mut zone, path)
 fs::read_bytes(ref mut zone, path)
+fs::read_bytes_detailed(ref mut zone, path)
 fs::read_optional(ref mut zone, path)
 fs::read_or_default(ref mut zone, path)
 fs::read(ref mut zone, path)
 fs::read_unchecked(ref mut zone, path)
 fs::try_read(ref mut zone, path)
 fs::write(path, values)
+fs::write_detailed(path, values)
 fs::write_bool(path, values)
 fs::write_raw(path, values)
 fs::write(path, values)
 fs::write_string(path, text)
+fs::write_string_detailed(path, text)
 fs::try_write(path, values)
 fs::append(path, values)
+fs::append_detailed(path, values)
 fs::append_bool(path, values)
 fs::append_raw(path, values)
 fs::append(path, values)
 fs::try_append(path, values)
 fs::truncate(path)
 fs::copy(source, target)
+fs::copy_detailed(source, target)
 fs::copy_bool(source, target)
 fs::copy_raw(source, target)
 fs::copy(source, target)
@@ -244,8 +348,10 @@ fs::try_read_to_string(ref mut zone, path)
 
 fs::open_raw(path, mode)
 fs::open(path, mode)
+fs::open_detailed(path, mode)
 fs::create_raw(path)
 fs::create(path)
+fs::create_detailed(path)
 fs::open_options()
 OpenOptions::new()
 options.read(enabled)
@@ -313,6 +419,21 @@ entry.is_dir()
 entry.is_symlink()
 entry.is_other()
 
+info.entry()
+info.name()
+info.path()
+info.metadata()
+info.symlink_metadata()
+info.file_type()
+info.metadata_ok()
+info.metadata_err()
+info.symlink_metadata_ok()
+info.symlink_metadata_err()
+info.file_type_ok()
+info.file_type_err()
+info.name_equals(value)
+info.path_equals(value)
+
 Permissions::none()
 Permissions::read_only()
 Permissions::all()
@@ -328,10 +449,35 @@ metadata.permissions()
 metadata.accessed()
 metadata.modified()
 metadata.changed()
+metadata.created()
+metadata.birth_time()
+metadata.created_or_changed()
+metadata.owner()
+metadata.group()
+metadata.owner_id()
+metadata.group_id()
+metadata.uid()
+metadata.gid()
 metadata.is_file()
 metadata.is_dir()
 metadata.is_symlink()
 metadata.is_other()
+
+path_error.operation()
+path_error.path()
+path_error.reason()
+path_error.kind()
+path_error.code()
+path_error.path_equals(value)
+
+two_path_error.operation()
+two_path_error.source()
+two_path_error.target()
+two_path_error.reason()
+two_path_error.kind()
+two_path_error.code()
+two_path_error.source_equals(value)
+two_path_error.target_equals(value)
 ```
 
 `File` is a small value handle around the runtime file descriptor. Failed open

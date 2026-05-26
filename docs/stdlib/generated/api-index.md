@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `3113`
+- API entries: `3180`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,16 +32,16 @@ platform notes.
 | `alloc` | 848 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 853 | stable candidate |
-| `hosted` | 1225 | platform-backed |
+| `hosted` | 1292 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
-| `enum` | 29 |
-| `fn` | 1133 |
-| `method` | 1548 |
+| `enum` | 30 |
+| `fn` | 1159 |
+| `method` | 1585 |
 | `module` | 39 |
-| `struct` | 166 |
+| `struct` | 169 |
 | `trait` | 39 |
 | `trait-method` | 41 |
 | `type` | 23 |
@@ -66,7 +66,7 @@ platform notes.
 | `std::env` | `hosted` | 68 |
 | `std::error` | `core` | 37 |
 | `std::fmt` | `core` | 57 |
-| `std::fs` | `hosted` | 258 |
+| `std::fs` | `hosted` | 325 |
 | `std::hash` | `alloc` | 24 |
 | `std::input` | `hosted` | 6 |
 | `std::io` | `hosted` | 91 |
@@ -1664,6 +1664,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | API | Coverage note |
 | --- | --- |
 | `enum std::fs::FileKind` | check-prelude std-fs-metadata file/directory/symlink/other metadata classifier; docs/stdlib/modules/fs.md |
+| `enum std::fs::Operation` | check-prelude std-fs-detailed-errors structured filesystem operation classifier; docs/stdlib/modules/fs.md |
 
 ### fn
 
@@ -1671,11 +1672,13 @@ Tier: `hosted`. Stability reading: platform-backed.
 | --- | --- |
 | `fn std::fs::append` | check-prelude std-fs-read-write Result-returning whole-file append helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::append_bool` | check-prelude std-fs-read-write bool whole-file append compatibility helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::append_detailed` | check-prelude std-fs-detailed-errors path-tagged append error helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::append_raw` | check-prelude std-fs-byte-result raw Result-returning whole-file append byte-count compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::can_execute` | check-prelude std-fs-permissions execute/search access hook; docs/stdlib/modules/fs.md |
 | `fn std::fs::can_read` | check-prelude std-fs-permissions read access hook; docs/stdlib/modules/fs.md |
 | `fn std::fs::can_write` | check-prelude std-fs-permissions write access hook; docs/stdlib/modules/fs.md |
 | `fn std::fs::canonicalize` | check-prelude std-fs-query-result Result-returning realpath-backed canonicalization helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::canonicalize_detailed` | check-prelude std-fs-detailed-errors path-tagged canonicalization error helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::canonicalize_optional` | check-prelude std-fs-query-result Option-returning realpath-backed canonicalization compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::canonicalize_unchecked` | check-prelude std-fs-query-result unchecked realpath-backed canonicalization compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::close` | check-prelude std-fs-basic Result-returning file close helper; docs/stdlib/modules/fs.md |
@@ -1686,14 +1689,18 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::fs::close_unchecked` | check-prelude std-fs-basic unchecked file close compatibility hook; docs/stdlib/modules/fs.md |
 | `fn std::fs::copy` | check-prelude std-fs-byte-result Result-returning streaming copy byte-count helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::copy_bool` | check-prelude std-fs-create-truncate-copy bool streaming copy compatibility helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::copy_detailed` | check-prelude std-fs-detailed-errors source/target-tagged copy error helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::copy_raw` | check-prelude std-fs-byte-result raw Result-returning streaming copy byte-count compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::create` | check-prelude std-fs-open-result Result-returning create/truncate open helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::create_detailed` | check-prelude std-fs-detailed-errors path-tagged create error helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::create_dir` | check-prelude std-fs-mutation-result Result-returning single-directory creation helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::create_dir_all` | check-prelude std-fs-create-dir-all Result-returning recursive directory creation helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::create_dir_all_bool` | check-prelude std-fs-create-dir-all bool recursive directory creation compatibility helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::create_dir_all_detailed` | check-prelude std-fs-detailed-errors path-tagged recursive directory creation error helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::create_dir_all_raw` | check-prelude std-fs-create-dir-all raw Result-returning recursive directory creation compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::create_dir_all_unchecked` | check-prelude std-fs-create-dir-all unchecked recursive directory creation compatibility hook; docs/stdlib/modules/fs.md |
 | `fn std::fs::create_dir_bool` | check-prelude std-fs-rename-dir bool single-directory creation compatibility helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::create_dir_detailed` | check-prelude std-fs-detailed-errors path-tagged directory creation error helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::create_dir_raw` | check-prelude std-fs-mutation-result raw Result-returning directory creation compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::create_dir_unchecked` | check-prelude std-fs-rename-dir unchecked single-directory creation compatibility hook; docs/stdlib/modules/fs.md |
 | `fn std::fs::create_optional` | check-prelude std-fs-open-result Option-returning create compatibility helper; docs/stdlib/modules/fs.md |
@@ -1704,6 +1711,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::fs::ensure_file` | check-prelude std-fs-ensure-file idempotent single-file creation helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::exists` | check-prelude std-fs-basic file existence hook; docs/stdlib/modules/fs.md |
 | `fn std::fs::file_type` | check-prelude std-fs-query-result Result-returning path kind helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::file_type_detailed` | check-prelude std-fs-detailed-errors path-tagged file-kind error helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::file_type_optional` | check-prelude std-fs-query-result Option-returning path kind compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::file_type_raw` | check-prelude std-fs-query-result raw Result-returning path kind compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::file_type_unchecked` | check-prelude std-fs-query-result unchecked path kind compatibility helper; docs/stdlib/modules/fs.md |
@@ -1720,10 +1728,12 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::fs::lock_shared` | check-prelude std-fs-lock Result-returning hosted advisory shared file lock helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::lock_shared_raw` | check-prelude std-fs-lock raw Result-returning hosted advisory shared file lock helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::metadata` | check-prelude std-fs-query-result Result-returning target-following metadata helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::metadata_detailed` | check-prelude std-fs-detailed-errors path-tagged metadata error helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::metadata_optional` | check-prelude std-fs-query-result Option-returning target-following metadata compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::metadata_raw` | check-prelude std-fs-query-result raw Result-returning target-following metadata compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::metadata_unchecked` | check-prelude std-fs-query-result unchecked target-following metadata compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::mode` | check-prelude std-fs-query-result Result-returning POSIX permission-mode helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::mode_detailed` | check-prelude std-fs-detailed-errors path-tagged mode query error helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::mode_optional` | check-prelude std-fs-query-result Option-returning POSIX permission-mode compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::mode_raw` | check-prelude std-fs-query-result raw Result-returning permission-mode compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::mode_unchecked` | check-prelude std-fs-query-result unchecked POSIX permission-mode compatibility helper; docs/stdlib/modules/fs.md |
@@ -1731,6 +1741,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::fs::open_append` | check-prelude std-fs-open-result Result-returning append-mode open helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::open_append_optional` | check-prelude std-fs-open-result Option-returning append-mode open compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::open_append_unchecked` | check-prelude std-fs-open-result unchecked append-mode open compatibility helper returning invalid handles; docs/stdlib/modules/fs.md |
+| `fn std::fs::open_detailed` | check-prelude std-fs-detailed-errors path-tagged mode-string open error helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::open_dir` | check-prelude std-fs-read-dir Result-returning directory open helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::open_dir_raw` | check-prelude std-fs-query-result raw Result-returning directory open compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::open_dir_unchecked` | check-prelude std-fs-read-dir unchecked directory open compatibility helper; docs/stdlib/modules/fs.md |
@@ -1751,10 +1762,17 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::fs::read` | check-prelude std-fs-read-result Result-returning natural read alias for read_to_string; docs/stdlib/modules/fs.md |
 | `fn std::fs::read_byte` | check-prelude std-fs-basic file byte read hook; docs/stdlib/modules/fs.md |
 | `fn std::fs::read_bytes` | check-prelude std-fs-byte-result Result-returning whole-file byte-vector helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::read_bytes_detailed` | check-prelude std-fs-detailed-errors path-tagged whole-file byte-vector read error helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::read_detailed` | check-prelude std-fs-detailed-errors path-tagged whole-file string read error helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::read_dir` | check-prelude std-fs-query-result Result-returning directory entry-list helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::read_dir_detailed` | check-prelude std-fs-detailed-errors path-tagged directory read error helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::read_dir_entries` | check-prelude std-fs-query-result Result-returning directory entry-list helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::read_dir_entries_optional` | check-prelude std-fs-query-result Option-returning directory entry-list compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::read_dir_entries_unchecked` | check-prelude std-fs-query-result unchecked directory entry-list compatibility helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::read_dir_info` | check-prelude std-fs-dir-entry-info directory entries with per-entry metadata Result snapshots; docs/stdlib/modules/fs.md |
+| `fn std::fs::read_dir_info_detailed` | check-prelude std-fs-dir-entry-info path-tagged directory info read error helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::read_dir_info_optional` | check-prelude std-fs-dir-entry-info Option-returning directory info compatibility helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::read_dir_info_unchecked` | check-prelude std-fs-dir-entry-info unchecked directory info compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::read_dir_names` | check-prelude std-fs-query-result Result-returning directory name-list helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::read_dir_names_optional` | check-prelude std-fs-query-result Option-returning directory name-list compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::read_dir_names_unchecked` | check-prelude std-fs-read-dir unchecked directory name-list compatibility helper; docs/stdlib/modules/fs.md |
@@ -1762,6 +1780,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::fs::read_dir_optional` | check-prelude std-fs-query-result Option-returning directory entry-list compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::read_dir_unchecked` | check-prelude std-fs-read-dir unchecked directory entry-list compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::read_link` | check-prelude std-fs-query-result Result-returning symbolic-link target reader; docs/stdlib/modules/fs.md |
+| `fn std::fs::read_link_detailed` | check-prelude std-fs-detailed-errors path-tagged symbolic-link read error helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::read_link_optional` | check-prelude std-fs-query-result Option-returning symbolic-link target compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::read_link_unchecked` | check-prelude std-fs-query-result unchecked symbolic-link target compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::read_optional` | check-prelude std-fs-read-result Option-returning whole-file read compatibility helper; docs/stdlib/modules/fs.md |
@@ -1776,15 +1795,19 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::fs::remove_dir` | check-prelude std-fs-mutation-result Result-returning single-directory removal helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::remove_dir_all` | check-prelude std-fs-remove-dir-all Result-returning recursive directory tree removal helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::remove_dir_all_bool` | check-prelude std-fs-remove-dir-all bool recursive directory tree removal compatibility helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::remove_dir_all_detailed` | check-prelude std-fs-detailed-errors path-tagged recursive directory removal error helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::remove_dir_bool` | check-prelude std-fs-rename-dir bool single-directory removal compatibility helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::remove_dir_detailed` | check-prelude std-fs-detailed-errors path-tagged directory removal error helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::remove_dir_raw` | check-prelude std-fs-mutation-result raw Result-returning directory removal compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::remove_dir_unchecked` | check-prelude std-fs-rename-dir unchecked single-directory removal compatibility hook; docs/stdlib/modules/fs.md |
 | `fn std::fs::remove_file` | check-prelude std-fs-mutation-result Result-returning file removal alias; docs/stdlib/modules/fs.md |
 | `fn std::fs::remove_file_bool` | check-prelude std-fs-basic bool file removal alias; docs/stdlib/modules/fs.md |
+| `fn std::fs::remove_file_detailed` | check-prelude std-fs-detailed-errors path-tagged file removal error helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::remove_raw` | check-prelude std-fs-mutation-result raw Result-returning unlink compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::remove_unchecked` | check-prelude std-fs-basic unchecked file removal compatibility hook; docs/stdlib/modules/fs.md |
 | `fn std::fs::rename` | check-prelude std-fs-mutation-result Result-returning file rename helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::rename_bool` | check-prelude std-fs-rename-dir bool file rename compatibility helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::rename_detailed` | check-prelude std-fs-detailed-errors source/target-tagged rename error helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::rename_raw` | check-prelude std-fs-mutation-result raw Result-returning rename compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::rename_unchecked` | check-prelude std-fs-rename-dir unchecked file rename compatibility hook; docs/stdlib/modules/fs.md |
 | `fn std::fs::seek` | check-prelude std-fs-seek Result-returning absolute file cursor seek helper; docs/stdlib/modules/fs.md |
@@ -1797,6 +1820,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::fs::symbolic_link_raw` | check-prelude std-fs-links raw Result-returning symbolic-link compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::symbolic_link_unchecked` | check-prelude std-fs-links unchecked symbolic-link compatibility hook; docs/stdlib/modules/fs.md |
 | `fn std::fs::symlink_metadata` | check-prelude std-fs-query-result Result-returning no-follow metadata helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::symlink_metadata_detailed` | check-prelude std-fs-detailed-errors path-tagged no-follow metadata error helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::symlink_metadata_optional` | check-prelude std-fs-query-result Option-returning no-follow metadata compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::symlink_metadata_raw` | check-prelude std-fs-query-result raw Result-returning no-follow metadata compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::symlink_metadata_unchecked` | check-prelude std-fs-query-result unchecked no-follow metadata compatibility helper; docs/stdlib/modules/fs.md |
@@ -1823,6 +1847,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::fs::try_read_byte` | check-prelude std-fs-try-byte Option-returning file byte read helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::try_read_dir` | check-prelude std-fs-read-dir Option-returning directory name-list helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::try_read_dir_entries` | check-prelude std-fs-read-dir Option-returning directory entry-list helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::try_read_dir_info` | check-prelude std-fs-dir-entry-info Option-returning directory info helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::try_read_dir_names` | check-prelude std-fs-read-dir Option-returning directory name-list alias; docs/stdlib/modules/fs.md |
 | `fn std::fs::try_read_link` | check-prelude std-fs-read-link Option-returning symbolic-link target reader; docs/stdlib/modules/fs.md |
 | `fn std::fs::try_read_to_string` | check-prelude std-fs-try-read Option-returning whole-file byte-string read helper; docs/stdlib/modules/fs.md |
@@ -1838,8 +1863,10 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::fs::write_bytes` | check-prelude std-fs-basic Result-returning source byte-slice write helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::write_bytes_raw` | check-prelude std-fs-basic raw Result-returning file slice write compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::write_bytes_unchecked` | check-prelude std-fs-basic unchecked file slice write compatibility helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::write_detailed` | check-prelude std-fs-detailed-errors path-tagged whole-file write error helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::write_raw` | check-prelude std-fs-byte-result raw Result-returning whole-file truncating write byte-count compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::write_string` | check-prelude std-fs-byte-result Result-returning whole-file string write helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::write_string_detailed` | check-prelude std-fs-detailed-errors path-tagged whole-file string write error helper; docs/stdlib/modules/fs.md |
 
 ### method
 
@@ -1870,6 +1897,20 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::fs::DirEntry::try_file_type` | check-prelude std-fs-dir-entry-metadata Option-returning directory entry file-kind method; docs/stdlib/modules/fs.md |
 | `method std::fs::DirEntry::try_metadata` | check-prelude std-fs-dir-entry-metadata Option-returning target-following directory entry metadata method; docs/stdlib/modules/fs.md |
 | `method std::fs::DirEntry::try_symlink_metadata` | check-prelude std-fs-dir-entry-metadata Option-returning no-follow directory entry metadata method; docs/stdlib/modules/fs.md |
+| `method std::fs::DirEntryInfo::entry` | check-prelude std-fs-dir-entry-info borrowed underlying directory entry accessor; docs/stdlib/modules/fs.md |
+| `method std::fs::DirEntryInfo::file_type` | check-prelude std-fs-dir-entry-info borrowed per-entry file-kind Result snapshot accessor; docs/stdlib/modules/fs.md |
+| `method std::fs::DirEntryInfo::file_type_err` | check-prelude std-fs-dir-entry-info per-entry file-kind error predicate; docs/stdlib/modules/fs.md |
+| `method std::fs::DirEntryInfo::file_type_ok` | check-prelude std-fs-dir-entry-info per-entry file-kind success predicate; docs/stdlib/modules/fs.md |
+| `method std::fs::DirEntryInfo::metadata` | check-prelude std-fs-dir-entry-info borrowed per-entry target-following metadata Result snapshot accessor; docs/stdlib/modules/fs.md |
+| `method std::fs::DirEntryInfo::metadata_err` | check-prelude std-fs-dir-entry-info per-entry target-following metadata error predicate; docs/stdlib/modules/fs.md |
+| `method std::fs::DirEntryInfo::metadata_ok` | check-prelude std-fs-dir-entry-info per-entry target-following metadata success predicate; docs/stdlib/modules/fs.md |
+| `method std::fs::DirEntryInfo::name` | check-prelude std-fs-dir-entry-info borrowed underlying directory entry name accessor; docs/stdlib/modules/fs.md |
+| `method std::fs::DirEntryInfo::name_equals` | check-prelude std-fs-dir-entry-info directory info name comparison helper; docs/stdlib/modules/fs.md |
+| `method std::fs::DirEntryInfo::path` | check-prelude std-fs-dir-entry-info borrowed underlying directory entry path accessor; docs/stdlib/modules/fs.md |
+| `method std::fs::DirEntryInfo::path_equals` | check-prelude std-fs-dir-entry-info directory info path comparison helper; docs/stdlib/modules/fs.md |
+| `method std::fs::DirEntryInfo::symlink_metadata` | check-prelude std-fs-dir-entry-info borrowed per-entry no-follow metadata Result snapshot accessor; docs/stdlib/modules/fs.md |
+| `method std::fs::DirEntryInfo::symlink_metadata_err` | check-prelude std-fs-dir-entry-info per-entry no-follow metadata error predicate; docs/stdlib/modules/fs.md |
+| `method std::fs::DirEntryInfo::symlink_metadata_ok` | check-prelude std-fs-dir-entry-info per-entry no-follow metadata success predicate; docs/stdlib/modules/fs.md |
 | `method std::fs::File::close` | check-prelude std-fs-basic Result-returning file close method; docs/stdlib/modules/fs.md |
 | `method std::fs::File::close_unchecked` | check-prelude std-fs-basic unchecked file close compatibility method; docs/stdlib/modules/fs.md |
 | `method std::fs::File::descriptor` | check-prelude std-os-fd non-owning std::os::Fd view over a file handle; docs/stdlib/modules/fs.md |
@@ -1891,15 +1932,24 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::fs::File::write_bytes` | check-prelude std-fs-basic Result-returning file slice write method; docs/stdlib/modules/fs.md |
 | `method std::fs::File::write_bytes_unchecked` | check-prelude std-fs-basic unchecked file slice write compatibility method; docs/stdlib/modules/fs.md |
 | `method std::fs::Metadata::accessed` | check-prelude std-fs-metadata-times access timestamp accessor; docs/stdlib/modules/fs.md |
+| `method std::fs::Metadata::birth_time` | check-prelude std-fs-metadata-owner optional portable birth/creation timestamp alias; docs/stdlib/modules/fs.md |
 | `method std::fs::Metadata::changed` | check-prelude std-fs-metadata-times status-change timestamp accessor; docs/stdlib/modules/fs.md |
+| `method std::fs::Metadata::created` | check-prelude std-fs-metadata-owner optional portable creation timestamp accessor; docs/stdlib/modules/fs.md |
+| `method std::fs::Metadata::created_or_changed` | check-prelude std-fs-metadata-owner creation-time fallback to POSIX status-change timestamp; docs/stdlib/modules/fs.md |
 | `method std::fs::Metadata::file_type` | check-prelude std-fs-metadata file kind accessor; docs/stdlib/modules/fs.md |
+| `method std::fs::Metadata::gid` | check-prelude std-fs-metadata-owner POSIX group id alias; docs/stdlib/modules/fs.md |
+| `method std::fs::Metadata::group` | check-prelude std-fs-metadata-owner POSIX group id accessor; docs/stdlib/modules/fs.md |
+| `method std::fs::Metadata::group_id` | check-prelude std-fs-metadata-owner POSIX group id alias; docs/stdlib/modules/fs.md |
 | `method std::fs::Metadata::is_dir` | check-prelude std-fs-metadata directory kind predicate; docs/stdlib/modules/fs.md |
 | `method std::fs::Metadata::is_file` | check-prelude std-fs-metadata regular-file kind predicate; docs/stdlib/modules/fs.md |
 | `method std::fs::Metadata::is_other` | check-prelude std-fs-metadata non-file/non-dir/non-symlink predicate; docs/stdlib/modules/fs.md |
 | `method std::fs::Metadata::is_symlink` | check-prelude std-fs-metadata symlink kind predicate; docs/stdlib/modules/fs.md |
 | `method std::fs::Metadata::len` | check-prelude std-fs-metadata byte length accessor; docs/stdlib/modules/fs.md |
 | `method std::fs::Metadata::modified` | check-prelude std-fs-metadata-times modification timestamp accessor; docs/stdlib/modules/fs.md |
+| `method std::fs::Metadata::owner` | check-prelude std-fs-metadata-owner POSIX owner id accessor; docs/stdlib/modules/fs.md |
+| `method std::fs::Metadata::owner_id` | check-prelude std-fs-metadata-owner POSIX owner id alias; docs/stdlib/modules/fs.md |
 | `method std::fs::Metadata::permissions` | check-prelude std-fs-metadata permission snapshot accessor; docs/stdlib/modules/fs.md |
+| `method std::fs::Metadata::uid` | check-prelude std-fs-metadata-owner POSIX owner id alias; docs/stdlib/modules/fs.md |
 | `method std::fs::OpenOptions::append` | check-prelude std-fs-open-options append-mode option builder; docs/stdlib/modules/fs.md |
 | `method std::fs::OpenOptions::create` | check-prelude std-fs-open-options create-if-missing option builder; docs/stdlib/modules/fs.md |
 | `method std::fs::OpenOptions::create_new` | check-prelude std-fs-open-options exclusive create option builder; docs/stdlib/modules/fs.md |
@@ -1912,6 +1962,12 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::fs::OpenOptions::truncate` | check-prelude std-fs-open-options truncate option builder; docs/stdlib/modules/fs.md |
 | `method std::fs::OpenOptions::try_open` | check-prelude std-fs-open-options Option-returning OpenOptions open helper; docs/stdlib/modules/fs.md |
 | `method std::fs::OpenOptions::write` | check-prelude std-fs-open-options write option builder; docs/stdlib/modules/fs.md |
+| `method std::fs::PathError::code` | check-prelude std-fs-detailed-errors wrapped compact host error code accessor; docs/stdlib/modules/fs.md |
+| `method std::fs::PathError::kind` | check-prelude std-fs-detailed-errors wrapped shared error kind accessor; docs/stdlib/modules/fs.md |
+| `method std::fs::PathError::operation` | check-prelude std-fs-detailed-errors structured filesystem operation accessor; docs/stdlib/modules/fs.md |
+| `method std::fs::PathError::path` | check-prelude std-fs-detailed-errors borrowed failing path accessor; docs/stdlib/modules/fs.md |
+| `method std::fs::PathError::path_equals` | check-prelude std-fs-detailed-errors failing path comparison helper; docs/stdlib/modules/fs.md |
+| `method std::fs::PathError::reason` | check-prelude std-fs-detailed-errors wrapped shared Error accessor; docs/stdlib/modules/fs.md |
 | `method std::fs::Permissions::all` | check-prelude std-fs-mode all-permission constructor for mode mutation; docs/stdlib/modules/fs.md |
 | `method std::fs::Permissions::any` | check-prelude std-fs-permissions any-access predicate; docs/stdlib/modules/fs.md |
 | `method std::fs::Permissions::can_execute` | check-prelude std-fs-permissions executable/searchable access method; docs/stdlib/modules/fs.md |
@@ -1920,6 +1976,14 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::fs::Permissions::none` | check-prelude std-fs-permissions all-false permissions constructor; docs/stdlib/modules/fs.md |
 | `method std::fs::Permissions::read_only` | check-prelude std-fs-mode readable-only constructor for mode mutation; docs/stdlib/modules/fs.md |
 | `method std::fs::Permissions::to_mode` | check-prelude std-fs-mode POSIX permission-mode conversion helper; docs/stdlib/modules/fs.md |
+| `method std::fs::TwoPathError::code` | check-prelude std-fs-detailed-errors wrapped compact host error code accessor; docs/stdlib/modules/fs.md |
+| `method std::fs::TwoPathError::kind` | check-prelude std-fs-detailed-errors wrapped shared error kind accessor; docs/stdlib/modules/fs.md |
+| `method std::fs::TwoPathError::operation` | check-prelude std-fs-detailed-errors structured filesystem operation accessor; docs/stdlib/modules/fs.md |
+| `method std::fs::TwoPathError::reason` | check-prelude std-fs-detailed-errors wrapped shared Error accessor; docs/stdlib/modules/fs.md |
+| `method std::fs::TwoPathError::source` | check-prelude std-fs-detailed-errors failing source path accessor; docs/stdlib/modules/fs.md |
+| `method std::fs::TwoPathError::source_equals` | check-prelude std-fs-detailed-errors failing source path comparison helper; docs/stdlib/modules/fs.md |
+| `method std::fs::TwoPathError::target` | check-prelude std-fs-detailed-errors failing target path accessor; docs/stdlib/modules/fs.md |
+| `method std::fs::TwoPathError::target_equals` | check-prelude std-fs-detailed-errors failing target path comparison helper; docs/stdlib/modules/fs.md |
 
 ### module
 
@@ -1933,10 +1997,13 @@ Tier: `hosted`. Stability reading: platform-backed.
 | --- | --- |
 | `struct std::fs::Dir` | std fs directory handle tests; docs/stdlib/modules/fs.md |
 | `struct std::fs::DirEntry` | std fs directory entry tests; docs/stdlib/modules/fs.md |
+| `struct std::fs::DirEntryInfo` | check-prelude std-fs-dir-entry-info directory entry plus per-entry metadata Result snapshots; docs/stdlib/modules/fs.md |
 | `struct std::fs::File` | std fs file handle tests; docs/stdlib/modules/fs.md |
 | `struct std::fs::Metadata` | std fs metadata tests; docs/stdlib/modules/fs.md |
 | `struct std::fs::OpenOptions` | check-prelude std-fs-open-options file open option builder; docs/stdlib/modules/fs.md |
+| `struct std::fs::PathError` | check-prelude std-fs-detailed-errors structured single-path filesystem error; docs/stdlib/modules/fs.md |
 | `struct std::fs::Permissions` | std fs permission query tests; docs/stdlib/modules/fs.md |
+| `struct std::fs::TwoPathError` | check-prelude std-fs-detailed-errors structured source/target filesystem error; docs/stdlib/modules/fs.md |
 
 ### type
 

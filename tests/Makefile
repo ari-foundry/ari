@@ -1216,6 +1216,13 @@ check-prelude: $(TARGET)
 	grep -F -q "DirEntry8inherent13try_file_type" $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-dir-entry-metadata.ari -o $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.elf
 	$(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.elf; code=$$?; test $$code -eq 36
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-dir-entry-info.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-dir-entry-info.ll
+	grep -F -q "std2fs13read_dir_info" $(BUILD_DIR)/prelude/std-fs-dir-entry-info.ll
+	grep -F -q "std2fs22read_dir_info_detailed" $(BUILD_DIR)/prelude/std-fs-dir-entry-info.ll
+	grep -F -q "DirEntryInfo8inherent11metadata_ok" $(BUILD_DIR)/prelude/std-fs-dir-entry-info.ll
+	grep -F -q "DirEntryInfo8inherent12metadata_err" $(BUILD_DIR)/prelude/std-fs-dir-entry-info.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-dir-entry-info.ari -o $(BUILD_DIR)/prelude/std-fs-dir-entry-info.elf
+	$(BUILD_DIR)/prelude/std-fs-dir-entry-info.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-links.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-links.ll
 	grep -q "@ari_builtin_fs_hard_link" $(BUILD_DIR)/prelude/std-fs-links.ll
 	grep -q "@ari_builtin_fs_symbolic_link" $(BUILD_DIR)/prelude/std-fs-links.ll
@@ -1300,6 +1307,15 @@ check-prelude: $(TARGET)
 	grep -F -q "std2fs18read_link_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-query-result.ari -o $(BUILD_DIR)/prelude/std-fs-query-result.elf
 	$(BUILD_DIR)/prelude/std-fs-query-result.elf; code=$$?; test $$code -eq 255
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-detailed-errors.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-detailed-errors.ll
+	grep -F -q "std2fs13open_detailed" $(BUILD_DIR)/prelude/std-fs-detailed-errors.ll
+	grep -F -q "std2fs14write_detailed" $(BUILD_DIR)/prelude/std-fs-detailed-errors.ll
+	grep -F -q "std2fs15rename_detailed" $(BUILD_DIR)/prelude/std-fs-detailed-errors.ll
+	grep -F -q "std2fs17metadata_detailed" $(BUILD_DIR)/prelude/std-fs-detailed-errors.ll
+	grep -F -q "PathError8inherent11path_equals" $(BUILD_DIR)/prelude/std-fs-detailed-errors.ll
+	grep -F -q "TwoPathError8inherent13source_equals" $(BUILD_DIR)/prelude/std-fs-detailed-errors.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-detailed-errors.ari -o $(BUILD_DIR)/prelude/std-fs-detailed-errors.elf
+	$(BUILD_DIR)/prelude/std-fs-detailed-errors.elf; code=$$?; test $$code -eq 31
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-metadata-times.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-metadata-times.ll
 	grep -q "@ari_builtin_fs_metadata_accessed_nanos" $(BUILD_DIR)/prelude/std-fs-metadata-times.ll
 	grep -q "@ari_builtin_fs_metadata_modified_nanos" $(BUILD_DIR)/prelude/std-fs-metadata-times.ll
@@ -1310,6 +1326,14 @@ check-prelude: $(TARGET)
 	grep -F -q "Metadata8inherent7changed" $(BUILD_DIR)/prelude/std-fs-metadata-times.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-metadata-times.ari -o $(BUILD_DIR)/prelude/std-fs-metadata-times.elf
 	$(BUILD_DIR)/prelude/std-fs-metadata-times.elf; code=$$?; test $$code -eq 255
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-metadata-owner.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-metadata-owner.ll
+	grep -q "@ari_builtin_fs_metadata_uid" $(BUILD_DIR)/prelude/std-fs-metadata-owner.ll
+	grep -q "@ari_builtin_fs_metadata_gid" $(BUILD_DIR)/prelude/std-fs-metadata-owner.ll
+	grep -F -q "Metadata8inherent5owner" $(BUILD_DIR)/prelude/std-fs-metadata-owner.ll
+	grep -F -q "Metadata8inherent7created" $(BUILD_DIR)/prelude/std-fs-metadata-owner.ll
+	grep -F -q "Metadata8inherent18created_or_changed" $(BUILD_DIR)/prelude/std-fs-metadata-owner.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-metadata-owner.ari -o $(BUILD_DIR)/prelude/std-fs-metadata-owner.elf
+	$(BUILD_DIR)/prelude/std-fs-metadata-owner.elf; code=$$?; test $$code -eq 127
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-canonicalize.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-canonicalize.ll
 	grep -q "@ari_builtin_fs_canonicalize" $(BUILD_DIR)/prelude/std-fs-canonicalize.ll
 	grep -q "declare ptr @realpath" $(BUILD_DIR)/prelude/std-fs-canonicalize.ll

@@ -30,6 +30,52 @@ pub struct DirEntry {
   path_value: std::string::String,
 }
 
+pub enum Operation {
+  FsOpen,
+  FsCreate,
+  FsRead,
+  FsWrite,
+  FsAppend,
+  FsCopy,
+  FsRemove,
+  FsRemoveDir,
+  FsCreateDir,
+  FsRename,
+  FsMetadata,
+  FsSymlinkMetadata,
+  FsFileType,
+  FsMode,
+  FsCanonicalize,
+  FsReadLink,
+  FsReadDir,
+  FsTempFile,
+  FsTempDir,
+  FsLock,
+  FsUnlock,
+  FsPermissions,
+  FsOtherOperation,
+}
+
+pub struct PathError {
+  operation_value: Operation,
+  path_value: string,
+  reason_value: Error,
+}
+
+pub struct TwoPathError {
+  operation_value: Operation,
+  source_value: string,
+  target_value: string,
+  reason_value: Error,
+}
+
+pub struct DirEntryInfo {
+  entry_value: DirEntry,
+  metadata_result_value: std::Result[Metadata, Error],
+  symlink_metadata_result_value: std::Result[Metadata, Error],
+  file_type_result_value: std::Result[FileKind, Error],
+}
+
 pub struct Permissions {
   readable: bool,
   writable: bool,
@@ -50,6 +96,8 @@ pub struct Metadata {
   accessed_at: std::time::SystemTime,
   modified_at: std::time::SystemTime,
   changed_at: std::time::SystemTime,
+  owner_id_value: i64,
+  group_id_value: i64,
 }
 
 pub extern "ari" fn exists(path: string) -> bool = "ari_builtin_fs_exists";
@@ -91,21 +139,29 @@ extern "C" fn raw_flock(fd: c_int, operation: c_int) -> c_int = "flock";
 extern "ari" fn metadata_size_raw(path: string) -> i64 = "ari_builtin_fs_metadata_size";
 extern "ari" fn metadata_kind_raw(path: string) -> i64 = "ari_builtin_fs_metadata_kind";
 extern "ari" fn metadata_mode_raw(path: string) -> i64 = "ari_builtin_fs_metadata_mode";
+extern "ari" fn metadata_owner_raw(path: string) -> i64 = "ari_builtin_fs_metadata_uid";
+extern "ari" fn metadata_group_raw(path: string) -> i64 = "ari_builtin_fs_metadata_gid";
 extern "ari" fn metadata_accessed_nanos_raw(path: string) -> i64 = "ari_builtin_fs_metadata_accessed_nanos";
 extern "ari" fn metadata_modified_nanos_raw(path: string) -> i64 = "ari_builtin_fs_metadata_modified_nanos";
 extern "ari" fn metadata_changed_nanos_raw(path: string) -> i64 = "ari_builtin_fs_metadata_changed_nanos";
 extern "ari" fn symlink_metadata_size_raw(path: string) -> i64 = "ari_builtin_fs_symlink_metadata_size";
 extern "ari" fn symlink_metadata_kind_raw(path: string) -> i64 = "ari_builtin_fs_symlink_metadata_kind";
+extern "ari" fn symlink_metadata_owner_raw(path: string) -> i64 = "ari_builtin_fs_symlink_metadata_uid";
+extern "ari" fn symlink_metadata_group_raw(path: string) -> i64 = "ari_builtin_fs_symlink_metadata_gid";
 extern "ari" fn symlink_metadata_accessed_nanos_raw(path: string) -> i64 = "ari_builtin_fs_symlink_metadata_accessed_nanos";
 extern "ari" fn symlink_metadata_modified_nanos_raw(path: string) -> i64 = "ari_builtin_fs_symlink_metadata_modified_nanos";
 extern "ari" fn symlink_metadata_changed_nanos_raw(path: string) -> i64 = "ari_builtin_fs_symlink_metadata_changed_nanos";
 extern "ari" fn metadata_size_bytes_raw(data: ptr u8, len: i64) -> i64 = "ari_builtin_fs_metadata_size_bytes";
 extern "ari" fn metadata_kind_bytes_raw(data: ptr u8, len: i64) -> i64 = "ari_builtin_fs_metadata_kind_bytes";
+extern "ari" fn metadata_owner_bytes_raw(data: ptr u8, len: i64) -> i64 = "ari_builtin_fs_metadata_uid_bytes";
+extern "ari" fn metadata_group_bytes_raw(data: ptr u8, len: i64) -> i64 = "ari_builtin_fs_metadata_gid_bytes";
 extern "ari" fn metadata_accessed_nanos_bytes_raw(data: ptr u8, len: i64) -> i64 = "ari_builtin_fs_metadata_accessed_nanos_bytes";
 extern "ari" fn metadata_modified_nanos_bytes_raw(data: ptr u8, len: i64) -> i64 = "ari_builtin_fs_metadata_modified_nanos_bytes";
 extern "ari" fn metadata_changed_nanos_bytes_raw(data: ptr u8, len: i64) -> i64 = "ari_builtin_fs_metadata_changed_nanos_bytes";
 extern "ari" fn symlink_metadata_size_bytes_raw(data: ptr u8, len: i64) -> i64 = "ari_builtin_fs_symlink_metadata_size_bytes";
 extern "ari" fn symlink_metadata_kind_bytes_raw(data: ptr u8, len: i64) -> i64 = "ari_builtin_fs_symlink_metadata_kind_bytes";
+extern "ari" fn symlink_metadata_owner_bytes_raw(data: ptr u8, len: i64) -> i64 = "ari_builtin_fs_symlink_metadata_uid_bytes";
+extern "ari" fn symlink_metadata_group_bytes_raw(data: ptr u8, len: i64) -> i64 = "ari_builtin_fs_symlink_metadata_gid_bytes";
 extern "ari" fn symlink_metadata_accessed_nanos_bytes_raw(data: ptr u8, len: i64) -> i64 = "ari_builtin_fs_symlink_metadata_accessed_nanos_bytes";
 extern "ari" fn symlink_metadata_modified_nanos_bytes_raw(data: ptr u8, len: i64) -> i64 = "ari_builtin_fs_symlink_metadata_modified_nanos_bytes";
 extern "ari" fn symlink_metadata_changed_nanos_bytes_raw(data: ptr u8, len: i64) -> i64 = "ari_builtin_fs_symlink_metadata_changed_nanos_bytes";
@@ -221,6 +277,59 @@ fn system_time_from_nanos(nanos: i64) -> std::time::SystemTime {
   return std::time::system_from_unix(nanos / 1000000000, nanos % 1000000000);
 }
 
+fn path_error(operation: Operation, path: string, reason: Error) -> PathError {
+  return PathError {
+    operation_value: operation,
+    path_value: path,
+    reason_value: reason,
+  };
+}
+
+fn two_path_error(
+  operation: Operation,
+  source: string,
+  target: string,
+  reason: Error
+) -> TwoPathError {
+  return TwoPathError {
+    operation_value: operation,
+    source_value: source,
+    target_value: target,
+    reason_value: reason,
+  };
+}
+
+fn map_path_error[T](
+  operation: Operation,
+  path: string,
+  value: std::Result[T, Error]
+) -> std::Result[T, PathError] {
+  match value {
+    std::Ok(payload) => {
+      return std::Ok<T, PathError>(payload);
+    }
+    std::Err(reason) => {
+      return std::Err<T, PathError>(path_error(operation, path, reason));
+    }
+  }
+}
+
+fn map_two_path_error[T](
+  operation: Operation,
+  source: string,
+  target: string,
+  value: std::Result[T, Error]
+) -> std::Result[T, TwoPathError] {
+  match value {
+    std::Ok(payload) => {
+      return std::Ok<T, TwoPathError>(payload);
+    }
+    std::Err(reason) => {
+      return std::Err<T, TwoPathError>(two_path_error(operation, source, target, reason));
+    }
+  }
+}
+
 pub fn remove_raw(path: string) -> std::Result[(), i64] {
   return unit_raw(remove_unchecked(path));
 }
@@ -330,9 +439,12 @@ fn metadata_from_parts(
   permissions: Permissions,
   accessed_nanos: i64,
   modified_nanos: i64,
-  changed_nanos: i64
+  changed_nanos: i64,
+  owner_id: i64,
+  group_id: i64
 ) -> std::Option[Metadata] {
-  if kind < 0 || size < 0 || accessed_nanos < 0 || modified_nanos < 0 || changed_nanos < 0 {
+  if kind < 0 || size < 0 || accessed_nanos < 0 || modified_nanos < 0 || changed_nanos < 0 ||
+     owner_id < 0 || group_id < 0 {
     return std::None<Metadata>();
   }
   return std::Some<Metadata>(Metadata {
@@ -342,6 +454,8 @@ fn metadata_from_parts(
     accessed_at: system_time_from_nanos(accessed_nanos),
     modified_at: system_time_from_nanos(modified_nanos),
     changed_at: system_time_from_nanos(changed_nanos),
+    owner_id_value: owner_id,
+    group_id_value: group_id,
   });
 }
 
@@ -351,7 +465,9 @@ fn metadata_from_raw(
   size: i64,
   accessed_nanos: i64,
   modified_nanos: i64,
-  changed_nanos: i64
+  changed_nanos: i64,
+  owner_id: i64,
+  group_id: i64
 ) -> std::Option[Metadata] {
   return metadata_from_parts(
     kind,
@@ -359,7 +475,9 @@ fn metadata_from_raw(
     permissions(path),
     accessed_nanos,
     modified_nanos,
-    changed_nanos
+    changed_nanos,
+    owner_id,
+    group_id
   );
 }
 
@@ -377,7 +495,9 @@ fn metadata_from_bytes(
   size: i64,
   accessed_nanos: i64,
   modified_nanos: i64,
-  changed_nanos: i64
+  changed_nanos: i64,
+  owner_id: i64,
+  group_id: i64
 ) -> std::Option[Metadata] {
   return metadata_from_parts(
     kind,
@@ -385,7 +505,9 @@ fn metadata_from_bytes(
     permissions_bytes(path),
     accessed_nanos,
     modified_nanos,
-    changed_nanos
+    changed_nanos,
+    owner_id,
+    group_id
   );
 }
 
@@ -410,7 +532,15 @@ pub fn metadata_raw(path: string) -> std::Result[Metadata, i64] {
   if changed < 0 {
     return std::Err<Metadata, i64>(last_errno_error_raw());
   }
-  match metadata_from_raw(path, kind, size, accessed, modified, changed) {
+  let owner_id = metadata_owner_raw(path);
+  if owner_id < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  let group_id = metadata_group_raw(path);
+  if group_id < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  match metadata_from_raw(path, kind, size, accessed, modified, changed, owner_id, group_id) {
     std::Some(value) => {
       return std::Ok<Metadata, i64>(value);
     }
@@ -452,6 +582,8 @@ pub fn metadata_unchecked(path: string) -> Metadata {
     accessed_at: std::time::system_from_unix(0, 0),
     modified_at: std::time::system_from_unix(0, 0),
     changed_at: std::time::system_from_unix(0, 0),
+    owner_id_value: -1,
+    group_id_value: -1,
   };
 }
 
@@ -476,7 +608,15 @@ pub fn symlink_metadata_raw(path: string) -> std::Result[Metadata, i64] {
   if changed < 0 {
     return std::Err<Metadata, i64>(last_errno_error_raw());
   }
-  match metadata_from_raw(path, kind, size, accessed, modified, changed) {
+  let owner_id = symlink_metadata_owner_raw(path);
+  if owner_id < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  let group_id = symlink_metadata_group_raw(path);
+  if group_id < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  match metadata_from_raw(path, kind, size, accessed, modified, changed, owner_id, group_id) {
     std::Some(value) => {
       return std::Ok<Metadata, i64>(value);
     }
@@ -518,6 +658,8 @@ pub fn symlink_metadata_unchecked(path: string) -> Metadata {
     accessed_at: std::time::system_from_unix(0, 0),
     modified_at: std::time::system_from_unix(0, 0),
     changed_at: std::time::system_from_unix(0, 0),
+    owner_id_value: -1,
+    group_id_value: -1,
   };
 }
 
@@ -533,7 +675,9 @@ fn try_metadata_bytes(path: std::Slice[u8]) -> std::Option[Metadata] {
     size,
     metadata_accessed_nanos_bytes_raw(path.data, path.len),
     metadata_modified_nanos_bytes_raw(path.data, path.len),
-    metadata_changed_nanos_bytes_raw(path.data, path.len)
+    metadata_changed_nanos_bytes_raw(path.data, path.len),
+    metadata_owner_bytes_raw(path.data, path.len),
+    metadata_group_bytes_raw(path.data, path.len)
   );
 }
 
@@ -558,7 +702,15 @@ fn metadata_bytes_raw(path: std::Slice[u8]) -> std::Result[Metadata, i64] {
   if changed < 0 {
     return std::Err<Metadata, i64>(last_errno_error_raw());
   }
-  match metadata_from_bytes(path, kind, size, accessed, modified, changed) {
+  let owner_id = metadata_owner_bytes_raw(path.data, path.len);
+  if owner_id < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  let group_id = metadata_group_bytes_raw(path.data, path.len);
+  if group_id < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  match metadata_from_bytes(path, kind, size, accessed, modified, changed, owner_id, group_id) {
     std::Some(value) => {
       return std::Ok<Metadata, i64>(value);
     }
@@ -579,7 +731,9 @@ fn try_symlink_metadata_bytes(path: std::Slice[u8]) -> std::Option[Metadata] {
     size,
     symlink_metadata_accessed_nanos_bytes_raw(path.data, path.len),
     symlink_metadata_modified_nanos_bytes_raw(path.data, path.len),
-    symlink_metadata_changed_nanos_bytes_raw(path.data, path.len)
+    symlink_metadata_changed_nanos_bytes_raw(path.data, path.len),
+    symlink_metadata_owner_bytes_raw(path.data, path.len),
+    symlink_metadata_group_bytes_raw(path.data, path.len)
   );
 }
 
@@ -604,7 +758,15 @@ fn symlink_metadata_bytes_raw(path: std::Slice[u8]) -> std::Result[Metadata, i64
   if changed < 0 {
     return std::Err<Metadata, i64>(last_errno_error_raw());
   }
-  match metadata_from_bytes(path, kind, size, accessed, modified, changed) {
+  let owner_id = symlink_metadata_owner_bytes_raw(path.data, path.len);
+  if owner_id < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  let group_id = symlink_metadata_group_bytes_raw(path.data, path.len);
+  if group_id < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  match metadata_from_bytes(path, kind, size, accessed, modified, changed, owner_id, group_id) {
     std::Some(value) => {
       return std::Ok<Metadata, i64>(value);
     }
@@ -1035,6 +1197,67 @@ pub fn read_dir_entries_unchecked(zone: ref mut Zone, path: string) -> std::vec:
   }
   std::panic();
   return std::vec::new<DirEntry>(zone, 0);
+}
+
+fn make_dir_entry_info(entry: DirEntry) -> DirEntryInfo {
+  let metadata_result = entry.metadata();
+  let symlink_metadata_result = entry.symlink_metadata();
+  let file_type_result = entry.file_type();
+  return DirEntryInfo {
+    entry_value: entry,
+    metadata_result_value: metadata_result,
+    symlink_metadata_result_value: symlink_metadata_result,
+    file_type_result_value: file_type_result,
+  };
+}
+
+pub fn read_dir_info(zone: ref mut Zone, path: string) -> std::Result[std::vec::Vec[DirEntryInfo], std::error::Error] {
+  match read_dir_entries(zone, path) {
+    std::Ok(entries) => {
+      var output = std::vec::new<DirEntryInfo>(zone, entries.len());
+      var index = 0;
+      while index < entries.len() {
+        output.push_in(zone, make_dir_entry_info(entries.get(index)));
+        index = index + 1;
+      }
+      return std::Ok<std::vec::Vec[DirEntryInfo], std::error::Error>(output);
+    }
+    std::Err(reason) => {
+      return std::Err<std::vec::Vec[DirEntryInfo], std::error::Error>(reason);
+    }
+  }
+}
+
+pub fn read_dir_info_detailed(
+  zone: ref mut Zone,
+  path: string
+) -> std::Result[std::vec::Vec[DirEntryInfo], PathError] {
+  return map_path_error<std::vec::Vec[DirEntryInfo]>(FsReadDir, path, read_dir_info(zone, path));
+}
+
+pub fn read_dir_info_optional(zone: ref mut Zone, path: string) -> std::Option[std::vec::Vec[DirEntryInfo]] {
+  match read_dir_info(zone, path) {
+    std::Ok(entries) => {
+      return std::Some<std::vec::Vec[DirEntryInfo]>(entries);
+    }
+    std::Err(_) => {}
+  }
+  return std::None<std::vec::Vec[DirEntryInfo]>();
+}
+
+pub fn try_read_dir_info(zone: ref mut Zone, path: string) -> std::Option[std::vec::Vec[DirEntryInfo]] {
+  return read_dir_info_optional(zone, path);
+}
+
+pub fn read_dir_info_unchecked(zone: ref mut Zone, path: string) -> std::vec::Vec[DirEntryInfo] {
+  match read_dir_info(zone, path) {
+    std::Ok(entries) => {
+      return entries;
+    }
+    std::Err(_) => {}
+  }
+  std::panic();
+  return std::vec::new<DirEntryInfo>(zone, 0);
 }
 
 fn remove_dir_all_entry_bytes(zone: ref mut Zone, path: std::Slice[u8]) -> bool {
@@ -1651,6 +1874,120 @@ pub fn try_copy(source: string, target: string) -> std::Option[i64] {
   return byte_count_option(copy_raw(source, target));
 }
 
+pub fn open_detailed(path: string, mode: string) -> std::Result[File, PathError] {
+  return map_path_error<File>(FsOpen, path, open(path, mode));
+}
+
+pub fn create_detailed(path: string) -> std::Result[File, PathError] {
+  return map_path_error<File>(FsCreate, path, create(path));
+}
+
+pub fn read_detailed(
+  zone: ref mut Zone,
+  path: string
+) -> std::Result[std::string::String, PathError] {
+  return map_path_error<std::string::String>(FsRead, path, read(zone, path));
+}
+
+pub fn read_bytes_detailed(
+  zone: ref mut Zone,
+  path: string
+) -> std::Result[std::vec::Vec[u8], PathError] {
+  return map_path_error<std::vec::Vec[u8]>(FsRead, path, read_bytes(zone, path));
+}
+
+pub fn write_detailed(
+  path: string,
+  values: std::Slice[u8]
+) -> std::Result[i64, PathError] {
+  return map_path_error<i64>(FsWrite, path, write(path, values));
+}
+
+pub fn write_string_detailed(
+  path: string,
+  text: string
+) -> std::Result[(), PathError] {
+  return map_path_error<()>(FsWrite, path, write_string(path, text));
+}
+
+pub fn append_detailed(
+  path: string,
+  values: std::Slice[u8]
+) -> std::Result[i64, PathError] {
+  return map_path_error<i64>(FsAppend, path, append(path, values));
+}
+
+pub fn remove_file_detailed(path: string) -> std::Result[(), PathError] {
+  return map_path_error<()>(FsRemove, path, remove_file(path));
+}
+
+pub fn remove_dir_detailed(path: string) -> std::Result[(), PathError] {
+  return map_path_error<()>(FsRemoveDir, path, remove_dir(path));
+}
+
+pub fn remove_dir_all_detailed(path: string) -> std::Result[(), PathError] {
+  return map_path_error<()>(FsRemoveDir, path, remove_dir_all(path));
+}
+
+pub fn create_dir_detailed(path: string) -> std::Result[(), PathError] {
+  return map_path_error<()>(FsCreateDir, path, create_dir(path));
+}
+
+pub fn create_dir_all_detailed(path: string) -> std::Result[(), PathError] {
+  return map_path_error<()>(FsCreateDir, path, create_dir_all(path));
+}
+
+pub fn rename_detailed(
+  source: string,
+  target: string
+) -> std::Result[(), TwoPathError] {
+  return map_two_path_error<()>(FsRename, source, target, rename(source, target));
+}
+
+pub fn copy_detailed(
+  source: string,
+  target: string
+) -> std::Result[i64, TwoPathError] {
+  return map_two_path_error<i64>(FsCopy, source, target, copy(source, target));
+}
+
+pub fn metadata_detailed(path: string) -> std::Result[Metadata, PathError] {
+  return map_path_error<Metadata>(FsMetadata, path, metadata(path));
+}
+
+pub fn symlink_metadata_detailed(path: string) -> std::Result[Metadata, PathError] {
+  return map_path_error<Metadata>(FsSymlinkMetadata, path, symlink_metadata(path));
+}
+
+pub fn file_type_detailed(path: string) -> std::Result[FileKind, PathError] {
+  return map_path_error<FileKind>(FsFileType, path, file_type(path));
+}
+
+pub fn mode_detailed(path: string) -> std::Result[i64, PathError] {
+  return map_path_error<i64>(FsMode, path, mode(path));
+}
+
+pub fn canonicalize_detailed(
+  zone: ref mut Zone,
+  path: string
+) -> std::Result[std::string::String, PathError] {
+  return map_path_error<std::string::String>(FsCanonicalize, path, canonicalize(zone, path));
+}
+
+pub fn read_link_detailed(
+  zone: ref mut Zone,
+  path: string
+) -> std::Result[std::string::String, PathError] {
+  return map_path_error<std::string::String>(FsReadLink, path, read_link(zone, path));
+}
+
+pub fn read_dir_detailed(
+  zone: ref mut Zone,
+  path: string
+) -> std::Result[std::vec::Vec[DirEntry], PathError] {
+  return map_path_error<std::vec::Vec[DirEntry]>(FsReadDir, path, read_dir(zone, path));
+}
+
 pub impl std::fs::Permissions {
   fn all() -> Permissions {
     return Permissions {
@@ -1707,6 +2044,66 @@ pub impl std::fs::Permissions {
   }
 }
 
+pub impl std::fs::PathError {
+  fn operation(self: ref Self) -> Operation {
+    return self.operation_value;
+  }
+
+  fn path(self: ref Self) -> string {
+    return self.path_value;
+  }
+
+  fn reason(self: ref Self) -> Error {
+    return self.reason_value;
+  }
+
+  fn kind(self: ref Self) -> ErrorKind {
+    return self.reason_value.kind();
+  }
+
+  fn code(self: ref Self) -> i64 {
+    return self.reason_value.code();
+  }
+
+  fn path_equals(self: ref Self, value: string) -> bool {
+    return std::string::bytes(self.path_value).equals(std::string::bytes(value));
+  }
+}
+
+pub impl std::fs::TwoPathError {
+  fn operation(self: ref Self) -> Operation {
+    return self.operation_value;
+  }
+
+  fn source(self: ref Self) -> string {
+    return self.source_value;
+  }
+
+  fn target(self: ref Self) -> string {
+    return self.target_value;
+  }
+
+  fn reason(self: ref Self) -> Error {
+    return self.reason_value;
+  }
+
+  fn kind(self: ref Self) -> ErrorKind {
+    return self.reason_value.kind();
+  }
+
+  fn code(self: ref Self) -> i64 {
+    return self.reason_value.code();
+  }
+
+  fn source_equals(self: ref Self, value: string) -> bool {
+    return std::string::bytes(self.source_value).equals(std::string::bytes(value));
+  }
+
+  fn target_equals(self: ref Self, value: string) -> bool {
+    return std::string::bytes(self.target_value).equals(std::string::bytes(value));
+  }
+}
+
 pub impl std::fs::Metadata {
   fn len(self: ref Self) -> i64 {
     return self.byte_len;
@@ -1730,6 +2127,43 @@ pub impl std::fs::Metadata {
 
   fn changed(self: ref Self) -> std::time::SystemTime {
     return self.changed_at;
+  }
+
+  fn created(self: ref Self) -> std::Option[std::time::SystemTime] {
+    // Portable hosted POSIX metadata does not expose file birth time.
+    return std::None<std::time::SystemTime>();
+  }
+
+  fn birth_time(self: ref Self) -> std::Option[std::time::SystemTime] {
+    return self.created();
+  }
+
+  fn created_or_changed(self: ref Self) -> std::time::SystemTime {
+    return self.changed_at;
+  }
+
+  fn owner(self: ref Self) -> i64 {
+    return self.owner_id_value;
+  }
+
+  fn group(self: ref Self) -> i64 {
+    return self.group_id_value;
+  }
+
+  fn owner_id(self: ref Self) -> i64 {
+    return self.owner_id_value;
+  }
+
+  fn group_id(self: ref Self) -> i64 {
+    return self.group_id_value;
+  }
+
+  fn uid(self: ref Self) -> i64 {
+    return self.owner_id_value;
+  }
+
+  fn gid(self: ref Self) -> i64 {
+    return self.group_id_value;
   }
 
   fn is_file(self: ref Self) -> bool {
@@ -2101,6 +2535,8 @@ pub impl std::fs::DirEntry {
       accessed_at: std::time::system_from_unix(0, 0),
       modified_at: std::time::system_from_unix(0, 0),
       changed_at: std::time::system_from_unix(0, 0),
+      owner_id_value: -1,
+      group_id_value: -1,
     };
   }
 
@@ -2137,6 +2573,8 @@ pub impl std::fs::DirEntry {
       accessed_at: std::time::system_from_unix(0, 0),
       modified_at: std::time::system_from_unix(0, 0),
       changed_at: std::time::system_from_unix(0, 0),
+      owner_id_value: -1,
+      group_id_value: -1,
     };
   }
 
@@ -2207,5 +2645,75 @@ pub impl std::fs::DirEntry {
       std::None => {}
     }
     return false;
+  }
+}
+
+pub impl std::fs::DirEntryInfo {
+  fn entry(self: ref Self) -> ref DirEntry {
+    return ref self.entry_value;
+  }
+
+  fn name(self: ref Self) -> ref std::string::String {
+    return ref self.entry_value.name_value;
+  }
+
+  fn path(self: ref Self) -> ref std::string::String {
+    return ref self.entry_value.path_value;
+  }
+
+  fn metadata(self: ref Self) -> ref std::Result[Metadata, Error] {
+    return ref self.metadata_result_value;
+  }
+
+  fn symlink_metadata(self: ref Self) -> ref std::Result[Metadata, Error] {
+    return ref self.symlink_metadata_result_value;
+  }
+
+  fn file_type(self: ref Self) -> ref std::Result[FileKind, Error] {
+    return ref self.file_type_result_value;
+  }
+
+  fn metadata_ok(self: ref Self) -> bool {
+    return self.metadata_result_value.is_ok();
+  }
+
+  fn symlink_metadata_ok(self: ref Self) -> bool {
+    return self.symlink_metadata_result_value.is_ok();
+  }
+
+  fn file_type_ok(self: ref Self) -> bool {
+    return self.file_type_result_value.is_ok();
+  }
+
+  fn metadata_err(self: ref Self) -> bool {
+    return self.metadata_result_value.is_err();
+  }
+
+  fn symlink_metadata_err(self: ref Self) -> bool {
+    return self.symlink_metadata_result_value.is_err();
+  }
+
+  fn file_type_err(self: ref Self) -> bool {
+    return self.file_type_result_value.is_err();
+  }
+
+  fn name_equals(self: ref Self, value: string) -> bool {
+    return self.entry_value.name_equals(value);
+  }
+
+  fn path_equals(self: ref Self, value: string) -> bool {
+    return self.entry_value.path_equals(value);
+  }
+}
+
+impl std::zone::ZoneBacked for std::fs::DirEntry {
+  pub fn zone(self: ref Self) -> std::zone::ZoneMetadata {
+    return std::zone::of<std::string::String>(ref self.path_value);
+  }
+}
+
+impl std::zone::ZoneBacked for std::fs::DirEntryInfo {
+  pub fn zone(self: ref Self) -> std::zone::ZoneMetadata {
+    return std::zone::of<DirEntry>(ref self.entry_value);
   }
 }

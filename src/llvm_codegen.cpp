@@ -1182,6 +1182,70 @@ private:
         line("}");
         line();
 
+        line("define private i64 @ari_runtime_fs_stat_i32_field(ptr %path, i64 %offset) {");
+        line("entry:");
+        line("  %stat.storage = alloca [144 x i8], align 8");
+        line("  %stat.ptr = getelementptr inbounds [144 x i8], ptr %stat.storage, i64 0, i64 0");
+        line("  %code = call i32 @stat(ptr %path, ptr %stat.ptr)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  br i1 %ok, label %load, label %fail");
+        line("load:");
+        line("  %field.ptr = getelementptr inbounds i8, ptr %stat.ptr, i64 %offset");
+        line("  %field32 = load i32, ptr %field.ptr, align 4");
+        line("  %field = zext i32 %field32 to i64");
+        line("  ret i64 %field");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define private i64 @ari_runtime_fs_lstat_i32_field(ptr %path, i64 %offset) {");
+        line("entry:");
+        line("  %stat.storage = alloca [144 x i8], align 8");
+        line("  %stat.ptr = getelementptr inbounds [144 x i8], ptr %stat.storage, i64 0, i64 0");
+        line("  %code = call i32 @lstat(ptr %path, ptr %stat.ptr)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  br i1 %ok, label %load, label %fail");
+        line("load:");
+        line("  %field.ptr = getelementptr inbounds i8, ptr %stat.ptr, i64 %offset");
+        line("  %field32 = load i32, ptr %field.ptr, align 4");
+        line("  %field = zext i32 %field32 to i64");
+        line("  ret i64 %field");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_fs_metadata_uid(ptr %path) {");
+        line("entry:");
+        // Linux/glibc x86_64 stat layout: st_uid is an i32 at byte offset 28.
+        line("  %value = call i64 @ari_runtime_fs_stat_i32_field(ptr %path, i64 28)");
+        line("  ret i64 %value");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_fs_metadata_gid(ptr %path) {");
+        line("entry:");
+        // Linux/glibc x86_64 stat layout: st_gid is an i32 at byte offset 32.
+        line("  %value = call i64 @ari_runtime_fs_stat_i32_field(ptr %path, i64 32)");
+        line("  ret i64 %value");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_fs_symlink_metadata_uid(ptr %path) {");
+        line("entry:");
+        line("  %value = call i64 @ari_runtime_fs_lstat_i32_field(ptr %path, i64 28)");
+        line("  ret i64 %value");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_fs_symlink_metadata_gid(ptr %path) {");
+        line("entry:");
+        line("  %value = call i64 @ari_runtime_fs_lstat_i32_field(ptr %path, i64 32)");
+        line("  ret i64 %value");
+        line("}");
+        line();
+
         line("define private i64 @ari_runtime_fs_stat_time_nanos(ptr %path, i64 %sec_offset, i64 %nsec_offset) {");
         line("entry:");
         line("  %stat.storage = alloca [144 x i8], align 8");
@@ -1295,6 +1359,36 @@ private:
         line("}");
         line();
 
+        line("define " + runtime_visibility + "i64 @ari_builtin_fs_metadata_uid_bytes(ptr %data, i64 %len) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %path = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %path, null");
+        line("  br i1 %missing, label %fail, label %check");
+        line("check:");
+        line("  %value = call i64 @ari_builtin_fs_metadata_uid(ptr %path)");
+        line("  ret i64 %value");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_fs_metadata_gid_bytes(ptr %data, i64 %len) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %path = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %path, null");
+        line("  br i1 %missing, label %fail, label %check");
+        line("check:");
+        line("  %value = call i64 @ari_builtin_fs_metadata_gid(ptr %path)");
+        line("  ret i64 %value");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
         line("define " + runtime_visibility + "i64 @ari_builtin_fs_metadata_accessed_nanos_bytes(ptr %data, i64 %len) {");
         line("entry:");
         line("  %storage = alloca [4096 x i8], align 16");
@@ -1365,6 +1459,36 @@ private:
         line("check:");
         line("  %kind = call i64 @ari_builtin_fs_symlink_metadata_kind(ptr %path)");
         line("  ret i64 %kind");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_fs_symlink_metadata_uid_bytes(ptr %data, i64 %len) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %path = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %path, null");
+        line("  br i1 %missing, label %fail, label %check");
+        line("check:");
+        line("  %value = call i64 @ari_builtin_fs_symlink_metadata_uid(ptr %path)");
+        line("  ret i64 %value");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_fs_symlink_metadata_gid_bytes(ptr %data, i64 %len) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %path = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %path, null");
+        line("  br i1 %missing, label %fail, label %check");
+        line("check:");
+        line("  %value = call i64 @ari_builtin_fs_symlink_metadata_gid(ptr %path)");
+        line("  ret i64 %value");
         line("fail:");
         line("  ret i64 -1");
         line("}");

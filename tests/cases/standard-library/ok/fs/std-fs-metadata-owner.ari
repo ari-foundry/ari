@@ -1,0 +1,43 @@
+// Covers POSIX owner/group metadata and the explicit creation-time policy.
+fn main() -> i64 {
+  let path = "build/prelude/std-fs-metadata-owner.tmp";
+  fs::remove_file_bool(path);
+  var score = 0;
+
+  if fs::write_string(path, "owner").is_ok() {
+    score = score + 1;
+  }
+
+  match fs::metadata(path) {
+    Ok(info) => {
+      if info.owner() >= 0 && info.group() >= 0 {
+        score = score + 2;
+      }
+      if info.owner() == info.owner_id() && info.owner() == info.uid() {
+        score = score + 4;
+      }
+      if info.group() == info.group_id() && info.group() == info.gid() {
+        score = score + 8;
+      }
+      if info.created().is_none() && info.birth_time().is_none() {
+        score = score + 16;
+      }
+      if info.created_or_changed().as_unix_nanos() == info.changed().as_unix_nanos() {
+        score = score + 32;
+      }
+    }
+    Err(_) => {}
+  }
+
+  match fs::symlink_metadata(path) {
+    Ok(link_info) => {
+      if link_info.owner() >= 0 && link_info.group() >= 0 {
+        score = score + 64;
+      }
+    }
+    Err(_) => {}
+  }
+
+  fs::remove_file_bool(path);
+  return score;
+}

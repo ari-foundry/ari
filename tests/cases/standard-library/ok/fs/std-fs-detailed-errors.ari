@@ -1,0 +1,100 @@
+// Covers structured path errors for std::fs APIs that already return the
+// compact shared std::error::Error by default.
+fn is_metadata_op(value: fs::Operation) -> bool {
+  match value {
+    fs::FsMetadata => {
+      return true;
+    }
+    _ => {}
+  }
+  return false;
+}
+
+fn is_rename_op(value: fs::Operation) -> bool {
+  match value {
+    fs::FsRename => {
+      return true;
+    }
+    _ => {}
+  }
+  return false;
+}
+
+fn is_open_op(value: fs::Operation) -> bool {
+  match value {
+    fs::FsOpen => {
+      return true;
+    }
+    _ => {}
+  }
+  return false;
+}
+
+fn main() -> i64 {
+  let missing = "build/prelude/std-fs-detailed-errors.missing";
+  let target = "build/prelude/std-fs-detailed-errors.target";
+  var zone = zone::create(4096);
+  var score = 0;
+
+  fs::remove_file_bool(missing);
+  fs::remove_file_bool(target);
+
+  match fs::metadata_detailed(missing) {
+    Ok(_) => {}
+    Err(metadata_reason) => {
+      if is_metadata_op(metadata_reason.operation()) &&
+         metadata_reason.path_equals(missing) &&
+         metadata_reason.reason().is_not_found() {
+        score = score + 1;
+      }
+    }
+  }
+
+  match fs::rename_detailed(missing, target) {
+    Ok(_) => {}
+    Err(rename_reason) => {
+      if is_rename_op(rename_reason.operation()) &&
+         rename_reason.source_equals(missing) &&
+         rename_reason.target_equals(target) &&
+         rename_reason.reason().is_not_found() {
+        score = score + 2;
+      }
+    }
+  }
+
+  match fs::open_detailed(missing, "bad-mode") {
+    Ok(file) => {
+      file.close_unchecked();
+    }
+    Err(open_reason) => {
+      if is_open_op(open_reason.operation()) &&
+         open_reason.path_equals(missing) &&
+         open_reason.reason().is_kind(error::InvalidInput) {
+        score = score + 4;
+      }
+    }
+  }
+
+  var bytes = ['O', 'K'];
+  match fs::write_detailed(target, bytes.as_slice()) {
+    Ok(written) => {
+      if written == 2 {
+        score = score + 8;
+      }
+    }
+    Err(_) => {}
+  }
+
+  match fs::read_detailed(ref mut zone, target) {
+    Ok(text) => {
+      if text.equals_text("OK") {
+        score = score + 16;
+      }
+    }
+    Err(_) => {}
+  }
+
+  fs::remove_file_bool(target);
+  zone::destroy(zone);
+  return score;
+}
