@@ -66,11 +66,31 @@ fn main() -> i64 {
       assert(integer_reason.is_kind(error::InvalidData));
     }
   }
+  match parse::integer_error("12x") {
+    std::Some(integer_detail) => {
+      assert(integer_detail.offset() == 2);
+      match integer_detail.kind() {
+        parse::InvalidDigit => {}
+        _ => { panic(); }
+      }
+    }
+    std::None => { panic(); }
+  }
   match parse::integer_radix("10", 1) {
     Ok(_) => { panic(); }
     Err(radix_reason) => {
       assert(radix_reason.is_kind(error::InvalidInput));
     }
+  }
+  match parse::integer_radix_error("10", 1) {
+    std::Some(radix_detail) => {
+      assert(radix_detail.offset() == 0);
+      match radix_detail.kind() {
+        parse::InvalidRadix => {}
+        _ => { panic(); }
+      }
+    }
+    std::None => { panic(); }
   }
   assert(parse::unsigned("+42").unwrap_or(0u64) == 42u64);
   match parse::unsigned_radix("2", 2) {
@@ -78,6 +98,40 @@ fn main() -> i64 {
     Err(unsigned_reason) => {
       assert(unsigned_reason.is_kind(error::InvalidData));
     }
+  }
+  match parse::unsigned_error("-1") {
+    std::Some(sign_detail) => {
+      assert(sign_detail.offset() == 0);
+      match sign_detail.kind() {
+        parse::InvalidSign => {}
+        _ => { panic(); }
+      }
+    }
+    std::None => { panic(); }
+  }
+  match parse::integer_error("9223372036854775808") {
+    std::Some(overflow_detail) => {
+      assert(overflow_detail.offset() == 18);
+      match overflow_detail.kind() {
+        parse::Overflow => {}
+        _ => { panic(); }
+      }
+    }
+    std::None => { panic(); }
+  }
+  match parse::integer_with_underscores_error("12__3") {
+    std::Some(separator_detail) => {
+      assert(separator_detail.offset() == 2);
+      match separator_detail.kind() {
+        parse::InvalidSeparator => {}
+        _ => { panic(); }
+      }
+    }
+    std::None => { panic(); }
+  }
+  match parse::unsigned_with_underscores_error("+1_024") {
+    std::Some(_) => { panic(); }
+    std::None => {}
   }
   assert(parse::hex_integer("ff").unwrap_or(0) == 255);
   assert(parse::hex_integer("-F").unwrap_or(0) == -15);

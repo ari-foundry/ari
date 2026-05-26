@@ -18,42 +18,61 @@ reason, and `_or` helpers keep the explicit fallback pattern. Invalid radices
 return `InvalidInput`; syntactically invalid, empty, or out-of-range values
 return `InvalidData`.
 
+For callers that need precise diagnostics without changing the default
+`Result[T, std::error::Error]` surface, the integer families also expose
+`*_error` helpers. They return `Option[ParseError]`: `None` means the same
+input would parse successfully, and `Some(error)` carries a `ParseErrorKind`
+plus the byte offset in the ASCII-trimmed input where the diagnostic was
+detected.
+
 ## API
 
 ```ari
 trait Parse
+parse::ParseError
+parse::ParseErrorKind
+parse_error.kind() -> ParseErrorKind
+parse_error.offset() -> i64
 parse::parse[T: Parse](bytes) -> T
 parse::parse_or[T: Parse](bytes, fallback) -> T
 parse::is_parse[T: Parse](bytes) -> bool
 parse::integer(bytes) -> Result[i64, std::error::Error]
+parse::integer_error(bytes) -> Option[ParseError]
 parse::integer_optional(bytes) -> Option[i64]
 parse::is_integer(bytes) -> bool
 parse::integer_or(bytes, fallback) -> i64
 parse::integer_with_underscores(bytes) -> Result[i64, std::error::Error]
+parse::integer_with_underscores_error(bytes) -> Option[ParseError]
 parse::integer_with_underscores_optional(bytes) -> Option[i64]
 parse::is_integer_with_underscores(bytes) -> bool
 parse::integer_with_underscores_or(bytes, fallback) -> i64
 parse::integer_radix(bytes, radix) -> Result[i64, std::error::Error]
+parse::integer_radix_error(bytes, radix) -> Option[ParseError]
 parse::integer_radix_optional(bytes, radix) -> Option[i64]
 parse::is_integer_radix(bytes, radix) -> bool
 parse::integer_radix_or(bytes, radix, fallback) -> i64
 parse::integer_radix_with_underscores(bytes, radix) -> Result[i64, std::error::Error]
+parse::integer_radix_with_underscores_error(bytes, radix) -> Option[ParseError]
 parse::integer_radix_with_underscores_optional(bytes, radix) -> Option[i64]
 parse::is_integer_radix_with_underscores(bytes, radix) -> bool
 parse::integer_radix_with_underscores_or(bytes, radix, fallback) -> i64
 parse::unsigned(bytes) -> Result[u64, std::error::Error]
+parse::unsigned_error(bytes) -> Option[ParseError]
 parse::unsigned_optional(bytes) -> Option[u64]
 parse::is_unsigned(bytes) -> bool
 parse::unsigned_or(bytes, fallback) -> u64
 parse::unsigned_with_underscores(bytes) -> Result[u64, std::error::Error]
+parse::unsigned_with_underscores_error(bytes) -> Option[ParseError]
 parse::unsigned_with_underscores_optional(bytes) -> Option[u64]
 parse::is_unsigned_with_underscores(bytes) -> bool
 parse::unsigned_with_underscores_or(bytes, fallback) -> u64
 parse::unsigned_radix(bytes, radix) -> Result[u64, std::error::Error]
+parse::unsigned_radix_error(bytes, radix) -> Option[ParseError]
 parse::unsigned_radix_optional(bytes, radix) -> Option[u64]
 parse::is_unsigned_radix(bytes, radix) -> bool
 parse::unsigned_radix_or(bytes, radix, fallback) -> u64
 parse::unsigned_radix_with_underscores(bytes, radix) -> Result[u64, std::error::Error]
+parse::unsigned_radix_with_underscores_error(bytes, radix) -> Option[ParseError]
 parse::unsigned_radix_with_underscores_optional(bytes, radix) -> Option[u64]
 parse::is_unsigned_radix_with_underscores(bytes, radix) -> bool
 parse::unsigned_radix_with_underscores_or(bytes, radix, fallback) -> u64
@@ -116,6 +135,17 @@ side is rejected. It intentionally does not recognize prefixes such as `0x` or
 `2`, and `8`. All three wrappers have matching `_optional`, `is_*`, and
 `*_or` forms.
 
+`integer_error` and `integer_radix_error` are diagnostic helpers for callers
+that need to explain a parse failure. They do not replace the natural
+Result-returning parser; instead, they return `None` for valid input and
+`Some(ParseError)` for invalid input. `ParseError::kind()` returns one of:
+`EmptyInput`, `ExpectedDigit`, `InvalidRadix`, `InvalidDigit`,
+`InvalidSign`, `InvalidSeparator`, or `Overflow`. `ParseError::offset()` is
+the byte offset in the trimmed input where that condition was detected. For
+example, `12x` reports `InvalidDigit` at offset `2`, an invalid radix reports
+`InvalidRadix` at offset `0`, and signed integer overflow reports `Overflow` at
+the first digit that made the value exceed `i64`.
+
 Default integer parsers are strict and reject underscores. Use the explicit
 `*_with_underscores` family for human-edited configuration values such as
 `1_000`, `ff_ff`, or `1010_0101`. Underscores are accepted only between two
@@ -125,6 +155,10 @@ prefix-adjacent, and suffix-adjacent underscores are rejected:
 integer helpers keep the same overflow checks and the same `InvalidInput` versus
 `InvalidData` split as the strict radix helpers, and they have matching
 `_optional`, `is_*`, and `*_or` forms.
+`integer_with_underscores_error` and
+`integer_radix_with_underscores_error` keep those same separator rules but
+return `InvalidSeparator` for separator placement failures, which makes config
+file diagnostics more precise than the broad `InvalidData` category.
 
 `unsigned` and `unsigned_radix` mirror the signed integer parsers for `u64`.
 They trim ASCII whitespace, accept an optional leading `+`, reject `-`, and
@@ -132,6 +166,9 @@ reject values larger than `18446744073709551615`. Use them for ids, bitmasks,
 wire-format counters, and other fields where negative numbers are not valid.
 They follow the same `Result` policy as the signed parsers, with `_optional`
 forms for callers that only need presence or absence.
+`unsigned_error`, `unsigned_radix_error`, and their underscore-aware variants
+return the same `ParseError` shape; unsigned-only diagnostics additionally use
+`InvalidSign` at offset `0` for a leading `-`.
 
 `boolean` trims ASCII whitespace and accepts only lowercase `true` or `false`.
 It intentionally does not accept titlecase, uppercase, `1`, `0`, `yes`, or
@@ -223,12 +260,12 @@ tests/cases/standard-library/ok/parse/std-parse-basic.ari
 The focused test covers ASCII-trimmed signed integer parsing, radix wrappers
 for binary, octal, and hexadecimal input, unsigned integer parsing, boolean
 parsing, natural `Result` error categories for invalid data and invalid radix
-input, `_optional` compatibility helpers, underscore-aware integer/radix/float
+input, richer integer/unsigned `ParseError` diagnostics and offsets,
+`_optional` compatibility helpers, underscore-aware integer/radix/float
 parsing, `Result` float parsing, float validation, float conversion,
 trait-backed typed parsing, and invalid whole-input cases. It is wired into
 `make check-prelude` with LLVM symbol checks for the public helpers.
 
 ## Future Work
 
-- `ParseError` once richer error values are worth the API weight
 - clearer overflow/range diagnostics for extreme decimal float exponents

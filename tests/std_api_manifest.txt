@@ -18,6 +18,7 @@ enum std::log::Level|check-prelude std-log-basic source logging level enum; docs
 enum std::net::Shutdown|check-prelude std-net-tcp-loopback and std-net-unix-socket stream shutdown mode enum; docs/stdlib/modules/net.md
 enum std::option::OptionMut[T]|check-prelude prelude-option-result-ref-access mutable borrowed option payload view union; docs/stdlib/modules/option-result.md
 enum std::option::OptionRef[T]|check-prelude prelude-option-result-ref-access shared borrowed option payload view union; docs/stdlib/modules/option-result.md
+enum std::parse::ParseErrorKind|check-prelude std-parse-basic integer parse diagnostic categories; docs/stdlib/modules/parse.md
 enum std::path::ComponentKind|check-prelude std-path-components kinded path component categories; docs/stdlib/modules/path.md
 enum std::result::ResultMut[T, E]|check-prelude prelude-option-result-ref-access mutable borrowed result payload view union; docs/stdlib/modules/option-result.md
 enum std::result::ResultRef[T, E]|check-prelude prelude-option-result-ref-access shared borrowed result payload view union; docs/stdlib/modules/option-result.md
@@ -801,15 +802,19 @@ fn std::parse::hex_integer_with_underscores|check-prelude std-parse-basic Result
 fn std::parse::hex_integer_with_underscores_optional|check-prelude std-parse-basic Option-returning signed hexadecimal integer parser with digit separators; docs/stdlib/modules/parse.md
 fn std::parse::hex_integer_with_underscores_or|check-prelude std-parse-basic signed hexadecimal integer parser with digit separators and fallback; docs/stdlib/modules/parse.md
 fn std::parse::integer|check-prelude std-parse-basic Result-returning ASCII-trimmed signed integer parser; docs/stdlib/modules/parse.md
+fn std::parse::integer_error|check-prelude std-parse-basic signed integer parse diagnostic helper; docs/stdlib/modules/parse.md
 fn std::parse::integer_optional|check-prelude std-parse-basic Option-returning signed integer compatibility parser; docs/stdlib/modules/parse.md
 fn std::parse::integer_or|check-prelude std-parse-basic signed integer parser with fallback; docs/stdlib/modules/parse.md
 fn std::parse::integer_radix|check-prelude std-parse-basic Result-returning signed radix integer parser; docs/stdlib/modules/parse.md
+fn std::parse::integer_radix_error|check-prelude std-parse-basic signed radix integer parse diagnostic helper; docs/stdlib/modules/parse.md
 fn std::parse::integer_radix_optional|check-prelude std-parse-basic Option-returning signed radix integer compatibility parser; docs/stdlib/modules/parse.md
 fn std::parse::integer_radix_or|check-prelude std-parse-basic signed radix integer parser with fallback; docs/stdlib/modules/parse.md
 fn std::parse::integer_radix_with_underscores|check-prelude std-parse-basic Result-returning signed radix integer parser with digit separators; docs/stdlib/modules/parse.md
+fn std::parse::integer_radix_with_underscores_error|check-prelude std-parse-basic signed radix integer parse diagnostic helper with digit separators; docs/stdlib/modules/parse.md
 fn std::parse::integer_radix_with_underscores_optional|check-prelude std-parse-basic Option-returning signed radix integer parser with digit separators; docs/stdlib/modules/parse.md
 fn std::parse::integer_radix_with_underscores_or|check-prelude std-parse-basic signed radix integer parser with digit separators and fallback; docs/stdlib/modules/parse.md
 fn std::parse::integer_with_underscores|check-prelude std-parse-basic Result-returning signed integer parser with digit separators; docs/stdlib/modules/parse.md
+fn std::parse::integer_with_underscores_error|check-prelude std-parse-basic signed integer parse diagnostic helper with digit separators; docs/stdlib/modules/parse.md
 fn std::parse::integer_with_underscores_optional|check-prelude std-parse-basic Option-returning signed integer parser with digit separators; docs/stdlib/modules/parse.md
 fn std::parse::integer_with_underscores_or|check-prelude std-parse-basic signed integer parser with digit separators and fallback; docs/stdlib/modules/parse.md
 fn std::parse::is_binary_integer|check-prelude std-parse-basic signed binary integer parser validator; docs/stdlib/modules/parse.md
@@ -839,15 +844,19 @@ fn std::parse::octal_integer_with_underscores_or|check-prelude std-parse-basic s
 fn std::parse::parse[T: std::parse::Parse]|check-prelude std-parse-basic trait-backed typed parser dispatch; docs/stdlib/modules/parse.md
 fn std::parse::parse_or[T: std::parse::Parse]|check-prelude std-parse-basic trait-backed typed parser fallback dispatch; docs/stdlib/modules/parse.md
 fn std::parse::unsigned|check-prelude std-parse-basic Result-returning unsigned decimal integer parser; docs/stdlib/modules/parse.md
+fn std::parse::unsigned_error|check-prelude std-parse-basic unsigned integer parse diagnostic helper; docs/stdlib/modules/parse.md
 fn std::parse::unsigned_optional|check-prelude std-parse-basic Option-returning unsigned integer compatibility parser; docs/stdlib/modules/parse.md
 fn std::parse::unsigned_or|check-prelude std-parse-basic unsigned decimal integer parser with fallback; docs/stdlib/modules/parse.md
 fn std::parse::unsigned_radix|check-prelude std-parse-basic Result-returning unsigned radix integer parser; docs/stdlib/modules/parse.md
+fn std::parse::unsigned_radix_error|check-prelude std-parse-basic unsigned radix integer parse diagnostic helper; docs/stdlib/modules/parse.md
 fn std::parse::unsigned_radix_optional|check-prelude std-parse-basic Option-returning unsigned radix integer compatibility parser; docs/stdlib/modules/parse.md
 fn std::parse::unsigned_radix_or|check-prelude std-parse-basic unsigned radix integer parser with fallback; docs/stdlib/modules/parse.md
 fn std::parse::unsigned_radix_with_underscores|check-prelude std-parse-basic Result-returning unsigned radix integer parser with digit separators; docs/stdlib/modules/parse.md
+fn std::parse::unsigned_radix_with_underscores_error|check-prelude std-parse-basic unsigned radix integer parse diagnostic helper with digit separators; docs/stdlib/modules/parse.md
 fn std::parse::unsigned_radix_with_underscores_optional|check-prelude std-parse-basic Option-returning unsigned radix integer parser with digit separators; docs/stdlib/modules/parse.md
 fn std::parse::unsigned_radix_with_underscores_or|check-prelude std-parse-basic unsigned radix integer parser with digit separators and fallback; docs/stdlib/modules/parse.md
 fn std::parse::unsigned_with_underscores|check-prelude std-parse-basic Result-returning unsigned decimal integer parser with digit separators; docs/stdlib/modules/parse.md
+fn std::parse::unsigned_with_underscores_error|check-prelude std-parse-basic unsigned integer parse diagnostic helper with digit separators; docs/stdlib/modules/parse.md
 fn std::parse::unsigned_with_underscores_optional|check-prelude std-parse-basic Option-returning unsigned integer parser with digit separators; docs/stdlib/modules/parse.md
 fn std::parse::unsigned_with_underscores_or|check-prelude std-parse-basic unsigned decimal integer parser with digit separators and fallback; docs/stdlib/modules/parse.md
 fn std::path::as_bytes|check-prelude std-path-buf borrowed path-byte accessor helper; docs/stdlib/modules/path.md
@@ -2073,6 +2082,8 @@ method std::os::Pipe::read_end|check-prelude std-os-pipe borrowed pipe read desc
 method std::os::Pipe::take_read_end|check-prelude std-os-pipe take pipe read end ownership; docs/stdlib/modules/os.md
 method std::os::Pipe::take_write_end|check-prelude std-os-pipe take pipe write end ownership; docs/stdlib/modules/os.md
 method std::os::Pipe::write_end|check-prelude std-os-pipe borrowed pipe write descriptor view; docs/stdlib/modules/os.md
+method std::parse::ParseError::kind|check-prelude std-parse-basic parse diagnostic kind accessor; docs/stdlib/modules/parse.md
+method std::parse::ParseError::offset|check-prelude std-parse-basic parse diagnostic offset accessor; docs/stdlib/modules/parse.md
 method std::path::Component::as_slice|check-prelude std-path-components borrowed bytes for kinded path component; docs/stdlib/modules/path.md
 method std::path::Component::is_current|check-prelude std-path-components current-directory component predicate; docs/stdlib/modules/path.md
 method std::path::Component::is_normal|check-prelude std-path-components normal component predicate; docs/stdlib/modules/path.md
@@ -2821,6 +2832,7 @@ struct std::net::UnixStream|check-prelude std-net-unix-socket owned Unix domain 
 struct std::os::Fd|check-prelude std-os-fd non-owning file descriptor view; docs/stdlib/modules/os.md
 struct std::os::OwnedFd|check-prelude std-os-owned-fd owning file descriptor close wrapper; docs/stdlib/modules/os.md
 struct std::os::Pipe|check-prelude std-os-pipe owning pipe descriptor pair; docs/stdlib/modules/os.md
+struct std::parse::ParseError|check-prelude std-parse-basic integer parse diagnostic value; docs/stdlib/modules/parse.md
 struct std::path::Component|check-prelude std-path-components borrowed kinded path component handle; docs/stdlib/modules/path.md
 struct std::path::Components|check-prelude std-path-components borrowed lexical path component iterator; docs/stdlib/modules/path.md
 struct std::path::ComponentsWithKinds|check-prelude std-path-components borrowed kinded path component iterator; docs/stdlib/modules/path.md

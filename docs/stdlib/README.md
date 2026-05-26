@@ -131,8 +131,9 @@ for sorting, binary search, lower/upper/equal-range bounds, partition-point
   The current sequence value movement contract is documented separately so
   copy-oriented helpers stay distinct from future move-aware resource handling.
   `std::parse` adds whole-input signed/unsigned decimal and radix integer
-  parsing, hex/binary/octal signed wrappers, bool and decimal float parsing,
-  plus trait-backed `parse<T>`, `parse_or<T>`, and `is_parse<T>` helpers,
+  parsing, integer `ParseError` diagnostics, hex/binary/octal signed wrappers,
+  bool and decimal float parsing, plus trait-backed `parse<T>`,
+  `parse_or<T>`, and `is_parse<T>` helpers,
 and `std::encoding` adds ASCII/UTF-8/UTF-16 validation, detailed UTF-8
 byte-string decoding, plus hex, standard base64, MIME base64, and URL-safe
 base64 codecs with fallible owned decoders for untrusted input.

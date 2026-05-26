@@ -3953,38 +3953,50 @@ values:
 
 ```ari
 parse::Parse
+parse::ParseError
+parse::ParseErrorKind
+parse_error.kind()
+parse_error.offset()
 parse::parse[T: Parse](bytes)
 parse::parse_or[T: Parse](bytes, fallback)
 parse::is_parse[T: Parse](bytes)
 parse::integer(bytes)
+parse::integer_error(bytes)
 parse::integer_optional(bytes)
 parse::is_integer(bytes)
 parse::integer_or(bytes, fallback)
 parse::integer_with_underscores(bytes)
+parse::integer_with_underscores_error(bytes)
 parse::integer_with_underscores_optional(bytes)
 parse::is_integer_with_underscores(bytes)
 parse::integer_with_underscores_or(bytes, fallback)
 parse::integer_radix(bytes, radix)
+parse::integer_radix_error(bytes, radix)
 parse::integer_radix_optional(bytes, radix)
 parse::is_integer_radix(bytes, radix)
 parse::integer_radix_or(bytes, radix, fallback)
 parse::integer_radix_with_underscores(bytes, radix)
+parse::integer_radix_with_underscores_error(bytes, radix)
 parse::integer_radix_with_underscores_optional(bytes, radix)
 parse::is_integer_radix_with_underscores(bytes, radix)
 parse::integer_radix_with_underscores_or(bytes, radix, fallback)
 parse::unsigned(bytes)
+parse::unsigned_error(bytes)
 parse::unsigned_optional(bytes)
 parse::is_unsigned(bytes)
 parse::unsigned_or(bytes, fallback)
 parse::unsigned_with_underscores(bytes)
+parse::unsigned_with_underscores_error(bytes)
 parse::unsigned_with_underscores_optional(bytes)
 parse::is_unsigned_with_underscores(bytes)
 parse::unsigned_with_underscores_or(bytes, fallback)
 parse::unsigned_radix(bytes, radix)
+parse::unsigned_radix_error(bytes, radix)
 parse::unsigned_radix_optional(bytes, radix)
 parse::is_unsigned_radix(bytes, radix)
 parse::unsigned_radix_or(bytes, radix, fallback)
 parse::unsigned_radix_with_underscores(bytes, radix)
+parse::unsigned_radix_with_underscores_error(bytes, radix)
 parse::unsigned_radix_with_underscores_optional(bytes, radix)
 parse::is_unsigned_radix_with_underscores(bytes, radix)
 parse::unsigned_radix_with_underscores_or(bytes, radix, fallback)
@@ -4036,9 +4048,18 @@ through `36` with ASCII alphanumeric digits, returns `InvalidInput` for invalid
 radices, and returns `InvalidData` for invalid or out-of-range input.
 `hex_integer` / `binary_integer` / `octal_integer` are readable wrappers for
 common bases. Each has a matching `_optional`, `is_*`, and `*_or` helper.
+When a caller needs a precise diagnostic, `integer_error`,
+`integer_radix_error`, and the underscore-aware `*_error` variants return
+`Option[ParseError]`: `None` means the input parses successfully, while
+`Some(error)` carries a `ParseErrorKind` and the byte offset in the
+ASCII-trimmed input where parsing failed. Integer diagnostics distinguish
+`EmptyInput`, `ExpectedDigit`, `InvalidRadix`, `InvalidDigit`,
+`InvalidSeparator`, and `Overflow`.
 `unsigned` and `unsigned_radix` are the matching `u64` `Result` parsers: they
 accept an optional leading `+`, reject `-`, check overflow against `u64::MAX`,
 and have matching `_optional`, `is_*`, and `*_or` helpers.
+Their `*_error` helpers use the same `ParseError` shape and additionally report
+`InvalidSign` for a leading `-`.
 These radix parsers trim whitespace but do not recognize prefixes such as
 `0x`, `0b`, or leading-zero octal policy. `boolean` returns
 `Result[bool, Error]` and accepts only lowercase `true` and `false`;
