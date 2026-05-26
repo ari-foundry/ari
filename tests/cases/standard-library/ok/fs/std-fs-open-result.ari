@@ -56,7 +56,7 @@ fn main() -> i64 {
     score = score + 1;
   }
   if result_error_matches(fs::open(missing, "r"), error::NotFound, 2) &&
-    result_error_matches(fs::open_result(missing, "r"), error::NotFound, 2) &&
+    result_error_matches(fs::open(missing, "r"), error::NotFound, 2) &&
     raw_result_error_matches(fs::open_raw_result(missing, "r"), error::NotFound, 2) {
     score = score + 2;
   }
@@ -86,7 +86,7 @@ fn main() -> i64 {
   let exclusive = fs::OpenOptions::new().write(true).create_new(true);
   if result_error_matches(exclusive.open(path), error::AlreadyExists, 17) &&
     exclusive.open_optional(path).is_none() &&
-    result_error_matches(exclusive.open_result(path), error::AlreadyExists, 17) &&
+    result_error_matches(exclusive.open(path), error::AlreadyExists, 17) &&
     raw_result_error_matches(exclusive.open_raw_result(path), error::AlreadyExists, 17) {
     score = score + 16;
   }
@@ -115,7 +115,7 @@ fn main() -> i64 {
     Err(_) => {}
   }
 
-  match fs::create_result(missing) {
+  match fs::create(missing) {
     Ok(temp_file) => {
       temp_file.close_unchecked();
     }

@@ -21,8 +21,8 @@ compatibility helpers that discard error detail are named explicitly:
 Argument and process-path helpers follow the default stdlib error model:
 natural fallible names return `Result`, while `_optional`, `_or_default`,
 `_raw`, or `_unchecked` names opt into information-discarding or boundary
-behavior. Transitional `*_result` aliases remain for older code that already
-used the explicit suffix while the natural names migrated.
+behavior. Ordinary `*_result` migration aliases are retired from `std::env`;
+use the natural names for Result-returning argument and process-path helpers.
 
 Use `std::env` from application code when you want friendly arguments,
 environment variables, or current process path state. Use `std::context` when
@@ -41,18 +41,14 @@ env::arg_optional(index: i64) -> Option[string]
 env::arg_unchecked(index: i64) -> string
 env::has_arg(index: i64) -> bool
 env::try_arg(index: i64) -> Option[string]
-env::arg_result(index: i64) -> Result[string, env::Error]
 env::arg_os(index: i64) -> Result[std::string::OsStr, env::Error]
 env::arg_os_optional(index: i64) -> Option[std::string::OsStr]
 env::arg_os_unchecked(index: i64) -> std::string::OsStr
 env::try_arg_os(index: i64) -> Option[std::string::OsStr]
-env::arg_os_result(index: i64) -> Result[std::string::OsStr, env::Error]
 env::program_name() -> Result[string, env::Error]
 env::program_name_optional() -> Option[string]
 env::program_name_os() -> Result[std::string::OsStr, env::Error]
 env::program_name_os_optional() -> Option[std::string::OsStr]
-env::program_name_result() -> Result[string, env::Error]
-env::program_name_os_result() -> Result[std::string::OsStr, env::Error]
 env::var(name: string) -> Option[string]
 env::var_optional(name: string) -> Option[string]
 env::var_or_default(name: string) -> string
@@ -134,8 +130,7 @@ runtime argument byte strings.
 when one exists and `NotFound` when the host context has no argument 0.
 `program_name_optional()` is the explicit optional compatibility form.
 `program_name_os()` and `program_name_os_optional()` mirror that policy for
-`OsStr`. The `program_name_result()` and `program_name_os_result()` aliases are
-kept for source compatibility.
+`OsStr`.
 
 `has(name)` returns whether an environment variable is visible to the current
 process. `var(name)` returns `Some(value)` when the variable exists and `None`

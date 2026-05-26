@@ -37,15 +37,15 @@ fn main() -> i64 {
     score = score + 1;
   }
   if string_ok(fs::read_to_string(ref mut zone, path), "Ari") &&
-    fs::read_to_string_result(ref mut zone, path).is_ok() {
+    fs::read_to_string(ref mut zone, path).is_ok() {
     score = score + 2;
   }
   if string_ok(fs::read(ref mut zone, path), "Ari") &&
-    fs::read_result(ref mut zone, path).is_ok() {
+    fs::read(ref mut zone, path).is_ok() {
     score = score + 4;
   }
   if string_err(fs::read(ref mut zone, missing), error::NotFound, 2) &&
-    fs::read_result(ref mut zone, missing).is_err() {
+    fs::read(ref mut zone, missing).is_err() {
     score = score + 8;
   }
   if fs::try_read(ref mut zone, missing).is_none() &&

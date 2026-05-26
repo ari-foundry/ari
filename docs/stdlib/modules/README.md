@@ -16,9 +16,10 @@ error type such as `std::encoding::Utf8Error`. Compatibility helpers that
 discard information are named explicitly: `_optional` returns `Option`,
 `_or`/`_or_default` use caller-provided or empty fallbacks, `_bool` returns only
 a success flag, `_unchecked` preserves older asserting or invalid-handle
-behavior, and `_raw`/`_raw_result` expose low-level host or ABI shapes. Existing
-`*_result` aliases are migration spellings for older Ari code; new code should
-prefer the natural Result-returning names shown in each module guide.
+behavior, and `_raw`/`_raw_result` expose low-level host or ABI shapes. Core
+hosted modules no longer add ordinary `*_result` migration spellings for
+fallible operations; new code should prefer the natural Result-returning names
+shown in each module guide.
 Some lookups model normal absence as `Option` instead of failure; for example,
 `std::env::var(name)` returns `Option[string]` because a missing environment
 variable is common CLI configuration state, while `std::env::get(name)` keeps

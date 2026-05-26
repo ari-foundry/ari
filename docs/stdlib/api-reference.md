@@ -1373,14 +1373,14 @@ fs::can_execute(path)
 fs::permissions(path)
 fs::metadata(path)
 fs::metadata_raw_result(path)
-fs::metadata_result(path)
+fs::metadata(path)
 fs::try_metadata(path)
 fs::symlink_metadata(path)
 fs::symlink_metadata_raw_result(path)
-fs::symlink_metadata_result(path)
+fs::symlink_metadata(path)
 fs::try_symlink_metadata(path)
 fs::file_type_raw_result(path)
-fs::file_type_result(path)
+fs::file_type(path)
 fs::try_file_type(path)
 fs::is_file(path)
 fs::is_dir(path)
@@ -1388,13 +1388,13 @@ fs::is_symlink(path)
 fs::is_other(path)
 fs::mode(path)
 fs::mode_raw_result(path)
-fs::mode_result(path)
+fs::mode(path)
 fs::try_mode(path)
 fs::set_mode(path, mode)
 fs::set_permissions(path, permissions)
 fs::canonicalize(ref mut zone, path)
 fs::canonicalize_optional(ref mut zone, path)
-fs::canonicalize_result(ref mut zone, path)
+fs::canonicalize(ref mut zone, path)
 fs::canonicalize_unchecked(ref mut zone, path)
 fs::try_canonicalize(ref mut zone, path)
 fs::remove(path)
@@ -1415,14 +1415,14 @@ fs::symbolic_link_raw_result(target, link_path)
 fs::symbolic_link_unchecked(target, link_path)
 fs::read_link(ref mut zone, path)
 fs::read_link_optional(ref mut zone, path)
-fs::read_link_result(ref mut zone, path)
+fs::read_link(ref mut zone, path)
 fs::read_link_unchecked(ref mut zone, path)
 fs::try_read_link(ref mut zone, path)
 fs::ensure_file(path)
 fs::create_dir(path)
 fs::create_dir_bool(path)
 fs::create_dir_raw_result(path)
-fs::create_dir_result(path)
+fs::create_dir(path)
 fs::create_dir_unchecked(path)
 fs::ensure_dir(path)
 fs::create_dir_all(path)
@@ -1433,17 +1433,17 @@ fs::ensure_dir_all(path)
 fs::remove_dir(path)
 fs::remove_dir_bool(path)
 fs::remove_dir_raw_result(path)
-fs::remove_dir_result(path)
+fs::remove_dir(path)
 fs::remove_dir_unchecked(path)
 fs::remove_dir_all(path)
 fs::remove_dir_all_bool(path)
 fs::open_dir(path)
 fs::open_dir_raw_result(path)
-fs::open_dir_result(path)
+fs::open_dir(path)
 fs::try_open_dir(path)
 fs::read_dir(ref mut zone, path)
 fs::read_dir_optional(ref mut zone, path)
-fs::read_dir_result(ref mut zone, path)
+fs::read_dir(ref mut zone, path)
 fs::read_dir_unchecked(ref mut zone, path)
 fs::try_read_dir(ref mut zone, path)
 fs::read_dir_names(ref mut zone, path)
@@ -1452,7 +1452,7 @@ fs::read_dir_names_unchecked(ref mut zone, path)
 fs::try_read_dir_names(ref mut zone, path)
 fs::read_dir_entries(ref mut zone, path)
 fs::read_dir_entries_optional(ref mut zone, path)
-fs::read_dir_entries_result(ref mut zone, path)
+fs::read_dir_entries(ref mut zone, path)
 fs::read_dir_entries_unchecked(ref mut zone, path)
 fs::try_read_dir_entries(ref mut zone, path)
 fs::read_dir_next(ref mut zone, dir)
@@ -1464,9 +1464,9 @@ fs::create(path)
 fs::create_optional(path)
 fs::create_unchecked(path)
 fs::remove_raw_result(path)
-fs::remove_result(path)
+fs::remove(path)
 fs::rename_raw_result(source, target)
-fs::rename_result(source, target)
+fs::rename(source, target)
 fs::open_read(path)
 fs::open_write(path)
 fs::open_append(path)
@@ -1492,37 +1492,37 @@ fs::read(ref mut zone, path)
 fs::read_bytes(ref mut zone, path)
 fs::read_optional(ref mut zone, path)
 fs::read_or_default(ref mut zone, path)
-fs::read_result(ref mut zone, path)
+fs::read(ref mut zone, path)
 fs::read_unchecked(ref mut zone, path)
 fs::try_read(ref mut zone, path)
 fs::write(path, values)
 fs::write_bool(path, values)
 fs::write_raw_result(path, values)
-fs::write_result(path, values)
+fs::write(path, values)
 fs::write_string(path, text)
 fs::try_write(path, values)
 fs::append(path, values)
 fs::append_bool(path, values)
 fs::append_raw_result(path, values)
-fs::append_result(path, values)
+fs::append(path, values)
 fs::try_append(path, values)
 fs::truncate(path)
 fs::copy(source, target)
 fs::copy_bool(source, target)
 fs::copy_raw_result(source, target)
-fs::copy_result(source, target)
+fs::copy(source, target)
 fs::try_copy(source, target)
 fs::read_to_string(ref mut zone, path)
 fs::read_to_string_optional(ref mut zone, path)
 fs::read_to_string_or_default(ref mut zone, path)
-fs::read_to_string_result(ref mut zone, path)
+fs::read_to_string(ref mut zone, path)
 fs::read_to_string_unchecked(ref mut zone, path)
 fs::try_read_to_string(ref mut zone, path)
 
 fs::open_raw_result(path, mode)
-fs::open_result(path, mode)
+fs::open(path, mode)
 fs::create_raw_result(path)
-fs::create_result(path)
+fs::create(path)
 fs::open_options()
 OpenOptions::new()
 options.read(enabled)
@@ -1535,7 +1535,7 @@ options.open(path)
 options.open_optional(path)
 options.open_unchecked(path)
 options.open_raw_result(path)
-options.open_result(path)
+options.open(path)
 options.try_open(path)
 
 File::invalid()
@@ -1601,13 +1601,11 @@ read/write, `"r+"` as a familiar alias for `"rw"`, `"w+"` for create/truncate
 read/write, and `"a+"` for read/append. `open_read`, `open_write`, and
 `open_append` are Result-returning wrappers over those mode strings; their
 `_optional`/`try_open_*` partners discard reasons, and their `_unchecked`
-partners preserve the invalid-handle shape. `open_result(path, mode)` and
-`create_result(path)` remain compatibility aliases for existing Result-suffix
-callers. Use `open_raw_result(path, mode)` or `create_raw_result(path)` only
+partners preserve the invalid-handle shape. Use
+`open_raw_result(path, mode)` or `create_raw_result(path)` only
 for compatibility callers that still need `Result[File, i64]`.
 Use `read(ref mut zone, path)` or `read_to_string(ref mut zone, path)` when a
-missing file should return `Error(NotFound)`. `read_result` and
-`read_to_string_result` are migration aliases for older Result-suffix callers;
+missing file should return `Error(NotFound)`.
 `read_optional`/`read_to_string_optional` and the older `try_*` helpers discard
 failure reasons, `_or_default` keeps the old empty-string fallback, and
 `_unchecked` asserts on failure.
@@ -1616,8 +1614,7 @@ Use `OpenOptions::new()` or `fs::open_options()` when named policy is clearer:
 new options value, `options.try_open(path)` returns `Option[File]`, and
 `options.open(path)` returns `Result[File, Error]`. `options.open_optional`
 and `options.try_open(path)` discard failures into `None`; `options.open_unchecked`
-keeps the old invalid-handle sentinel; and `options.open_result(path)` remains
-a compatibility alias.
+keeps the old invalid-handle sentinel.
 `options.open_raw_result(path)` keeps the raw integer compatibility `Result`
 shape.
 `create_new(true)` is exclusive creation; `append(true).truncate(true)` and
@@ -1647,14 +1644,13 @@ failures because filesystem access can change after the check.
 `try_metadata(path)` returns `Option[Metadata]`, using `None` for missing or
 unstatable paths. `metadata(path)` returns `Result[Metadata, Error]` and
 preserves errno-derived failure kinds. These helpers follow symbolic links.
-`metadata_result(path)` is a migration alias, and `metadata_raw_result(path)`
-keeps the raw compatibility bridge.
+`metadata_raw_result(path)` keeps the raw compatibility bridge.
 `try_symlink_metadata(path)` and `symlink_metadata(path)` use no-follow
 metadata lookup, so a symbolic link reports `FileKind::Symlink` and its stored
 target byte length instead of the target file's metadata. The `Permissions`
 field is still the same access-style snapshot as `permissions(path)`; portable
 symlink permission-bit policy is not part of this slice.
-`symlink_metadata_result(path)` and `symlink_metadata_raw_result(path)` are the
+`symlink_metadata(path)` and `symlink_metadata_raw_result(path)` are the
 direct `Error` and raw compatibility versions of that no-follow lookup.
 `Metadata::len` reports host byte length, `Metadata::file_type` returns
 `FileKind` (`Regular`, `Directory`, `Symlink`, or `Other`), and
@@ -1664,7 +1660,7 @@ direct `Error` and raw compatibility versions of that no-follow lookup.
 status-change time respectively. `changed` is not a portable creation time.
 `try_file_type(path)` returns just `Option[FileKind]` without building the full
 metadata/permission snapshot.
-`file_type_result(path)` returns `Result[FileKind, Error]` when the caller
+`file_type(path)` returns `Result[FileKind, Error]` when the caller
 needs a precise failure reason, and `file_type_raw_result(path)` keeps raw
 errno compatibility.
 `fs::is_file(path)`, `fs::is_dir(path)`, `fs::is_symlink(path)`, and
@@ -1682,19 +1678,17 @@ permission bits, and `mode(path)` returns `Result[i64, Error]`. Use
 the call site. `Permissions::to_mode`
 maps the three booleans to user/group/other bits, so `read_only()` maps to
 `0444` and `all()` maps to `0777`.
-`mode_result(path)` is a migration alias; `mode_raw_result(path)` is the raw
-compatibility form.
+`mode_raw_result(path)` is the raw compatibility form.
 `canonicalize(ref mut zone, path)` returns `Result[String, Error]` for host
 `realpath` resolution. The returned string is absolute, owned by the provided
 zone, and follows the host symlink policy. `canonicalize_optional` and
-`try_canonicalize` discard the reason, `canonicalize_unchecked` asserts on
-failure, and `canonicalize_result` is a migration alias.
+`try_canonicalize` discard the reason, and `canonicalize_unchecked` asserts on
+failure.
 `read_link(ref mut zone, path)` returns `Result[String, Error]` containing the
 stored target bytes of a symbolic link. Use `read_link` when code needs the
 link text itself; use `canonicalize` when code wants the host-resolved absolute
-path. `read_link_optional` and `try_read_link` discard the reason,
-`read_link_unchecked` asserts on failure, and `read_link_result` is a migration
-alias.
+path. `read_link_optional` and `try_read_link` discard the reason, and
+`read_link_unchecked` asserts on failure.
 `read_byte` returns an `i64` byte value or `-1` at EOF/failure, and
 `write_byte` returns `Result[(), Error]`. `write_bytes` writes a `Slice[u8]`
 and returns `Result[i64, Error]` with the byte count.
@@ -1703,8 +1697,8 @@ and returns `Result[i64, Error]` with the byte count.
 `write_string(path, text)` writes Ari's byte-oriented `String` and returns
 `Result[(), Error]` after discarding the byte count.
 `append(path, values)` creates if needed and appends the whole slice with the
-same `Result[i64, Error]` policy. `write_result` and `append_result` are
-migration aliases; `write_raw_result` and `append_raw_result` preserve the raw
+same `Result[i64, Error]` policy. `write_raw_result` and
+`append_raw_result` preserve the raw
 `Result[i64, i64]` compatibility shape. `try_write(path, values)` and
 `try_append(path, values)` are `Option[i64]` wrappers, while
 `write_bool(path, values)` and `append_bool(path, values)` are boolean
@@ -1719,30 +1713,27 @@ creates or empties a file. `try_copy(source, target)` streams bytes from the
 source handle into the target opened with truncating semantics and returns
 `Some(byte_count)` on success or `None` on open/write/close failure.
 `copy(source, target)` is the natural `Result[i64, Error]` copy helper,
-`copy_result(source, target)` is its migration alias,
 `copy_raw_result(source, target)` keeps the raw `Result[i64, i64]` bridge, and
 `copy_bool(source, target)` is the boolean compatibility wrapper over
 `try_copy`. `rename(source, target)` moves or renames one path according to the
 host runtime's current behavior and returns `Result[(), Error]`;
-`rename_result` is a migration alias, `rename_bool` is the compatibility
+`rename_bool` is the compatibility
 boolean shape, and `rename_unchecked` is the direct runtime hook.
 `remove(path)`/`remove_file(path)`, `create_dir(path)`, `remove_dir(path)`,
 `create_dir_all(path)`, and `remove_dir_all(path)` are natural `Result[(),
-Error]` helpers. Their `*_result` names are migration aliases where present,
-their `*_bool` names keep old boolean compatibility, and their `*_raw_result`
+Error]` helpers. Their `*_bool` names keep old boolean compatibility, and their `*_raw_result`
 or `*_unchecked` forms are only for compatibility/runtime-hook code.
 `ensure_dir(path)` and `ensure_dir_all(path)` stay boolean setup helpers.
 `hard_link(existing, link_path)` and `symbolic_link(target, link_path)` are
 also Result-first; their `_bool`, `_unchecked`, and `_raw_result` variants are
 the non-default compatibility forms.
-`open_dir_result(path)` returns `Result[Dir, Error]` and
+`open_dir(path)` returns `Result[Dir, Error]` and
 `open_dir_raw_result(path)` keeps raw compatibility. `try_open_dir(path)`
 returns `Option[Dir]`, `dir.next(ref mut zone)` returns the next entry name
 while skipping `"."` and `".."`, and `dir.close()` closes the handle.
 `read_dir(ref mut zone, path)` opens, collects `DirEntry` values, closes, and
-returns `Result[Vec[DirEntry], Error]`. `read_dir_result(ref mut zone, path)`
-is a migration alias, `read_dir_optional` discards the reason, and
-`read_dir_unchecked` asserts on failure. Use `read_dir_names(ref mut zone,
+returns `Result[Vec[DirEntry], Error]`. `read_dir_optional` discards the reason,
+and `read_dir_unchecked` asserts on failure. Use `read_dir_names(ref mut zone,
 path)` for the old `Vec[String]` name-list shape; `try_read_dir`,
 `try_read_dir_names`, `read_dir_names_optional`, and `read_dir_names_unchecked`
 are the absence-only and unchecked name-list compatibility helpers. Use

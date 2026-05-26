@@ -47,7 +47,7 @@ fn main() -> i64 {
   var score = 0;
 
   if result_error_matches(fs::remove(missing_path), error::NotFound, 2) &&
-    result_error_matches(fs::remove_result(missing_path), error::NotFound, 2) &&
+    result_error_matches(fs::remove(missing_path), error::NotFound, 2) &&
     raw_result_error_matches(fs::remove_raw_result(missing_path), error::NotFound, 2) {
     score = score + 1;
   }
@@ -55,7 +55,7 @@ fn main() -> i64 {
     score = score + 2;
   }
   if result_error_matches(fs::create_dir(dir_path), error::AlreadyExists, 17) &&
-    result_error_matches(fs::create_dir_result(dir_path), error::AlreadyExists, 17) &&
+    result_error_matches(fs::create_dir(dir_path), error::AlreadyExists, 17) &&
     raw_result_error_matches(fs::create_dir_raw_result(dir_path), error::AlreadyExists, 17) {
     score = score + 4;
   }
@@ -63,7 +63,7 @@ fn main() -> i64 {
     score = score + 8;
   }
   if result_error_matches(fs::remove_dir(dir_path), error::NotFound, 2) &&
-    result_error_matches(fs::remove_dir_result(dir_path), error::NotFound, 2) &&
+    result_error_matches(fs::remove_dir(dir_path), error::NotFound, 2) &&
     raw_result_error_matches(fs::remove_dir_raw_result(dir_path), error::NotFound, 2) {
     score = score + 16;
   }
@@ -73,10 +73,10 @@ fn main() -> i64 {
     !fs::exists(source_path) && fs::exists(target_path) {
     score = score + 32;
   }
-  assert(fs::rename_result(target_path, source_path).is_ok());
-  assert(fs::rename_result(source_path, target_path).is_ok());
+  assert(fs::rename(target_path, source_path).is_ok());
+  assert(fs::rename(source_path, target_path).is_ok());
   if result_error_matches(fs::rename(missing_path, source_path), error::NotFound, 2) &&
-    result_error_matches(fs::rename_result(missing_path, source_path), error::NotFound, 2) &&
+    result_error_matches(fs::rename(missing_path, source_path), error::NotFound, 2) &&
     raw_result_error_matches(fs::rename_raw_result(missing_path, source_path), error::NotFound, 2) {
     score = score + 64;
   }

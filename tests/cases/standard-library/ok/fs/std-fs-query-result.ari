@@ -1,6 +1,6 @@
 // Covers direct Error-returning filesystem query helpers. The natural names
-// return Result values; *_optional, try_*, *_unchecked, and *_result spellings
-// remain compatibility forms for non-default behavior and migration.
+// return Result values; *_optional, try_*, and *_unchecked spellings remain
+// compatibility forms for non-default behavior.
 fn has_name(values: ref std::vec::Vec[std::string::String], expected: string) -> bool {
   var index = 0;
   while index < values.len() {
@@ -47,7 +47,7 @@ fn main() -> i64 {
   match fs::metadata(file_path) {
     std::Ok(file_info) => {
       if file_info.len() == 3 && file_info.is_file() &&
-         fs::metadata_result(file_path).is_ok() &&
+         fs::metadata(file_path).is_ok() &&
          fs::metadata_optional(file_path).is_some() &&
          fs::try_metadata(file_path).is_some() {
         score = score + 1;
@@ -60,7 +60,7 @@ fn main() -> i64 {
     std::Ok(kind) => {
       match kind {
         fs::Regular => {
-          if fs::file_type_result(file_path).is_ok() &&
+          if fs::file_type(file_path).is_ok() &&
              fs::file_type_optional(file_path).is_some() &&
              fs::try_file_type(file_path).is_some() {
             score = score + 2;
@@ -75,7 +75,7 @@ fn main() -> i64 {
   match fs::mode(file_path) {
     std::Ok(mode) => {
       if mode >= 0 &&
-         fs::mode_result(file_path).is_ok() &&
+         fs::mode(file_path).is_ok() &&
          fs::mode_optional(file_path).is_some() &&
          fs::try_mode(file_path).is_some() {
         score = score + 4;
@@ -87,7 +87,7 @@ fn main() -> i64 {
   match fs::metadata(missing) {
     std::Ok(_) => {}
     std::Err(reason) => {
-      if reason.is_kind(error::NotFound) && fs::metadata_result(missing).is_err() {
+      if reason.is_kind(error::NotFound) && fs::metadata(missing).is_err() {
         score = score + 8;
       }
     }
@@ -96,7 +96,7 @@ fn main() -> i64 {
   match fs::symlink_metadata(link_path) {
     std::Ok(link_info) => {
       if link_info.is_symlink() &&
-         fs::symlink_metadata_result(link_path).is_ok() &&
+         fs::symlink_metadata(link_path).is_ok() &&
          fs::symlink_metadata_optional(link_path).is_some() &&
          fs::try_symlink_metadata(link_path).is_some() {
         score = score + 16;
@@ -108,7 +108,7 @@ fn main() -> i64 {
   match fs::read_link(ref mut zone, link_path) {
     std::Ok(target) => {
       if target.equals_text(file_path) &&
-         fs::read_link_result(ref mut zone, link_path).is_ok() &&
+         fs::read_link(ref mut zone, link_path).is_ok() &&
          fs::read_link_optional(ref mut zone, link_path).is_some() {
         score = score + 32;
       }
@@ -120,7 +120,7 @@ fn main() -> i64 {
     std::Ok(resolved) => {
       if path::is_absolute(resolved.as_slice()) &&
          resolved.ends_with("item.txt") &&
-         fs::canonicalize_result(ref mut zone, file_path).is_ok() &&
+         fs::canonicalize(ref mut zone, file_path).is_ok() &&
          fs::canonicalize_optional(ref mut zone, file_path).is_some() {
         score = score + 64;
       }
@@ -129,7 +129,7 @@ fn main() -> i64 {
   }
 
   var directory_results_ok = false;
-  match fs::open_dir_result(dir_path) {
+  match fs::open_dir(dir_path) {
     std::Ok(dir) => {
       directory_results_ok = dir.is_open() && dir.close().is_ok();
     }
@@ -150,9 +150,9 @@ fn main() -> i64 {
       directory_results_ok = directory_results_ok &&
         has_entry(ref entries, "item.link") &&
         fs::read_dir(ref mut zone, dir_path).is_ok() &&
-        fs::read_dir_result(ref mut zone, dir_path).is_ok() &&
+        fs::read_dir(ref mut zone, dir_path).is_ok() &&
         fs::read_dir_optional(ref mut zone, dir_path).is_some() &&
-        fs::read_dir_entries_result(ref mut zone, dir_path).is_ok() &&
+        fs::read_dir_entries(ref mut zone, dir_path).is_ok() &&
         fs::read_dir_entries_optional(ref mut zone, dir_path).is_some();
     }
     std::Err(_) => {

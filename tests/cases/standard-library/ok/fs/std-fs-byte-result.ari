@@ -50,7 +50,7 @@ fn main() -> i64 {
 
   var first = [65 as u8, 66 as u8, 67 as u8];
   if byte_result_ok(fs::write(path, first.as_slice()), 3) &&
-    fs::write_result(path, first.as_slice()).is_ok() {
+    fs::write(path, first.as_slice()).is_ok() {
     score = score + 1;
   }
   let after_write = fs::read_unchecked(ref mut zone, path);
@@ -68,18 +68,15 @@ fn main() -> i64 {
   }
 
   if byte_result_error(fs::write(missing_child, first.as_slice()), error::NotFound, 2) &&
-    byte_result_error(fs::write_result(missing_child, first.as_slice()), error::NotFound, 2) &&
     byte_raw_result_error(fs::write_raw_result(missing_child, first.as_slice()), error::NotFound, 2) {
     score = score + 16;
   }
   if byte_result_error(fs::append(missing_child, tail.as_slice()), error::NotFound, 2) &&
-    byte_result_error(fs::append_result(missing_child, tail.as_slice()), error::NotFound, 2) &&
     byte_raw_result_error(fs::append_raw_result(missing_child, tail.as_slice()), error::NotFound, 2) {
     score = score + 32;
   }
 
-  if byte_result_ok(fs::copy(path, copy_path), 5) &&
-    byte_result_ok(fs::copy_result(path, copy_path), 5) {
+  if byte_result_ok(fs::copy(path, copy_path), 5) {
     score = score + 64;
   }
   let copied = fs::read_unchecked(ref mut zone, copy_path);
@@ -100,7 +97,6 @@ fn main() -> i64 {
   }
 
   assert(byte_result_error(fs::copy(missing_source, copy_path), error::NotFound, 2));
-  assert(byte_result_error(fs::copy_result(missing_source, copy_path), error::NotFound, 2));
   assert(byte_raw_result_error(fs::copy_raw_result(missing_source, copy_path), error::NotFound, 2));
   cleanup(path, copy_path, missing_source, missing_parent);
   zone::destroy(zone);

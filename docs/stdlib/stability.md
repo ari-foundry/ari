@@ -65,7 +65,7 @@ until it has source, tests, and docs.
 Good:
 
 ```text
-std::fs::read_result(path) -> Result[String, Error]
+std::fs::read(path) -> Result[String, Error]
 ```
 
 This makes failure explicit and uses the shared error vocabulary.
