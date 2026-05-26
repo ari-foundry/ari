@@ -270,7 +270,7 @@ algorithms.
   constructors once `Hash`/`Eq` and `Ord` dispatch policy is stronger. Hash
   containers should derive default policy from `Hash + Eq`; tree and heap
   containers should derive default policy from `Ord`.
-- Grow `std::encoding` with URL-safe base64 or fallible owned decoders after
-  zone-backed enum payloads and richer error values are supported.
+- Grow `std::encoding` with richer structured decode errors after the current
+  hex, standard base64, MIME base64, and URL-safe base64 codecs.
 - Keep compression optional unless Ari decides that a specific codec belongs
   in the core distribution.

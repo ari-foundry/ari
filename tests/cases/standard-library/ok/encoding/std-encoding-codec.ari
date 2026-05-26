@@ -368,13 +368,110 @@ fn check_base64_url(zone: ref mut Zone) -> bool {
   return true;
 }
 
+fn check_base64_mime(zone: ref mut Zone) -> bool {
+  var bytes = std::string::new(zone, 60);
+  var index = 0;
+  while index < 60 {
+    bytes.push_in(zone, 0u8);
+    index = index + 1;
+  }
+
+  var encoded = encoding::encode_base64_mime_in(zone, bytes.as_slice());
+  if encoding::base64_mime_encoded_len(bytes.as_slice()) != 82 {
+    return false;
+  }
+  if encoded.len() != 82 {
+    return false;
+  }
+  if encoded.get(75) != (65 as u8) {
+    return false;
+  }
+  if encoded.get(76) != (13 as u8) {
+    return false;
+  }
+  if encoded.get(77) != (10 as u8) {
+    return false;
+  }
+  if encoded.get(78) != (65 as u8) {
+    return false;
+  }
+
+  if encoding::base64_decoded_len(encoded.as_slice()).is_ok() {
+    return false;
+  }
+  if encoding::base64_mime_decoded_len(encoded.as_slice()).unwrap_or(0) != 60 {
+    return false;
+  }
+  if encoding::base64_mime_decoded_len_optional(encoded.as_slice()).unwrap_or(0) != 60 {
+    return false;
+  }
+
+  var decoded = encoding::decode_base64_mime_unchecked_in(zone, encoded.as_slice());
+  if decoded.len() != 60 {
+    return false;
+  }
+  if decoded.get(0) != (0 as u8) || decoded.get(59) != (0 as u8) {
+    return false;
+  }
+
+  var folded_man = [84u8, 13u8, 10u8, 87u8, 70u8, 117u8];
+  match encoding::decode_base64_mime_optional_in(zone, folded_man.as_slice()) {
+    std::Some(value) => {
+      if value.len() != 3 || value.get(0) != (77 as u8) || value.get(2) != (110 as u8) {
+        return false;
+      }
+    }
+    std::None => {
+      return false;
+    }
+  }
+
+  var spaced_ma = [84u8, 87u8, 69u8, 61u8, 13u8, 10u8];
+  match encoding::decode_base64_mime_in(zone, spaced_ma.as_slice()) {
+    std::Ok(value2) => {
+      if value2.len() != 2 || value2.get(0) != (77 as u8) || value2.get(1) != (97 as u8) {
+        return false;
+      }
+    }
+    std::Err(_) => {
+      return false;
+    }
+  }
+
+  var invalid_mime = [84u8, 36u8, 87u8, 70u8, 117u8];
+  if encoding::can_decode_base64_mime(invalid_mime.as_slice()) {
+    return false;
+  }
+  match encoding::try_decode_base64_mime_in(zone, invalid_mime.as_slice()) {
+    std::Some(_) => {
+      return false;
+    }
+    std::None => {}
+  }
+  match encoding::decode_base64_mime(zone, invalid_mime.as_slice()) {
+    std::Ok(_) => {
+      return false;
+    }
+    std::Err(reason) => {
+      if !reason.is_kind(error::InvalidData) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 fn main() -> i64 {
-  var zone = zone::create(512);
+  var zone = zone::create(4096);
   if check_hex(ref mut zone) {
     if check_base64(ref mut zone) {
       if check_base64_url(ref mut zone) {
+        if check_base64_mime(ref mut zone) {
+          zone::destroy(zone);
+          return 13;
+        }
         zone::destroy(zone);
-        return 13;
+        return 4;
       }
       zone::destroy(zone);
       return 3;

@@ -4027,6 +4027,16 @@ encoding::decode_base64_in(ref mut zone, bytes)
 encoding::decode_base64_optional_in(ref mut zone, bytes)
 encoding::try_decode_base64_in(ref mut zone, bytes)
 encoding::decode_base64_unchecked_in(ref mut zone, bytes)
+encoding::base64_mime_encoded_len(bytes)
+encoding::encode_base64_mime_in(ref mut zone, bytes)
+encoding::base64_mime_decoded_len(bytes)
+encoding::base64_mime_decoded_len_optional(bytes)
+encoding::can_decode_base64_mime(bytes)
+encoding::decode_base64_mime(ref mut zone, bytes)
+encoding::decode_base64_mime_in(ref mut zone, bytes)
+encoding::decode_base64_mime_optional_in(ref mut zone, bytes)
+encoding::try_decode_base64_mime_in(ref mut zone, bytes)
+encoding::decode_base64_mime_unchecked_in(ref mut zone, bytes)
 encoding::base64_url_encoded_len(bytes)
 encoding::base64_url_unpadded_encoded_len(bytes)
 encoding::encode_base64_url_in(ref mut zone, bytes)
@@ -4059,11 +4069,13 @@ returns `Result[String, Utf8Error]` for one Unicode scalar, and
 or the compatibility `try_encode_utf8_in` alias when invalid scalars should be
 `None`; use `encode_utf8_unchecked_in` only for trusted scalars.
 Hex encoding emits lowercase digits and decoding accepts ASCII hex digits.
-Base64 uses the standard `+`/`/` alphabet with `=` padding. URL-safe base64
-uses `-`/`_`; the padded encoder keeps `=`, the unpadded encoder omits it, and
-the URL-safe decoder accepts both padded and unpadded URL-safe input while
+Base64 uses the standard `+`/`/` alphabet with `=` padding. MIME base64 uses
+the standard alphabet, inserts CRLF after each 76 encoded characters, and
+ignores ASCII space, tab, CR, and LF while decoding. URL-safe base64 uses
+`-`/`_`; the padded encoder keeps `=`, the unpadded encoder omits it, and the
+URL-safe decoder accepts both padded and unpadded URL-safe input while
 rejecting the standard alphabet. Decoders use natural names such as
-`decode_hex`, `decode_base64`, and `decode_base64_url` for
+`decode_hex`, `decode_base64`, `decode_base64_mime`, and `decode_base64_url` for
 `Result[String, Error]`. The older `decode_*_in` names are compatibility
 spellings for the same explicit-zone operations, `_optional_in` or older
 `try_decode_*_in` aliases return `Option[String]`, and `_unchecked_in` keeps

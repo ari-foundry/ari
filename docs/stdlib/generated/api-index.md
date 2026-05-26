@@ -24,21 +24,21 @@ platform notes.
 
 ## Summary
 
-- API entries: `2999`
+- API entries: `3009`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
 | `alloc` | 842 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 757 | stable candidate |
+| `core` | 767 | stable candidate |
 | `hosted` | 1213 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 25 |
-| `fn` | 1066 |
+| `fn` | 1076 |
 | `method` | 1512 |
 | `module` | 39 |
 | `struct` | 161 |
@@ -62,7 +62,7 @@ platform notes.
 | `std::collections` | `alloc` | 364 |
 | `std::context` | `hosted` | 20 |
 | `std::convert` | `core` | 14 |
-| `std::encoding` | `core` | 72 |
+| `std::encoding` | `core` | 82 |
 | `std::env` | `hosted` | 72 |
 | `std::error` | `core` | 37 |
 | `std::fmt` | `core` | 41 |
@@ -1303,15 +1303,23 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::encoding::base64_decoded_len` | check-prelude std-encoding-codec Result-returning standard base64 decoded length validator; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::base64_decoded_len_optional` | check-prelude std-encoding-codec Option-returning standard base64 decoded length compatibility validator; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::base64_encoded_len` | check-prelude std-encoding-codec standard base64 encoded length helper; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::base64_mime_decoded_len` | check-prelude std-encoding-codec Result-returning MIME base64 decoded length validator; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::base64_mime_decoded_len_optional` | check-prelude std-encoding-codec Option-returning MIME base64 decoded length compatibility validator; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::base64_mime_encoded_len` | check-prelude std-encoding-codec line-wrapped MIME base64 encoded length helper; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::base64_url_decoded_len` | check-prelude std-encoding-codec Result-returning URL-safe base64 decoded length validator; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::base64_url_decoded_len_optional` | check-prelude std-encoding-codec Option-returning URL-safe base64 decoded length compatibility validator; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::base64_url_encoded_len` | check-prelude std-encoding-codec padded URL-safe base64 encoded length helper; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::base64_url_unpadded_encoded_len` | check-prelude std-encoding-codec unpadded URL-safe base64 encoded length helper; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::can_decode_base64` | check-prelude std-encoding-codec standard base64 validation guard; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::can_decode_base64_mime` | check-prelude std-encoding-codec MIME base64 validation guard; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::can_decode_base64_url` | check-prelude std-encoding-codec URL-safe base64 validation guard; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::can_decode_hex` | check-prelude std-encoding-codec hexadecimal validation guard; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::decode_base64` | check-prelude std-encoding-codec Result-returning standard base64 zone-backed decoder; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::decode_base64_in` | check-prelude std-encoding-codec Result-returning standard base64 zone-backed decoder; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::decode_base64_mime` | check-prelude std-encoding-codec Result-returning MIME base64 zone-backed decoder; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::decode_base64_mime_in` | check-prelude std-encoding-codec Result-returning MIME base64 zone-backed decoder; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::decode_base64_mime_optional_in` | check-prelude std-encoding-codec Option-returning MIME base64 zone-backed compatibility decoder; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::decode_base64_mime_unchecked_in` | check-prelude std-encoding-codec asserting MIME base64 zone-backed compatibility decoder; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::decode_base64_optional_in` | check-prelude std-encoding-codec Option-returning standard base64 zone-backed compatibility decoder; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::decode_base64_unchecked_in` | check-prelude std-encoding-codec asserting standard base64 zone-backed compatibility decoder; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::decode_base64_url` | check-prelude std-encoding-codec Result-returning URL-safe base64 zone-backed decoder; docs/stdlib/modules/encoding.md |
@@ -1327,6 +1335,7 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::encoding::decode_utf8_optional_in` | check-prelude std-encoding-text Option-returning UTF-8 byte-string compatibility decoder; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::decode_utf8_unchecked_in` | check-prelude std-encoding-text asserting UTF-8 byte-string compatibility decoder; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::encode_base64_in` | check-prelude std-encoding-codec standard base64 zone-backed encoder; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::encode_base64_mime_in` | check-prelude std-encoding-codec line-wrapped MIME base64 zone-backed encoder; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::encode_base64_url_in` | check-prelude std-encoding-codec padded URL-safe base64 zone-backed encoder; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::encode_base64_url_unpadded_in` | check-prelude std-encoding-codec unpadded URL-safe base64 zone-backed encoder; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::encode_hex_in` | check-prelude std-encoding-codec lowercase hexadecimal zone-backed encoder; docs/stdlib/modules/encoding.md |
@@ -1342,6 +1351,7 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::encoding::is_utf16` | check-prelude std-encoding-text UTF-16 boolean validation; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::is_utf8` | check-prelude std-encoding-text UTF-8 boolean validation; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::try_decode_base64_in` | check-prelude std-encoding-codec Option-returning standard base64 compatibility decoder; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::try_decode_base64_mime_in` | check-prelude std-encoding-codec Option-returning MIME base64 compatibility decoder; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::try_decode_base64_url_in` | check-prelude std-encoding-codec Option-returning URL-safe base64 compatibility decoder; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::try_decode_hex_in` | check-prelude std-encoding-codec Option-returning hexadecimal compatibility decoder; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::try_encode_utf8_in` | check-prelude std-encoding-utf8-codepoints Option-returning UTF-8 scalar compatibility encoder; docs/stdlib/modules/encoding.md |

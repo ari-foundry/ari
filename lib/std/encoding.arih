@@ -208,6 +208,34 @@ fn base64_url_value_unchecked(value: u8) -> i64 {
   return 0;
 }
 
+fn is_base64_mime_ignored(value: u8) -> bool {
+  if value == '\r' {
+    return true;
+  }
+  if value == '\n' {
+    return true;
+  }
+  if value == ' ' {
+    return true;
+  }
+  return value == '\t';
+}
+
+fn push_base64_mime_byte(
+  output: ref mut std::string::String,
+  line_len: i64,
+  value: u8
+) -> i64 {
+  var next_line_len = line_len;
+  if next_line_len == 76 {
+    output.push('\r');
+    output.push('\n');
+    next_line_len = 0;
+  }
+  output.push(value);
+  return next_line_len + 1;
+}
+
 fn is_utf8_continuation(value: u8) -> bool {
   if value < (128 as u8) {
     return false;
@@ -881,6 +909,14 @@ pub fn base64_url_unpadded_encoded_len(values: std::Slice[u8]) -> i64 {
   return full + 3;
 }
 
+pub fn base64_mime_encoded_len(values: std::Slice[u8]) -> i64 {
+  let encoded = base64_encoded_len(values);
+  if encoded == 0 {
+    return 0;
+  }
+  return encoded + (((encoded - 1) / 76) * 2);
+}
+
 pub fn encode_base64_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::string::String {
   var output = std::string::new(zone, base64_encoded_len(values));
   var index = 0;
@@ -906,6 +942,38 @@ pub fn encode_base64_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::stri
       output.push_in(zone, base64_digit(third % 64));
     } else {
       output.push_in(zone, '=');
+    }
+    index = index + 3;
+  }
+  return output;
+}
+
+pub fn encode_base64_mime_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::string::String {
+  var output = std::string::new(zone, base64_mime_encoded_len(values));
+  var index = 0;
+  var line_len = 0;
+  while index < values.len {
+    let first = values[index] as i64;
+    var second = 0;
+    var third = 0;
+    if index + 1 < values.len {
+      second = values[index + 1] as i64;
+    }
+    if index + 2 < values.len {
+      third = values[index + 2] as i64;
+    }
+
+    line_len = push_base64_mime_byte(ref mut output, line_len, base64_digit(first / 4));
+    line_len = push_base64_mime_byte(ref mut output, line_len, base64_digit(((first % 4) * 16) + (second / 16)));
+    if index + 1 < values.len {
+      line_len = push_base64_mime_byte(ref mut output, line_len, base64_digit(((second % 16) * 4) + (third / 64)));
+    } else {
+      line_len = push_base64_mime_byte(ref mut output, line_len, '=');
+    }
+    if index + 2 < values.len {
+      line_len = push_base64_mime_byte(ref mut output, line_len, base64_digit(third % 64));
+    } else {
+      line_len = push_base64_mime_byte(ref mut output, line_len, '=');
     }
     index = index + 3;
   }
@@ -1071,8 +1139,65 @@ pub fn base64_url_decoded_len_optional(values: std::Slice[u8]) -> std::Option[i6
   return std::Some<i64>(decoded);
 }
 
+pub fn base64_mime_decoded_len_optional(values: std::Slice[u8]) -> std::Option[i64] {
+  var compact_len = 0;
+  var index = 0;
+  while index != values.len {
+    if !is_base64_mime_ignored(values[index]) {
+      compact_len = compact_len + 1;
+    }
+    index = index + 1;
+  }
+
+  if compact_len == 0 {
+    return std::Some<i64>(0);
+  }
+  if compact_len % 4 != 0 {
+    return std::None<i64>();
+  }
+
+  var padding = 0;
+  var seen_padding = false;
+  index = 0;
+  while index != values.len {
+    let byte = values[index];
+    if !is_base64_mime_ignored(byte) {
+      if is_base64_padding(byte) {
+        seen_padding = true;
+        padding = padding + 1;
+        if padding > 2 {
+          return std::None<i64>();
+        }
+      } else {
+        if seen_padding {
+          return std::None<i64>();
+        }
+        match base64_value(byte) {
+          std::Some(_) => {}
+          std::None => {
+            return std::None<i64>();
+          }
+        }
+      }
+    }
+    index = index + 1;
+  }
+  return std::Some<i64>(((compact_len / 4) * 3) - padding);
+}
+
 pub fn base64_decoded_len(values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
   match base64_decoded_len_optional(values) {
+    std::Some(value) => {
+      return std::Ok<i64, std::error::Error>(value);
+    }
+    std::None => {
+      return std::Err<i64, std::error::Error>(invalid_data_error());
+    }
+  }
+}
+
+pub fn base64_mime_decoded_len(values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+  match base64_mime_decoded_len_optional(values) {
     std::Some(value) => {
       return std::Ok<i64, std::error::Error>(value);
     }
@@ -1089,6 +1214,17 @@ pub fn base64_url_decoded_len(values: std::Slice[u8]) -> std::Result[i64, std::e
     }
     std::None => {
       return std::Err<i64, std::error::Error>(invalid_data_error());
+    }
+  }
+}
+
+pub fn can_decode_base64_mime(values: std::Slice[u8]) -> bool {
+  match base64_mime_decoded_len_optional(values) {
+    std::Some(_) => {
+      return true;
+    }
+    std::None => {
+      return false;
     }
   }
 }
@@ -1113,6 +1249,18 @@ pub fn can_decode_base64_url(values: std::Slice[u8]) -> bool {
       return false;
     }
   }
+}
+
+pub fn decode_base64_mime_unchecked_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::string::String {
+  var compact = std::string::new(zone, values.len);
+  var index = 0;
+  while index != values.len {
+    if !is_base64_mime_ignored(values[index]) {
+      compact.push_in(zone, values[index]);
+    }
+    index = index + 1;
+  }
+  return decode_base64_unchecked_in(zone, compact.as_slice());
 }
 
 pub fn decode_base64_unchecked_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::string::String {
@@ -1207,6 +1355,13 @@ pub fn decode_base64_url_unchecked_in(zone: ref mut Zone, values: std::Slice[u8]
   return output;
 }
 
+pub fn decode_base64_mime_optional_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::Option[std::string::String] {
+  if !can_decode_base64_mime(values) {
+    return std::None<std::string::String>();
+  }
+  return std::Some<std::string::String>(decode_base64_mime_unchecked_in(zone, values));
+}
+
 pub fn decode_base64_optional_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::Option[std::string::String] {
   if !can_decode_base64(values) {
     return std::None<std::string::String>();
@@ -1221,6 +1376,10 @@ pub fn decode_base64_url_optional_in(zone: ref mut Zone, values: std::Slice[u8])
   return std::Some<std::string::String>(decode_base64_url_unchecked_in(zone, values));
 }
 
+pub fn try_decode_base64_mime_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::Option[std::string::String] {
+  return decode_base64_mime_optional_in(zone, values);
+}
+
 pub fn try_decode_base64_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::Option[std::string::String] {
   return decode_base64_optional_in(zone, values);
 }
@@ -1229,11 +1388,22 @@ pub fn try_decode_base64_url_in(zone: ref mut Zone, values: std::Slice[u8]) -> s
   return decode_base64_url_optional_in(zone, values);
 }
 
+pub fn decode_base64_mime_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::Result[std::string::String, std::error::Error] {
+  if !can_decode_base64_mime(values) {
+    return std::Err<std::string::String, std::error::Error>(invalid_data_error());
+  }
+  return std::Ok<std::string::String, std::error::Error>(decode_base64_mime_unchecked_in(zone, values));
+}
+
 pub fn decode_base64_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::Result[std::string::String, std::error::Error] {
   if !can_decode_base64(values) {
     return std::Err<std::string::String, std::error::Error>(invalid_data_error());
   }
   return std::Ok<std::string::String, std::error::Error>(decode_base64_unchecked_in(zone, values));
+}
+
+pub fn decode_base64_mime(zone: ref mut Zone, values: std::Slice[u8]) -> std::Result[std::string::String, std::error::Error] {
+  return decode_base64_mime_in(zone, values);
 }
 
 pub fn decode_base64(zone: ref mut Zone, values: std::Slice[u8]) -> std::Result[std::string::String, std::error::Error] {
