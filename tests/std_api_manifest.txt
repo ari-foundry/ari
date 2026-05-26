@@ -18,6 +18,7 @@ enum std::log::Level|check-prelude std-log-basic source logging level enum; docs
 enum std::net::Shutdown|check-prelude std-net-tcp-loopback and std-net-unix-socket stream shutdown mode enum; docs/stdlib/modules/net.md
 enum std::option::OptionMut[T]|check-prelude prelude-option-result-ref-access mutable borrowed option payload view union; docs/stdlib/modules/option-result.md
 enum std::option::OptionRef[T]|check-prelude prelude-option-result-ref-access shared borrowed option payload view union; docs/stdlib/modules/option-result.md
+enum std::path::ComponentKind|check-prelude std-path-components kinded path component categories; docs/stdlib/modules/path.md
 enum std::result::ResultMut[T, E]|check-prelude prelude-option-result-ref-access mutable borrowed result payload view union; docs/stdlib/modules/option-result.md
 enum std::result::ResultRef[T, E]|check-prelude prelude-option-result-ref-access shared borrowed result payload view union; docs/stdlib/modules/option-result.md
 enum std::sync::Ordering|check-prelude std-sync-concurrency-api explicit atomic memory-order vocabulary; docs/stdlib/modules/sync.md
@@ -852,6 +853,7 @@ fn std::parse::unsigned_with_underscores_or|check-prelude std-parse-basic unsign
 fn std::path::as_bytes|check-prelude std-path-buf borrowed path-byte accessor helper; docs/stdlib/modules/path.md
 fn std::path::bytes|check-prelude std-path-bytes typed borrowed path-byte view constructor; docs/stdlib/modules/path.md
 fn std::path::components|check-prelude std-path-components borrowed lexical component iterator; docs/stdlib/modules/path.md
+fn std::path::components_with_kinds|check-prelude std-path-components kinded lexical path component iterator; docs/stdlib/modules/path.md
 fn std::path::contains_nul|check-prelude std-path-buf POSIX path NUL-byte predicate; docs/stdlib/modules/path.md
 fn std::path::current_dir_join|check-prelude std-path-buf Result-returning current-directory path join helper; docs/stdlib/modules/path.md
 fn std::path::ends_with|check-prelude std-path-affixes component-aware suffix predicate; docs/stdlib/modules/path.md
@@ -2071,9 +2073,16 @@ method std::os::Pipe::read_end|check-prelude std-os-pipe borrowed pipe read desc
 method std::os::Pipe::take_read_end|check-prelude std-os-pipe take pipe read end ownership; docs/stdlib/modules/os.md
 method std::os::Pipe::take_write_end|check-prelude std-os-pipe take pipe write end ownership; docs/stdlib/modules/os.md
 method std::os::Pipe::write_end|check-prelude std-os-pipe borrowed pipe write descriptor view; docs/stdlib/modules/os.md
+method std::path::Component::as_slice|check-prelude std-path-components borrowed bytes for kinded path component; docs/stdlib/modules/path.md
+method std::path::Component::is_current|check-prelude std-path-components current-directory component predicate; docs/stdlib/modules/path.md
+method std::path::Component::is_normal|check-prelude std-path-components normal component predicate; docs/stdlib/modules/path.md
+method std::path::Component::is_parent|check-prelude std-path-components parent-directory component predicate; docs/stdlib/modules/path.md
+method std::path::Component::is_root|check-prelude std-path-components root component predicate; docs/stdlib/modules/path.md
+method std::path::Component::kind|check-prelude std-path-components kinded path component classifier accessor; docs/stdlib/modules/path.md
 method std::path::PathBuf::as_bytes|check-prelude std-path-buf owned path byte accessor; docs/stdlib/modules/path.md
 method std::path::PathBuf::as_path|check-prelude std-path-buf borrowed view from owned path buffer; docs/stdlib/modules/path.md
 method std::path::PathBuf::components|check-prelude std-path-buf owned path component iterator wrapper; docs/stdlib/modules/path.md
+method std::path::PathBuf::components_with_kinds|check-prelude std-path-components owned path kinded component iterator wrapper; docs/stdlib/modules/path.md
 method std::path::PathBuf::contains_nul|check-prelude std-path-buf owned path NUL-byte predicate; docs/stdlib/modules/path.md
 method std::path::PathBuf::extension|check-prelude std-path-buf owned path extension wrapper; docs/stdlib/modules/path.md
 method std::path::PathBuf::file_name|check-prelude std-path-buf owned path file-name wrapper; docs/stdlib/modules/path.md
@@ -2090,6 +2099,7 @@ method std::path::PathBuf::with_file_name|check-prelude std-path-buf owned path 
 method std::path::PathBytes::as_bytes|check-prelude std-path-buf typed path byte accessor alias; docs/stdlib/modules/path.md
 method std::path::PathBytes::as_slice|check-prelude std-path-bytes borrowed path-byte view accessor; docs/stdlib/modules/path.md
 method std::path::PathBytes::components|check-prelude std-path-bytes typed path component iterator wrapper; docs/stdlib/modules/path.md
+method std::path::PathBytes::components_with_kinds|check-prelude std-path-components typed path kinded component iterator wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::contains_nul|check-prelude std-path-buf typed path NUL-byte predicate; docs/stdlib/modules/path.md
 method std::path::PathBytes::ends_with|check-prelude std-path-affixes typed path suffix predicate wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::extension|check-prelude std-path-bytes typed path extension wrapper; docs/stdlib/modules/path.md
@@ -2811,7 +2821,9 @@ struct std::net::UnixStream|check-prelude std-net-unix-socket owned Unix domain 
 struct std::os::Fd|check-prelude std-os-fd non-owning file descriptor view; docs/stdlib/modules/os.md
 struct std::os::OwnedFd|check-prelude std-os-owned-fd owning file descriptor close wrapper; docs/stdlib/modules/os.md
 struct std::os::Pipe|check-prelude std-os-pipe owning pipe descriptor pair; docs/stdlib/modules/os.md
+struct std::path::Component|check-prelude std-path-components borrowed kinded path component handle; docs/stdlib/modules/path.md
 struct std::path::Components|check-prelude std-path-components borrowed lexical path component iterator; docs/stdlib/modules/path.md
+struct std::path::ComponentsWithKinds|check-prelude std-path-components borrowed kinded path component iterator; docs/stdlib/modules/path.md
 struct std::path::PathBytes|check-prelude std-path-bytes typed borrowed path-byte view; docs/stdlib/modules/path.md
 struct std::process::Arg|check-prelude std-process-command borrowed C argv argument wrapper; docs/stdlib/modules/process.md
 struct std::process::Child|check-prelude std-process-command child process handle; docs/stdlib/modules/process.md

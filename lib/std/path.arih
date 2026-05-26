@@ -32,6 +32,24 @@ pub struct Components {
   mut index: i64,
 }
 
+pub enum ComponentKind {
+  RootDir,
+  CurrentDir,
+  ParentDir,
+  Normal,
+}
+
+pub struct Component {
+  kind_value: std::path::ComponentKind,
+  bytes: std::Slice[u8],
+}
+
+pub struct ComponentsWithKinds {
+  path: std::Slice[u8],
+  mut index: i64,
+  mut yielded_root: bool,
+}
+
 pub struct PathBytes {
   bytes: std::Slice[u8],
 }
@@ -110,6 +128,27 @@ pub fn trim_trailing_separators(path: std::Slice[u8]) -> std::Slice[u8] {
 
 pub fn components(path: std::Slice[u8]) -> Components {
   return Components { path: path, index: 0 };
+}
+
+fn component_kind(bytes: std::Slice[u8]) -> std::path::ComponentKind {
+  if bytes.len == 1 {
+    if is_separator(bytes[0]) {
+      return RootDir;
+    }
+    if bytes[0] == '.' {
+      return CurrentDir;
+    }
+  }
+  if bytes.len == 2 {
+    if bytes[0] == '.' && bytes[1] == '.' {
+      return ParentDir;
+    }
+  }
+  return Normal;
+}
+
+pub fn components_with_kinds(path: std::Slice[u8]) -> std::path::ComponentsWithKinds {
+  return ComponentsWithKinds { path: path, index: 0, yielded_root: false };
 }
 
 pub fn file_name(path: std::Slice[u8]) -> std::Option[std::Slice[u8]] {
@@ -466,6 +505,95 @@ impl std::Iterator[std::Slice[u8]] for std::path::Components {
   }
 }
 
+impl std::Iterator[std::path::Component] for std::path::ComponentsWithKinds {
+  pub fn next(self: ref mut Self) -> std::Option[std::path::Component] {
+    if !self.yielded_root {
+      self.yielded_root = true;
+      if self.path.len > 0 {
+        if is_separator(self.path[0]) {
+          self.index = 1;
+          let root = slice_range(self.path, 0, 1);
+          return std::Some<std::path::Component>(std::path::Component {
+            kind_value: RootDir,
+            bytes: root,
+          });
+        }
+      }
+    }
+
+    while self.index < self.path.len {
+      if !is_separator(self.path[self.index]) {
+        break;
+      }
+      self.index = self.index + 1;
+    }
+
+    if self.index >= self.path.len {
+      return std::None<std::path::Component>();
+    }
+
+    let start = self.index;
+    while self.index < self.path.len {
+      if is_separator(self.path[self.index]) {
+        break;
+      }
+      self.index = self.index + 1;
+    }
+
+    let bytes = slice_range(self.path, start, self.index);
+    return std::Some<std::path::Component>(std::path::Component {
+      kind_value: component_kind(bytes),
+      bytes: bytes,
+    });
+  }
+}
+
+pub impl std::path::Component {
+  fn kind(self: ref Self) -> std::path::ComponentKind {
+    return self.kind_value;
+  }
+
+  fn as_slice(self: ref Self) -> std::Slice[u8] {
+    return self.bytes;
+  }
+
+  fn is_root(self: ref Self) -> bool {
+    match self.kind_value {
+      RootDir => { return true; }
+      CurrentDir => { return false; }
+      ParentDir => { return false; }
+      Normal => { return false; }
+    }
+  }
+
+  fn is_current(self: ref Self) -> bool {
+    match self.kind_value {
+      RootDir => { return false; }
+      CurrentDir => { return true; }
+      ParentDir => { return false; }
+      Normal => { return false; }
+    }
+  }
+
+  fn is_parent(self: ref Self) -> bool {
+    match self.kind_value {
+      RootDir => { return false; }
+      CurrentDir => { return false; }
+      ParentDir => { return true; }
+      Normal => { return false; }
+    }
+  }
+
+  fn is_normal(self: ref Self) -> bool {
+    match self.kind_value {
+      RootDir => { return false; }
+      CurrentDir => { return false; }
+      ParentDir => { return false; }
+      Normal => { return true; }
+    }
+  }
+}
+
 pub fn normalize_in(zone: ref mut Zone, path: std::Slice[u8]) -> std::string::String {
   var output = std::string::new(zone, path.len);
   var index = 0;
@@ -566,6 +694,10 @@ pub impl std::path::PathBytes {
 
   fn components(self: ref Self) -> std::path::Components {
     return std::path::components(self.bytes);
+  }
+
+  fn components_with_kinds(self: ref Self) -> std::path::ComponentsWithKinds {
+    return std::path::components_with_kinds(self.bytes);
   }
 
   fn file_name(self: ref Self) -> std::Option[std::Slice[u8]] {
@@ -681,6 +813,10 @@ pub impl std::path::PathBuf {
 
   fn components(self: ref Self) -> std::path::Components {
     return std::path::components(self.as_slice());
+  }
+
+  fn components_with_kinds(self: ref Self) -> std::path::ComponentsWithKinds {
+    return std::path::components_with_kinds(self.as_slice());
   }
 
   fn file_name(self: ref Self) -> std::Option[std::Slice[u8]] {

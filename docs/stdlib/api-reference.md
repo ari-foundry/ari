@@ -882,6 +882,8 @@ fails.
 path::Path
 path::PathBytes
 path::PathBuf
+path::Component
+path::ComponentKind
 path::bytes(path)
 path::from_os(os)
 path::from_bytes(ref mut zone, path)
@@ -895,6 +897,13 @@ path::is_absolute(path)
 path::is_relative(path)
 path::trim_trailing_separators(path)
 path::components(path)
+path::components_with_kinds(path)
+component.kind()
+component.as_slice()
+component.is_root()
+component.is_current()
+component.is_parent()
+component.is_normal()
 path::file_name(path)
 path::parent(path)
 path::extension(path)
@@ -926,6 +935,7 @@ path.is_absolute()
 path.is_relative()
 path.trim_trailing_separators()
 path.components()
+path.components_with_kinds()
 path.file_name()
 path.parent()
 path.extension()
@@ -953,6 +963,7 @@ path_buf.contains_nul()
 path_buf.is_absolute()
 path_buf.is_relative()
 path_buf.components()
+path_buf.components_with_kinds()
 path_buf.file_name()
 path_buf.parent()
 path_buf.extension()
@@ -976,6 +987,13 @@ Single-component helpers return `Option[Slice[u8]]` views into the original
 path bytes.
 `components(path)` returns a lazy iterator over non-empty borrowed components
 and skips leading, repeated, and trailing separators.
+`components_with_kinds(path)` yields `Component` values so callers can keep the
+lexical meaning that plain components intentionally discard. Absolute paths
+start with one `RootDir` component for `/`; `.` yields `CurrentDir`, `..` yields
+`ParentDir`, and all other non-empty components are `Normal`. `as_slice()` keeps
+returning borrowed bytes from the original path, and the `is_root`,
+`is_current`, `is_parent`, and `is_normal` helpers are the branch-friendly
+accessors for the enum kind.
 `join_in` and `normalize_in` are the string-returning compatibility helpers;
 the owned-path wrappers `join`, `join_many`, `PathBytes::join`,
 `PathBytes::normalize`, and the matching `PathBuf` methods return `PathBuf`.

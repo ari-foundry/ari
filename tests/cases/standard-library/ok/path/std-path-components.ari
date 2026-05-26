@@ -12,6 +12,9 @@ fn main() -> i64 {
   var usr = [117u8, 115u8, 114u8];
   var local = [108u8, 111u8, 99u8, 97u8, 108u8];
   var bin = [98u8, 105u8, 110u8];
+  var dot = [46u8];
+  var dotdot = [46u8, 46u8];
+  var src = [115u8, 114u8, 99u8];
 
   var iterated = path::components(path.as_slice());
   var score = 0;
@@ -28,6 +31,105 @@ fn main() -> i64 {
   }
 
   var root = [47u8];
+  var typed = path::components_with_kinds(path.as_slice());
+  match typed.next() {
+    std::Some(component0) => {
+      if component0.is_root() && component0.as_slice().equals(root.as_slice()) {
+        score = score + 2;
+      }
+      match component0.kind() {
+        path::RootDir => {
+          score = score + 1;
+        }
+        _ => {
+          panic();
+        }
+      }
+    }
+    std::None => {}
+  }
+  match typed.next() {
+    std::Some(component1) => {
+      if component1.is_normal() && component1.as_slice().equals(usr.as_slice()) {
+        score = score + 4;
+      }
+      match component1.kind() {
+        path::Normal => {
+          score = score + 1;
+        }
+        _ => {
+          panic();
+        }
+      }
+    }
+    std::None => {}
+  }
+  match typed.next() {
+    std::Some(component2) => {
+      if component2.is_normal() && component2.as_slice().equals(local.as_slice()) {
+        score = score + 8;
+      }
+    }
+    std::None => {}
+  }
+  match typed.next() {
+    std::Some(component3) => {
+      if component3.is_normal() && component3.as_slice().equals(bin.as_slice()) {
+        score = score + 16;
+      }
+    }
+    std::None => {}
+  }
+  if typed.next().is_none() {
+    score = score + 32;
+  }
+
+  var dotted = [46u8, 47u8, 46u8, 46u8, 47u8, 115u8, 114u8, 99u8];
+  var kinds = path::components_with_kinds(dotted.as_slice());
+  match kinds.next() {
+    std::Some(component4) => {
+      if component4.is_current() && component4.as_slice().equals(dot.as_slice()) {
+        score = score + 3;
+      }
+      match component4.kind() {
+        path::CurrentDir => {
+          score = score + 1;
+        }
+        _ => {
+          panic();
+        }
+      }
+    }
+    std::None => {}
+  }
+  match kinds.next() {
+    std::Some(component5) => {
+      if component5.is_parent() && component5.as_slice().equals(dotdot.as_slice()) {
+        score = score + 5;
+      }
+      match component5.kind() {
+        path::ParentDir => {
+          score = score + 1;
+        }
+        _ => {
+          panic();
+        }
+      }
+    }
+    std::None => {}
+  }
+  match kinds.next() {
+    std::Some(component6) => {
+      if component6.is_normal() && component6.as_slice().equals(src.as_slice()) {
+        score = score + 7;
+      }
+    }
+    std::None => {}
+  }
+  if kinds.next().is_none() {
+    score = score + 50;
+  }
+
   var empty = path::components(root.as_slice());
   match empty.next() {
     std::Some(_) => {
@@ -36,6 +138,6 @@ fn main() -> i64 {
     std::None => {}
   }
 
-  assert_eq_i64(score, 111);
+  assert_eq_i64(score, 242);
   return score;
 }

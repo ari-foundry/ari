@@ -2182,9 +2182,11 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/std-path-edit.elf; code=$$?; test $$code -eq 27
 	$(TARGET) tests/cases/standard-library/ok/path/std-path-components.ari --emit-llvm $(BUILD_DIR)/prelude/std-path-components.ll
 	grep -q '_ARNv3std4path10components' $(BUILD_DIR)/prelude/std-path-components.ll
+	grep -q '_ARNv3std4path21components_with_kinds' $(BUILD_DIR)/prelude/std-path-components.ll
 	grep -q 'std__path__Components13std__Iterator4next' $(BUILD_DIR)/prelude/std-path-components.ll
+	grep -q 'std__path__ComponentsWithKinds13std__Iterator4next' $(BUILD_DIR)/prelude/std-path-components.ll
 	$(TARGET) tests/cases/standard-library/ok/path/std-path-components.ari -o $(BUILD_DIR)/prelude/std-path-components.elf
-	$(BUILD_DIR)/prelude/std-path-components.elf; code=$$?; test $$code -eq 111
+	$(BUILD_DIR)/prelude/std-path-components.elf; code=$$?; test $$code -eq 242
 	$(TARGET) tests/cases/standard-library/ok/path/std-path-bytes.ari --emit-llvm $(BUILD_DIR)/prelude/std-path-bytes.ll
 	grep -q '_ARNv3std4path5bytes' $(BUILD_DIR)/prelude/std-path-bytes.ll
 	grep -q '_ARNv3std4path7from_os' $(BUILD_DIR)/prelude/std-path-bytes.ll

@@ -54,7 +54,7 @@ can fail before the lexical join happens.
 | Convert from OS boundary data | `path::from_os(os)` | Keeps bytes borrowed from `OsStr`; no UTF-8 validation. |
 | Own a path | `path::from_bytes(ref mut zone, bytes)` or `path::from_string(ref mut zone, text)` | Copies bytes into the zone and returns `PathBuf`. |
 | Copy a borrowed path to owned text | `path::to_string(ref mut zone, path)` or `path_buf.to_string(ref mut zone)` | Still byte-oriented text, not validated UTF-8. |
-| Inspect components | `components`, `file_name`, `parent`, `extension`, `stem`, `file_stem` | Borrowed slices point into the original path. |
+| Inspect components | `components`, `components_with_kinds`, `file_name`, `parent`, `extension`, `stem`, `file_stem` | Borrowed slices point into the original path; kinded components preserve root, `.`, and `..`. |
 | Compare path prefixes/suffixes | `starts_with`, `strip_prefix`, `ends_with`, `strip_suffix` | Component-aware: `src` matches `src/main.ari` but not `src2/main.ari`. |
 | Join paths | `path::join(ref mut zone, base, child)`, `base.join(ref mut zone, child)`, or `join_many` | Returns `PathBuf`; absolute children replace the accumulated base. |
 | Join against the process cwd | `path::current_dir_join(ref mut zone, child)` | Returns `Result[PathBuf, Error]` because cwd lookup can fail. |
@@ -67,6 +67,8 @@ can fail before the lexical join happens.
 path::Path
 path::PathBytes
 path::PathBuf
+path::Component
+path::ComponentKind
 path::bytes(path) -> PathBytes
 path::from_os(os) -> PathBytes
 path::from_bytes(ref mut zone, path) -> PathBuf
@@ -80,6 +82,13 @@ path::is_absolute(path) -> bool
 path::is_relative(path) -> bool
 path::trim_trailing_separators(path) -> Slice[u8]
 path::components(path) -> Components
+path::components_with_kinds(path) -> ComponentsWithKinds
+component.kind() -> ComponentKind
+component.as_slice() -> Slice[u8]
+component.is_root() -> bool
+component.is_current() -> bool
+component.is_parent() -> bool
+component.is_normal() -> bool
 path::file_name(path) -> Option[Slice[u8]]
 path::parent(path) -> Option[Slice[u8]]
 path::extension(path) -> Option[Slice[u8]]
@@ -122,6 +131,7 @@ path.contains_nul()
 path.is_absolute()
 path.is_relative()
 path.components()
+path.components_with_kinds()
 path.file_name()
 path.parent()
 path.extension()
@@ -175,6 +185,7 @@ owned.contains_nul()
 owned.is_absolute()
 owned.is_relative()
 owned.components()
+owned.components_with_kinds()
 owned.file_name()
 owned.parent()
 owned.extension()
@@ -200,6 +211,16 @@ component returning `None`.
 skips leading, repeated, and trailing `/` separators. Root-only `/` and empty
 paths produce no components. It does not normalize `.` or `..`; callers that
 need lightweight lexical cleanup should call `normalize_in` first.
+
+`components_with_kinds(path)` returns `Component` values. It yields a single
+`RootDir` component for leading `/`, skips repeated separators, and then yields
+`CurrentDir` for `.`, `ParentDir` for `..`, and `Normal` for every other
+component. `Component::as_slice()` returns the borrowed bytes for the component:
+`/` for `RootDir`, `.` for `CurrentDir`, `..` for `ParentDir`, or the normal
+component bytes. Use `is_root`, `is_current`, `is_parent`, and `is_normal` for
+branching without matching on the enum directly. `components_with_kinds` is the
+path parser to use when a caller needs to preserve lexical meaning instead of
+just the raw non-empty names.
 
 `extension` and `stem` operate on the final component. `file_stem` is the same
 operation as `stem`, kept under the more explicit name many path APIs use.
@@ -351,7 +372,7 @@ tests/cases/standard-library/ok/path/std-path-buf.ari
 The focused test covers separator policy, absolute/relative checks, trailing
 separator trimming, final component views, parent/stem/extension behavior,
 explicit `file_stem` aliases, zone-backed path editing, zone-backed join,
-lightweight normalization, component iteration, typed `PathBytes` views, and
+lightweight normalization, plain and kinded component iteration, typed `PathBytes` views, and
 allocation-free final-component predicates plus component-aware path
 prefix/suffix predicates and stripping. It also covers `Path`/`PathBuf`,
 owned path construction from strings and bytes, byte access, NUL detection,
@@ -366,5 +387,3 @@ results.
   platform-specific ownership separate from `std::string::String`
 - deeper integration with `std::fs::canonicalize` and other filesystem APIs as
   more of them accept path-byte values directly
-- richer component kinds such as root, current directory, and parent directory
-  if Ari later adds an owned `Path` model

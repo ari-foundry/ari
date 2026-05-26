@@ -24,24 +24,24 @@ platform notes.
 
 ## Summary
 
-- API entries: `3055`
+- API entries: `3067`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
 | `alloc` | 846 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 805 | stable candidate |
+| `core` | 817 | stable candidate |
 | `hosted` | 1217 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
-| `enum` | 25 |
-| `fn` | 1115 |
-| `method` | 1518 |
+| `enum` | 26 |
+| `fn` | 1116 |
+| `method` | 1526 |
 | `module` | 39 |
-| `struct` | 162 |
+| `struct` | 164 |
 | `trait` | 39 |
 | `trait-method` | 41 |
 | `type` | 21 |
@@ -78,7 +78,7 @@ platform notes.
 | `std::option` | `core` | 12 |
 | `std::os` | `platform` | 50 |
 | `std::parse` | `core` | 77 |
-| `std::path` | `core` | 83 |
+| `std::path` | `core` | 95 |
 | `std::process` | `hosted` | 143 |
 | `std::random` | `alloc/hosted` | 36 |
 | `std::rc` | `alloc` | 32 |
@@ -2849,6 +2849,12 @@ Tier: `core`. Stability reading: stable candidate.
 
 Tier: `core`. Stability reading: stable candidate.
 
+### enum
+
+| API | Coverage note |
+| --- | --- |
+| `enum std::path::ComponentKind` | check-prelude std-path-components kinded path component categories; docs/stdlib/modules/path.md |
+
 ### fn
 
 | API | Coverage note |
@@ -2856,6 +2862,7 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::path::as_bytes` | check-prelude std-path-buf borrowed path-byte accessor helper; docs/stdlib/modules/path.md |
 | `fn std::path::bytes` | check-prelude std-path-bytes typed borrowed path-byte view constructor; docs/stdlib/modules/path.md |
 | `fn std::path::components` | check-prelude std-path-components borrowed lexical component iterator; docs/stdlib/modules/path.md |
+| `fn std::path::components_with_kinds` | check-prelude std-path-components kinded lexical path component iterator; docs/stdlib/modules/path.md |
 | `fn std::path::contains_nul` | check-prelude std-path-buf POSIX path NUL-byte predicate; docs/stdlib/modules/path.md |
 | `fn std::path::current_dir_join` | check-prelude std-path-buf Result-returning current-directory path join helper; docs/stdlib/modules/path.md |
 | `fn std::path::ends_with` | check-prelude std-path-affixes component-aware suffix predicate; docs/stdlib/modules/path.md |
@@ -2891,9 +2898,16 @@ Tier: `core`. Stability reading: stable candidate.
 
 | API | Coverage note |
 | --- | --- |
+| `method std::path::Component::as_slice` | check-prelude std-path-components borrowed bytes for kinded path component; docs/stdlib/modules/path.md |
+| `method std::path::Component::is_current` | check-prelude std-path-components current-directory component predicate; docs/stdlib/modules/path.md |
+| `method std::path::Component::is_normal` | check-prelude std-path-components normal component predicate; docs/stdlib/modules/path.md |
+| `method std::path::Component::is_parent` | check-prelude std-path-components parent-directory component predicate; docs/stdlib/modules/path.md |
+| `method std::path::Component::is_root` | check-prelude std-path-components root component predicate; docs/stdlib/modules/path.md |
+| `method std::path::Component::kind` | check-prelude std-path-components kinded path component classifier accessor; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::as_bytes` | check-prelude std-path-buf owned path byte accessor; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::as_path` | check-prelude std-path-buf borrowed view from owned path buffer; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::components` | check-prelude std-path-buf owned path component iterator wrapper; docs/stdlib/modules/path.md |
+| `method std::path::PathBuf::components_with_kinds` | check-prelude std-path-components owned path kinded component iterator wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::contains_nul` | check-prelude std-path-buf owned path NUL-byte predicate; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::extension` | check-prelude std-path-buf owned path extension wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::file_name` | check-prelude std-path-buf owned path file-name wrapper; docs/stdlib/modules/path.md |
@@ -2910,6 +2924,7 @@ Tier: `core`. Stability reading: stable candidate.
 | `method std::path::PathBytes::as_bytes` | check-prelude std-path-buf typed path byte accessor alias; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::as_slice` | check-prelude std-path-bytes borrowed path-byte view accessor; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::components` | check-prelude std-path-bytes typed path component iterator wrapper; docs/stdlib/modules/path.md |
+| `method std::path::PathBytes::components_with_kinds` | check-prelude std-path-components typed path kinded component iterator wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::contains_nul` | check-prelude std-path-buf typed path NUL-byte predicate; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::ends_with` | check-prelude std-path-affixes typed path suffix predicate wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::extension` | check-prelude std-path-bytes typed path extension wrapper; docs/stdlib/modules/path.md |
@@ -2947,7 +2962,9 @@ Tier: `core`. Stability reading: stable candidate.
 
 | API | Coverage note |
 | --- | --- |
+| `struct std::path::Component` | check-prelude std-path-components borrowed kinded path component handle; docs/stdlib/modules/path.md |
 | `struct std::path::Components` | check-prelude std-path-components borrowed lexical path component iterator; docs/stdlib/modules/path.md |
+| `struct std::path::ComponentsWithKinds` | check-prelude std-path-components borrowed kinded path component iterator; docs/stdlib/modules/path.md |
 | `struct std::path::PathBytes` | check-prelude std-path-bytes typed borrowed path-byte view; docs/stdlib/modules/path.md |
 
 ### type
