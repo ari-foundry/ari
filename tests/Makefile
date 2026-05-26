@@ -3193,6 +3193,8 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std11collections18binary_heap__G_i64' $(BUILD_DIR)/prelude/std-collections-heap.ll
 	grep -q '_ARNv3std11collections21priority_queue__G_i64' $(BUILD_DIR)/prelude/std-collections-heap.ll
 	grep -q '_ARNv3std11collections28binary_heap_sift_down__G_i64' $(BUILD_DIR)/prelude/std-collections-heap.ll
+	grep -q '_ARNv4impl33std__collections__BinaryHeap_i64_8inherent13with_capacity' $(BUILD_DIR)/prelude/std-collections-heap.ll
+	grep -q '_ARNv4impl36std__collections__PriorityQueue_i64_8inherent13with_capacity' $(BUILD_DIR)/prelude/std-collections-heap.ll
 	grep -q '_ARNv4impl36std__collections__PriorityQueue_i64_8inherent4push' $(BUILD_DIR)/prelude/std-collections-heap.ll
 	$(TARGET) tests/cases/standard-library/ok/collections/heap/std-collections-heap.ari -o $(BUILD_DIR)/prelude/std-collections-heap.elf
 	$(BUILD_DIR)/prelude/std-collections-heap.elf; code=$$?; test $$code -eq 42

@@ -5526,6 +5526,20 @@ pub impl[T] std::collections::BinaryHeap[T] {
   }
 }
 
+pub impl[T: std::cmp::Ord[T]] std::collections::BinaryHeap[T] {
+  fn with_capacity(
+    zone: ref mut Zone,
+    capacity: i64
+  ) -> std::collections::BinaryHeap[T] {
+    let less: fn(T, T) -> bool = std::collections::default_less;
+    return std::collections::binary_heap<T>(
+      zone,
+      capacity,
+      less
+    );
+  }
+}
+
 pub impl[T] std::collections::BinaryHeapPeekMut[T] {
   fn value(self: ref Self) -> T {
     return ptr_load(self.value);
@@ -5755,6 +5769,20 @@ pub impl[T] std::collections::PriorityQueue[T] {
     }
     copied.len = self.len;
     return copied;
+  }
+}
+
+pub impl[T: std::cmp::Ord[T]] std::collections::PriorityQueue[T] {
+  fn with_capacity(
+    zone: ref mut Zone,
+    capacity: i64
+  ) -> std::collections::PriorityQueue[T] {
+    let less: fn(T, T) -> bool = std::collections::default_less;
+    return std::collections::priority_queue<T>(
+      zone,
+      capacity,
+      less
+    );
   }
 }
 

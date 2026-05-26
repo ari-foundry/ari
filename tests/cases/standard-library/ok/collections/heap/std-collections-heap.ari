@@ -53,6 +53,20 @@ fn main() -> i64 {
     failure = 8;
   }
 
+  var default_heap = BinaryHeap::with_capacity<i64>(ref mut zone, 1);
+  default_heap.push(ref mut zone, 6);
+  default_heap.push(ref mut zone, 10);
+  default_heap.push(ref mut zone, 4);
+  if default_heap.pop() != 10 {
+    failure = 21;
+  }
+  if default_heap.pop() != 6 {
+    failure = 22;
+  }
+  if default_heap.pop() != 4 {
+    failure = 23;
+  }
+
   var sorted_heap = BinaryHeap::new<i64>(ref mut zone, 1, collections::less_i64);
   sorted_heap.push(ref mut zone, 2);
   sorted_heap.push(ref mut zone, 7);
@@ -93,6 +107,20 @@ fn main() -> i64 {
   let empty_queue_pop = queue.try_pop();
   if !empty_queue_pop.is_none() {
     failure = 14;
+  }
+
+  var default_queue = PriorityQueue::with_capacity<i64>(ref mut zone, 1);
+  default_queue.push(ref mut zone, 11);
+  default_queue.push(ref mut zone, 1);
+  default_queue.push(ref mut zone, 7);
+  if default_queue.pop() != 11 {
+    failure = 24;
+  }
+  if default_queue.pop() != 7 {
+    failure = 25;
+  }
+  if default_queue.pop() != 1 {
+    failure = 26;
   }
 
   zone::destroy(zone);

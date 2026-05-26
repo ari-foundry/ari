@@ -683,16 +683,20 @@ with the same comparator.
 
 ## BinaryHeap And PriorityQueue
 
-`BinaryHeap[T]` and `PriorityQueue[T]` are comparator-driven max-priority
-containers. The `less(a, b)` function means `a` has lower priority than `b`.
-With `collections::less_i64`, larger integers pop first.
+`BinaryHeap[T]` and `PriorityQueue[T]` are max-priority containers. For
+ordinary values that implement `std::cmp::Ord`, use `with_capacity` to select
+the stdlib default ordering. For caller-specific priority policy, keep the
+comparator explicit: `less(a, b)` means `a` has lower priority than `b`. With
+`collections::less_i64`, larger integers pop first.
 
 ```ari
 collections::binary_heap<T>(ref mut zone, capacity, less)
 BinaryHeap::new<T>(ref mut zone, capacity, less)
+BinaryHeap::with_capacity<T: std::cmp::Ord[T]>(ref mut zone, capacity)
 BinaryHeap::from_iter<T, I>(ref mut zone, capacity, less, iter)
 collections::priority_queue<T>(ref mut zone, capacity, less)
 PriorityQueue::new<T>(ref mut zone, capacity, less)
+PriorityQueue::with_capacity<T: std::cmp::Ord[T]>(ref mut zone, capacity)
 PriorityQueue::from_iter<T, I>(ref mut zone, capacity, less, iter)
 ```
 
@@ -728,6 +732,12 @@ priority to high priority for the comparator; with `less_i64`, the resulting
 vector is ascending. `BinaryHeap::from_iter`/`PriorityQueue::from_iter` and
 `extend_iter` consume `Iterator[T]`, append every value, and sift it into the
 heap invariant.
+`BinaryHeap::with_capacity` and `PriorityQueue::with_capacity` are the
+trait-driven constructors: they use the ordinary `<` operation available
+through `std::cmp::Ord[T]`. Use `BinaryHeap::new`,
+`PriorityQueue::new`, `collections::binary_heap`, or
+`collections::priority_queue` when a custom priority relation should be
+visible at the construction site.
 For tracked local heap and priority-queue handles, `push(value)`,
 `reserve(capacity)`, and `reserve_extra(additional)` infer the constructor
 zone. `copy_to(ref mut target)` copies the heap storage and comparator into the
@@ -972,5 +982,6 @@ and checked by `make check-std-api`.
   rebuild path.
 - `LinkedList[T]` is zone-backed index storage rather than one allocation per
   node. Spare node storage is reused by the list and reclaimed with the zone.
-- `BinaryHeap[T]` and `PriorityQueue[T]` require an explicit comparator until
-  generic `Ord` dispatch is available inside containers.
+- `BinaryHeap[T]` and `PriorityQueue[T]` now have `with_capacity`
+  trait-driven constructors for ordinary `Ord[T]` values. Use explicit
+  comparator constructors only when custom priority policy is intentional.

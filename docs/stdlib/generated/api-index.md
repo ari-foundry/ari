@@ -24,12 +24,12 @@ platform notes.
 
 ## Summary
 
-- API entries: `3352`
+- API entries: `3354`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
-| `alloc` | 891 | usable |
+| `alloc` | 893 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 902 | stable candidate |
 | `hosted` | 1372 | platform-backed |
@@ -39,7 +39,7 @@ platform notes.
 | --- | ---: |
 | `enum` | 32 |
 | `fn` | 1184 |
-| `method` | 1718 |
+| `method` | 1720 |
 | `module` | 39 |
 | `struct` | 178 |
 | `trait` | 39 |
@@ -59,7 +59,7 @@ platform notes.
 | `std::c` | `platform` | 49 |
 | `std::cell` | `alloc` | 44 |
 | `std::cmp` | `core` | 38 |
-| `std::collections` | `alloc` | 383 |
+| `std::collections` | `alloc` | 385 |
 | `std::context` | `hosted` | 20 |
 | `std::convert` | `core` | 14 |
 | `std::encoding` | `core` | 98 |
@@ -879,6 +879,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::collections::BinaryHeap[T]::reserve_extra` | check-prelude std-collections-heap same-zone heap spare-capacity growth; docs/stdlib/modules/collections.md |
 | `method std::collections::BinaryHeap[T]::try_peek` | check-prelude std-collections-heap optional highest-priority access; docs/stdlib/modules/collections.md |
 | `method std::collections::BinaryHeap[T]::try_pop` | check-prelude std-collections-heap optional highest-priority removal; docs/stdlib/modules/collections.md |
+| `method std::collections::BinaryHeap[T]::with_capacity` | check-prelude std-collections-heap trait-driven default-order binary heap constructor; docs/stdlib/modules/collections.md |
 | `method std::collections::Deque[T]::back` | check-prelude std-collections-deque asserting back accessor; docs/stdlib/modules/collections.md |
 | `method std::collections::Deque[T]::capacity` | check-prelude std-collections-deque deque capacity metadata; docs/stdlib/modules/collections.md |
 | `method std::collections::Deque[T]::clear` | check-prelude std-collections-deque drops live deque values; docs/stdlib/modules/collections.md |
@@ -1038,6 +1039,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::collections::PriorityQueue[T]::reserve_extra` | check-prelude std-collections-heap same-zone priority queue spare-capacity growth; docs/stdlib/modules/collections.md |
 | `method std::collections::PriorityQueue[T]::try_peek` | check-prelude std-collections-heap optional highest-priority access; docs/stdlib/modules/collections.md |
 | `method std::collections::PriorityQueue[T]::try_pop` | check-prelude std-collections-heap optional highest-priority removal; docs/stdlib/modules/collections.md |
+| `method std::collections::PriorityQueue[T]::with_capacity` | check-prelude std-collections-heap trait-driven default-order priority queue constructor; docs/stdlib/modules/collections.md |
 | `method std::collections::RingBuffer[T]::capacity` | check-prelude std-collections-ring-buffer ring buffer fixed capacity metadata; docs/stdlib/modules/collections.md |
 | `method std::collections::RingBuffer[T]::clear` | check-prelude std-collections-ring-buffer drops live ring buffer values; docs/stdlib/modules/collections.md |
 | `method std::collections::RingBuffer[T]::copy_to` | check-prelude std-collections-structure-copy-to target-zone ring buffer copy preserving fixed capacity and FIFO order; docs/stdlib/modules/collections.md |
