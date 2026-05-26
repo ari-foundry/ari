@@ -125,7 +125,10 @@ fn main() -> i64 {
     server.set_send_buffer_size(4096).is_ok() &&
     server.send_buffer_size().unwrap_or(0) > 0 &&
     server.set_recv_buffer_size(4096).is_ok() &&
-    server.recv_buffer_size().unwrap_or(0) > 0 {
+    server.recv_buffer_size().unwrap_or(0) > 0 &&
+    server.set_ttl(64).is_ok() &&
+    server.ttl().unwrap_or(0) > 0 &&
+    server.set_ttl(0).is_err() {
     score = score + 8192;
   }
 

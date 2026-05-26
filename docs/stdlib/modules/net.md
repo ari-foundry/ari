@@ -177,6 +177,14 @@ stream.send_buffer_size()
 stream.set_send_buffer_size(value)
 stream.recv_buffer_size()
 stream.set_recv_buffer_size(value)
+stream.ttl()
+stream.ttl_optional()
+stream.set_ttl(value)
+stream.set_ttl_unchecked(value)
+stream.hop_limit()
+stream.hop_limit_optional()
+stream.set_hop_limit(value)
+stream.set_hop_limit_unchecked(value)
 stream.set_read_timeout(timeout)
 stream.set_read_timeout_millis(millis)
 stream.set_read_timeout_millis_unchecked(millis)
@@ -234,6 +242,14 @@ socket.send_buffer_size()
 socket.set_send_buffer_size(value)
 socket.recv_buffer_size()
 socket.set_recv_buffer_size(value)
+socket.ttl()
+socket.ttl_optional()
+socket.set_ttl(value)
+socket.set_ttl_unchecked(value)
+socket.hop_limit()
+socket.hop_limit_optional()
+socket.set_hop_limit(value)
+socket.set_hop_limit_unchecked(value)
 socket.set_read_timeout(timeout)
 socket.set_read_timeout_millis(millis)
 socket.set_read_timeout_millis_unchecked(millis)
@@ -459,9 +475,11 @@ Use `local_addr_v6()` and `peer_addr_v6()` when an accepted or connected
 stream is expected to be IPv6 and the caller wants family-specific failure
 rather than generic address dispatch.
 `close_on_exec`/`set_close_on_exec`, send/receive buffer-size setters, TCP
-`keepalive`, TCP `nodelay`, and timeout helpers all return `Result` on their
-natural names. `_optional` getters and `_unchecked` setters remain
-compatibility conveniences where present.
+`keepalive`, TCP `nodelay`, IPv4 TTL, IPv6 hop-limit, and timeout helpers all
+return `Result` on their natural names. `_optional` getters and `_unchecked`
+setters remain compatibility conveniences where present. `set_ttl` and
+`set_hop_limit` reject values outside `1..=255` with `InvalidInput` before
+calling the host.
 
 ## UDP Sockets
 
@@ -487,9 +505,9 @@ Use `send_to`, `recv_from`, `connect`, `send`, `recv`, `local_port`,
 keep invalid handles, unsupported address families, and host socket errors
 visible. Use `send_byte_to_unchecked`, `recv_byte_unchecked`, and `_optional`
 helpers only when discarding those errors is intentional. UDP exposes
-`reuse_addr`, `reuse_port`, `broadcast`, close-on-exec, send-buffer, and
-receive-buffer helpers as Result-returning natural methods; multicast and
-TTL/hop-limit helpers are future slices.
+`reuse_addr`, `reuse_port`, `broadcast`, close-on-exec, send-buffer,
+receive-buffer, IPv4 TTL, and IPv6 hop-limit helpers as Result-returning
+natural methods; multicast helpers are future slices.
 
 ## Unix Domain Sockets
 
@@ -536,9 +554,12 @@ servers, tests, and restartable tools. They also expose `reuse_port()` and
 UDP sockets expose `broadcast()`/`set_broadcast(enabled)`. TCP streams and UDP
 sockets expose `send_buffer_size`, `set_send_buffer_size`,
 `recv_buffer_size`, and `set_recv_buffer_size` as Result-returning integer
-option helpers. Query methods return `Result[..., Error]`; setters return
-`Result[(), Error]`. The corresponding `_optional` and `_unchecked` helpers
-discard those failures where they exist.
+option helpers. TCP streams and UDP sockets also expose `ttl()`/`set_ttl(value)`
+for IPv4 `IP_TTL` and `hop_limit()`/`set_hop_limit(value)` for IPv6
+`IPV6_UNICAST_HOPS`; those hop counts must be in `1..=255`. Query methods
+return `Result[..., Error]`; setters return `Result[(), Error]`. The
+corresponding `_optional` and `_unchecked` helpers discard those failures
+where they exist.
 
 `close_on_exec()` and `set_close_on_exec(enabled)` are descriptor lifecycle
 helpers on socket handles. Newly-created socket handles set close-on-exec by
@@ -661,10 +682,10 @@ return ptr_load(output.as_slice().as_ptr()) as i64;
 | Socket address | Current: `SocketAddr`, `socket_addr`, `localhost`, `ip`, `port`, `with_port`. |
 | DNS lookup | Current hosted IPv4/IPv6 slice: `lookup_v4`, `lookup_v6`, `"host:port"`, and `"[host]:port"` `resolve` return `Error`; `service_port` maps common service names to ports; `resolve_all(zone, host, port)`, `resolve_service(zone, host, service)`, `to_socket_addrs(zone, endpoint)`, and `to_socket_addrs_service(zone, host, service)` return zone-backed `Vec[SocketAddr]`; `_optional`/`try_*` helpers discard error detail intentionally; `_raw` helpers are raw compatibility bridges. |
 | TCP listener | Current hosted IPv4/IPv6 slice: module-level `listen`/`tcp_listen`, explicit IPv6 `tcp_listen_v6`, `TcpListener::bind`, and `accept` return `Error`; optional/try compatibility and raw compatibility forms remain; Result-returning `local_port`/`local_addr` plus IPv6-specific `local_addr_v6`, descriptor/open/close-on-exec helpers, nonblocking, reuse-address, and reuse-port setter/query with Result defaults, `Duration` and raw-millisecond accept timeout setters, accept readiness probes, unchecked timeout compatibility, and explicit close/close_unchecked. |
-| TCP stream | Current hosted IPv4/IPv6 slice: module-level `connect`/`tcp_connect`, explicit IPv6 `tcp_connect_v6`, and host-port `connect_host`/`tcp_connect_host`; `TcpStream::connect` returns `Error`, optional/try and raw compatibility forms remain, local/peer address helpers dispatch across IPv4/IPv6 with IPv6-specific `local_addr_v6`/`peer_addr_v6`, descriptor/open/close-on-exec helpers, nonblocking, TCP nodelay, keepalive, send/receive buffer-size helpers with Result defaults, `Duration` timeouts, read/write readiness probes, shutdown, byte and buffer IO, close/close_unchecked, and `std::io::Reader`/`Writer` adapters. |
-| UDP socket | Current hosted IPv4/IPv6 slice: module-level `udp_bind` plus explicit IPv6 `udp_bind_v6`, `UdpSocket::bind` returns `Error`, optional/try and raw compatibility forms remain, Result-returning local-port/local-address helpers including `local_addr_v6`, descriptor/open/close-on-exec helpers, nonblocking, reuse-address, reuse-port, broadcast, send/receive buffer-size helpers with Result defaults, `Duration` timeouts, send/receive readiness probes, datagram `send_to`/`recv_from`/`peek_from`, connected `send`/`recv`, single-byte compatibility helpers, and close/close_unchecked. |
+| TCP stream | Current hosted IPv4/IPv6 slice: module-level `connect`/`tcp_connect`, explicit IPv6 `tcp_connect_v6`, and host-port `connect_host`/`tcp_connect_host`; `TcpStream::connect` returns `Error`, optional/try and raw compatibility forms remain, local/peer address helpers dispatch across IPv4/IPv6 with IPv6-specific `local_addr_v6`/`peer_addr_v6`, descriptor/open/close-on-exec helpers, nonblocking, TCP nodelay, keepalive, send/receive buffer-size helpers, IPv4 TTL, IPv6 hop-limit with Result defaults, `Duration` timeouts, read/write readiness probes, shutdown, byte and buffer IO, close/close_unchecked, and `std::io::Reader`/`Writer` adapters. |
+| UDP socket | Current hosted IPv4/IPv6 slice: module-level `udp_bind` plus explicit IPv6 `udp_bind_v6`, `UdpSocket::bind` returns `Error`, optional/try and raw compatibility forms remain, Result-returning local-port/local-address helpers including `local_addr_v6`, descriptor/open/close-on-exec helpers, nonblocking, reuse-address, reuse-port, broadcast, send/receive buffer-size helpers, IPv4 TTL, IPv6 hop-limit with Result defaults, `Duration` timeouts, send/receive readiness probes, datagram `send_to`/`recv_from`/`peek_from`, connected `send`/`recv`, single-byte compatibility helpers, and close/close_unchecked. |
 | Unix domain socket | Current hosted stream slice: module-level `unix_listen`/`unix_connect`, `UnixListener` bind/accept and `UnixStream` connect return `Error`, optional/try compatibility helpers and raw compatibility bridges remain, IO/shutdown Result methods, close-on-exec helpers, `Duration` and raw-millisecond timeout setters, accept/read/write readiness probes, and `read`/`write`/`read_exact`/`write_all` buffer helpers. |
-| socket options | Current: nonblocking, close-on-exec, readiness probes, read/write timeout, TCP listener/UDP reuse-address and reuse-port, TCP nodelay/keepalive, UDP broadcast, and TCP/UDP send/receive buffer-size helpers with Result defaults plus `_optional`/`_unchecked` compatibility where present; future linger, multicast, and TTL/hop-limit. |
+| socket options | Current: nonblocking, close-on-exec, readiness probes, read/write timeout, TCP listener/UDP reuse-address and reuse-port, TCP nodelay/keepalive, UDP broadcast, TCP/UDP send/receive buffer-size helpers, IPv4 TTL, and IPv6 hop-limit with Result defaults plus `_optional`/`_unchecked` compatibility where present; future linger and multicast. |
 | timeout | Current: preferred `std::time::Duration` read/write/accept timeout setters plus raw millisecond setters, all Result-returning, with `_unchecked` raw-millisecond compatibility helpers. |
 | readiness | Current: `TcpListener::accept_ready`, `TcpStream::read_ready`/`write_ready`, `UdpSocket::recv_ready`/`send_ready`, `UnixListener::accept_ready`, and `UnixStream::read_ready`/`write_ready` delegate to `std::os::poll_read`/`poll_write`. Each has a `Duration` form and a `_millis` form. They return `Ok(true)` for ready, `Ok(false)` for timeout, and `Error` for invalid descriptors or host poll failures. They do not perform the read/write/accept themselves; callers must still handle the operation result. |
 | shutdown | Current: `Shutdown::{Read, Write, Both}` and stream `shutdown(mode)` for TCP and Unix streams. |
@@ -681,7 +702,8 @@ return ptr_load(output.as_slice().as_ptr()) as i64;
   available through `resolve_service` and `to_socket_addrs_service` using the
   deterministic stdlib service table.
 - UDP supports buffer datagrams, source-address return values, connected UDP,
-  and peek. Multicast and TTL/hop-limit controls are future slices.
+  peek, IPv4 TTL, and IPv6 hop-limit controls. Multicast controls are future
+  slices.
 - Unix sockets are stream-only and path-based. Abstract namespace sockets,
   Unix datagram sockets, peer credentials, and platform guards need later
   design.
@@ -722,18 +744,18 @@ IPv6 segment accessors.
 explicit `tcp_*` aliases, IPv4 listener bind, ephemeral
 local-port/local-address lookup, stream connect, accept, stream local-address
 lookup, timeout/nonblocking helpers, close-on-exec, reuse-port, keepalive,
-send/receive buffer-size options, stream shutdown, byte transfer through
+TTL, send/receive buffer-size options, stream shutdown, byte transfer through
 both stream methods and `std::io::Reader`/`Writer`, and explicit close. On
 restricted hosts it verifies that socket creation reports `PermissionDenied`
 through the shared error bridge.
 `std-net-udp-socket.ari` covers module-level `udp_bind`, IPv4 UDP bind,
 local-port/local-address lookup, timeout/nonblocking helpers, close-on-exec,
-reuse/broadcast/buffer-size options, datagram `send_to`/`recv_from`/`peek_from`,
+reuse/broadcast/buffer-size/TTL options, datagram `send_to`/`recv_from`/`peek_from`,
 connected `send`/`recv`, single-byte datagram compatibility helpers,
 restricted-host fallback, and explicit close.
 `std-net-ipv6-socket.ari` covers IPv6 lookup, bracketed endpoint resolution,
 explicit `tcp_listen_v6`/`tcp_connect_v6`/`udp_bind_v6`, IPv6 local/peer
-address helpers, TCP loopback transfer, UDP loopback datagrams, and
+address helpers, TCP/UDP IPv6 hop-limit options, TCP loopback transfer, UDP loopback datagrams, and
 restricted-host fallback.
 `std-net-unix-socket.ari` covers module-level Unix listener/connect wrappers,
 Unix stream listener bind, stream connect,
@@ -753,9 +775,8 @@ IPv6 input for the IPv4 resolver, and edge IPv4 addresses.
   canonical names, and detailed resolver status.
 - Add timeout-specific error categories once the runtime can distinguish
   deadline expiry from ordinary read, write, accept, and connect failures.
-- Add remaining socket options such as linger, TTL/hop-limit, multicast
-  join/leave, and close-on-exec-at-creation only with focused platform docs and
-  tests.
+- Add remaining socket options such as linger, multicast join/leave, and
+  close-on-exec-at-creation only with focused platform docs and tests.
 - Expand single-descriptor readiness into `net::Poll`/`Events` or another
   multi-descriptor event-loop API once ownership and cancellation policy are
   clearer.

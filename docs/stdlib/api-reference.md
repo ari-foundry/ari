@@ -1957,6 +1957,10 @@ stream.send_buffer_size()
 stream.set_send_buffer_size(value)
 stream.recv_buffer_size()
 stream.set_recv_buffer_size(value)
+stream.ttl()
+stream.set_ttl(value)
+stream.hop_limit()
+stream.set_hop_limit(value)
 stream.set_read_timeout(timeout)
 stream.set_read_timeout_millis(millis)
 stream.set_write_timeout(timeout)
@@ -1996,6 +2000,10 @@ socket.send_buffer_size()
 socket.set_send_buffer_size(value)
 socket.recv_buffer_size()
 socket.set_recv_buffer_size(value)
+socket.ttl()
+socket.set_ttl(value)
+socket.hop_limit()
+socket.set_hop_limit(value)
 socket.set_read_timeout(timeout)
 socket.set_read_timeout_millis(millis)
 socket.set_write_timeout(timeout)
@@ -2092,7 +2100,8 @@ connected UDP send/receive, Unix stream
 bind/connect/accept, local bound-port and local socket-address lookup,
 borrowed descriptor views, explicit close, nonblocking flags,
 reuse-address/reuse-port helpers, close-on-exec helpers, TCP nodelay and
-keepalive helpers, UDP broadcast, send/receive buffer-size helpers,
+keepalive helpers, UDP broadcast, send/receive buffer-size helpers, IPv4 TTL
+and IPv6 hop-limit helpers,
 `std::time::Duration` timeout setters with raw millisecond compatibility
 helpers, and stream shutdown. TCP and
 Unix streams adapt to `std::io::Reader`/`Writer` and provide inherent
@@ -2104,10 +2113,12 @@ compatibility call sites concise when they intentionally discard the reason.
 Host-port `connect_host` first resolves through `resolve`, then delegates to
 `TcpStream::connect`. `*_ready` helpers expose single-descriptor readiness
 over `std::os::poll_read`/`poll_write`; they are advisory and callers must
-still handle the actual operation result. Full `getaddrinfo` iteration, host
-service-database lookup, multicast, TTL/hop-limit, multi-descriptor poll/event
-loops, TLS packaging decisions, and timeout-specific error results remain
-roadmap work.
+still handle the actual operation result. `ttl` controls IPv4 `IP_TTL` and
+`hop_limit` controls IPv6 `IPV6_UNICAST_HOPS`; setters accept `1..=255` and
+return `InvalidInput` outside that range. Full `getaddrinfo` iteration, host
+service-database lookup, multicast, linger, multi-descriptor poll/event loops,
+TLS packaging decisions, and timeout-specific error results remain roadmap
+work.
 
 ## IO And Input
 

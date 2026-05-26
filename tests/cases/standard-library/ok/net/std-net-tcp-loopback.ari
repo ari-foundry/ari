@@ -135,6 +135,9 @@ fn main() -> i64 {
     client.send_buffer_size().unwrap_or(0) > 0 &&
     client.set_recv_buffer_size(4096).is_ok() &&
     client.recv_buffer_size().unwrap_or(0) > 0 &&
+    client.set_ttl(64).is_ok() &&
+    client.ttl().unwrap_or(0) > 0 &&
+    client.set_ttl(0).is_err() &&
     listener.set_reuse_port(true).is_ok() {
     score = score + 32768;
   }

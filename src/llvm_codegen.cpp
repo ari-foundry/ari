@@ -586,6 +586,8 @@ private:
             symbol == "ari_builtin_net_set_broadcast" ||
             symbol == "ari_builtin_net_set_send_buffer_size" ||
             symbol == "ari_builtin_net_set_recv_buffer_size" ||
+            symbol == "ari_builtin_net_set_ttl" ||
+            symbol == "ari_builtin_net_set_hop_limit" ||
             symbol == "ari_builtin_net_set_nodelay" ||
             symbol == "ari_builtin_net_udp_connect_v4" ||
             symbol == "ari_builtin_net_udp_connect_v6" ||
@@ -3130,6 +3132,34 @@ private:
         line("define " + runtime_visibility + "i1 @ari_builtin_net_set_recv_buffer_size(i64 %fd, i64 %value) {");
         line("entry:");
         line("  %ok = call i1 @ari_runtime_net_set_int_option(i64 %fd, i32 1, i32 8, i64 %value)");
+        line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_net_ttl(i64 %fd) {");
+        line("entry:");
+        line("  %value = call i64 @ari_runtime_net_int_option(i64 %fd, i32 0, i32 2)");
+        line("  ret i64 %value");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_net_set_ttl(i64 %fd, i64 %value) {");
+        line("entry:");
+        line("  %ok = call i1 @ari_runtime_net_set_int_option(i64 %fd, i32 0, i32 2, i64 %value)");
+        line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_net_hop_limit(i64 %fd) {");
+        line("entry:");
+        line("  %value = call i64 @ari_runtime_net_int_option(i64 %fd, i32 41, i32 16)");
+        line("  ret i64 %value");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_net_set_hop_limit(i64 %fd, i64 %value) {");
+        line("entry:");
+        line("  %ok = call i1 @ari_runtime_net_set_int_option(i64 %fd, i32 41, i32 16, i64 %value)");
         line("  ret i1 %ok");
         line("}");
         line();

@@ -265,14 +265,15 @@ results.
 address helpers stay source Ari, while hosted runtime hooks provide IPv4/IPv6
 TCP, IPv4/IPv6 UDP, Unix stream sockets, one-address IPv4/IPv6 lookup,
 host-port and bracketed IPv6 endpoint resolution, direct `Error` result
-helpers with raw compatibility variants, millisecond socket timeouts, and stream shutdown. TCP and Unix streams implement the shared
+helpers with raw compatibility variants, millisecond socket timeouts, common
+socket options, IPv4 TTL, IPv6 hop-limit, and stream shutdown. TCP and Unix streams implement the shared
 `std::io::Reader`/`Writer` traits so higher-level byte helpers do not need
 socket-specific overloads, and TCP/UDP handles can report their local socket
 address. TCP listeners and UDP sockets expose reuse-address policy, and TCP
 streams can report the connected peer address and nodelay policy. The current
-network layer still keeps buffer-oriented datagrams, UDP source address
-queries, remaining socket options, and
-timeout-specific error results on the roadmap.
+network layer still keeps fuller DNS iteration, host service-database lookup,
+multi-descriptor poll/event loops, linger, multicast, Unix datagram helpers,
+and timeout-specific error results on the roadmap.
 
 `std::env` wraps the context hooks with the names application code should use
 and adds `Option`-based argument access through `try_arg` and program-name
@@ -417,12 +418,12 @@ IPv6 endpoint parsing, IPv4/IPv6 `TcpListener`/`TcpStream` handles, IPv4/IPv6
 sockets, ephemeral local-port and local-address lookup where it applies,
 descriptor views, nonblocking flags, `std::time::Duration` timeout setters
 with raw millisecond compatibility helpers, stream shutdown, explicit close,
-common socket options, single-descriptor readiness probes, and TCP/Unix
+common socket options, IPv4 TTL, IPv6 hop-limit, single-descriptor readiness probes, and TCP/Unix
 `std::io::Reader`/`Writer` byte adapters plus method-style
 `read_exact`/`write_all` stream buffer helpers. Full DNS iteration, host
 service-database lookup, multi-descriptor poll/event loops, linger,
-TTL/hop-limit, multicast, and timeout-specific error results remain roadmap
-work.
+multicast, Unix datagram helpers, and timeout-specific error results remain
+roadmap work.
 
 `std::collections` is source Ari over typed zone allocation. `Set[T]` remains a
 small, insertion-order, linear set with iterator support and stable in-place

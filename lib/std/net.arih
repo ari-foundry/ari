@@ -142,6 +142,10 @@ extern "ari" fn set_send_buffer_size_raw(raw: i64, value: i64) -> bool =
 extern "ari" fn recv_buffer_size_raw(raw: i64) -> i64 = "ari_builtin_net_recv_buffer_size";
 extern "ari" fn set_recv_buffer_size_raw(raw: i64, value: i64) -> bool =
   "ari_builtin_net_set_recv_buffer_size";
+extern "ari" fn ttl_raw(raw: i64) -> i64 = "ari_builtin_net_ttl";
+extern "ari" fn set_ttl_raw(raw: i64, value: i64) -> bool = "ari_builtin_net_set_ttl";
+extern "ari" fn hop_limit_raw(raw: i64) -> i64 = "ari_builtin_net_hop_limit";
+extern "ari" fn set_hop_limit_raw(raw: i64, value: i64) -> bool = "ari_builtin_net_set_hop_limit";
 extern "ari" fn nodelay_raw(raw: i64) -> i64 = "ari_builtin_net_nodelay";
 extern "ari" fn set_nodelay_raw(raw: i64, enabled: bool) -> bool =
   "ari_builtin_net_set_nodelay";
@@ -856,6 +860,16 @@ fn socket_int_raw(raw: i64, value: i64) -> std::Result[i64, i64] {
     return std::Err<i64, i64>(last_errno_error_raw());
   }
   return std::Ok<i64, i64>(value);
+}
+
+fn socket_hop_count_raw(raw: i64, value: i64) -> std::Result[(), i64] {
+  if raw < 0 {
+    return std::Err<(), i64>(invalid_input_error_raw());
+  }
+  if value < 1 || value > 255 {
+    return std::Err<(), i64>(invalid_input_error_raw());
+  }
+  return std::Ok<(), i64>(());
 }
 
 fn read_exact_bool_raw(raw: i64, output: ptr u8, len: i64) -> bool {
@@ -1719,6 +1733,58 @@ pub impl std::net::TcpStream {
     );
   }
 
+  fn ttl_optional(self: ref Self) -> std::Option[i64] {
+    return self.ttl().ok();
+  }
+
+  fn ttl(self: ref Self) -> std::Result[i64, std::error::Error] {
+    return std::error::map_raw<i64>(
+      socket_int_raw(self.handle.raw(), ttl_raw(self.handle.raw()))
+    );
+  }
+
+  fn set_ttl_unchecked(self: ref Self, value: i64) -> bool {
+    return self.set_ttl(value).is_ok();
+  }
+
+  fn set_ttl(self: ref Self, value: i64) -> std::Result[(), std::error::Error] {
+    match socket_hop_count_raw(self.handle.raw(), value) {
+      std::Ok(_) => {}
+      std::Err(reason) => {
+        return std::error::map_raw<()>(std::Err<(), i64>(reason));
+      }
+    }
+    return std::error::map_raw<()>(
+      socket_unit_raw(self.handle.raw(), set_ttl_raw(self.handle.raw(), value))
+    );
+  }
+
+  fn hop_limit_optional(self: ref Self) -> std::Option[i64] {
+    return self.hop_limit().ok();
+  }
+
+  fn hop_limit(self: ref Self) -> std::Result[i64, std::error::Error] {
+    return std::error::map_raw<i64>(
+      socket_int_raw(self.handle.raw(), hop_limit_raw(self.handle.raw()))
+    );
+  }
+
+  fn set_hop_limit_unchecked(self: ref Self, value: i64) -> bool {
+    return self.set_hop_limit(value).is_ok();
+  }
+
+  fn set_hop_limit(self: ref Self, value: i64) -> std::Result[(), std::error::Error] {
+    match socket_hop_count_raw(self.handle.raw(), value) {
+      std::Ok(_) => {}
+      std::Err(reason) => {
+        return std::error::map_raw<()>(std::Err<(), i64>(reason));
+      }
+    }
+    return std::error::map_raw<()>(
+      socket_unit_raw(self.handle.raw(), set_hop_limit_raw(self.handle.raw(), value))
+    );
+  }
+
   fn set_read_timeout_millis_unchecked(self: ref Self, millis: i64) -> bool {
     return self.set_read_timeout_millis(millis).is_ok();
   }
@@ -2042,6 +2108,58 @@ pub impl std::net::UdpSocket {
   fn set_recv_buffer_size(self: ref Self, value: i64) -> std::Result[(), std::error::Error] {
     return std::error::map_raw<()>(
       socket_unit_raw(self.handle.raw(), set_recv_buffer_size_raw(self.handle.raw(), value))
+    );
+  }
+
+  fn ttl_optional(self: ref Self) -> std::Option[i64] {
+    return self.ttl().ok();
+  }
+
+  fn ttl(self: ref Self) -> std::Result[i64, std::error::Error] {
+    return std::error::map_raw<i64>(
+      socket_int_raw(self.handle.raw(), ttl_raw(self.handle.raw()))
+    );
+  }
+
+  fn set_ttl_unchecked(self: ref Self, value: i64) -> bool {
+    return self.set_ttl(value).is_ok();
+  }
+
+  fn set_ttl(self: ref Self, value: i64) -> std::Result[(), std::error::Error] {
+    match socket_hop_count_raw(self.handle.raw(), value) {
+      std::Ok(_) => {}
+      std::Err(reason) => {
+        return std::error::map_raw<()>(std::Err<(), i64>(reason));
+      }
+    }
+    return std::error::map_raw<()>(
+      socket_unit_raw(self.handle.raw(), set_ttl_raw(self.handle.raw(), value))
+    );
+  }
+
+  fn hop_limit_optional(self: ref Self) -> std::Option[i64] {
+    return self.hop_limit().ok();
+  }
+
+  fn hop_limit(self: ref Self) -> std::Result[i64, std::error::Error] {
+    return std::error::map_raw<i64>(
+      socket_int_raw(self.handle.raw(), hop_limit_raw(self.handle.raw()))
+    );
+  }
+
+  fn set_hop_limit_unchecked(self: ref Self, value: i64) -> bool {
+    return self.set_hop_limit(value).is_ok();
+  }
+
+  fn set_hop_limit(self: ref Self, value: i64) -> std::Result[(), std::error::Error] {
+    match socket_hop_count_raw(self.handle.raw(), value) {
+      std::Ok(_) => {}
+      std::Err(reason) => {
+        return std::error::map_raw<()>(std::Err<(), i64>(reason));
+      }
+    }
+    return std::error::map_raw<()>(
+      socket_unit_raw(self.handle.raw(), set_hop_limit_raw(self.handle.raw(), value))
     );
   }
 

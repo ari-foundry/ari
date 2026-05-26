@@ -1422,6 +1422,8 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_net_set_read_timeout_millis" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -q "@ari_builtin_net_reuse_addr" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -q "@ari_builtin_net_set_reuse_addr" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -q "@ari_builtin_net_ttl" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -q "@ari_builtin_net_set_ttl" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -q "@ari_builtin_net_nodelay" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -q "@ari_builtin_net_set_nodelay" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -q "@ari_builtin_net_shutdown" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
@@ -1456,6 +1458,8 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_net_udp_recv_byte" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -q "@ari_builtin_net_reuse_addr" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -q "@ari_builtin_net_set_reuse_addr" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
+	grep -q "@ari_builtin_net_ttl" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
+	grep -q "@ari_builtin_net_set_ttl" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -F -q "std3net8udp_bind" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -F -q "std__net__UdpSocket8inherent10local_addr" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -F -q "std__net__UdpSocket8inherent13bind_optional" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
@@ -1475,6 +1479,8 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_net_peer_addr_v6" $(BUILD_DIR)/prelude/std-net-ipv6-socket.ll
 	grep -q "@ari_builtin_net_lookup_v6" $(BUILD_DIR)/prelude/std-net-ipv6-socket.ll
 	grep -q "@ari_builtin_net_lookup_v6_endpoint" $(BUILD_DIR)/prelude/std-net-ipv6-socket.ll
+	grep -q "@ari_builtin_net_hop_limit" $(BUILD_DIR)/prelude/std-net-ipv6-socket.ll
+	grep -q "@ari_builtin_net_set_hop_limit" $(BUILD_DIR)/prelude/std-net-ipv6-socket.ll
 	grep -F -q "std3net13tcp_listen_v6" $(BUILD_DIR)/prelude/std-net-ipv6-socket.ll
 	grep -F -q "std3net14tcp_connect_v6" $(BUILD_DIR)/prelude/std-net-ipv6-socket.ll
 	grep -F -q "std3net11udp_bind_v6" $(BUILD_DIR)/prelude/std-net-ipv6-socket.ll
