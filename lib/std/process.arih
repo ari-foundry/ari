@@ -1435,10 +1435,120 @@ pub impl std::process::Command {
             }
           }
         }
-        var stdout_bytes = std::io::read_all<std::io::PipeReader>(zone, ref mut stdout_reader);
-        var stderr_bytes = std::io::read_all<std::io::PipeReader>(zone, ref mut stderr_reader);
+        var stdout_bytes = std::vec::new<u8>(zone, 16);
+        var stderr_bytes = std::vec::new<u8>(zone, 16);
+        var stdout_open = true;
+        var stderr_open = true;
+        var drain_error = std::None<std::error::Error>();
+        while (stdout_open || stderr_open) && drain_error.is_none() {
+          var progressed = false;
+
+          if stdout_open {
+            match stdout_reader.as_fd().poll_read_millis(0) {
+              std::Err(stdout_poll_now_reason) => {
+                drain_error = std::Some<std::error::Error>(stdout_poll_now_reason);
+              }
+              std::Ok(stdout_ready_now) => {
+                if stdout_ready_now {
+                  match stdout_reader.read_one() {
+                    std::io::ReadByteValue(stdout_value_now) => {
+                      stdout_bytes.push_in(zone, stdout_value_now);
+                      progressed = true;
+                    }
+                    std::io::ReadByteEof => {
+                      stdout_open = false;
+                      progressed = true;
+                    }
+                    std::io::ReadByteError(stdout_read_now_reason) => {
+                      drain_error = std::Some<std::error::Error>(stdout_read_now_reason);
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          if drain_error.is_none() && stderr_open {
+            match stderr_reader.as_fd().poll_read_millis(0) {
+              std::Err(stderr_poll_now_reason) => {
+                drain_error = std::Some<std::error::Error>(stderr_poll_now_reason);
+              }
+              std::Ok(stderr_ready_now) => {
+                if stderr_ready_now {
+                  match stderr_reader.read_one() {
+                    std::io::ReadByteValue(stderr_value_now) => {
+                      stderr_bytes.push_in(zone, stderr_value_now);
+                      progressed = true;
+                    }
+                    std::io::ReadByteEof => {
+                      stderr_open = false;
+                      progressed = true;
+                    }
+                    std::io::ReadByteError(stderr_read_now_reason) => {
+                      drain_error = std::Some<std::error::Error>(stderr_read_now_reason);
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          if drain_error.is_none() && !progressed && stdout_open {
+            match stdout_reader.as_fd().poll_read_millis(25) {
+              std::Err(stdout_poll_wait_reason) => {
+                drain_error = std::Some<std::error::Error>(stdout_poll_wait_reason);
+              }
+              std::Ok(stdout_ready_wait) => {
+                if stdout_ready_wait {
+                  match stdout_reader.read_one() {
+                    std::io::ReadByteValue(stdout_value_wait) => {
+                      stdout_bytes.push_in(zone, stdout_value_wait);
+                      progressed = true;
+                    }
+                    std::io::ReadByteEof => {
+                      stdout_open = false;
+                      progressed = true;
+                    }
+                    std::io::ReadByteError(stdout_read_wait_reason) => {
+                      drain_error = std::Some<std::error::Error>(stdout_read_wait_reason);
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          if drain_error.is_none() && !progressed && stderr_open {
+            match stderr_reader.as_fd().poll_read_millis(25) {
+              std::Err(stderr_poll_wait_reason) => {
+                drain_error = std::Some<std::error::Error>(stderr_poll_wait_reason);
+              }
+              std::Ok(stderr_ready_wait) => {
+                if stderr_ready_wait {
+                  match stderr_reader.read_one() {
+                    std::io::ReadByteValue(stderr_value_wait) => {
+                      stderr_bytes.push_in(zone, stderr_value_wait);
+                    }
+                    std::io::ReadByteEof => {
+                      stderr_open = false;
+                    }
+                    std::io::ReadByteError(stderr_read_wait_reason) => {
+                      drain_error = std::Some<std::error::Error>(stderr_read_wait_reason);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
         stdout_reader.close();
         stderr_reader.close();
+        match drain_error {
+          std::Some(drain_reason) => {
+            return std::process::wait_then_output_error(pid, drain_reason);
+          }
+          std::None => {}
+        }
 
         match std::process::wait_status(pid) {
           std::Err(wait_reason) => {

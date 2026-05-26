@@ -186,6 +186,10 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::os::nonblocking_raw", "ari_builtin_os_nonblocking"},
         {"os::set_nonblocking_raw", "ari_builtin_os_set_nonblocking"},
         {"std::os::set_nonblocking_raw", "ari_builtin_os_set_nonblocking"},
+        {"os::poll_read_raw", "ari_builtin_os_poll_read"},
+        {"std::os::poll_read_raw", "ari_builtin_os_poll_read"},
+        {"os::poll_write_raw", "ari_builtin_os_poll_write"},
+        {"std::os::poll_write_raw", "ari_builtin_os_poll_write"},
         {"os::pipe_raw", "ari_builtin_os_pipe"},
         {"std::os::pipe_raw", "ari_builtin_os_pipe"},
         {"fs::exists", "ari_builtin_fs_exists"},
@@ -411,6 +415,8 @@ const std::unordered_map<std::string, AriBuiltinSignatureExpectation>& ari_built
         add("ari_builtin_os_set_close_on_exec", builtin_sig({i64, boolean}, boolean));
         add("ari_builtin_os_nonblocking", builtin_sig({i64}, i64));
         add("ari_builtin_os_set_nonblocking", builtin_sig({i64, boolean}, boolean));
+        add("ari_builtin_os_poll_read", builtin_sig({i64, i64}, i64));
+        add("ari_builtin_os_poll_write", builtin_sig({i64, i64}, i64));
         add("ari_builtin_os_pipe", builtin_sig({}, i64));
         add("ari_builtin_os_read_byte", builtin_sig({i64}, i64));
         add("ari_builtin_os_write_byte", builtin_sig({i64, u8}, boolean));

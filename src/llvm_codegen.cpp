@@ -499,6 +499,7 @@ private:
                symbol == "lseek" ||
                symbol == "dup" ||
                symbol == "fcntl" ||
+               symbol == "poll" ||
                symbol == "pipe" ||
                symbol == "socket" ||
                symbol == "bind" ||
@@ -675,6 +676,7 @@ private:
         declarations_ << "declare i64 @lseek(i32, i64, i32)\n";
         declarations_ << "declare i32 @dup(i32)\n";
         declarations_ << "declare i32 @fcntl(i32, i32, ...)\n";
+        declarations_ << "declare i32 @poll(ptr, i64, i32)\n";
         declarations_ << "declare i32 @pipe(ptr)\n";
         declarations_ << "declare i32 @socket(i32, i32, i32)\n";
         declarations_ << "declare i32 @bind(i32, ptr, i32)\n";
@@ -2060,6 +2062,62 @@ private:
         line("  ret i1 %ok");
         line("fail:");
         line("  ret i1 false");
+        line("}");
+        line();
+
+        line("define private i64 @ari_runtime_os_poll_fd(i64 %fd, i64 %timeout, i16 %events) {");
+        line("entry:");
+        line("  %bad_fd = icmp slt i64 %fd, 0");
+        line("  %bad_timeout = icmp slt i64 %timeout, 0");
+        line("  %bad_input = or i1 %bad_fd, %bad_timeout");
+        line("  br i1 %bad_input, label %fail, label %call");
+        line("call:");
+        line("  %pollfd = alloca [8 x i8], align 8");
+        line("  call void @llvm.memset.p0.i64(ptr %pollfd, i8 0, i64 8, i1 false)");
+        line("  %fd_ptr = getelementptr inbounds i8, ptr %pollfd, i64 0");
+        line("  %fd32 = trunc i64 %fd to i32");
+        line("  store i32 %fd32, ptr %fd_ptr, align 4");
+        line("  %events_ptr = getelementptr inbounds i8, ptr %pollfd, i64 4");
+        line("  store i16 %events, ptr %events_ptr, align 2");
+        line("  %timeout32 = trunc i64 %timeout to i32");
+        line("  %code = call i32 @poll(ptr %pollfd, i64 1, i32 %timeout32)");
+        line("  %poll_bad = icmp slt i32 %code, 0");
+        line("  br i1 %poll_bad, label %fail, label %check_timeout");
+        line("check_timeout:");
+        line("  %timed_out = icmp eq i32 %code, 0");
+        line("  br i1 %timed_out, label %not_ready, label %check_revents");
+        line("check_revents:");
+        line("  %revents_ptr = getelementptr inbounds i8, ptr %pollfd, i64 6");
+        line("  %revents = load i16, ptr %revents_ptr, align 2");
+        line("  %bad_masked = and i16 %revents, 40");
+        line("  %bad_revents = icmp ne i16 %bad_masked, 0");
+        line("  br i1 %bad_revents, label %fail, label %check_ready");
+        line("check_ready:");
+        line("  %ready_masked = and i16 %revents, %events");
+        line("  %ready_event = icmp ne i16 %ready_masked, 0");
+        line("  %hup_masked = and i16 %revents, 16");
+        line("  %ready_hup = icmp ne i16 %hup_masked, 0");
+        line("  %ready = or i1 %ready_event, %ready_hup");
+        line("  %wide = zext i1 %ready to i64");
+        line("  ret i64 %wide");
+        line("not_ready:");
+        line("  ret i64 0");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_os_poll_read(i64 %fd, i64 %timeout) {");
+        line("entry:");
+        line("  %ready = call i64 @ari_runtime_os_poll_fd(i64 %fd, i64 %timeout, i16 1)");
+        line("  ret i64 %ready");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_os_poll_write(i64 %fd, i64 %timeout) {");
+        line("entry:");
+        line("  %ready = call i64 @ari_runtime_os_poll_fd(i64 %fd, i64 %timeout, i16 4)");
+        line("  ret i64 %ready");
         line("}");
         line();
 

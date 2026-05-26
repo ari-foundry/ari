@@ -1,0 +1,49 @@
+// Covers descriptor readiness polling. poll_read/poll_write are non-owning
+// descriptor probes; they do not consume or close the handle they inspect.
+fn main() -> i64 {
+  var pipe = std::io::pipe().unwrap();
+  var reader = pipe.take_reader();
+  var writer = pipe.take_writer();
+  let zero = std::time::Duration::zero();
+  var score = 0;
+
+  if !std::os::poll_read(reader.as_fd(), zero).unwrap_or(true) {
+    score = score + 1;
+  }
+  if std::os::poll_write(writer.as_fd(), zero).unwrap_or(false) {
+    score = score + 2;
+  }
+  if writer.as_fd().poll_write_millis(0).unwrap_or(false) {
+    score = score + 4;
+  }
+
+  var payload = [42u8];
+  if std::io::write_all<std::io::PipeWriter>(ref mut writer, payload.as_slice()).is_ok() {
+    score = score + 8;
+  }
+  if std::os::poll_read_millis(reader.as_fd(), 0).unwrap_or(false) {
+    score = score + 16;
+  }
+  if reader.as_fd().poll_read(zero).unwrap_or(false) {
+    score = score + 32;
+  }
+
+  var output = [0u8];
+  let view = output.as_slice();
+  let raw = view.as_ptr();
+  if std::io::read_exact<std::io::PipeReader>(ref mut reader, raw, 1).is_ok() {
+    if ptr_load(raw) == 42u8 {
+      score = score + 64;
+    }
+  }
+
+  let invalid = std::os::invalid();
+  if invalid.poll_read_millis(0).is_err() {
+    score = score + 128;
+  }
+  assert(writer.as_fd().poll_write_millis(-1).is_err());
+  assert(reader.close().is_ok());
+  assert(writer.close().is_ok());
+
+  return score;
+}

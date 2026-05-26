@@ -97,7 +97,7 @@ useful for modern systems work.
 | errno mapping | `std::target::uses_posix_errno()` reports the ABI family, and `std::c::errno()`/`std::c::error()` provide the first hosted runtime accessor and `std::error` bridge. | Add portable `std::os::errno` together with the first fallible descriptor wrappers and non-glibc tests. |
 | getrandom | `std::random::entropy()` and `std::random::fill(values)` use the hosted libc/syscall path and return `std::error::Error` on recoverable failure; `entropy_unchecked()` and `fill_unchecked(values)` hard-fail if entropy cannot be read. | Add broader failure injection tests and keep cryptographic streams behind a separate policy. |
 | `/dev/urandom` | Used as the random fallback when `getrandom` cannot make progress. | Keep as fallback; do not expose raw device reads as portable API. |
-| file descriptor abstraction | `std::os::Fd` is a public non-owning descriptor view, `std::os::OwnedFd` owns exactly-one-close responsibility, `OwnedFd::try_clone()` duplicates that ownership through `dup`, `std::os::pipe()` creates an owned read/write `Pipe`, and `std::fs::File.descriptor()` exposes file handles through the borrowed view. | Add duplicate-with-flags and richer error policy before exposing broad `fcntl`, `poll`, or epoll. |
+| file descriptor abstraction | `std::os::Fd` is a public non-owning descriptor view, `std::os::OwnedFd` owns exactly-one-close responsibility, `OwnedFd::try_clone()` duplicates that ownership through `dup`, `std::os::pipe()` creates an owned read/write `Pipe`, `std::os::poll_read`/`poll_write` expose single-descriptor readiness probes, and `std::fs::File.descriptor()` exposes file handles through the borrowed view. | Add duplicate-with-flags and richer error policy before exposing broad `fcntl` or epoll. |
 | file open options | `std::fs::OpenOptions` lowers read/write/append/truncate/create/create-new policy to hosted `open(2)` flags. | Add typed filesystem errors before exposing more platform-specific open flags. |
 | file open errors | `std::fs::open`, `create`, and `OpenOptions::open` return direct `Result[File, Error]`; `*_optional`/`try_*` helpers intentionally discard the reason, `_unchecked` helpers preserve invalid-handle compatibility, `*_raw` variants preserve compact raw errno values for compatibility, and `_detailed` helpers add operation/path context through `PathError` or `TwoPathError`. | Add broader platform-specific open flags in `std::os` before growing the portable `OpenOptions` surface. |
 | file read errors | `std::fs::read` and `read_to_string` return direct `Result[String, Error]` for open, mid-read, and close failures while preserving the byte-oriented read loop; the hosted `read_byte` hook now reports `read(2) == 0` as EOF and `read(2) < 0` as an adapter error sentinel. | Add richer typed filesystem errors once the portable error-field policy is ready. |
@@ -115,7 +115,7 @@ useful for modern systems work.
 | pipe | `std::os::pipe()` is backed by the hosted `pipe(2)` ABI and returns an owning `Pipe` value with separate read/write ends; `std::io::pipe()` adapts it into `Reader`/`Writer` ends. | Add `pipe2`-style close-on-exec/nonblocking-at-creation policy where host APIs support it. |
 | fcntl | Not exposed. | Future low-level descriptor module with typed flag helpers. |
 | ioctl | Not exposed. | Keep optional and narrow; prefer typed wrappers for common devices over a raw catch-all. |
-| poll/select | Not exposed. | `poll` can be a portable readiness seed; `select` is legacy and should stay compatibility-oriented. |
+| poll/select | `std::os::poll_read` and `poll_write` expose a small `poll(2)` readiness seed over one descriptor, and `std::net` forwards it through listener/stream/socket `*_ready` helpers. | Multi-descriptor poll/event loops and Linux `epoll` remain future work; `select` is legacy and should stay compatibility-oriented. |
 | epoll | `target::has_epoll()` reports Linux family support. | `std::os::linux::epoll` with owned epoll fd, `add`, `modify`, `remove`, and `wait`. |
 | inotify | `target::has_inotify()` reports Linux family support. | Owned inotify fd plus event buffer parsing. |
 | fanotify | `target::has_fanotify_api()` reports Linux family support only. | Optional; permission-heavy and likely not a first runtime slice. |
@@ -135,7 +135,7 @@ useful for modern systems work.
 | current process info | `std::process::id`, `uid`, `gid`, and `is_root` exist. | Add parent id, session/process-group helpers only with clear platform policy. |
 | exit/abort | `std::process::exit` and `abort` exist. | Document destructor/cleanup limits anywhere higher-level runtime teardown is added. |
 | spawn | `Command::spawn` and module-level `process::spawn(ref command)` are exposed through a portable-looking builder backed by POSIX `fork`/`execvp` today. A close-on-exec setup pipe reports child `chdir`, `dup2`, and `execvp` failures back to the parent. | Add Windows mapping and decide interactive stdin ownership before broadening the API. |
-| output capture and stdin | `Command::output_in(ref mut zone)` captures small child stdout/stderr into a zone-backed `Output` handle using `pipe(2)` and `dup2(2)`. `status_with_stdin`, `status_with_stdin_string`, `spawn_with_stdin_file`, `status_with_stdin_file`, and their `/dev/null`/byte/path variants redirect child stdin at execution time and surface setup errors to the parent. | Add readiness or nonblocking draining before promising large-output capture, then add interactive stdin handles. |
+| output capture and stdin | `Command::output_in(ref mut zone)` captures child stdout/stderr into a zone-backed `Output` handle using `pipe(2)`, `dup2(2)`, and descriptor readiness to drain both streams. `status_with_stdin`, `status_with_stdin_string`, `spawn_with_stdin_file`, `status_with_stdin_file`, and their `/dev/null`/byte/path variants redirect child stdin at execution time and surface setup errors to the parent. | Add interactive stdin/stdout/stderr handles after ownership policy is clear. |
 | fork | `std::process::fork` exists as a POSIX `Result` slice, with `fork_raw` for old sentinel-style code. | Keep marked as sharp; fork-with-threads and async-signal-safe limitations need more docs. |
 | exec | `Command::exec` replaces the current process after applying child setup. | Add richer setup policy and document noreturn behavior in more examples. |
 | wait | `std::process::wait_status`, `Command::exit_status`, and `Child::wait_status` preserve typed `ExitStatus` values for normal exits and signal termination. Compatibility `wait_raw`, `Command::status`, and `Child::wait` still expose normal exit-code oriented paths. | Add richer platform-specific status fields and Windows mapping. |
@@ -158,10 +158,10 @@ useful for modern systems work.
 1. Keep `std::target` current with compiler target support.
 2. Add explicit `std::os` docs before adding raw wrappers.
 3. Grow `OwnedFd` with duplicate-with-flags and `errno`/error policy.
-4. Add process expansion in order: large-output pipe draining, interactive
-   stdin handles, richer wait status, then portable `spawn` mapping.
-5. Implement descriptor readiness primitives in order: `poll`, then Linux
-   `epoll`, `eventfd`, `timerfd`, and `memfd`.
+4. Add process expansion in order: interactive stdin/stdout/stderr handles,
+   richer wait status, then portable `spawn` mapping.
+5. Expand descriptor readiness from single-descriptor `poll_read`/`poll_write`
+   into Linux `epoll`, `eventfd`, `timerfd`, and `memfd`.
 6. Add memory mapping only after descriptor/error policy and owned mapping
    cleanup are designed.
 7. Add signal mask/action support only after signal-safe limitations are fully

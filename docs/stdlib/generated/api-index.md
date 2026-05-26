@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `3354`
+- API entries: `3382`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,14 +32,14 @@ platform notes.
 | `alloc` | 893 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 902 | stable candidate |
-| `hosted` | 1372 | platform-backed |
-| `platform` | 151 | platform-specific |
+| `hosted` | 1388 | platform-backed |
+| `platform` | 163 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1184 |
-| `method` | 1720 |
+| `fn` | 1188 |
+| `method` | 1744 |
 | `module` | 39 |
 | `struct` | 178 |
 | `trait` | 39 |
@@ -74,9 +74,9 @@ platform notes.
 | `std::log` | `hosted` | 12 |
 | `std::math` | `core` | 39 |
 | `std::mem` | `core` | 13 |
-| `std::net` | `hosted` | 272 |
+| `std::net` | `hosted` | 288 |
 | `std::option` | `core` | 12 |
-| `std::os` | `platform` | 50 |
+| `std::os` | `platform` | 62 |
 | `std::parse` | `core` | 101 |
 | `std::path` | `core` | 120 |
 | `std::process` | `hosted` | 153 |
@@ -2545,6 +2545,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::TcpListener::accept` | check-prelude std-net-tcp-loopback Result-returning TCP accept helper with Error payload; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::accept_optional` | check-prelude std-net-tcp-loopback Option-returning TCP accept compatibility helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::accept_raw` | check-prelude std-net-tcp-loopback raw Result-returning TCP accept compatibility helper; docs/stdlib/modules/net.md |
+| `method std::net::TcpListener::accept_ready` | check-prelude std-os-poll Duration-based TCP listener accept-readiness probe; docs/stdlib/modules/net.md |
+| `method std::net::TcpListener::accept_ready_millis` | check-prelude std-os-poll millisecond TCP listener accept-readiness probe; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::bind` | check-prelude std-net-tcp-loopback Result-returning IPv4/IPv6 TCP bind helper with Error payload; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::bind_optional` | check-prelude std-net-tcp-loopback Option-returning TCP bind compatibility helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::bind_raw` | check-prelude std-net-tcp-loopback raw Result-returning TCP bind compatibility helper and restricted-host error bridge; docs/stdlib/modules/net.md |
@@ -2607,6 +2609,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::TcpStream::read_exact` | check-prelude std-net-tcp-loopback stream buffer read helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::read_exact_slice` | check-prelude std-net-tcp-loopback stream exact slice read helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::read_exact_unchecked` | check-prelude std-net-tcp-loopback unchecked stream exact-read compatibility helper; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::read_ready` | check-prelude std-os-poll Duration-based TCP stream read-readiness probe; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::read_ready_millis` | check-prelude std-os-poll millisecond TCP stream read-readiness probe; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::read_to_end` | check-prelude std-net-tcp-loopback stream collect-to-Vec helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::read_to_string` | check-prelude std-net-tcp-loopback stream collect-to-String helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::recv_buffer_size` | check-prelude std-net-tcp-loopback TCP receive-buffer-size query; docs/stdlib/modules/net.md |
@@ -2631,6 +2635,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::TcpStream::try_connect` | check-prelude std-net-tcp-loopback Option-returning TCP connect compatibility alias; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::try_read_byte` | check-prelude std-net-tcp-loopback Option-returning single-byte stream read helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::write_all_unchecked` | check-prelude std-net-tcp-loopback unchecked stream write-all compatibility helper; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::write_ready` | check-prelude std-os-poll Duration-based TCP stream write-readiness probe; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::write_ready_millis` | check-prelude std-os-poll millisecond TCP stream write-readiness probe; docs/stdlib/modules/net.md |
 | `method std::net::UdpRecvFrom::addr` | check-prelude std-net-udp-socket UDP receive source address accessor; docs/stdlib/modules/net.md |
 | `method std::net::UdpRecvFrom::len` | check-prelude std-net-udp-socket UDP receive byte-count accessor; docs/stdlib/modules/net.md |
 | `method std::net::UdpRecvFrom::source` | check-prelude std-net-udp-socket UDP receive source-address alias; docs/stdlib/modules/net.md |
@@ -2660,6 +2666,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::UdpSocket::recv_byte` | check-prelude std-net-udp-socket single-byte UDP datagram receive helper; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::recv_byte_unchecked` | check-prelude std-net-udp-socket unchecked single-byte UDP receive compatibility helper; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::recv_from` | check-prelude std-net-udp-socket UDP source-address receive helper; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::recv_ready` | check-prelude std-os-poll Duration-based UDP receive-readiness probe; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::recv_ready_millis` | check-prelude std-os-poll millisecond UDP receive-readiness probe; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::reuse_addr` | check-prelude std-net-udp-socket UDP reuse-address socket option query; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::reuse_addr_optional` | check-prelude std-net-udp-socket Option-returning UDP reuse-address compatibility query; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::reuse_port` | check-prelude std-net-udp-socket UDP reuse-port socket option query; docs/stdlib/modules/net.md |
@@ -2668,6 +2676,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::UdpSocket::send_buffer_size` | check-prelude std-net-udp-socket UDP send-buffer-size query; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::send_byte_to` | check-prelude std-net-udp-socket single-byte UDP datagram send helper; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::send_byte_to_unchecked` | check-prelude std-net-udp-socket unchecked single-byte UDP send compatibility helper; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::send_ready` | check-prelude std-os-poll Duration-based UDP send-readiness probe; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::send_ready_millis` | check-prelude std-os-poll millisecond UDP send-readiness probe; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::send_to` | check-prelude std-net-udp-socket UDP datagram buffer send helper; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::set_broadcast` | check-prelude std-net-udp-socket UDP broadcast socket option setter; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::set_broadcast_unchecked` | check-prelude std-net-udp-socket unchecked UDP broadcast compatibility setter; docs/stdlib/modules/net.md |
@@ -2692,6 +2702,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::UnixListener::accept` | check-prelude std-net-unix-socket Result-returning Unix stream accept helper with Error payload; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::accept_optional` | check-prelude std-net-unix-socket Option-returning Unix stream accept compatibility helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::accept_raw` | check-prelude std-net-unix-socket raw Result-returning Unix stream accept compatibility helper; docs/stdlib/modules/net.md |
+| `method std::net::UnixListener::accept_ready` | check-prelude std-os-poll Duration-based Unix listener accept-readiness probe; docs/stdlib/modules/net.md |
+| `method std::net::UnixListener::accept_ready_millis` | check-prelude std-os-poll millisecond Unix listener accept-readiness probe; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::bind` | check-prelude std-net-unix-socket Result-returning Unix listener bind helper with Error payload; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::bind_optional` | check-prelude std-net-unix-socket Option-returning Unix listener bind compatibility helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::bind_raw` | check-prelude std-net-unix-socket raw Result-returning Unix listener bind compatibility helper and restricted-host error bridge; docs/stdlib/modules/net.md |
@@ -2725,6 +2737,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::UnixStream::read_exact` | check-prelude std-net-unix-socket Unix stream buffer read helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::read_exact_slice` | check-prelude std-net-unix-socket Unix stream exact slice read helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::read_exact_unchecked` | check-prelude std-net-unix-socket unchecked Unix stream exact-read compatibility helper; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::read_ready` | check-prelude std-os-poll Duration-based Unix stream read-readiness probe; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::read_ready_millis` | check-prelude std-os-poll millisecond Unix stream read-readiness probe; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::read_to_end` | check-prelude std-net-unix-socket Unix stream collect-to-Vec helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::read_to_string` | check-prelude std-net-unix-socket Unix stream collect-to-String helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::set_close_on_exec` | check-prelude std-net-unix-socket Unix stream close-on-exec descriptor flag setter; docs/stdlib/modules/net.md |
@@ -2741,6 +2755,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::UnixStream::try_connect` | check-prelude std-net-unix-socket Option-returning Unix connect compatibility alias; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::try_read_byte` | check-prelude std-net-unix-socket Option-returning single-byte Unix stream read helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::write_all_unchecked` | check-prelude std-net-unix-socket unchecked Unix stream write-all compatibility helper; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::write_ready` | check-prelude std-os-poll Duration-based Unix stream write-readiness probe; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::write_ready_millis` | check-prelude std-os-poll millisecond Unix stream write-readiness probe; docs/stdlib/modules/net.md |
 
 ### module
 
@@ -2825,6 +2841,10 @@ Tier: `platform`. Stability reading: platform-specific.
 | `fn std::os::invalid` | check-prelude std-os-fd invalid descriptor view constructor; docs/stdlib/modules/os.md |
 | `fn std::os::pipe` | check-prelude std-os-pipe Result-returning owned OS pipe descriptor pair constructor; docs/stdlib/modules/os.md |
 | `fn std::os::pipe_optional` | check-prelude std-os-pipe Option-returning pipe constructor compatibility helper; docs/stdlib/modules/os.md |
+| `fn std::os::poll_read` | check-prelude std-os-poll Duration-based descriptor read readiness helper; docs/stdlib/modules/os.md |
+| `fn std::os::poll_read_millis` | check-prelude std-os-poll millisecond descriptor read readiness helper; docs/stdlib/modules/os.md |
+| `fn std::os::poll_write` | check-prelude std-os-poll Duration-based descriptor write readiness helper; docs/stdlib/modules/os.md |
+| `fn std::os::poll_write_millis` | check-prelude std-os-poll millisecond descriptor write readiness helper; docs/stdlib/modules/os.md |
 | `fn std::os::stderr` | check-prelude std-os-fd stderr descriptor view constructor; docs/stdlib/modules/os.md |
 | `fn std::os::stdin` | check-prelude std-os-fd stdin descriptor view constructor; docs/stdlib/modules/os.md |
 | `fn std::os::stdout` | check-prelude std-os-fd stdout descriptor view constructor; docs/stdlib/modules/os.md |
@@ -2840,6 +2860,10 @@ Tier: `platform`. Stability reading: platform-specific.
 | `method std::os::Fd::is_stdin` | check-prelude std-os-fd stdin descriptor predicate; docs/stdlib/modules/os.md |
 | `method std::os::Fd::is_stdout` | check-prelude std-os-fd stdout descriptor predicate; docs/stdlib/modules/os.md |
 | `method std::os::Fd::is_valid` | check-prelude std-os-fd valid descriptor predicate; docs/stdlib/modules/os.md |
+| `method std::os::Fd::poll_read` | check-prelude std-os-poll Duration-based borrowed descriptor read-readiness probe; docs/stdlib/modules/os.md |
+| `method std::os::Fd::poll_read_millis` | check-prelude std-os-poll millisecond borrowed descriptor read-readiness probe; docs/stdlib/modules/os.md |
+| `method std::os::Fd::poll_write` | check-prelude std-os-poll Duration-based borrowed descriptor write-readiness probe; docs/stdlib/modules/os.md |
+| `method std::os::Fd::poll_write_millis` | check-prelude std-os-poll millisecond borrowed descriptor write-readiness probe; docs/stdlib/modules/os.md |
 | `method std::os::Fd::raw` | check-prelude std-os-fd raw descriptor accessor; docs/stdlib/modules/os.md |
 | `method std::os::OwnedFd::as_fd` | check-prelude std-os-owned-fd borrowed descriptor view from owned handle; docs/stdlib/modules/os.md |
 | `method std::os::OwnedFd::clone` | check-prelude std-os-owned-fd direct Error owned descriptor duplication helper; docs/stdlib/modules/os.md |
@@ -2853,6 +2877,10 @@ Tier: `platform`. Stability reading: platform-specific.
 | `method std::os::OwnedFd::is_nonblocking` | check-prelude std-os-owned-fd direct Error nonblocking descriptor flag query; docs/stdlib/modules/os.md |
 | `method std::os::OwnedFd::is_nonblocking_optional` | check-prelude std-os-owned-fd-nonblocking Option-returning nonblocking descriptor flag query; docs/stdlib/modules/os.md |
 | `method std::os::OwnedFd::is_open` | check-prelude std-os-owned-fd owned descriptor open predicate; docs/stdlib/modules/os.md |
+| `method std::os::OwnedFd::poll_read` | check-prelude std-os-poll Duration-based owned descriptor read-readiness probe; docs/stdlib/modules/os.md |
+| `method std::os::OwnedFd::poll_read_millis` | check-prelude std-os-poll millisecond owned descriptor read-readiness probe; docs/stdlib/modules/os.md |
+| `method std::os::OwnedFd::poll_write` | check-prelude std-os-poll Duration-based owned descriptor write-readiness probe; docs/stdlib/modules/os.md |
+| `method std::os::OwnedFd::poll_write_millis` | check-prelude std-os-poll millisecond owned descriptor write-readiness probe; docs/stdlib/modules/os.md |
 | `method std::os::OwnedFd::raw` | check-prelude std-os-owned-fd owned descriptor raw accessor; docs/stdlib/modules/os.md |
 | `method std::os::OwnedFd::set_close_on_exec` | check-prelude std-os-owned-fd direct Error close-on-exec descriptor flag setter; docs/stdlib/modules/os.md |
 | `method std::os::OwnedFd::set_close_on_exec_bool` | check-prelude std-os-owned-fd-flags bool compatibility close-on-exec descriptor flag setter; docs/stdlib/modules/os.md |

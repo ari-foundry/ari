@@ -11,9 +11,10 @@ small descriptor model with two shapes:
 This module is intentionally not a raw syscall collection. Close, duplicate,
 pipe creation, close-on-exec, and nonblocking mode are the first owner
 operations because they define descriptor lifetime, inheritance, data-flow
-edges, and blocking behavior. Broad `fcntl`, `poll`, Linux `epoll`, signals,
-and memory mapping are added in small layers after descriptor error policy is
-stable.
+edges, and blocking behavior. `poll_read` and `poll_write` are the first
+readiness probes over borrowed descriptors. Broad `fcntl`, Linux `epoll`,
+signals, and memory mapping are added in small layers after descriptor error
+policy is stable.
 
 ## API
 
@@ -27,6 +28,10 @@ os::stdout()
 os::stderr()
 os::pipe()
 os::pipe_optional()
+os::poll_read(fd, timeout)
+os::poll_read_millis(fd, timeout_millis)
+os::poll_write(fd, timeout)
+os::poll_write_millis(fd, timeout_millis)
 
 fd.raw()
 fd.is_valid()
@@ -36,6 +41,10 @@ fd.is_stdout()
 fd.is_stderr()
 fd.is_standard()
 fd.equals(other)
+fd.poll_read(timeout)
+fd.poll_read_millis(timeout_millis)
+fd.poll_write(timeout)
+fd.poll_write_millis(timeout_millis)
 
 OwnedFd::from_raw(raw)
 OwnedFd::invalid()
@@ -54,6 +63,10 @@ owned.is_nonblocking()
 owned.is_nonblocking_optional()
 owned.set_nonblocking(enabled)
 owned.set_nonblocking_bool(enabled)
+owned.poll_read(timeout)
+owned.poll_read_millis(timeout_millis)
+owned.poll_write(timeout)
+owned.poll_write_millis(timeout_millis)
 owned.close()
 owned.close_bool()
 
@@ -133,6 +146,21 @@ specific already-closed side through `close_read_end()` or
 ownership layer; use `std::io::pipe()` when the same pipe should be split into
 `Reader`/`Writer` adapters.
 
+`poll_read(fd, timeout)` and `poll_write(fd, timeout)` test whether a borrowed
+descriptor is ready for a read-like or write-like operation before the
+timeout expires. They return `Ok(true)` for ready, `Ok(false)` for timeout,
+and `Error(InvalidInput)` for invalid descriptors or negative millisecond
+timeouts. Host `poll(2)` failures map to `Error(Other)`. These helpers do not
+read, write, close, duplicate, or otherwise consume the descriptor; they are
+advisory probes that callers must pair with the actual operation and normal
+error handling. `poll_*_millis` is the raw-millisecond form used by socket and
+process code that already stores timeouts in milliseconds. The `Duration`
+forms are preferred for ordinary code.
+
+`Fd::poll_*` is the borrowed-view method form. `OwnedFd::poll_*` delegates
+through `as_fd()` while preserving owned-handle lifecycle checks, so a closed
+`OwnedFd` returns `Error(InvalidInput)` instead of polling descriptor `-1`.
+
 ## Example
 
 ```ari
@@ -178,6 +206,25 @@ fn main() -> i64 {
 }
 ```
 
+```ari
+fn main() -> i64 {
+  var pipe = std::io::pipe().unwrap();
+  var reader = pipe.take_reader();
+  var writer = pipe.take_writer();
+  if reader.as_fd().poll_read(std::time::Duration::zero()).unwrap() {
+    return 1;
+  }
+  var payload = [65u8];
+  std::io::write_all<std::io::PipeWriter>(ref mut writer, payload.as_slice()).unwrap();
+  if reader.as_fd().poll_read_millis(0).unwrap() {
+    reader.close().unwrap();
+    writer.close().unwrap();
+    return 0;
+  }
+  return 2;
+}
+```
+
 ## Tests
 
 Focused tests:
@@ -189,20 +236,24 @@ tests/cases/standard-library/ok/os/std-os-owned-fd-duplicate.ari
 tests/cases/standard-library/ok/os/std-os-owned-fd-flags.ari
 tests/cases/standard-library/ok/os/std-os-owned-fd-nonblocking.ari
 tests/cases/standard-library/ok/os/std-os-pipe.ari
+tests/cases/standard-library/ok/os/std-os-poll.ari
 ```
 
 `std-os-owned-fd.ari` covers closed-handle `Result` errors, close invalidation,
 and duplicate/flag query failure behavior. `std-os-pipe.ari` covers
-`pipe`, `Pipe::close`, and flag result helpers on live pipe
-ends. `make check-std-api` tracks the public declarations. `make
-check-prelude` compiles and runs the focused descriptor fixtures.
+`pipe`, `Pipe::close`, and flag result helpers on live pipe ends.
+`std-os-poll.ari` covers read/write readiness, timeout-as-false behavior,
+invalid descriptor errors, and the non-consuming relationship between a poll
+probe and a later read. `make check-std-api` tracks the public declarations.
+`make check-prelude` compiles and runs the focused descriptor fixtures.
 
 ## Future Work
 
 - Add duplication flags such as close-on-exec-on-dup when the API shape is
   stable.
 - Add richer descriptor flag tests on sockets and terminals.
-- Add `poll` as the first portable readiness primitive.
+- Expand readiness from single-descriptor `poll_read`/`poll_write` into
+  multi-descriptor events once the event-loop API is designed.
 - Add Linux-only `epoll`, `eventfd`, `timerfd`, `signalfd`, `pidfd`, and
   `memfd` under target-guarded APIs after owned descriptors are stable.
 - Add signal and memory-mapping APIs only after lifetime and safety rules are

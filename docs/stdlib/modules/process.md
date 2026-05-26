@@ -11,7 +11,7 @@ by-value `with_arg`/`with_env`/`with_clear_env`/`with_inherit_env`/
 policy, explicit child stdin redirection from a file or `/dev/null` at execution
 time, `spawn`,
 `status`, `status_code`, `output`, `output_in`, `exec`, typed `ExitStatus` and
-`ExitCode` inspection, typed signal helpers, small stdout/stderr capture,
+`ExitCode` inspection, typed signal helpers, readiness-drained stdout/stderr capture,
 child-stream endpoint aliases, current path wrappers, and temp file/temp dir
 creation.
 
@@ -575,10 +575,11 @@ fn main() -> i64 {
   stdio by default, inherited or cleared environment plus selected assignments,
   working-directory setup, captured stdout and stderr, typed status inspection,
   and `Child` wait/kill/signal helpers.
-  `output_in` is intended for small captured outputs today: large concurrent
-  stdout/stderr streams need future readiness/nonblocking draining to avoid
-  pipe-buffer backpressure. Interactive streaming stdin and portable
-  platform-specific status detail are future work.
+  `output_in` captures both stdout and stderr into memory and drains the two
+  pipes with descriptor readiness so one stream cannot fill its pipe while the
+  other is being read. It is still an all-in-memory capture API; interactive
+  streaming stdin/stdout/stderr handles and portable platform-specific status
+  detail are future work.
 - Exit runs through the host process immediately. Do not expect Ari destructors
   or zone cleanup to run after `process::exit`.
 - Abort also terminates immediately through the host runtime and should be
@@ -619,9 +620,10 @@ method and module-level `status`/`spawn`, module-level `exit_status`,
 `Child::wait`, non-destructive `kill(0)`, and the env-backed Result path
 wrappers. The typed-status fixture covers
 `ExitStatus`, `Command::exit_status`, `Child::wait_status`, normal exit codes,
-and signal termination. The output fixture covers method and module-level small
-stdout/stderr capture, exit status accessors, parent-visible missing-command
-setup errors, and missing stdin-file setup errors.
+and signal termination. The output fixture covers method and module-level
+readiness-drained stdout/stderr capture, exit status accessors,
+parent-visible missing-command setup errors, and missing stdin-file setup
+errors.
 The high-level fixture covers zone-backed `Command::arg`/`env_var`, typed
 by-value `with_arg`/`with_env`/`with_current_dir` chains, byte-boundary
 `arg_bytes`/`env_bytes`/`current_dir_path` helpers, NUL rejection,

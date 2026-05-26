@@ -301,13 +301,13 @@ builder for argument passing, environment setup, working-directory setup,
 `arg`, `env_var`, explicit inherited-or-cleared environment policy,
 `spawn`, `status`, `exit_status`, `output`, `output_in`, `exec`, `Child`
 handles, typed `ExitStatus`/`ExitCode` values, typed `Signal`, `Output`
-handles, stdout/stderr capture for small outputs, child-stream endpoint
+handles, readiness-drained stdout/stderr capture, child-stream endpoint
 aliases, current/executable path wrappers, temp file/dir constructors, and
 `kill`/`kill_signal`. Bounded pipe-backed stdin plus file-backed and
 `/dev/null` stdin redirection are available at execution time, and fork-based
 command helpers surface child setup and `execvp` failures through a
-close-on-exec error pipe. Large-stream readiness, interactive streaming stdin
-handles, richer platform status fields, and Windows process mapping remain
+close-on-exec error pipe. Interactive streaming stdin/stdout/stderr handles,
+richer platform status fields, and Windows process mapping remain
 roadmap work.
 
 `std::thread` is the first thread slice. `spawn`, `join`, `detach`,
@@ -416,9 +416,10 @@ endpoint parsing, IPv4/IPv6 `TcpListener`/`TcpStream` handles, IPv4/IPv6
 sockets, ephemeral local-port and local-address lookup where it applies,
 descriptor views, nonblocking flags, `std::time::Duration` timeout setters
 with raw millisecond compatibility helpers, stream shutdown, explicit close,
-common socket options, and TCP/Unix `std::io::Reader`/`Writer` byte adapters
-plus method-style `read_exact`/`write_all` stream buffer helpers. Full DNS
-iteration, service-name ports, readiness/poll, linger, TTL/hop-limit,
+common socket options, single-descriptor readiness probes, and TCP/Unix
+`std::io::Reader`/`Writer` byte adapters plus method-style
+`read_exact`/`write_all` stream buffer helpers. Full DNS iteration,
+service-name ports, multi-descriptor poll/event loops, linger, TTL/hop-limit,
 multicast, and timeout-specific error results remain roadmap work.
 
 `std::collections` is source Ari over typed zone allocation. `Set[T]` remains a

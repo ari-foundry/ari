@@ -69,7 +69,7 @@ for argument passing, child environment setup, working-directory setup,
 `spawn`, `status`, `exit_status`, `output`, `output_in`, `exec`, `kill`,
 `kill_signal`, typed status inspection, child stream aliases, temp file/temp
 dir helpers, file-backed or `/dev/null` child stdin redirection, inherited or
-cleared environment policy, and small stdout/stderr capture,
+cleared environment policy, and readiness-drained stdout/stderr capture,
 `std::os` introduces non-owning `Fd` descriptor views and `OwnedFd` wrappers
 for raw descriptor close, duplicate, close-on-exec, and nonblocking policy,
 plus `Pipe` for owned read/write descriptor pairs,
@@ -111,8 +111,10 @@ TCP nodelay and keepalive options, UDP broadcast, reuse-port, send/receive
 buffer-size options, stream shutdown, TCP/Unix `read`/`write`/
 `read_exact`/`write_all`/`read_to_end`/`read_to_string` helpers,
 buffer-oriented UDP datagrams, UDP source address helpers, and
-zone-backed resolver lists. Full DNS iteration, readiness/poll, richer
-timeout errors, and platform socket extensions remain runtime roadmap work.
+zone-backed resolver lists, plus single-descriptor readiness probes for
+listeners, streams, and UDP sockets. Full DNS iteration, multi-descriptor
+poll/event loops, richer timeout errors, and platform socket extensions remain
+runtime roadmap work.
 Source
 `std::hash` adds deterministic non-cryptographic `Hasher`/`Hash[T]` helpers
 for primitive values and byte slices, and `std::random` adds OS entropy plus a

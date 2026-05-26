@@ -1389,6 +1389,13 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/os/std-os-pipe.ari -o $(BUILD_DIR)/prelude/std-os-pipe.elf
 	$(BUILD_DIR)/prelude/std-os-pipe.elf; code=$$?; test $$code -eq 255
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/os/std-os-pipe.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-os-pipe.elf; $(BUILD_DIR)/prelude/std-os-pipe.elf; code=$$?; test $$code -eq 255; fi
+	$(TARGET) tests/cases/standard-library/ok/os/std-os-poll.ari --emit-llvm $(BUILD_DIR)/prelude/std-os-poll.ll
+	grep -q "@ari_builtin_os_poll_read" $(BUILD_DIR)/prelude/std-os-poll.ll
+	grep -q "@ari_builtin_os_poll_write" $(BUILD_DIR)/prelude/std-os-poll.ll
+	grep -q "declare i32 @poll" $(BUILD_DIR)/prelude/std-os-poll.ll
+	$(TARGET) tests/cases/standard-library/ok/os/std-os-poll.ari -o $(BUILD_DIR)/prelude/std-os-poll.elf
+	$(BUILD_DIR)/prelude/std-os-poll.elf; code=$$?; test $$code -eq 255
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/os/std-os-poll.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-os-poll.elf; $(BUILD_DIR)/prelude/std-os-poll.elf; code=$$?; test $$code -eq 255; fi
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-addresses.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-addresses.ll
 	grep -F -q "std3net4ipv4" $(BUILD_DIR)/prelude/std-net-addresses.ll
 	grep -F -q "std3net4ipv6" $(BUILD_DIR)/prelude/std-net-addresses.ll
@@ -1605,6 +1612,7 @@ check-prelude: $(TARGET)
 	grep -F -q "std__process__Output8inherent13stderr_string" $(BUILD_DIR)/prelude/std-process-output.ll
 	grep -F -q "std7process19redirect_descriptor" $(BUILD_DIR)/prelude/std-process-output.ll
 	grep -F -q '@"dup2"' $(BUILD_DIR)/prelude/std-process-output.ll
+	grep -q "@ari_builtin_os_poll_read" $(BUILD_DIR)/prelude/std-process-output.ll
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-output.ari -o $(BUILD_DIR)/prelude/std-process-output.elf
 	$(BUILD_DIR)/prelude/std-process-output.elf; code=$$?; test $$code -eq 221
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-high-level.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-high-level.ll

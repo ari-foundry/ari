@@ -785,9 +785,10 @@ cannot write all bytes, the helper waits for the child and returns the writer
 `exit_code()` returns the typed `ExitCode` form. `raw()` exposes the hosted
 wait-status bits for diagnostics.
 
-`output_in(zone)` is the first captured-output helper. It spawns the child with
-stdout and stderr redirected to pipes, waits for it, and returns an `Output`
-whose byte buffers live in the provided zone:
+`output_in(zone)` is the captured-output helper. It spawns the child with
+stdout and stderr redirected to pipes, drains both streams with descriptor
+readiness, waits for the child, and returns an `Output` whose byte buffers live
+in the provided zone:
 
 ```ari
 var zone = zone::temp(512);
@@ -801,14 +802,16 @@ exit code compatibility accessor, `Output::is_success()` for the standard
 success check, and `stdout()` / `stderr()` for borrowed `Slice[u8]` views.
 `stdout_string(zone)` and `stderr_string(zone)` validate the captured bytes as
 UTF-8, copy them into a zone-owned `String`, and return `Error(InvalidData)` for
-non-UTF-8 output. This slice is meant for small outputs today. File-backed and
-`/dev/null` stdin redirection helpers plus bounded pipe-backed stdin status
-helpers exist on `Command`. Fork-based `spawn`, `status`, stdin-redirection,
-and `output` helpers use a close-on-exec setup-error pipe so `chdir`, stdin
-open/`dup2`, stdout/stderr `dup2`, or `execvp` failures return `Err(Error)` to
-the parent instead of being hidden as status `127`. Large concurrent streams,
-interactive streaming stdin handles, portable Windows mapping, and
-platform-specific status detail are still future process-library work.
+non-UTF-8 output. `output` drains stdout and stderr with descriptor readiness
+so one captured stream cannot fill its pipe while the other is being read; it
+still stores the complete capture in memory. File-backed and `/dev/null` stdin
+redirection helpers plus bounded pipe-backed stdin status helpers exist on
+`Command`. Fork-based `spawn`, `status`, stdin-redirection, and `output`
+helpers use a close-on-exec setup-error pipe so `chdir`, stdin open/`dup2`,
+stdout/stderr `dup2`, or `execvp` failures return `Err(Error)` to the parent
+instead of being hidden as status `127`. Interactive streaming stdin/stdout/
+stderr handles, portable Windows mapping, and platform-specific status detail
+are still future process-library work.
 
 `ChildStdin`, `ChildStdout`, and `ChildStderr` name the current pipe endpoint
 types used by future streaming process IO. `current_dir`,
@@ -2087,9 +2090,11 @@ method syntax. Natural bind/connect/accept/resolve names return
 `Result[..., Error]`; matching `_optional` and `try_*` helpers keep
 compatibility call sites concise when they intentionally discard the reason.
 Host-port `connect_host` first resolves through `resolve`, then delegates to
-`TcpStream::connect`. Full `getaddrinfo` iteration, multicast, TTL/hop-limit,
-readiness/poll abstractions, TLS packaging decisions, and timeout-specific
-error results remain roadmap work.
+`TcpStream::connect`. `*_ready` helpers expose single-descriptor readiness
+over `std::os::poll_read`/`poll_write`; they are advisory and callers must
+still handle the actual operation result. Full `getaddrinfo` iteration,
+multicast, TTL/hop-limit, multi-descriptor poll/event loops, TLS packaging
+decisions, and timeout-specific error results remain roadmap work.
 
 ## IO And Input
 

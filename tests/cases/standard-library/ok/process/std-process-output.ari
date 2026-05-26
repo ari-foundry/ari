@@ -1,6 +1,5 @@
-// Covers Command::output_in: small stdout/stderr capture, exit status, and
-// Output accessors. Larger concurrent output belongs to the future readiness
-// and nonblocking process-pipe slice.
+// Covers Command::output_in: readiness-drained stdout/stderr capture, exit
+// status, Output accessors, and parent-visible setup errors.
 fn bytes_equal(values: Slice[u8], expected: Slice[u8]) -> bool {
   if values.len != expected.len {
     return false;

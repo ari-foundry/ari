@@ -1428,6 +1428,14 @@ pub impl std::net::TcpListener {
     return self.set_accept_timeout_millis(timeout.as_millis());
   }
 
+  fn accept_ready_millis(self: ref Self, timeout_millis: i64) -> std::Result[bool, std::error::Error] {
+    return self.handle.poll_read_millis(timeout_millis);
+  }
+
+  fn accept_ready(self: ref Self, timeout: std::time::Duration) -> std::Result[bool, std::error::Error] {
+    return self.accept_ready_millis(timeout.as_millis());
+  }
+
   fn local_port_optional(self: ref Self) -> std::Option[u16] {
     return self.local_port().ok();
   }
@@ -1657,6 +1665,22 @@ pub impl std::net::TcpStream {
 
   fn set_write_timeout(self: ref Self, timeout: std::time::Duration) -> std::Result[(), std::error::Error] {
     return self.set_write_timeout_millis(timeout.as_millis());
+  }
+
+  fn read_ready_millis(self: ref Self, timeout_millis: i64) -> std::Result[bool, std::error::Error] {
+    return self.handle.poll_read_millis(timeout_millis);
+  }
+
+  fn read_ready(self: ref Self, timeout: std::time::Duration) -> std::Result[bool, std::error::Error] {
+    return self.read_ready_millis(timeout.as_millis());
+  }
+
+  fn write_ready_millis(self: ref Self, timeout_millis: i64) -> std::Result[bool, std::error::Error] {
+    return self.handle.poll_write_millis(timeout_millis);
+  }
+
+  fn write_ready(self: ref Self, timeout: std::time::Duration) -> std::Result[bool, std::error::Error] {
+    return self.write_ready_millis(timeout.as_millis());
   }
 
   fn local_addr_optional(self: ref Self) -> std::Option[SocketAddr] {
@@ -1969,6 +1993,22 @@ pub impl std::net::UdpSocket {
     return self.set_write_timeout_millis(timeout.as_millis());
   }
 
+  fn recv_ready_millis(self: ref Self, timeout_millis: i64) -> std::Result[bool, std::error::Error] {
+    return self.handle.poll_read_millis(timeout_millis);
+  }
+
+  fn recv_ready(self: ref Self, timeout: std::time::Duration) -> std::Result[bool, std::error::Error] {
+    return self.recv_ready_millis(timeout.as_millis());
+  }
+
+  fn send_ready_millis(self: ref Self, timeout_millis: i64) -> std::Result[bool, std::error::Error] {
+    return self.handle.poll_write_millis(timeout_millis);
+  }
+
+  fn send_ready(self: ref Self, timeout: std::time::Duration) -> std::Result[bool, std::error::Error] {
+    return self.send_ready_millis(timeout.as_millis());
+  }
+
   fn connect(self: ref Self, addr: SocketAddr) -> std::Result[(), std::error::Error] {
     return std::error::map_raw<()>(udp_connect_raw(self.handle.raw(), addr));
   }
@@ -2144,6 +2184,14 @@ pub impl std::net::UnixListener {
     return self.handle.set_close_on_exec(enabled);
   }
 
+  fn accept_ready_millis(self: ref Self, timeout_millis: i64) -> std::Result[bool, std::error::Error] {
+    return self.handle.poll_read_millis(timeout_millis);
+  }
+
+  fn accept_ready(self: ref Self, timeout: std::time::Duration) -> std::Result[bool, std::error::Error] {
+    return self.accept_ready_millis(timeout.as_millis());
+  }
+
   fn accept(self: ref Self) -> std::Result[UnixStream, std::error::Error] {
     return std::error::map_raw<UnixStream>(self.accept_raw());
   }
@@ -2273,6 +2321,22 @@ pub impl std::net::UnixStream {
 
   fn set_write_timeout(self: ref Self, timeout: std::time::Duration) -> std::Result[(), std::error::Error] {
     return self.set_write_timeout_millis(timeout.as_millis());
+  }
+
+  fn read_ready_millis(self: ref Self, timeout_millis: i64) -> std::Result[bool, std::error::Error] {
+    return self.handle.poll_read_millis(timeout_millis);
+  }
+
+  fn read_ready(self: ref Self, timeout: std::time::Duration) -> std::Result[bool, std::error::Error] {
+    return self.read_ready_millis(timeout.as_millis());
+  }
+
+  fn write_ready_millis(self: ref Self, timeout_millis: i64) -> std::Result[bool, std::error::Error] {
+    return self.handle.poll_write_millis(timeout_millis);
+  }
+
+  fn write_ready(self: ref Self, timeout: std::time::Duration) -> std::Result[bool, std::error::Error] {
+    return self.write_ready_millis(timeout.as_millis());
   }
 
   fn shutdown(self: ref Self, mode: Shutdown) -> std::Result[(), std::error::Error] {

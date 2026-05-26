@@ -26,6 +26,8 @@ extern "ari" fn close_on_exec_raw(raw: i64) -> i64 = "ari_builtin_os_close_on_ex
 extern "ari" fn set_close_on_exec_raw(raw: i64, enabled: bool) -> bool = "ari_builtin_os_set_close_on_exec";
 extern "ari" fn nonblocking_raw(raw: i64) -> i64 = "ari_builtin_os_nonblocking";
 extern "ari" fn set_nonblocking_raw(raw: i64, enabled: bool) -> bool = "ari_builtin_os_set_nonblocking";
+extern "ari" fn poll_read_raw(raw: i64, timeout_millis: i64) -> i64 = "ari_builtin_os_poll_read";
+extern "ari" fn poll_write_raw(raw: i64, timeout_millis: i64) -> i64 = "ari_builtin_os_poll_write";
 extern "ari" fn pipe_raw() -> i64 = "ari_builtin_os_pipe";
 
 fn invalid_input_error() -> std::error::Error {
@@ -34,6 +36,13 @@ fn invalid_input_error() -> std::error::Error {
 
 fn other_error() -> std::error::Error {
   return std::error::new(std::error::Other);
+}
+
+fn poll_result(value: i64) -> std::Result[bool, std::error::Error] {
+  if value < 0 {
+    return std::Err<bool, std::error::Error>(other_error());
+  }
+  return std::Ok<bool, std::error::Error>(value != 0);
 }
 
 pub fn fd(raw: i64) -> std::os::Fd {
@@ -58,6 +67,22 @@ pub fn stderr() -> std::os::Fd {
 
 pub fn pipe_optional() -> std::Option[std::os::Pipe] {
   return pipe().ok();
+}
+
+pub fn poll_read_millis(handle: std::os::Fd, timeout_millis: i64) -> std::Result[bool, std::error::Error] {
+  return handle.poll_read_millis(timeout_millis);
+}
+
+pub fn poll_read(handle: std::os::Fd, timeout: std::time::Duration) -> std::Result[bool, std::error::Error] {
+  return handle.poll_read(timeout);
+}
+
+pub fn poll_write_millis(handle: std::os::Fd, timeout_millis: i64) -> std::Result[bool, std::error::Error] {
+  return handle.poll_write_millis(timeout_millis);
+}
+
+pub fn poll_write(handle: std::os::Fd, timeout: std::time::Duration) -> std::Result[bool, std::error::Error] {
+  return handle.poll_write(timeout);
 }
 
 pub fn pipe() -> std::Result[std::os::Pipe, std::error::Error] {
@@ -106,6 +131,28 @@ pub impl std::os::Fd {
 
   fn equals(self: ref Self, other: std::os::Fd) -> bool {
     return self.raw_value == other.raw();
+  }
+
+  fn poll_read_millis(self: ref Self, timeout_millis: i64) -> std::Result[bool, std::error::Error] {
+    if self.is_invalid() || timeout_millis < 0 {
+      return std::Err<bool, std::error::Error>(invalid_input_error());
+    }
+    return std::os::poll_result(poll_read_raw(self.raw_value, timeout_millis));
+  }
+
+  fn poll_read(self: ref Self, timeout: std::time::Duration) -> std::Result[bool, std::error::Error] {
+    return self.poll_read_millis(timeout.as_millis());
+  }
+
+  fn poll_write_millis(self: ref Self, timeout_millis: i64) -> std::Result[bool, std::error::Error] {
+    if self.is_invalid() || timeout_millis < 0 {
+      return std::Err<bool, std::error::Error>(invalid_input_error());
+    }
+    return std::os::poll_result(poll_write_raw(self.raw_value, timeout_millis));
+  }
+
+  fn poll_write(self: ref Self, timeout: std::time::Duration) -> std::Result[bool, std::error::Error] {
+    return self.poll_write_millis(timeout.as_millis());
   }
 }
 
@@ -281,6 +328,28 @@ pub impl std::os::OwnedFd {
       return std::Ok<(), std::error::Error>(());
     }
     return std::Err<(), std::error::Error>(other_error());
+  }
+
+  fn poll_read_millis(self: ref Self, timeout_millis: i64) -> std::Result[bool, std::error::Error] {
+    if self.is_closed() {
+      return std::Err<bool, std::error::Error>(invalid_input_error());
+    }
+    return self.as_fd().poll_read_millis(timeout_millis);
+  }
+
+  fn poll_read(self: ref Self, timeout: std::time::Duration) -> std::Result[bool, std::error::Error] {
+    return self.poll_read_millis(timeout.as_millis());
+  }
+
+  fn poll_write_millis(self: ref Self, timeout_millis: i64) -> std::Result[bool, std::error::Error] {
+    if self.is_closed() {
+      return std::Err<bool, std::error::Error>(invalid_input_error());
+    }
+    return self.as_fd().poll_write_millis(timeout_millis);
+  }
+
+  fn poll_write(self: ref Self, timeout: std::time::Duration) -> std::Result[bool, std::error::Error] {
+    return self.poll_write_millis(timeout.as_millis());
   }
 
   fn close_bool(self: ref mut Self) -> bool {

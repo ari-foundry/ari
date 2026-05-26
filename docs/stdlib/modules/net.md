@@ -640,12 +640,13 @@ return ptr_load(output.as_slice().as_ptr()) as i64;
 | IP address | Current: `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, constructors, strict and fallible indexed accessors, family predicates, loopback/unspecified checks. |
 | Socket address | Current: `SocketAddr`, `socket_addr`, `localhost`, `ip`, `port`, `with_port`. |
 | DNS lookup | Current hosted IPv4/IPv6 slice: `lookup_v4`, `lookup_v6`, `"host:port"`, and `"[host]:port"` `resolve` return `Error`; `resolve_all(zone, host, port)` and `to_socket_addrs(zone, endpoint)` return zone-backed `Vec[SocketAddr]`; `_optional`/`try_*` helpers discard error detail intentionally; `_raw` helpers are raw compatibility bridges. |
-| TCP listener | Current hosted IPv4/IPv6 slice: module-level `listen`/`tcp_listen`, explicit IPv6 `tcp_listen_v6`, `TcpListener::bind`, and `accept` return `Error`; optional/try compatibility and raw compatibility forms remain; Result-returning `local_port`/`local_addr` plus IPv6-specific `local_addr_v6`, descriptor/open/close-on-exec helpers, nonblocking, reuse-address, and reuse-port setter/query with Result defaults, `Duration` and raw-millisecond accept timeout setters, unchecked timeout compatibility, and explicit close/close_unchecked. |
-| TCP stream | Current hosted IPv4/IPv6 slice: module-level `connect`/`tcp_connect`, explicit IPv6 `tcp_connect_v6`, and host-port `connect_host`/`tcp_connect_host`; `TcpStream::connect` returns `Error`, optional/try and raw compatibility forms remain, local/peer address helpers dispatch across IPv4/IPv6 with IPv6-specific `local_addr_v6`/`peer_addr_v6`, descriptor/open/close-on-exec helpers, nonblocking, TCP nodelay, keepalive, send/receive buffer-size helpers with Result defaults, `Duration` timeouts, shutdown, byte and buffer IO, close/close_unchecked, and `std::io::Reader`/`Writer` adapters. |
-| UDP socket | Current hosted IPv4/IPv6 slice: module-level `udp_bind` plus explicit IPv6 `udp_bind_v6`, `UdpSocket::bind` returns `Error`, optional/try and raw compatibility forms remain, Result-returning local-port/local-address helpers including `local_addr_v6`, descriptor/open/close-on-exec helpers, nonblocking, reuse-address, reuse-port, broadcast, send/receive buffer-size helpers with Result defaults, `Duration` timeouts, datagram `send_to`/`recv_from`/`peek_from`, connected `send`/`recv`, single-byte compatibility helpers, and close/close_unchecked. |
-| Unix domain socket | Current hosted stream slice: module-level `unix_listen`/`unix_connect`, `UnixListener` bind/accept and `UnixStream` connect return `Error`, optional/try compatibility helpers and raw compatibility bridges remain, IO/shutdown Result methods, close-on-exec helpers, `Duration` and raw-millisecond timeout setters, and `read`/`write`/`read_exact`/`write_all` buffer helpers. |
-| socket options | Current: nonblocking, close-on-exec, read/write timeout, TCP listener/UDP reuse-address and reuse-port, TCP nodelay/keepalive, UDP broadcast, and TCP/UDP send/receive buffer-size helpers with Result defaults plus `_optional`/`_unchecked` compatibility where present; future linger, multicast, TTL/hop-limit, and readiness/poll abstractions. |
+| TCP listener | Current hosted IPv4/IPv6 slice: module-level `listen`/`tcp_listen`, explicit IPv6 `tcp_listen_v6`, `TcpListener::bind`, and `accept` return `Error`; optional/try compatibility and raw compatibility forms remain; Result-returning `local_port`/`local_addr` plus IPv6-specific `local_addr_v6`, descriptor/open/close-on-exec helpers, nonblocking, reuse-address, and reuse-port setter/query with Result defaults, `Duration` and raw-millisecond accept timeout setters, accept readiness probes, unchecked timeout compatibility, and explicit close/close_unchecked. |
+| TCP stream | Current hosted IPv4/IPv6 slice: module-level `connect`/`tcp_connect`, explicit IPv6 `tcp_connect_v6`, and host-port `connect_host`/`tcp_connect_host`; `TcpStream::connect` returns `Error`, optional/try and raw compatibility forms remain, local/peer address helpers dispatch across IPv4/IPv6 with IPv6-specific `local_addr_v6`/`peer_addr_v6`, descriptor/open/close-on-exec helpers, nonblocking, TCP nodelay, keepalive, send/receive buffer-size helpers with Result defaults, `Duration` timeouts, read/write readiness probes, shutdown, byte and buffer IO, close/close_unchecked, and `std::io::Reader`/`Writer` adapters. |
+| UDP socket | Current hosted IPv4/IPv6 slice: module-level `udp_bind` plus explicit IPv6 `udp_bind_v6`, `UdpSocket::bind` returns `Error`, optional/try and raw compatibility forms remain, Result-returning local-port/local-address helpers including `local_addr_v6`, descriptor/open/close-on-exec helpers, nonblocking, reuse-address, reuse-port, broadcast, send/receive buffer-size helpers with Result defaults, `Duration` timeouts, send/receive readiness probes, datagram `send_to`/`recv_from`/`peek_from`, connected `send`/`recv`, single-byte compatibility helpers, and close/close_unchecked. |
+| Unix domain socket | Current hosted stream slice: module-level `unix_listen`/`unix_connect`, `UnixListener` bind/accept and `UnixStream` connect return `Error`, optional/try compatibility helpers and raw compatibility bridges remain, IO/shutdown Result methods, close-on-exec helpers, `Duration` and raw-millisecond timeout setters, accept/read/write readiness probes, and `read`/`write`/`read_exact`/`write_all` buffer helpers. |
+| socket options | Current: nonblocking, close-on-exec, readiness probes, read/write timeout, TCP listener/UDP reuse-address and reuse-port, TCP nodelay/keepalive, UDP broadcast, and TCP/UDP send/receive buffer-size helpers with Result defaults plus `_optional`/`_unchecked` compatibility where present; future linger, multicast, and TTL/hop-limit. |
 | timeout | Current: preferred `std::time::Duration` read/write/accept timeout setters plus raw millisecond setters, all Result-returning, with `_unchecked` raw-millisecond compatibility helpers. |
+| readiness | Current: `TcpListener::accept_ready`, `TcpStream::read_ready`/`write_ready`, `UdpSocket::recv_ready`/`send_ready`, `UnixListener::accept_ready`, and `UnixStream::read_ready`/`write_ready` delegate to `std::os::poll_read`/`poll_write`. Each has a `Duration` form and a `_millis` form. They return `Ok(true)` for ready, `Ok(false)` for timeout, and `Error` for invalid descriptors or host poll failures. They do not perform the read/write/accept themselves; callers must still handle the operation result. |
 | shutdown | Current: `Shutdown::{Read, Write, Both}` and stream `shutdown(mode)` for TCP and Unix streams. |
 
 ## Current Limits
@@ -670,6 +671,11 @@ return ptr_load(output.as_slice().as_ptr()) as i64;
   A second close through the same handle returns an
   invalid-handle failure through the Result form; descriptor duplication and
   richer drop policy should stay aligned with `std::os::OwnedFd`.
+- Readiness probes are advisory. `*_ready(timeout)` answers whether the next
+  operation should not block at that instant, but EOF, hangup, peer reset,
+  nonblocking races, and ordinary OS errors are still reported by the later
+  `accept`, `read`, `write`, `send`, or `recv` call. Use them to build small
+  loops and process-drain helpers, not as a substitute for operation errors.
 - Text parsing and formatting of addresses are not implemented yet. The
   current constructors use numeric octets/segments so behavior is precise.
 
@@ -728,9 +734,9 @@ IPv6 input for the IPv4 resolver, and edge IPv4 addresses.
 - Add remaining socket options such as linger, TTL/hop-limit, multicast
   join/leave, and close-on-exec-at-creation only with focused platform docs and
   tests.
-- Add readiness/poll abstractions (`net::Poll`/`Events` or shared
-  `io::poll_read`/`poll_write`) after the event-loop and nonblocking policy is
-  clearer; arix MVP does not need this layer.
+- Expand single-descriptor readiness into `net::Poll`/`Events` or another
+  multi-descriptor event-loop API once ownership and cancellation policy are
+  clearer.
 - Keep `std::net` focused on raw TCP/UDP/Unix sockets. TLS should live in a
   future arix package-layer library until the package ecosystem and certificate
   policy are deliberate.
