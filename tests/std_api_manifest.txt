@@ -2898,7 +2898,6 @@ type std::process::ChildStdin|check-prelude std-process-high-level child stdin p
 type std::process::ChildStdout|check-prelude std-process-high-level child stdout pipe alias; docs/stdlib/modules/process.md
 type std::process::Error|check-prelude std-error-integration shared process error alias; docs/stdlib/modules/process.md
 type std::process::ErrorKind|check-prelude std-error-integration shared process error-kind alias; docs/stdlib/modules/process.md
-type std::string::StringBuilder|check-prelude std-string-module-views parser/CLI builder alias for byte-oriented String; docs/stdlib/modules/string.md
 type std::thread::Error|check-prelude std-thread-basic shared thread error alias; docs/stdlib/modules/thread.md
 type std::thread::ErrorKind|check-prelude std-thread-basic shared thread error-kind alias; docs/stdlib/modules/thread.md
 use std::Arc|check-prelude std-rc-arc-weak root alias for std::rc::Arc[T]; docs/stdlib/modules/rc.md
@@ -2941,7 +2940,6 @@ use std::RwLock|check-prelude std-sync-rwlock root alias for std::sync::RwLock; 
 use std::Sender|check-prelude std-sync-concurrency-api root alias for std::sync::Sender[T]; docs/stdlib/modules/sync.md
 use std::Set|check-prelude std-collections-set root alias for std::collections::Set[T]; docs/stdlib/modules/collections.md
 use std::String|prelude root String tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
-use std::StringBuilder|check-prelude std-string-module-views root alias for std::string::StringBuilder; docs/stdlib/modules/string.md
 use std::Symbol|check-prelude std-c-interop root alias for std::c::Symbol; docs/stdlib/modules/c.md
 use std::Thread|check-prelude std-thread-basic root alias for std::thread::Thread; docs/stdlib/modules/thread.md
 use std::ThreadId|check-prelude std-thread-basic root alias for std::thread::ThreadId; docs/stdlib/modules/thread.md

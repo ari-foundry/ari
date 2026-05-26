@@ -141,7 +141,6 @@ pub use rc::Weak;
 pub mod string;
 
 pub use string::String;
-pub use string::StringBuilder;
 
 pub mod c;
 pub use c::CStr;

@@ -3,8 +3,6 @@
 `std::string` contains Ari's current owned byte-string handle. It exists so
 programs can copy borrowed `string` literals, formatted output, or byte slices
 into an explicit allocation `Zone` without introducing a hidden global heap.
-`StringBuilder` is a public alias for the same handle, meant for parser and CLI
-code that is intentionally growing a message or small text buffer.
 
 Today's `String` is intentionally a byte string. It is useful for compiler
 tests, CLI-style output, simple parser buffers, and ASCII-oriented text work.
@@ -14,12 +12,11 @@ normalization, grapheme, or locale-aware text abstraction yet.
 ## When To Use It
 
 Use `std::string::String` when bytes must outlive a borrowed literal or input
-buffer and you can name the `Zone` that owns the storage. Use
-`std::string::StringBuilder` or root `StringBuilder` when the same handle is
-being used as an append-oriented builder for diagnostics, command output, or
-small manifest/parser strings. Use `Slice[u8]` when you only need a borrowed
-view. Use `std::ascii` or the `String` ASCII helpers for byte classification,
-ASCII-only comparison/search, trimming, and integer parsing.
+buffer and you can name the `Zone` that owns the storage. The same `String`
+handle is also the standard appendable buffer for diagnostics, command output,
+and small manifest/parser strings. Use `Slice[u8]` when you only need a
+borrowed view. Use `std::ascii` or the `String` ASCII helpers for byte
+classification, ASCII-only comparison/search, trimming, and integer parsing.
 
 For parser-style code that works mostly with borrowed bytes, use the module
 view helpers. They accept `Slice[u8]`, so string literals can be passed
@@ -206,13 +203,12 @@ text.resize_in(ref mut zone, length, char)
 
 Use `append` for Ari `string` values, `append_byte` for one ASCII byte
 character such as `'!'`, and `append_bytes` or `push_str` for a borrowed
-`Slice[u8]`. `push_str` is the CLI/parser-friendly builder spelling;
-`StringBuilder` names this use without introducing a second runtime type:
+`Slice[u8]`. `push_str` is the CLI/parser-friendly growth spelling:
 
 ```ari
-var builder: StringBuilder = std::string::empty(ref mut zone);
-builder.push_str(ref mut zone, "Created package ");
-builder.push_str(ref mut zone, name);
+var message = std::string::empty(ref mut zone);
+message.push_str(ref mut zone, "Created package ");
+message.push_str(ref mut zone, name);
 ```
 
 `char` is a public alias for `u8`, so binary byte buffers can still call these

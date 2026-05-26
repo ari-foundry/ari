@@ -2950,13 +2950,10 @@ drained entries or values. Tree
 `copy_to` methods rebuild the map or set in the target zone with the same
 comparator.
 
-`std::string::String` is an owned byte string. `std::string::StringBuilder`
-and root `StringBuilder` are aliases for the same handle when code is growing a
-diagnostic, manifest fragment, or other parser/CLI buffer:
+`std::string::String` is an owned byte string:
 
 ```ari
 std::string::String
-std::string::StringBuilder
 std::string::Utf8
 std::string::OsStr
 std::string::utf8(bytes)

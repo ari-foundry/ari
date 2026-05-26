@@ -24,14 +24,14 @@ platform notes.
 
 ## Summary
 
-- API entries: `2989`
+- API entries: `2987`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
-| `alloc` | 843 | usable |
+| `alloc` | 842 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 746 | stable candidate |
+| `core` | 745 | stable candidate |
 | `hosted` | 1213 | platform-backed |
 | `platform` | 151 | platform-specific |
 
@@ -44,14 +44,14 @@ platform notes.
 | `struct` | 161 |
 | `trait` | 39 |
 | `trait-method` | 41 |
-| `type` | 22 |
-| `use` | 96 |
+| `type` | 21 |
+| `use` | 95 |
 
 ## Modules
 
 | Module | Tier | Entries |
 | --- | --- | ---: |
-| `std` | `core` | 293 |
+| `std` | `core` | 292 |
 | `std::algo` | `alloc` | 41 |
 | `std::ascii` | `core` | 33 |
 | `std::bits` | `core` | 26 |
@@ -83,7 +83,7 @@ platform notes.
 | `std::random` | `alloc/hosted` | 36 |
 | `std::rc` | `alloc` | 32 |
 | `std::result` | `core` | 12 |
-| `std::string` | `alloc` | 142 |
+| `std::string` | `alloc` | 141 |
 | `std::sync` | `hosted` | 166 |
 | `std::target` | `platform` | 52 |
 | `std::test` | `hosted` | 32 |
@@ -376,7 +376,6 @@ Tier: `core`. Stability reading: stable candidate.
 | `use std::Sender` | check-prelude std-sync-concurrency-api root alias for std::sync::Sender[T]; docs/stdlib/modules/sync.md |
 | `use std::Set` | check-prelude std-collections-set root alias for std::collections::Set[T]; docs/stdlib/modules/collections.md |
 | `use std::String` | prelude root String tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows |
-| `use std::StringBuilder` | check-prelude std-string-module-views root alias for std::string::StringBuilder; docs/stdlib/modules/string.md |
 | `use std::Symbol` | check-prelude std-c-interop root alias for std::c::Symbol; docs/stdlib/modules/c.md |
 | `use std::Thread` | check-prelude std-thread-basic root alias for std::thread::Thread; docs/stdlib/modules/thread.md |
 | `use std::ThreadId` | check-prelude std-thread-basic root alias for std::thread::ThreadId; docs/stdlib/modules/thread.md |
@@ -3377,12 +3376,6 @@ Tier: `alloc`. Stability reading: usable.
 | `struct std::string::SplitOnce` | check-prelude std-string-module-views borrowed result handle for split_once; docs/stdlib/modules/string.md |
 | `struct std::string::String` | std string handle tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `struct std::string::Utf8` | check-prelude std-string-text-kinds typed validated UTF-8 byte view; docs/stdlib/modules/string.md |
-
-### type
-
-| API | Coverage note |
-| --- | --- |
-| `type std::string::StringBuilder` | check-prelude std-string-module-views parser/CLI builder alias for byte-oriented String; docs/stdlib/modules/string.md |
 
 ## `std::sync`
 
