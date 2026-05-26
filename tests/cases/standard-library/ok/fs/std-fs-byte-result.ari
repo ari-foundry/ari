@@ -30,7 +30,7 @@ fn byte_result_error(value: Result[i64, error::Error], kind: error::Kind, code: 
   }
 }
 
-fn byte_raw_result_error(value: Result[i64, i64], kind: error::Kind, code: i64) -> bool {
+fn byte_raw_error(value: Result[i64, i64], kind: error::Kind, code: i64) -> bool {
   match value {
     Ok(_) => { return false; }
     Err(raw) => { return raw_error_matches(raw, kind, code); }
@@ -68,11 +68,11 @@ fn main() -> i64 {
   }
 
   if byte_result_error(fs::write(missing_child, first.as_slice()), error::NotFound, 2) &&
-    byte_raw_result_error(fs::write_raw_result(missing_child, first.as_slice()), error::NotFound, 2) {
+    byte_raw_error(fs::write_raw(missing_child, first.as_slice()), error::NotFound, 2) {
     score = score + 16;
   }
   if byte_result_error(fs::append(missing_child, tail.as_slice()), error::NotFound, 2) &&
-    byte_raw_result_error(fs::append_raw_result(missing_child, tail.as_slice()), error::NotFound, 2) {
+    byte_raw_error(fs::append_raw(missing_child, tail.as_slice()), error::NotFound, 2) {
     score = score + 32;
   }
 
@@ -97,7 +97,7 @@ fn main() -> i64 {
   }
 
   assert(byte_result_error(fs::copy(missing_source, copy_path), error::NotFound, 2));
-  assert(byte_raw_result_error(fs::copy_raw_result(missing_source, copy_path), error::NotFound, 2));
+  assert(byte_raw_error(fs::copy_raw(missing_source, copy_path), error::NotFound, 2));
   cleanup(path, copy_path, missing_source, missing_parent);
   zone::destroy(zone);
   assert_eq_i64(score, 255);

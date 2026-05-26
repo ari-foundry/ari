@@ -56,11 +56,11 @@ pub fn stderr() -> std::os::Fd {
   return std::os::fd(2);
 }
 
-pub fn pipe() -> std::Option[std::os::Pipe] {
-  return pipe_result().ok();
+pub fn pipe_optional() -> std::Option[std::os::Pipe] {
+  return pipe().ok();
 }
 
-pub fn pipe_result() -> std::Result[std::os::Pipe, std::error::Error] {
+pub fn pipe() -> std::Result[std::os::Pipe, std::error::Error] {
   let packed = pipe_raw();
   if packed < 0 {
     return std::Err<std::os::Pipe, std::error::Error>(other_error());
@@ -128,31 +128,31 @@ pub impl std::os::Pipe {
     return std::os::OwnedFd::from_raw(raw);
   }
 
-  fn close_read_end(self: ref mut Self) -> bool {
-    return self.close_read_end_result().is_ok();
+  fn close_read_end_bool(self: ref mut Self) -> bool {
+    return self.close_read_end().is_ok();
   }
 
-  fn close_read_end_result(self: ref mut Self) -> std::Result[(), std::error::Error] {
-    return self.read_handle.close_result();
+  fn close_read_end(self: ref mut Self) -> std::Result[(), std::error::Error] {
+    return self.read_handle.close();
   }
 
-  fn close_write_end(self: ref mut Self) -> bool {
-    return self.close_write_end_result().is_ok();
+  fn close_write_end_bool(self: ref mut Self) -> bool {
+    return self.close_write_end().is_ok();
   }
 
-  fn close_write_end_result(self: ref mut Self) -> std::Result[(), std::error::Error] {
-    return self.write_handle.close_result();
+  fn close_write_end(self: ref mut Self) -> std::Result[(), std::error::Error] {
+    return self.write_handle.close();
   }
 
-  fn close(self: ref mut Self) -> bool {
-    return self.close_result().is_ok();
+  fn close_bool(self: ref mut Self) -> bool {
+    return self.close().is_ok();
   }
 
-  fn close_result(self: ref mut Self) -> std::Result[(), std::error::Error] {
+  fn close(self: ref mut Self) -> std::Result[(), std::error::Error] {
     var ok = true;
     var reason = other_error();
     if self.read_handle.is_open() {
-      match self.read_handle.close_result() {
+      match self.read_handle.close() {
         std::Ok(_) => {}
         std::Err(read_close_error) => {
           reason = read_close_error;
@@ -161,7 +161,7 @@ pub impl std::os::Pipe {
       }
     }
     if self.write_handle.is_open() {
-      match self.write_handle.close_result() {
+      match self.write_handle.close() {
         std::Ok(_) => {}
         std::Err(write_close_error) => {
           reason = write_close_error;
@@ -208,10 +208,10 @@ pub impl std::os::OwnedFd {
   }
 
   fn try_clone(self: ref Self) -> std::Option[std::os::OwnedFd] {
-    return self.try_clone_result().ok();
+    return self.clone().ok();
   }
 
-  fn try_clone_result(self: ref Self) -> std::Result[std::os::OwnedFd, std::error::Error] {
+  fn clone(self: ref Self) -> std::Result[std::os::OwnedFd, std::error::Error] {
     if self.is_closed() {
       return std::Err<std::os::OwnedFd, std::error::Error>(invalid_input_error());
     }
@@ -223,11 +223,11 @@ pub impl std::os::OwnedFd {
     return std::Ok<std::os::OwnedFd, std::error::Error>(std::os::OwnedFd::from_raw(raw));
   }
 
-  fn close_on_exec(self: ref Self) -> std::Option[bool] {
-    return self.close_on_exec_result().ok();
+  fn close_on_exec_optional(self: ref Self) -> std::Option[bool] {
+    return self.close_on_exec().ok();
   }
 
-  fn close_on_exec_result(self: ref Self) -> std::Result[bool, std::error::Error] {
+  fn close_on_exec(self: ref Self) -> std::Result[bool, std::error::Error] {
     if self.is_closed() {
       return std::Err<bool, std::error::Error>(invalid_input_error());
     }
@@ -239,11 +239,11 @@ pub impl std::os::OwnedFd {
     return std::Ok<bool, std::error::Error>(state != 0);
   }
 
-  fn set_close_on_exec(self: ref Self, enabled: bool) -> bool {
-    return self.set_close_on_exec_result(enabled).is_ok();
+  fn set_close_on_exec_bool(self: ref Self, enabled: bool) -> bool {
+    return self.set_close_on_exec(enabled).is_ok();
   }
 
-  fn set_close_on_exec_result(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
+  fn set_close_on_exec(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
     if self.is_closed() {
       return std::Err<(), std::error::Error>(invalid_input_error());
     }
@@ -253,11 +253,11 @@ pub impl std::os::OwnedFd {
     return std::Err<(), std::error::Error>(other_error());
   }
 
-  fn is_nonblocking(self: ref Self) -> std::Option[bool] {
-    return self.is_nonblocking_result().ok();
+  fn is_nonblocking_optional(self: ref Self) -> std::Option[bool] {
+    return self.is_nonblocking().ok();
   }
 
-  fn is_nonblocking_result(self: ref Self) -> std::Result[bool, std::error::Error] {
+  fn is_nonblocking(self: ref Self) -> std::Result[bool, std::error::Error] {
     if self.is_closed() {
       return std::Err<bool, std::error::Error>(invalid_input_error());
     }
@@ -269,11 +269,11 @@ pub impl std::os::OwnedFd {
     return std::Ok<bool, std::error::Error>(state != 0);
   }
 
-  fn set_nonblocking(self: ref Self, enabled: bool) -> bool {
-    return self.set_nonblocking_result(enabled).is_ok();
+  fn set_nonblocking_bool(self: ref Self, enabled: bool) -> bool {
+    return self.set_nonblocking(enabled).is_ok();
   }
 
-  fn set_nonblocking_result(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
+  fn set_nonblocking(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
     if self.is_closed() {
       return std::Err<(), std::error::Error>(invalid_input_error());
     }
@@ -283,11 +283,11 @@ pub impl std::os::OwnedFd {
     return std::Err<(), std::error::Error>(other_error());
   }
 
-  fn close(self: ref mut Self) -> bool {
-    return self.close_result().is_ok();
+  fn close_bool(self: ref mut Self) -> bool {
+    return self.close().is_ok();
   }
 
-  fn close_result(self: ref mut Self) -> std::Result[(), std::error::Error] {
+  fn close(self: ref mut Self) -> std::Result[(), std::error::Error] {
     if self.is_closed() {
       return std::Err<(), std::error::Error>(invalid_input_error());
     }

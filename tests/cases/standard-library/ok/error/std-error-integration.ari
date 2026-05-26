@@ -1,7 +1,7 @@
 // Covers the shared Error surface that fs/io/net/os/process re-export, errno
 // conversion helpers, conversion traits, and Display/Debug formatting.
 fn errno_result_matches(value: Result[i64, i64], kind: error::Kind, code: i64) -> bool {
-  match error::from_errno_result<i64>(value) {
+  match error::map_errno<i64>(value) {
     Ok(_) => {
       return false;
     }
@@ -60,7 +60,7 @@ fn main() -> i64 {
     return 6;
   }
 
-  match error::from_os_code_result<i64>(Err<i64, i64>(22)) {
+  match error::map_os_code<i64>(Err<i64, i64>(22)) {
     Ok(_) => {
       return 13;
     }

@@ -840,8 +840,8 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/error/std-error-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-error-basic.ll
 	grep -q '_ARNv3std5error10from_errno' $(BUILD_DIR)/prelude/std-error-basic.ll
 	grep -q '_ARNv3std5error8from_raw' $(BUILD_DIR)/prelude/std-error-basic.ll
-	grep -q '_ARNv3std5error22from_raw_result__G_i64' $(BUILD_DIR)/prelude/std-error-basic.ll
-	grep -q '_ARNv3std5error20to_raw_result__G_i64' $(BUILD_DIR)/prelude/std-error-basic.ll
+	grep -q '_ARNv3std5error14map_raw__G_i64' $(BUILD_DIR)/prelude/std-error-basic.ll
+	grep -q '_ARNv3std5error13to_raw__G_i64' $(BUILD_DIR)/prelude/std-error-basic.ll
 	grep -q 'std__error__Error8inherent12is_retryable' $(BUILD_DIR)/prelude/std-error-basic.ll
 	$(TARGET) tests/cases/standard-library/ok/error/std-error-basic.ari -o $(BUILD_DIR)/prelude/std-error-basic.elf
 	$(BUILD_DIR)/prelude/std-error-basic.elf; code=$$?; test $$code -eq 10
@@ -854,8 +854,8 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/error/std-error-validation.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-error-validation.elf; $(BUILD_DIR)/prelude/std-error-validation.elf; code=$$?; test $$code -eq 45; fi
 	$(TARGET) tests/cases/standard-library/ok/error/std-error-integration.ari --emit-llvm $(BUILD_DIR)/prelude/std-error-integration.ll
 	grep -q '_ARNv3std5error12from_os_code' $(BUILD_DIR)/prelude/std-error-integration.ll
-	grep -q '_ARNv3std5error24from_errno_result__G_i64' $(BUILD_DIR)/prelude/std-error-integration.ll
-	grep -q '_ARNv3std5error26from_os_code_result__G_i64' $(BUILD_DIR)/prelude/std-error-integration.ll
+	grep -q '_ARNv3std5error16map_errno__G_i64' $(BUILD_DIR)/prelude/std-error-integration.ll
+	grep -q '_ARNv3std5error18map_os_code__G_i64' $(BUILD_DIR)/prelude/std-error-integration.ll
 	grep -q '_ARNv3std5error21is_connection_refused' $(BUILD_DIR)/prelude/std-error-integration.ll
 	$(TARGET) tests/cases/standard-library/ok/error/std-error-integration.ari -o $(BUILD_DIR)/prelude/std-error-integration.elf
 	$(BUILD_DIR)/prelude/std-error-integration.elf; code=$$?; test $$code -eq 45
@@ -1037,13 +1037,11 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-open-result.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-open-result.ll
 	grep -F -q "std2fs4open" $(BUILD_DIR)/prelude/std-fs-open-result.ll
 	grep -F -q "std2fs13open_optional" $(BUILD_DIR)/prelude/std-fs-open-result.ll
-	grep -F -q "std2fs11open_result" $(BUILD_DIR)/prelude/std-fs-open-result.ll
-	grep -F -q "std2fs15open_raw_result" $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "std2fs8open_raw" $(BUILD_DIR)/prelude/std-fs-open-result.ll
 	grep -F -q "std2fs6create" $(BUILD_DIR)/prelude/std-fs-open-result.ll
 	grep -F -q "std2fs15create_optional" $(BUILD_DIR)/prelude/std-fs-open-result.ll
 	grep -F -q "std2fs16create_unchecked" $(BUILD_DIR)/prelude/std-fs-open-result.ll
-	grep -F -q "std2fs13create_result" $(BUILD_DIR)/prelude/std-fs-open-result.ll
-	grep -F -q "std2fs17create_raw_result" $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "std2fs10create_raw" $(BUILD_DIR)/prelude/std-fs-open-result.ll
 	grep -F -q "std2fs9open_read" $(BUILD_DIR)/prelude/std-fs-open-result.ll
 	grep -F -q "std2fs18open_read_optional" $(BUILD_DIR)/prelude/std-fs-open-result.ll
 	grep -F -q "std2fs19open_read_unchecked" $(BUILD_DIR)/prelude/std-fs-open-result.ll
@@ -1056,8 +1054,7 @@ check-prelude: $(TARGET)
 	grep -F -q "OpenOptions8inherent4open" $(BUILD_DIR)/prelude/std-fs-open-result.ll
 	grep -F -q "OpenOptions8inherent13open_optional" $(BUILD_DIR)/prelude/std-fs-open-result.ll
 	grep -F -q "OpenOptions8inherent14open_unchecked" $(BUILD_DIR)/prelude/std-fs-open-result.ll
-	grep -F -q "OpenOptions8inherent11open_result" $(BUILD_DIR)/prelude/std-fs-open-result.ll
-	grep -F -q "OpenOptions8inherent15open_raw_result" $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "OpenOptions8inherent8open_raw" $(BUILD_DIR)/prelude/std-fs-open-result.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-open-result.ari -o $(BUILD_DIR)/prelude/std-fs-open-result.elf
 	$(BUILD_DIR)/prelude/std-fs-open-result.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-lock.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-lock.ll
@@ -1090,22 +1087,17 @@ check-prelude: $(TARGET)
 	grep -F -q "std2fs4read" $(BUILD_DIR)/prelude/std-fs-read-result.ll
 	grep -F -q "std2fs13read_optional" $(BUILD_DIR)/prelude/std-fs-read-result.ll
 	grep -F -q "std2fs14read_unchecked" $(BUILD_DIR)/prelude/std-fs-read-result.ll
-	grep -F -q "std2fs11read_result" $(BUILD_DIR)/prelude/std-fs-read-result.ll
 	grep -F -q "std2fs14read_to_string" $(BUILD_DIR)/prelude/std-fs-read-result.ll
 	grep -F -q "std2fs24read_to_string_unchecked" $(BUILD_DIR)/prelude/std-fs-read-result.ll
-	grep -F -q "std2fs21read_to_string_result" $(BUILD_DIR)/prelude/std-fs-read-result.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-result.ari -o $(BUILD_DIR)/prelude/std-fs-read-result.elf
 	$(BUILD_DIR)/prelude/std-fs-read-result.elf; code=$$?; test $$code -eq 31
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-byte-result.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-byte-result.ll
 	grep -F -q "std2fs5write" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
-	grep -F -q "std2fs12write_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
-	grep -F -q "std2fs16write_raw_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
+	grep -F -q "std2fs9write_raw" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
 	grep -F -q "std2fs6append" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
-	grep -F -q "std2fs13append_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
-	grep -F -q "std2fs17append_raw_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
+	grep -F -q "std2fs10append_raw" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
 	grep -F -q "std2fs4copy" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
-	grep -F -q "std2fs11copy_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
-	grep -F -q "std2fs15copy_raw_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
+	grep -F -q "std2fs8copy_raw" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
 	grep -F -q "std2fs10read_bytes" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
 	grep -F -q "std2fs12write_string" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-byte-result.ari -o $(BUILD_DIR)/prelude/std-fs-byte-result.elf
@@ -1152,17 +1144,13 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-mutation-result.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
 	grep -F -q "std2fs6remove" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
 	grep -F -q "std2fs11remove_file" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
-	grep -F -q "std2fs13remove_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
-	grep -F -q "std2fs17remove_raw_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
+	grep -F -q "std2fs10remove_raw" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
 	grep -F -q "std2fs6rename" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
-	grep -F -q "std2fs13rename_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
-	grep -F -q "std2fs17rename_raw_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
+	grep -F -q "std2fs10rename_raw" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
 	grep -F -q "std2fs10create_dir" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
-	grep -F -q "std2fs17create_dir_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
-	grep -F -q "std2fs21create_dir_raw_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
+	grep -F -q "std2fs14create_dir_raw" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
 	grep -F -q "std2fs10remove_dir" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
-	grep -F -q "std2fs17remove_dir_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
-	grep -F -q "std2fs21remove_dir_raw_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
+	grep -F -q "std2fs14remove_dir_raw" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-mutation-result.ari -o $(BUILD_DIR)/prelude/std-fs-mutation-result.elf
 	$(BUILD_DIR)/prelude/std-fs-mutation-result.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-ensure-dir.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-ensure-dir.ll
@@ -1293,31 +1281,23 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-query-result.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs8metadata" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs17metadata_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
-	grep -F -q "std2fs15metadata_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs16symlink_metadata" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs25symlink_metadata_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
-	grep -F -q "std2fs23symlink_metadata_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs9file_type" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs18file_type_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
-	grep -F -q "std2fs16file_type_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs4mode" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs13mode_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
-	grep -F -q "std2fs11mode_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
-	grep -F -q "std2fs15open_dir_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs8open_dir" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs14read_dir_names" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs23read_dir_names_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs8read_dir" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs17read_dir_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
-	grep -F -q "std2fs15read_dir_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs16read_dir_entries" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs25read_dir_entries_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
-	grep -F -q "std2fs23read_dir_entries_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs12canonicalize" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs21canonicalize_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
-	grep -F -q "std2fs19canonicalize_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs9read_link" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs18read_link_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
-	grep -F -q "std2fs16read_link_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-query-result.ari -o $(BUILD_DIR)/prelude/std-fs-query-result.elf
 	$(BUILD_DIR)/prelude/std-fs-query-result.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-metadata-times.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-metadata-times.ll
@@ -1406,9 +1386,9 @@ check-prelude: $(TARGET)
 	grep -F -q "std__net__TcpListener8inherent10local_addr" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpListener8inherent18set_accept_timeout" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpListener8inherent13bind_optional" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
-	grep -F -q "std__net__TcpListener8inherent15bind_raw_result" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -F -q "std__net__TcpListener8inherent8bind_raw" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpListener8inherent15accept_optional" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
-	grep -F -q "std__net__TcpListener8inherent17accept_raw_result" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -F -q "std__net__TcpListener8inherent10accept_raw" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std3net6listen" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std3net10tcp_listen" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std3net11tcp_connect" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
@@ -1419,7 +1399,7 @@ check-prelude: $(TARGET)
 	grep -F -q "std__net__TcpStream8inherent16connect_optional" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpStream8inherent16set_read_timeout" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpStream8inherent17set_write_timeout" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
-	grep -F -q "std__net__TcpStream8inherent18connect_raw_result" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -F -q "std__net__TcpStream8inherent11connect_raw" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpListener8inherent10reuse_addr" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpListener8inherent14set_reuse_addr" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpStream8inherent7nodelay" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
@@ -1437,7 +1417,7 @@ check-prelude: $(TARGET)
 	grep -F -q "std3net8udp_bind" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -F -q "std__net__UdpSocket8inherent10local_addr" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -F -q "std__net__UdpSocket8inherent13bind_optional" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
-	grep -F -q "std__net__UdpSocket8inherent15bind_raw_result" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
+	grep -F -q "std__net__UdpSocket8inherent8bind_raw" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -F -q "std__net__UdpSocket8inherent16set_read_timeout" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -F -q "std__net__UdpSocket8inherent17set_write_timeout" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -F -q "std__net__UdpSocket8inherent10reuse_addr" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
@@ -1467,10 +1447,10 @@ check-prelude: $(TARGET)
 	grep -F -q "std3net12unix_connect" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std__net__UnixListener8inherent13bind_optional" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std__net__UnixListener8inherent15accept_optional" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
-	grep -F -q "std__net__UnixListener8inherent15bind_raw_result" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
-	grep -F -q "std__net__UnixListener8inherent17accept_raw_result" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
+	grep -F -q "std__net__UnixListener8inherent8bind_raw" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
+	grep -F -q "std__net__UnixListener8inherent10accept_raw" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std__net__UnixStream8inherent16connect_optional" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
-	grep -F -q "std__net__UnixStream8inherent18connect_raw_result" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
+	grep -F -q "std__net__UnixStream8inherent11connect_raw" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std__net__UnixStream8inherent10read_exact" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std__net__UnixStream8inherent16set_read_timeout" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std__net__UnixStream8inherent17set_write_timeout" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
@@ -1489,12 +1469,12 @@ check-prelude: $(TARGET)
 	grep -F -q "std3net18lookup_v6_optional" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net13try_lookup_v4" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net13try_lookup_v6" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
-	grep -F -q "std3net20lookup_v4_raw_result" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
-	grep -F -q "std3net20lookup_v6_raw_result" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -F -q "std3net13lookup_v4_raw" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -F -q "std3net13lookup_v6_raw" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net7resolve" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net16resolve_optional" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net11try_resolve" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
-	grep -F -q "std3net18resolve_raw_result" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -F -q "std3net11resolve_raw" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net15to_socket_addrs" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net12connect_host" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net16tcp_connect_host" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
@@ -1913,9 +1893,9 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/random/std-random-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-random-basic.elf; $(BUILD_DIR)/prelude/std-random-basic.elf; code=$$?; test $$code -eq 11; fi
 	$(TARGET) tests/cases/standard-library/ok/random/std-random-result.ari --emit-llvm $(BUILD_DIR)/prelude/std-random-result.ll
 	grep -F -q '@ari_builtin_random_fill_result' $(BUILD_DIR)/prelude/std-random-result.ll
-	grep -F -q 'std6random11fill_result' $(BUILD_DIR)/prelude/std-random-result.ll
-	grep -F -q 'std6random14entropy_result' $(BUILD_DIR)/prelude/std-random-result.ll
-	grep -F -q 'std__random__Prng8inherent19seed_from_os_result' $(BUILD_DIR)/prelude/std-random-result.ll
+	grep -F -q 'std6random4fill' $(BUILD_DIR)/prelude/std-random-result.ll
+	grep -F -q 'std6random7entropy' $(BUILD_DIR)/prelude/std-random-result.ll
+	grep -F -q 'std__random__Prng8inherent12seed_from_os' $(BUILD_DIR)/prelude/std-random-result.ll
 	$(TARGET) tests/cases/standard-library/ok/random/std-random-result.ari -o $(BUILD_DIR)/prelude/std-random-result.elf
 	$(BUILD_DIR)/prelude/std-random-result.elf; code=$$?; test $$code -eq 98
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/random/std-random-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-random-result.elf; $(BUILD_DIR)/prelude/std-random-result.elf; code=$$?; test $$code -eq 98; fi

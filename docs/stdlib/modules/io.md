@@ -21,7 +21,7 @@ scalar/bool contracts because they mirror the current runtime hooks;
 higher-level helpers are the default recoverable API.
 
 Migration note: older snapshots exposed these recoverable helpers as
-`read_exact_result`, `copy_result`, `write_all_result`, and `flush_result`,
+`read_exact`, `copy`, `write_all`, and `flush`,
 while the natural names returned `bool`. Update fallible call sites to the
 natural names and update bool-only call sites to the `_unchecked` names.
 

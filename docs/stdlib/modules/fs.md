@@ -36,8 +36,8 @@ Suffixes are reserved for non-default behavior. `_optional` and older `try_*`
 helpers discard error details and return `Option`; `_or_default` helpers keep
 the old empty fallback; `_unchecked` helpers keep the old assert or
 invalid-handle behavior; `_bool` helpers keep old success-flag behavior; and
-`_raw_result` helpers expose compact host integer errors. Ordinary
-`*_result` migration aliases are retired from `std::fs`; new and existing code
+`_raw` helpers expose compact host integer errors. Ordinary
+old result-suffixed migration aliases are retired from `std::fs`; new and existing code
 should use the natural Result-returning names unless it deliberately needs one
 of the explicit compatibility suffixes.
 
@@ -54,10 +54,10 @@ Common natural API shapes:
 | Operation | Preferred API | Compatibility APIs |
 | --- | --- | --- |
 | Read text/bytes | `read(ref mut zone, path) -> Result[String, Error]`, `read_to_string(ref mut zone, path) -> Result[String, Error]`, `read_bytes(ref mut zone, path) -> Result[Vec[u8], Error]` | `read_optional`, `try_read`, `read_or_default`, `read_unchecked` |
-| Write text/bytes | `write(path, values) -> Result[i64, Error]`, `write_string(path, text) -> Result[(), Error]`, `append(path, values) -> Result[i64, Error]` | `write_bool`, `try_write`, `write_raw_result`, `append_bool`, `try_append`, `append_raw_result` |
-| Directories | `create_dir(path) -> Result[(), Error]`, `create_dir_all(path) -> Result[(), Error]`, `remove_dir(path) -> Result[(), Error]`, `remove_dir_all(path) -> Result[(), Error]` | `*_bool`, `*_unchecked`, `_optional`/`try_*`, `_raw_result` |
-| Files and moves | `remove_file(path) -> Result[(), Error]`, `rename(source, target) -> Result[(), Error]`, `copy(source, target) -> Result[i64, Error]` | `remove_bool`, `rename_bool`, `copy_bool`, `try_copy`, `_raw_result` |
-| Paths and directories | `canonicalize(ref mut zone, path) -> Result[PathBuf, Error]`, `read_dir(ref mut zone, path) -> Result[Vec[DirEntry], Error]` | `_optional`, `try_*`, `_unchecked`, `_raw_result` where raw host errno is useful |
+| Write text/bytes | `write(path, values) -> Result[i64, Error]`, `write_string(path, text) -> Result[(), Error]`, `append(path, values) -> Result[i64, Error]` | `write_bool`, `try_write`, `write_raw`, `append_bool`, `try_append`, `append_raw` |
+| Directories | `create_dir(path) -> Result[(), Error]`, `create_dir_all(path) -> Result[(), Error]`, `remove_dir(path) -> Result[(), Error]`, `remove_dir_all(path) -> Result[(), Error]` | `*_bool`, `*_unchecked`, `_optional`/`try_*`, `_raw` |
+| Files and moves | `remove_file(path) -> Result[(), Error]`, `rename(source, target) -> Result[(), Error]`, `copy(source, target) -> Result[i64, Error]` | `remove_bool`, `rename_bool`, `copy_bool`, `try_copy`, `_raw` |
+| Paths and directories | `canonicalize(ref mut zone, path) -> Result[PathBuf, Error]`, `read_dir(ref mut zone, path) -> Result[Vec[DirEntry], Error]` | `_optional`, `try_*`, `_unchecked`, `_raw` where raw host errno is useful |
 | Temporary paths | `temp_file(ref mut zone) -> Result[TempFile, Error]`, `temp_file_in(ref mut zone, prefix) -> Result[TempFile, Error]`, `temp_dir(ref mut zone) -> Result[TempDir, Error]`, `temp_dir_in(ref mut zone, prefix) -> Result[TempDir, Error]` | Use `TempFile::close`, `TempFile::remove`, `TempFile::close_and_remove`, and `TempDir::remove` for cleanup. |
 | Advisory locks | `lock_shared(file) -> Result[(), Error]`, `lock_exclusive(file) -> Result[(), Error]`, `try_lock_shared(file) -> Result[bool, Error]`, `try_lock_exclusive(file) -> Result[bool, Error]`, `unlock(file) -> Result[(), Error]` | `*_raw` variants expose packed integer errors. |
 
@@ -80,16 +80,16 @@ fs::temp_dir_in(ref mut zone, prefix)
 fs::metadata(path)
 fs::metadata_optional(path)
 fs::metadata_unchecked(path)
-fs::metadata_raw_result(path)
+fs::metadata_raw(path)
 fs::try_metadata(path)
 fs::symlink_metadata(path)
 fs::symlink_metadata_optional(path)
 fs::symlink_metadata_unchecked(path)
-fs::symlink_metadata_raw_result(path)
+fs::symlink_metadata_raw(path)
 fs::try_symlink_metadata(path)
 fs::file_type(path)
 fs::file_type_optional(path)
-fs::file_type_raw_result(path)
+fs::file_type_raw(path)
 fs::file_type_unchecked(path)
 fs::try_file_type(path)
 fs::is_file(path)
@@ -98,7 +98,7 @@ fs::is_symlink(path)
 fs::is_other(path)
 fs::mode(path)
 fs::mode_optional(path)
-fs::mode_raw_result(path)
+fs::mode_raw(path)
 fs::mode_unchecked(path)
 fs::try_mode(path)
 fs::set_mode(path, mode)
@@ -117,11 +117,11 @@ fs::rename_bool(source, target)
 fs::rename_unchecked(source, target)
 fs::hard_link(existing, link_path)
 fs::hard_link_bool(existing, link_path)
-fs::hard_link_raw_result(existing, link_path)
+fs::hard_link_raw(existing, link_path)
 fs::hard_link_unchecked(existing, link_path)
 fs::symbolic_link(target, link_path)
 fs::symbolic_link_bool(target, link_path)
-fs::symbolic_link_raw_result(target, link_path)
+fs::symbolic_link_raw(target, link_path)
 fs::symbolic_link_unchecked(target, link_path)
 fs::read_link(ref mut zone, path)
 fs::read_link_optional(ref mut zone, path)
@@ -130,22 +130,22 @@ fs::try_read_link(ref mut zone, path)
 fs::ensure_file(path)
 fs::create_dir(path)
 fs::create_dir_bool(path)
-fs::create_dir_raw_result(path)
+fs::create_dir_raw(path)
 fs::create_dir_unchecked(path)
 fs::ensure_dir(path)
 fs::create_dir_all(path)
 fs::create_dir_all_bool(path)
-fs::create_dir_all_raw_result(path)
+fs::create_dir_all_raw(path)
 fs::create_dir_all_unchecked(path)
 fs::ensure_dir_all(path)
 fs::remove_dir(path)
 fs::remove_dir_bool(path)
-fs::remove_dir_raw_result(path)
+fs::remove_dir_raw(path)
 fs::remove_dir_unchecked(path)
 fs::remove_dir_all(path)
 fs::remove_dir_all_bool(path)
 fs::open_dir(path)
-fs::open_dir_raw_result(path)
+fs::open_dir_raw(path)
 fs::open_dir_unchecked(path)
 fs::try_open_dir(path)
 fs::read_dir(ref mut zone, path)
@@ -170,8 +170,8 @@ fs::open_unchecked(path, mode)
 fs::create(path)
 fs::create_optional(path)
 fs::create_unchecked(path)
-fs::remove_raw_result(path)
-fs::rename_raw_result(source, target)
+fs::remove_raw(path)
+fs::rename_raw(source, target)
 fs::open_read(path)
 fs::open_write(path)
 fs::open_append(path)
@@ -220,19 +220,19 @@ fs::read_unchecked(ref mut zone, path)
 fs::try_read(ref mut zone, path)
 fs::write(path, values)
 fs::write_bool(path, values)
-fs::write_raw_result(path, values)
+fs::write_raw(path, values)
 fs::write(path, values)
 fs::write_string(path, text)
 fs::try_write(path, values)
 fs::append(path, values)
 fs::append_bool(path, values)
-fs::append_raw_result(path, values)
+fs::append_raw(path, values)
 fs::append(path, values)
 fs::try_append(path, values)
 fs::truncate(path)
 fs::copy(source, target)
 fs::copy_bool(source, target)
-fs::copy_raw_result(source, target)
+fs::copy_raw(source, target)
 fs::copy(source, target)
 fs::try_copy(source, target)
 fs::read_to_string(ref mut zone, path)
@@ -242,9 +242,9 @@ fs::read_to_string(ref mut zone, path)
 fs::read_to_string_unchecked(ref mut zone, path)
 fs::try_read_to_string(ref mut zone, path)
 
-fs::open_raw_result(path, mode)
+fs::open_raw(path, mode)
 fs::open(path, mode)
-fs::create_raw_result(path)
+fs::create_raw(path)
 fs::create(path)
 fs::open_options()
 OpenOptions::new()
@@ -257,7 +257,7 @@ options.create_new(enabled)
 options.open(path)
 options.open_optional(path)
 options.open_unchecked(path)
-options.open_raw_result(path)
+options.open_raw(path)
 options.open(path)
 options.try_open(path)
 
@@ -414,7 +414,7 @@ strings return `InvalidInput`; missing paths and host failures preserve their
 returns the old invalid-handle sentinel directly. The Result shape lets
 callers branch on
 `reason.kind()`, `reason.code()`, or predicates such as `reason.is_not_found()`.
-`open_raw_result(path, mode)` remains available for low-level compatibility
+`open_raw(path, mode)` remains available for low-level compatibility
 tests and FFI-style bridges that still need `Result[File, i64]`.
 
 Use `OpenOptions` when the call site needs named policy instead of a mode
@@ -448,14 +448,14 @@ combination out of the portable surface. `options.open(path)` returns
 `Result[File, Error]`, `options.open_optional(path)` and
 `options.try_open(path)` turn failures into `None`, and
 `options.open_unchecked(path)` returns the old invalid-handle sentinel.
-`options.open_raw_result(path)` is the compatibility form with a raw integer
+`options.open_raw(path)` is the compatibility form with a raw integer
 error payload.
 
 `create(path)` is the natural Result-returning spelling for `open(path, "w")`:
 it creates a file if needed and truncates existing contents.
 `create_optional(path)` and `try_create(path)` wrap that same operation in
 `Option[File]`; `create_unchecked(path)` returns the old invalid-handle
-sentinel; and `create_raw_result(path)` keeps the old raw payload shape.
+sentinel; and `create_raw(path)` keeps the old raw payload shape.
 
 `ensure_file(path)` is the idempotent regular-file helper. It returns `true`
 when `path` is already a regular file, creates an empty file when the path is
@@ -491,8 +491,8 @@ Error]` after discarding the byte count. `append(path, values)` does the same
 with `"a"` mode. Failed opens, short writes, or failed closes return
 `Err(Error)`.
 `try_write(path, values)` and `try_append(path, values)` are byte-counting
-`Option` wrappers over the same operation. Use `write_raw_result` and
-`append_raw_result` only when a compatibility caller needs `Result[i64, i64]`.
+`Option` wrappers over the same operation. Use `write_raw` and
+`append_raw` only when a compatibility caller needs `Result[i64, i64]`.
 
 `write_bool(path, values)` and `append_bool(path, values)` are compatibility
 boolean wrappers over `try_write` and `try_append`.
@@ -533,7 +533,7 @@ closes return `None`. Detailed read error reporting remains future `std::io` or
 `std::os` work because `read_byte` still uses one EOF/failure sentinel.
 `copy(source, target)` is the natural Result-returning operation and keeps
 open/write/close failures as `Err(Error)` while returning the byte count on
-success. `copy_raw_result(source, target)` keeps the raw integer bridge for
+success. `copy_raw(source, target)` keeps the raw integer bridge for
 compatibility tests and low-level adapters. `copy_bool(source, target)` is the
 compatibility boolean wrapper over `try_copy`.
 
@@ -548,7 +548,7 @@ handle once and do not reuse any copied handle after one copy has been closed.
 path and returns `Result[(), Error]`; `remove_file(path)` is the explicit file
 spelling for the same operation. `remove_bool(path)`/`remove_file_bool(path)` keep the old boolean
 compatibility shape, `remove_unchecked(path)` is the raw runtime hook, and
-`remove_raw_result(path)` keeps the old `Result[(), i64]` bridge.
+`remove_raw(path)` keeps the old `Result[(), i64]` bridge.
 
 `can_read(path)`, `can_write(path)`, and `can_execute(path)` ask the host
 whether the current process can read, write, or execute/search the path. These
@@ -575,7 +575,7 @@ matching the common "tell me about the thing this path names" policy.
 `metadata_optional(path)` and the older `try_metadata(path)` discard the
 failure reason and return `Option[Metadata]`. `metadata_unchecked(path)` is the
 compatibility wrapper for programs that treat a missing path as a programmer
-error. `metadata_raw_result(path)` keeps the same operation with a compact raw
+error. `metadata_raw(path)` keeps the same operation with a compact raw
 `i64` payload for compatibility-only bridges.
 
 `symlink_metadata(path)` returns `Result[Metadata, Error]` using a no-follow
@@ -588,7 +588,7 @@ the distinction between the link and its target matters. The embedded
 snapshot as ordinary metadata; portable symlink permission-bit policy is
 intentionally not promised yet. `symlink_metadata_optional(path)` and the older
 `try_symlink_metadata(path)` discard the reason. `symlink_metadata_unchecked`
-asserts on failure, and `symlink_metadata_raw_result` is the raw compatibility
+asserts on failure, and `symlink_metadata_raw` is the raw compatibility
 variant.
 
 `file_type(path)` returns `Result[FileKind, Error]` for callers that need to
@@ -603,7 +603,7 @@ ordinary metadata policy; `is_symlink` uses no-follow metadata so it can detect
 the link object itself. Missing or unstatable paths return `false`. Prefer
 these predicates at call sites that only branch on the kind, and keep
 `metadata(path)` or `symlink_metadata(path)` for code that also needs size or
-permissions. `file_type_raw_result(path)` is the raw compatibility variant.
+permissions. `file_type_raw(path)` is the raw compatibility variant.
 
 `Metadata::len()` returns the byte length reported by the host. Directories and
 special files can have host-specific sizes; only regular-file sizes should be
@@ -626,7 +626,7 @@ and `511` for `0777`. `mode_optional(path)` and the older `try_mode(path)`
 discard the failure reason. `mode_unchecked(path)` asserts on failure.
 `set_mode(path, mode)` uses the host `chmod` path and rejects values outside
 `0..511`. `set_permissions(path, permissions)` is the structured version for
-code that already has a `Permissions` value. `mode_raw_result(path)` is kept
+code that already has a `Permissions` value. `mode_raw(path)` is kept
 for compatibility adapters.
 
 `canonicalize(ref mut zone, path)` resolves an existing path through the host
@@ -645,21 +645,21 @@ and returns `Result[(), Error]` so callers can distinguish failures such as
 allows it. Portable overwrite policy is still a future documentation point, so
 tests use a missing target path. `rename_bool(source, target)` keeps the old boolean
 compatibility shape, `rename_unchecked(source, target)` is the direct runtime
-hook, and `rename_raw_result(source, target)` is the compatibility raw payload
+hook, and `rename_raw(source, target)` is the compatibility raw payload
 form.
 
 `hard_link(existing, link_path)` creates a new hard link to an existing file
 and returns `Result[(), Error]`. The destination path must not already exist.
 `hard_link_bool(existing, link_path)` keeps the old boolean compatibility
 shape, `hard_link_unchecked(existing, link_path)` is the direct runtime hook,
-and `hard_link_raw_result(existing, link_path)` keeps raw integer errors. Cross
+and `hard_link_raw(existing, link_path)` keeps raw integer errors. Cross
 filesystem limitations and platform differences follow the OS.
 
 `symbolic_link(target, link_path)` creates a symbolic link at `link_path` that
 points at `target` and returns `Result[(), Error]`. The destination path must
 not already exist. `symbolic_link_bool(target, link_path)` keeps the old
 boolean compatibility shape, `symbolic_link_unchecked(target, link_path)` is
-the direct runtime hook, and `symbolic_link_raw_result(target, link_path)`
+the direct runtime hook, and `symbolic_link_raw(target, link_path)`
 keeps raw integer errors. On the current Linux/glibc runtime path this is a
 direct `symlink` wrapper. Relative targets are resolved by the host relative to
 the directory containing `link_path`, not the caller's current directory.
@@ -691,7 +691,7 @@ create parent directories. `create_dir_bool(path)` keeps the old boolean compati
 `remove_dir(path)` removes one empty directory and returns `Result[(), Error]`;
 `remove_dir_bool(path)` keeps the old boolean compatibility shape, and
 `remove_dir_unchecked(path)` is the
-direct runtime hook. The `*_raw_result` variants keep raw integer payloads for
+direct runtime hook. The `*_raw` variants keep raw integer payloads for
 compatibility.
 `ensure_dir(path)` is the idempotent single-directory helper: it returns `true`
 when `path` is already a directory, creates it when it is missing, and returns
@@ -704,7 +704,7 @@ Error]`. It fails when the path is empty, an existing non-directory blocks the
 final path, or an intermediate component cannot be created or searched.
 `create_dir_all_bool(path)` keeps the old boolean compatibility shape,
 `create_dir_all_unchecked(path)` is the direct runtime hook, and
-`create_dir_all_raw_result(path)` keeps raw integer errors. `ensure_dir_all`
+`create_dir_all_raw(path)` keeps raw integer errors. `ensure_dir_all`
 returns a boolean idempotent setup shape for callers that read the operation as
 setup rather than creation. Both helpers use the runtime's current default
 directory mode for newly created components, with the host process umask still
@@ -715,7 +715,7 @@ symlinks as link entries to unlink rather than directories to follow.
 `remove_dir_all_bool(path)` keeps the old boolean compatibility shape.
 
 `open_dir(path)` opens one directory and returns `Result[Dir, Error]`;
-`open_dir_raw_result(path)` keeps the raw compatibility payload.
+`open_dir_raw(path)` keeps the raw compatibility payload.
 `try_open_dir(path)` opens one directory and returns `Option[Dir]`.
 `dir.next(ref mut zone)` returns the next entry name as `Option[String]`,
 skipping the host `"."` and `".."` entries. `dir.close()` closes the directory
@@ -755,23 +755,23 @@ branching is enough, and `entry.metadata_unchecked()` or
 
 | Need | Status |
 | --- | --- |
-| open | Current: `open(path, mode)` returns `Error`, `open_optional(path, mode)`/`try_open(path, mode)` discard reasons, `open_unchecked(path, mode)` preserves the invalid-handle compatibility shape, `open(path, mode)` remains a compatibility alias, raw compatibility `open_raw_result`, Result/optional/unchecked convenience wrappers for read/write/append modes, and `OpenOptions` for named read/write/append/truncate/create/create-new policy plus `OpenOptions::open`/`open_optional`/`try_open`/`open_unchecked`/`open`/`open_raw_result`. |
+| open | Current: `open(path, mode)` returns `Error`, `open_optional(path, mode)`/`try_open(path, mode)` discard reasons, `open_unchecked(path, mode)` preserves the invalid-handle compatibility shape, `open(path, mode)` remains a compatibility alias, raw compatibility `open_raw`, Result/optional/unchecked convenience wrappers for read/write/append modes, and `OpenOptions` for named read/write/append/truncate/create/create-new policy plus `OpenOptions::open`/`open_optional`/`try_open`/`open_unchecked`/`open`/`open_raw`. |
 | create | Current: `create(path)` returns `Error`, `create_optional(path)`/`try_create(path)` discard reasons, `create_unchecked(path)` preserves the invalid-handle compatibility shape, `create(path)` remains a compatibility alias, and `ensure_file(path)` provides non-truncating idempotent file setup. |
 | read | Current: byte `read_byte`/`try_read_byte`, Result-first whole-file `read`/`read_to_string`, byte-vector `read_bytes`, `_optional`/`try_*` absence-only helpers, `_or_default` empty-string compatibility, and `_unchecked` asserting compatibility. Splitting byte-read EOF from byte-read errors remains roadmap. |
-| write | Current: byte `write_byte`, `write_bytes`, `write_byte_unchecked`, `write_bytes_unchecked`, Result-first whole-file `write`, string convenience `write_string`, `write_bool` boolean compatibility, byte-counting `try_write`, and raw compatibility `write_raw_result`/`write_byte_raw`/`write_bytes_raw`. |
-| append | Current: `"a"`/`"a+"` modes, Result-first whole-file `append`, `append_bool` boolean compatibility, byte-counting `try_append`, and raw compatibility `append_raw_result`. |
+| write | Current: byte `write_byte`, `write_bytes`, `write_byte_unchecked`, `write_bytes_unchecked`, Result-first whole-file `write`, string convenience `write_string`, `write_bool` boolean compatibility, byte-counting `try_write`, and raw compatibility `write_raw`/`write_byte_raw`/`write_bytes_raw`. |
+| append | Current: `"a"`/`"a+"` modes, Result-first whole-file `append`, `append_bool` boolean compatibility, byte-counting `try_append`, and raw compatibility `append_raw`. |
 | truncate | Current: `truncate(path)` and `"w"`/`"w+"` modes. |
-| metadata | Current: Result-first `metadata(path)`, `symlink_metadata(path)`, and `file_type(path)` with `Error`; `_optional`/`try_*` compatibility helpers that discard reasons; `_unchecked` compatibility helpers that assert; raw compatibility `metadata_raw_result(path)`, `symlink_metadata_raw_result(path)`, and `file_type_raw_result(path)` over Linux/glibc `stat`/`lstat`; direct predicates `is_file(path)`, `is_dir(path)`, `is_symlink(path)`, `is_other(path)`, `Metadata`, `FileKind`, and `Metadata` access/modification/status-change timestamps; creation/birth time is platform-policy roadmap work. |
-| permissions | Current: access-style `can_read`, `can_write`, `can_execute`, `permissions`, Result-first stat-backed `mode(path)` with `Error`, `mode_optional(path)`/`try_mode(path)`, `mode_unchecked(path)`, raw compatibility `mode_raw_result`, and chmod-backed `set_mode`/`set_permissions`; richer ACL/owner/group policy is roadmap. |
-| rename | Current: Result-first `rename(source, target)`, `rename_bool(source, target)` boolean compatibility, `rename_unchecked(source, target)` runtime hook, and raw compatibility `rename_raw_result`; portable overwrite policy is roadmap. |
-| remove | Current: Result-first file removal with `remove(path)`/`remove_file(path)`, `remove_bool(path)`/`remove_file_bool(path)` boolean compatibility, raw compatibility `remove_raw_result`, Result-first empty directory removal with `remove_dir(path)` plus bool/raw compatibility, and Result-first recursive tree removal with `remove_dir_all(path)` using no-follow symlink policy for entries plus bool compatibility. |
-| copy | Current: Result-first source streaming `copy(source, target)`, byte-counting `try_copy(source, target)`, `copy_bool(source, target)` boolean compatibility, and raw compatibility `copy_raw_result(source, target)` for byte files. |
-| hard link | Current: Result-first `hard_link(existing, link_path)`, `hard_link_bool` boolean compatibility, `hard_link_unchecked` runtime hook, and `hard_link_raw_result` raw compatibility. |
-| symbolic link | Current: Result-first `symbolic_link(target, link_path)`, `symbolic_link_bool` boolean compatibility, `symbolic_link_unchecked` runtime hook, `symbolic_link_raw_result` raw compatibility, Result-first `read_link(ref mut zone, path)`, `read_link_optional(ref mut zone, path)`/`try_read_link(ref mut zone, path)`, and `read_link_unchecked(ref mut zone, path)` on the Linux/glibc path; Windows split is roadmap. |
+| metadata | Current: Result-first `metadata(path)`, `symlink_metadata(path)`, and `file_type(path)` with `Error`; `_optional`/`try_*` compatibility helpers that discard reasons; `_unchecked` compatibility helpers that assert; raw compatibility `metadata_raw(path)`, `symlink_metadata_raw(path)`, and `file_type_raw(path)` over Linux/glibc `stat`/`lstat`; direct predicates `is_file(path)`, `is_dir(path)`, `is_symlink(path)`, `is_other(path)`, `Metadata`, `FileKind`, and `Metadata` access/modification/status-change timestamps; creation/birth time is platform-policy roadmap work. |
+| permissions | Current: access-style `can_read`, `can_write`, `can_execute`, `permissions`, Result-first stat-backed `mode(path)` with `Error`, `mode_optional(path)`/`try_mode(path)`, `mode_unchecked(path)`, raw compatibility `mode_raw`, and chmod-backed `set_mode`/`set_permissions`; richer ACL/owner/group policy is roadmap. |
+| rename | Current: Result-first `rename(source, target)`, `rename_bool(source, target)` boolean compatibility, `rename_unchecked(source, target)` runtime hook, and raw compatibility `rename_raw`; portable overwrite policy is roadmap. |
+| remove | Current: Result-first file removal with `remove(path)`/`remove_file(path)`, `remove_bool(path)`/`remove_file_bool(path)` boolean compatibility, raw compatibility `remove_raw`, Result-first empty directory removal with `remove_dir(path)` plus bool/raw compatibility, and Result-first recursive tree removal with `remove_dir_all(path)` using no-follow symlink policy for entries plus bool compatibility. |
+| copy | Current: Result-first source streaming `copy(source, target)`, byte-counting `try_copy(source, target)`, `copy_bool(source, target)` boolean compatibility, and raw compatibility `copy_raw(source, target)` for byte files. |
+| hard link | Current: Result-first `hard_link(existing, link_path)`, `hard_link_bool` boolean compatibility, `hard_link_unchecked` runtime hook, and `hard_link_raw` raw compatibility. |
+| symbolic link | Current: Result-first `symbolic_link(target, link_path)`, `symbolic_link_bool` boolean compatibility, `symbolic_link_unchecked` runtime hook, `symbolic_link_raw` raw compatibility, Result-first `read_link(ref mut zone, path)`, `read_link_optional(ref mut zone, path)`/`try_read_link(ref mut zone, path)`, and `read_link_unchecked(ref mut zone, path)` on the Linux/glibc path; Windows split is roadmap. |
 | canonicalize | Current: Result-first `canonicalize(ref mut zone, path)`, `canonicalize_optional(ref mut zone, path)`/`try_canonicalize(ref mut zone, path)`, and `canonicalize_unchecked(ref mut zone, path)` over the Linux/glibc `realpath` runtime path. |
 | file handle lifecycle | Current: explicit Result-returning `close`, `position`, and `seek` on value `File` handles, `_unchecked` compatibility helpers, and `_raw` integer-error helpers. Close once; copied handles are not disarmed. |
-| read directory | Current: Result-first entry-list `read_dir(ref mut zone, path)` and `read_dir_entries(ref mut zone, path)`, name-list `read_dir_names(ref mut zone, path)` with `try_read_dir` compatibility, `_optional`/`try_*` absence-only helpers, `_unchecked` asserting compatibility, `open_dir(path)` with `Error`, raw compatibility `open_dir_raw_result(path)`, `try_open_dir(path)`, `open_dir_unchecked(path)`, `Dir`, `DirEntry`, `dir.next(ref mut zone)`, `dir.close()`/`dir.close_unchecked()`, borrowed entry name/path methods, and lazy `DirEntry` metadata/file-kind predicates; richer per-entry errors are roadmap. |
-| create directory | Current: Result-first single-directory `create_dir(path)`, `create_dir_bool(path)` boolean compatibility, raw compatibility `create_dir_raw_result(path)`, idempotent `ensure_dir(path)`, Result-first recursive `create_dir_all(path)`, `create_dir_all_bool(path)` boolean compatibility, raw compatibility `create_dir_all_raw_result(path)`, and `ensure_dir_all(path)` for missing parent directories. |
+| read directory | Current: Result-first entry-list `read_dir(ref mut zone, path)` and `read_dir_entries(ref mut zone, path)`, name-list `read_dir_names(ref mut zone, path)` with `try_read_dir` compatibility, `_optional`/`try_*` absence-only helpers, `_unchecked` asserting compatibility, `open_dir(path)` with `Error`, raw compatibility `open_dir_raw(path)`, `try_open_dir(path)`, `open_dir_unchecked(path)`, `Dir`, `DirEntry`, `dir.next(ref mut zone)`, `dir.close()`/`dir.close_unchecked()`, borrowed entry name/path methods, and lazy `DirEntry` metadata/file-kind predicates; richer per-entry errors are roadmap. |
+| create directory | Current: Result-first single-directory `create_dir(path)`, `create_dir_bool(path)` boolean compatibility, raw compatibility `create_dir_raw(path)`, idempotent `ensure_dir(path)`, Result-first recursive `create_dir_all(path)`, `create_dir_all_bool(path)` boolean compatibility, raw compatibility `create_dir_all_raw(path)`, and `ensure_dir_all(path)` for missing parent directories. |
 | temporary files | Current: Result-first `temp_file(ref mut zone)` / `temp_file_in(ref mut zone, prefix)` and `temp_dir(ref mut zone)` / `temp_dir_in(ref mut zone, prefix)` wrappers over the hosted POSIX `mkstemp`/`mkdtemp` implementation. `TempFile` owns the descriptor and path buffer, `TempDir` owns the path buffer, and callers should explicitly close/remove the resource when they want recoverable cleanup errors. |
 | path manipulation | Current: source lexical helpers in `std::path`, borrowed `PathBytes`/`Path` views, and owned POSIX `PathBuf` as a `std::string::String` alias; platform-specific owned paths remain roadmap. |
 | file locking | Current: hosted POSIX advisory locks through `flock(2)` with shared, exclusive, nonblocking try, and unlock helpers on `File`; Windows and mandatory-locking policy remain roadmap. |
@@ -1079,7 +1079,7 @@ match fs::open(path, "rw") {
   existing read/write files, `"w+"` for create/truncate read/write, and `"a+"`
   for read/append. More detailed flags belong in a future options API.
 - Prefer natural Result-returning names when the caller needs a reason.
-  Ordinary `*_result` migration aliases have been removed from `std::fs`.
+  Ordinary old result-suffixed migration aliases have been removed from `std::fs`.
   Compatibility bool, `Option`, empty-string, unchecked, raw, and `-1`
   sentinel helpers remain for compact code and older tests, but new filesystem
   APIs should use `std::error::Error` instead of adding more sentinel
@@ -1133,7 +1133,7 @@ value builder, exclusive creation, non-truncating read/write opens,
 append-with-read behavior, and invalid option combinations.
 `std-fs-open-result.ari` covers natural `open`, `create`, `OpenOptions::open`,
 their `_optional` compatibility helpers,
-`open_raw_result`, `create_raw_result`, and `OpenOptions::open_raw_result` for
+`open_raw`, `create_raw`, and `OpenOptions::open_raw` for
 invalid input, missing files, exclusive-create failures, and successful
 handles. `std-fs-read-write.ari` covers natural Result-returning whole-file
 write/append, `try_write`/`try_append` byte counts, read-to-byte-string,

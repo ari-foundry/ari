@@ -83,7 +83,7 @@ pub fn stderr() -> std::io::Stderr {
 }
 
 pub fn pipe() -> std::Result[std::io::Pipe, std::error::Error] {
-  match std::os::pipe_result() {
+  match std::os::pipe() {
     std::Err(reason) => {
       return std::Err<std::io::Pipe, std::error::Error>(reason);
     }
@@ -407,7 +407,7 @@ pub impl std::io::Pipe {
   }
 
   fn close(self: ref mut Self) -> std::Result[(), std::error::Error] {
-    return self.raw.close_result();
+    return self.raw.close();
   }
 
   fn close_bool(self: ref mut Self) -> bool {
@@ -425,7 +425,7 @@ pub impl std::io::PipeReader {
   }
 
   fn close(self: ref mut Self) -> std::Result[(), std::error::Error] {
-    return self.handle.close_result();
+    return self.handle.close();
   }
 
   fn close_bool(self: ref mut Self) -> bool {
@@ -451,7 +451,7 @@ pub impl std::io::PipeWriter {
   }
 
   fn close(self: ref mut Self) -> std::Result[(), std::error::Error] {
-    return self.handle.close_result();
+    return self.handle.close();
   }
 
   fn close_bool(self: ref mut Self) -> bool {

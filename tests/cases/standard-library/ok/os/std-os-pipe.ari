@@ -2,15 +2,15 @@
 // callers can inspect borrowed views, take the ends apart, and close them
 // independently.
 fn main() -> i64 {
-  let maybe_pipe = std::os::pipe();
+  let maybe_pipe = std::os::pipe_optional();
   var score = 0;
   if maybe_pipe.is_some() {
     score = score + 1;
   }
-  match std::os::pipe_result() {
+  match std::os::pipe() {
     Ok(result_pipe) => {
       var closable = result_pipe;
-      assert(closable.close_result().is_ok());
+      assert(closable.close().is_ok());
     }
     Err(_) => {
       panic();
@@ -33,20 +33,20 @@ fn main() -> i64 {
   if pipe.read_end().is_invalid() && pipe.write_end().is_invalid() {
     score = score + 16;
   }
-  if reader.set_nonblocking(true) {
+  if reader.set_nonblocking_bool(true) {
     score = score + 32;
   }
-  assert(reader.set_nonblocking_result(true).is_ok());
-  assert(reader.is_nonblocking_result().unwrap_or(false));
-  if writer.set_close_on_exec(true) {
+  assert(reader.set_nonblocking(true).is_ok());
+  assert(reader.is_nonblocking().unwrap_or(false));
+  if writer.set_close_on_exec_bool(true) {
     score = score + 64;
   }
-  assert(writer.set_close_on_exec_result(true).is_ok());
-  assert(writer.close_on_exec_result().unwrap_or(false));
-  if reader.close() && writer.close() {
+  assert(writer.set_close_on_exec(true).is_ok());
+  assert(writer.close_on_exec().unwrap_or(false));
+  if reader.close_bool() && writer.close_bool() {
     score = score + 128;
   }
-  assert(pipe.close_result().is_ok());
+  assert(pipe.close().is_ok());
 
   return score;
 }

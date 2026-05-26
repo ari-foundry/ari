@@ -239,7 +239,7 @@ condvar.generation() -> i64
 condvar.wait(ref mut mutex) -> void
 condvar.wait_timeout(ref mut mutex, duration) -> Result[WaitTimeoutResult, Error]
 condvar.wait_while(ref mut mutex, condition: fn() -> bool) -> void
-wait_result.timed_out() -> bool
+wait.timed_out() -> bool
 ```
 
 The current `Condvar` is generation-based and source-level. `notify_one` and

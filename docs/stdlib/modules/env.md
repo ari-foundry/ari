@@ -21,7 +21,7 @@ compatibility helpers that discard error detail are named explicitly:
 Argument and process-path helpers follow the default stdlib error model:
 natural fallible names return `Result`, while `_optional`, `_or_default`,
 `_raw`, or `_unchecked` names opt into information-discarding or boundary
-behavior. Ordinary `*_result` migration aliases are retired from `std::env`;
+behavior. Ordinary old result-suffixed migration aliases are retired from `std::env`;
 use the natural names for Result-returning argument and process-path helpers.
 
 Use `std::env` from application code when you want friendly arguments,

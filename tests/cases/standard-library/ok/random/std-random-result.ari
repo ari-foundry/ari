@@ -4,25 +4,25 @@ fn main() -> i64 {
   var bytes = [0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8];
   var score = 0;
 
-  if random::fill_raw_result(bytes.as_slice()).is_ok() {
+  if random::fill_raw(bytes.as_slice()).is_ok() {
     score = score + 3;
   }
 
-  if random::fill_result(bytes.as_slice()).is_ok() {
+  if random::fill(bytes.as_slice()).is_ok() {
     score = score + 5;
   }
 
-  let raw_entropy = random::entropy_raw_result();
+  let raw_entropy = random::entropy_raw();
   if raw_entropy.is_ok() {
     score = score + 7;
   }
 
-  let entropy = random::entropy_result();
+  let entropy = random::entropy();
   if entropy.is_ok() {
     score = score + 11;
   }
 
-  let seeded = random::from_entropy_result();
+  let seeded = random::from_entropy();
   if seeded.is_ok() {
     var rng = seeded.unwrap();
     let value = rng.below(10);
@@ -31,7 +31,7 @@ fn main() -> i64 {
     }
   }
 
-  let associated = random::Prng::seed_from_os_result();
+  let associated = random::Prng::seed_from_os();
   if associated.is_ok() {
     score = score + 17;
   }
@@ -39,7 +39,7 @@ fn main() -> i64 {
   var byte = 0u8;
   let invalid = Slice<u8> { data: (ref mut byte) as ptr u8, len: -1 };
 
-  let invalid_raw = random::fill_raw_result(invalid);
+  let invalid_raw = random::fill_raw(invalid);
   if invalid_raw.is_err() {
     let raw_error = std::error::from_raw(invalid_raw.unwrap_err());
     if raw_error.code() == 22 && raw_error.is_kind(std::error::InvalidInput) {
@@ -47,7 +47,7 @@ fn main() -> i64 {
     }
   }
 
-  let invalid_typed = random::fill_result(invalid);
+  let invalid_typed = random::fill(invalid);
   if invalid_typed.is_err() {
     let error = invalid_typed.unwrap_err();
     if error.code() == 22 && error.is_kind(std::error::InvalidInput) {

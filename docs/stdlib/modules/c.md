@@ -48,12 +48,12 @@ std::c::Library
 std::c::Symbol
 
 c::from_string(text: string) -> CStr
-c::from_ptr(data: ptr c_char) -> CStr
-c::from_ptr_result(data: ptr c_char) -> Result[CStr, std::error::Error]
-c::from_slice_in(zone: ref mut Zone, bytes: Slice[u8]) -> CString
-c::from_slice_result_in(zone: ref mut Zone, bytes: Slice[u8]) -> Result[CString, std::error::Error]
-c::from_cstr_in(zone: ref mut Zone, value: CStr) -> CString
-c::from_cstr_result_in(zone: ref mut Zone, value: CStr) -> Result[CString, std::error::Error]
+c::from_ptr(data: ptr c_char) -> Result[CStr, std::error::Error]
+c::from_ptr_unchecked(data: ptr c_char) -> CStr
+c::from_slice_in(zone: ref mut Zone, bytes: Slice[u8]) -> Result[CString, std::error::Error]
+c::from_slice_unchecked_in(zone: ref mut Zone, bytes: Slice[u8]) -> CString
+c::from_cstr_in(zone: ref mut Zone, value: CStr) -> Result[CString, std::error::Error]
+c::from_cstr_unchecked_in(zone: ref mut Zone, value: CStr) -> CString
 c::is_null(value: ptr c_void) -> bool
 
 c::errno() -> i64
@@ -63,15 +63,15 @@ c::lazy() -> i64
 c::now() -> i64
 c::local() -> i64
 c::global() -> i64
-c::open(path: CStr, flags: i64) -> Library
-c::open_result(path: CStr, flags: i64) -> Result[Library, std::error::Error]
-c::main_program(flags: i64) -> Library
-c::main_program_result(flags: i64) -> Result[Library, std::error::Error]
-c::symbol(library: ref Library, name: CStr) -> Symbol
-c::symbol_result(library: ref Library, name: CStr) -> Result[Symbol, std::error::Error]
+c::open(path: CStr, flags: i64) -> Result[Library, std::error::Error]
+c::open_raw(path: CStr, flags: i64) -> Library
+c::main_program(flags: i64) -> Result[Library, std::error::Error]
+c::main_program_raw(flags: i64) -> Library
+c::symbol(library: ref Library, name: CStr) -> Result[Symbol, std::error::Error]
+c::symbol_raw(library: ref Library, name: CStr) -> Symbol
 c::function[T](symbol: ref Symbol) -> T
-c::close(library: ref mut Library) -> bool
-c::close_result(library: ref mut Library) -> Result[(), std::error::Error]
+c::close(library: ref mut Library) -> Result[(), std::error::Error]
+c::close_bool(library: ref mut Library) -> bool
 c::last_error() -> CStr
 ```
 
@@ -106,26 +106,26 @@ not included because normal Ari `Slice[u8]` APIs expect a length, not a
 sentinel. When a `CStr` is the expected type, a string literal can coerce
 directly to that borrowed C string view; use `c::from_string(text)` when the
 conversion should be visually explicit.
-`from_ptr(data)` asserts that the pointer is non-null; use
-`from_ptr_result(data)` for C APIs where null is an ordinary failure result.
-The result form returns `Error(InvalidInput)` for null.
+`from_ptr(data)` returns `Result[CStr, Error]` and yields
+`Error(InvalidInput)` for null. Use `from_ptr_unchecked(data)` only when the C
+contract already proves the pointer is non-null; it asserts on null.
 
 `CString` is a zone-backed owned C string buffer. It copies a byte slice,
-asserts that the input has no interior NUL byte, appends one trailing NUL, and
-keeps the logical length without that terminator.
-`from_slice_result_in` and `from_cstr_result_in` are the non-asserting
+appends one trailing NUL, and keeps the logical length without that terminator.
+`from_slice_in` and `from_cstr_in` are the natural Result-returning
 constructors. They return `Error(InvalidInput)` when an owned byte slice would
-contain an interior NUL.
+contain an interior NUL. `from_slice_unchecked_in` and
+`from_cstr_unchecked_in` are the assert-on-invalid compatibility forms.
 
 ```ari
 fn copy_name(zone: ref mut Zone, bytes: Slice[u8]) -> CString {
-  let owned = c::from_slice_in(zone, bytes);
+  let owned = c::from_slice_unchecked_in(zone, bytes);
   assert(owned.as_bytes_with_nul()[owned.len()] == 0u8);
   return owned;
 }
 
 fn try_copy_name(zone: ref mut Zone, bytes: Slice[u8]) -> Result[CString, Error] {
-  return c::from_slice_result_in(zone, bytes);
+  return c::from_slice_in(zone, bytes);
 }
 ```
 
@@ -190,20 +190,11 @@ reports failure through sentinel values and `errno`.
 
 ```ari
 fn load_strlen() -> i64 {
-  var library = c::open(c::from_string("libc.so.6"), c::lazy());
-  if !library.is_open() {
-    return 1;
-  }
+  var library = c::open(c::from_string("libc.so.6"), c::lazy()).unwrap();
 
-  let symbol = library.symbol(c::from_string("strlen"));
-  if !symbol.is_valid() {
-    let reason = c::last_error();
-    assert(!reason.is_empty());
-    library.close();
-    return 2;
-  }
+  let symbol = library.symbol(c::from_string("strlen")).unwrap();
 
-  library.close();
+  library.close().unwrap();
   return 0;
 }
 ```
@@ -212,12 +203,12 @@ To call a loaded function, ask the `Symbol` for a function-pointer type:
 
 ```ari
 fn loaded_strlen() -> i64 {
-  var library = c::open(c::from_string("libc.so.6"), c::lazy());
-  let symbol = library.symbol(c::from_string("strlen"));
+  var library = c::open(c::from_string("libc.so.6"), c::lazy()).unwrap();
+  let symbol = library.symbol(c::from_string("strlen")).unwrap();
   let strlen = symbol.function<fn(ptr c_char) -> size_t>();
   let text = c::from_string("ari");
   let result = strlen(text.as_ptr()) as i64;
-  library.close();
+  library.close().unwrap();
   return result;
 }
 ```
@@ -238,14 +229,16 @@ the C dynamic loader:
 | `c::global()` | `RTLD_GLOBAL` |
 
 `c::main_program(flags)` passes a null path to the loader and returns a handle
-for symbols in the main program image. `Library::invalid()` and
+for symbols in the main program image. `open_raw`, `main_program_raw`, and
+`symbol_raw` keep the old sentinel-returning compatibility behavior.
+`Library::invalid()` and
 `Symbol::invalid()` are explicit sentinels for code that needs a default value.
 `Symbol.as_ptr()` is still available when a binding needs a raw address instead
 of a callable function pointer.
-`open_result`, `main_program_result`, `symbol_result`, and
-`Library::symbol_result` convert loader null sentinels into `Error(Other)`.
+`open`, `main_program`, `symbol`, and
+`Library::symbol` convert loader null sentinels into `Error(Other)`.
 Use `last_error()` after a loader failure when the platform string is useful
-for diagnostics. `close_result` and `Library::close_result` return `Ok(())`
+for diagnostics. `close` and `Library::close` return `Ok(())`
 for an already-closed handle, so library close is idempotent at the Ari wrapper
 level.
 
@@ -259,9 +252,8 @@ let raw: ptr c_void = null;
 assert(c::is_null(raw));
 ```
 
-`c::from_ptr` rejects null pointers with `assert`. Use
-`c::from_ptr_result` when null is an ordinary C result and the caller wants a
-recoverable `Error(InvalidInput)` branch.
+`c::from_ptr` returns `Error(InvalidInput)` for null. Use
+`c::from_ptr_unchecked` only when a binding has already ruled null out.
 
 ## Roadmap
 

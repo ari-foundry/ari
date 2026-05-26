@@ -1,10 +1,10 @@
 fn main() -> i64 {
   var score = 0;
 
-  var library = c::open(c::from_string("libc.so.6"), c::lazy());
+  var library = c::open(c::from_string("libc.so.6"), c::lazy()).unwrap();
   assert(library.is_open());
 
-  let strlen_symbol = library.symbol(c::from_string("strlen"));
+  let strlen_symbol = library.symbol(c::from_string("strlen")).unwrap();
   assert(strlen_symbol.is_valid());
 
   let strlen = strlen_symbol.function<fn(ptr c_char) -> size_t>();
@@ -17,6 +17,6 @@ fn main() -> i64 {
   assert_eq_i64(strlen_again(ari.as_ptr()) as i64, 3);
   score = score + 1;
 
-  assert(library.close());
+  assert(library.close().is_ok());
   return score;
 }

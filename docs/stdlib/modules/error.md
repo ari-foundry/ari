@@ -44,10 +44,10 @@ try_from_errno(code: i64) -> Option[Error]
 try_from_os_code(code: i64) -> Option[Error]
 from_raw(raw: i64) -> Error
 try_from_raw(raw: i64) -> Option[Error]
-from_raw_result[T](value: Result[T, i64]) -> Result[T, Error]
-from_errno_result[T](value: Result[T, i64]) -> Result[T, Error]
-from_os_code_result[T](value: Result[T, i64]) -> Result[T, Error]
-to_raw_result[T](value: Result[T, Error]) -> Result[T, i64]
+map_raw[T](value: Result[T, i64]) -> Result[T, Error]
+map_errno[T](value: Result[T, i64]) -> Result[T, Error]
+map_os_code[T](value: Result[T, i64]) -> Result[T, Error]
+to_raw[T](value: Result[T, Error]) -> Result[T, i64]
 
 kind(ref Error) -> Kind
 code(ref Error) -> i64
@@ -74,10 +74,10 @@ use either name without changing the payload shape.
 `Error` currently stores a compact one-word representation. That is deliberate:
 it lets filesystem and other OS-facing helpers return direct
 `Result[T, Error]` values while still allowing raw compatibility boundaries.
-Use `from_raw_result` when adapting an older `Result[T, i64]` helper into the
-preferred `Result[T, Error]` shape. Use `to_raw_result` only when a runtime,
+Use `map_raw` when adapting an older `Result[T, i64]` helper into the
+preferred `Result[T, Error]` shape. Use `to_raw` only when a runtime,
 FFI, or compatibility test still needs the compact integer bridge.
-Use `from_errno_result` or `from_os_code_result` only when the `i64` payload is
+Use `map_errno` or `map_os_code` only when the `i64` payload is
 the platform error code itself rather than a packed Ari `Error.raw()` value.
 Use strict constructors such as `with_code`, `from_errno`, and `from_raw`
 when values are trusted or produced by Ari itself. Use `try_with_code`,
@@ -109,7 +109,7 @@ fn old_open_like() -> Result[i64, i64] {
   return Err<i64, i64>(reason.raw());
 }
 
-let result: Result[i64, Error] = error::from_raw_result<i64>(old_open_like());
+let result: Result[i64, Error] = error::map_raw<i64>(old_open_like());
 ```
 
 Fallible error reconstruction:

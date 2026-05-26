@@ -27,7 +27,7 @@ fn main() -> i64 {
         }
       }
     }
-    match net::UnixListener::bind_raw_result(path) {
+    match net::UnixListener::bind_raw(path) {
       Ok(_raw_retry_listener) => {}
       Err(bind_raw) => {
         if !(raw_error_is(bind_raw, error::PermissionDenied) || raw_error_is(bind_raw, error::Unsupported)) {

@@ -1,9 +1,7 @@
 // Randomness helpers.
 //
-// `entropy()` is OS-backed and suitable for seeding. Use the `*_result`
-// variants when host entropy failure should stay recoverable. `Prng` is
-// deterministic and deliberately not cryptographic; use it when repeatability
-// matters.
+// `entropy()` is OS-backed and suitable for seeding. `Prng` is deterministic
+// and deliberately not cryptographic; use it when repeatability matters.
 
 const STEP: u64 = 11400714819323198485u64;
 
@@ -11,9 +9,9 @@ pub struct Prng {
   mut state: u64,
 }
 
-pub extern "ari" fn entropy() -> u64 = "ari_builtin_random_entropy";
+extern "ari" fn entropy_unchecked_raw() -> u64 = "ari_builtin_random_entropy";
 extern "ari" fn fill_os(data: ptr u8, len: i64) -> void = "ari_builtin_random_fill";
-extern "ari" fn fill_os_result(data: ptr u8, len: i64) -> i64 = "ari_builtin_random_fill_result";
+extern "ari" fn fill_os_checked_raw(data: ptr u8, len: i64) -> i64 = "ari_builtin_random_fill_result";
 
 fn mix(value: u64) -> u64 {
   var mixed = value;
@@ -39,30 +37,34 @@ pub fn seed(value: u64) -> std::random::Prng {
   return Prng { state: value };
 }
 
-pub fn from_entropy() -> std::random::Prng {
-  return seed(std::random::entropy());
+pub fn entropy_unchecked() -> u64 {
+  return entropy_unchecked_raw();
 }
 
-pub fn seed_from_os() -> std::random::Prng {
-  return from_entropy();
+pub fn from_entropy_unchecked() -> std::random::Prng {
+  return seed(std::random::entropy_unchecked());
 }
 
-pub fn fill_raw_result(values: std::Slice[u8]) -> std::Result[(), i64] {
-  let code = fill_os_result(values.data, values.len);
+pub fn seed_from_os_unchecked() -> std::random::Prng {
+  return from_entropy_unchecked();
+}
+
+pub fn fill_raw(values: std::Slice[u8]) -> std::Result[(), i64] {
+  let code = fill_os_checked_raw(values.data, values.len);
   if code == 0 {
     return std::Ok<(), i64>(());
   }
   return std::Err<(), i64>(std::error::from_errno(code).raw());
 }
 
-pub fn fill_result(values: std::Slice[u8]) -> std::Result[(), std::error::Error] {
-  return std::error::from_raw_result<()>(std::random::fill_raw_result(values));
+pub fn fill(values: std::Slice[u8]) -> std::Result[(), std::error::Error] {
+  return std::error::map_raw<()>(std::random::fill_raw(values));
 }
 
-pub fn entropy_raw_result() -> std::Result[u64, i64] {
+pub fn entropy_raw() -> std::Result[u64, i64] {
   var value = 0u64;
   let data = ((ref mut value) as ptr u64) as ptr u8;
-  let raw = std::random::fill_raw_result(std::Slice<u8> { data: data, len: 8 });
+  let raw = std::random::fill_raw(std::Slice<u8> { data: data, len: 8 });
   match raw {
     std::Ok(_) => {
       return std::Ok<u64, i64>(value);
@@ -73,12 +75,12 @@ pub fn entropy_raw_result() -> std::Result[u64, i64] {
   }
 }
 
-pub fn entropy_result() -> std::Result[u64, std::error::Error] {
-  return std::error::from_raw_result<u64>(std::random::entropy_raw_result());
+pub fn entropy() -> std::Result[u64, std::error::Error] {
+  return std::error::map_raw<u64>(std::random::entropy_raw());
 }
 
-pub fn from_entropy_result() -> std::Result[std::random::Prng, std::error::Error] {
-  match std::random::entropy_result() {
+pub fn from_entropy() -> std::Result[std::random::Prng, std::error::Error] {
+  match std::random::entropy() {
     std::Ok(value) => {
       return std::Ok<std::random::Prng, std::error::Error>(std::random::seed(value));
     }
@@ -88,8 +90,8 @@ pub fn from_entropy_result() -> std::Result[std::random::Prng, std::error::Error
   }
 }
 
-pub fn seed_from_os_result() -> std::Result[std::random::Prng, std::error::Error] {
-  return std::random::from_entropy_result();
+pub fn seed_from_os() -> std::Result[std::random::Prng, std::error::Error] {
+  return std::random::from_entropy();
 }
 
 pub fn next(rng: ref mut std::random::Prng) -> u64 {
@@ -131,7 +133,7 @@ pub fn float(rng: ref mut std::random::Prng) -> f64 {
   return (bits as f64) / 9007199254740992.0f64;
 }
 
-pub fn fill(values: std::Slice[u8]) -> void {
+pub fn fill_unchecked(values: std::Slice[u8]) -> void {
   fill_os(values.data, values.len);
   return;
 }
@@ -165,20 +167,20 @@ pub impl std::random::Prng {
     return std::random::seed(value);
   }
 
-  fn from_entropy() -> std::random::Prng {
+  fn from_entropy_unchecked() -> std::random::Prng {
+    return std::random::from_entropy_unchecked();
+  }
+
+  fn from_entropy() -> std::Result[std::random::Prng, std::error::Error] {
     return std::random::from_entropy();
   }
 
-  fn seed_from_os() -> std::random::Prng {
+  fn seed_from_os_unchecked() -> std::random::Prng {
+    return std::random::seed_from_os_unchecked();
+  }
+
+  fn seed_from_os() -> std::Result[std::random::Prng, std::error::Error] {
     return std::random::seed_from_os();
-  }
-
-  fn from_entropy_result() -> std::Result[std::random::Prng, std::error::Error] {
-    return std::random::from_entropy_result();
-  }
-
-  fn seed_from_os_result() -> std::Result[std::random::Prng, std::error::Error] {
-    return std::random::seed_from_os_result();
   }
 
   fn next(self: ref mut Self) -> u64 {

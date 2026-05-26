@@ -31,12 +31,12 @@ fn same_i64(left: Slice[i64], right: Slice[i64]) -> bool {
 fn main() -> i64 {
   var score = 0;
 
-  let os_seed = random::entropy();
+  let os_seed = random::entropy_unchecked();
   if os_seed == os_seed {
     score = score + 1;
   }
 
-  var from_os = random::from_entropy();
+  var from_os = random::from_entropy_unchecked();
   let from_os_value = from_os.next();
   if from_os_value == from_os_value {
     score = score + 1;
@@ -99,7 +99,7 @@ fn main() -> i64 {
   }
 
   var os_bytes = [0u8, 0u8, 0u8, 0u8];
-  random::fill(os_bytes.as_slice());
+  random::fill_unchecked(os_bytes.as_slice());
   score = score + 1;
 
   var shuffled_a = [1, 2, 3, 4, 5, 6];

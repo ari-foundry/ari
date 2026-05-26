@@ -20,10 +20,10 @@ fn main() -> i64 {
   if invalid.is_closed() && invalid.as_fd().is_invalid() {
     score = score + 8;
   }
-  if !invalid.close() && invalid.is_closed() {
+  if !invalid.close_bool() && invalid.is_closed() {
     score = score + 16;
   }
-  match invalid.close_result() {
+  match invalid.close() {
     Ok(_) => {
       panic();
     }
@@ -31,16 +31,16 @@ fn main() -> i64 {
       assert(reason.is_kind(error::InvalidInput));
     }
   }
-  assert(invalid.try_clone_result().is_err());
-  assert(invalid.close_on_exec_result().is_err());
-  assert(invalid.set_close_on_exec_result(true).is_err());
-  assert(invalid.is_nonblocking_result().is_err());
-  assert(invalid.set_nonblocking_result(true).is_err());
-  if owned.close() && owned.is_closed() {
+  assert(invalid.clone().is_err());
+  assert(invalid.close_on_exec().is_err());
+  assert(invalid.set_close_on_exec(true).is_err());
+  assert(invalid.is_nonblocking().is_err());
+  assert(invalid.set_nonblocking(true).is_err());
+  if owned.close_bool() && owned.is_closed() {
     score = score + 32;
   }
-  assert(owned.close_result().is_err());
-  if !owned.close() {
+  assert(owned.close().is_err());
+  if !owned.close_bool() {
     score = score + 64;
   }
 

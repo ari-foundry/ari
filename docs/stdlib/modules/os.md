@@ -26,7 +26,7 @@ os::stdin()
 os::stdout()
 os::stderr()
 os::pipe()
-os::pipe_result()
+os::pipe_optional()
 
 fd.raw()
 fd.is_valid()
@@ -45,28 +45,28 @@ owned.is_open()
 owned.is_closed()
 owned.take()
 owned.try_clone()
-owned.try_clone_result()
+owned.clone()
 owned.close_on_exec()
-owned.close_on_exec_result()
+owned.close_on_exec_optional()
 owned.set_close_on_exec(enabled)
-owned.set_close_on_exec_result(enabled)
+owned.set_close_on_exec_bool(enabled)
 owned.is_nonblocking()
-owned.is_nonblocking_result()
+owned.is_nonblocking_optional()
 owned.set_nonblocking(enabled)
-owned.set_nonblocking_result(enabled)
+owned.set_nonblocking_bool(enabled)
 owned.close()
-owned.close_result()
+owned.close_bool()
 
 pipe.read_end()
 pipe.write_end()
 pipe.take_read_end()
 pipe.take_write_end()
 pipe.close_read_end()
-pipe.close_read_end_result()
+pipe.close_read_end_bool()
 pipe.close_write_end()
-pipe.close_write_end_result()
+pipe.close_write_end_bool()
 pipe.close()
-pipe.close_result()
+pipe.close_bool()
 
 file.descriptor()
 ```
@@ -96,41 +96,40 @@ close a reused descriptor accidentally.
 when the host accepts the operation. It returns `None` for closed descriptors
 or OS-level duplicate failures. The original and cloned owners must be closed
 independently.
-`try_clone_result()` is the error-preserving form: closed descriptors return
+`clone()` is the error-preserving form: closed descriptors return
 `Error(InvalidInput)` and host duplicate failures return `Error(Other)`.
 
 `close_on_exec()` reads whether the descriptor is marked close-on-exec and
-returns `Option[bool]`. `set_close_on_exec(enabled)` updates that flag and
-returns whether the platform accepted the change. Both methods live on
-`OwnedFd` first so flag mutation stays near the code that owns the descriptor.
-The `*_result` variants use `Error(InvalidInput)` for closed handles and
-`Error(Other)` for host flag failures.
+returns `Result[bool, Error]`. `set_close_on_exec(enabled)` updates that flag
+and returns `Result[(), Error]`. Both methods live on `OwnedFd` first so flag
+mutation stays near the code that owns the descriptor. Closed handles use
+`Error(InvalidInput)` and host flag failures use `Error(Other)`.
+`close_on_exec_optional()` and `set_close_on_exec_bool(enabled)` are
+compatibility helpers for callers that intentionally discard the reason.
 
-`is_nonblocking()` reads whether the descriptor has nonblocking mode enabled.
-`set_nonblocking(enabled)` toggles that flag and returns whether the platform
-accepted the change. The API intentionally avoids exposing raw flag integers;
-future socket and readiness wrappers can build on this owned-descriptor
-policy.
-`is_nonblocking_result()` and `set_nonblocking_result(enabled)` preserve the
-same failures as `Result` values.
+`is_nonblocking()` reads whether the descriptor has nonblocking mode enabled
+and returns `Result[bool, Error]`. `set_nonblocking(enabled)` toggles that flag
+and returns `Result[(), Error]`. The API intentionally avoids exposing raw flag
+integers; future socket and readiness wrappers can build on this
+owned-descriptor policy. `is_nonblocking_optional()` and
+`set_nonblocking_bool(enabled)` are the compatibility forms.
 
 `close()` disarms an open `OwnedFd` before calling the runtime close hook and
-returns `false` if the owner was already closed. `close_result()` follows the
-same lifecycle rule but returns `Error(InvalidInput)` for an already-closed
-owner and `Error(Other)` if the host close operation reports failure. After
-any `close_result()` call on an open owner, the handle is invalidated even if
-the host reports a close failure, so the same `OwnedFd` cannot accidentally
-close a reused descriptor later.
+returns `Error(InvalidInput)` if the owner was already closed. `close_bool()`
+follows the same lifecycle rule while discarding the reason. After any
+`close()` call on an open owner, the handle is invalidated even if the host
+reports a close failure, so the same `OwnedFd` cannot accidentally close a
+reused descriptor later.
 
-`pipe()` returns `Option[Pipe]`; `pipe_result()` returns
-`Result[Pipe, Error]`. A successful `Pipe` owns both ends of the host pipe:
+`pipe()` returns `Result[Pipe, Error]`; `pipe_optional()` returns
+`Option[Pipe]`. A successful `Pipe` owns both ends of the host pipe:
 `read_end()` and `write_end()` borrow descriptor views, `take_*` methods move
 one owned end out and leave that side invalid inside the pair, and the
 `close_*`/`close()` methods explicitly release the remaining owned ends.
-`Pipe::close_result()` is idempotent for a pair whose ends have already been
+`Pipe::close()` is idempotent for a pair whose ends have already been
 taken or closed: it returns `Ok(())` when no owned end remains open. Closing a
-specific already-closed side through `close_read_end_result()` or
-`close_write_end_result()` returns `Error(InvalidInput)`. This is the OS-level
+specific already-closed side through `close_read_end()` or
+`close_write_end()` returns `Error(InvalidInput)`. This is the OS-level
 ownership layer; use `std::io::pipe()` when the same pipe should be split into
 `Reader`/`Writer` adapters.
 
@@ -154,11 +153,11 @@ fn main() -> i64 {
 fn main() -> i64 {
   let file = std::fs::open("build/output.tmp", "w").unwrap();
   var owned = std::os::OwnedFd::from_raw(file.descriptor().raw());
-  owned.set_close_on_exec(true);
-  owned.set_nonblocking(true);
+  owned.set_close_on_exec(true).unwrap();
+  owned.set_nonblocking(true).unwrap();
   var copy = owned.try_clone().unwrap();
-  copy.close();
-  if owned.close() {
+  copy.close().unwrap();
+  if owned.close().is_ok() {
     return 0;
   }
   return 1;
@@ -167,14 +166,14 @@ fn main() -> i64 {
 
 ```ari
 fn main() -> i64 {
-  var pipe = std::os::pipe_result().unwrap();
+  var pipe = std::os::pipe().unwrap();
   if !pipe.write_end().is_valid() {
     return 1;
   }
   var reader = pipe.take_read_end();
   var writer = pipe.take_write_end();
-  reader.close();
-  writer.close();
+  reader.close().unwrap();
+  writer.close().unwrap();
   return 0;
 }
 ```
@@ -194,7 +193,7 @@ tests/cases/standard-library/ok/os/std-os-pipe.ari
 
 `std-os-owned-fd.ari` covers closed-handle `Result` errors, close invalidation,
 and duplicate/flag query failure behavior. `std-os-pipe.ari` covers
-`pipe_result`, `Pipe::close_result`, and flag result helpers on live pipe
+`pipe`, `Pipe::close`, and flag result helpers on live pipe
 ends. `make check-std-api` tracks the public declarations. `make
 check-prelude` compiles and runs the focused descriptor fixtures.
 

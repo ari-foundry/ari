@@ -167,7 +167,7 @@ pub fn arg(value: string) -> std::process::Arg {
 }
 
 pub fn arg_bytes(zone: ref mut Zone, value: std::Slice[u8]) -> std::Result[std::process::Arg, std::error::Error] {
-  match std::c::from_slice_result_in(zone, value) {
+  match std::c::from_slice_in(zone, value) {
     std::Ok(text) => {
       return std::Ok<std::process::Arg, std::error::Error>(std::process::Arg { value: text.as_c_str() });
     }
@@ -189,17 +189,17 @@ pub fn env_var_bytes(
   name: std::Slice[u8],
   value: std::Slice[u8]
 ) -> std::Result[std::process::EnvVar, std::error::Error] {
-  let name_result = std::c::from_slice_result_in(zone, name);
-  if name_result.is_err() {
-    return std::Err<std::process::EnvVar, std::error::Error>(name_result.unwrap_err());
+  let name_c = std::c::from_slice_in(zone, name);
+  if name_c.is_err() {
+    return std::Err<std::process::EnvVar, std::error::Error>(name_c.unwrap_err());
   }
-  let value_result = std::c::from_slice_result_in(zone, value);
-  if value_result.is_err() {
-    return std::Err<std::process::EnvVar, std::error::Error>(value_result.unwrap_err());
+  let value_c = std::c::from_slice_in(zone, value);
+  if value_c.is_err() {
+    return std::Err<std::process::EnvVar, std::error::Error>(value_c.unwrap_err());
   }
   return std::Ok<std::process::EnvVar, std::error::Error>(std::process::EnvVar {
-    name: name_result.unwrap().as_c_str(),
-    value: value_result.unwrap().as_c_str(),
+    name: name_c.unwrap().as_c_str(),
+    value: value_c.unwrap().as_c_str(),
   });
 }
 
@@ -702,7 +702,7 @@ pub impl std::process::TempFile {
   }
 
   fn as_c_str(self: ref Self) -> std::c::CStr {
-    return std::c::from_ptr(self.path_data as ptr c_char);
+    return std::c::from_ptr_unchecked(self.path_data as ptr c_char);
   }
 
   fn as_fd(self: ref Self) -> std::os::Fd {
@@ -714,7 +714,7 @@ pub impl std::process::TempFile {
   }
 
   fn close(self: ref mut Self) -> std::Result[(), std::error::Error] {
-    return self.fd_value.close_result();
+    return self.fd_value.close();
   }
 
   fn close_bool(self: ref mut Self) -> bool {
@@ -743,7 +743,7 @@ pub impl std::process::TempDir {
   }
 
   fn as_c_str(self: ref Self) -> std::c::CStr {
-    return std::c::from_ptr(self.path_data as ptr c_char);
+    return std::c::from_ptr_unchecked(self.path_data as ptr c_char);
   }
 
   fn remove(self: ref Self) -> std::Result[(), std::error::Error] {
@@ -959,7 +959,7 @@ pub impl std::process::Command {
   }
 
   fn current_dir_bytes(self: ref mut Self, zone: ref mut Zone, path: std::Slice[u8]) -> std::Result[(), std::error::Error] {
-    match std::c::from_slice_result_in(zone, path) {
+    match std::c::from_slice_in(zone, path) {
       std::Ok(cwd) => {
         self.cwd_path = std::Some<std::c::CStr>(cwd.as_c_str());
         return std::Ok<(), std::error::Error>(());
@@ -1043,7 +1043,7 @@ pub impl std::process::Command {
     zone: ref mut Zone,
     path: std::Slice[u8]
   ) -> std::Result[std::process::ExitStatus, std::error::Error] {
-    match std::c::from_slice_result_in(zone, path) {
+    match std::c::from_slice_in(zone, path) {
       std::Ok(input_path) => {
         return std::process::status_with_stdin_cstr(self, input_path.as_c_str());
       }

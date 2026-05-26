@@ -14,8 +14,8 @@ recoverable failures should flow through `Option` or `Result`.
 
 For shared library or OS failures, use `std::error::Error`. New public APIs
 should prefer `Result[T, Error]`. Keep `Result[T, i64]` at runtime, FFI, and
-compatibility boundaries, and adapt with `error::from_raw_result` or
-`error::to_raw_result` instead of leaking raw error integers into ordinary
+compatibility boundaries, and adapt with `error::map_raw` or
+`error::to_raw` instead of leaking raw error integers into ordinary
 library code.
 
 ## Option API

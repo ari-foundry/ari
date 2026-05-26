@@ -15,27 +15,27 @@ fn main() -> i64 {
   if owned.is_open() {
     score = score + 2;
   }
-  if invalid.close_on_exec().is_none() {
+  if invalid.close_on_exec_optional().is_none() {
     score = score + 4;
   }
-  if !invalid.set_close_on_exec(true) {
+  if !invalid.set_close_on_exec_bool(true) {
     score = score + 8;
   }
 
-  if owned.set_close_on_exec(true) {
+  if owned.set_close_on_exec_bool(true) {
     score = score + 16;
   }
   if owned.close_on_exec().unwrap_or(false) {
     score = score + 32;
   }
-  if owned.set_close_on_exec(false) {
+  if owned.set_close_on_exec_bool(false) {
     score = score + 64;
   }
   if !owned.close_on_exec().unwrap_or(true) {
     score = score + 128;
   }
 
-  owned.close();
+  owned.close_bool();
   std::fs::remove_bool(path);
   return score;
 }

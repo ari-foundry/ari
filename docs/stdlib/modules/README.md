@@ -15,9 +15,9 @@ Recoverable stdlib operations use the natural module or method name and return
 error type such as `std::encoding::Utf8Error`. Compatibility helpers that
 discard information are named explicitly: `_optional` returns `Option`,
 `_or`/`_or_default` use caller-provided or empty fallbacks, `_bool` returns only
-a success flag, `_unchecked` preserves older asserting or invalid-handle
-behavior, and `_raw`/`_raw_result` expose low-level host or ABI shapes. Core
-hosted modules no longer add ordinary `*_result` migration spellings for
+	a success flag, `_unchecked` preserves older asserting or invalid-handle
+	behavior, and `_raw` exposes low-level host or ABI shapes. Core
+	hosted modules no longer add ordinary result-suffixed migration spellings for
 fallible operations; new code should prefer the natural Result-returning names
 shown in each module guide.
 Some lookups model normal absence as `Option` instead of failure; for example,
@@ -127,7 +127,7 @@ the Result-returning form for callers that need `Error(NotFound)`.
   deadlines/timeouts, UTC calendar conversion, and sleep.
 - [std::fs](fs.md): runtime-backed file existence, mode-string and
   `OpenOptions` open calls, direct `Error` result helpers for open, mutation,
-  and byte-count operations, raw compatibility result helpers,
+  and byte-count operations, raw compatibility bridges,
   close, removal, `File` value handles, `Option[File]` open helpers, and
   source byte create/read/write/append/truncate/copy plus target-following and
   no-follow metadata, path-kind predicates, rename, hard/symbolic links, and

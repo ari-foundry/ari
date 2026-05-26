@@ -54,7 +54,7 @@ ones depend on a hosted OS or a specific platform family.
 | --- | --- | --- |
 | core | `option`, `result`, `cmp`, `convert`, `math`, `bits`, `ascii`, `parse`, `encoding`, root `Slice[T]` | Source-first APIs that should stay portable and easy to test without OS state. |
 | alloc | `zone`, `boxed`, `string`, `vec`, `collections`, `iter`, `algo`, `hash`, `random::Prng` | APIs that need explicit `Zone` allocation or collection invariants. They must document provenance and reset/destroy behavior. |
-| hosted | `io`, `input`, `env`, `fs`, `process`, `thread`, `sync`, `time`, `net` DNS/TCP/UDP/Unix socket handles, `random::entropy`, `random::entropy_result`, `random::fill`, `random::fill_result` | APIs that require a hosted runtime, libc, OS handles, sockets, clocks, threads, or entropy. They must document handle ownership and failure behavior. |
+| hosted | `io`, `input`, `env`, `fs`, `process`, `thread`, `sync`, `time`, `net` DNS/TCP/UDP/Unix socket handles, `random::entropy`, `random::fill`, `random::entropy_unchecked`, `random::fill_unchecked` | APIs that require a hosted runtime, libc, OS handles, sockets, clocks, threads, or entropy. They must document handle ownership and failure behavior. |
 | platform | `target`, `c`, `os`, low-level socket options and platform-specific `net` extensions | APIs that expose ABI, loader, errno, syscall, descriptor, or target-specific behavior. They must say which target family they describe. |
 | experimental | future raw `os` wrappers, backtrace, benchmark, fuzzing, async, compression | APIs that should remain roadmap work until ownership, error, and platform policies are tested. |
 

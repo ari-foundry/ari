@@ -199,10 +199,10 @@ error::try_from_errno(code)
 error::try_from_os_code(code)
 error::from_raw(raw)
 error::try_from_raw(raw)
-error::from_raw_result[T](value)
-error::from_errno_result[T](value)
-error::from_os_code_result[T](value)
-error::to_raw_result[T](value)
+error::map_raw[T](value)
+error::map_errno[T](value)
+error::map_os_code[T](value)
+error::to_raw[T](value)
 error::kind(ref error)
 error::code(ref error)
 error::raw(ref error)
@@ -230,7 +230,7 @@ Use `Error` for OS/runtime/library failures, and use `ErrorKind` for the root
 alias of `std::error::Kind`. Direct `Result[T, Error]` is the preferred shape
 for recoverable OS/runtime/library failures. The raw scalar representation is
 kept for runtime, FFI, and compatibility bridges through
-`from_raw_result`/`to_raw_result`. The strict constructors are for trusted
+`map_raw`/`to_raw`. The strict constructors are for trusted
 values; use `try_with_code`, `try_from_errno`, and `try_from_raw` when
 validating untrusted boundary data.
 The fs/io/net/os/process modules re-export this shared payload as
@@ -818,6 +818,7 @@ os::stdin()
 os::stdout()
 os::stderr()
 os::pipe()
+os::pipe_optional()
 
 fd.raw()
 fd.is_valid()
@@ -836,19 +837,28 @@ owned.is_open()
 owned.is_closed()
 owned.take()
 owned.try_clone()
+owned.clone()
 owned.close_on_exec()
+owned.close_on_exec_optional()
 owned.set_close_on_exec(enabled)
+owned.set_close_on_exec_bool(enabled)
 owned.is_nonblocking()
+owned.is_nonblocking_optional()
 owned.set_nonblocking(enabled)
+owned.set_nonblocking_bool(enabled)
 owned.close()
+owned.close_bool()
 
 pipe.read_end()
 pipe.write_end()
 pipe.take_read_end()
 pipe.take_write_end()
 pipe.close_read_end()
+pipe.close_read_end_bool()
 pipe.close_write_end()
+pipe.close_write_end_bool()
 pipe.close()
+pipe.close_bool()
 ```
 
 `Fd` is non-owning. It identifies a descriptor but does not close, duplicate,
@@ -860,20 +870,20 @@ handle without transferring ownership.
 one close. `as_fd()` borrows the descriptor as `Fd`, `take()` disarms the owner
 without closing, and `close()` disarms before calling the runtime close hook so
 the same handle cannot close twice. `try_clone()` duplicates the descriptor and
-returns `Option[OwnedFd]`; the original and cloned owners close independently.
-`close_on_exec()` returns `Option[bool]`, and `set_close_on_exec(enabled)`
-updates descriptor inheritance policy without exposing raw `fcntl` constants.
-`is_nonblocking()` returns `Option[bool]`, and `set_nonblocking(enabled)`
-updates blocking behavior with the same owned-descriptor policy. Readiness APIs,
-raw syscalls, signals, and memory mapping remain future `std::os` work after
-richer error policy is stable.
+returns `Option[OwnedFd]`; `clone()` returns `Result[OwnedFd, Error]`. The
+original and cloned owners close independently. `close_on_exec()` and
+`is_nonblocking()` return `Result[bool, Error]`, and the setters return
+`Result[(), Error]`. The `_optional` and `_bool` forms are compatibility
+helpers for callers that intentionally discard the reason. Readiness APIs, raw
+syscalls, signals, and memory mapping remain future `std::os` work after richer
+error policy is stable.
 
 `Pipe` owns the read and write descriptors returned by `os::pipe()`.
 `read_end()` and `write_end()` borrow non-owning `Fd` views, `take_read_end()`
 and `take_write_end()` move individual owned ends out of the pair, and
 `close_read_end()`, `close_write_end()`, or `close()` explicitly release the
-remaining descriptors. `os::pipe()` returns `None` if the hosted pipe call
-fails.
+remaining descriptors. `os::pipe()` returns `Result[Pipe, Error]`;
+`os::pipe_optional()` returns `None` if the hosted pipe call fails.
 
 ## Paths
 
@@ -1211,7 +1221,7 @@ condvar.notify_all()
 condvar.wait(ref mut mutex)
 condvar.wait_timeout(ref mut mutex, duration)
 condvar.wait_while(ref mut mutex, condition)
-wait_timeout_result.timed_out()
+wait_timeout.timed_out()
 
 barrier.wait()
 
@@ -1372,14 +1382,14 @@ fs::can_write(path)
 fs::can_execute(path)
 fs::permissions(path)
 fs::metadata(path)
-fs::metadata_raw_result(path)
+fs::metadata_raw(path)
 fs::metadata(path)
 fs::try_metadata(path)
 fs::symlink_metadata(path)
-fs::symlink_metadata_raw_result(path)
+fs::symlink_metadata_raw(path)
 fs::symlink_metadata(path)
 fs::try_symlink_metadata(path)
-fs::file_type_raw_result(path)
+fs::file_type_raw(path)
 fs::file_type(path)
 fs::try_file_type(path)
 fs::is_file(path)
@@ -1387,7 +1397,7 @@ fs::is_dir(path)
 fs::is_symlink(path)
 fs::is_other(path)
 fs::mode(path)
-fs::mode_raw_result(path)
+fs::mode_raw(path)
 fs::mode(path)
 fs::try_mode(path)
 fs::set_mode(path, mode)
@@ -1407,11 +1417,11 @@ fs::rename_bool(source, target)
 fs::rename_unchecked(source, target)
 fs::hard_link(existing, link_path)
 fs::hard_link_bool(existing, link_path)
-fs::hard_link_raw_result(existing, link_path)
+fs::hard_link_raw(existing, link_path)
 fs::hard_link_unchecked(existing, link_path)
 fs::symbolic_link(target, link_path)
 fs::symbolic_link_bool(target, link_path)
-fs::symbolic_link_raw_result(target, link_path)
+fs::symbolic_link_raw(target, link_path)
 fs::symbolic_link_unchecked(target, link_path)
 fs::read_link(ref mut zone, path)
 fs::read_link_optional(ref mut zone, path)
@@ -1421,24 +1431,24 @@ fs::try_read_link(ref mut zone, path)
 fs::ensure_file(path)
 fs::create_dir(path)
 fs::create_dir_bool(path)
-fs::create_dir_raw_result(path)
+fs::create_dir_raw(path)
 fs::create_dir(path)
 fs::create_dir_unchecked(path)
 fs::ensure_dir(path)
 fs::create_dir_all(path)
 fs::create_dir_all_bool(path)
-fs::create_dir_all_raw_result(path)
+fs::create_dir_all_raw(path)
 fs::create_dir_all_unchecked(path)
 fs::ensure_dir_all(path)
 fs::remove_dir(path)
 fs::remove_dir_bool(path)
-fs::remove_dir_raw_result(path)
+fs::remove_dir_raw(path)
 fs::remove_dir(path)
 fs::remove_dir_unchecked(path)
 fs::remove_dir_all(path)
 fs::remove_dir_all_bool(path)
 fs::open_dir(path)
-fs::open_dir_raw_result(path)
+fs::open_dir_raw(path)
 fs::open_dir(path)
 fs::try_open_dir(path)
 fs::read_dir(ref mut zone, path)
@@ -1463,9 +1473,9 @@ fs::open_unchecked(path, mode)
 fs::create(path)
 fs::create_optional(path)
 fs::create_unchecked(path)
-fs::remove_raw_result(path)
+fs::remove_raw(path)
 fs::remove(path)
-fs::rename_raw_result(source, target)
+fs::rename_raw(source, target)
 fs::rename(source, target)
 fs::open_read(path)
 fs::open_write(path)
@@ -1497,19 +1507,19 @@ fs::read_unchecked(ref mut zone, path)
 fs::try_read(ref mut zone, path)
 fs::write(path, values)
 fs::write_bool(path, values)
-fs::write_raw_result(path, values)
+fs::write_raw(path, values)
 fs::write(path, values)
 fs::write_string(path, text)
 fs::try_write(path, values)
 fs::append(path, values)
 fs::append_bool(path, values)
-fs::append_raw_result(path, values)
+fs::append_raw(path, values)
 fs::append(path, values)
 fs::try_append(path, values)
 fs::truncate(path)
 fs::copy(source, target)
 fs::copy_bool(source, target)
-fs::copy_raw_result(source, target)
+fs::copy_raw(source, target)
 fs::copy(source, target)
 fs::try_copy(source, target)
 fs::read_to_string(ref mut zone, path)
@@ -1519,9 +1529,9 @@ fs::read_to_string(ref mut zone, path)
 fs::read_to_string_unchecked(ref mut zone, path)
 fs::try_read_to_string(ref mut zone, path)
 
-fs::open_raw_result(path, mode)
+fs::open_raw(path, mode)
 fs::open(path, mode)
-fs::create_raw_result(path)
+fs::create_raw(path)
 fs::create(path)
 fs::open_options()
 OpenOptions::new()
@@ -1534,7 +1544,7 @@ options.create_new(enabled)
 options.open(path)
 options.open_optional(path)
 options.open_unchecked(path)
-options.open_raw_result(path)
+options.open_raw(path)
 options.open(path)
 options.try_open(path)
 
@@ -1602,7 +1612,7 @@ read/write, and `"a+"` for read/append. `open_read`, `open_write`, and
 `open_append` are Result-returning wrappers over those mode strings; their
 `_optional`/`try_open_*` partners discard reasons, and their `_unchecked`
 partners preserve the invalid-handle shape. Use
-`open_raw_result(path, mode)` or `create_raw_result(path)` only
+`open_raw(path, mode)` or `create_raw(path)` only
 for compatibility callers that still need `Result[File, i64]`.
 Use `read(ref mut zone, path)` or `read_to_string(ref mut zone, path)` when a
 missing file should return `Error(NotFound)`.
@@ -1615,7 +1625,7 @@ new options value, `options.try_open(path)` returns `Option[File]`, and
 `options.open(path)` returns `Result[File, Error]`. `options.open_optional`
 and `options.try_open(path)` discard failures into `None`; `options.open_unchecked`
 keeps the old invalid-handle sentinel.
-`options.open_raw_result(path)` keeps the raw integer compatibility `Result`
+`options.open_raw(path)` keeps the raw integer compatibility `Result`
 shape.
 `create_new(true)` is exclusive creation; `append(true).truncate(true)` and
 create/truncate without write or append are rejected as invalid option sets.
@@ -1644,13 +1654,13 @@ failures because filesystem access can change after the check.
 `try_metadata(path)` returns `Option[Metadata]`, using `None` for missing or
 unstatable paths. `metadata(path)` returns `Result[Metadata, Error]` and
 preserves errno-derived failure kinds. These helpers follow symbolic links.
-`metadata_raw_result(path)` keeps the raw compatibility bridge.
+`metadata_raw(path)` keeps the raw compatibility bridge.
 `try_symlink_metadata(path)` and `symlink_metadata(path)` use no-follow
 metadata lookup, so a symbolic link reports `FileKind::Symlink` and its stored
 target byte length instead of the target file's metadata. The `Permissions`
 field is still the same access-style snapshot as `permissions(path)`; portable
 symlink permission-bit policy is not part of this slice.
-`symlink_metadata(path)` and `symlink_metadata_raw_result(path)` are the
+`symlink_metadata(path)` and `symlink_metadata_raw(path)` are the
 direct `Error` and raw compatibility versions of that no-follow lookup.
 `Metadata::len` reports host byte length, `Metadata::file_type` returns
 `FileKind` (`Regular`, `Directory`, `Symlink`, or `Other`), and
@@ -1661,7 +1671,7 @@ status-change time respectively. `changed` is not a portable creation time.
 `try_file_type(path)` returns just `Option[FileKind]` without building the full
 metadata/permission snapshot.
 `file_type(path)` returns `Result[FileKind, Error]` when the caller
-needs a precise failure reason, and `file_type_raw_result(path)` keeps raw
+needs a precise failure reason, and `file_type_raw(path)` keeps raw
 errno compatibility.
 `fs::is_file(path)`, `fs::is_dir(path)`, `fs::is_symlink(path)`, and
 `fs::is_other(path)` are direct path predicates that return `false` for
@@ -1678,7 +1688,7 @@ permission bits, and `mode(path)` returns `Result[i64, Error]`. Use
 the call site. `Permissions::to_mode`
 maps the three booleans to user/group/other bits, so `read_only()` maps to
 `0444` and `all()` maps to `0777`.
-`mode_raw_result(path)` is the raw compatibility form.
+`mode_raw(path)` is the raw compatibility form.
 `canonicalize(ref mut zone, path)` returns `Result[String, Error]` for host
 `realpath` resolution. The returned string is absolute, owned by the provided
 zone, and follows the host symlink policy. `canonicalize_optional` and
@@ -1697,8 +1707,8 @@ and returns `Result[i64, Error]` with the byte count.
 `write_string(path, text)` writes Ari's byte-oriented `String` and returns
 `Result[(), Error]` after discarding the byte count.
 `append(path, values)` creates if needed and appends the whole slice with the
-same `Result[i64, Error]` policy. `write_raw_result` and
-`append_raw_result` preserve the raw
+same `Result[i64, Error]` policy. `write_raw` and
+`append_raw` preserve the raw
 `Result[i64, i64]` compatibility shape. `try_write(path, values)` and
 `try_append(path, values)` are `Option[i64]` wrappers, while
 `write_bool(path, values)` and `append_bool(path, values)` are boolean
@@ -1713,7 +1723,7 @@ creates or empties a file. `try_copy(source, target)` streams bytes from the
 source handle into the target opened with truncating semantics and returns
 `Some(byte_count)` on success or `None` on open/write/close failure.
 `copy(source, target)` is the natural `Result[i64, Error]` copy helper,
-`copy_raw_result(source, target)` keeps the raw `Result[i64, i64]` bridge, and
+`copy_raw(source, target)` keeps the raw `Result[i64, i64]` bridge, and
 `copy_bool(source, target)` is the boolean compatibility wrapper over
 `try_copy`. `rename(source, target)` moves or renames one path according to the
 host runtime's current behavior and returns `Result[(), Error]`;
@@ -1721,14 +1731,14 @@ host runtime's current behavior and returns `Result[(), Error]`;
 boolean shape, and `rename_unchecked` is the direct runtime hook.
 `remove(path)`/`remove_file(path)`, `create_dir(path)`, `remove_dir(path)`,
 `create_dir_all(path)`, and `remove_dir_all(path)` are natural `Result[(),
-Error]` helpers. Their `*_bool` names keep old boolean compatibility, and their `*_raw_result`
+Error]` helpers. Their `*_bool` names keep old boolean compatibility, and their `*_raw`
 or `*_unchecked` forms are only for compatibility/runtime-hook code.
 `ensure_dir(path)` and `ensure_dir_all(path)` stay boolean setup helpers.
 `hard_link(existing, link_path)` and `symbolic_link(target, link_path)` are
-also Result-first; their `_bool`, `_unchecked`, and `_raw_result` variants are
+also Result-first; their `_bool`, `_unchecked`, and `_raw` variants are
 the non-default compatibility forms.
 `open_dir(path)` returns `Result[Dir, Error]` and
-`open_dir_raw_result(path)` keeps raw compatibility. `try_open_dir(path)`
+`open_dir_raw(path)` keeps raw compatibility. `try_open_dir(path)`
 returns `Option[Dir]`, `dir.next(ref mut zone)` returns the next entry name
 while skipping `"."` and `".."`, and `dir.close()` closes the handle.
 `read_dir(ref mut zone, path)` opens, collects `DirEntry` values, closes, and
@@ -1769,15 +1779,15 @@ net::localhost(port)
 net::lookup_v4(host, port)
 net::lookup_v4_optional(host, port)
 net::try_lookup_v4(host, port)
-net::lookup_v4_raw_result(host, port)
+net::lookup_v4_raw(host, port)
 net::lookup_v6(host, port)
 net::lookup_v6_optional(host, port)
 net::try_lookup_v6(host, port)
-net::lookup_v6_raw_result(host, port)
+net::lookup_v6_raw(host, port)
 net::resolve(endpoint)
 net::resolve_optional(endpoint)
 net::try_resolve(endpoint)
-net::resolve_raw_result(endpoint)
+net::resolve_raw(endpoint)
 net::resolve_all(zone, host, port)
 net::to_socket_addrs(zone, endpoint)
 net::listen(addr)
@@ -1829,7 +1839,7 @@ addr.is_loopback()
 TcpListener::bind(addr)
 TcpListener::bind_optional(addr)
 TcpListener::try_bind(addr)
-TcpListener::bind_raw_result(addr)
+TcpListener::bind_raw(addr)
 listener.descriptor()
 listener.is_open()
 listener.local_port()
@@ -1848,13 +1858,13 @@ listener.set_accept_timeout_millis(millis)
 listener.accept()
 listener.accept_optional()
 listener.try_accept()
-listener.accept_raw_result()
+listener.accept_raw()
 listener.close()
 
 TcpStream::connect(addr)
 TcpStream::connect_optional(addr)
 TcpStream::try_connect(addr)
-TcpStream::connect_raw_result(addr)
+TcpStream::connect_raw(addr)
 stream.descriptor()
 stream.is_open()
 stream.local_addr()
@@ -1892,7 +1902,7 @@ stream.close()
 UdpSocket::bind(addr)
 UdpSocket::bind_optional(addr)
 UdpSocket::try_bind(addr)
-UdpSocket::bind_raw_result(addr)
+UdpSocket::bind_raw(addr)
 socket.descriptor()
 socket.is_open()
 socket.local_port()
@@ -1934,7 +1944,7 @@ recv.source()
 UnixListener::bind(path)
 UnixListener::bind_optional(path)
 UnixListener::try_bind(path)
-UnixListener::bind_raw_result(path)
+UnixListener::bind_raw(path)
 listener.descriptor()
 listener.is_open()
 listener.is_nonblocking()
@@ -1944,13 +1954,13 @@ listener.set_close_on_exec(enabled)
 listener.accept()
 listener.accept_optional()
 listener.try_accept()
-listener.accept_raw_result()
+listener.accept_raw()
 listener.close()
 
 UnixStream::connect(path)
 UnixStream::connect_optional(path)
 UnixStream::try_connect(path)
-UnixStream::connect_raw_result(path)
+UnixStream::connect_raw(path)
 stream.descriptor()
 stream.is_open()
 stream.is_nonblocking()
@@ -1980,7 +1990,7 @@ known-good indexes and `try_octet`/`try_segment` when validating parsed input.
 returns `Result[SocketAddr, Error]`. `lookup_v4_optional` and `try_lookup_v4`
 discard the reason intentionally. `lookup_v6` is the IPv6 sibling and follows
 the same Result/optional/raw naming policy. `resolve("host:port")`,
-`resolve("[::1]:port")`, and `resolve_raw_result` parse common IPv4/host-name
+`resolve("[::1]:port")`, and `resolve_raw` parse common IPv4/host-name
 and bracketed IPv6 endpoint spellings, rejecting malformed endpoints as
 `InvalidInput` before calling the resolver.
 `resolve_optional` and `try_resolve` keep the old absence-only shape.
@@ -1988,7 +1998,7 @@ and bracketed IPv6 endpoint spellings, rejecting malformed endpoints as
 zone-backed `Vec[SocketAddr]` values; the hosted implementation currently
 collects the first IPv4 and first IPv6 address exposed by the resolver.
 `string` implements the matching `ToSocketAddrs` trait shape.
-Matching `*_raw_result` helpers are compatibility-only bridges for
+Matching `*_raw` helpers are compatibility-only bridges for
 low-level callers that still need raw integer errors.
 `net::listen`/`net::connect` are TCP-focused module-level `Result` helpers;
 use `tcp_listen`/`tcp_connect`, explicit IPv6 `tcp_listen_v6`/
@@ -3674,16 +3684,16 @@ helpers:
 ```ari
 random::Prng
 random::entropy()
-random::entropy_raw_result()
-random::entropy_result()
+random::entropy_raw()
+random::entropy_unchecked()
 random::fill(values)
-random::fill_raw_result(values)
-random::fill_result(values)
+random::fill_raw(values)
+random::fill_unchecked(values)
 random::seed(value)
 random::from_entropy()
-random::from_entropy_result()
+random::from_entropy_unchecked()
 random::seed_from_os()
-random::seed_from_os_result()
+random::seed_from_os_unchecked()
 random::next(ref mut rng)
 random::boolean(ref mut rng)
 random::below(ref mut rng, upper)
@@ -3696,9 +3706,9 @@ random::shuffle<T>(ref mut rng, values)
 
 Prng::seed(value)
 Prng::from_entropy()
-Prng::from_entropy_result()
+Prng::from_entropy_unchecked()
 Prng::seed_from_os()
-Prng::seed_from_os_result()
+Prng::seed_from_os_unchecked()
 rng.next()
 rng.boolean()
 rng.below(upper)
@@ -3711,11 +3721,11 @@ rng.shuffle<T>(values)
 ```
 
 Use `entropy()` or `fill(values)` when seed material must come from the host
-OS. On hosted Linux, both use `getrandom` first and fall back to
-`/dev/urandom`; `fill(values)` writes the caller's byte slice directly instead
-of looping through `entropy()` words. The strict helpers terminate on host
-entropy failure. Use `entropy_result()` and `fill_result(values)` when failures
-should be returned as `std::error::Error`; the `*_raw_result` forms keep the
+OS and failures should be returned as `std::error::Error`. On hosted Linux,
+both use `getrandom` first and fall back to `/dev/urandom`; `fill(values)`
+writes the caller's byte slice directly instead of looping through `entropy()`
+words. The `_unchecked` helpers terminate on host entropy failure. The
+`*_raw` forms keep the
 compatibility `i64` error payload. Use `Prng` for reproducible booleans,
 integers, floats, tests, games, randomized algorithms, and shuffling.
 `below` and `range` use rejection sampling instead of raw modulo so bounded

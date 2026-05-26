@@ -15,7 +15,7 @@ The API deliberately keeps compatibility helpers beside `Result[..., Error]`
 methods. Natural method names are the error-preserving forms where this module
 owns the name; `_optional` and `_unchecked` methods discard error details for
 older call sites. `try_*` helpers are compatibility aliases for the optional
-forms. `*_raw_result` names are low-level compatibility bridges for callers
+forms. `*_raw` names are low-level compatibility bridges for callers
 that need compact raw host errors instead of `std::error::Error`.
 
 ## API
@@ -42,15 +42,15 @@ net::localhost(port)
 net::lookup_v4(host, port)
 net::lookup_v4_optional(host, port)
 net::try_lookup_v4(host, port)
-net::lookup_v4_raw_result(host, port)
+net::lookup_v4_raw(host, port)
 net::lookup_v6(host, port)
 net::lookup_v6_optional(host, port)
 net::try_lookup_v6(host, port)
-net::lookup_v6_raw_result(host, port)
+net::lookup_v6_raw(host, port)
 net::resolve(endpoint)
 net::resolve_optional(endpoint)
 net::try_resolve(endpoint)
-net::resolve_raw_result(endpoint)
+net::resolve_raw(endpoint)
 net::resolve_all(zone, host, port)
 net::to_socket_addrs(zone, endpoint)
 net::listen(addr)
@@ -102,7 +102,7 @@ addr.is_loopback()
 TcpListener::bind(addr)
 TcpListener::bind_optional(addr)
 TcpListener::try_bind(addr)
-TcpListener::bind_raw_result(addr)
+TcpListener::bind_raw(addr)
 listener.descriptor()
 listener.is_open()
 listener.local_port()
@@ -133,14 +133,14 @@ listener.set_accept_timeout_millis_unchecked(millis)
 listener.accept()
 listener.accept_optional()
 listener.try_accept()
-listener.accept_raw_result()
+listener.accept_raw()
 listener.close()
 listener.close_unchecked()
 
 TcpStream::connect(addr)
 TcpStream::connect_optional(addr)
 TcpStream::try_connect(addr)
-TcpStream::connect_raw_result(addr)
+TcpStream::connect_raw(addr)
 stream.descriptor()
 stream.is_open()
 stream.local_addr()
@@ -195,7 +195,7 @@ stream.close_unchecked()
 UdpSocket::bind(addr)
 UdpSocket::bind_optional(addr)
 UdpSocket::try_bind(addr)
-UdpSocket::bind_raw_result(addr)
+UdpSocket::bind_raw(addr)
 socket.descriptor()
 socket.is_open()
 socket.local_port()
@@ -255,7 +255,7 @@ recv.source()
 UnixListener::bind(path)
 UnixListener::bind_optional(path)
 UnixListener::try_bind(path)
-UnixListener::bind_raw_result(path)
+UnixListener::bind_raw(path)
 listener.descriptor()
 listener.is_open()
 listener.is_nonblocking()
@@ -269,14 +269,14 @@ listener.set_close_on_exec_unchecked(enabled)
 listener.accept()
 listener.accept_optional()
 listener.try_accept()
-listener.accept_raw_result()
+listener.accept_raw()
 listener.close()
 listener.close_unchecked()
 
 UnixStream::connect(path)
 UnixStream::connect_optional(path)
 UnixStream::try_connect(path)
-UnixStream::connect_raw_result(path)
+UnixStream::connect_raw(path)
 stream.descriptor()
 stream.is_open()
 stream.is_nonblocking()
@@ -347,20 +347,20 @@ or `SocketAddr::new(ip, port)` when the IP is already known. Use
 intentionally a small first slice: the returned address uses the resolved IPv4
 octets and the caller-provided port. Use `lookup_v4_optional(host, port)` or
 `try_lookup_v4(host, port)` only when absence is enough and the caller is
-intentionally discarding the reason. `lookup_v4_raw_result(host, port)` keeps
+intentionally discarding the reason. `lookup_v4_raw(host, port)` keeps
 the compatibility `Result[SocketAddr, i64]` shape for low-level runtime
 adapter tests.
 
 `lookup_v6(host, port)` is the IPv6 sibling. It resolves one IPv6 address and
 returns `Result[SocketAddr, Error]`; `lookup_v6_optional`/`try_lookup_v6`
-discard the reason intentionally, and `lookup_v6_raw_result` keeps the compact
+discard the reason intentionally, and `lookup_v6_raw` keeps the compact
 raw bridge for runtime tests.
 
 `resolve(endpoint)` accepts the common `"host:port"` IPv4 spelling and the
 bracketed IPv6 spelling `"[host]:port"`, returning
 `Result[SocketAddr, Error]`. `resolve_optional(endpoint)` and
 `try_resolve(endpoint)` are the compatibility forms that discard error detail,
-while `resolve_raw_result(endpoint)` preserves the compatibility
+while `resolve_raw(endpoint)` preserves the compatibility
 `Result[SocketAddr, i64]` bridge. The endpoint form rejects missing hosts,
 missing ports, non-decimal ports, and ports outside `0..65535` as
 `InvalidInput` before it calls the hosted resolver.
@@ -400,14 +400,14 @@ explicit `tcp_*` names where UDP or Unix socket code appears nearby.
 
 `TcpListener` owns a listening TCP descriptor. `bind` returns
 `Result[TcpListener, Error]`; `bind_optional` and `try_bind` keep the old
-information-discarding shape for simple compatibility code. `bind_raw_result`
+information-discarding shape for simple compatibility code. `bind_raw`
 keeps the old compact integer shape. Use `local_port()` after binding to port
 `0` to learn the ephemeral port chosen by the OS, or `local_addr()` when the
 caller needs the complete `SocketAddr`. `local_addr_v6()` is available when a
 caller specifically wants to assert or require an IPv6 listener address.
 `accept` returns
 `Result[TcpStream, Error]`; `accept_optional` and `try_accept` discard the
-reason, and `accept_raw_result` is the low-level compatibility form.
+reason, and `accept_raw` is the low-level compatibility form.
 `local_port`, `local_addr`, option setter/query methods, and `close` preserve
 invalid-handle and host failures as `std::error::Error`; `_optional` and
 `_unchecked` methods remain compatibility helpers for callers that only need
@@ -415,7 +415,7 @@ success or absence.
 
 `TcpStream` owns a connected TCP descriptor. `connect` returns
 `Result[TcpStream, Error]`; `connect_optional` and `try_connect` discard OS
-error detail for compatibility, and `connect_raw_result` keeps raw
+error detail for compatibility, and `connect_raw` keeps raw
 compatibility. Use
 `shutdown(Shutdown::Write)`, `shutdown(Shutdown::Read)`, or
 `shutdown(Shutdown::Both)` to half-close or fully shut down the stream without
@@ -447,7 +447,7 @@ compatibility conveniences where present.
 
 `UdpSocket` owns a UDP descriptor. `bind` returns
 `Result[UdpSocket, Error]`; `bind_optional` and `try_bind` are compatibility
-helpers that discard the reason; and `bind_raw_result` keeps the compact raw
+helpers that discard the reason; and `bind_raw` keeps the compact raw
 host-error bridge. Use `local_port()` after binding to port `0` to discover
 the OS-selected port, or `local_addr()` to retrieve the full local
 `SocketAddr`. `udp_bind_v6(addr)` requires an IPv6 address and
@@ -639,7 +639,7 @@ return ptr_load(output.as_slice().as_ptr()) as i64;
 | --- | --- |
 | IP address | Current: `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, constructors, strict and fallible indexed accessors, family predicates, loopback/unspecified checks. |
 | Socket address | Current: `SocketAddr`, `socket_addr`, `localhost`, `ip`, `port`, `with_port`. |
-| DNS lookup | Current hosted IPv4/IPv6 slice: `lookup_v4`, `lookup_v6`, `"host:port"`, and `"[host]:port"` `resolve` return `Error`; `resolve_all(zone, host, port)` and `to_socket_addrs(zone, endpoint)` return zone-backed `Vec[SocketAddr]`; `_optional`/`try_*` helpers discard error detail intentionally; `_raw_result` helpers are raw compatibility bridges. |
+| DNS lookup | Current hosted IPv4/IPv6 slice: `lookup_v4`, `lookup_v6`, `"host:port"`, and `"[host]:port"` `resolve` return `Error`; `resolve_all(zone, host, port)` and `to_socket_addrs(zone, endpoint)` return zone-backed `Vec[SocketAddr]`; `_optional`/`try_*` helpers discard error detail intentionally; `_raw` helpers are raw compatibility bridges. |
 | TCP listener | Current hosted IPv4/IPv6 slice: module-level `listen`/`tcp_listen`, explicit IPv6 `tcp_listen_v6`, `TcpListener::bind`, and `accept` return `Error`; optional/try compatibility and raw compatibility forms remain; Result-returning `local_port`/`local_addr` plus IPv6-specific `local_addr_v6`, descriptor/open/close-on-exec helpers, nonblocking, reuse-address, and reuse-port setter/query with Result defaults, `Duration` and raw-millisecond accept timeout setters, unchecked timeout compatibility, and explicit close/close_unchecked. |
 | TCP stream | Current hosted IPv4/IPv6 slice: module-level `connect`/`tcp_connect`, explicit IPv6 `tcp_connect_v6`, and host-port `connect_host`/`tcp_connect_host`; `TcpStream::connect` returns `Error`, optional/try and raw compatibility forms remain, local/peer address helpers dispatch across IPv4/IPv6 with IPv6-specific `local_addr_v6`/`peer_addr_v6`, descriptor/open/close-on-exec helpers, nonblocking, TCP nodelay, keepalive, send/receive buffer-size helpers with Result defaults, `Duration` timeouts, shutdown, byte and buffer IO, close/close_unchecked, and `std::io::Reader`/`Writer` adapters. |
 | UDP socket | Current hosted IPv4/IPv6 slice: module-level `udp_bind` plus explicit IPv6 `udp_bind_v6`, `UdpSocket::bind` returns `Error`, optional/try and raw compatibility forms remain, Result-returning local-port/local-address helpers including `local_addr_v6`, descriptor/open/close-on-exec helpers, nonblocking, reuse-address, reuse-port, broadcast, send/receive buffer-size helpers with Result defaults, `Duration` timeouts, datagram `send_to`/`recv_from`/`peek_from`, connected `send`/`recv`, single-byte compatibility helpers, and close/close_unchecked. |

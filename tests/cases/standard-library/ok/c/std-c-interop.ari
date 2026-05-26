@@ -30,10 +30,10 @@ fn main() -> i64 {
   score = score + 1;
 
   var zone = zone::create(256);
-  var owned = c::from_slice_in(ref mut zone, hello.as_slice());
+  var owned = c::from_slice_unchecked_in(ref mut zone, hello.as_slice());
   assert_eq_i64(owned.len(), 5);
   assert(same_bytes(owned.as_slice(), hello.as_slice()));
-  match c::from_slice_result_in(ref mut zone, hello.as_slice()) {
+  match c::from_slice_in(ref mut zone, hello.as_slice()) {
     Ok(result_owned) => {
       assert_eq_i64(result_owned.len(), 5);
       assert(same_bytes(result_owned.as_slice(), hello.as_slice()));
@@ -43,7 +43,7 @@ fn main() -> i64 {
     }
   }
   var with_nul = [97u8, 0u8, 98u8];
-  match c::from_slice_result_in(ref mut zone, with_nul.as_slice()) {
+  match c::from_slice_in(ref mut zone, with_nul.as_slice()) {
     Ok(_) => {
       panic();
     }
@@ -55,20 +55,20 @@ fn main() -> i64 {
   assert_eq_i64(nul_bytes.len, 6);
   assert(nul_bytes[5] == 0u8);
   let owned_ptr = owned.as_ptr();
-  let roundtrip = c::from_ptr(owned_ptr);
-  assert(c::from_ptr_result(owned_ptr).is_ok());
+  let roundtrip = c::from_ptr_unchecked(owned_ptr);
+  assert(c::from_ptr(owned_ptr).is_ok());
   assert(same_bytes(roundtrip.as_slice(), hello.as_slice()));
   let owned_view = owned.as_c_str();
   assert(same_bytes(owned_view.as_slice(), hello.as_slice()));
-  let copied = c::from_cstr_in(ref mut zone, borrowed);
+  let copied = c::from_cstr_unchecked_in(ref mut zone, borrowed);
   assert(same_bytes(copied.as_slice(), hello.as_slice()));
-  assert(c::from_cstr_result_in(ref mut zone, borrowed).is_ok());
+  assert(c::from_cstr_in(ref mut zone, borrowed).is_ok());
   score = score + 1;
 
   let null_handle: ptr c_void = null;
   let null_text: ptr c_char = null;
   assert(c::is_null(null_handle));
-  match c::from_ptr_result(null_text) {
+  match c::from_ptr(null_text) {
     Ok(_) => {
       panic();
     }
@@ -95,11 +95,11 @@ fn main() -> i64 {
   assert_eq_i64(c::local() + c::global(), 256);
   score = score + 1;
 
-  var library = c::open(c::from_string("libc.so.6"), c::lazy());
+  var library = c::open(c::from_string("libc.so.6"), c::lazy()).unwrap();
   assert(library.is_open());
-  let strlen_symbol = library.symbol(c::from_string("strlen"));
+  let strlen_symbol = library.symbol(c::from_string("strlen")).unwrap();
   assert(strlen_symbol.is_valid());
-  match library.symbol_result(c::from_string("strlen")) {
+  match library.symbol(c::from_string("strlen")) {
     Ok(result_symbol) => {
       assert(result_symbol.is_valid());
     }
@@ -107,32 +107,32 @@ fn main() -> i64 {
       panic();
     }
   }
-  assert(c::symbol_result(ref library, c::from_string("strlen")).is_ok());
+  assert(c::symbol(ref library, c::from_string("strlen")).is_ok());
   assert(!c::is_null(strlen_symbol.as_ptr()));
-  let absent_symbol = c::symbol(ref library, c::from_string("__ari_missing_symbol_for_test__"));
+  let absent_symbol = c::symbol_raw(ref library, c::from_string("__ari_missing_symbol_for_test__"));
   assert(!absent_symbol.is_valid());
-  assert(library.symbol_result(c::from_string("__ari_missing_symbol_for_test__")).is_err());
+  assert(library.symbol(c::from_string("__ari_missing_symbol_for_test__")).is_err());
   let loader_error = c::last_error();
   assert(!loader_error.is_empty());
-  assert(library.close_result().is_ok());
+  assert(library.close().is_ok());
   assert(!library.is_open());
   score = score + 1;
 
-  match c::open_result(c::from_string("libc.so.6"), c::lazy()) {
+  match c::open(c::from_string("libc.so.6"), c::lazy()) {
     Ok(result_library) => {
       var closable = result_library;
-      assert(closable.close_result().is_ok());
-      assert(closable.close_result().is_ok());
+      assert(closable.close().is_ok());
+      assert(closable.close().is_ok());
     }
     Err(_) => {
       panic();
     }
   }
-  assert(c::open_result(c::from_string("/tmp/ari-missing-library-for-result.so"), c::lazy()).is_err());
+  assert(c::open(c::from_string("/tmp/ari-missing-library-for-result.so"), c::lazy()).is_err());
 
-  let main_library = c::main_program(c::now());
+  let main_library = c::main_program(c::now()).unwrap();
   assert(main_library.is_open());
-  assert(c::main_program_result(c::now()).is_ok());
+  assert(c::main_program(c::now()).is_ok());
   score = score + 1;
 
   zone::destroy(zone);

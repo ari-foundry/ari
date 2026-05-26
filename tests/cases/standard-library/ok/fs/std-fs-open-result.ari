@@ -25,7 +25,7 @@ fn result_error_matches(value: Result[fs::File, error::Error], kind: error::Kind
   }
 }
 
-fn raw_result_error_matches(value: Result[fs::File, i64], kind: error::Kind, code: i64) -> bool {
+fn raw_file_error_matches(value: Result[fs::File, i64], kind: error::Kind, code: i64) -> bool {
   match value {
     Ok(file) => {
       file.close_unchecked();
@@ -57,7 +57,7 @@ fn main() -> i64 {
   }
   if result_error_matches(fs::open(missing, "r"), error::NotFound, 2) &&
     result_error_matches(fs::open(missing, "r"), error::NotFound, 2) &&
-    raw_result_error_matches(fs::open_raw_result(missing, "r"), error::NotFound, 2) {
+    raw_file_error_matches(fs::open_raw(missing, "r"), error::NotFound, 2) {
     score = score + 2;
   }
 
@@ -87,7 +87,7 @@ fn main() -> i64 {
   if result_error_matches(exclusive.open(path), error::AlreadyExists, 17) &&
     exclusive.open_optional(path).is_none() &&
     result_error_matches(exclusive.open(path), error::AlreadyExists, 17) &&
-    raw_result_error_matches(exclusive.open_raw_result(path), error::AlreadyExists, 17) {
+    raw_file_error_matches(exclusive.open_raw(path), error::AlreadyExists, 17) {
     score = score + 16;
   }
 
@@ -124,7 +124,7 @@ fn main() -> i64 {
     }
   }
   fs::remove_bool(missing);
-  match fs::create_raw_result(missing) {
+  match fs::create_raw(missing) {
     Ok(temp_raw_file) => {
       temp_raw_file.close_unchecked();
     }

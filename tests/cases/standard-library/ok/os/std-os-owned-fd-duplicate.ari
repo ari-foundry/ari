@@ -30,10 +30,10 @@ fn main() -> i64 {
   if copy.as_fd().is_valid() {
     score = score + 32;
   }
-  if copy.close() && copy.is_closed() {
+  if copy.close_bool() && copy.is_closed() {
     score = score + 64;
   }
-  if owned.close() && owned.is_closed() {
+  if owned.close_bool() && owned.is_closed() {
     score = score + 128;
   }
 

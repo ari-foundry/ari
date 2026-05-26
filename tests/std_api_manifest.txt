@@ -139,16 +139,16 @@ fn std::bits::trailing_ones|std bits one-run helper tests; docs/stdlib/api-refer
 fn std::bits::trailing_zeros|std bits scan helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::wrapping_align_up|std bits alignment policy tests; docs/stdlib/modules/bits.md
 fn std::boxed::new[T]|check-prelude std-boxed-* provenance tests; docs/dev/test-matrix.md Explicit memory zones row
-fn std::c::close|check-prelude std-c-interop dynamic library close wrapper; docs/stdlib/modules/c.md
-fn std::c::close_result|check-prelude std-c-interop Result-returning dynamic library close wrapper; docs/stdlib/modules/c.md
+fn std::c::close|check-prelude std-c-interop Result-returning dynamic library close wrapper; docs/stdlib/modules/c.md
+fn std::c::close_bool|check-prelude std-c-interop boolean compatibility dynamic library close wrapper; docs/stdlib/modules/c.md
 fn std::c::errno|check-prelude std-c-interop POSIX errno accessor; docs/stdlib/modules/c.md
 fn std::c::error|check-prelude std-c-interop errno-to-Error bridge; docs/stdlib/modules/c.md
-fn std::c::from_cstr_in|check-prelude std-c-interop owned CString copy from borrowed CStr; docs/stdlib/modules/c.md
-fn std::c::from_cstr_result_in|check-prelude std-c-interop Result-returning CString copy from borrowed CStr; docs/stdlib/modules/c.md
-fn std::c::from_ptr|check-prelude std-c-interop borrowed non-null raw C string wrapper; docs/stdlib/modules/c.md
-fn std::c::from_ptr_result|check-prelude std-c-interop null-checked Result C string wrapper; docs/stdlib/modules/c.md
-fn std::c::from_slice_in|check-prelude std-c-interop zone-backed NUL-terminated CString constructor; docs/stdlib/modules/c.md
-fn std::c::from_slice_result_in|check-prelude std-c-interop Result-returning CString constructor rejecting interior NUL bytes; docs/stdlib/modules/c.md
+fn std::c::from_cstr_in|check-prelude std-c-interop Result-returning CString copy from borrowed CStr; docs/stdlib/modules/c.md
+fn std::c::from_cstr_unchecked_in|check-prelude std-c-interop assert-on-invalid CString copy from borrowed CStr; docs/stdlib/modules/c.md
+fn std::c::from_ptr|check-prelude std-c-interop null-checked Result C string wrapper; docs/stdlib/modules/c.md
+fn std::c::from_ptr_unchecked|check-prelude std-c-interop assert-on-null borrowed C string wrapper; docs/stdlib/modules/c.md
+fn std::c::from_slice_in|check-prelude std-c-interop Result-returning CString constructor rejecting interior NUL bytes; docs/stdlib/modules/c.md
+fn std::c::from_slice_unchecked_in|check-prelude std-c-interop assert-on-invalid zone-backed NUL-terminated CString constructor; docs/stdlib/modules/c.md
 fn std::c::from_string|check-prelude std-c-interop borrowed Ari string to CStr wrapper; docs/stdlib/modules/c.md
 fn std::c::function[T]|check-prelude std-c-dynamic-function typed dynamic function pointer extraction; docs/stdlib/modules/c.md
 fn std::c::global|check-prelude std-c-interop dynamic loader flag helper; docs/stdlib/modules/c.md
@@ -156,13 +156,13 @@ fn std::c::is_null|check-prelude std-c-interop raw pointer null predicate; docs/
 fn std::c::last_error|check-prelude std-c-interop dynamic loader error view; docs/stdlib/modules/c.md
 fn std::c::lazy|check-prelude std-c-interop dynamic loader flag helper; docs/stdlib/modules/c.md
 fn std::c::local|check-prelude std-c-interop dynamic loader flag helper; docs/stdlib/modules/c.md
-fn std::c::main_program|check-prelude std-c-interop current process dynamic symbol handle; docs/stdlib/modules/c.md
-fn std::c::main_program_result|check-prelude std-c-interop Result-returning current process dynamic symbol handle; docs/stdlib/modules/c.md
+fn std::c::main_program|check-prelude std-c-interop Result-returning current process dynamic symbol handle; docs/stdlib/modules/c.md
+fn std::c::main_program_raw|check-prelude std-c-interop raw current process dynamic symbol handle compatibility helper; docs/stdlib/modules/c.md
 fn std::c::now|check-prelude std-c-interop dynamic loader flag helper; docs/stdlib/modules/c.md
-fn std::c::open|check-prelude std-c-interop dynamic library open wrapper; docs/stdlib/modules/c.md
-fn std::c::open_result|check-prelude std-c-interop Result-returning dynamic library open wrapper; docs/stdlib/modules/c.md
-fn std::c::symbol|check-prelude std-c-interop dynamic symbol lookup wrapper; docs/stdlib/modules/c.md
-fn std::c::symbol_result|check-prelude std-c-interop Result-returning dynamic symbol lookup wrapper; docs/stdlib/modules/c.md
+fn std::c::open|check-prelude std-c-interop Result-returning dynamic library open wrapper; docs/stdlib/modules/c.md
+fn std::c::open_raw|check-prelude std-c-interop raw dynamic library open compatibility helper; docs/stdlib/modules/c.md
+fn std::c::symbol|check-prelude std-c-interop Result-returning dynamic symbol lookup wrapper; docs/stdlib/modules/c.md
+fn std::c::symbol_raw|check-prelude std-c-interop raw dynamic symbol lookup compatibility helper; docs/stdlib/modules/c.md
 fn std::cmp::clamp[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
 fn std::cmp::clamp_by[T]|check-prelude std-cmp-by-helpers comparator-based clamping; docs/stdlib/modules/cmp.md
 fn std::cmp::compare[T: Ord[T]|check-prelude std-cmp-ordering generic three-way comparison; docs/stdlib/modules/cmp.md
@@ -360,22 +360,22 @@ fn std::env::var_os_optional|check-prelude std-env-vars Option-returning OS-stri
 fn std::env::var_os_or_default|check-prelude std-env-vars OS-string environment variable compatibility helper; docs/stdlib/modules/env.md
 fn std::error::code|check-prelude std-error-basic error platform code extractor; docs/stdlib/modules/error.md
 fn std::error::from_errno|check-prelude std-error-basic POSIX errno mapping helper; docs/stdlib/modules/error.md
-fn std::error::from_errno_result[T]|check-prelude std-error-integration Result[T, errno] to Result[T, Error] bridge; docs/stdlib/modules/error.md
 fn std::error::from_os_code|check-prelude std-error-integration target OS error-code mapping alias; docs/stdlib/modules/error.md
-fn std::error::from_os_code_result[T]|check-prelude std-error-integration Result[T, OS code] to Result[T, Error] bridge; docs/stdlib/modules/error.md
 fn std::error::from_raw|check-prelude std-error-basic compact Result-compatible error reconstruction; docs/stdlib/modules/error.md
-fn std::error::from_raw_result[T]|check-prelude std-error-basic Result[T, i64] to Result[T, Error] compatibility bridge; docs/stdlib/modules/error.md
 fn std::error::is_connection_refused|check-prelude std-error-integration connection-refused predicate helper; docs/stdlib/modules/error.md
 fn std::error::is_interrupted|check-prelude std-error-basic interrupted predicate helper; docs/stdlib/modules/error.md
 fn std::error::is_kind|check-prelude std-error-basic error-kind predicate helper; docs/stdlib/modules/error.md
 fn std::error::is_not_found|check-prelude std-error-basic not-found predicate helper; docs/stdlib/modules/error.md
 fn std::error::is_retryable|check-prelude std-error-basic retryable predicate helper; docs/stdlib/modules/error.md
 fn std::error::kind|check-prelude std-error-basic error kind extractor; docs/stdlib/modules/error.md
+fn std::error::map_errno[T]|check-prelude std-error-integration Result[T, errno] to Result[T, Error] bridge; docs/stdlib/modules/error.md
+fn std::error::map_os_code[T]|check-prelude std-error-integration Result[T, OS code] to Result[T, Error] bridge; docs/stdlib/modules/error.md
+fn std::error::map_raw[T]|check-prelude std-error-basic Result[T, i64] to Result[T, Error] compatibility bridge; docs/stdlib/modules/error.md
 fn std::error::message|check-prelude std-error-basic stable generic message helper; docs/stdlib/modules/error.md
 fn std::error::name|check-prelude std-error-basic error-kind name helper; docs/stdlib/modules/error.md
 fn std::error::new|check-prelude std-error-basic error constructor without platform code; docs/stdlib/modules/error.md
 fn std::error::raw|check-prelude std-error-basic compact raw error representation helper; docs/stdlib/modules/error.md
-fn std::error::to_raw_result[T]|check-prelude std-error-basic Result[T, Error] to Result[T, i64] compatibility bridge; docs/stdlib/modules/error.md
+fn std::error::to_raw[T]|check-prelude std-error-basic Result[T, Error] to Result[T, i64] compatibility bridge; docs/stdlib/modules/error.md
 fn std::error::try_from_errno|check-prelude std-error-validation Option-returning POSIX errno mapping helper; docs/stdlib/modules/error.md
 fn std::error::try_from_os_code|check-prelude std-error-integration Option-returning target OS error-code mapping alias; docs/stdlib/modules/error.md
 fn std::error::try_from_raw|check-prelude std-error-validation Option-returning raw error reconstruction; docs/stdlib/modules/error.md
@@ -434,7 +434,7 @@ fn std::fmt::write_value[W: std::io::Writer, T: std::fmt::Display]|check-prelude
 fn std::fmt::write_value_bool[W: std::io::Writer, T: std::fmt::Display]|check-prelude std-fmt-format-spec bool compatibility generic Writer-backed Display formatting helper; docs/stdlib/modules/fmt.md
 fn std::fs::append|check-prelude std-fs-read-write Result-returning whole-file append helper; docs/stdlib/modules/fs.md
 fn std::fs::append_bool|check-prelude std-fs-read-write bool whole-file append compatibility helper; docs/stdlib/modules/fs.md
-fn std::fs::append_raw_result|check-prelude std-fs-byte-result raw Result-returning whole-file append byte-count compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::append_raw|check-prelude std-fs-byte-result raw Result-returning whole-file append byte-count compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::can_execute|check-prelude std-fs-permissions execute/search access hook; docs/stdlib/modules/fs.md
 fn std::fs::can_read|check-prelude std-fs-permissions read access hook; docs/stdlib/modules/fs.md
 fn std::fs::can_write|check-prelude std-fs-permissions write access hook; docs/stdlib/modules/fs.md
@@ -449,18 +449,18 @@ fn std::fs::close_raw|check-prelude std-fs-basic raw Result-returning file close
 fn std::fs::close_unchecked|check-prelude std-fs-basic unchecked file close compatibility hook; docs/stdlib/modules/fs.md
 fn std::fs::copy|check-prelude std-fs-byte-result Result-returning streaming copy byte-count helper; docs/stdlib/modules/fs.md
 fn std::fs::copy_bool|check-prelude std-fs-create-truncate-copy bool streaming copy compatibility helper; docs/stdlib/modules/fs.md
-fn std::fs::copy_raw_result|check-prelude std-fs-byte-result raw Result-returning streaming copy byte-count compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::copy_raw|check-prelude std-fs-byte-result raw Result-returning streaming copy byte-count compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::create|check-prelude std-fs-open-result Result-returning create/truncate open helper; docs/stdlib/modules/fs.md
 fn std::fs::create_dir|check-prelude std-fs-mutation-result Result-returning single-directory creation helper; docs/stdlib/modules/fs.md
 fn std::fs::create_dir_all|check-prelude std-fs-create-dir-all Result-returning recursive directory creation helper; docs/stdlib/modules/fs.md
 fn std::fs::create_dir_all_bool|check-prelude std-fs-create-dir-all bool recursive directory creation compatibility helper; docs/stdlib/modules/fs.md
-fn std::fs::create_dir_all_raw_result|check-prelude std-fs-create-dir-all raw Result-returning recursive directory creation compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::create_dir_all_raw|check-prelude std-fs-create-dir-all raw Result-returning recursive directory creation compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::create_dir_all_unchecked|check-prelude std-fs-create-dir-all unchecked recursive directory creation compatibility hook; docs/stdlib/modules/fs.md
 fn std::fs::create_dir_bool|check-prelude std-fs-rename-dir bool single-directory creation compatibility helper; docs/stdlib/modules/fs.md
-fn std::fs::create_dir_raw_result|check-prelude std-fs-mutation-result raw Result-returning directory creation compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::create_dir_raw|check-prelude std-fs-mutation-result raw Result-returning directory creation compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::create_dir_unchecked|check-prelude std-fs-rename-dir unchecked single-directory creation compatibility hook; docs/stdlib/modules/fs.md
 fn std::fs::create_optional|check-prelude std-fs-open-result Option-returning create compatibility helper; docs/stdlib/modules/fs.md
-fn std::fs::create_raw_result|check-prelude std-fs-open-result raw Result-returning create compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::create_raw|check-prelude std-fs-open-result raw Result-returning create compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::create_unchecked|check-prelude std-fs-open-result unchecked create compatibility helper returning invalid handles; docs/stdlib/modules/fs.md
 fn std::fs::ensure_dir|check-prelude std-fs-ensure-dir idempotent single-directory creation helper; docs/stdlib/modules/fs.md
 fn std::fs::ensure_dir_all|check-prelude std-fs-create-dir-all idempotent recursive directory creation alias; docs/stdlib/modules/fs.md
@@ -468,11 +468,11 @@ fn std::fs::ensure_file|check-prelude std-fs-ensure-file idempotent single-file 
 fn std::fs::exists|check-prelude std-fs-basic file existence hook; docs/stdlib/modules/fs.md
 fn std::fs::file_type|check-prelude std-fs-query-result Result-returning path kind helper; docs/stdlib/modules/fs.md
 fn std::fs::file_type_optional|check-prelude std-fs-query-result Option-returning path kind compatibility helper; docs/stdlib/modules/fs.md
-fn std::fs::file_type_raw_result|check-prelude std-fs-query-result raw Result-returning path kind compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::file_type_raw|check-prelude std-fs-query-result raw Result-returning path kind compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::file_type_unchecked|check-prelude std-fs-query-result unchecked path kind compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::hard_link|check-prelude std-fs-links Result-returning hard-link helper; docs/stdlib/modules/fs.md
 fn std::fs::hard_link_bool|check-prelude std-fs-links bool hard-link compatibility helper; docs/stdlib/modules/fs.md
-fn std::fs::hard_link_raw_result|check-prelude std-fs-links raw Result-returning hard-link compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::hard_link_raw|check-prelude std-fs-links raw Result-returning hard-link compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::hard_link_unchecked|check-prelude std-fs-links unchecked hard-link compatibility hook; docs/stdlib/modules/fs.md
 fn std::fs::is_dir|check-prelude std-fs-metadata direct directory-kind predicate; docs/stdlib/modules/fs.md
 fn std::fs::is_file|check-prelude std-fs-metadata direct regular-file predicate; docs/stdlib/modules/fs.md
@@ -484,22 +484,22 @@ fn std::fs::lock_shared|check-prelude std-fs-lock Result-returning hosted adviso
 fn std::fs::lock_shared_raw|check-prelude std-fs-lock raw Result-returning hosted advisory shared file lock helper; docs/stdlib/modules/fs.md
 fn std::fs::metadata|check-prelude std-fs-query-result Result-returning target-following metadata helper; docs/stdlib/modules/fs.md
 fn std::fs::metadata_optional|check-prelude std-fs-query-result Option-returning target-following metadata compatibility helper; docs/stdlib/modules/fs.md
-fn std::fs::metadata_raw_result|check-prelude std-fs-query-result raw Result-returning target-following metadata compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::metadata_raw|check-prelude std-fs-query-result raw Result-returning target-following metadata compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::metadata_unchecked|check-prelude std-fs-query-result unchecked target-following metadata compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::mode|check-prelude std-fs-query-result Result-returning POSIX permission-mode helper; docs/stdlib/modules/fs.md
 fn std::fs::mode_optional|check-prelude std-fs-query-result Option-returning POSIX permission-mode compatibility helper; docs/stdlib/modules/fs.md
-fn std::fs::mode_raw_result|check-prelude std-fs-query-result raw Result-returning permission-mode compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::mode_raw|check-prelude std-fs-query-result raw Result-returning permission-mode compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::mode_unchecked|check-prelude std-fs-query-result unchecked POSIX permission-mode compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::open|check-prelude std-fs-open-result Result-returning mode-string open helper with Error payload; docs/stdlib/modules/fs.md
 fn std::fs::open_append|check-prelude std-fs-open-result Result-returning append-mode open helper; docs/stdlib/modules/fs.md
 fn std::fs::open_append_optional|check-prelude std-fs-open-result Option-returning append-mode open compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::open_append_unchecked|check-prelude std-fs-open-result unchecked append-mode open compatibility helper returning invalid handles; docs/stdlib/modules/fs.md
 fn std::fs::open_dir|check-prelude std-fs-read-dir Result-returning directory open helper; docs/stdlib/modules/fs.md
-fn std::fs::open_dir_raw_result|check-prelude std-fs-query-result raw Result-returning directory open compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::open_dir_raw|check-prelude std-fs-query-result raw Result-returning directory open compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::open_dir_unchecked|check-prelude std-fs-read-dir unchecked directory open compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::open_optional|check-prelude std-fs-open-result Option-returning mode-string open compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::open_options|check-prelude std-fs-open-options OpenOptions default constructor helper; docs/stdlib/modules/fs.md
-fn std::fs::open_raw_result|check-prelude std-fs-open-result raw Result-returning mode-string open compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::open_raw|check-prelude std-fs-open-result raw Result-returning mode-string open compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::open_read|check-prelude std-fs-open-result Result-returning read-mode open helper; docs/stdlib/modules/fs.md
 fn std::fs::open_read_optional|check-prelude std-fs-open-result Option-returning read-mode open compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::open_read_unchecked|check-prelude std-fs-open-result unchecked read-mode open compatibility helper returning invalid handles; docs/stdlib/modules/fs.md
@@ -540,15 +540,15 @@ fn std::fs::remove_dir|check-prelude std-fs-mutation-result Result-returning sin
 fn std::fs::remove_dir_all|check-prelude std-fs-remove-dir-all Result-returning recursive directory tree removal helper; docs/stdlib/modules/fs.md
 fn std::fs::remove_dir_all_bool|check-prelude std-fs-remove-dir-all bool recursive directory tree removal compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::remove_dir_bool|check-prelude std-fs-rename-dir bool single-directory removal compatibility helper; docs/stdlib/modules/fs.md
-fn std::fs::remove_dir_raw_result|check-prelude std-fs-mutation-result raw Result-returning directory removal compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::remove_dir_raw|check-prelude std-fs-mutation-result raw Result-returning directory removal compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::remove_dir_unchecked|check-prelude std-fs-rename-dir unchecked single-directory removal compatibility hook; docs/stdlib/modules/fs.md
 fn std::fs::remove_file|check-prelude std-fs-mutation-result Result-returning file removal alias; docs/stdlib/modules/fs.md
 fn std::fs::remove_file_bool|check-prelude std-fs-basic bool file removal alias; docs/stdlib/modules/fs.md
-fn std::fs::remove_raw_result|check-prelude std-fs-mutation-result raw Result-returning unlink compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::remove_raw|check-prelude std-fs-mutation-result raw Result-returning unlink compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::remove_unchecked|check-prelude std-fs-basic unchecked file removal compatibility hook; docs/stdlib/modules/fs.md
 fn std::fs::rename|check-prelude std-fs-mutation-result Result-returning file rename helper; docs/stdlib/modules/fs.md
 fn std::fs::rename_bool|check-prelude std-fs-rename-dir bool file rename compatibility helper; docs/stdlib/modules/fs.md
-fn std::fs::rename_raw_result|check-prelude std-fs-mutation-result raw Result-returning rename compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::rename_raw|check-prelude std-fs-mutation-result raw Result-returning rename compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::rename_unchecked|check-prelude std-fs-rename-dir unchecked file rename compatibility hook; docs/stdlib/modules/fs.md
 fn std::fs::seek|check-prelude std-fs-seek Result-returning absolute file cursor seek helper; docs/stdlib/modules/fs.md
 fn std::fs::seek_raw|check-prelude std-fs-seek raw Result-returning file seek compatibility helper; docs/stdlib/modules/fs.md
@@ -557,11 +557,11 @@ fn std::fs::set_mode|check-prelude std-fs-mode chmod-backed permission-mode muta
 fn std::fs::set_permissions|check-prelude std-fs-mode Permissions-to-mode mutation helper; docs/stdlib/modules/fs.md
 fn std::fs::symbolic_link|check-prelude std-fs-links Result-returning symbolic-link helper; docs/stdlib/modules/fs.md
 fn std::fs::symbolic_link_bool|check-prelude std-fs-links bool symbolic-link compatibility helper; docs/stdlib/modules/fs.md
-fn std::fs::symbolic_link_raw_result|check-prelude std-fs-links raw Result-returning symbolic-link compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::symbolic_link_raw|check-prelude std-fs-links raw Result-returning symbolic-link compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::symbolic_link_unchecked|check-prelude std-fs-links unchecked symbolic-link compatibility hook; docs/stdlib/modules/fs.md
 fn std::fs::symlink_metadata|check-prelude std-fs-query-result Result-returning no-follow metadata helper; docs/stdlib/modules/fs.md
 fn std::fs::symlink_metadata_optional|check-prelude std-fs-query-result Option-returning no-follow metadata compatibility helper; docs/stdlib/modules/fs.md
-fn std::fs::symlink_metadata_raw_result|check-prelude std-fs-query-result raw Result-returning no-follow metadata compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::symlink_metadata_raw|check-prelude std-fs-query-result raw Result-returning no-follow metadata compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::symlink_metadata_unchecked|check-prelude std-fs-query-result unchecked no-follow metadata compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::temp_dir|check-prelude std-fs-temp hosted temporary directory constructor; docs/stdlib/modules/fs.md
 fn std::fs::temp_dir_in|check-prelude std-fs-temp prefixed hosted temporary directory constructor; docs/stdlib/modules/fs.md
@@ -601,7 +601,7 @@ fn std::fs::write_byte_unchecked|check-prelude std-fs-basic unchecked file byte 
 fn std::fs::write_bytes|check-prelude std-fs-basic Result-returning source byte-slice write helper; docs/stdlib/modules/fs.md
 fn std::fs::write_bytes_raw|check-prelude std-fs-basic raw Result-returning file slice write compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::write_bytes_unchecked|check-prelude std-fs-basic unchecked file slice write compatibility helper; docs/stdlib/modules/fs.md
-fn std::fs::write_raw_result|check-prelude std-fs-byte-result raw Result-returning whole-file truncating write byte-count compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::write_raw|check-prelude std-fs-byte-result raw Result-returning whole-file truncating write byte-count compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::write_string|check-prelude std-fs-byte-result Result-returning whole-file string write helper; docs/stdlib/modules/fs.md
 fn std::hash::bytes|check-prelude std-hash-basic byte-slice hasher convenience; docs/stdlib/modules/hash.md
 fn std::hash::combine|check-prelude std-hash-combine-helpers precomputed u64 hash composition helper; docs/stdlib/modules/hash.md
@@ -756,14 +756,14 @@ fn std::net::listen|check-prelude std-net-tcp-loopback module-level TCP listener
 fn std::net::localhost|check-prelude std-net-addresses source loopback socket address constructor; docs/stdlib/modules/net.md
 fn std::net::lookup_v4|check-prelude std-net-dns-lookup Result-returning IPv4 name lookup with Error payload; docs/stdlib/modules/net.md
 fn std::net::lookup_v4_optional|check-prelude std-net-dns-lookup Option-returning IPv4 name lookup compatibility helper; docs/stdlib/modules/net.md
-fn std::net::lookup_v4_raw_result|check-prelude std-net-dns-lookup raw Result-returning IPv4 name lookup compatibility helper; docs/stdlib/modules/net.md
+fn std::net::lookup_v4_raw|check-prelude std-net-dns-lookup raw Result-returning IPv4 name lookup compatibility helper; docs/stdlib/modules/net.md
 fn std::net::lookup_v6|check-prelude std-net-dns-lookup Result-returning IPv6 name lookup with Error payload; docs/stdlib/modules/net.md
 fn std::net::lookup_v6_optional|check-prelude std-net-dns-lookup Option-returning IPv6 name lookup compatibility helper; docs/stdlib/modules/net.md
-fn std::net::lookup_v6_raw_result|check-prelude std-net-dns-lookup raw Result-returning IPv6 name lookup compatibility helper; docs/stdlib/modules/net.md
+fn std::net::lookup_v6_raw|check-prelude std-net-dns-lookup raw Result-returning IPv6 name lookup compatibility helper; docs/stdlib/modules/net.md
 fn std::net::resolve|check-prelude std-net-dns-lookup Result-returning host-port endpoint resolver; docs/stdlib/modules/net.md
 fn std::net::resolve_all|check-prelude std-net-dns-lookup zone-backed multi-address host resolver; docs/stdlib/modules/net.md
 fn std::net::resolve_optional|check-prelude std-net-dns-lookup Option-returning host-port endpoint resolver compatibility helper; docs/stdlib/modules/net.md
-fn std::net::resolve_raw_result|check-prelude std-net-dns-lookup raw Result-returning host-port endpoint resolver; docs/stdlib/modules/net.md
+fn std::net::resolve_raw|check-prelude std-net-dns-lookup raw Result-returning host-port endpoint resolver; docs/stdlib/modules/net.md
 fn std::net::socket_addr|check-prelude std-net-addresses source socket address constructor; docs/stdlib/modules/net.md
 fn std::net::tcp_connect|check-prelude std-net-tcp-loopback explicit TCP connect helper returning Error; docs/stdlib/modules/net.md
 fn std::net::tcp_connect_host|check-prelude std-net-dns-lookup explicit host-port TCP connect helper; docs/stdlib/modules/net.md
@@ -780,8 +780,8 @@ fn std::net::unix_connect|check-prelude std-net-unix-socket module-level Unix st
 fn std::net::unix_listen|check-prelude std-net-unix-socket module-level Unix listener helper returning Error; docs/stdlib/modules/net.md
 fn std::os::fd|check-prelude std-os-fd non-owning descriptor view constructor; docs/stdlib/modules/os.md
 fn std::os::invalid|check-prelude std-os-fd invalid descriptor view constructor; docs/stdlib/modules/os.md
-fn std::os::pipe|check-prelude std-os-pipe owned OS pipe descriptor pair constructor; docs/stdlib/modules/os.md
-fn std::os::pipe_result|check-prelude std-os-pipe Result-returning owned OS pipe descriptor pair constructor; docs/stdlib/modules/os.md
+fn std::os::pipe|check-prelude std-os-pipe Result-returning owned OS pipe descriptor pair constructor; docs/stdlib/modules/os.md
+fn std::os::pipe_optional|check-prelude std-os-pipe Option-returning pipe constructor compatibility helper; docs/stdlib/modules/os.md
 fn std::os::stderr|check-prelude std-os-fd stderr descriptor view constructor; docs/stdlib/modules/os.md
 fn std::os::stdin|check-prelude std-os-fd stdin descriptor view constructor; docs/stdlib/modules/os.md
 fn std::os::stdout|check-prelude std-os-fd stdout descriptor view constructor; docs/stdlib/modules/os.md
@@ -961,21 +961,21 @@ fn std::process::wait_raw|check-prelude std-process-fork-wait POSIX wait raw com
 fn std::process::wait_status|check-prelude std-process-exit-status POSIX wait typed ExitStatus helper; docs/stdlib/modules/process.md
 fn std::random::below|check-prelude std-random-basic unbiased bounded non-crypto PRNG integer helper; docs/stdlib/modules/random.md
 fn std::random::boolean|check-prelude std-random-basic deterministic PRNG boolean helper; docs/stdlib/modules/random.md
-fn std::random::entropy|check-prelude std-random-basic OS entropy hook; docs/stdlib/modules/random.md
-fn std::random::entropy_raw_result|check-prelude std-random-result raw Result OS entropy hook; docs/stdlib/modules/random.md
-fn std::random::entropy_result|check-prelude std-random-result Error-returning OS entropy hook; docs/stdlib/modules/random.md
-fn std::random::fill|check-prelude std-random-basic OS entropy byte fill helper; docs/stdlib/modules/random.md
+fn std::random::entropy|check-prelude std-random-result Error-returning OS entropy hook; docs/stdlib/modules/random.md
+fn std::random::entropy_raw|check-prelude std-random-result raw Result OS entropy hook; docs/stdlib/modules/random.md
+fn std::random::entropy_unchecked|check-prelude std-random-basic strict OS entropy hook compatibility helper; docs/stdlib/modules/random.md
+fn std::random::fill|check-prelude std-random-result Error-returning OS entropy byte fill helper; docs/stdlib/modules/random.md
 fn std::random::fill_from|check-prelude std-random-basic deterministic PRNG byte fill helper; docs/stdlib/modules/random.md
-fn std::random::fill_raw_result|check-prelude std-random-result raw Result OS entropy byte fill helper; docs/stdlib/modules/random.md
-fn std::random::fill_result|check-prelude std-random-result Error-returning OS entropy byte fill helper; docs/stdlib/modules/random.md
+fn std::random::fill_raw|check-prelude std-random-result raw Result OS entropy byte fill helper; docs/stdlib/modules/random.md
+fn std::random::fill_unchecked|check-prelude std-random-basic strict OS entropy byte fill compatibility helper; docs/stdlib/modules/random.md
 fn std::random::float|check-prelude std-random-basic unit f64 PRNG helper; docs/stdlib/modules/random.md
-fn std::random::from_entropy|check-prelude std-random-basic OS-seeded PRNG constructor; docs/stdlib/modules/random.md
-fn std::random::from_entropy_result|check-prelude std-random-result Error-returning OS-seeded PRNG constructor; docs/stdlib/modules/random.md
+fn std::random::from_entropy|check-prelude std-random-result Error-returning OS-seeded PRNG constructor; docs/stdlib/modules/random.md
+fn std::random::from_entropy_unchecked|check-prelude std-random-basic strict OS-seeded PRNG constructor compatibility helper; docs/stdlib/modules/random.md
 fn std::random::next|check-prelude std-random-basic raw PRNG word helper; docs/stdlib/modules/random.md
 fn std::random::range|check-prelude std-random-basic unbiased bounded PRNG range helper; docs/stdlib/modules/random.md
 fn std::random::seed|check-prelude std-random-basic deterministic PRNG seed constructor; docs/stdlib/modules/random.md
-fn std::random::seed_from_os|check-prelude std-random-basic OS-seeded PRNG constructor alias; docs/stdlib/modules/random.md
-fn std::random::seed_from_os_result|check-prelude std-random-result Error-returning OS-seeded PRNG constructor alias; docs/stdlib/modules/random.md
+fn std::random::seed_from_os|check-prelude std-random-result Error-returning OS-seeded PRNG constructor alias; docs/stdlib/modules/random.md
+fn std::random::seed_from_os_unchecked|check-prelude std-random-basic strict OS-seeded PRNG constructor alias; docs/stdlib/modules/random.md
 fn std::random::shuffle[T]|check-prelude std-random-basic Fisher-Yates slice shuffle; docs/stdlib/modules/random.md
 fn std::random::try_below|check-prelude std-random-try-bounds Option-returning unbiased bounded PRNG integer helper; docs/stdlib/modules/random.md
 fn std::random::try_range|check-prelude std-random-try-bounds Option-returning unbiased PRNG range helper; docs/stdlib/modules/random.md
@@ -1333,12 +1333,12 @@ method std::c::CString::as_ptr|check-prelude std-c-interop owned raw C pointer a
 method std::c::CString::as_slice|check-prelude std-c-interop owned bytes without trailing NUL; docs/stdlib/modules/c.md
 method std::c::CString::is_empty|check-prelude std-c-interop owned C string empty predicate; docs/stdlib/modules/c.md
 method std::c::CString::len|check-prelude std-c-interop owned C string byte length; docs/stdlib/modules/c.md
-method std::c::Library::close|check-prelude std-c-interop dynamic library close method; docs/stdlib/modules/c.md
-method std::c::Library::close_result|check-prelude std-c-interop Result-returning dynamic library close method; docs/stdlib/modules/c.md
+method std::c::Library::close|check-prelude std-c-interop Result-returning dynamic library close method; docs/stdlib/modules/c.md
+method std::c::Library::close_bool|check-prelude std-c-interop boolean compatibility dynamic library close method; docs/stdlib/modules/c.md
 method std::c::Library::invalid|check-prelude std-c-interop invalid dynamic library sentinel; docs/stdlib/modules/c.md
 method std::c::Library::is_open|check-prelude std-c-interop dynamic library validity predicate; docs/stdlib/modules/c.md
-method std::c::Library::symbol|check-prelude std-c-interop dynamic symbol lookup method; docs/stdlib/modules/c.md
-method std::c::Library::symbol_result|check-prelude std-c-interop Result-returning dynamic symbol lookup method; docs/stdlib/modules/c.md
+method std::c::Library::symbol|check-prelude std-c-interop Result-returning dynamic symbol lookup method; docs/stdlib/modules/c.md
+method std::c::Library::symbol_raw|check-prelude std-c-interop raw dynamic symbol lookup compatibility method; docs/stdlib/modules/c.md
 method std::c::Symbol::as_ptr|check-prelude std-c-interop dynamic symbol raw pointer accessor; docs/stdlib/modules/c.md
 method std::c::Symbol::function[T]|check-prelude std-c-dynamic-function typed dynamic function pointer extraction; docs/stdlib/modules/c.md
 method std::c::Symbol::invalid|check-prelude std-c-interop invalid dynamic symbol sentinel; docs/stdlib/modules/c.md
@@ -1787,7 +1787,7 @@ method std::fs::OpenOptions::create_new|check-prelude std-fs-open-options exclus
 method std::fs::OpenOptions::new|check-prelude std-fs-open-options empty OpenOptions constructor; docs/stdlib/modules/fs.md
 method std::fs::OpenOptions::open|check-prelude std-fs-open-result Result-returning OpenOptions open helper with Error payload; docs/stdlib/modules/fs.md
 method std::fs::OpenOptions::open_optional|check-prelude std-fs-open-result Option-returning OpenOptions open compatibility helper; docs/stdlib/modules/fs.md
-method std::fs::OpenOptions::open_raw_result|check-prelude std-fs-open-result raw Result-returning OpenOptions open compatibility helper; docs/stdlib/modules/fs.md
+method std::fs::OpenOptions::open_raw|check-prelude std-fs-open-result raw Result-returning OpenOptions open compatibility helper; docs/stdlib/modules/fs.md
 method std::fs::OpenOptions::open_unchecked|check-prelude std-fs-open-result unchecked OpenOptions open compatibility helper returning invalid handles; docs/stdlib/modules/fs.md
 method std::fs::OpenOptions::read|check-prelude std-fs-open-options read option builder; docs/stdlib/modules/fs.md
 method std::fs::OpenOptions::truncate|check-prelude std-fs-open-options truncate option builder; docs/stdlib/modules/fs.md
@@ -1860,10 +1860,10 @@ method std::net::SocketAddr::port|check-prelude std-net-addresses socket address
 method std::net::SocketAddr::with_port|check-prelude std-net-addresses socket address port replacement; docs/stdlib/modules/net.md
 method std::net::TcpListener::accept|check-prelude std-net-tcp-loopback Result-returning TCP accept helper with Error payload; docs/stdlib/modules/net.md
 method std::net::TcpListener::accept_optional|check-prelude std-net-tcp-loopback Option-returning TCP accept compatibility helper; docs/stdlib/modules/net.md
-method std::net::TcpListener::accept_raw_result|check-prelude std-net-tcp-loopback raw Result-returning TCP accept compatibility helper; docs/stdlib/modules/net.md
+method std::net::TcpListener::accept_raw|check-prelude std-net-tcp-loopback raw Result-returning TCP accept compatibility helper; docs/stdlib/modules/net.md
 method std::net::TcpListener::bind|check-prelude std-net-tcp-loopback Result-returning IPv4/IPv6 TCP bind helper with Error payload; docs/stdlib/modules/net.md
 method std::net::TcpListener::bind_optional|check-prelude std-net-tcp-loopback Option-returning TCP bind compatibility helper; docs/stdlib/modules/net.md
-method std::net::TcpListener::bind_raw_result|check-prelude std-net-tcp-loopback raw Result-returning TCP bind compatibility helper and restricted-host error bridge; docs/stdlib/modules/net.md
+method std::net::TcpListener::bind_raw|check-prelude std-net-tcp-loopback raw Result-returning TCP bind compatibility helper and restricted-host error bridge; docs/stdlib/modules/net.md
 method std::net::TcpListener::close|check-prelude std-net-tcp-loopback explicit listener descriptor close helper; docs/stdlib/modules/net.md
 method std::net::TcpListener::close_on_exec|check-prelude std-net-tcp-loopback Result-returning listener close-on-exec descriptor flag query; docs/stdlib/modules/net.md
 method std::net::TcpListener::close_on_exec_optional|check-prelude std-net-tcp-loopback Option-returning listener close-on-exec compatibility query; docs/stdlib/modules/net.md
@@ -1901,7 +1901,7 @@ method std::net::TcpStream::close_on_exec_optional|check-prelude std-net-tcp-loo
 method std::net::TcpStream::close_unchecked|check-prelude std-net-tcp-loopback unchecked TCP stream close compatibility method; docs/stdlib/modules/net.md
 method std::net::TcpStream::connect|check-prelude std-net-tcp-loopback Result-returning IPv4/IPv6 TCP connect helper with Error payload; docs/stdlib/modules/net.md
 method std::net::TcpStream::connect_optional|check-prelude std-net-tcp-loopback Option-returning TCP connect compatibility helper; docs/stdlib/modules/net.md
-method std::net::TcpStream::connect_raw_result|check-prelude std-net-tcp-loopback raw Result-returning TCP connect compatibility helper; docs/stdlib/modules/net.md
+method std::net::TcpStream::connect_raw|check-prelude std-net-tcp-loopback raw Result-returning TCP connect compatibility helper; docs/stdlib/modules/net.md
 method std::net::TcpStream::descriptor|check-prelude std-net-tcp-loopback stream borrowed descriptor view; docs/stdlib/modules/net.md
 method std::net::TcpStream::flush|check-prelude std-net-tcp-loopback stream flush helper preserving closed-handle errors; docs/stdlib/modules/net.md
 method std::net::TcpStream::is_nonblocking|check-prelude std-net-tcp-loopback stream nonblocking descriptor query; docs/stdlib/modules/net.md
@@ -1952,7 +1952,7 @@ method std::net::UdpRecvFrom::len|check-prelude std-net-udp-socket UDP receive b
 method std::net::UdpRecvFrom::source|check-prelude std-net-udp-socket UDP receive source-address alias; docs/stdlib/modules/net.md
 method std::net::UdpSocket::bind|check-prelude std-net-udp-socket Result-returning IPv4/IPv6 UDP bind helper with Error payload; docs/stdlib/modules/net.md
 method std::net::UdpSocket::bind_optional|check-prelude std-net-udp-socket Option-returning UDP bind compatibility helper; docs/stdlib/modules/net.md
-method std::net::UdpSocket::bind_raw_result|check-prelude std-net-udp-socket raw Result-returning UDP bind compatibility helper and restricted-host error bridge; docs/stdlib/modules/net.md
+method std::net::UdpSocket::bind_raw|check-prelude std-net-udp-socket raw Result-returning UDP bind compatibility helper and restricted-host error bridge; docs/stdlib/modules/net.md
 method std::net::UdpSocket::broadcast|check-prelude std-net-udp-socket UDP broadcast socket option query; docs/stdlib/modules/net.md
 method std::net::UdpSocket::broadcast_optional|check-prelude std-net-udp-socket Option-returning UDP broadcast compatibility query; docs/stdlib/modules/net.md
 method std::net::UdpSocket::close|check-prelude std-net-udp-socket explicit UDP descriptor close helper; docs/stdlib/modules/net.md
@@ -2007,10 +2007,10 @@ method std::net::UdpSocket::try_bind|check-prelude std-net-udp-socket Option-ret
 method std::net::UdpSocket::try_recv_byte|check-prelude std-net-udp-socket Option-returning single-byte UDP datagram receive helper; docs/stdlib/modules/net.md
 method std::net::UnixListener::accept|check-prelude std-net-unix-socket Result-returning Unix stream accept helper with Error payload; docs/stdlib/modules/net.md
 method std::net::UnixListener::accept_optional|check-prelude std-net-unix-socket Option-returning Unix stream accept compatibility helper; docs/stdlib/modules/net.md
-method std::net::UnixListener::accept_raw_result|check-prelude std-net-unix-socket raw Result-returning Unix stream accept compatibility helper; docs/stdlib/modules/net.md
+method std::net::UnixListener::accept_raw|check-prelude std-net-unix-socket raw Result-returning Unix stream accept compatibility helper; docs/stdlib/modules/net.md
 method std::net::UnixListener::bind|check-prelude std-net-unix-socket Result-returning Unix listener bind helper with Error payload; docs/stdlib/modules/net.md
 method std::net::UnixListener::bind_optional|check-prelude std-net-unix-socket Option-returning Unix listener bind compatibility helper; docs/stdlib/modules/net.md
-method std::net::UnixListener::bind_raw_result|check-prelude std-net-unix-socket raw Result-returning Unix listener bind compatibility helper and restricted-host error bridge; docs/stdlib/modules/net.md
+method std::net::UnixListener::bind_raw|check-prelude std-net-unix-socket raw Result-returning Unix listener bind compatibility helper and restricted-host error bridge; docs/stdlib/modules/net.md
 method std::net::UnixListener::close|check-prelude std-net-unix-socket explicit Unix listener close helper; docs/stdlib/modules/net.md
 method std::net::UnixListener::close_on_exec|check-prelude std-net-unix-socket Result-returning Unix listener close-on-exec descriptor flag query; docs/stdlib/modules/net.md
 method std::net::UnixListener::close_on_exec_optional|check-prelude std-net-unix-socket Option-returning Unix listener close-on-exec compatibility query; docs/stdlib/modules/net.md
@@ -2031,7 +2031,7 @@ method std::net::UnixStream::close_on_exec_optional|check-prelude std-net-unix-s
 method std::net::UnixStream::close_unchecked|check-prelude std-net-unix-socket unchecked Unix stream close compatibility method; docs/stdlib/modules/net.md
 method std::net::UnixStream::connect|check-prelude std-net-unix-socket Result-returning Unix stream connect helper with Error payload; docs/stdlib/modules/net.md
 method std::net::UnixStream::connect_optional|check-prelude std-net-unix-socket Option-returning Unix stream connect compatibility helper; docs/stdlib/modules/net.md
-method std::net::UnixStream::connect_raw_result|check-prelude std-net-unix-socket raw Result-returning Unix stream connect compatibility helper; docs/stdlib/modules/net.md
+method std::net::UnixStream::connect_raw|check-prelude std-net-unix-socket raw Result-returning Unix stream connect compatibility helper; docs/stdlib/modules/net.md
 method std::net::UnixStream::descriptor|check-prelude std-net-unix-socket Unix stream borrowed descriptor view; docs/stdlib/modules/net.md
 method std::net::UnixStream::flush|check-prelude std-net-unix-socket Unix stream flush helper preserving closed-handle errors; docs/stdlib/modules/net.md
 method std::net::UnixStream::is_nonblocking|check-prelude std-net-unix-socket Unix stream nonblocking descriptor query; docs/stdlib/modules/net.md
@@ -2075,30 +2075,30 @@ method std::os::Fd::is_stdout|check-prelude std-os-fd stdout descriptor predicat
 method std::os::Fd::is_valid|check-prelude std-os-fd valid descriptor predicate; docs/stdlib/modules/os.md
 method std::os::Fd::raw|check-prelude std-os-fd raw descriptor accessor; docs/stdlib/modules/os.md
 method std::os::OwnedFd::as_fd|check-prelude std-os-owned-fd borrowed descriptor view from owned handle; docs/stdlib/modules/os.md
-method std::os::OwnedFd::close|check-prelude std-os-owned-fd explicit owned descriptor close and disarm helper; docs/stdlib/modules/os.md
-method std::os::OwnedFd::close_on_exec|check-prelude std-os-owned-fd-flags close-on-exec descriptor flag query; docs/stdlib/modules/os.md
-method std::os::OwnedFd::close_on_exec_result|check-prelude std-os-owned-fd direct Error close-on-exec descriptor flag query; docs/stdlib/modules/os.md
-method std::os::OwnedFd::close_result|check-prelude std-os-owned-fd direct Error owned descriptor close and disarm helper; docs/stdlib/modules/os.md
+method std::os::OwnedFd::clone|check-prelude std-os-owned-fd direct Error owned descriptor duplication helper; docs/stdlib/modules/os.md
+method std::os::OwnedFd::close|check-prelude std-os-owned-fd direct Error owned descriptor close and disarm helper; docs/stdlib/modules/os.md
+method std::os::OwnedFd::close_bool|check-prelude std-os-owned-fd bool compatibility owned descriptor close helper; docs/stdlib/modules/os.md
+method std::os::OwnedFd::close_on_exec|check-prelude std-os-owned-fd direct Error close-on-exec descriptor flag query; docs/stdlib/modules/os.md
+method std::os::OwnedFd::close_on_exec_optional|check-prelude std-os-owned-fd-flags Option-returning close-on-exec descriptor flag query; docs/stdlib/modules/os.md
 method std::os::OwnedFd::from_raw|check-prelude std-os-owned-fd raw descriptor ownership handoff constructor; docs/stdlib/modules/os.md
 method std::os::OwnedFd::invalid|check-prelude std-os-owned-fd invalid owned descriptor constructor; docs/stdlib/modules/os.md
 method std::os::OwnedFd::is_closed|check-prelude std-os-owned-fd owned descriptor closed predicate; docs/stdlib/modules/os.md
-method std::os::OwnedFd::is_nonblocking|check-prelude std-os-owned-fd-nonblocking nonblocking descriptor flag query; docs/stdlib/modules/os.md
-method std::os::OwnedFd::is_nonblocking_result|check-prelude std-os-owned-fd direct Error nonblocking descriptor flag query; docs/stdlib/modules/os.md
+method std::os::OwnedFd::is_nonblocking|check-prelude std-os-owned-fd direct Error nonblocking descriptor flag query; docs/stdlib/modules/os.md
+method std::os::OwnedFd::is_nonblocking_optional|check-prelude std-os-owned-fd-nonblocking Option-returning nonblocking descriptor flag query; docs/stdlib/modules/os.md
 method std::os::OwnedFd::is_open|check-prelude std-os-owned-fd owned descriptor open predicate; docs/stdlib/modules/os.md
 method std::os::OwnedFd::raw|check-prelude std-os-owned-fd owned descriptor raw accessor; docs/stdlib/modules/os.md
-method std::os::OwnedFd::set_close_on_exec|check-prelude std-os-owned-fd-flags close-on-exec descriptor flag setter; docs/stdlib/modules/os.md
-method std::os::OwnedFd::set_close_on_exec_result|check-prelude std-os-owned-fd direct Error close-on-exec descriptor flag setter; docs/stdlib/modules/os.md
-method std::os::OwnedFd::set_nonblocking|check-prelude std-os-owned-fd-nonblocking nonblocking descriptor flag setter; docs/stdlib/modules/os.md
-method std::os::OwnedFd::set_nonblocking_result|check-prelude std-os-owned-fd direct Error nonblocking descriptor flag setter; docs/stdlib/modules/os.md
+method std::os::OwnedFd::set_close_on_exec|check-prelude std-os-owned-fd direct Error close-on-exec descriptor flag setter; docs/stdlib/modules/os.md
+method std::os::OwnedFd::set_close_on_exec_bool|check-prelude std-os-owned-fd-flags bool compatibility close-on-exec descriptor flag setter; docs/stdlib/modules/os.md
+method std::os::OwnedFd::set_nonblocking|check-prelude std-os-owned-fd direct Error nonblocking descriptor flag setter; docs/stdlib/modules/os.md
+method std::os::OwnedFd::set_nonblocking_bool|check-prelude std-os-owned-fd-nonblocking bool compatibility nonblocking descriptor flag setter; docs/stdlib/modules/os.md
 method std::os::OwnedFd::take|check-prelude std-os-owned-fd disarming raw descriptor take helper; docs/stdlib/modules/os.md
 method std::os::OwnedFd::try_clone|check-prelude std-os-owned-fd-duplicate fallible owned descriptor duplication helper; docs/stdlib/modules/os.md
-method std::os::OwnedFd::try_clone_result|check-prelude std-os-owned-fd direct Error owned descriptor duplication helper; docs/stdlib/modules/os.md
-method std::os::Pipe::close|check-prelude std-os-pipe close both owned pipe ends; docs/stdlib/modules/os.md
-method std::os::Pipe::close_read_end|check-prelude std-os-pipe close owned pipe read end; docs/stdlib/modules/os.md
-method std::os::Pipe::close_read_end_result|check-prelude std-os-pipe Result-returning close of owned pipe read end; docs/stdlib/modules/os.md
-method std::os::Pipe::close_result|check-prelude std-os-pipe Result-returning close of both owned pipe ends; docs/stdlib/modules/os.md
-method std::os::Pipe::close_write_end|check-prelude std-os-pipe close owned pipe write end; docs/stdlib/modules/os.md
-method std::os::Pipe::close_write_end_result|check-prelude std-os-pipe Result-returning close of owned pipe write end; docs/stdlib/modules/os.md
+method std::os::Pipe::close|check-prelude std-os-pipe Result-returning close of both owned pipe ends; docs/stdlib/modules/os.md
+method std::os::Pipe::close_bool|check-prelude std-os-pipe bool compatibility close of both owned pipe ends; docs/stdlib/modules/os.md
+method std::os::Pipe::close_read_end|check-prelude std-os-pipe Result-returning close of owned pipe read end; docs/stdlib/modules/os.md
+method std::os::Pipe::close_read_end_bool|check-prelude std-os-pipe bool compatibility close of owned pipe read end; docs/stdlib/modules/os.md
+method std::os::Pipe::close_write_end|check-prelude std-os-pipe Result-returning close of owned pipe write end; docs/stdlib/modules/os.md
+method std::os::Pipe::close_write_end_bool|check-prelude std-os-pipe bool compatibility close of owned pipe write end; docs/stdlib/modules/os.md
 method std::os::Pipe::read_end|check-prelude std-os-pipe borrowed pipe read descriptor view; docs/stdlib/modules/os.md
 method std::os::Pipe::take_read_end|check-prelude std-os-pipe take pipe read end ownership; docs/stdlib/modules/os.md
 method std::os::Pipe::take_write_end|check-prelude std-os-pipe take pipe write end ownership; docs/stdlib/modules/os.md
@@ -2238,13 +2238,13 @@ method std::random::Prng::below|check-prelude std-random-basic unbiased bounded 
 method std::random::Prng::boolean|check-prelude std-random-basic deterministic PRNG boolean method; docs/stdlib/modules/random.md
 method std::random::Prng::fill|check-prelude std-random-basic deterministic PRNG byte fill method; docs/stdlib/modules/random.md
 method std::random::Prng::float|check-prelude std-random-basic unit f64 PRNG method; docs/stdlib/modules/random.md
-method std::random::Prng::from_entropy|check-prelude std-random-basic OS-seeded PRNG associated constructor; docs/stdlib/modules/random.md
-method std::random::Prng::from_entropy_result|check-prelude std-random-result Error-returning OS-seeded PRNG associated constructor; docs/stdlib/modules/random.md
+method std::random::Prng::from_entropy|check-prelude std-random-result Error-returning OS-seeded PRNG associated constructor; docs/stdlib/modules/random.md
+method std::random::Prng::from_entropy_unchecked|check-prelude std-random-basic strict OS-seeded PRNG associated constructor; docs/stdlib/modules/random.md
 method std::random::Prng::next|check-prelude std-random-basic raw PRNG word method; docs/stdlib/modules/random.md
 method std::random::Prng::range|check-prelude std-random-basic unbiased bounded PRNG range method; docs/stdlib/modules/random.md
 method std::random::Prng::seed|check-prelude std-random-basic deterministic PRNG associated seed constructor; docs/stdlib/modules/random.md
-method std::random::Prng::seed_from_os|check-prelude std-random-basic OS-seeded PRNG associated constructor alias; docs/stdlib/modules/random.md
-method std::random::Prng::seed_from_os_result|check-prelude std-random-result Error-returning OS-seeded PRNG associated constructor alias; docs/stdlib/modules/random.md
+method std::random::Prng::seed_from_os|check-prelude std-random-result Error-returning OS-seeded PRNG associated constructor alias; docs/stdlib/modules/random.md
+method std::random::Prng::seed_from_os_unchecked|check-prelude std-random-basic strict OS-seeded PRNG associated constructor alias; docs/stdlib/modules/random.md
 method std::random::Prng::shuffle[T]|check-prelude std-random-basic Fisher-Yates slice shuffle method; docs/stdlib/modules/random.md
 method std::random::Prng::try_below|check-prelude std-random-try-bounds Option-returning unbiased bounded PRNG integer method; docs/stdlib/modules/random.md
 method std::random::Prng::try_range|check-prelude std-random-try-bounds Option-returning unbiased PRNG range method; docs/stdlib/modules/random.md

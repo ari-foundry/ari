@@ -66,7 +66,7 @@ extern "ari" fn read_link_raw(path: string) -> string = "ari_builtin_fs_read_lin
 pub extern "ari" fn create_dir_unchecked(path: string) -> bool = "ari_builtin_fs_create_dir";
 pub extern "ari" fn create_dir_all_unchecked(path: string) -> bool = "ari_builtin_fs_create_dir_all";
 pub extern "ari" fn remove_dir_unchecked(path: string) -> bool = "ari_builtin_fs_remove_dir";
-extern "ari" fn open_dir_raw(path: string) -> Dir = "ari_builtin_fs_open_dir";
+extern "ari" fn open_dir_handle_raw(path: string) -> Dir = "ari_builtin_fs_open_dir";
 pub extern "ari" fn close_dir_unchecked(dir: Dir) -> bool = "ari_builtin_fs_close_dir";
 extern "ari" fn remove_bytes_raw(data: ptr u8, len: i64) -> bool = "ari_builtin_fs_remove_bytes";
 extern "ari" fn remove_dir_bytes_raw(data: ptr u8, len: i64) -> bool = "ari_builtin_fs_remove_dir_bytes";
@@ -163,7 +163,7 @@ fn last_errno_error_raw() -> i64 {
   return error.raw();
 }
 
-fn unit_raw_result(ok: bool) -> std::Result[(), i64] {
+fn unit_raw(ok: bool) -> std::Result[(), i64] {
   if ok {
     return std::Ok<(), i64>(());
   }
@@ -221,12 +221,12 @@ fn system_time_from_nanos(nanos: i64) -> std::time::SystemTime {
   return std::time::system_from_unix(nanos / 1000000000, nanos % 1000000000);
 }
 
-pub fn remove_raw_result(path: string) -> std::Result[(), i64] {
-  return unit_raw_result(remove_unchecked(path));
+pub fn remove_raw(path: string) -> std::Result[(), i64] {
+  return unit_raw(remove_unchecked(path));
 }
 
 pub fn remove(path: string) -> std::Result[(), std::error::Error] {
-  return std::error::from_raw_result<()>(remove_raw_result(path));
+  return std::error::map_raw<()>(remove_raw(path));
 }
 
 pub fn remove_file(path: string) -> std::Result[(), std::error::Error] {
@@ -241,72 +241,72 @@ pub fn remove_file_bool(path: string) -> bool {
   return remove_bool(path);
 }
 
-pub fn rename_raw_result(source: string, target: string) -> std::Result[(), i64] {
-  return unit_raw_result(rename_unchecked(source, target));
+pub fn rename_raw(source: string, target: string) -> std::Result[(), i64] {
+  return unit_raw(rename_unchecked(source, target));
 }
 
 pub fn rename(source: string, target: string) -> std::Result[(), std::error::Error] {
-  return std::error::from_raw_result<()>(rename_raw_result(source, target));
+  return std::error::map_raw<()>(rename_raw(source, target));
 }
 
 pub fn rename_bool(source: string, target: string) -> bool {
   return rename_unchecked(source, target);
 }
 
-pub fn hard_link_raw_result(existing: string, link_path: string) -> std::Result[(), i64] {
-  return unit_raw_result(hard_link_unchecked(existing, link_path));
+pub fn hard_link_raw(existing: string, link_path: string) -> std::Result[(), i64] {
+  return unit_raw(hard_link_unchecked(existing, link_path));
 }
 
 pub fn hard_link(existing: string, link_path: string) -> std::Result[(), std::error::Error] {
-  return std::error::from_raw_result<()>(hard_link_raw_result(existing, link_path));
+  return std::error::map_raw<()>(hard_link_raw(existing, link_path));
 }
 
 pub fn hard_link_bool(existing: string, link_path: string) -> bool {
   return hard_link_unchecked(existing, link_path);
 }
 
-pub fn symbolic_link_raw_result(target: string, link_path: string) -> std::Result[(), i64] {
-  return unit_raw_result(symbolic_link_unchecked(target, link_path));
+pub fn symbolic_link_raw(target: string, link_path: string) -> std::Result[(), i64] {
+  return unit_raw(symbolic_link_unchecked(target, link_path));
 }
 
 pub fn symbolic_link(target: string, link_path: string) -> std::Result[(), std::error::Error] {
-  return std::error::from_raw_result<()>(symbolic_link_raw_result(target, link_path));
+  return std::error::map_raw<()>(symbolic_link_raw(target, link_path));
 }
 
 pub fn symbolic_link_bool(target: string, link_path: string) -> bool {
   return symbolic_link_unchecked(target, link_path);
 }
 
-pub fn create_dir_raw_result(path: string) -> std::Result[(), i64] {
-  return unit_raw_result(create_dir_unchecked(path));
+pub fn create_dir_raw(path: string) -> std::Result[(), i64] {
+  return unit_raw(create_dir_unchecked(path));
 }
 
 pub fn create_dir(path: string) -> std::Result[(), std::error::Error] {
-  return std::error::from_raw_result<()>(create_dir_raw_result(path));
+  return std::error::map_raw<()>(create_dir_raw(path));
 }
 
 pub fn create_dir_bool(path: string) -> bool {
   return create_dir_unchecked(path);
 }
 
-pub fn create_dir_all_raw_result(path: string) -> std::Result[(), i64] {
-  return unit_raw_result(create_dir_all_unchecked(path));
+pub fn create_dir_all_raw(path: string) -> std::Result[(), i64] {
+  return unit_raw(create_dir_all_unchecked(path));
 }
 
 pub fn create_dir_all(path: string) -> std::Result[(), std::error::Error] {
-  return std::error::from_raw_result<()>(create_dir_all_raw_result(path));
+  return std::error::map_raw<()>(create_dir_all_raw(path));
 }
 
 pub fn create_dir_all_bool(path: string) -> bool {
   return create_dir_all_unchecked(path);
 }
 
-pub fn remove_dir_raw_result(path: string) -> std::Result[(), i64] {
-  return unit_raw_result(remove_dir_unchecked(path));
+pub fn remove_dir_raw(path: string) -> std::Result[(), i64] {
+  return unit_raw(remove_dir_unchecked(path));
 }
 
 pub fn remove_dir(path: string) -> std::Result[(), std::error::Error] {
-  return std::error::from_raw_result<()>(remove_dir_raw_result(path));
+  return std::error::map_raw<()>(remove_dir_raw(path));
 }
 
 pub fn remove_dir_bool(path: string) -> bool {
@@ -317,11 +317,11 @@ pub fn close_dir_raw(dir: Dir) -> std::Result[(), i64] {
   if !dir.is_open() {
     return std::Err<(), i64>(invalid_input_error_raw());
   }
-  return unit_raw_result(close_dir_unchecked(dir));
+  return unit_raw(close_dir_unchecked(dir));
 }
 
 pub fn close_dir(dir: Dir) -> std::Result[(), std::error::Error] {
-  return std::error::from_raw_result<()>(close_dir_raw(dir));
+  return std::error::map_raw<()>(close_dir_raw(dir));
 }
 
 fn metadata_from_parts(
@@ -389,7 +389,7 @@ fn metadata_from_bytes(
   );
 }
 
-pub fn metadata_raw_result(path: string) -> std::Result[Metadata, i64] {
+pub fn metadata_raw(path: string) -> std::Result[Metadata, i64] {
   let kind = metadata_kind_raw(path);
   if kind < 0 {
     return std::Err<Metadata, i64>(last_errno_error_raw());
@@ -420,7 +420,7 @@ pub fn metadata_raw_result(path: string) -> std::Result[Metadata, i64] {
 }
 
 pub fn metadata(path: string) -> std::Result[Metadata, std::error::Error] {
-  return std::error::from_raw_result<Metadata>(metadata_raw_result(path));
+  return std::error::map_raw<Metadata>(metadata_raw(path));
 }
 
 pub fn metadata_optional(path: string) -> std::Option[Metadata] {
@@ -455,7 +455,7 @@ pub fn metadata_unchecked(path: string) -> Metadata {
   };
 }
 
-pub fn symlink_metadata_raw_result(path: string) -> std::Result[Metadata, i64] {
+pub fn symlink_metadata_raw(path: string) -> std::Result[Metadata, i64] {
   let kind = symlink_metadata_kind_raw(path);
   if kind < 0 {
     return std::Err<Metadata, i64>(last_errno_error_raw());
@@ -486,7 +486,7 @@ pub fn symlink_metadata_raw_result(path: string) -> std::Result[Metadata, i64] {
 }
 
 pub fn symlink_metadata(path: string) -> std::Result[Metadata, std::error::Error] {
-  return std::error::from_raw_result<Metadata>(symlink_metadata_raw_result(path));
+  return std::error::map_raw<Metadata>(symlink_metadata_raw(path));
 }
 
 pub fn symlink_metadata_optional(path: string) -> std::Option[Metadata] {
@@ -537,7 +537,7 @@ fn try_metadata_bytes(path: std::Slice[u8]) -> std::Option[Metadata] {
   );
 }
 
-fn metadata_bytes_raw_result(path: std::Slice[u8]) -> std::Result[Metadata, i64] {
+fn metadata_bytes_raw(path: std::Slice[u8]) -> std::Result[Metadata, i64] {
   let kind = metadata_kind_bytes_raw(path.data, path.len);
   if kind < 0 {
     return std::Err<Metadata, i64>(last_errno_error_raw());
@@ -583,7 +583,7 @@ fn try_symlink_metadata_bytes(path: std::Slice[u8]) -> std::Option[Metadata] {
   );
 }
 
-fn symlink_metadata_bytes_raw_result(path: std::Slice[u8]) -> std::Result[Metadata, i64] {
+fn symlink_metadata_bytes_raw(path: std::Slice[u8]) -> std::Result[Metadata, i64] {
   let kind = symlink_metadata_kind_bytes_raw(path.data, path.len);
   if kind < 0 {
     return std::Err<Metadata, i64>(last_errno_error_raw());
@@ -617,7 +617,7 @@ pub fn try_file_type(path: string) -> std::Option[FileKind] {
   return file_type_optional(path);
 }
 
-pub fn file_type_raw_result(path: string) -> std::Result[FileKind, i64] {
+pub fn file_type_raw(path: string) -> std::Result[FileKind, i64] {
   let kind = metadata_kind_raw(path);
   if kind < 0 {
     return std::Err<FileKind, i64>(last_errno_error_raw());
@@ -626,7 +626,7 @@ pub fn file_type_raw_result(path: string) -> std::Result[FileKind, i64] {
 }
 
 pub fn file_type(path: string) -> std::Result[FileKind, std::error::Error] {
-  return std::error::from_raw_result<FileKind>(file_type_raw_result(path));
+  return std::error::map_raw<FileKind>(file_type_raw(path));
 }
 
 pub fn file_type_optional(path: string) -> std::Option[FileKind] {
@@ -650,7 +650,7 @@ pub fn file_type_unchecked(path: string) -> FileKind {
   return Other;
 }
 
-fn file_type_bytes_raw_result(path: std::Slice[u8]) -> std::Result[FileKind, i64] {
+fn file_type_bytes_raw(path: std::Slice[u8]) -> std::Result[FileKind, i64] {
   let kind = metadata_kind_bytes_raw(path.data, path.len);
   if kind < 0 {
     return std::Err<FileKind, i64>(last_errno_error_raw());
@@ -717,7 +717,7 @@ pub fn try_mode(path: string) -> std::Option[i64] {
   return mode_optional(path);
 }
 
-pub fn mode_raw_result(path: string) -> std::Result[i64, i64] {
+pub fn mode_raw(path: string) -> std::Result[i64, i64] {
   let mode = metadata_mode_raw(path);
   if mode < 0 {
     return std::Err<i64, i64>(last_errno_error_raw());
@@ -726,7 +726,7 @@ pub fn mode_raw_result(path: string) -> std::Result[i64, i64] {
 }
 
 pub fn mode(path: string) -> std::Result[i64, std::error::Error] {
-  return std::error::from_raw_result<i64>(mode_raw_result(path));
+  return std::error::map_raw<i64>(mode_raw(path));
 }
 
 pub fn mode_optional(path: string) -> std::Option[i64] {
@@ -791,7 +791,7 @@ pub fn ensure_file(path: string) -> bool {
   return file.close().is_ok();
 }
 
-pub fn open_dir_raw_result(path: string) -> std::Result[Dir, i64] {
+pub fn open_dir_raw(path: string) -> std::Result[Dir, i64] {
   let dir = open_dir_unchecked(path);
   if dir.is_open() {
     return std::Ok<Dir, i64>(dir);
@@ -800,11 +800,11 @@ pub fn open_dir_raw_result(path: string) -> std::Result[Dir, i64] {
 }
 
 pub fn open_dir(path: string) -> std::Result[Dir, std::error::Error] {
-  return std::error::from_raw_result<Dir>(open_dir_raw_result(path));
+  return std::error::map_raw<Dir>(open_dir_raw(path));
 }
 
 pub fn open_dir_unchecked(path: string) -> Dir {
-  return open_dir_raw(path);
+  return open_dir_handle_raw(path);
 }
 
 pub fn try_open_dir(path: string) -> std::Option[Dir] {
@@ -1170,7 +1170,7 @@ pub fn try_open(path: string, mode: string) -> std::Option[File] {
   return open_optional(path, mode);
 }
 
-pub fn open_raw_result(path: string, mode: string) -> std::Result[File, i64] {
+pub fn open_raw(path: string, mode: string) -> std::Result[File, i64] {
   if !supported_open_mode(mode) {
     return std::Err<File, i64>(invalid_input_error_raw());
   }
@@ -1182,7 +1182,7 @@ pub fn open_raw_result(path: string, mode: string) -> std::Result[File, i64] {
 }
 
 pub fn open(path: string, mode: string) -> std::Result[File, std::error::Error] {
-  return std::error::from_raw_result<File>(open_raw_result(path, mode));
+  return std::error::map_raw<File>(open_raw(path, mode));
 }
 
 pub fn open_options() -> OpenOptions {
@@ -1205,8 +1205,8 @@ pub fn try_create(path: string) -> std::Option[File] {
   return create_optional(path);
 }
 
-pub fn create_raw_result(path: string) -> std::Result[File, i64] {
-  return open_raw_result(path, "w");
+pub fn create_raw(path: string) -> std::Result[File, i64] {
+  return open_raw(path, "w");
 }
 
 pub fn open_read_unchecked(path: string) -> File {
@@ -1272,11 +1272,11 @@ pub fn close_raw(file: File) -> std::Result[(), i64] {
   if !file.is_open() {
     return std::Err<(), i64>(invalid_input_error_raw());
   }
-  return unit_raw_result(close_unchecked(file));
+  return unit_raw(close_unchecked(file));
 }
 
 pub fn close(file: File) -> std::Result[(), std::error::Error] {
-  return std::error::from_raw_result<()>(close_raw(file));
+  return std::error::map_raw<()>(close_raw(file));
 }
 
 fn lock_operation_raw(file: File, operation: i64) -> std::Result[(), i64] {
@@ -1309,7 +1309,7 @@ pub fn lock_shared_raw(file: File) -> std::Result[(), i64] {
 }
 
 pub fn lock_shared(file: File) -> std::Result[(), std::error::Error] {
-  return std::error::from_raw_result<()>(lock_shared_raw(file));
+  return std::error::map_raw<()>(lock_shared_raw(file));
 }
 
 pub fn try_lock_shared(file: File) -> std::Result[bool, std::error::Error] {
@@ -1321,7 +1321,7 @@ pub fn lock_exclusive_raw(file: File) -> std::Result[(), i64] {
 }
 
 pub fn lock_exclusive(file: File) -> std::Result[(), std::error::Error] {
-  return std::error::from_raw_result<()>(lock_exclusive_raw(file));
+  return std::error::map_raw<()>(lock_exclusive_raw(file));
 }
 
 pub fn try_lock_exclusive(file: File) -> std::Result[bool, std::error::Error] {
@@ -1333,18 +1333,18 @@ pub fn unlock_raw(file: File) -> std::Result[(), i64] {
 }
 
 pub fn unlock(file: File) -> std::Result[(), std::error::Error] {
-  return std::error::from_raw_result<()>(unlock_raw(file));
+  return std::error::map_raw<()>(unlock_raw(file));
 }
 
 pub fn write_byte_raw(file: File, value: u8) -> std::Result[(), i64] {
   if !file.is_open() {
     return std::Err<(), i64>(invalid_input_error_raw());
   }
-  return unit_raw_result(write_byte_unchecked(file, value));
+  return unit_raw(write_byte_unchecked(file, value));
 }
 
 pub fn write_byte(file: File, value: u8) -> std::Result[(), std::error::Error] {
-  return std::error::from_raw_result<()>(write_byte_raw(file, value));
+  return std::error::map_raw<()>(write_byte_raw(file, value));
 }
 
 pub fn write_bytes_raw(file: File, values: std::Slice[u8]) -> std::Result[i64, i64] {
@@ -1366,7 +1366,7 @@ pub fn write_bytes_raw(file: File, values: std::Slice[u8]) -> std::Result[i64, i
 }
 
 pub fn write_bytes(file: File, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
-  return std::error::from_raw_result<i64>(write_bytes_raw(file, values));
+  return std::error::map_raw<i64>(write_bytes_raw(file, values));
 }
 
 pub fn position_raw(file: File) -> std::Result[i64, i64] {
@@ -1381,7 +1381,7 @@ pub fn position_raw(file: File) -> std::Result[i64, i64] {
 }
 
 pub fn position(file: File) -> std::Result[i64, std::error::Error] {
-  return std::error::from_raw_result<i64>(position_raw(file));
+  return std::error::map_raw<i64>(position_raw(file));
 }
 
 pub fn position_or(file: File, fallback: i64) -> i64 {
@@ -1392,11 +1392,11 @@ pub fn seek_raw(file: File, offset: i64) -> std::Result[(), i64] {
   if !file.is_open() || offset < 0 {
     return std::Err<(), i64>(invalid_input_error_raw());
   }
-  return unit_raw_result(seek_unchecked(file, offset));
+  return unit_raw(seek_unchecked(file, offset));
 }
 
 pub fn seek(file: File, offset: i64) -> std::Result[(), std::error::Error] {
-  return std::error::from_raw_result<()>(seek_raw(file, offset));
+  return std::error::map_raw<()>(seek_raw(file, offset));
 }
 
 pub fn try_read_byte(file: File) -> std::Option[u8] {
@@ -1407,8 +1407,8 @@ pub fn try_read_byte(file: File) -> std::Option[u8] {
   return std::Some<u8>(byte as u8);
 }
 
-fn write_all_raw_result_with_mode(path: string, mode: string, values: std::Slice[u8]) -> std::Result[i64, i64] {
-  match open_raw_result(path, mode) {
+fn write_all_raw_with_mode(path: string, mode: string, values: std::Slice[u8]) -> std::Result[i64, i64] {
+  match open_raw(path, mode) {
     std::Ok(file) => {
       match write_bytes_raw(file, values) {
         std::Ok(written) => {
@@ -1434,7 +1434,7 @@ fn write_all_raw_result_with_mode(path: string, mode: string, values: std::Slice
 }
 
 pub fn write(path: string, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
-  return std::error::from_raw_result<i64>(write_raw_result(path, values));
+  return std::error::map_raw<i64>(write_raw(path, values));
 }
 
 pub fn write_bool(path: string, values: std::Slice[u8]) -> bool {
@@ -1442,19 +1442,19 @@ pub fn write_bool(path: string, values: std::Slice[u8]) -> bool {
 }
 
 pub fn append(path: string, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
-  return std::error::from_raw_result<i64>(append_raw_result(path, values));
+  return std::error::map_raw<i64>(append_raw(path, values));
 }
 
 pub fn append_bool(path: string, values: std::Slice[u8]) -> bool {
   return try_append(path, values).is_some();
 }
 
-pub fn write_raw_result(path: string, values: std::Slice[u8]) -> std::Result[i64, i64] {
-  return write_all_raw_result_with_mode(path, "w", values);
+pub fn write_raw(path: string, values: std::Slice[u8]) -> std::Result[i64, i64] {
+  return write_all_raw_with_mode(path, "w", values);
 }
 
-pub fn append_raw_result(path: string, values: std::Slice[u8]) -> std::Result[i64, i64] {
-  return write_all_raw_result_with_mode(path, "a", values);
+pub fn append_raw(path: string, values: std::Slice[u8]) -> std::Result[i64, i64] {
+  return write_all_raw_with_mode(path, "a", values);
 }
 
 pub fn write_string(path: string, text: string) -> std::Result[(), std::error::Error] {
@@ -1469,11 +1469,11 @@ pub fn write_string(path: string, text: string) -> std::Result[(), std::error::E
 }
 
 pub fn try_write(path: string, values: std::Slice[u8]) -> std::Option[i64] {
-  return byte_count_option(write_raw_result(path, values));
+  return byte_count_option(write_raw(path, values));
 }
 
 pub fn try_append(path: string, values: std::Slice[u8]) -> std::Option[i64] {
-  return byte_count_option(append_raw_result(path, values));
+  return byte_count_option(append_raw(path, values));
 }
 
 pub fn read_to_string(zone: ref mut Zone, path: string) -> std::Result[std::string::String, std::error::Error] {
@@ -1591,10 +1591,10 @@ pub fn copy_bool(source: string, target: string) -> bool {
   return false;
 }
 
-pub fn copy_raw_result(source: string, target: string) -> std::Result[i64, i64] {
-  match open_raw_result(source, "r") {
+pub fn copy_raw(source: string, target: string) -> std::Result[i64, i64] {
+  match open_raw(source, "r") {
     std::Ok(reader) => {
-      match open_raw_result(target, "w") {
+      match open_raw(target, "w") {
         std::Ok(writer) => {
           // read_byte currently uses one EOF/failure sentinel, so copy
           // preserves open, write, and close errors while keeping read errors
@@ -1644,11 +1644,11 @@ pub fn copy_raw_result(source: string, target: string) -> std::Result[i64, i64] 
 }
 
 pub fn copy(source: string, target: string) -> std::Result[i64, std::error::Error] {
-  return std::error::from_raw_result<i64>(copy_raw_result(source, target));
+  return std::error::map_raw<i64>(copy_raw(source, target));
 }
 
 pub fn try_copy(source: string, target: string) -> std::Option[i64] {
-  return byte_count_option(copy_raw_result(source, target));
+  return byte_count_option(copy_raw(source, target));
 }
 
 pub impl std::fs::Permissions {
@@ -1949,7 +1949,7 @@ pub impl std::fs::OpenOptions {
     );
   }
 
-  fn open_raw_result(self: ref Self, path: string) -> std::Result[File, i64] {
+  fn open_raw(self: ref Self, path: string) -> std::Result[File, i64] {
     if !open_options_valid(self) {
       return std::Err<File, i64>(invalid_input_error_raw());
     }
@@ -1961,7 +1961,7 @@ pub impl std::fs::OpenOptions {
   }
 
   fn open(self: ref Self, path: string) -> std::Result[File, std::error::Error] {
-    return std::error::from_raw_result<File>(self.open_raw_result(path));
+    return std::error::map_raw<File>(self.open_raw(path));
   }
 
   fn open_optional(self: ref Self, path: string) -> std::Option[File] {
@@ -2073,7 +2073,7 @@ pub impl std::fs::DirEntry {
   }
 
   fn metadata(self: ref Self) -> std::Result[Metadata, std::error::Error] {
-    return std::error::from_raw_result<Metadata>(metadata_bytes_raw_result(self.path_value.as_slice()));
+    return std::error::map_raw<Metadata>(metadata_bytes_raw(self.path_value.as_slice()));
   }
 
   fn metadata_optional(self: ref Self) -> std::Option[Metadata] {
@@ -2109,7 +2109,7 @@ pub impl std::fs::DirEntry {
   }
 
   fn symlink_metadata(self: ref Self) -> std::Result[Metadata, std::error::Error] {
-    return std::error::from_raw_result<Metadata>(symlink_metadata_bytes_raw_result(self.path_value.as_slice()));
+    return std::error::map_raw<Metadata>(symlink_metadata_bytes_raw(self.path_value.as_slice()));
   }
 
   fn symlink_metadata_optional(self: ref Self) -> std::Option[Metadata] {
@@ -2145,7 +2145,7 @@ pub impl std::fs::DirEntry {
   }
 
   fn file_type(self: ref Self) -> std::Result[FileKind, std::error::Error] {
-    return std::error::from_raw_result<FileKind>(file_type_bytes_raw_result(self.path_value.as_slice()));
+    return std::error::map_raw<FileKind>(file_type_bytes_raw(self.path_value.as_slice()));
   }
 
   fn file_type_optional(self: ref Self) -> std::Option[FileKind] {
