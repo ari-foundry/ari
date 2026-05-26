@@ -390,7 +390,15 @@ pub fn hash_string(value: std::string::String) -> u64 {
   return std::hash::string(value);
 }
 
+fn default_hash[T: std::hash::Hash[T]](value: T) -> u64 {
+  return std::hash::value<T>(value);
+}
+
 pub fn less_i64(left: i64, right: i64) -> bool {
+  return left < right;
+}
+
+fn default_less[T: std::cmp::Ord[T]](left: T, right: T) -> bool {
   return left < right;
 }
 
@@ -1352,6 +1360,20 @@ pub impl[K, V] std::collections::HashMap[K, V] {
   }
 }
 
+pub impl[K: std::hash::Hash[K], V] std::collections::HashMap[K, V] {
+  fn with_capacity(
+    zone: ref mut Zone,
+    capacity: i64
+  ) -> std::collections::HashMap[K, V] {
+    let hash: fn(K) -> u64 = std::collections::default_hash;
+    return std::collections::hash_map<K, V>(
+      zone,
+      capacity,
+      hash
+    );
+  }
+}
+
 pub impl[V] std::collections::HashMap[std::string::String, V] {
   fn contains_key_bytes(self: ref Self, key: std::Slice[u8]) -> bool {
     return std::collections::hash_map_find_string_slot<V>(self, key) >= 0;
@@ -2044,6 +2066,20 @@ pub impl[T] std::collections::HashSet[T] {
       capacity: self.capacity,
       index: 0,
     };
+  }
+}
+
+pub impl[T: std::hash::Hash[T]] std::collections::HashSet[T] {
+  fn with_capacity(
+    zone: ref mut Zone,
+    capacity: i64
+  ) -> std::collections::HashSet[T] {
+    let hash: fn(T) -> u64 = std::collections::default_hash;
+    return std::collections::hash_set<T>(
+      zone,
+      capacity,
+      hash
+    );
   }
 }
 
@@ -3259,6 +3295,20 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
   }
 }
 
+pub impl[K: std::cmp::Ord[K], V] std::collections::TreeMap[K, V] {
+  fn with_capacity(
+    zone: ref mut Zone,
+    capacity: i64
+  ) -> std::collections::TreeMap[K, V] {
+    let less: fn(K, K) -> bool = std::collections::default_less;
+    return std::collections::tree_map<K, V>(
+      zone,
+      capacity,
+      less
+    );
+  }
+}
+
 pub impl[K, V] std::collections::TreeMapEntry[K, V] {
   fn and_modify(self, op: fn(ref mut V) -> void) -> Self {
     let map: ref mut std::collections::TreeMap[K, V] = ref mut *self.map;
@@ -4407,6 +4457,20 @@ impl[T] std::IntoIterator[T] for std::collections::TreeSet[T] {
       parent: self.parent,
       current: tree_first_node(self.root, self.left),
     };
+  }
+}
+
+pub impl[T: std::cmp::Ord[T]] std::collections::TreeSet[T] {
+  fn with_capacity(
+    zone: ref mut Zone,
+    capacity: i64
+  ) -> std::collections::TreeSet[T] {
+    let less: fn(T, T) -> bool = std::collections::default_less;
+    return std::collections::tree_set<T>(
+      zone,
+      capacity,
+      less
+    );
   }
 }
 

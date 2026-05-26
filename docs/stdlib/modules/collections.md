@@ -262,9 +262,10 @@ front-to-back values in the target zone, leaving free-list holes behind.
 ## HashMap And HashSet
 
 Hash collections are real hash tables, not aliases over `Set`. They use linear
-probing, tombstones for removal, and a load-factor growth rule. Until Ari has a
-standard `Hash`/`Eq` trait pair with dispatch through generic containers,
-constructors take a hash function explicitly.
+probing, tombstones for removal, and a load-factor growth rule. For ordinary
+keys that implement `std::hash::Hash`, use `with_capacity` to select the
+stdlib default hash policy. For caller-specific hash policy, use `with_hash` or
+the lower-level `collections::hash_map` / `collections::hash_set` constructors.
 For tracked local hash handles, `map.insert(key, value)`, `map.entry(key)`,
 `map.reserve(capacity)`, `map.reserve_extra(additional)`, `set.insert(value)`,
 `set.replace(value)`, `set.reserve(capacity)`, and
@@ -276,11 +277,13 @@ collections::hash_string(value)
 collections::hash_map<K, V>(ref mut zone, capacity, hash)
 collections::string_hash_map<V>(ref mut zone, capacity)
 HashMap::new<K, V>(ref mut zone, capacity, hash)
+HashMap::with_capacity<K: std::hash::Hash[K], V>(ref mut zone, capacity)
 HashMap::with_hash<K, V>(ref mut zone, capacity, hash)
 HashMap::from_iter<K, V, I>(ref mut zone, capacity, hash, iter)
 collections::hash_set<T>(ref mut zone, capacity, hash)
 collections::string_hash_set(ref mut zone, capacity)
 HashSet::new<T>(ref mut zone, capacity, hash)
+HashSet::with_capacity<T: std::hash::Hash[T]>(ref mut zone, capacity)
 HashSet::with_hash<T>(ref mut zone, capacity, hash)
 HashSet::from_iter<T, I>(ref mut zone, capacity, hash, iter)
 ```
@@ -293,12 +296,13 @@ compatibility helper for i64 keys and delegates to `std::hash::value<i64>`.
 `String` key case. Owned `String` equality is content-based through
 `std::cmp::Eq[String]`, so independently allocated strings with the same bytes
 find the same hash map entry.
-The planned trait-driven shape is for `HashMap::new<K: Hash[K] + Eq[K], V>`
-and `HashSet::new<T: Hash[T] + Eq[T]>` to select the default hash/equality
-policy automatically. Use `HashMap::with_hash` and `HashSet::with_hash` when a
-custom hash policy is intentional; `HashMap::new(zone, capacity, hash)` and
+`HashMap::with_capacity` and `HashSet::with_capacity` are the trait-driven
+constructors: they call `std::hash::value<T>` for the key/value type and leave
+equality to the same `==`/`std::cmp::Eq` behavior used by lookups. Use
+`HashMap::with_hash` and `HashSet::with_hash` when a custom hash policy is
+intentional; `HashMap::new(zone, capacity, hash)` and
 `HashSet::new(zone, capacity, hash)` remain compatibility spellings for the
-current explicit-hasher constructor shape.
+older explicit-hasher constructor shape.
 
 ```ari
 map.len()
@@ -478,29 +482,31 @@ a temporary key.
 ## TreeMap And TreeSet
 
 Tree collections are red-black trees. They provide ordered lookup without
-needing a hash function. Until trait dispatch is strong enough to use
-`std::cmp::Ord` directly in generic container internals, constructors take a
-strict less-than comparator.
+needing a hash function. For ordinary keys that implement `std::cmp::Ord`, use
+`with_capacity` to select the stdlib default less-than policy. Custom orderings
+stay explicit through comparator-taking constructors.
 
 ```ari
 collections::less_i64(left, right)
 collections::tree_map<K, V>(ref mut zone, capacity, less)
 TreeMap::new<K, V>(ref mut zone, capacity, less)
+TreeMap::with_capacity<K: std::cmp::Ord[K], V>(ref mut zone, capacity)
 TreeMap::from_iter<K, V, I>(ref mut zone, capacity, less, iter)
 collections::tree_set<T>(ref mut zone, capacity, less)
 TreeSet::new<T>(ref mut zone, capacity, less)
+TreeSet::with_capacity<T: std::cmp::Ord[T]>(ref mut zone, capacity)
 TreeSet::from_iter<T, I>(ref mut zone, capacity, less, iter)
 ```
 
 The comparator shape is `fn(K, K) -> bool` for `TreeMap[K, V]` and
 `fn(T, T) -> bool` for `TreeSet[T]`. `collections::less_i64` is the first
 built-in helper for i64 keys.
-The intended trait-driven constructor shape is for
-`TreeMap::new<K: std::cmp::Ord[K], V>` and
-`TreeSet::new<T: std::cmp::Ord[T]>` to synthesize/select the default
-less-than comparator from `Ord[T]`. Custom orderings should stay explicit,
-for example as `with_less`, so caller-specific sort policy remains readable
-without making the common ordered-map path noisy.
+`TreeMap::with_capacity` and `TreeSet::with_capacity` are the trait-driven
+constructors: they use the ordinary `<` operation available through
+`std::cmp::Ord[T]`. Keep custom orderings explicit with `TreeMap::new`,
+`TreeSet::new`, `collections::tree_map`, or `collections::tree_set`, so
+caller-specific sort policy remains readable without making the common ordered
+path noisy.
 
 ```ari
 map.len()
@@ -790,14 +796,13 @@ fn main() -> i64 {
 }
 ```
 
-`HashMap::with_hash(ref mut zone, capacity, hash)` is the named custom-hasher
-constructor. `HashMap::new(ref mut zone, capacity, hash)` is still accepted as a
-compatibility spelling while the stdlib waits for trait-driven default hasher
-selection. The intended future spelling for ordinary hashable keys is
-`HashMap::new<K: Hash[K] + Eq[K], V>(ref mut zone, capacity)`, with the
-explicit hash-function form living under `with_hash`. Until then,
-`string_hash_map` is the natural `HashMap[String, V]` constructor and uses
-content hashing plus content equality for independently allocated `String`
+`HashMap::with_capacity(ref mut zone, capacity)` is the common constructor for
+ordinary hashable keys. `HashMap::with_hash(ref mut zone, capacity, hash)` is
+the named custom-hasher constructor. `HashMap::new(ref mut zone, capacity,
+hash)` is still accepted as a compatibility spelling for the older explicit
+hash-function form. `string_hash_map` remains the concise
+`HashMap[String, V]` constructor and uses content hashing plus content equality
+for independently allocated `String`
 values. For parser code, use the `_bytes` methods on `HashMap[String, V]` and
 `HashSet[String]` when the query key is already a borrowed `Slice[u8]`.
 
@@ -949,14 +954,12 @@ and checked by `make check-std-api`.
 - Hash and tree containers are copy-style value APIs today, matching the
   current `Set`/`Vec` source style. Use simple copyable keys and values until
   trait bounds can express copy, hash, equality, and ordering requirements.
-- Hash containers require an explicit hash function. The future API should
-  prefer `HashMap::new<K: Hash[K] + Eq[K], V>` and
-  `HashSet::new<T: Hash[T] + Eq[T]>` once trait dispatch is ready, with
-  explicit custom policy moved to a `with_hash`-style constructor.
-- Tree containers require an explicit comparator. The future API should use
-  `Ord`-driven `TreeMap::new<K: Ord[K], V>`, `TreeSet::new<T: Ord[T]>`, and
-  heap/priority-queue defaults when generic trait dispatch is strong enough,
-  with custom policy moved to a `with_less`-style constructor.
+- Hash containers now have `with_capacity` trait-driven constructors for
+  ordinary `Hash[T]` keys. Use explicit hash constructors only when custom hash
+  policy is intentional.
+- Tree containers now have `with_capacity` trait-driven constructors for
+  ordinary `Ord[T]` keys. Use explicit comparator constructors only when custom
+  ordering policy is intentional.
 - `values_mut()` uses a `has_next()`/`next()` cursor because Ari does not yet
   lower `Iterator[ref mut T]`/`Option[ref mut T]` as a stable public iterator
   item shape. Map `iter_mut()` therefore yields `MapEntryMut[K,V]` handles

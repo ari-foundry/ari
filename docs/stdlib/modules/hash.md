@@ -142,10 +142,9 @@ impl hash::Hash[Pair] for Pair {
 - The algorithm is a simple FNV-1a style byte mixer with a final avalanche.
   It is good enough as a stdlib seed, not a promise of long-term ABI-stable
   hash values.
-- `HashMap` and `HashSet` still take explicit hash functions. Future
-  trait-driven constructors should use `Hash[T]` plus `Eq[T]` as the default
-  map/set policy once trait dispatch and equality policy are stronger, with
-  custom hash policy kept under explicit names.
+- `HashMap::with_capacity` and `HashSet::with_capacity` use `Hash[T]` through
+  `hash::value<T>` as the default map/set hash policy. Custom hash policy stays
+  explicit through `with_hash` or the lower-level collection constructors.
 - Hex/base64 encoding lives in `std::encoding`; keep `std::hash` focused on
   deterministic non-cryptographic hash values.
 

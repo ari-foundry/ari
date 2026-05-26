@@ -24,12 +24,12 @@ platform notes.
 
 ## Summary
 
-- API entries: `3298`
+- API entries: `3302`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
-| `alloc` | 887 | usable |
+| `alloc` | 891 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 900 | stable candidate |
 | `hosted` | 1324 | platform-backed |
@@ -39,7 +39,7 @@ platform notes.
 | --- | ---: |
 | `enum` | 32 |
 | `fn` | 1182 |
-| `method` | 1673 |
+| `method` | 1677 |
 | `module` | 39 |
 | `struct` | 173 |
 | `trait` | 39 |
@@ -59,7 +59,7 @@ platform notes.
 | `std::c` | `platform` | 49 |
 | `std::cell` | `alloc` | 44 |
 | `std::cmp` | `core` | 38 |
-| `std::collections` | `alloc` | 379 |
+| `std::collections` | `alloc` | 383 |
 | `std::context` | `hosted` | 20 |
 | `std::convert` | `core` | 14 |
 | `std::encoding` | `core` | 98 |
@@ -945,6 +945,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::collections::HashMap[K,V]::try_get_mut` | check-prelude std-collections-map-mut-access optional hash map mutable value handle lookup; docs/stdlib/modules/collections.md |
 | `method std::collections::HashMap[K,V]::values` | check-prelude std-collections-hash-iter bucket-order value iterator; docs/stdlib/modules/collections.md |
 | `method std::collections::HashMap[K,V]::values_mut` | check-prelude std-collections-view-api mutable live-bucket value cursor; docs/stdlib/modules/collections.md |
+| `method std::collections::HashMap[K,V]::with_capacity` | check-prelude std-collections-map-natural-api trait-driven default-hash hash map constructor; docs/stdlib/modules/collections.md |
 | `method std::collections::HashMap[K,V]::with_hash` | check-prelude std-collections-hash-with-hash explicit custom-hasher constructor and HashMap::new migration path; docs/stdlib/modules/collections.md |
 | `method std::collections::HashMap[std::string::String,V]::contains_key_bytes` | check-prelude std-collections-string-map borrowed byte-slice lookup for String-key hash maps; docs/stdlib/modules/collections.md |
 | `method std::collections::HashMap[std::string::String,V]::get_bytes` | check-prelude std-collections-string-map asserting borrowed byte-slice lookup for String-key hash maps; docs/stdlib/modules/collections.md |
@@ -979,6 +980,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::collections::HashSet[T]::retain` | check-prelude std-collections-retain hash set in-place predicate filtering; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::take` | check-prelude std-collections-hash Option-returning removal; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::try_get` | check-prelude std-collections-set-representatives optional stored representative lookup; docs/stdlib/modules/collections.md |
+| `method std::collections::HashSet[T]::with_capacity` | check-prelude std-collections-map-natural-api trait-driven default-hash hash set constructor; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::with_hash` | check-prelude std-collections-hash-with-hash explicit custom-hasher constructor and HashSet::new migration path; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[std::string::String]::contains_bytes` | check-prelude std-collections-string-map borrowed byte-slice lookup for String hash sets; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[std::string::String]::get_bytes` | check-prelude std-collections-string-map asserting borrowed byte-slice representative lookup for String hash sets; docs/stdlib/modules/collections.md |
@@ -1146,6 +1148,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::collections::TreeMap[K,V]::upper_bound` | check-prelude std-collections-tree-bounds optional first entry greater than key; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeMap[K,V]::values` | check-prelude std-collections-tree-iter sorted-by-key value iterator; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeMap[K,V]::values_mut` | check-prelude std-collections-view-api mutable sorted-by-key value cursor; docs/stdlib/modules/collections.md |
+| `method std::collections::TreeMap[K,V]::with_capacity` | check-prelude std-collections-map-natural-api trait-driven default-order tree map constructor; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::append` | check-prelude std-collections-polish-api same-zone ordered set drain append; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::capacity` | check-prelude std-collections-tree tree set capacity metadata; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::clear` | check-prelude std-collections-tree drops live tree set nodes; docs/stdlib/modules/collections.md |
@@ -1179,6 +1182,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::collections::TreeSet[T]::try_get` | check-prelude std-collections-set-representatives optional ordered representative lookup; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::try_last` | check-prelude std-collections-tree-boundaries optional largest-value accessor; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::upper_bound` | check-prelude std-collections-tree-bounds optional first value greater than target; docs/stdlib/modules/collections.md |
+| `method std::collections::TreeSet[T]::with_capacity` | check-prelude std-collections-map-natural-api trait-driven default-order tree set constructor; docs/stdlib/modules/collections.md |
 
 ### module
 

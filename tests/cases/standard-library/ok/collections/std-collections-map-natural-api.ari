@@ -8,7 +8,31 @@ fn main() -> i64 {
   var zone = zone::create(4096);
   var hash = HashMap::new<i64, i64>(ref mut zone, 1, constant_hash);
   var tree = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  var default_hash = HashMap::with_capacity<i64, i64>(ref mut zone, 1);
+  var default_set = HashSet::with_capacity<i64>(ref mut zone, 1);
+  var default_tree = TreeMap::with_capacity<i64, i64>(ref mut zone, 1);
+  var default_tree_set = TreeSet::with_capacity<i64>(ref mut zone, 1);
   var score = 0;
+
+  default_hash.insert(ref mut zone, 4, 40);
+  default_hash.insert(ref mut zone, 4, 41);
+  assert(default_hash.len() == 1);
+  assert(default_hash.get_or(4, 0) == 41);
+  assert(default_hash.get_or(8, 88) == 88);
+
+  assert(default_set.insert(ref mut zone, 7));
+  assert(!default_set.insert(ref mut zone, 7));
+  assert(default_set.contains(7));
+
+  default_tree.insert(ref mut zone, 3, 30);
+  default_tree.insert(ref mut zone, 1, 10);
+  assert(default_tree.first_entry().key() == 1);
+  assert(default_tree.last_entry().value() == 30);
+
+  assert(default_tree_set.insert(ref mut zone, 9));
+  assert(default_tree_set.insert(ref mut zone, 2));
+  assert(default_tree_set.first() == 2);
+  assert(default_tree_set.last() == 9);
 
   hash.insert(ref mut zone, 1, 10);
   hash.insert(ref mut zone, 9, 90);
