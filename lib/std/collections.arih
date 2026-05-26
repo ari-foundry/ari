@@ -908,6 +908,52 @@ fn hash_map_find_slot_mut[K, V](map: ref mut std::collections::HashMap[K, V], ke
   return -1;
 }
 
+fn hash_map_find_string_slot[V](
+  map: ref std::collections::HashMap[std::string::String, V],
+  key: std::Slice[u8]
+) -> i64 {
+  var index = bucket_for(std::hash::bytes(key), map.capacity);
+  var scanned = 0;
+  while scanned < map.capacity {
+    let state = ptr_load(ptr_add(map.states, index));
+    if state == 0 {
+      return -1;
+    }
+    if state == 1 {
+      let stored_key = ptr_load(ptr_add(map.keys, index));
+      if stored_key.equals(key) {
+        return index;
+      }
+    }
+    index = (index + 1) % map.capacity;
+    scanned = scanned + 1;
+  }
+  return -1;
+}
+
+fn hash_map_find_string_slot_mut[V](
+  map: ref mut std::collections::HashMap[std::string::String, V],
+  key: std::Slice[u8]
+) -> i64 {
+  var index = bucket_for(std::hash::bytes(key), map.capacity);
+  var scanned = 0;
+  while scanned < map.capacity {
+    let state = ptr_load(ptr_add(map.states, index));
+    if state == 0 {
+      return -1;
+    }
+    if state == 1 {
+      let stored_key = ptr_load(ptr_add(map.keys, index));
+      if stored_key.equals(key) {
+        return index;
+      }
+    }
+    index = (index + 1) % map.capacity;
+    scanned = scanned + 1;
+  }
+  return -1;
+}
+
 fn hash_map_find_insert_slot[K, V](map: ref mut std::collections::HashMap[K, V], key: K) -> i64 {
   let hash = map.hash;
   var index = bucket_for(hash(key), map.capacity);
@@ -1306,6 +1352,78 @@ pub impl[K, V] std::collections::HashMap[K, V] {
   }
 }
 
+pub impl[V] std::collections::HashMap[std::string::String, V] {
+  fn contains_key_bytes(self: ref Self, key: std::Slice[u8]) -> bool {
+    return std::collections::hash_map_find_string_slot<V>(self, key) >= 0;
+  }
+
+  fn try_get_bytes(self: ref Self, key: std::Slice[u8]) -> std::Option[V] {
+    let index = std::collections::hash_map_find_string_slot<V>(self, key);
+    if index < 0 {
+      return std::None<V>();
+    }
+    return std::Some<V>(ptr_load(ptr_add(self.values, index)));
+  }
+
+  fn get_bytes(self: ref Self, key: std::Slice[u8]) -> V {
+    let index = std::collections::hash_map_find_string_slot<V>(self, key);
+    std::assert(index >= 0);
+    return ptr_load(ptr_add(self.values, index));
+  }
+
+  fn get_or_bytes(self: ref Self, key: std::Slice[u8], fallback: V) -> V {
+    return self.try_get_bytes(key).unwrap_or(fallback);
+  }
+
+  fn try_get_mut_bytes(self: ref mut Self, key: std::Slice[u8]) -> std::Option[std::collections::MapValueMut[V]] {
+    let index = std::collections::hash_map_find_string_slot_mut<V>(self, key);
+    if index < 0 {
+      return std::None<std::collections::MapValueMut[V]>();
+    }
+    return std::Some<std::collections::MapValueMut[V]>(
+      std::collections::MapValueMut<V> {
+        value: ptr_add(self.values, index),
+      }
+    );
+  }
+
+  fn get_mut_bytes(self: ref mut Self, key: std::Slice[u8]) -> ref mut V {
+    let index = std::collections::hash_map_find_string_slot_mut<V>(self, key);
+    std::assert(index >= 0);
+    return ref mut *ptr_add(self.values, index);
+  }
+
+  fn remove_bytes(self: ref mut Self, key: std::Slice[u8]) -> std::Option[V] {
+    let index = std::collections::hash_map_find_string_slot_mut<V>(self, key);
+    if index < 0 {
+      return std::None<V>();
+    }
+    let removed_key = ptr_load(ptr_add(self.keys, index));
+    let removed_value = ptr_load(ptr_add(self.values, index));
+    drop removed_key;
+    ptr_store(ptr_add(self.states, index), 2);
+    self.len = self.len - 1;
+    return std::Some<V>(removed_value);
+  }
+
+  fn remove_entry_bytes(self: ref mut Self, key: std::Slice[u8]) -> std::Option[std::collections::MapEntry[std::string::String, V]] {
+    let index = std::collections::hash_map_find_string_slot_mut<V>(self, key);
+    if index < 0 {
+      return std::None<std::collections::MapEntry[std::string::String, V]>();
+    }
+    let removed_key = ptr_load(ptr_add(self.keys, index));
+    let removed_value = ptr_load(ptr_add(self.values, index));
+    ptr_store(ptr_add(self.states, index), 2);
+    self.len = self.len - 1;
+    return std::Some<std::collections::MapEntry[std::string::String, V]>(
+      std::collections::MapEntry<std::string::String, V> {
+        key: removed_key,
+        value: removed_value,
+      }
+    );
+  }
+}
+
 pub impl[K, V] std::collections::HashMapEntry[K, V] {
   fn and_modify(self, op: fn(ref mut V) -> void) -> Self {
     let map: ref mut std::collections::HashMap[K, V] = ref mut *self.map;
@@ -1571,6 +1689,46 @@ fn hash_set_find_slot_mut[T](set: ref mut std::collections::HashSet[T], value: T
     }
     if state == 1 {
       if ptr_load(ptr_add(set.data, index)) == value {
+        return index;
+      }
+    }
+    index = (index + 1) % set.capacity;
+    scanned = scanned + 1;
+  }
+  return -1;
+}
+
+fn hash_set_find_string_slot(set: ref std::collections::HashSet[std::string::String], value: std::Slice[u8]) -> i64 {
+  var index = bucket_for(std::hash::bytes(value), set.capacity);
+  var scanned = 0;
+  while scanned < set.capacity {
+    let state = ptr_load(ptr_add(set.states, index));
+    if state == 0 {
+      return -1;
+    }
+    if state == 1 {
+      let stored_value = ptr_load(ptr_add(set.data, index));
+      if stored_value.equals(value) {
+        return index;
+      }
+    }
+    index = (index + 1) % set.capacity;
+    scanned = scanned + 1;
+  }
+  return -1;
+}
+
+fn hash_set_find_string_slot_mut(set: ref mut std::collections::HashSet[std::string::String], value: std::Slice[u8]) -> i64 {
+  var index = bucket_for(std::hash::bytes(value), set.capacity);
+  var scanned = 0;
+  while scanned < set.capacity {
+    let state = ptr_load(ptr_add(set.states, index));
+    if state == 0 {
+      return -1;
+    }
+    if state == 1 {
+      let stored_value = ptr_load(ptr_add(set.data, index));
+      if stored_value.equals(value) {
         return index;
       }
     }
@@ -1886,6 +2044,50 @@ pub impl[T] std::collections::HashSet[T] {
       capacity: self.capacity,
       index: 0,
     };
+  }
+}
+
+pub impl std::collections::HashSet[std::string::String] {
+  fn contains_bytes(self: ref Self, value: std::Slice[u8]) -> bool {
+    return std::collections::hash_set_find_string_slot(self, value) >= 0;
+  }
+
+  fn try_get_bytes(self: ref Self, value: std::Slice[u8]) -> std::Option[std::string::String] {
+    let index = std::collections::hash_set_find_string_slot(self, value);
+    if index < 0 {
+      return std::None<std::string::String>();
+    }
+    return std::Some<std::string::String>(ptr_load(ptr_add(self.data, index)));
+  }
+
+  fn get_bytes(self: ref Self, value: std::Slice[u8]) -> std::string::String {
+    let index = std::collections::hash_set_find_string_slot(self, value);
+    std::assert(index >= 0);
+    return ptr_load(ptr_add(self.data, index));
+  }
+
+  fn take_bytes(self: ref mut Self, value: std::Slice[u8]) -> std::Option[std::string::String] {
+    let index = std::collections::hash_set_find_string_slot_mut(self, value);
+    if index < 0 {
+      return std::None<std::string::String>();
+    }
+    let removed = ptr_load(ptr_add(self.data, index));
+    ptr_store(ptr_add(self.states, index), 2);
+    self.len = self.len - 1;
+    return std::Some<std::string::String>(removed);
+  }
+
+  fn remove_bytes(self: ref mut Self, value: std::Slice[u8]) -> bool {
+    let removed = self.take_bytes(value);
+    match removed {
+      std::Some(found) => {
+        drop found;
+        return true;
+      }
+      std::None => {
+        return false;
+      }
+    }
   }
 }
 

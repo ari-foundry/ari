@@ -161,11 +161,12 @@ work. Each one should land in small tested slices with natural API names.
 - Add collection helpers in small slices: slice methods, vector methods, the
   current linear `Set[T]` access/update/reserve/iteration surface, hash/table
   lookup and tombstones, tree insertion/lookup, hash and tree iterators,
-  deque/ring-buffer/linked-list/heap families, direct red-black deletion, and
-  then trait-driven constructors.
+  deque/ring-buffer/linked-list/heap families, direct red-black deletion,
+  String-key borrowed byte-slice lookup, and then trait-driven constructors
+  plus general borrowed lookup.
 - Keep `HashMap`/`HashSet` and `TreeMap`/`TreeSet` on explicit hash or
   comparator constructors until generic trait-driven `Hash`, `Eq`, and `Ord`
-  selection is testable.
+  selection and general borrowed lookup are testable.
 - When trait-driven collection constructors land, make the common constructor
   names use trait defaults: `HashMap::new`/`HashSet::new` from `Hash + Eq`,
   and `TreeMap::new`/`TreeSet::new`/heap constructors from `Ord`. Keep custom

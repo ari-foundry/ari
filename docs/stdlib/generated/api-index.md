@@ -24,12 +24,12 @@ platform notes.
 
 ## Summary
 
-- API entries: `3227`
+- API entries: `3240`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
-| `alloc` | 848 | usable |
+| `alloc` | 861 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 868 | stable candidate |
 | `hosted` | 1324 | platform-backed |
@@ -39,7 +39,7 @@ platform notes.
 | --- | ---: |
 | `enum` | 32 |
 | `fn` | 1169 |
-| `method` | 1617 |
+| `method` | 1630 |
 | `module` | 39 |
 | `struct` | 171 |
 | `trait` | 39 |
@@ -59,7 +59,7 @@ platform notes.
 | `std::c` | `platform` | 49 |
 | `std::cell` | `alloc` | 44 |
 | `std::cmp` | `core` | 38 |
-| `std::collections` | `alloc` | 366 |
+| `std::collections` | `alloc` | 379 |
 | `std::context` | `hosted` | 20 |
 | `std::convert` | `core` | 14 |
 | `std::encoding` | `core` | 98 |
@@ -946,6 +946,14 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::collections::HashMap[K,V]::values` | check-prelude std-collections-hash-iter bucket-order value iterator; docs/stdlib/modules/collections.md |
 | `method std::collections::HashMap[K,V]::values_mut` | check-prelude std-collections-view-api mutable live-bucket value cursor; docs/stdlib/modules/collections.md |
 | `method std::collections::HashMap[K,V]::with_hash` | check-prelude std-collections-hash-with-hash explicit custom-hasher constructor and HashMap::new migration path; docs/stdlib/modules/collections.md |
+| `method std::collections::HashMap[std::string::String,V]::contains_key_bytes` | check-prelude std-collections-string-map borrowed byte-slice lookup for String-key hash maps; docs/stdlib/modules/collections.md |
+| `method std::collections::HashMap[std::string::String,V]::get_bytes` | check-prelude std-collections-string-map asserting borrowed byte-slice lookup for String-key hash maps; docs/stdlib/modules/collections.md |
+| `method std::collections::HashMap[std::string::String,V]::get_mut_bytes` | check-prelude std-collections-string-map asserting borrowed mutable byte-slice lookup for String-key hash maps; docs/stdlib/modules/collections.md |
+| `method std::collections::HashMap[std::string::String,V]::get_or_bytes` | check-prelude std-collections-string-map fallback borrowed byte-slice lookup for String-key hash maps; docs/stdlib/modules/collections.md |
+| `method std::collections::HashMap[std::string::String,V]::remove_bytes` | check-prelude std-collections-string-map borrowed byte-slice removal for String-key hash maps; docs/stdlib/modules/collections.md |
+| `method std::collections::HashMap[std::string::String,V]::remove_entry_bytes` | check-prelude std-collections-string-map borrowed byte-slice key-value removal for String-key hash maps; docs/stdlib/modules/collections.md |
+| `method std::collections::HashMap[std::string::String,V]::try_get_bytes` | check-prelude std-collections-string-map optional borrowed byte-slice lookup for String-key hash maps; docs/stdlib/modules/collections.md |
+| `method std::collections::HashMap[std::string::String,V]::try_get_mut_bytes` | check-prelude std-collections-string-map optional borrowed mutable byte-slice lookup for String-key hash maps; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::capacity` | check-prelude std-collections-hash hash set capacity metadata; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::clear` | check-prelude std-collections-hash drops live hash set entries; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::contains` | check-prelude std-collections-hash hash set lookup predicate; docs/stdlib/modules/collections.md |
@@ -972,6 +980,11 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::collections::HashSet[T]::take` | check-prelude std-collections-hash Option-returning removal; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::try_get` | check-prelude std-collections-set-representatives optional stored representative lookup; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::with_hash` | check-prelude std-collections-hash-with-hash explicit custom-hasher constructor and HashSet::new migration path; docs/stdlib/modules/collections.md |
+| `method std::collections::HashSet[std::string::String]::contains_bytes` | check-prelude std-collections-string-map borrowed byte-slice lookup for String hash sets; docs/stdlib/modules/collections.md |
+| `method std::collections::HashSet[std::string::String]::get_bytes` | check-prelude std-collections-string-map asserting borrowed byte-slice representative lookup for String hash sets; docs/stdlib/modules/collections.md |
+| `method std::collections::HashSet[std::string::String]::remove_bytes` | check-prelude std-collections-string-map borrowed byte-slice removal for String hash sets; docs/stdlib/modules/collections.md |
+| `method std::collections::HashSet[std::string::String]::take_bytes` | check-prelude std-collections-string-map optional borrowed byte-slice representative removal for String hash sets; docs/stdlib/modules/collections.md |
+| `method std::collections::HashSet[std::string::String]::try_get_bytes` | check-prelude std-collections-string-map optional borrowed byte-slice representative lookup for String hash sets; docs/stdlib/modules/collections.md |
 | `method std::collections::LinkedList[T]::back` | check-prelude std-collections-linked-list asserting back accessor; docs/stdlib/modules/collections.md |
 | `method std::collections::LinkedList[T]::capacity` | check-prelude std-collections-linked-list linked list capacity metadata; docs/stdlib/modules/collections.md |
 | `method std::collections::LinkedList[T]::clear` | check-prelude std-collections-linked-list drops live linked list values; docs/stdlib/modules/collections.md |

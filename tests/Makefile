@@ -2982,6 +2982,19 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std11collections15string_hash_set' $(BUILD_DIR)/prelude/std-collections-string-map.ll
 	grep -q 'HashMap_std__string__String__std__string__String_8inherent12contains_key' $(BUILD_DIR)/prelude/std-collections-string-map.ll
 	grep -q 'HashMap_std__string__String__std__string__String_8inherent6get_or' $(BUILD_DIR)/prelude/std-collections-string-map.ll
+	grep -q 'HashMap_std__string__String__std__string__String_8inherent18contains_key_bytes' $(BUILD_DIR)/prelude/std-collections-string-map.ll
+	grep -q 'HashMap_std__string__String__std__string__String_8inherent9get_bytes' $(BUILD_DIR)/prelude/std-collections-string-map.ll
+	grep -q 'HashMap_std__string__String__std__string__String_8inherent12get_or_bytes' $(BUILD_DIR)/prelude/std-collections-string-map.ll
+	grep -q 'HashMap_std__string__String__std__string__String_8inherent13get_mut_bytes' $(BUILD_DIR)/prelude/std-collections-string-map.ll
+	grep -q 'HashMap_std__string__String__std__string__String_8inherent13try_get_bytes' $(BUILD_DIR)/prelude/std-collections-string-map.ll
+	grep -q 'HashMap_std__string__String__std__string__String_8inherent17try_get_mut_bytes' $(BUILD_DIR)/prelude/std-collections-string-map.ll
+	grep -q 'HashMap_std__string__String__std__string__String_8inherent12remove_bytes' $(BUILD_DIR)/prelude/std-collections-string-map.ll
+	grep -q 'HashMap_std__string__String__std__string__String_8inherent18remove_entry_bytes' $(BUILD_DIR)/prelude/std-collections-string-map.ll
+	grep -q 'HashSet_std__string__String_8inherent14contains_bytes' $(BUILD_DIR)/prelude/std-collections-string-map.ll
+	grep -q 'HashSet_std__string__String_8inherent9get_bytes' $(BUILD_DIR)/prelude/std-collections-string-map.ll
+	grep -q 'HashSet_std__string__String_8inherent13try_get_bytes' $(BUILD_DIR)/prelude/std-collections-string-map.ll
+	grep -q 'HashSet_std__string__String_8inherent10take_bytes' $(BUILD_DIR)/prelude/std-collections-string-map.ll
+	grep -q 'HashSet_std__string__String_8inherent12remove_bytes' $(BUILD_DIR)/prelude/std-collections-string-map.ll
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-string-map.ari -o $(BUILD_DIR)/prelude/std-collections-string-map.elf
 	$(BUILD_DIR)/prelude/std-collections-string-map.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-representatives.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-set-representatives.ll

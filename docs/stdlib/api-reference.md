@@ -2784,17 +2784,25 @@ map.is_empty()
 map.contains(key)
 map.contains_key(key)
 map.contains_value(value)
+map.contains_key_bytes(bytes) // HashMap[String, V]
 map.get(key)
+map.get_bytes(bytes) // HashMap[String, V]
 map.get_or(key, fallback)
+map.get_or_bytes(bytes, fallback) // HashMap[String, V]
 map.try_get(key)
+map.try_get_bytes(bytes) // HashMap[String, V]
 map.get_mut(key)
+map.get_mut_bytes(bytes) // HashMap[String, V]
 map.try_get_mut(key)
+map.try_get_mut_bytes(bytes) // HashMap[String, V]
 map.insert(ref mut zone, key, value)
 map.replace(ref mut zone, key, value)
 map.entry(ref mut zone, key)
 map.entry(key)
 map.remove(key)
+map.remove_bytes(bytes) // HashMap[String, V]
 map.remove_entry(key)
+map.remove_entry_bytes(bytes) // HashMap[String, V]
 map.clear()
 map.retain(keep)
 map.reserve(ref mut zone, capacity)
@@ -2815,8 +2823,11 @@ set.len()
 set.capacity()
 set.is_empty()
 set.contains(value)
+set.contains_bytes(bytes) // HashSet[String]
 set.get(value)
+set.get_bytes(bytes) // HashSet[String]
 set.try_get(value)
+set.try_get_bytes(bytes) // HashSet[String]
 set.equals(ref other)
 set.is_subset(ref other)
 set.is_superset(ref other)
@@ -2824,7 +2835,9 @@ set.is_disjoint(ref other)
 set.insert(ref mut zone, value)
 set.replace(ref mut zone, value)
 set.take(value)
+set.take_bytes(bytes) // HashSet[String]
 set.remove(value)
+set.remove_bytes(bytes) // HashSet[String]
 set.clear()
 set.retain(keep)
 set.reserve(ref mut zone, capacity)
@@ -2839,6 +2852,14 @@ set.drain()
 keys. `collections::string_hash_map` and `collections::string_hash_set` wire
 that hash policy in for the common `HashMap[String,V]` and `HashSet[String]`
 cases while explicit custom hash constructors remain available.
+For parser-style code where the lookup key is already borrowed bytes,
+`HashMap[String,V]` also exposes `contains_key_bytes`, `try_get_bytes`,
+`get_bytes`, `get_or_bytes`, `try_get_mut_bytes`, `get_mut_bytes`,
+`remove_bytes`, and `remove_entry_bytes`. `HashSet[String]` mirrors the same
+idea with `contains_bytes`, `try_get_bytes`, `get_bytes`, `take_bytes`, and
+`remove_bytes`. These helpers hash the borrowed `Slice[u8]` directly and
+compare against stored `String` keys/values by byte content, avoiding a
+temporary owned `String`.
 
 `HashMap.contains_key(key)` is the preferred key-membership spelling;
 `HashMap.contains(key)` remains available for compatibility.

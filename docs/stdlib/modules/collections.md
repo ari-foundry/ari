@@ -307,17 +307,25 @@ map.is_empty()
 map.contains(key)
 map.contains_key(key)
 map.contains_value(value)
+map.contains_key_bytes(bytes) // HashMap[String, V]
 map.get(key)
+map.get_bytes(bytes) // HashMap[String, V]
 map.get_or(key, fallback)
+map.get_or_bytes(bytes, fallback) // HashMap[String, V]
 map.try_get(key)
+map.try_get_bytes(bytes) // HashMap[String, V]
 map.get_mut(key)
+map.get_mut_bytes(bytes) // HashMap[String, V]
 map.try_get_mut(key)
+map.try_get_mut_bytes(bytes) // HashMap[String, V]
 map.insert(ref mut zone, key, value)
 map.replace(ref mut zone, key, value)
 map.entry(ref mut zone, key)
 map.entry(key)
 map.remove(key)
+map.remove_bytes(bytes) // HashMap[String, V]
 map.remove_entry(key)
+map.remove_entry_bytes(bytes) // HashMap[String, V]
 map.clear()
 map.retain(keep)
 map.extend_iter(iter)
@@ -369,6 +377,15 @@ for the requested live length without immediately violating the table's load
 factor rule. `copy_to(ref mut target)` copies only live entries into the target
 zone and leaves tombstones behind.
 
+String-key hash maps also have borrowed byte-slice lookup and removal helpers:
+`contains_key_bytes`, `try_get_bytes`, `get_bytes`, `get_or_bytes`,
+`try_get_mut_bytes`, `get_mut_bytes`, `remove_bytes`, and
+`remove_entry_bytes`. They are available on `HashMap[String, V]` values created
+with `string_hash_map` or the equivalent `HashMap::new(..., hash_string)`
+policy. These helpers hash the borrowed bytes directly and compare them against
+stored `String` keys by byte content, so parser-style code can look up
+`Slice[u8]` keys from an input line without allocating a temporary `String`.
+
 `map.entry(key)` returns a mutable update handle. It is separate from
 `MapEntry[K, V]`: `MapEntry` is a copied key-value result from iterators,
 boundaries, and `remove_entry`, while `HashMapEntry[K, V]` is a short-lived
@@ -410,8 +427,11 @@ set.len()
 set.capacity()
 set.is_empty()
 set.contains(value)
+set.contains_bytes(bytes) // HashSet[String]
 set.get(value)
+set.get_bytes(bytes) // HashSet[String]
 set.try_get(value)
+set.try_get_bytes(bytes) // HashSet[String]
 set.equals(ref other)
 set.is_subset(ref other)
 set.is_superset(ref other)
@@ -419,7 +439,9 @@ set.is_disjoint(ref other)
 set.insert(ref mut zone, value)
 set.replace(ref mut zone, value)
 set.take(value)
+set.take_bytes(bytes) // HashSet[String]
 set.remove(value)
+set.remove_bytes(bytes) // HashSet[String]
 set.clear()
 set.retain(keep)
 set.extend_iter(iter)
@@ -446,6 +468,12 @@ returns a live-bucket draining cursor and leaves the set empty.
 are dropped and the first stored representative is retained.
 `copy_to(ref mut target)` copies live values into a fresh target-zone hash
 table without tombstones.
+
+String hash sets mirror the map borrowed lookup surface with
+`contains_bytes`, `try_get_bytes`, `get_bytes`, `take_bytes`, and
+`remove_bytes`. These helpers let parser and lexer code test or remove a
+borrowed `Slice[u8]` spelling against an owned `String` set without allocating
+a temporary key.
 
 ## TreeMap And TreeSet
 
@@ -754,7 +782,8 @@ fn main() -> i64 {
   let query = string::from(ref mut zone, "version");
   let fallback = string::from(ref mut zone, "0.0.0");
   let version = package.get_or(query, fallback);
-  let result = version.len();
+  let borrowed_version = package.get_bytes(string::bytes("version"));
+  let result = version.len() + borrowed_version.len();
 
   zone::destroy(zone);
   return result;
@@ -769,7 +798,8 @@ selection. The intended future spelling for ordinary hashable keys is
 explicit hash-function form living under `with_hash`. Until then,
 `string_hash_map` is the natural `HashMap[String, V]` constructor and uses
 content hashing plus content equality for independently allocated `String`
-values.
+values. For parser code, use the `_bytes` methods on `HashMap[String, V]` and
+`HashSet[String]` when the query key is already a borrowed `Slice[u8]`.
 
 Ordered tree:
 

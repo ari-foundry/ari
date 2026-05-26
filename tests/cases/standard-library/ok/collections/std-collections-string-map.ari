@@ -24,11 +24,13 @@ fn main() -> i64 {
   if map.contains_key(lookup_name) {
     score = score + 2;
   }
+  assert(map.contains_key_bytes(std::string::bytes("name")));
 
   let get_name = text(ref mut zone, "name");
   if map.get(get_name).equals_text("hello") {
     score = score + 4;
   }
+  assert(map.get_bytes(std::string::bytes("name")).equals_text("hello"));
 
   let replacement_key = text(ref mut zone, "name");
   let replacement_value = text(ref mut zone, "ari");
@@ -46,9 +48,29 @@ fn main() -> i64 {
   if map.get_or(fallback_key, fallback_value).equals_text("fallback") {
     score = score + 16;
   }
+  let fallback_value_bytes = text(ref mut zone, "fallback-bytes");
+  assert(map.get_or_bytes(std::string::bytes("missing"), fallback_value_bytes).equals_text("fallback-bytes"));
+  match map.try_get_mut_bytes(std::string::bytes("name")) {
+    Some(slot) => {
+      assert(slot.value().equals_text("ari"));
+    }
+    None => { std::panic(); }
+  }
+  let direct_slot: ref mut String = map.get_mut_bytes(std::string::bytes("name"));
+  assert(direct_slot.equals_text("ari"));
 
-  let remove_key = text(ref mut zone, "name");
-  match map.remove(remove_key) {
+  let mode_key = text(ref mut zone, "mode");
+  let mode_value = text(ref mut zone, "dev");
+  map.insert(mode_key, mode_value);
+  match map.remove_entry_bytes(std::string::bytes("mode")) {
+    Some(removed_entry) => {
+      assert(removed_entry.key().equals_text("mode"));
+      assert(removed_entry.value().equals_text("dev"));
+    }
+    None => { std::panic(); }
+  }
+
+  match map.remove_bytes(std::string::bytes("name")) {
     Some(removed) => {
       if removed.equals_text("ari") && map.is_empty() {
         score = score + 32;
@@ -76,10 +98,25 @@ fn main() -> i64 {
 
   let set_value = text(ref mut zone, "feature");
   if set.insert(set_value) {
-    let set_lookup = text(ref mut zone, "feature");
-    if set.contains(set_lookup) {
-      score = score + 256;
+    assert(set.contains_bytes(std::string::bytes("feature")));
+    assert(set.get_bytes(std::string::bytes("feature")).equals_text("feature"));
+    score = score + 256;
+    match set.try_get_bytes(std::string::bytes("feature")) {
+      Some(found) => {
+        assert(found.equals_text("feature"));
+      }
+      None => { std::panic(); }
     }
+    let temp_value = text(ref mut zone, "temp");
+    assert(set.insert(temp_value));
+    match set.take_bytes(std::string::bytes("temp")) {
+      Some(taken) => {
+        assert(taken.equals_text("temp"));
+      }
+      None => { std::panic(); }
+    }
+    assert(set.remove_bytes(std::string::bytes("feature")));
+    assert(set.is_empty());
   }
 
   let hash_left = hash::value<String>(text(ref mut zone, "name"));
