@@ -3424,12 +3424,18 @@ fmt::debug_text_in(ref mut zone, value)
 fmt::debug_char_in(ref mut zone, value)
 fmt::format_value<T: Display>(ref mut zone, value)
 fmt::debug_value<T: Debug>(ref mut zone, value)
+fmt::format<T: Display>(ref mut zone, template, value)
+fmt::format2<A: Display, B: Display>(ref mut zone, template, first, second)
+fmt::format3<A: Display, B: Display, C: Display>(ref mut zone, template, first, second, third)
 fmt::concat2<A: Display, B: Display>(ref mut zone, first, second)
 fmt::concat3<A: Display, B: Display, C: Display>(ref mut zone, first, second, third)
 fmt::write_concat2<W: io::Writer, A: Display, B: Display>(ref mut writer, ref mut zone, first, second)
 fmt::write_concat2_bool<W: io::Writer, A: Display, B: Display>(ref mut writer, ref mut zone, first, second)
 fmt::write_concat3<W: io::Writer, A: Display, B: Display, C: Display>(ref mut writer, ref mut zone, first, second, third)
 fmt::write_concat3_bool<W: io::Writer, A: Display, B: Display, C: Display>(ref mut writer, ref mut zone, first, second, third)
+fmt::write_format<W: io::Writer, T: Display>(ref mut writer, ref mut zone, template, value)
+fmt::write_format2<W: io::Writer, A: Display, B: Display>(ref mut writer, ref mut zone, template, first, second)
+fmt::write_format3<W: io::Writer, A: Display, B: Display, C: Display>(ref mut writer, ref mut zone, template, first, second, third)
 fmt::write_unsigned<W: io::Writer>(ref mut writer, ref mut zone, value, spec)
 fmt::write_unsigned_bool<W: io::Writer>(ref mut writer, ref mut zone, value, spec)
 fmt::write_integer<W: io::Writer>(ref mut writer, ref mut zone, value)
@@ -3465,15 +3471,23 @@ Built-in `Debug` impls cover the same initial scalar/text set. `string` and
 `fmt::debug_value`, `fmt::write_debug`, or `fmt::println_debug` when diagnostic
 output should use that policy.
 `fmt::format_value` is the named source helper for the common one-value
-`Display` case. `fmt::concat2` and `fmt::concat3` build small explicit-zone
-strings from `Display` values, which is handy for CLI messages such as
-`"Compiling " + name` while Ari keeps general string interpolation and hidden
-allocation out of the language.
+`Display` case. `fmt::format`, `fmt::format2`, and `fmt::format3` are fixed
+arity runtime-template helpers. They support `{}` placeholders, escaped braces
+with `{{` and `}}`, allocate into the explicit zone, and return
+`Err(InvalidInput)` when the template is malformed or the placeholder count
+does not match the chosen arity. `fmt::concat2` and `fmt::concat3` build small
+explicit-zone strings from `Display` values, which is handy for CLI messages
+such as `"Compiling " + name` while Ari keeps general string interpolation and
+hidden allocation out of the language.
 `fmt::write_concat2` and `fmt::write_concat3` write the same short
 `Display`-driven message shape directly into an `io::Writer`, returning the
 first writer error instead of allocating one combined output string. Their
 `_bool` variants are compatibility wrappers for call sites that deliberately
 discard the failure reason.
+`fmt::write_format`, `fmt::write_format2`, and `fmt::write_format3` apply the
+same runtime-template rules for writer destinations. They currently format into
+the explicit zone first and then call `io::write_all`, so both invalid-template
+errors and writer failures stay recoverable.
 
 The executable formatting path is still macro-based: `print!`, `println!`,
 `eprintln!`, and `format_in!(ref mut zone, "...", values...)`. `{}` uses
@@ -3506,7 +3520,8 @@ without panicking.
 allocator-backed helpers for common scalar/text values. `write_*` helpers
 format through an explicit temporary zone and then write to any `io::Writer`.
 Full custom formatter objects and direct streaming formatters remain roadmap
-work; `Debug` dispatch itself is source-level today.
+work; `Debug` dispatch itself is source-level today. Variadic/default-zone
+formatting is also still future work.
 
 ## Comparison
 

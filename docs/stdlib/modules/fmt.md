@@ -47,12 +47,18 @@ debug_text_in(zone: ref mut Zone, value: string) -> String
 debug_char_in(zone: ref mut Zone, value: char) -> String
 format_value[T: Display](zone: ref mut Zone, value: T) -> String
 debug_value[T: Debug](zone: ref mut Zone, value: T) -> String
+format[T: Display](zone: ref mut Zone, template: string, value: T) -> Result[String, Error]
+format2[A: Display, B: Display](zone: ref mut Zone, template: string, first: A, second: B) -> Result[String, Error]
+format3[A: Display, B: Display, C: Display](zone: ref mut Zone, template: string, first: A, second: B, third: C) -> Result[String, Error]
 concat2[A: Display, B: Display](zone: ref mut Zone, first: A, second: B) -> String
 concat3[A: Display, B: Display, C: Display](zone: ref mut Zone, first: A, second: B, third: C) -> String
 write_concat2[W: io::Writer, A: Display, B: Display](writer: ref mut W, zone: ref mut Zone, first: A, second: B) -> Result[(), Error]
 write_concat2_bool[W: io::Writer, A: Display, B: Display](writer: ref mut W, zone: ref mut Zone, first: A, second: B) -> bool
 write_concat3[W: io::Writer, A: Display, B: Display, C: Display](writer: ref mut W, zone: ref mut Zone, first: A, second: B, third: C) -> Result[(), Error]
 write_concat3_bool[W: io::Writer, A: Display, B: Display, C: Display](writer: ref mut W, zone: ref mut Zone, first: A, second: B, third: C) -> bool
+write_format[W: io::Writer, T: Display](writer: ref mut W, zone: ref mut Zone, template: string, value: T) -> Result[(), Error]
+write_format2[W: io::Writer, A: Display, B: Display](writer: ref mut W, zone: ref mut Zone, template: string, first: A, second: B) -> Result[(), Error]
+write_format3[W: io::Writer, A: Display, B: Display, C: Display](writer: ref mut W, zone: ref mut Zone, template: string, first: A, second: B, third: C) -> Result[(), Error]
 
 write_unsigned[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: u64, spec: FormatSpec) -> Result[(), Error]
 write_unsigned_bool[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: u64, spec: FormatSpec) -> bool
@@ -190,6 +196,34 @@ zone::destroy(zone);
 These helpers still allocate through the explicit zone and use `Display`, so
 they follow the same text policy as `format_in!`, `print_value`, and
 `String.append_value`.
+
+Use `format`, `format2`, and `format3` when the template is a runtime string
+and the caller still wants checked placeholder counting. The template language
+is intentionally small and byte-oriented:
+
+- `{}` consumes the next `Display` value.
+- `{{` writes a literal `{`.
+- `}}` writes a literal `}`.
+- unmatched braces, a placeholder count mismatch, or any placeholder other than
+  `{}` returns `Err(std::error::InvalidInput)`.
+
+The functions allocate the resulting `String` in the supplied zone and return
+`Result[String, Error]` because template mistakes are recoverable user-input or
+configuration errors:
+
+```ari
+var zone = zone::create(128);
+match fmt::format2(ref mut zone, "{}={}", "name", 7) {
+  std::Ok(text) => {
+    // text == "name=7"
+  }
+  std::Err(err) => {
+    // Invalid template or wrong number of placeholders.
+  }
+}
+zone::destroy(zone);
+```
+
 Use `write_concat2` and `write_concat3` when the destination is already an
 `io::Writer` and the caller wants to stream a short status message without
 constructing one combined `String` first:
@@ -208,6 +242,22 @@ fmt::write_concat3<io::Stdout, string, String, string>(
 These helpers write each `Display` value in order and return the first writer
 error. The `_bool` variants are compatibility wrappers for call sites that
 intentionally discard the failure reason.
+Use `write_format`, `write_format2`, and `write_format3` for the same runtime
+template rules when the final destination is an `io::Writer`. These helpers
+currently format into the explicit zone first and then call `io::write_all`, so
+they preserve both invalid-template errors and writer errors while keeping
+allocation visible:
+
+```ari
+var stdout = io::stdout();
+fmt::write_format2<io::Stdout, string, i64>(
+  ref mut stdout,
+  ref mut zone,
+  "Compiling {} ({})",
+  "hello",
+  1,
+).unwrap();
+```
 
 ## Formatting Macros
 
@@ -248,10 +298,14 @@ The source helpers complement the macros:
 - Use `format_in!` for mixed literal templates and type-safe argument counting.
 - Use `format_value` for one `Display` value when a named source function is
   clearer than calling `value.format_in(zone)` directly.
+- Use `format`, `format2`, and `format3` for runtime templates with one, two,
+  or three `{}` placeholders and recoverable invalid-template errors.
 - Use `concat2` and `concat3` for small CLI/status strings such as
   `"Compiling " + name` while Ari does not have general string interpolation.
 - Use `write_concat2` and `write_concat3` for the same short CLI/status message
   shape when the destination is already an `io::Writer`.
+- Use `write_format`, `write_format2`, and `write_format3` when the writer path
+  needs the runtime-template rules and must preserve writer/template failures.
 - Use `Display::format_in` for standard display values and user-defined values
   that participate in `{}`.
 - Use `Debug::debug_in`, `{:?}`, and `debug_value` for diagnostic output that
@@ -294,7 +348,8 @@ The source helpers complement the macros:
   generic bounds, not as a suffix, unless the compiler/runtime primitive truly
   requires a distinct symbol.
 - Custom formatter objects, allocator-returning `format!` without an explicit
-  zone, and full literal-template writer streaming remain roadmap work.
+  zone, variadic/default-zone formatting, and fully streaming template writers
+  remain roadmap work.
 
 ## Tests
 

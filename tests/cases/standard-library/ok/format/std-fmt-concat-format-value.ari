@@ -5,6 +5,34 @@ struct Point {
   y: i64,
 }
 
+struct MemoryWriter {
+  data: Slice[u8],
+  mut position: i64,
+}
+
+impl io::Writer for MemoryWriter {
+  fn write_byte(self: ref mut Self, value: u8) -> bool {
+    if self.position >= self.data.len {
+      return false;
+    }
+    ptr_store(ptr_add(self.data.as_ptr(), self.position), value);
+    self.position = self.position + 1;
+    return true;
+  }
+
+  fn write(self: ref mut Self, values: Slice[u8]) -> Result[i64, error::Error] {
+    return io::write<MemoryWriter>(self, values);
+  }
+
+  fn write_all(self: ref mut Self, values: Slice[u8]) -> Result[(), error::Error] {
+    return io::write_all<MemoryWriter>(self, values);
+  }
+
+  fn flush(self: ref mut Self) -> Result[(), error::Error] {
+    return Ok(());
+  }
+}
+
 impl fmt::Display for Point {
   fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
     var output = std::string::new(zone, 8);
@@ -22,37 +50,133 @@ fn equals_text(value: String, expected: string) -> bool {
 }
 
 fn main() -> i64 {
-  var zone = zone::create(512);
-  var score = 0;
+  var zone = zone::create(4096);
 
   let number = fmt::format_value<i64>(ref mut zone, -42);
-  if equals_text(number, "-42") {
-    score = score + 1;
+  if !equals_text(number, "-42") {
+    zone::destroy(zone);
+    return 1;
   }
 
   let name = std::string::from(ref mut zone, "hello");
   let compiling = fmt::concat2<string, String>(ref mut zone, "Compiling ", name);
-  if equals_text(compiling, "Compiling hello") {
-    score = score + 2;
+  if !equals_text(compiling, "Compiling hello") {
+    zone::destroy(zone);
+    return 2;
   }
 
   let target = fmt::concat3<string, i64, string>(ref mut zone, "target/debug/", 7, ".ari");
-  if equals_text(target, "target/debug/7.ari") {
-    score = score + 4;
+  if !equals_text(target, "target/debug/7.ari") {
+    zone::destroy(zone);
+    return 3;
   }
 
   let point = Point { x: 3, y: 5 };
   let display = fmt::format_value<Point>(ref mut zone, point);
-  if equals_text(display, "(3,5)") {
-    score = score + 8;
+  if !equals_text(display, "(3,5)") {
+    zone::destroy(zone);
+    return 4;
   }
 
   let other = Point { x: 8, y: 13 };
   let message = fmt::concat3<string, Point, string>(ref mut zone, "point=", other, "!");
-  if equals_text(message, "point=(8,13)!") {
-    score = score + 16;
+  if !equals_text(message, "point=(8,13)!") {
+    zone::destroy(zone);
+    return 5;
+  }
+
+  match fmt::format<i64>(ref mut zone, "value={} {{ok}}", 9) {
+    Ok(formatted) => {
+      if !equals_text(formatted, "value=9 {ok}") {
+        zone::destroy(zone);
+        return 6;
+      }
+      if !fmt::format<i64>(ref mut zone, "value={}", 1).is_ok() {
+        zone::destroy(zone);
+        return 7;
+      }
+      if !fmt::format<i64>(ref mut zone, "value={} {}", 1).is_err() {
+        zone::destroy(zone);
+        return 8;
+      }
+      if !fmt::format<i64>(ref mut zone, "value={", 1).is_err() {
+        zone::destroy(zone);
+        return 9;
+      }
+    }
+    Err(_) => {
+      zone::destroy(zone);
+      return 10;
+    }
+  }
+
+  match fmt::format2<string, i64>(ref mut zone, "{}={}", "n", 2) {
+    Ok(formatted2) => {
+      if !equals_text(formatted2, "n=2") {
+        zone::destroy(zone);
+        return 11;
+      }
+      match fmt::format3<string, i64, string>(ref mut zone, "{}:{}{}", "v", 7, "!") {
+        Ok(formatted3) => {
+          if !equals_text(formatted3, "v:7!") {
+            zone::destroy(zone);
+            return 12;
+          }
+          if !fmt::format2<string, i64>(ref mut zone, "{}={}", "n", 2).is_ok() {
+            zone::destroy(zone);
+            return 13;
+          }
+          if !fmt::format3<string, i64, string>(ref mut zone, "{}:{}", "v", 7, "!").is_err() {
+            zone::destroy(zone);
+            return 14;
+          }
+        }
+        Err(_) => {
+          zone::destroy(zone);
+          return 15;
+        }
+      }
+    }
+    Err(_) => {
+      zone::destroy(zone);
+      return 16;
+    }
+  }
+
+  var buffer = [0u8, 0u8, 0u8, 0u8, 0u8];
+  var writer = MemoryWriter { data: buffer.as_slice(), position: 0 };
+  if !fmt::write_format<MemoryWriter, i64>(ref mut writer, ref mut zone, "n={}", 4).is_ok() {
+    zone::destroy(zone);
+    return 17;
+  }
+  if !(buffer[0] == 'n' && buffer[1] == '=' && buffer[2] == '4' && writer.position == 3) {
+    zone::destroy(zone);
+    return 18;
+  }
+
+  var buffer2 = [0u8, 0u8, 0u8, 0u8, 0u8];
+  var writer2 = MemoryWriter { data: buffer2.as_slice(), position: 0 };
+  if !fmt::write_format2<MemoryWriter, string, i64>(ref mut writer2, ref mut zone, "{}={}", "x", 5).is_ok() {
+    zone::destroy(zone);
+    return 19;
+  }
+  if !(buffer2[0] == 'x' && buffer2[1] == '=' && buffer2[2] == '5' && writer2.position == 3) {
+    zone::destroy(zone);
+    return 20;
+  }
+
+  var buffer3 = [0u8, 0u8, 0u8, 0u8, 0u8];
+  var writer3 = MemoryWriter { data: buffer3.as_slice(), position: 0 };
+  if !fmt::write_format3<MemoryWriter, string, i64, string>(ref mut writer3, ref mut zone, "{}:{}{}", "v", 8, "!").is_ok() {
+    zone::destroy(zone);
+    return 21;
+  }
+  if !(buffer3[0] == 'v' && buffer3[1] == ':' && buffer3[2] == '8' && buffer3[3] == '!' &&
+       writer3.position == 4) {
+    zone::destroy(zone);
+    return 22;
   }
 
   zone::destroy(zone);
-  return score;
+  return 42;
 }

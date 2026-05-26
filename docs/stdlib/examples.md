@@ -47,7 +47,7 @@ library evolves.
 | `std::encoding` | UTF-8/UTF-16 validation, hex, base64. | `std-encoding-text.ari`, `std-encoding-codec.ari` |
 | `std::env` | Arguments, environment variables, current directory, executable path. | `std-env-vars.ari`, `std-env-paths.ari` |
 | `std::error` | Shared error kinds, errno mapping, module aliases, typed results. | `std-error-basic.ari`, `std-error-integration.ari` |
-| `std::fmt` | `Debug`, `Display`, format specs, writer-backed formatting. | `std-fmt-format-spec.ari`, `std-fmt-debug-values.ari` |
+| `std::fmt` | `Debug`, `Display`, format specs, runtime templates, writer-backed formatting. | `std-fmt-format-spec.ari`, `std-fmt-concat-format-value.ari`, `std-fmt-debug-values.ari` |
 | `std::fs` | Open options, file handles, metadata, directories, links, typed errors. | `std-fs-open-result.ari`, `std-fs-read-dir.ari` |
 | `std::hash` | Deterministic hashing and collection hash helpers. | `std-hash-basic.ari` |
 | `std::input` | Stdin byte and line input with `Option` EOF handling. | `std-input-byte-option.ari` |
