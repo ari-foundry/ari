@@ -54,6 +54,12 @@ pub struct BufWriter[W] {
   mut len: i64,
 }
 
+pub enum ReadByte {
+  ReadByteValue(u8),
+  ReadByteEof,
+  ReadByteError(std::error::Error),
+}
+
 pub trait Reader {
   fn read_byte(self: ref mut Self) -> i64;
 }
@@ -187,6 +193,93 @@ fn invalid_input_error() -> std::error::Error {
 
 fn broken_pipe_error() -> std::error::Error {
   return std::error::new(std::error::BrokenPipe);
+}
+
+pub impl std::io::ReadByte {
+  fn is_byte(self) -> bool {
+    match self {
+      ReadByteValue(_) => {
+        return true;
+      }
+      _ => {
+        return false;
+      }
+    }
+  }
+
+  fn is_eof(self) -> bool {
+    match self {
+      ReadByteEof => {
+        return true;
+      }
+      _ => {
+        return false;
+      }
+    }
+  }
+
+  fn is_error(self) -> bool {
+    match self {
+      ReadByteError(_) => {
+        return true;
+      }
+      _ => {
+        return false;
+      }
+    }
+  }
+
+  fn byte(self) -> std::Option[u8] {
+    match self {
+      ReadByteValue(value) => {
+        return std::Some<u8>(value);
+      }
+      _ => {
+        return std::None<u8>();
+      }
+    }
+  }
+
+  fn error(self) -> std::Option[std::error::Error] {
+    match self {
+      ReadByteError(reason) => {
+        return std::Some<std::error::Error>(reason);
+      }
+      _ => {
+        return std::None<std::error::Error>();
+      }
+    }
+  }
+}
+
+pub fn read_one[R: Reader](reader: ref mut R) -> std::io::ReadByte {
+  let value = reader.read_byte();
+  if value < 0 {
+    return std::io::ReadByteEof;
+  }
+  return std::io::ReadByteValue(value as u8);
+}
+
+pub fn read[R: Reader](reader: ref mut R, output: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+  var index = 0;
+  while index < output.len {
+    match std::io::read_one<R>(reader) {
+      ReadByteValue(value) => {
+        std::mem::ptr_store(std::mem::ptr_add(output.data, index), value);
+        index = index + 1;
+      }
+      ReadByteEof => {
+        return std::Ok<i64, std::error::Error>(index);
+      }
+      ReadByteError(reason) => {
+        if index > 0 {
+          return std::Ok<i64, std::error::Error>(index);
+        }
+        return std::Err<i64, std::error::Error>(reason);
+      }
+    }
+  }
+  return std::Ok<i64, std::error::Error>(index);
 }
 
 pub fn read_exact[R: Reader](reader: ref mut R, output: ptr u8, len: i64) -> std::Result[(), std::error::Error] {
@@ -352,6 +445,14 @@ pub impl[R: Reader] std::io::BufReader[R] {
     return self.buffered_len() == 0;
   }
 
+  fn read_one(self: ref mut Self) -> std::io::ReadByte {
+    return std::io::read_one<std::io::BufReader[R]>(self);
+  }
+
+  fn read(self: ref mut Self, output: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+    return std::io::read<std::io::BufReader[R]>(self, output);
+  }
+
   fn read_line(self: ref mut Self, zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
     return std::io::read_line_from<std::io::BufReader[R]>(zone, self);
   }
@@ -380,6 +481,14 @@ pub impl[W: Writer] std::io::BufWriter[W] {
 }
 
 pub impl std::io::Stdin {
+  fn read_one(self: ref mut Self) -> std::io::ReadByte {
+    return std::io::read_one<std::io::Stdin>(self);
+  }
+
+  fn read(self: ref mut Self, output: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+    return std::io::read<std::io::Stdin>(self, output);
+  }
+
   fn read_line(self: ref mut Self, zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
     return std::io::read_line_from<std::io::Stdin>(zone, self);
   }
@@ -432,6 +541,24 @@ pub impl std::io::PipeReader {
     return self.close().is_ok();
   }
 
+  fn read_one(self: ref mut Self) -> std::io::ReadByte {
+    if !self.handle.is_open() {
+      return std::io::ReadByteError(std::io::broken_pipe_error());
+    }
+    let value = std::io::read_fd_byte(self.handle.raw());
+    if value < 0 {
+      return std::io::ReadByteEof;
+    }
+    return std::io::ReadByteValue(value as u8);
+  }
+
+  fn read(self: ref mut Self, output: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+    if !self.handle.is_open() {
+      return std::Err<i64, std::error::Error>(std::io::broken_pipe_error());
+    }
+    return std::io::read<std::io::PipeReader>(self, output);
+  }
+
   fn read_line(self: ref mut Self, zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
     return std::io::read_line_from<std::io::PipeReader>(zone, self);
   }
@@ -460,6 +587,14 @@ pub impl std::io::PipeWriter {
 }
 
 pub impl std::io::Cursor {
+  fn read_one(self: ref mut Self) -> std::io::ReadByte {
+    return std::io::read_one<std::io::Cursor>(self);
+  }
+
+  fn read(self: ref mut Self, output: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+    return std::io::read<std::io::Cursor>(self, output);
+  }
+
   fn read_line(self: ref mut Self, zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
     return std::io::read_line_from<std::io::Cursor>(zone, self);
   }

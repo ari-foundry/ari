@@ -186,6 +186,74 @@ fn main() -> i64 {
   assert_eq_i64(unchecked_write_output[0] as i64, 79);
   assert(unchecked_write_writer.flushed);
 
+  var one_source = [80u8, 81u8];
+  var one_reader = io::cursor(one_source.as_slice());
+  match io::read_one<io::Cursor>(ref mut one_reader) {
+    io::ReadByteValue(value) => {
+      assert_eq_i64(value as i64, 80);
+    }
+    _ => {
+      panic();
+    }
+  }
+  match one_reader.read_one() {
+    io::ReadByteValue(value2) => {
+      assert_eq_i64(value2 as i64, 81);
+    }
+    _ => {
+      panic();
+    }
+  }
+  assert(one_reader.read_one().is_eof());
+  assert(io::ReadByteValue(82u8).is_byte());
+  assert(io::ReadByteEof.is_eof());
+  assert(error_is(io::ReadByteError(error::new(error::BrokenPipe)).error().unwrap(), error::BrokenPipe));
+  assert(io::ReadByteValue(83u8).byte().contains(83u8));
+
+  var read_source = [84u8, 85u8];
+  var read_reader = io::cursor(read_source.as_slice());
+  var read_output = [0u8, 0u8, 0u8];
+  match io::read<io::Cursor>(ref mut read_reader, read_output.as_slice()) {
+    Ok(count) => {
+      assert_eq_i64(count, 2);
+      assert_eq_i64(read_output[0] as i64, 84);
+      assert_eq_i64(read_output[1] as i64, 85);
+      assert_eq_i64(read_output[2] as i64, 0);
+    }
+    Err(_) => {
+      panic();
+    }
+  }
+  var method_source = [86u8];
+  var method_reader = io::cursor(method_source.as_slice());
+  var method_output = [0u8, 0u8];
+  match method_reader.read(method_output.as_slice()) {
+    Ok(method_count) => {
+      assert_eq_i64(method_count, 1);
+      assert_eq_i64(method_output[0] as i64, 86);
+    }
+    Err(_) => {
+      panic();
+    }
+  }
+
+  var buffered_source = [87u8, 88u8];
+  var buffered_cursor = io::cursor(buffered_source.as_slice());
+  var buffered_storage = [0u8];
+  var buffered_reader = io::buf_reader<io::Cursor>(buffered_cursor, buffered_storage.as_slice());
+  var buffered_output = [0u8, 0u8, 0u8];
+  match buffered_reader.read(buffered_output.as_slice()) {
+    Ok(buffered_count) => {
+      assert_eq_i64(buffered_count, 2);
+      assert_eq_i64(buffered_output[0] as i64, 87);
+      assert_eq_i64(buffered_output[1] as i64, 88);
+    }
+    Err(_) => {
+      panic();
+    }
+  }
+  assert(buffered_reader.read_one().is_eof());
+
   assert_eq_i64(score, 255);
   return score;
 }

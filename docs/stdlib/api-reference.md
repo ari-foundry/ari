@@ -2035,6 +2035,7 @@ byte readers/writers, while `std::input` keeps stdin-oriented helper names:
 io::Reader
 io::Writer
 io::Seek
+io::ReadByte
 io::Stdin
 io::Stdout
 io::Stderr
@@ -2066,10 +2067,14 @@ pipe_writer.close_bool() -> bool
 io::cursor(values)
 io::buf_reader[R: Reader](inner, buffer)
 io::buf_writer[W: Writer](inner, buffer)
+reader.read_one()
+reader.read(output)
 reader.read_line(zone)
 reader.read_to_string(zone)
 writer.write(values)
 writer.write_all(values)
+io::read_one[R: Reader](reader: ref mut R)
+io::read[R: Reader](reader: ref mut R, output)
 io::read_exact[R: Reader](reader: ref mut R, output, len)
 io::read_exact_unchecked[R: Reader](reader: ref mut R, output, len)
 io::read_all[R: Reader](zone: ref mut Zone, reader: ref mut R)
@@ -2115,6 +2120,13 @@ Borrowed line input uses a reusable runtime buffer; use the owned forms when
 the line must survive later input reads.
 
 `io::Cursor` implements `Reader` and `Seek` over a borrowed `Slice[u8]`.
+`io::read_one(ref mut reader)` converts one low-level byte read into
+`ReadByteValue(byte)`, `ReadByteEof`, or `ReadByteError(error)` when an adapter
+can detect a real failure before reaching the raw hook. The `ReadByte` methods
+`is_byte`, `is_eof`, `is_error`, `byte`, and `error` give compact branching
+without inspecting the raw `-1` sentinel. `io::read(ref mut reader, output)`
+fills up to `output.len` bytes and returns `Ok(count)`, with EOF reported as
+`Ok(0)` or a short positive count rather than an error.
 `io::read_exact(ref mut reader, output, len)` copies exactly `len` bytes or
 returns `Err(Error(UnexpectedEof))`; `io::read_exact_unchecked` is the bool
 compatibility wrapper. A negative `len` returns `Err(Error(InvalidInput))`.

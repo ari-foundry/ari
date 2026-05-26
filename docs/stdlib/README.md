@@ -44,9 +44,10 @@ path-byte helpers now live in `std::env`, while `std::context` stays the
 low-level runtime context layer.
 `std::io` now has source `Reader`/`Writer`/`Seek` contracts, `Stdin`,
 `Stdout`, `Stderr`, `PipeReader`/`PipeWriter`, `Cursor`, caller-buffered
-`BufReader`/`BufWriter`, direct `Error` helpers for exact reads, whole-slice
-writes, stream copies, and flushes, plus bool/Option compatibility wrappers on
-top of the raw process IO, descriptor, and file seek hooks.
+`BufReader`/`BufWriter`, `ReadByte` one-byte status values, direct `Error`
+helpers for partial reads, exact reads, whole-slice writes, stream copies, and
+flushes, plus bool/Option compatibility wrappers on top of the raw process IO,
+descriptor, and file seek hooks.
 `std::test` adds source executable unit-test reports, generic equality checks,
 scratch-zone helpers, temporary path helpers, snapshot/golden comparisons,
 minimal benchmark timers, and compiler `@test` runner integration with stderr

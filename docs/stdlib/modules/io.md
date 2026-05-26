@@ -11,8 +11,10 @@ Use `std::input` for ordinary stdin line/byte helpers, `std::fs` for files, and
 `std::io` when you want the lower-level IO contracts directly.
 
 Fallible helpers use natural names and return `Result[..., Error]`:
-`read_exact`, `read_line_from`, `read_to_string`, `copy`, `write`, `write_all`,
-and `flush`. `Writer` also exposes natural `write(values)` and
+`read`, `read_exact`, `read_line_from`, `read_to_string`, `copy`, `write`,
+`write_all`, and `flush`. `Reader` byte hooks can also be inspected through the
+`ReadByte` status enum when code needs to distinguish byte, EOF, and
+adapter-detected failure. `Writer` exposes natural `write(values)` and
 `write_all(values)` trait methods, so generic writer-bound code can use method
 syntax instead of dropping back to module helpers. Compatibility helpers that
 discard error details use explicit suffixes such as `_unchecked`, `_optional`,
@@ -35,7 +37,8 @@ Implemented now:
 - raw stdout/scalar hooks: `write_i64`, `write_u64`, `write_bool`,
   `write_byte`, `write_bytes`, `newline`
 - raw stdin/line hooks: `read_byte`, `read_line`, `read_line_owned`
-- source traits: `Reader`, `Writer`, `Seek`; `Writer` includes natural
+- source traits: `Reader`, `Writer`, `Seek`; `ReadByte` describes one byte,
+  EOF, or an adapter-detected read error; `Writer` includes natural
   `write`, `write_all`, and `flush` Result methods plus the low-level
   `write_byte` hook
 - source handles: `Stdin`, `Stdout`, `Stderr`, `Pipe`, `PipeReader`,
@@ -45,8 +48,8 @@ Implemented now:
 - source constructors and adapters: `stdin`, `stdout`, `stderr`, `pipe`,
   `pipe_optional`, `cursor`, `buf_reader`, `buf_writer`, `BufReader::new`,
   `BufWriter::new`
-- direct error helpers: `read_exact`, `read_line_from`, `read_to_string`,
-  `copy`, `write`, `write_all`, `flush`
+- direct error helpers: `read_one`, `read`, `read_exact`, `read_line_from`,
+  `read_to_string`, `copy`, `write`, `write_all`, `flush`
 - collection helper: `read_all`
 - compatibility helpers: `read_exact_unchecked`, `read_to_string_unchecked`,
   `try_copy`, `copy_unchecked`, `write_all_unchecked`, `flush_unchecked`
@@ -80,6 +83,12 @@ pub trait Seek {
 
 io::BufReader[R]
 io::BufWriter[W]
+io::ReadByte
+ReadByte::is_byte() -> bool
+ReadByte::is_eof() -> bool
+ReadByte::is_error() -> bool
+ReadByte::byte() -> Option[u8]
+ReadByte::error() -> Option[Error]
 io::Stdin
 io::Stdout
 io::Stderr
@@ -109,6 +118,8 @@ io::cursor(values: Slice[u8]) -> io::Cursor
 io::buf_reader[R: Reader](inner: R, buffer: Slice[u8]) -> io::BufReader[R]
 io::buf_writer[W: Writer](inner: W, buffer: Slice[u8]) -> io::BufWriter[W]
 io::BufReader::new<R>(inner: R, buffer: Slice[u8]) -> io::BufReader[R]
+reader.read_one() -> ReadByte
+reader.read(output) -> Result[i64, Error]
 reader.read_line(zone) -> Result[String, Error]
 reader.read_to_string(zone) -> Result[String, Error]
 io::BufWriter::new<W>(inner: W, buffer: Slice[u8]) -> io::BufWriter[W]
@@ -116,6 +127,8 @@ writer.write(values) -> Result[i64, Error]
 writer.write_all(values) -> Result[(), Error]
 
 io::read_exact[R: Reader](reader: ref mut R, output: ptr u8, len: i64) -> Result[(), Error]
+io::read_one[R: Reader](reader: ref mut R) -> ReadByte
+io::read[R: Reader](reader: ref mut R, output: Slice[u8]) -> Result[i64, Error]
 io::read_exact_unchecked[R: Reader](reader: ref mut R, output: ptr u8, len: i64) -> bool
 io::read_all[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::vec::Vec[u8]
 io::read_line_from[R: Reader](zone: ref mut Zone, reader: ref mut R) -> Result[String, Error]
@@ -160,11 +173,23 @@ read_line_owned(ref mut zone)
 ```
 
 `Reader.read_byte` returns the next byte as `i64` or `-1` at EOF. That sentinel
-matches the existing runtime hook. Prefer `read_exact` when the caller needs
-recoverable failure: it returns `Ok(())` only when every requested byte was
-copied into `output`, and `Err(Error(UnexpectedEof))` when EOF arrives early.
-Negative lengths return `Err(Error(InvalidInput))`. `read_exact_unchecked` is
-the bool compatibility wrapper over that result shape.
+matches the existing runtime hook and remains the compatibility layer.
+`read_one(ref mut reader)` wraps one low-level byte read in `ReadByte`:
+`ReadByteValue(byte)` for a byte, `ReadByteEof` for ordinary end-of-stream,
+and `ReadByteError(error)` when an adapter can detect a real failure before
+calling the raw hook. Generic readers backed only by `Reader::read_byte`
+currently map negative sentinels to `ReadByteEof`; `PipeReader::read_one`
+returns `ReadByteError(BrokenPipe)` after its descriptor has been closed.
+Use `is_byte()`, `is_eof()`, `is_error()`, `byte()`, and `error()` for compact
+branching.
+`read(ref mut reader, output)` fills up to `output.len` bytes and returns
+`Ok(count)`. EOF before any bytes is `Ok(0)`, EOF after a prefix is
+`Ok(prefix_len)`, and adapter-detected errors return `Err(error)` when no byte
+has been produced yet. `read_exact` is stricter: it returns `Ok(())` only when
+every requested byte was copied into `output`, and
+`Err(Error(UnexpectedEof))` when EOF arrives early. Negative lengths return
+`Err(Error(InvalidInput))`. `read_exact_unchecked` is the bool compatibility
+wrapper over that result shape.
 `read_all(ref mut zone, ref mut reader)` repeatedly reads until EOF and returns
 a zone-backed `Vec[u8]`. Use it when the caller wants the whole remaining byte
 stream and can make allocation explicit through the zone.

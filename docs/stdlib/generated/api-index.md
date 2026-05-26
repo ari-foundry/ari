@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `3208`
+- API entries: `3224`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,14 +32,14 @@ platform notes.
 | `alloc` | 848 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 865 | stable candidate |
-| `hosted` | 1308 | platform-backed |
+| `hosted` | 1324 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
-| `enum` | 31 |
-| `fn` | 1167 |
-| `method` | 1601 |
+| `enum` | 32 |
+| `fn` | 1169 |
+| `method` | 1614 |
 | `module` | 39 |
 | `struct` | 170 |
 | `trait` | 39 |
@@ -69,7 +69,7 @@ platform notes.
 | `std::fs` | `hosted` | 325 |
 | `std::hash` | `alloc` | 24 |
 | `std::input` | `hosted` | 6 |
-| `std::io` | `hosted` | 91 |
+| `std::io` | `hosted` | 107 |
 | `std::iter` | `alloc` | 41 |
 | `std::log` | `hosted` | 12 |
 | `std::math` | `core` | 39 |
@@ -2108,6 +2108,12 @@ Tier: `hosted`. Stability reading: platform-backed.
 
 Tier: `hosted`. Stability reading: platform-backed.
 
+### enum
+
+| API | Coverage note |
+| --- | --- |
+| `enum std::io::ReadByte` | check-prelude std-io-result byte-read status distinguishing byte, EOF, and adapter error; docs/stdlib/modules/io.md |
+
 ### fn
 
 | API | Coverage note |
@@ -2130,6 +2136,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::io::print_text` | check-prelude std-io-natural-api Result-returning stdout text helper; docs/stdlib/modules/io.md |
 | `fn std::io::println` | check-prelude std-io-natural-api Result-returning stdout line helper; docs/stdlib/modules/io.md |
 | `fn std::io::println_text` | check-prelude std-io-natural-api Result-returning stdout line helper; docs/stdlib/modules/io.md |
+| `fn std::io::read[R: Reader]` | check-prelude std-io-result Result-returning partial read helper with EOF count semantics; docs/stdlib/modules/io.md |
 | `fn std::io::read_all[R: Reader]` | check-prelude std-io-read-all generic Reader whole-stream collector; docs/stdlib/modules/io.md |
 | `fn std::io::read_byte` | prelude byte input tests; docs/dev/test-matrix.md Prelude row |
 | `fn std::io::read_exact[R: Reader]` | check-prelude std-io-result/std-io-traits-cursor Result-returning exact-read helper; docs/stdlib/modules/io.md |
@@ -2137,6 +2144,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::io::read_line` | prelude read_line/input tests; docs/dev/test-matrix.md Prelude row |
 | `fn std::io::read_line_from[R: Reader]` | check-prelude std-io-read-to-string Result-returning generic line reader helper; docs/stdlib/modules/io.md |
 | `fn std::io::read_line_owned` | prelude owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows |
+| `fn std::io::read_one[R: Reader]` | check-prelude std-io-result generic one-byte read status helper; docs/stdlib/modules/io.md |
 | `fn std::io::read_to_string[R: Reader]` | check-prelude std-io-read-to-string Result-returning generic Reader whole-stream owned String collector; docs/stdlib/modules/io.md |
 | `fn std::io::read_to_string_unchecked[R: Reader]` | check-prelude std-io-read-to-string unchecked generic Reader whole-stream owned String collector; docs/stdlib/modules/io.md |
 | `fn std::io::stderr` | std io stderr tests; docs/stdlib/modules/io.md |
@@ -2160,13 +2168,17 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::io::BufReader[R]::capacity` | std io buffered tests; docs/stdlib/modules/io.md |
 | `method std::io::BufReader[R]::is_empty` | std io buffered tests; docs/stdlib/modules/io.md |
 | `method std::io::BufReader[R]::new` | std io buffered tests; docs/stdlib/modules/io.md |
+| `method std::io::BufReader[R]::read` | check-prelude std-io-result Result-returning buffered partial read method; docs/stdlib/modules/io.md |
 | `method std::io::BufReader[R]::read_line` | check-prelude std-io-read-to-string Result-returning buffered reader line helper; docs/stdlib/modules/io.md |
+| `method std::io::BufReader[R]::read_one` | check-prelude std-io-result buffered one-byte status method; docs/stdlib/modules/io.md |
 | `method std::io::BufReader[R]::read_to_string` | check-prelude std-io-read-to-string Result-returning buffered reader whole-stream helper; docs/stdlib/modules/io.md |
 | `method std::io::BufWriter[W]::buffered_len` | std io buffered tests; docs/stdlib/modules/io.md |
 | `method std::io::BufWriter[W]::capacity` | std io buffered tests; docs/stdlib/modules/io.md |
 | `method std::io::BufWriter[W]::is_empty` | std io buffered tests; docs/stdlib/modules/io.md |
 | `method std::io::BufWriter[W]::new` | std io buffered tests; docs/stdlib/modules/io.md |
+| `method std::io::Cursor::read` | check-prelude std-io-result Result-returning cursor partial read method; docs/stdlib/modules/io.md |
 | `method std::io::Cursor::read_line` | check-prelude std-io-read-to-string Result-returning cursor line helper; docs/stdlib/modules/io.md |
+| `method std::io::Cursor::read_one` | check-prelude std-io-result cursor one-byte status method; docs/stdlib/modules/io.md |
 | `method std::io::Cursor::read_to_string` | check-prelude std-io-read-to-string Result-returning cursor whole-stream helper; docs/stdlib/modules/io.md |
 | `method std::io::Pipe::close` | check-prelude std-io-pipe Result-returning close for remaining pipe adapter ends; docs/stdlib/modules/io.md |
 | `method std::io::Pipe::close_bool` | check-prelude std-io-pipe bool compatibility close for remaining pipe adapter ends; docs/stdlib/modules/io.md |
@@ -2178,13 +2190,22 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::io::PipeReader::close` | check-prelude std-io-pipe Result-returning pipe reader close helper; docs/stdlib/modules/io.md |
 | `method std::io::PipeReader::close_bool` | check-prelude std-io-pipe bool compatibility pipe reader close helper; docs/stdlib/modules/io.md |
 | `method std::io::PipeReader::is_open` | check-prelude std-io-pipe pipe reader open predicate; docs/stdlib/modules/io.md |
+| `method std::io::PipeReader::read` | check-prelude std-io-pipe Result-returning pipe reader partial read method; docs/stdlib/modules/io.md |
 | `method std::io::PipeReader::read_line` | check-prelude std-io-pipe Result-returning pipe reader line helper; docs/stdlib/modules/io.md |
+| `method std::io::PipeReader::read_one` | check-prelude std-io-pipe pipe reader one-byte status method with closed-handle error; docs/stdlib/modules/io.md |
 | `method std::io::PipeReader::read_to_string` | check-prelude std-io-pipe Result-returning pipe reader whole-stream helper; docs/stdlib/modules/io.md |
 | `method std::io::PipeWriter::as_fd` | check-prelude std-io-pipe borrowed descriptor view from pipe writer; docs/stdlib/modules/io.md |
 | `method std::io::PipeWriter::close` | check-prelude std-io-pipe Result-returning pipe writer close helper; docs/stdlib/modules/io.md |
 | `method std::io::PipeWriter::close_bool` | check-prelude std-io-pipe bool compatibility pipe writer close helper; docs/stdlib/modules/io.md |
 | `method std::io::PipeWriter::is_open` | check-prelude std-io-pipe pipe writer open predicate; docs/stdlib/modules/io.md |
+| `method std::io::ReadByte::byte` | check-prelude std-io-result byte-read payload accessor; docs/stdlib/modules/io.md |
+| `method std::io::ReadByte::error` | check-prelude std-io-result byte-read error payload accessor; docs/stdlib/modules/io.md |
+| `method std::io::ReadByte::is_byte` | check-prelude std-io-result byte-read byte predicate; docs/stdlib/modules/io.md |
+| `method std::io::ReadByte::is_eof` | check-prelude std-io-result byte-read EOF predicate; docs/stdlib/modules/io.md |
+| `method std::io::ReadByte::is_error` | check-prelude std-io-result byte-read adapter-error predicate; docs/stdlib/modules/io.md |
+| `method std::io::Stdin::read` | check-prelude std-io-result Result-returning stdin partial read method; docs/stdlib/modules/io.md |
 | `method std::io::Stdin::read_line` | check-prelude std-io-read-to-string Result-returning stdin line method; docs/stdlib/modules/io.md |
+| `method std::io::Stdin::read_one` | check-prelude std-io-result stdin one-byte status method; docs/stdlib/modules/io.md |
 | `method std::io::Stdin::read_to_string` | check-prelude std-io-read-to-string Result-returning stdin whole-stream method; docs/stdlib/modules/io.md |
 
 ### module
