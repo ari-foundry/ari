@@ -1,7 +1,7 @@
-// Covers Unix domain stream sockets on hosted Unix-like targets. The test uses
-// a short pathname socket, transfers bytes through stream byte and buffer
-// helpers, and cleans up the path. Restricted hosts may reject socket creation;
-// that still proves the std::error bridge.
+// Covers Unix domain stream and datagram sockets on hosted Unix-like targets.
+// The test uses short pathname sockets, transfers bytes through stream and
+// datagram helpers, and cleans up the paths. Restricted hosts may reject
+// socket creation; that still proves the std::error bridge.
 fn error_is(value: error::Error, kind: error::Kind) -> bool {
   return value.is_kind(kind);
 }
@@ -97,6 +97,91 @@ fn main() -> i64 {
   assert(client.close().is_err());
   assert(listener.close().is_err());
 
-  assert_eq_i64(score, 255);
+  let datagram_path = "build/prelude/std-net-unix-datagram.sock";
+  let datagram_peer_path = "build/prelude/std-net-unix-datagram-peer.sock";
+  fs::remove_bool(datagram_path);
+  fs::remove_bool(datagram_peer_path);
+
+  assert(net::UnixDatagram::bind_optional("build/prelude/missing-dir/std-net-unix-datagram.sock").is_none());
+  let maybe_datagram_server = net::unix_datagram(datagram_path);
+  if maybe_datagram_server.is_err() {
+    match maybe_datagram_server {
+      Ok(_retry_datagram_server) => {}
+      Err(datagram_client_error) => {
+        if !(error_is(datagram_client_error, error::PermissionDenied) ||
+          error_is(datagram_client_error, error::Unsupported)) {
+          panic();
+        }
+      }
+    }
+    assert_eq_i64(score, 255);
+    return score;
+  }
+
+  var datagram_server = maybe_datagram_server.unwrap();
+  let maybe_datagram_client = net::UnixDatagram::unbound();
+  if maybe_datagram_client.is_err() {
+    match maybe_datagram_client {
+      Ok(_retry_datagram_client) => {}
+      Err(datagram_error) => {
+        if !(error_is(datagram_error, error::PermissionDenied) || error_is(datagram_error, error::Unsupported)) {
+          panic();
+        }
+      }
+    }
+    datagram_server.close();
+    fs::remove_bool(datagram_path);
+    assert_eq_i64(score, 255);
+    return score;
+  }
+
+  var datagram_client = maybe_datagram_client.unwrap();
+  if datagram_server.is_open() &&
+    datagram_server.descriptor().is_valid() &&
+    datagram_client.is_open() &&
+    datagram_client.descriptor().is_valid() {
+    score = score + 256;
+  }
+
+  if datagram_server.set_nonblocking(false).is_ok() &&
+    datagram_client.set_nonblocking(false).is_ok() &&
+    datagram_server.set_read_timeout(time::milliseconds(1000)).is_ok() &&
+    datagram_client.set_write_timeout_millis(1000).is_ok() &&
+    datagram_client.send_ready(time::Duration::zero()).unwrap_or(false) &&
+    datagram_client.close_on_exec().unwrap_or(false) {
+    score = score + 512;
+  }
+
+  var datagram = [84u8, 85u8];
+  if datagram_client.send_to(datagram.as_slice(), datagram_path).unwrap_or(0) == 2 {
+    var datagram_output = [0u8, 0u8];
+    if datagram_server.recv(datagram_output.as_slice()).unwrap_or(0) == 2 &&
+      datagram_output[0] == 84u8 &&
+      datagram_output[1] == 85u8 {
+      score = score + 1024;
+    }
+  }
+
+  var datagram_peer = net::UnixDatagram::bind(datagram_peer_path).unwrap();
+  if datagram_peer.connect(datagram_path).is_ok() &&
+    datagram_peer.send(datagram.as_slice()).unwrap_or(0) == 2 {
+    var connected_output = [0u8, 0u8];
+    if datagram_server.recv(connected_output.as_slice()).unwrap_or(0) == 2 &&
+      connected_output[0] == 84u8 &&
+      connected_output[1] == 85u8 {
+      score = score + 2048;
+    }
+  }
+
+  if datagram_peer.close().is_ok() &&
+    datagram_client.close().is_ok() &&
+    datagram_server.close().is_ok() &&
+    fs::remove_bool(datagram_path) &&
+    fs::remove_bool(datagram_peer_path) {
+    score = score + 4096;
+  }
+  assert(datagram_server.close().is_err());
+
+  assert_eq_i64(score, 8191);
   return score;
 }

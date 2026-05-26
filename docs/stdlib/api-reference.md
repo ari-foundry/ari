@@ -2094,13 +2094,15 @@ low-level callers that still need raw integer errors.
 `net::listen`/`net::connect` are TCP-focused module-level `Result` helpers;
 use `tcp_listen`/`tcp_connect`, explicit IPv6 `tcp_listen_v6`/
 `tcp_connect_v6`, `connect_host`/`tcp_connect_host`, `udp_bind`,
-`udp_bind_v6`, `unix_listen`, and `unix_connect` when the socket family should
-be explicit at the call site.
-`TcpListener`, `TcpStream`, `UdpSocket`, `UnixListener`, and `UnixStream` are
+`udp_bind_v6`, `unix_listen`, `unix_connect`, `unix_datagram`, and
+`unix_datagram_unbound` when the socket family should be explicit at the call
+site.
+`TcpListener`, `TcpStream`, `UdpSocket`, `UnixListener`, `UnixStream`, and `UnixDatagram` are
 owned descriptor-backed handles. They support hosted IPv4/IPv6 TCP
 bind/connect/accept, IPv4/IPv6 UDP bind/buffer datagrams/source-address receive,
 connected UDP send/receive, Unix stream
-bind/connect/accept, local bound-port and local socket-address lookup,
+bind/connect/accept, pathname Unix datagram bind/unbound/connect/send/receive,
+local bound-port and local socket-address lookup,
 borrowed descriptor views, explicit close, nonblocking flags,
 reuse-address/reuse-port helpers, close-on-exec helpers, TCP nodelay,
 keepalive, and linger helpers, UDP broadcast, send/receive buffer-size helpers,
@@ -2121,9 +2123,9 @@ still handle the actual operation result. `linger_seconds` reads TCP
 enables it and `disable_linger` clears it. `ttl` controls IPv4 `IP_TTL` and
 `hop_limit` controls IPv6 `IPV6_UNICAST_HOPS`; setters accept `1..=255` and
 return `InvalidInput` outside that range. Full `getaddrinfo` iteration, host
-service-database lookup, multicast, multi-descriptor poll/event loops,
-TLS packaging decisions, and timeout-specific error results remain roadmap
-work.
+service-database lookup, multicast, multi-descriptor poll/event loops, Unix
+peer credentials, TLS packaging decisions, and timeout-specific error results
+remain roadmap work.
 
 ## IO And Input
 

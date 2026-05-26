@@ -71,6 +71,8 @@ net::udp_bind(addr)
 net::udp_bind_v6(addr)
 net::unix_listen(path)
 net::unix_connect(path)
+net::unix_datagram(path)
+net::unix_datagram_unbound()
 
 ToSocketAddrs::to_socket_addrs(zone)
 
@@ -695,10 +697,10 @@ return ptr_load(output.as_slice().as_ptr()) as i64;
 | TCP listener | Current hosted IPv4/IPv6 slice: module-level `listen`/`tcp_listen`, explicit IPv6 `tcp_listen_v6`, `TcpListener::bind`, and `accept` return `Error`; optional/try compatibility and raw compatibility forms remain; Result-returning `local_port`/`local_addr` plus IPv6-specific `local_addr_v6`, descriptor/open/close-on-exec helpers, nonblocking, reuse-address, and reuse-port setter/query with Result defaults, `Duration` and raw-millisecond accept timeout setters, accept readiness probes, unchecked timeout compatibility, and explicit close/close_unchecked. |
 | TCP stream | Current hosted IPv4/IPv6 slice: module-level `connect`/`tcp_connect`, explicit IPv6 `tcp_connect_v6`, and host-port `connect_host`/`tcp_connect_host`; `TcpStream::connect` returns `Error`, optional/try and raw compatibility forms remain, local/peer address helpers dispatch across IPv4/IPv6 with IPv6-specific `local_addr_v6`/`peer_addr_v6`, descriptor/open/close-on-exec helpers, nonblocking, TCP nodelay, keepalive, linger, send/receive buffer-size helpers, IPv4 TTL, IPv6 hop-limit with Result defaults, `Duration` timeouts, read/write readiness probes, shutdown, byte and buffer IO, close/close_unchecked, and `std::io::Reader`/`Writer` adapters. |
 | UDP socket | Current hosted IPv4/IPv6 slice: module-level `udp_bind` plus explicit IPv6 `udp_bind_v6`, `UdpSocket::bind` returns `Error`, optional/try and raw compatibility forms remain, Result-returning local-port/local-address helpers including `local_addr_v6`, descriptor/open/close-on-exec helpers, nonblocking, reuse-address, reuse-port, broadcast, send/receive buffer-size helpers, IPv4 TTL, IPv6 hop-limit with Result defaults, `Duration` timeouts, send/receive readiness probes, datagram `send_to`/`recv_from`/`peek_from`, connected `send`/`recv`, single-byte compatibility helpers, and close/close_unchecked. |
-| Unix domain socket | Current hosted stream slice: module-level `unix_listen`/`unix_connect`, `UnixListener` bind/accept and `UnixStream` connect return `Error`, optional/try compatibility helpers and raw compatibility bridges remain, IO/shutdown Result methods, close-on-exec helpers, `Duration` and raw-millisecond timeout setters, accept/read/write readiness probes, and `read`/`write`/`read_exact`/`write_all` buffer helpers. |
+| Unix domain socket | Current hosted stream and datagram slice: module-level `unix_listen`/`unix_connect`, `UnixListener` bind/accept and `UnixStream` connect return `Error`, optional/try compatibility helpers and raw compatibility bridges remain, IO/shutdown Result methods, close-on-exec helpers, `Duration` and raw-millisecond timeout setters, accept/read/write readiness probes, and `read`/`write`/`read_exact`/`write_all` buffer helpers. `unix_datagram(path)` binds a pathname datagram socket, `unix_datagram_unbound()` creates an unbound datagram socket, and `UnixDatagram` supports `bind`, `unbound`, `connect(path)`, `send_to(bytes, path)`, connected `send`/`recv`, close-on-exec, nonblocking, timeout, and readiness helpers. |
 | socket options | Current: nonblocking, close-on-exec, readiness probes, read/write timeout, TCP listener/UDP reuse-address and reuse-port, TCP nodelay/keepalive/linger, UDP broadcast, TCP/UDP send/receive buffer-size helpers, IPv4 TTL, and IPv6 hop-limit with Result defaults plus `_optional`/`_unchecked` compatibility where present; future multicast. |
 | timeout | Current: preferred `std::time::Duration` read/write/accept timeout setters plus raw millisecond setters, all Result-returning, with `_unchecked` raw-millisecond compatibility helpers. |
-| readiness | Current: `TcpListener::accept_ready`, `TcpStream::read_ready`/`write_ready`, `UdpSocket::recv_ready`/`send_ready`, `UnixListener::accept_ready`, and `UnixStream::read_ready`/`write_ready` delegate to `std::os::poll_read`/`poll_write`. Each has a `Duration` form and a `_millis` form. They return `Ok(true)` for ready, `Ok(false)` for timeout, and `Error` for invalid descriptors or host poll failures. They do not perform the read/write/accept themselves; callers must still handle the operation result. |
+| readiness | Current: `TcpListener::accept_ready`, `TcpStream::read_ready`/`write_ready`, `UdpSocket::recv_ready`/`send_ready`, `UnixListener::accept_ready`, `UnixStream::read_ready`/`write_ready`, and `UnixDatagram::recv_ready`/`send_ready` delegate to `std::os::poll_read`/`poll_write`. Each has a `Duration` form and a `_millis` form. They return `Ok(true)` for ready, `Ok(false)` for timeout, and `Error` for invalid descriptors or host poll failures. They do not perform the read/write/accept themselves; callers must still handle the operation result. |
 | shutdown | Current: `Shutdown::{Read, Write, Both}` and stream `shutdown(mode)` for TCP and Unix streams. |
 
 ## Current Limits
@@ -715,8 +717,8 @@ return ptr_load(output.as_slice().as_ptr()) as i64;
 - UDP supports buffer datagrams, source-address return values, connected UDP,
   peek, IPv4 TTL, and IPv6 hop-limit controls. Multicast controls are future
   slices.
-- Unix sockets are stream-only and path-based. Abstract namespace sockets,
-  Unix datagram sockets, peer credentials, and platform guards need later
+- Unix sockets are path-based. Stream and datagram handles are available;
+  abstract namespace sockets, peer credentials, and platform guards need later
   design.
 - Tests may run on hosts that forbid socket creation. In that case
   natural Result-returning helpers should report `PermissionDenied` or
@@ -768,10 +770,12 @@ restricted-host fallback, and explicit close.
 explicit `tcp_listen_v6`/`tcp_connect_v6`/`udp_bind_v6`, IPv6 local/peer
 address helpers, TCP/UDP IPv6 hop-limit options, TCP loopback transfer, UDP loopback datagrams, and
 restricted-host fallback.
-`std-net-unix-socket.ari` covers module-level Unix listener/connect wrappers,
-Unix stream listener bind, stream connect,
-accept, timeout/nonblocking helpers, bidirectional byte and buffer IO,
-shutdown, close, and test socket-file cleanup.
+`std-net-unix-socket.ari` covers module-level Unix listener/connect and
+Unix datagram wrappers, Unix stream listener bind, stream connect, accept,
+timeout/nonblocking/readiness helpers, bidirectional byte and buffer IO,
+shutdown, close, Unix datagram bind/unbound/connect/send-to/connected-send/recv,
+close-on-exec, timeout/readiness helpers, double-close error behavior, and test
+socket-file cleanup.
 `std-net-dns-lookup.ari` covers numeric IPv4 and IPv6 lookup, `Option` and
 `Result` lookup shapes, `"host:port"` and bracketed `"[host]:port"` endpoint
 resolution, `ToSocketAddrs`, host-connect input validation, rejected unbracketed
@@ -794,5 +798,5 @@ IPv6 input for the IPv4 resolver, and edge IPv4 addresses.
 - Keep `std::net` focused on raw TCP/UDP/Unix sockets. TLS should live in a
   future arix package-layer library until the package ecosystem and certificate
   policy are deliberate.
-- Add Unix datagram sockets, abstract namespace policy, and peer credential
-  helpers behind explicit Linux/Unix platform documentation.
+- Add abstract namespace policy and peer credential helpers behind explicit
+  Linux/Unix platform documentation.

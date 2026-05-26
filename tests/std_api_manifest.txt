@@ -820,6 +820,8 @@ fn std::net::try_resolve|check-prelude std-net-dns-lookup Option-returning host-
 fn std::net::udp_bind|check-prelude std-net-udp-socket module-level UDP bind helper returning Error; docs/stdlib/modules/net.md
 fn std::net::udp_bind_v6|check-prelude std-net-ipv6-socket module-level IPv6 UDP bind helper returning Error; docs/stdlib/modules/net.md
 fn std::net::unix_connect|check-prelude std-net-unix-socket module-level Unix stream connect helper returning Error; docs/stdlib/modules/net.md
+fn std::net::unix_datagram|check-prelude std-net-unix-socket module-level Unix datagram bind helper returning Error; docs/stdlib/modules/net.md
+fn std::net::unix_datagram_unbound|check-prelude std-net-unix-socket module-level unbound Unix datagram socket helper returning Error; docs/stdlib/modules/net.md
 fn std::net::unix_listen|check-prelude std-net-unix-socket module-level Unix listener helper returning Error; docs/stdlib/modules/net.md
 fn std::os::fd|check-prelude std-os-fd non-owning descriptor view constructor; docs/stdlib/modules/os.md
 fn std::os::invalid|check-prelude std-os-fd invalid descriptor view constructor; docs/stdlib/modules/os.md
@@ -2178,6 +2180,39 @@ method std::net::UdpSocket::try_bind|check-prelude std-net-udp-socket Option-ret
 method std::net::UdpSocket::try_recv_byte|check-prelude std-net-udp-socket Option-returning single-byte UDP datagram receive helper; docs/stdlib/modules/net.md
 method std::net::UdpSocket::ttl|check-prelude std-net-udp-socket UDP IPv4 TTL socket option query; docs/stdlib/modules/net.md
 method std::net::UdpSocket::ttl_optional|check-prelude std-net-udp-socket Option-returning UDP IPv4 TTL compatibility query; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::bind|check-prelude std-net-unix-socket Result-returning Unix datagram bind helper with Error payload; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::bind_optional|check-prelude std-net-unix-socket Option-returning Unix datagram bind compatibility helper; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::bind_raw|check-prelude std-net-unix-socket raw Result-returning Unix datagram bind compatibility helper; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::close|check-prelude std-net-unix-socket explicit Unix datagram close helper; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::close_on_exec|check-prelude std-net-unix-socket Result-returning Unix datagram close-on-exec descriptor flag query; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::close_on_exec_optional|check-prelude std-net-unix-socket Option-returning Unix datagram close-on-exec compatibility query; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::close_unchecked|check-prelude std-net-unix-socket unchecked Unix datagram close compatibility method; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::connect|check-prelude std-net-unix-socket Unix datagram default-peer connect helper; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::descriptor|check-prelude std-net-unix-socket Unix datagram borrowed descriptor view; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::is_nonblocking|check-prelude std-net-unix-socket Unix datagram nonblocking descriptor query; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::is_nonblocking_optional|check-prelude std-net-unix-socket Option-returning Unix datagram nonblocking compatibility query; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::is_open|check-prelude std-net-unix-socket Unix datagram open predicate; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::recv|check-prelude std-net-unix-socket connected Unix datagram receive helper; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::recv_ready|check-prelude std-os-poll Duration-based Unix datagram receive-readiness probe; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::recv_ready_millis|check-prelude std-os-poll millisecond Unix datagram receive-readiness probe; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::send|check-prelude std-net-unix-socket connected Unix datagram send helper; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::send_ready|check-prelude std-os-poll Duration-based Unix datagram send-readiness probe; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::send_ready_millis|check-prelude std-os-poll millisecond Unix datagram send-readiness probe; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::send_to|check-prelude std-net-unix-socket pathname Unix datagram send helper; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::set_close_on_exec|check-prelude std-net-unix-socket Unix datagram close-on-exec descriptor flag setter; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::set_close_on_exec_unchecked|check-prelude std-net-unix-socket unchecked Unix datagram close-on-exec compatibility setter; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::set_nonblocking|check-prelude std-net-unix-socket Unix datagram nonblocking descriptor setter; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::set_nonblocking_unchecked|check-prelude std-net-unix-socket unchecked Unix datagram nonblocking compatibility setter; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::set_read_timeout|check-prelude std-net-unix-socket Duration-based Unix datagram read timeout setter; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::set_read_timeout_millis|check-prelude std-net-unix-socket Unix datagram read timeout setter; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::set_read_timeout_millis_unchecked|check-prelude std-net-unix-socket unchecked Unix datagram read timeout compatibility setter; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::set_write_timeout|check-prelude std-net-unix-socket Duration-based Unix datagram write timeout setter; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::set_write_timeout_millis|check-prelude std-net-unix-socket Unix datagram write timeout setter; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::set_write_timeout_millis_unchecked|check-prelude std-net-unix-socket unchecked Unix datagram write timeout compatibility setter; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::try_bind|check-prelude std-net-unix-socket Option-returning Unix datagram bind compatibility alias; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::unbound|check-prelude std-net-unix-socket Result-returning unbound Unix datagram constructor; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::unbound_optional|check-prelude std-net-unix-socket Option-returning unbound Unix datagram constructor; docs/stdlib/modules/net.md
+method std::net::UnixDatagram::unbound_raw|check-prelude std-net-unix-socket raw Result-returning unbound Unix datagram constructor; docs/stdlib/modules/net.md
 method std::net::UnixListener::accept|check-prelude std-net-unix-socket Result-returning Unix stream accept helper with Error payload; docs/stdlib/modules/net.md
 method std::net::UnixListener::accept_optional|check-prelude std-net-unix-socket Option-returning Unix stream accept compatibility helper; docs/stdlib/modules/net.md
 method std::net::UnixListener::accept_raw|check-prelude std-net-unix-socket raw Result-returning Unix stream accept compatibility helper; docs/stdlib/modules/net.md
@@ -3146,6 +3181,7 @@ struct std::net::TcpListener|check-prelude std-net-tcp-loopback owned TCP listen
 struct std::net::TcpStream|check-prelude std-net-tcp-loopback owned TCP stream handle and IO traits; docs/stdlib/modules/net.md
 struct std::net::UdpRecvFrom|check-prelude std-net-udp-socket UDP receive metadata value; docs/stdlib/modules/net.md
 struct std::net::UdpSocket|check-prelude std-net-udp-socket owned UDP datagram socket handle; docs/stdlib/modules/net.md
+struct std::net::UnixDatagram|check-prelude std-net-unix-socket owned Unix domain datagram handle; docs/stdlib/modules/net.md
 struct std::net::UnixListener|check-prelude std-net-unix-socket owned Unix domain listener handle; docs/stdlib/modules/net.md
 struct std::net::UnixStream|check-prelude std-net-unix-socket owned Unix domain stream handle and IO traits; docs/stdlib/modules/net.md
 struct std::os::Fd|check-prelude std-os-fd non-owning file descriptor view; docs/stdlib/modules/os.md

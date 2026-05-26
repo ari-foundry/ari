@@ -1494,8 +1494,12 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-unix-socket.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -q "@ari_builtin_net_unix_listen" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -q "@ari_builtin_net_unix_connect" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
+	grep -q "@ari_builtin_net_unix_datagram_bind" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
+	grep -q "@ari_builtin_net_unix_datagram_unbound" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
+	grep -q "@ari_builtin_net_unix_datagram_send_to" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std3net11unix_listen" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std3net12unix_connect" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
+	grep -F -q "std3net13unix_datagram" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std__net__UnixListener8inherent13bind_optional" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std__net__UnixListener8inherent15accept_optional" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std__net__UnixListener8inherent8bind_raw" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
@@ -1506,6 +1510,9 @@ check-prelude: $(TARGET)
 	grep -F -q "std__net__UnixStream8inherent16set_read_timeout" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std__net__UnixStream8inherent17set_write_timeout" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std__net__UnixStream15std__io__Writer9write_all" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
+	grep -F -q "std__net__UnixDatagram8inherent7unbound" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
+	grep -F -q "std__net__UnixDatagram8inherent7send_to" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
+	grep -F -q "std__net__UnixDatagram8inherent4recv" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-unix-socket.ari -o $(BUILD_DIR)/prelude/std-net-unix-socket.elf
 	$(BUILD_DIR)/prelude/std-net-unix-socket.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-dns-lookup.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-dns-lookup.ll

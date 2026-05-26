@@ -70,6 +70,10 @@ pub struct UnixStream {
   mut handle: std::os::OwnedFd,
 }
 
+pub struct UnixDatagram {
+  mut handle: std::os::OwnedFd,
+}
+
 pub enum Shutdown {
   Read,
   Write,
@@ -156,6 +160,12 @@ extern "ari" fn set_nodelay_raw(raw: i64, enabled: bool) -> bool =
 extern "ari" fn shutdown_socket_raw(raw: i64, mode: i64) -> bool = "ari_builtin_net_shutdown";
 extern "ari" fn unix_listen_host_raw(path: string) -> i64 = "ari_builtin_net_unix_listen";
 extern "ari" fn unix_connect_host_raw(path: string) -> i64 = "ari_builtin_net_unix_connect";
+extern "ari" fn unix_datagram_unbound_host_raw() -> i64 = "ari_builtin_net_unix_datagram_unbound";
+extern "ari" fn unix_datagram_bind_host_raw(path: string) -> i64 = "ari_builtin_net_unix_datagram_bind";
+extern "ari" fn unix_datagram_connect_host_raw(raw: i64, path: string) -> bool =
+  "ari_builtin_net_unix_datagram_connect";
+extern "ari" fn unix_datagram_send_to_host_raw(raw: i64, values: ptr u8, len: i64, path: string) -> i64 =
+  "ari_builtin_net_unix_datagram_send_to";
 extern "ari" fn lookup_v4_host_raw(host: string, port: i64) -> i64 = "ari_builtin_net_lookup_v4";
 extern "ari" fn lookup_v4_endpoint_host_raw(endpoint: string) -> i64 = "ari_builtin_net_lookup_v4_endpoint";
 extern "ari" fn lookup_v6_host_raw(host: string, port: i64, output: ptr u16) -> i64 = "ari_builtin_net_lookup_v6";
@@ -556,6 +566,14 @@ pub fn unix_connect(path: string) -> std::Result[UnixStream, std::error::Error] 
   return UnixStream::connect(path);
 }
 
+pub fn unix_datagram(path: string) -> std::Result[UnixDatagram, std::error::Error] {
+  return UnixDatagram::bind(path);
+}
+
+pub fn unix_datagram_unbound() -> std::Result[UnixDatagram, std::error::Error] {
+  return UnixDatagram::unbound();
+}
+
 fn socket_addr_from_packed_v4(packed: i64) -> SocketAddr {
   let address = packed >> 16;
   let a = ((address >> 24) & 255) as u8;
@@ -914,6 +932,12 @@ fn unix_stream_from_raw(raw: i64) -> UnixStream {
   return UnixStream { handle: handle };
 }
 
+fn unix_datagram_from_raw(raw: i64) -> UnixDatagram {
+  var handle = std::os::OwnedFd::from_raw(raw);
+  handle.set_close_on_exec_bool(true);
+  return UnixDatagram { handle: handle };
+}
+
 fn shutdown_mode(mode: Shutdown) -> i64 {
   match mode {
     Read => { return 0; }
@@ -1190,6 +1214,33 @@ fn unix_connect_raw(path: string) -> std::Result[i64, i64] {
     return std::Ok<i64, i64>(raw);
   }
   return std::Err<i64, i64>(last_errno_error_raw());
+}
+
+fn unix_datagram_unbound_raw() -> std::Result[i64, i64] {
+  let raw = unix_datagram_unbound_host_raw();
+  if raw >= 0 {
+    return std::Ok<i64, i64>(raw);
+  }
+  return std::Err<i64, i64>(last_errno_error_raw());
+}
+
+fn unix_datagram_bind_raw(path: string) -> std::Result[i64, i64] {
+  let raw = unix_datagram_bind_host_raw(path);
+  if raw >= 0 {
+    return std::Ok<i64, i64>(raw);
+  }
+  return std::Err<i64, i64>(last_errno_error_raw());
+}
+
+fn unix_datagram_connect_raw(raw: i64, path: string) -> std::Result[(), i64] {
+  return socket_unit_raw(raw, unix_datagram_connect_host_raw(raw, path));
+}
+
+fn unix_datagram_send_to_raw(raw: i64, values: std::Slice[u8], path: string) -> std::Result[i64, i64] {
+  return udp_count_raw(
+    raw,
+    unix_datagram_send_to_host_raw(raw, values.as_ptr(), values.len, path)
+  );
 }
 
 pub impl std::net::Ipv4Addr {
@@ -2361,6 +2412,168 @@ pub impl std::net::UdpSocket {
       return std::Err<u8, std::error::Error>(std::error::new(std::error::UnexpectedEof));
     }
     return std::Ok<u8, std::error::Error>(value as u8);
+  }
+}
+
+pub impl std::net::UnixDatagram {
+  fn bind(path: string) -> std::Result[UnixDatagram, std::error::Error] {
+    return std::error::map_raw<UnixDatagram>(UnixDatagram::bind_raw(path));
+  }
+
+  fn bind_optional(path: string) -> std::Option[UnixDatagram] {
+    return UnixDatagram::bind(path).ok();
+  }
+
+  fn try_bind(path: string) -> std::Option[UnixDatagram] {
+    return UnixDatagram::bind_optional(path);
+  }
+
+  fn bind_raw(path: string) -> std::Result[UnixDatagram, i64] {
+    match unix_datagram_bind_raw(path) {
+      std::Ok(raw) => {
+        return std::Ok<UnixDatagram, i64>(unix_datagram_from_raw(raw));
+      }
+      std::Err(error) => {
+        return std::Err<UnixDatagram, i64>(error);
+      }
+    }
+  }
+
+  fn unbound() -> std::Result[UnixDatagram, std::error::Error] {
+    return std::error::map_raw<UnixDatagram>(UnixDatagram::unbound_raw());
+  }
+
+  fn unbound_optional() -> std::Option[UnixDatagram] {
+    return UnixDatagram::unbound().ok();
+  }
+
+  fn unbound_raw() -> std::Result[UnixDatagram, i64] {
+    match unix_datagram_unbound_raw() {
+      std::Ok(raw) => {
+        return std::Ok<UnixDatagram, i64>(unix_datagram_from_raw(raw));
+      }
+      std::Err(error) => {
+        return std::Err<UnixDatagram, i64>(error);
+      }
+    }
+  }
+
+  fn descriptor(self: ref Self) -> std::os::Fd {
+    return self.handle.as_fd();
+  }
+
+  fn is_open(self: ref Self) -> bool {
+    return self.handle.is_open();
+  }
+
+  fn close_unchecked(self: ref mut Self) -> bool {
+    return self.handle.close();
+  }
+
+  fn close(self: ref mut Self) -> std::Result[(), std::error::Error] {
+    return self.handle.close();
+  }
+
+  fn is_nonblocking_optional(self: ref Self) -> std::Option[bool] {
+    return self.handle.is_nonblocking();
+  }
+
+  fn is_nonblocking(self: ref Self) -> std::Result[bool, std::error::Error] {
+    return self.handle.is_nonblocking();
+  }
+
+  fn set_nonblocking_unchecked(self: ref Self, enabled: bool) -> bool {
+    return self.handle.set_nonblocking(enabled);
+  }
+
+  fn set_nonblocking(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
+    return self.handle.set_nonblocking(enabled);
+  }
+
+  fn close_on_exec_optional(self: ref Self) -> std::Option[bool] {
+    return self.handle.close_on_exec();
+  }
+
+  fn close_on_exec(self: ref Self) -> std::Result[bool, std::error::Error] {
+    return self.handle.close_on_exec();
+  }
+
+  fn set_close_on_exec_unchecked(self: ref Self, enabled: bool) -> bool {
+    return self.handle.set_close_on_exec(enabled);
+  }
+
+  fn set_close_on_exec(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
+    return self.handle.set_close_on_exec(enabled);
+  }
+
+  fn set_read_timeout_millis_unchecked(self: ref Self, millis: i64) -> bool {
+    return self.set_read_timeout_millis(millis).is_ok();
+  }
+
+  fn set_read_timeout_millis(self: ref Self, millis: i64) -> std::Result[(), std::error::Error] {
+    if !self.is_open() {
+      return std::Err<(), std::error::Error>(std::error::new(std::error::InvalidInput));
+    }
+    return std::error::map_raw<()>(
+      socket_unit_raw(self.handle.raw(), set_read_timeout_millis_raw(self.handle.raw(), millis))
+    );
+  }
+
+  fn set_read_timeout(self: ref Self, timeout: std::time::Duration) -> std::Result[(), std::error::Error] {
+    return self.set_read_timeout_millis(timeout.as_millis());
+  }
+
+  fn set_write_timeout_millis_unchecked(self: ref Self, millis: i64) -> bool {
+    return self.set_write_timeout_millis(millis).is_ok();
+  }
+
+  fn set_write_timeout_millis(self: ref Self, millis: i64) -> std::Result[(), std::error::Error] {
+    if !self.is_open() {
+      return std::Err<(), std::error::Error>(std::error::new(std::error::InvalidInput));
+    }
+    return std::error::map_raw<()>(
+      socket_unit_raw(self.handle.raw(), set_write_timeout_millis_raw(self.handle.raw(), millis))
+    );
+  }
+
+  fn set_write_timeout(self: ref Self, timeout: std::time::Duration) -> std::Result[(), std::error::Error] {
+    return self.set_write_timeout_millis(timeout.as_millis());
+  }
+
+  fn recv_ready_millis(self: ref Self, timeout_millis: i64) -> std::Result[bool, std::error::Error] {
+    return self.handle.poll_read_millis(timeout_millis);
+  }
+
+  fn recv_ready(self: ref Self, timeout: std::time::Duration) -> std::Result[bool, std::error::Error] {
+    return self.recv_ready_millis(timeout.as_millis());
+  }
+
+  fn send_ready_millis(self: ref Self, timeout_millis: i64) -> std::Result[bool, std::error::Error] {
+    return self.handle.poll_write_millis(timeout_millis);
+  }
+
+  fn send_ready(self: ref Self, timeout: std::time::Duration) -> std::Result[bool, std::error::Error] {
+    return self.send_ready_millis(timeout.as_millis());
+  }
+
+  fn connect(self: ref Self, path: string) -> std::Result[(), std::error::Error] {
+    return std::error::map_raw<()>(unix_datagram_connect_raw(self.handle.raw(), path));
+  }
+
+  fn send_to(self: ref Self, values: std::Slice[u8], path: string) -> std::Result[i64, std::error::Error] {
+    return std::error::map_raw<i64>(unix_datagram_send_to_raw(self.handle.raw(), values, path));
+  }
+
+  fn send(self: ref Self, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+    return std::error::map_raw<i64>(
+      udp_count_raw(self.handle.raw(), udp_send_raw(self.handle.raw(), values.as_ptr(), values.len))
+    );
+  }
+
+  fn recv(self: ref mut Self, output: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+    return std::error::map_raw<i64>(
+      udp_count_raw(self.handle.raw(), udp_recv_raw(self.handle.raw(), output.as_ptr(), output.len))
+    );
   }
 }
 
