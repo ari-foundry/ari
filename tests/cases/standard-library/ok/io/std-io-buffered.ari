@@ -1,4 +1,48 @@
 // Covers source std::io BufReader/BufWriter behavior over generic traits.
+struct DropMemoryWriter {
+  data: Slice[u8],
+  position: ptr i64,
+  flushed: ptr i64,
+}
+
+impl io::Writer for DropMemoryWriter {
+  fn write_byte(self: ref mut Self, value: u8) -> bool {
+    let index = ptr_load(self.position);
+    if index >= self.data.len {
+      return false;
+    }
+    ptr_store(ptr_add(self.data.as_ptr(), index), value);
+    ptr_store(self.position, index + 1);
+    return true;
+  }
+
+  fn write(self: ref mut Self, values: Slice[u8]) -> Result[i64, error::Error] {
+    return io::write<DropMemoryWriter>(self, values);
+  }
+
+  fn write_all(self: ref mut Self, values: Slice[u8]) -> Result[(), error::Error] {
+    return io::write_all<DropMemoryWriter>(self, values);
+  }
+
+  fn flush(self: ref mut Self) -> Result[(), error::Error] {
+    ptr_store(self.flushed, 1);
+    return Ok(());
+  }
+}
+
+fn write_buffered_then_drop(output: Slice[u8], position: ptr i64, flushed: ptr i64) -> void {
+  var buffer = [0u8, 0u8];
+  let inner = DropMemoryWriter {
+    data: output,
+    position: position,
+    flushed: flushed,
+  };
+  var writer = io::BufWriter::new<DropMemoryWriter>(inner, buffer.as_slice());
+  let _ = writer.write_byte(88u8);
+  drop writer;
+  return;
+}
+
 fn main() -> i64 {
   var score = 0;
 
@@ -59,6 +103,18 @@ fn main() -> i64 {
     if writer.flush().is_ok() && writer.is_empty() {
       score = score + 1;
     }
+  }
+
+  var drop_output = [0u8, 0u8];
+  var drop_position = 0;
+  var drop_flushed = 0;
+  write_buffered_then_drop(
+    drop_output.as_slice(),
+    (ref mut drop_position) as ptr i64,
+    (ref mut drop_flushed) as ptr i64
+  );
+  if drop_output[0] == 88u8 && drop_position == 1 && drop_flushed == 1 {
+    score = score + 1;
   }
 
   return score;

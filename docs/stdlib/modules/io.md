@@ -54,9 +54,8 @@ Implemented now:
 
 Roadmap, not implemented yet:
 
-- zone-owning buffered constructors and drop-time writer flush: need compiler
-  support for new std types that own zone-backed raw buffers and a clear
-  generic `Drop`/flush policy.
+- zone-owning buffered constructors: need compiler support for new std types
+  that own zone-backed raw buffers.
 
 ## API
 
@@ -234,8 +233,11 @@ its descriptor is open because writes go directly to the descriptor; use
 `BufReader[R]` and `BufWriter[W]` wrap any `Reader` or `Writer` with an
 explicit caller-provided `Slice[u8]` buffer. This keeps allocation visible and
 lets the wrappers be implemented in Ari source today. The buffer slice must
-stay alive while the wrapper is used. `BufWriter` flushes only when the buffer
-is full or when `flush()` is called; there is no implicit drop-time flush yet.
+stay alive while the wrapper is used. `BufWriter` flushes when the buffer is
+full, when `flush()` is called, or as a best-effort cleanup when the writer is
+dropped while bytes remain buffered. Drop cleanup discards the `Result` because
+destructors cannot report recoverable errors, so code that must observe write
+failures should still call `flush()` explicitly before dropping the writer.
 
 ## Examples
 
@@ -420,7 +422,8 @@ open because `File` itself does not buffer.
 - `tests/cases/standard-library/ok/io/std-io-buffered.ari` checks
   `BufReader`, `BufWriter`, caller-provided buffers, associated constructors,
   exact reads through a buffered reader, whole-slice writes through a buffered
-  writer, generated helper symbols, and stdout output.
+  writer, best-effort drop-time flush, generated helper symbols, and stdout
+  output.
 - `tests/cases/standard-library/ok/input/prelude-input.ari` checks byte input
   hook lowering.
 - `tests/cases/standard-library/ok/input/prelude-read-line.ari` and

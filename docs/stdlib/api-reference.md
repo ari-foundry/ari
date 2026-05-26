@@ -2149,14 +2149,18 @@ builtins, so the stdlib reserves `_text` for these direct byte-output helpers.
 stream hooks, with `flush` currently succeeding as a no-op. `io::BufReader`
 and `io::BufWriter` wrap any `Reader` or `Writer` with an explicit
 caller-provided `Slice[u8]` buffer, so allocation and buffer lifetime stay
-visible. `io::pipe()` returns `Result[io::Pipe, Error]` and wraps
+visible. `io::BufWriter` flushes when the buffer fills, on explicit `flush()`,
+and as a best-effort cleanup when a still-buffered writer is dropped. Drop
+cleanup cannot report errors, so callers that need to observe write failures
+should still call `flush()` explicitly before dropping the writer. `io::pipe()`
+returns `Result[io::Pipe, Error]` and wraps
 `std::os::Pipe` in `PipeReader` and `PipeWriter` adapters; use
 `io::pipe_optional()` only when the caller intentionally discards creation
 errors. The reader implements `Reader`, the writer implements `Writer`, and
 both expose explicit Result-returning close helpers plus `_bool`
 compatibility wrappers. `std::fs::File` implements `Reader`,
-`Writer`, and `Seek`; zone-owning buffered constructors and drop-time writer
-flush remain roadmap items until generic resource policy is specified.
+`Writer`, and `Seek`; zone-owning buffered constructors remain a roadmap item
+until generic owned-buffer resource policy is specified.
 
 ## Memory And Zones
 

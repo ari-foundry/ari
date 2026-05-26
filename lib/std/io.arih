@@ -605,3 +605,13 @@ impl[W: std::io::Writer] std::io::Writer for std::io::BufWriter[W] {
     return self.inner.flush();
   }
 }
+
+impl[W: std::io::Writer] std::Drop for std::io::BufWriter[W] {
+  fn drop(self) -> void {
+    var writer = self;
+    if writer.len > 0 {
+      let _ = writer.flush();
+    }
+    return;
+  }
+}

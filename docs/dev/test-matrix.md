@@ -1146,6 +1146,7 @@ Checklist:
 - [x] add source stderr writer handle: `io::Stderr` and `io::stderr`
 - [x] add caller-buffered IO wrappers: `io::BufReader`, `io::BufWriter`,
       `io::buf_reader`, and `io::buf_writer`
+- [x] add best-effort `io::BufWriter` drop-time flush for buffered bytes
 - [x] add source byte input helper: `input::try_read_byte() -> Option[u8]`
 - [x] add host line input builtins: `read_line`, `io::read_line`, `input`,
       `input::line`

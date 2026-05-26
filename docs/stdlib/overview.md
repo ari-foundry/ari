@@ -463,8 +463,10 @@ Ari over `Slice[u8]`, raw pointers, explicit caller-provided buffers, and the
 process stream hooks. `PipeReader` and
 `PipeWriter` adapt `std::os::Pipe` into the same traits. `std::fs::File`
 also adapts to `Reader`, `Writer`, and `Seek` so filesystem handles can use
-the same generic helpers. The next IO roadmap items are zone-owning buffered
-constructors and resource flush/drop rules.
+the same generic helpers. `BufWriter` writes buffered bytes when full, when
+explicitly flushed, or as best-effort cleanup when dropped; explicit `flush()`
+remains the observable error path. The next IO roadmap item is zone-owning
+buffered constructors.
 
 When adding new library code, first ask whether it can be written in Ari source
 using existing modules. If yes, keep it in `lib/std/`. Add compiler support

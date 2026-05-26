@@ -857,7 +857,7 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std2io29buf_reader__G_std__io__Cursor' $(BUILD_DIR)/prelude/std-io-buffered.ll
 	grep -q '_ARNv3std2io29buf_writer__G_std__io__Stdout' $(BUILD_DIR)/prelude/std-io-buffered.ll
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-buffered.ari -o $(BUILD_DIR)/prelude/std-io-buffered.elf
-	$(BUILD_DIR)/prelude/std-io-buffered.elf >$(BUILD_DIR)/prelude/std-io-buffered.out; code=$$?; test $$code -eq 10
+	$(BUILD_DIR)/prelude/std-io-buffered.elf >$(BUILD_DIR)/prelude/std-io-buffered.out; code=$$?; test $$code -eq 11
 	grep -qx "ABC" $(BUILD_DIR)/prelude/std-io-buffered.out
 	$(TARGET) tests/cases/standard-library/ok/format/raw-string-literals.ari -o $(BUILD_DIR)/prelude/raw-string-literals.elf
 	$(BUILD_DIR)/prelude/raw-string-literals.elf >$(BUILD_DIR)/prelude/raw-string-literals.out; code=$$?; test $$code -eq 141
