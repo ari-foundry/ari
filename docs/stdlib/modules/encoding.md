@@ -136,16 +136,35 @@ encoding::decode_base64_in(ref mut zone, bytes) -> Result[String, std::error::Er
 encoding::decode_base64_optional_in(ref mut zone, bytes) -> Option[String]
 encoding::try_decode_base64_in(ref mut zone, bytes) -> Option[String]
 encoding::decode_base64_unchecked_in(ref mut zone, bytes) -> String
+encoding::base64_url_encoded_len(bytes) -> i64
+encoding::base64_url_unpadded_encoded_len(bytes) -> i64
+encoding::encode_base64_url_in(ref mut zone, bytes) -> String
+encoding::encode_base64_url_unpadded_in(ref mut zone, bytes) -> String
+encoding::base64_url_decoded_len(bytes) -> Result[i64, std::error::Error]
+encoding::base64_url_decoded_len_optional(bytes) -> Option[i64]
+encoding::can_decode_base64_url(bytes) -> bool
+encoding::decode_base64_url(ref mut zone, bytes) -> Result[String, std::error::Error]
+encoding::decode_base64_url_in(ref mut zone, bytes) -> Result[String, std::error::Error]
+encoding::decode_base64_url_optional_in(ref mut zone, bytes) -> Option[String]
+encoding::try_decode_base64_url_in(ref mut zone, bytes) -> Option[String]
+encoding::decode_base64_url_unchecked_in(ref mut zone, bytes) -> String
 ```
 
 Base64 uses the standard `A-Z`, `a-z`, `0-9`, `+`, `/`, and `=` alphabet. The
 decoder requires length to be a multiple of four and padding to appear only at
-the end. Line-wrapped MIME base64 and URL-safe base64 are future variants, not
-accepted by this first slice. `base64_decoded_len`, `decode_base64`, and
-`decode_base64_in` return `Error(InvalidData)` for invalid length, alphabet, or
-padding placement. `decode_base64_in` is the compatibility spelling for the
-explicit-zone decoder. The `_optional` helpers and older
-`try_decode_base64_in` compatibility alias discard that category into `None`.
+the end. URL-safe base64 uses the same bit layout with `-` and `_` in place of
+`+` and `/`. `encode_base64_url_in` emits padded output, while
+`encode_base64_url_unpadded_in` omits trailing `=` for token and URL contexts.
+`decode_base64_url` accepts both padded and unpadded URL-safe input, but it
+rejects the standard `+` and `/` alphabet so callers do not accidentally mix
+protocol policies. Line-wrapped MIME base64 remains future work.
+
+`base64_decoded_len`, `decode_base64`, `decode_base64_in`,
+`base64_url_decoded_len`, `decode_base64_url`, and `decode_base64_url_in`
+return `Error(InvalidData)` for invalid length, alphabet, or padding
+placement. The `_in` forms are compatibility spellings for explicit-zone
+decoders. The `_optional` helpers and older `try_decode_*_in` compatibility
+aliases discard that category into `None`.
 
 ## Fallible Decoding
 
@@ -211,14 +230,15 @@ validation/count helpers.
 width, byte-offset decoding, next-index helpers, natural Result scalar
 encoding with detailed `Utf8Error`, optional compatibility scalar encoding,
 and unchecked scalar encoding.
-`std-encoding-codec.ari` covers hex/base64 length helpers, encoding, decoding,
-natural Result decoding, optional compatibility decoding, unchecked decoding,
-and invalid input guards. These tests are wired into `make check-prelude` with
-LLVM symbol checks.
+`std-encoding-codec.ari` covers hex/base64 length helpers, standard and
+URL-safe base64 encoding, padded and unpadded URL-safe base64 decoding, natural
+Result decoding, optional compatibility decoding, unchecked decoding, and
+invalid input guards. These tests are wired into `make check-prelude` with LLVM
+symbol checks.
 
 ## Future Work
 
-- URL-safe base64 and optional line-wrapped MIME base64
+- optional line-wrapped MIME base64
 - richer structured decode errors beyond the current shared `InvalidData`
   result category
 - Unicode normalization, grapheme clusters, and transcoding only after Ari has

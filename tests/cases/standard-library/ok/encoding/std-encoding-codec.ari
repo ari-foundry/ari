@@ -260,12 +260,124 @@ fn check_base64(zone: ref mut Zone) -> bool {
   return true;
 }
 
+fn check_base64_url(zone: ref mut Zone) -> bool {
+  var bytes = [251u8, 255u8, 255u8];
+  var two = [251u8, 255u8];
+  var one = [251u8];
+  var url_full = [45u8, 95u8, 95u8, 95u8];
+  var url_two_padded = [45u8, 95u8, 56u8, 61u8];
+  var url_two_unpadded = [45u8, 95u8, 56u8];
+  var url_one_unpadded = [45u8, 119u8];
+  var standard_full = [43u8, 47u8, 47u8, 47u8];
+  var invalid_url = [45u8, 61u8, 95u8];
+
+  var encoded = encoding::encode_base64_url_in(zone, bytes.as_slice());
+  if !encoded.equals(url_full.as_slice()) {
+    return false;
+  }
+
+  var encoded_two = encoding::encode_base64_url_in(zone, two.as_slice());
+  if !encoded_two.equals(url_two_padded.as_slice()) {
+    return false;
+  }
+
+  var encoded_unpadded = encoding::encode_base64_url_unpadded_in(zone, two.as_slice());
+  if !encoded_unpadded.equals(url_two_unpadded.as_slice()) {
+    return false;
+  }
+
+  var encoded_one_unpadded = encoding::encode_base64_url_unpadded_in(zone, one.as_slice());
+  if !encoded_one_unpadded.equals(url_one_unpadded.as_slice()) {
+    return false;
+  }
+
+  if encoding::base64_url_encoded_len(one.as_slice()) != 4 {
+    return false;
+  }
+  if encoding::base64_url_unpadded_encoded_len(one.as_slice()) != 2 {
+    return false;
+  }
+  if encoding::base64_url_decoded_len(url_two_padded.as_slice()).unwrap_or(0) != 2 {
+    return false;
+  }
+  if encoding::base64_url_decoded_len_optional(url_two_unpadded.as_slice()).unwrap_or(0) != 2 {
+    return false;
+  }
+  if encoding::base64_url_decoded_len(invalid_url.as_slice()).is_ok() {
+    return false;
+  }
+  if encoding::can_decode_base64_url(standard_full.as_slice()) {
+    return false;
+  }
+
+  var decoded = encoding::decode_base64_url_unchecked_in(zone, url_full.as_slice());
+  if decoded.len() != 3 || decoded.get(0) != (251 as u8) || decoded.get(2) != (255 as u8) {
+    return false;
+  }
+
+  match encoding::decode_base64_url_optional_in(zone, url_two_unpadded.as_slice()) {
+    std::Some(value) => {
+      if value.len() != 2 || value.get(0) != (251 as u8) || value.get(1) != (255 as u8) {
+        return false;
+      }
+    }
+    std::None => {
+      return false;
+    }
+  }
+
+  match encoding::try_decode_base64_url_in(zone, invalid_url.as_slice()) {
+    std::Some(_) => {
+      return false;
+    }
+    std::None => {}
+  }
+
+  match encoding::decode_base64_url_in(zone, url_two_padded.as_slice()) {
+    std::Ok(value2) => {
+      if value2.len() != 2 || value2.get(0) != (251 as u8) || value2.get(1) != (255 as u8) {
+        return false;
+      }
+    }
+    std::Err(_) => {
+      return false;
+    }
+  }
+
+  match encoding::decode_base64_url(zone, url_one_unpadded.as_slice()) {
+    std::Ok(value3) => {
+      if value3.len() != 1 || value3.get(0) != (251 as u8) {
+        return false;
+      }
+    }
+    std::Err(_) => {
+      return false;
+    }
+  }
+
+  match encoding::decode_base64_url(zone, invalid_url.as_slice()) {
+    std::Ok(_) => {
+      return false;
+    }
+    std::Err(reason) => {
+      if !reason.is_kind(error::InvalidData) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 fn main() -> i64 {
-  var zone = zone::create(256);
+  var zone = zone::create(512);
   if check_hex(ref mut zone) {
     if check_base64(ref mut zone) {
+      if check_base64_url(ref mut zone) {
+        zone::destroy(zone);
+        return 13;
+      }
       zone::destroy(zone);
-      return 13;
+      return 3;
     }
     zone::destroy(zone);
     return 2;

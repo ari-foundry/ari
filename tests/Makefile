@@ -2087,6 +2087,15 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std8encoding25decode_base64_optional_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding20try_decode_base64_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding26decode_base64_unchecked_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding20encode_base64_url_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding29encode_base64_url_unpadded_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding22base64_url_decoded_len' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding31base64_url_decoded_len_optional' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding17decode_base64_url' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding20decode_base64_url_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding29decode_base64_url_optional_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding24try_decode_base64_url_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding30decode_base64_url_unchecked_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	$(TARGET) tests/cases/standard-library/ok/encoding/std-encoding-codec.ari -o $(BUILD_DIR)/prelude/std-encoding-codec.elf
 	$(BUILD_DIR)/prelude/std-encoding-codec.elf; code=$$?; test $$code -eq 13
 	$(TARGET) tests/cases/standard-library/ok/path/std-path-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-path-basic.ll

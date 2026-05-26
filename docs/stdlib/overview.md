@@ -60,7 +60,7 @@ API evolution.
 | `std::string` | Zone-backed owned byte string and typed borrowed text-boundary views. | `String`, `Utf8`, `OsStr`, `SplitOnce`, direct string-literal coercion to `Slice[u8]` / `Vec[u8]` / `[u8, N]` / `Utf8` / `OsStr` / `PathBytes` / `CStr`, `utf8`, `os_str`, `c_str`, `c_len`, `c_bytes`, `bytes`, `new`, `empty`, `from`, `copy`, `from_string`, `from_slice_in`, `join_in`, borrowed parser helpers `lines`, `trim`, `split_once`, `starts_with`, `ends_with`, `contains`, `find`, `strip_prefix`, `strip_suffix`, `substring`, allocating `replace`, `push`, `push_str`, `try_get`, `try_pop`, `remove`, `try_remove`, `retain`, `append`, `append_byte`, `append_bytes`, `find_text`, `contains_text`, `split`, `chunks`, `windows`, `push_codepoint_in`, `try_utf8`, `is_utf8`, `codepoint_count`, `codepoint_at`, `equals_text`, `equals_text_ignore_case`, `trimmed`, `parse_decimal`, `parse_signed_decimal`, `parse_decimal_prefix`, `parse_signed_decimal_prefix`, `as_slice`. `c_str` returns the shared `std::c::CStr` type. |
 | `std::ascii` | Source-only ASCII byte and slice helpers. | `is_digit`, `is_printable`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `parse_decimal`, `parse_decimal_prefix`, signed decimal parsers, and overflow-checked `i64` parser policy. |
 | `std::parse` | Whole-input value parsers over byte slices. | `Parse`, `parse<T>`, `parse_or<T>`, `is_parse<T>`, Result-returning signed `integer`/`integer_radix`, unsigned `unsigned`/`unsigned_radix`, radix wrappers for hex/binary/octal signed integers, `boolean`, `_optional` compatibility forms, `is_float`, `float_or`, `float`. |
-| `std::encoding` | Text validation, UTF-8 scalar helpers, and byte codecs. | `is_ascii`, `is_unicode_scalar`, detailed Result-returning `validate_utf8`, `decode_utf8`, `utf8_count`, `utf16_count`, `encode_utf8`, `encode_utf8_in`, `hex_decoded_len`, `decode_hex`, `decode_hex_in`, `base64_decoded_len`, `decode_base64`, `decode_base64_in`, `_optional` compatibility helpers, `_in` allocation aliases, `_unchecked` asserting codec helpers, `is_utf8`, `is_utf16`, `utf8_at`, `utf8_next_index`, `encode_hex_in`, and `encode_base64_in`. |
+| `std::encoding` | Text validation, UTF-8 scalar helpers, and byte codecs. | `is_ascii`, `is_unicode_scalar`, detailed Result-returning `validate_utf8`, `decode_utf8`, `utf8_count`, `utf16_count`, `encode_utf8`, `encode_utf8_in`, `hex_decoded_len`, `decode_hex`, `decode_hex_in`, `base64_decoded_len`, `decode_base64`, `decode_base64_in`, URL-safe `base64_url_decoded_len`, `decode_base64_url`, padded `encode_base64_url_in`, unpadded `encode_base64_url_unpadded_in`, `_optional` compatibility helpers, `_in` allocation aliases, `_unchecked` asserting codec helpers, `is_utf8`, `is_utf16`, `utf8_at`, `utf8_next_index`, `encode_hex_in`, and `encode_base64_in`. |
 | `std::vec` | Zone-backed growable sequence. | `Vec[T]`, `new<T>`, owning-zone `push`, `insert`, `reserve`, `reserve_extra`, `try_reserve`, `extend`, `extend_from_slice`, `extend_iter`, `append`, `resize`, `resize_with`, explicit `_in` compatibility methods, `try_get`, `try_remove`, `swap_remove`, `retain`, `dedup`, `dedup_by`, `dedup_by_key`, `fill`, `fill_range`, `copy_from`, `copy_within`, `partition`, `stable_partition`, `drain`, `drain_range`, `split_off`, `splice`, `slice`, `split_at`, `find`, `contains_slice`, `compare`, `chunks`, `windows`, `split`, `reverse`, `reverse_range`, `rotate_left`, `rotate_right`, `rotate_range`, introsort-backed `sort`, merge-sort-backed `stable_sort`, explicit-zone stable sort, `try_stable_sort`, `is_sorted`, `binary_search`, `lower_bound`, `upper_bound`, `equal_range`, `partition_point`, `min`, `max`, `as_slice`, `iter`, `iter_mut`. |
 | `std::hash` | Deterministic non-cryptographic hashing. | `Hasher`, `Hash[T]`, `new`, `reset`, `finish`, `write`, `value`, `pair`, `combine`, `bytes`, fixed-width integer and bool write helpers, and `Slice[u8]` hashing. |
 | `std::random` | OS entropy and deterministic non-cryptographic PRNG helpers. | `Prng`, `entropy`, `entropy_result`, `fill`, `fill_result`, `seed`, `from_entropy`, `from_entropy_result`, `seed_from_os`, `seed_from_os_result`, `next`, `boolean`, unbiased `below`/`try_below`, unbiased `range`/`try_range`, `float`, `fill_from`, `shuffle`. |
@@ -131,13 +131,14 @@ integer parsing, and prefix integer parsing need no compiler knowledge.
 Natural integer, boolean, and float parser names return `Result[..., Error]`,
 while `_optional`, `_or`, and `_unchecked` helpers keep information-discarding
 or asserting compatibility spelled explicitly.
-`std::encoding` validates ASCII/UTF-8/UTF-16 and encodes or decodes hex/base64
-into caller-provided zones. Natural UTF-8 validation, UTF-8 byte-string
-decoding, and scalar encoding return detailed `Utf8Error` values; count and
-hex/base64 helpers return shared `std::error::Error` categories. `_optional`,
-`_in`, and `_unchecked` names spell information-discarding, compatibility
-allocation spelling, and asserting compatibility explicitly. Richer codec and
-parser error payloads still wait on the broader error roadmap, while
+`std::encoding` validates ASCII/UTF-8/UTF-16 and encodes or decodes hex,
+standard base64, and URL-safe base64 into caller-provided zones. Natural UTF-8
+validation, UTF-8 byte-string decoding, and scalar encoding return detailed
+`Utf8Error` values; count and codec helpers return shared `std::error::Error`
+categories. `_optional`, `_in`, and `_unchecked` names spell
+information-discarding, compatibility allocation spelling, and asserting
+compatibility explicitly. Richer codec and parser error payloads still wait on
+the broader error roadmap, while
 `parse[f64]`, `parse_or[f64]`, and Result-returning `parse::float` cover
 strict, fallback, and recoverable typed float parsing today.
 
