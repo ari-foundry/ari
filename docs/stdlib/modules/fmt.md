@@ -50,12 +50,18 @@ debug_value[T: Debug](zone: ref mut Zone, value: T) -> String
 concat2[A: Display, B: Display](zone: ref mut Zone, first: A, second: B) -> String
 concat3[A: Display, B: Display, C: Display](zone: ref mut Zone, first: A, second: B, third: C) -> String
 
-write_unsigned[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: u64, spec: FormatSpec) -> bool
-write_integer[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: i64) -> bool
-write_boolean[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: bool) -> bool
-write_text[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: string) -> bool
-write_value[W: io::Writer, T: Display](writer: ref mut W, zone: ref mut Zone, value: T) -> bool
-write_debug[W: io::Writer, T: Debug](writer: ref mut W, zone: ref mut Zone, value: T) -> bool
+write_unsigned[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: u64, spec: FormatSpec) -> Result[(), Error]
+write_unsigned_bool[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: u64, spec: FormatSpec) -> bool
+write_integer[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: i64) -> Result[(), Error]
+write_integer_bool[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: i64) -> bool
+write_boolean[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: bool) -> Result[(), Error]
+write_boolean_bool[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: bool) -> bool
+write_text[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: string) -> Result[(), Error]
+write_text_bool[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: string) -> bool
+write_value[W: io::Writer, T: Display](writer: ref mut W, zone: ref mut Zone, value: T) -> Result[(), Error]
+write_value_bool[W: io::Writer, T: Display](writer: ref mut W, zone: ref mut Zone, value: T) -> bool
+write_debug[W: io::Writer, T: Debug](writer: ref mut W, zone: ref mut Zone, value: T) -> Result[(), Error]
+write_debug_bool[W: io::Writer, T: Debug](writer: ref mut W, zone: ref mut Zone, value: T) -> bool
 
 print_value[T: Display](zone: ref mut Zone, value: T) -> i64
 println_value[T: Display](zone: ref mut Zone, value: T) -> i64
@@ -110,17 +116,20 @@ match fmt::try_with_width(fmt::decimal(), parsed_width) {
 ```
 
 Use the `write_*` helpers when the destination is a buffer, file-like handle,
-or other type implementing `std::io::Writer`. The helper still takes a zone
-because Ari keeps temporary formatted text allocation explicit:
+or other type implementing `std::io::Writer`. The helpers return
+`Result[(), Error]`, preserving the writer failure from `io::write_all`; use the
+matching `_bool` wrappers only for compatibility call sites that intentionally
+discard the reason. Each helper still takes a zone because Ari keeps temporary
+formatted text allocation explicit:
 
 ```ari
 var stdout = io::stdout();
-let ok = fmt::write_unsigned<io::Stdout>(
+fmt::write_unsigned<io::Stdout>(
   ref mut stdout,
   ref mut zone,
   31u64,
   fmt::uppercase(fmt::hex()),
-);
+).unwrap();
 ```
 
 Use `print_value` and `println_value` for direct stdout output when a macro is
@@ -212,7 +221,8 @@ The source helpers complement the macros:
 - Use `String.append_debug(value)` when building an owned byte string in a
   tracked local zone and the value already implements `Debug`.
 - Use `write_value` when a `std::io::Writer` should receive any `Display`
-  value without choosing a type-suffixed writer helper.
+  value without choosing a type-suffixed writer helper and write failures should
+  stay recoverable.
 - Use `write_debug` when a `std::io::Writer` should receive any `Debug` value.
 - Use `print_value` and `println_value` when stdout should receive any
   `Display` value without choosing a type-suffixed IO hook.
@@ -243,8 +253,8 @@ The source helpers complement the macros:
   generic bounds, not as a suffix, unless the compiler/runtime primitive truly
   requires a distinct symbol.
 - Custom formatter objects, allocator-returning `format!` without an explicit
-  zone, and direct writer streaming without a temporary string remain roadmap
-  work.
+  zone, and zero-copy writer streaming without a temporary formatted string
+  remain roadmap work.
 
 ## Tests
 

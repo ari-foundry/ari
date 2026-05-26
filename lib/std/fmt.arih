@@ -432,29 +432,49 @@ impl std::fmt::Debug for std::string::String {
   }
 }
 
-pub fn write_unsigned[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: u64, spec: std::fmt::FormatSpec) -> bool {
+pub fn write_unsigned[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: u64, spec: std::fmt::FormatSpec) -> std::Result[(), std::error::Error] {
   var text = std::fmt::unsigned_in(zone, value, spec);
-  return std::io::write_all_unchecked<W>(writer, text.as_slice());
+  return std::io::write_all<W>(writer, text.as_slice());
 }
 
-pub fn write_integer[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: i64) -> bool {
+pub fn write_unsigned_bool[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: u64, spec: std::fmt::FormatSpec) -> bool {
+  return std::fmt::write_unsigned<W>(writer, zone, value, spec).is_ok();
+}
+
+pub fn write_integer[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: i64) -> std::Result[(), std::error::Error] {
   var text = std::fmt::integer_in(zone, value);
-  return std::io::write_all_unchecked<W>(writer, text.as_slice());
+  return std::io::write_all<W>(writer, text.as_slice());
 }
 
-pub fn write_boolean[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: bool) -> bool {
+pub fn write_integer_bool[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: i64) -> bool {
+  return std::fmt::write_integer<W>(writer, zone, value).is_ok();
+}
+
+pub fn write_boolean[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: bool) -> std::Result[(), std::error::Error] {
   var text = std::fmt::boolean_in(zone, value);
-  return std::io::write_all_unchecked<W>(writer, text.as_slice());
+  return std::io::write_all<W>(writer, text.as_slice());
 }
 
-pub fn write_text[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: string) -> bool {
+pub fn write_boolean_bool[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: bool) -> bool {
+  return std::fmt::write_boolean<W>(writer, zone, value).is_ok();
+}
+
+pub fn write_text[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: string) -> std::Result[(), std::error::Error] {
   var text = std::fmt::text_in(zone, value);
-  return std::io::write_all_unchecked<W>(writer, text.as_slice());
+  return std::io::write_all<W>(writer, text.as_slice());
 }
 
-pub fn write_value[W: std::io::Writer, T: std::fmt::Display](writer: ref mut W, zone: ref mut Zone, value: T) -> bool {
+pub fn write_text_bool[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: string) -> bool {
+  return std::fmt::write_text<W>(writer, zone, value).is_ok();
+}
+
+pub fn write_value[W: std::io::Writer, T: std::fmt::Display](writer: ref mut W, zone: ref mut Zone, value: T) -> std::Result[(), std::error::Error] {
   var text = value.format_in(zone);
-  return std::io::write_all_unchecked<W>(writer, text.as_slice());
+  return std::io::write_all<W>(writer, text.as_slice());
+}
+
+pub fn write_value_bool[W: std::io::Writer, T: std::fmt::Display](writer: ref mut W, zone: ref mut Zone, value: T) -> bool {
+  return std::fmt::write_value<W, T>(writer, zone, value).is_ok();
 }
 
 pub fn debug_value[T: std::fmt::Debug](zone: ref mut Zone, value: T) -> std::string::String {
@@ -490,9 +510,13 @@ pub fn concat3[A: std::fmt::Display, B: std::fmt::Display, C: std::fmt::Display]
   return output;
 }
 
-pub fn write_debug[W: std::io::Writer, T: std::fmt::Debug](writer: ref mut W, zone: ref mut Zone, value: T) -> bool {
+pub fn write_debug[W: std::io::Writer, T: std::fmt::Debug](writer: ref mut W, zone: ref mut Zone, value: T) -> std::Result[(), std::error::Error] {
   var text = value.debug_in(zone);
-  return std::io::write_all_unchecked<W>(writer, text.as_slice());
+  return std::io::write_all<W>(writer, text.as_slice());
+}
+
+pub fn write_debug_bool[W: std::io::Writer, T: std::fmt::Debug](writer: ref mut W, zone: ref mut Zone, value: T) -> bool {
+  return std::fmt::write_debug<W, T>(writer, zone, value).is_ok();
 }
 
 pub fn print_value[T: std::fmt::Display](zone: ref mut Zone, value: T) -> i64 {

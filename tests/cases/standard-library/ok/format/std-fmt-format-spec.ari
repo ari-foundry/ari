@@ -69,18 +69,86 @@ fn main() -> i64 {
 
   var buffer = [0u8, 0u8, 0u8, 0u8];
   var writer = MemoryWriter { data: buffer.as_slice(), position: 0 };
-  if fmt::write_unsigned<MemoryWriter>(ref mut writer, ref mut zone, 31u64, fmt::uppercase(fmt::hex())) {
+  if fmt::write_unsigned<MemoryWriter>(ref mut writer, ref mut zone, 31u64, fmt::uppercase(fmt::hex())).is_ok() {
     if buffer[0] == 49u8 && buffer[1] == 70u8 && writer.position == 2 {
+      score = score + 1;
+    }
+  }
+
+  var bool_buffer = [0u8, 0u8];
+  var bool_writer = MemoryWriter { data: bool_buffer.as_slice(), position: 0 };
+  if fmt::write_unsigned_bool<MemoryWriter>(ref mut bool_writer, ref mut zone, 31u64, fmt::uppercase(fmt::hex())) {
+    if bool_buffer[0] == '1' && bool_buffer[1] == 'F' && bool_writer.position == 2 {
+      score = score + 1;
+    }
+  }
+
+  var integer_buffer = [0u8, 0u8, 0u8];
+  var integer_writer = MemoryWriter { data: integer_buffer.as_slice(), position: 0 };
+  if fmt::write_integer<MemoryWriter>(ref mut integer_writer, ref mut zone, -7).is_ok() {
+    if integer_buffer[0] == '-' && integer_buffer[1] == '7' && integer_writer.position == 2 {
+      score = score + 1;
+    }
+  }
+
+  var integer_bool_buffer = [0u8, 0u8];
+  var integer_bool_writer = MemoryWriter { data: integer_bool_buffer.as_slice(), position: 0 };
+  if fmt::write_integer_bool<MemoryWriter>(ref mut integer_bool_writer, ref mut zone, 42) {
+    if integer_bool_buffer[0] == '4' && integer_bool_buffer[1] == '2' && integer_bool_writer.position == 2 {
+      score = score + 1;
+    }
+  }
+
+  var true_buffer = [0u8, 0u8, 0u8, 0u8];
+  var true_writer = MemoryWriter { data: true_buffer.as_slice(), position: 0 };
+  if fmt::write_boolean<MemoryWriter>(ref mut true_writer, ref mut zone, true).is_ok() {
+    if true_buffer[0] == 't' && true_buffer[3] == 'e' && true_writer.position == 4 {
+      score = score + 1;
+    }
+  }
+
+  var false_buffer = [0u8, 0u8, 0u8, 0u8, 0u8];
+  var false_writer = MemoryWriter { data: false_buffer.as_slice(), position: 0 };
+  if fmt::write_boolean_bool<MemoryWriter>(ref mut false_writer, ref mut zone, false) {
+    if false_buffer[0] == 'f' && false_buffer[4] == 'e' && false_writer.position == 5 {
+      score = score + 1;
+    }
+  }
+
+  var text_buffer = [0u8, 0u8];
+  var text_writer = MemoryWriter { data: text_buffer.as_slice(), position: 0 };
+  if fmt::write_text<MemoryWriter>(ref mut text_writer, ref mut zone, "io").is_ok() {
+    if text_buffer[0] == 'i' && text_buffer[1] == 'o' && text_writer.position == 2 {
+      score = score + 1;
+    }
+  }
+
+  var text_bool_buffer = [0u8, 0u8, 0u8];
+  var text_bool_writer = MemoryWriter { data: text_bool_buffer.as_slice(), position: 0 };
+  if fmt::write_text_bool<MemoryWriter>(ref mut text_bool_writer, ref mut zone, "ari") {
+    if text_bool_buffer[0] == 'a' && text_bool_buffer[2] == 'i' && text_bool_writer.position == 3 {
       score = score + 1;
     }
   }
 
   var display_buffer = [0u8, 0u8, 0u8, 0u8, 0u8, 0u8];
   var display_writer = MemoryWriter { data: display_buffer.as_slice(), position: 0 };
-  if fmt::write_value<MemoryWriter, i64>(ref mut display_writer, ref mut zone, -128) {
+  if fmt::write_value<MemoryWriter, i64>(ref mut display_writer, ref mut zone, -128).is_ok() {
     if display_buffer[0] == '-' && display_buffer[1] == '1' && display_buffer[3] == '8' && display_writer.position == 4 {
       score = score + 1;
     }
+  }
+
+  var short_buffer = [0u8, 0u8];
+  var short_writer = MemoryWriter { data: short_buffer.as_slice(), position: 0 };
+  if fmt::write_value<MemoryWriter, string>(ref mut short_writer, ref mut zone, "tool").is_err() {
+    score = score + 1;
+  }
+
+  var short_bool_buffer = [0u8];
+  var short_bool_writer = MemoryWriter { data: short_bool_buffer.as_slice(), position: 0 };
+  if !fmt::write_value_bool<MemoryWriter, string>(ref mut short_bool_writer, ref mut zone, "io") {
+    score = score + 1;
   }
 
   zone::destroy(zone);

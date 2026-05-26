@@ -60,7 +60,9 @@ depends on it.
   new type-specific `append_*_in` method.
 - For Writer-backed output, prefer `fmt::write_value(ref mut writer, ref mut
   zone, value)` with `Display` over adding another type-specific `write_*`
-  helper. Keep `io::write_i64`-style names only for raw runtime hooks.
+  helper. It returns `Result[(), Error]`; keep `_bool` wrappers for
+  compatibility-only call sites that intentionally discard write errors. Keep
+  `io::write_i64`-style names only for raw runtime hooks.
 - For direct stdout output, prefer `fmt::print_value(ref mut zone, value)` or
   `fmt::println_value(ref mut zone, value)` over raw type-specific IO hooks.
 - For equality and ordering in source `std`, prefer `==`, `!=`, `<`, `>`,

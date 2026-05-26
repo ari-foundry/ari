@@ -3384,11 +3384,17 @@ fmt::debug_value<T: Debug>(ref mut zone, value)
 fmt::concat2<A: Display, B: Display>(ref mut zone, first, second)
 fmt::concat3<A: Display, B: Display, C: Display>(ref mut zone, first, second, third)
 fmt::write_unsigned<W: io::Writer>(ref mut writer, ref mut zone, value, spec)
+fmt::write_unsigned_bool<W: io::Writer>(ref mut writer, ref mut zone, value, spec)
 fmt::write_integer<W: io::Writer>(ref mut writer, ref mut zone, value)
+fmt::write_integer_bool<W: io::Writer>(ref mut writer, ref mut zone, value)
 fmt::write_boolean<W: io::Writer>(ref mut writer, ref mut zone, value)
+fmt::write_boolean_bool<W: io::Writer>(ref mut writer, ref mut zone, value)
 fmt::write_text<W: io::Writer>(ref mut writer, ref mut zone, value)
+fmt::write_text_bool<W: io::Writer>(ref mut writer, ref mut zone, value)
 fmt::write_value<W: io::Writer, T: Display>(ref mut writer, ref mut zone, value)
+fmt::write_value_bool<W: io::Writer, T: Display>(ref mut writer, ref mut zone, value)
 fmt::write_debug<W: io::Writer, T: Debug>(ref mut writer, ref mut zone, value)
+fmt::write_debug_bool<W: io::Writer, T: Debug>(ref mut writer, ref mut zone, value)
 fmt::print_value<T: Display>(ref mut zone, value)
 fmt::println_value<T: Display>(ref mut zone, value)
 fmt::print_debug<T: Debug>(ref mut zone, value)
@@ -3401,7 +3407,10 @@ structs and enums. Float `Display` uses six fractional digits; call
 `fmt::float_in` to pick a precision explicitly. Prefer `fmt::write_value` for
 generic Writer-backed display output and `fmt::print_value`/`fmt::println_value`
 for generic stdout display output instead of adding new type-suffixed
-`write_*` helpers. `char` is a byte-character alias, so `fmt::char_in`,
+`write_*` helpers. The writer helpers return `Result[(), Error]` from the
+underlying `std::io::Writer`; `_bool` wrappers keep compatibility for call sites
+that intentionally discard the failure reason. `char` is a byte-character alias,
+so `fmt::char_in`,
 `String.append_value('A')`, and `format_in!(..., "{}", 'A')` write the byte as
 text rather than as the number `65`.
 Built-in `Debug` impls cover the same initial scalar/text set. `string` and

@@ -67,8 +67,16 @@ fn main() -> i64 {
 
   var buffer = [0u8, 0u8, 0u8, 0u8, 0u8, 0u8];
   var writer = MemoryWriter { data: buffer.as_slice(), position: 0 };
-  if fmt::write_debug<MemoryWriter, string>(ref mut writer, ref mut zone, "io") {
+  if fmt::write_debug<MemoryWriter, string>(ref mut writer, ref mut zone, "io").is_ok() {
     if buffer[0] == '"' && buffer[1] == 'i' && buffer[2] == 'o' && buffer[3] == '"' && writer.position == 4 {
+      score = score + 1;
+    }
+  }
+
+  var bool_buffer = [0u8, 0u8, 0u8, 0u8];
+  var bool_writer = MemoryWriter { data: bool_buffer.as_slice(), position: 0 };
+  if fmt::write_debug_bool<MemoryWriter, string>(ref mut bool_writer, ref mut zone, "io") {
+    if bool_buffer[0] == '"' && bool_buffer[1] == 'i' && bool_buffer[2] == 'o' && bool_buffer[3] == '"' && bool_writer.position == 4 {
       score = score + 1;
     }
   }

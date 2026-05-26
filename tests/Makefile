@@ -2585,8 +2585,16 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std3fmt11unsigned_in' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
 	grep -q '_ARNv3std3fmt13debug_text_in' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
 	grep -q 'write_unsigned' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
+	grep -q 'write_unsigned_bool' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
+	grep -q 'write_integer' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
+	grep -q 'write_integer_bool' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
+	grep -q 'write_boolean' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
+	grep -q 'write_boolean_bool' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
+	grep -q 'write_text' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
+	grep -q 'write_text_bool' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
 	grep -q 'write_value' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/std-fmt-format-spec.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fmt-format-spec.elf; $(BUILD_DIR)/prelude/std-fmt-format-spec.elf; code=$$?; test $$code -eq 9; fi
+	grep -q 'write_value_bool' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/std-fmt-format-spec.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fmt-format-spec.elf; $(BUILD_DIR)/prelude/std-fmt-format-spec.elf; code=$$?; test $$code -eq 18; fi
 	$(TARGET) tests/cases/standard-library/ok/format/std-fmt-concat-format-value.ari --emit-llvm $(BUILD_DIR)/prelude/std-fmt-concat-format-value.ll
 	grep -q 'format_value' $(BUILD_DIR)/prelude/std-fmt-concat-format-value.ll
 	grep -q 'concat2' $(BUILD_DIR)/prelude/std-fmt-concat-format-value.ll
@@ -2599,9 +2607,10 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/format/std-fmt-debug-values.ari --emit-llvm $(BUILD_DIR)/prelude/std-fmt-debug-values.ll
 	grep -q 'debug_value' $(BUILD_DIR)/prelude/std-fmt-debug-values.ll
 	grep -q 'write_debug' $(BUILD_DIR)/prelude/std-fmt-debug-values.ll
+	grep -q 'write_debug_bool' $(BUILD_DIR)/prelude/std-fmt-debug-values.ll
 	grep -q 'print_debug' $(BUILD_DIR)/prelude/std-fmt-debug-values.ll
 	grep -q 'println_debug' $(BUILD_DIR)/prelude/std-fmt-debug-values.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/std-fmt-debug-values.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fmt-debug-values.elf; $(BUILD_DIR)/prelude/std-fmt-debug-values.elf > $(BUILD_DIR)/prelude/std-fmt-debug-values.out; code=$$?; grep -qx '"out"false' $(BUILD_DIR)/prelude/std-fmt-debug-values.out; out_ok=$$?; test $$code -eq 5; test $$out_ok -eq 0; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/std-fmt-debug-values.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fmt-debug-values.elf; $(BUILD_DIR)/prelude/std-fmt-debug-values.elf > $(BUILD_DIR)/prelude/std-fmt-debug-values.out; code=$$?; grep -qx '"out"false' $(BUILD_DIR)/prelude/std-fmt-debug-values.out; out_ok=$$?; test $$code -eq 6; test $$out_ok -eq 0; fi
 	$(TARGET) tests/cases/standard-library/ok/format/std-fmt-char-values.ari --emit-llvm $(BUILD_DIR)/prelude/std-fmt-char-values.ll
 	grep -q '_ARNv3std3fmt7char_in' $(BUILD_DIR)/prelude/std-fmt-char-values.ll
 	grep -q '_ARNv3std3fmt13debug_char_in' $(BUILD_DIR)/prelude/std-fmt-char-values.ll

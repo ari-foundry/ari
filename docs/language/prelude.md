@@ -276,7 +276,8 @@ For source-controlled integer formatting, use `std::fmt::FormatSpec` helpers
 instead of adding new type-suffixed print routines. For example,
 `fmt::unsigned_in(ref mut zone, 255u64, fmt::uppercase(fmt::hex()))` builds
 `"FF"`, and `fmt::write_unsigned<W>(ref mut writer, ref mut zone, value, spec)`
-writes the same formatting through any `std::io::Writer`.
+writes the same formatting through any `std::io::Writer` with `Result` error
+reporting.
 
 ## Qualified Formatting Names
 

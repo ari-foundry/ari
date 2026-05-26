@@ -408,12 +408,18 @@ fn std::fmt::unsigned_in|check-prelude std-fmt-format-spec allocator-backed base
 fn std::fmt::uppercase|check-prelude std-fmt-format-spec uppercase digit spec helper; docs/stdlib/modules/fmt.md
 fn std::fmt::with_precision|check-prelude std-fmt-format-spec integer precision spec helper; docs/stdlib/modules/fmt.md
 fn std::fmt::with_width|check-prelude std-fmt-format-spec width spec helper; docs/stdlib/modules/fmt.md
-fn std::fmt::write_boolean[W: std::io::Writer]|check-prelude std-fmt-format-spec Writer-backed bool formatting helper; docs/stdlib/modules/fmt.md
-fn std::fmt::write_debug[W: std::io::Writer, T: std::fmt::Debug]|check-prelude std-fmt-debug-values generic Writer-backed Debug formatting helper; docs/stdlib/modules/fmt.md
-fn std::fmt::write_integer[W: std::io::Writer]|check-prelude std-fmt-format-spec Writer-backed signed integer formatting helper; docs/stdlib/modules/fmt.md
-fn std::fmt::write_text[W: std::io::Writer]|check-prelude std-fmt-format-spec Writer-backed text formatting helper; docs/stdlib/modules/fmt.md
-fn std::fmt::write_unsigned[W: std::io::Writer]|check-prelude std-fmt-format-spec Writer-backed base/width/precision formatting helper; docs/stdlib/modules/fmt.md
-fn std::fmt::write_value[W: std::io::Writer, T: std::fmt::Display]|check-prelude std-fmt-format-spec generic Writer-backed Display formatting helper; docs/stdlib/modules/fmt.md
+fn std::fmt::write_boolean[W: std::io::Writer]|check-prelude std-fmt-format-spec Result-returning Writer-backed bool formatting helper; docs/stdlib/modules/fmt.md
+fn std::fmt::write_boolean_bool[W: std::io::Writer]|check-prelude std-fmt-format-spec bool compatibility Writer-backed bool formatting helper; docs/stdlib/modules/fmt.md
+fn std::fmt::write_debug[W: std::io::Writer, T: std::fmt::Debug]|check-prelude std-fmt-debug-values Result-returning generic Writer-backed Debug formatting helper; docs/stdlib/modules/fmt.md
+fn std::fmt::write_debug_bool[W: std::io::Writer, T: std::fmt::Debug]|check-prelude std-fmt-debug-values bool compatibility generic Writer-backed Debug formatting helper; docs/stdlib/modules/fmt.md
+fn std::fmt::write_integer[W: std::io::Writer]|check-prelude std-fmt-format-spec Result-returning Writer-backed signed integer formatting helper; docs/stdlib/modules/fmt.md
+fn std::fmt::write_integer_bool[W: std::io::Writer]|check-prelude std-fmt-format-spec bool compatibility Writer-backed signed integer formatting helper; docs/stdlib/modules/fmt.md
+fn std::fmt::write_text[W: std::io::Writer]|check-prelude std-fmt-format-spec Result-returning Writer-backed text formatting helper; docs/stdlib/modules/fmt.md
+fn std::fmt::write_text_bool[W: std::io::Writer]|check-prelude std-fmt-format-spec bool compatibility Writer-backed text formatting helper; docs/stdlib/modules/fmt.md
+fn std::fmt::write_unsigned[W: std::io::Writer]|check-prelude std-fmt-format-spec Result-returning Writer-backed base/width/precision formatting helper; docs/stdlib/modules/fmt.md
+fn std::fmt::write_unsigned_bool[W: std::io::Writer]|check-prelude std-fmt-format-spec bool compatibility Writer-backed base/width/precision formatting helper; docs/stdlib/modules/fmt.md
+fn std::fmt::write_value[W: std::io::Writer, T: std::fmt::Display]|check-prelude std-fmt-format-spec Result-returning generic Writer-backed Display formatting helper; docs/stdlib/modules/fmt.md
+fn std::fmt::write_value_bool[W: std::io::Writer, T: std::fmt::Display]|check-prelude std-fmt-format-spec bool compatibility generic Writer-backed Display formatting helper; docs/stdlib/modules/fmt.md
 fn std::fs::append|check-prelude std-fs-read-write Result-returning whole-file append helper; docs/stdlib/modules/fs.md
 fn std::fs::append_bool|check-prelude std-fs-read-write bool whole-file append compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::append_raw_result|check-prelude std-fs-byte-result raw Result-returning whole-file append byte-count compatibility helper; docs/stdlib/modules/fs.md
