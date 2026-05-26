@@ -1187,8 +1187,10 @@ AtomicI64::new(value)
 AtomicBool::new(value)
 AtomicUsize::new(value)
 AtomicPtr::new<T>(ptr)
-Mutex::new()
-RwLock::new()
+Mutex::new<T>(value)
+RwLock::new<T>(value)
+RawMutex::new()
+RawRwLock::new()
 Once::new()
 OnceLock::new<T>()
 Condvar::new()
@@ -1304,22 +1306,21 @@ helpers keep the older success/failure-only compatibility shape. For
 `AtomicPtr[T]`, the Result payload is the old/current raw pointer value as
 `u64`, with casts back to `ptr T` left explicit.
 
-`Mutex` is a source spin/yield lock built on `AtomicI64`. The natural method
-API returns `MutexGuard`: `lock` waits for an active guard and `try_lock`
-returns `Option[MutexGuard]`. The guard owns the unlock operation; `unlock` is
-idempotent, and explicit `drop guard` releases an active guard. The
-`try_lock_bool`, `lock_raw`, and top-level `sync::try_lock`/`sync::lock`
-helpers keep the older manual bool/void behavior for low-level compatibility.
-`RwLock` follows the same rule with `read`, `try_read`, `write`, and
-`try_write` returning read/write guards. `MutexValue[T]` and `RwLockValue[T]`
-are the value-protecting forms: they own a payload and return guards with
-`value`, `value_ref`, `value_mut`, `set`, and `replace` accessors as
-appropriate. The final shorter `Mutex[T]`/`RwLock[T]` spelling remains a
-future compatibility decision because primitive `Mutex`/`RwLock` are already
-public names. Automatic scope/early-return RAII cleanup is not promised yet;
-use `guard.unlock()` or explicit `drop guard`. `Mutex` and `RwLock` do not
-poison after panic/failure; shared-state consistency remains caller-owned
-unless a future poison-aware type is introduced. `Once` runs a plain
+`Mutex[T]` is a source spin/yield value lock built on `RawMutex`. The natural
+method API returns `MutexGuard[T]`: `lock` waits for an active guard and
+`try_lock` returns `Option[MutexGuard[T]]`. The guard owns both the unlock
+operation and access to the payload through `value`, `value_ref`, `value_mut`,
+`set`, and `replace`. `RawMutex` keeps the older manual bool/void behavior for
+low-level code through `try_lock_bool`, `lock_raw`, and top-level
+`sync::try_lock`/`sync::lock`.
+
+`RwLock[T]` follows the same value-protecting rule with `read`, `try_read`,
+`write`, and `try_write` returning read/write payload guards. `RawRwLock`
+keeps the manual `*_lock`/`*_unlock` helpers. Automatic scope/early-return RAII
+cleanup is not promised yet; use `guard.unlock()` or explicit `drop guard`.
+`Mutex[T]`, `RwLock[T]`, `RawMutex`, and `RawRwLock` do not poison after
+panic/failure; shared-state consistency remains caller-owned unless a future
+poison-aware type is introduced. `Once` runs a plain
 `fn() -> void` at most once and reports whether the current caller ran it.
 `OnceLock[T]` is the
 sync-facing one-time value slot: `set` preserves the rejected value through

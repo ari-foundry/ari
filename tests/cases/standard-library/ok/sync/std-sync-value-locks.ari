@@ -1,22 +1,22 @@
 // Covers value-protecting sync locks: guard access, try-lock failure while held,
 // explicit unlock idempotence, and explicit drop release.
-fn read_mutex_guard(guard: ref std::sync::MutexValueGuard[i64]) -> i64 {
+fn read_mutex_guard(guard: ref std::sync::MutexGuard[i64]) -> i64 {
   let slot: ref i64 = guard.value_ref();
   return ptr_load(slot as ptr i64);
 }
 
-fn bump_mutex_guard(guard: ref mut std::sync::MutexValueGuard[i64], amount: i64) -> void {
+fn bump_mutex_guard(guard: ref mut std::sync::MutexGuard[i64], amount: i64) -> void {
   let slot: ref mut i64 = guard.value_mut();
   let raw = slot as ptr i64;
   ptr_store(raw, ptr_load(raw) + amount);
 }
 
-fn read_rw_guard(guard: ref std::sync::RwLockValueReadGuard[i64]) -> i64 {
+fn read_rw_guard(guard: ref std::sync::RwLockReadGuard[i64]) -> i64 {
   let slot: ref i64 = guard.value_ref();
   return ptr_load(slot as ptr i64);
 }
 
-fn bump_rw_guard(guard: ref mut std::sync::RwLockValueWriteGuard[i64], amount: i64) -> void {
+fn bump_rw_guard(guard: ref mut std::sync::RwLockWriteGuard[i64], amount: i64) -> void {
   let slot: ref mut i64 = guard.value_mut();
   let raw = slot as ptr i64;
   ptr_store(raw, ptr_load(raw) + amount);
@@ -25,7 +25,7 @@ fn bump_rw_guard(guard: ref mut std::sync::RwLockValueWriteGuard[i64], amount: i
 fn main() -> i64 {
   var score = 0;
 
-  var mutex = std::sync::MutexValue::new<i64>(10);
+  var mutex = std::sync::Mutex::new<i64>(10);
   if mutex.is_locked() {
     return 1;
   }
@@ -64,7 +64,7 @@ fn main() -> i64 {
     score = score + 2;
   }
 
-  var rw = std::sync::RwLockValue::new<i64>(20);
+  var rw = std::sync::RwLock::new<i64>(20);
   {
     var read_guard = rw.read();
     if read_rw_guard(ref read_guard) == 20 && read_guard.is_active() && rw.reader_count() == 1 {

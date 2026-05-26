@@ -1,6 +1,6 @@
-// Covers the first source RwLock primitive: explicit read/write lock states.
+// Covers the first source RawRwLock primitive: explicit read/write lock states.
 fn main() -> i64 {
-  var lock = RwLock::new();
+  var lock = RawRwLock::new();
   if lock.is_locked() {
     return 1;
   }
@@ -129,7 +129,7 @@ fn main() -> i64 {
   }
   sync::write_unlock(ref mut lock);
 
-  var qualified = std::sync::RwLock::new();
+  var qualified = std::sync::RawRwLock::new();
   if !std::sync::try_read_lock(ref mut qualified) {
     return 20;
   }

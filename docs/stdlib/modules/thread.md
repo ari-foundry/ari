@@ -169,7 +169,7 @@ is the natural Result-returning hosted processor count helper. Use
 `ThreadLocal[T]` is the first user-facing thread-local storage shape. It is an
 explicit zone-backed handle rather than a global `thread_local` declaration.
 The handle owns a small table of `(thread id, Option[T])` slots protected by a
-source `Mutex`. `get`, `get_mut`, `take`, and `remove` operate on the current
+source `RawMutex`. `get`, `get_mut`, `take`, and `remove` operate on the current
 thread id. `thread::thread_local<T>(zone)` uses the default capacity; use
 `thread_local_with_capacity` or `ThreadLocal::with_capacity` when a shared
 handle must serve a known number of threads. `len()`,

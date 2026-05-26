@@ -27,53 +27,53 @@ pub struct AtomicPtr[T] {
   mut bits: AtomicUsize,
 }
 
-pub struct Mutex {
+pub struct RawMutex {
   mut state: AtomicI64,
 }
 
-pub struct MutexGuard {
-  lock: ptr std::sync::Mutex,
+pub struct RawMutexGuard {
+  lock: ptr std::sync::RawMutex,
   mut active: bool,
 }
 
-pub struct MutexValue[T] {
-  mut lock_value: std::sync::Mutex,
+pub struct Mutex[T] {
+  mut lock_value: std::sync::RawMutex,
   mut value: T,
 }
 
-pub struct MutexValueGuard[T] {
-  lock: ptr std::sync::Mutex,
+pub struct MutexGuard[T] {
+  lock: ptr std::sync::RawMutex,
   value: ptr T,
   mut active: bool,
 }
 
-pub struct RwLock {
+pub struct RawRwLock {
   mut state: AtomicI64,
 }
 
-pub struct RwLockReadGuard {
-  lock: ptr std::sync::RwLock,
+pub struct RawRwLockReadGuard {
+  lock: ptr std::sync::RawRwLock,
   mut active: bool,
 }
 
-pub struct RwLockWriteGuard {
-  lock: ptr std::sync::RwLock,
+pub struct RawRwLockWriteGuard {
+  lock: ptr std::sync::RawRwLock,
   mut active: bool,
 }
 
-pub struct RwLockValue[T] {
-  mut lock_value: std::sync::RwLock,
+pub struct RwLock[T] {
+  mut lock_value: std::sync::RawRwLock,
   mut value: T,
 }
 
-pub struct RwLockValueReadGuard[T] {
-  lock: ptr std::sync::RwLock,
+pub struct RwLockReadGuard[T] {
+  lock: ptr std::sync::RawRwLock,
   value: ptr T,
   mut active: bool,
 }
 
-pub struct RwLockValueWriteGuard[T] {
-  lock: ptr std::sync::RwLock,
+pub struct RwLockWriteGuard[T] {
+  lock: ptr std::sync::RawRwLock,
   value: ptr T,
   mut active: bool,
 }
@@ -217,25 +217,25 @@ pub fn is_compare_exchange_order(success: std::sync::Ordering, failure: std::syn
   }
 }
 
-pub fn try_lock(lock: ref mut std::sync::Mutex) -> bool {
+pub fn try_lock(lock: ref mut std::sync::RawMutex) -> bool {
   return lock.state.compare_exchange_bool(0, 1);
 }
 
-pub fn lock(lock: ref mut std::sync::Mutex) -> void {
+pub fn lock(lock: ref mut std::sync::RawMutex) -> void {
   while !std::sync::try_lock(lock) {
     std::thread::yield_now();
   }
 }
 
-pub fn unlock(lock: ref mut std::sync::Mutex) -> void {
+pub fn unlock(lock: ref mut std::sync::RawMutex) -> void {
   lock.state.store(0);
 }
 
-pub fn is_locked(lock: ref std::sync::Mutex) -> bool {
+pub fn is_locked(lock: ref std::sync::RawMutex) -> bool {
   return lock.state.load() != 0;
 }
 
-pub fn try_read_lock(lock: ref mut std::sync::RwLock) -> bool {
+pub fn try_read_lock(lock: ref mut std::sync::RawRwLock) -> bool {
   let current = lock.state.load();
   if current < 0 {
     return false;
@@ -243,13 +243,13 @@ pub fn try_read_lock(lock: ref mut std::sync::RwLock) -> bool {
   return lock.state.compare_exchange_bool(current, current + 1);
 }
 
-pub fn read_lock(lock: ref mut std::sync::RwLock) -> void {
+pub fn read_lock(lock: ref mut std::sync::RawRwLock) -> void {
   while !std::sync::try_read_lock(lock) {
     std::thread::yield_now();
   }
 }
 
-pub fn read_unlock(lock: ref mut std::sync::RwLock) -> void {
+pub fn read_unlock(lock: ref mut std::sync::RawRwLock) -> void {
   let previous = lock.state.fetch_add(-1);
   if previous <= 0 {
     lock.state.fetch_add(1);
@@ -257,22 +257,22 @@ pub fn read_unlock(lock: ref mut std::sync::RwLock) -> void {
   }
 }
 
-pub fn try_write_lock(lock: ref mut std::sync::RwLock) -> bool {
+pub fn try_write_lock(lock: ref mut std::sync::RawRwLock) -> bool {
   return lock.state.compare_exchange_bool(0, -1);
 }
 
-pub fn write_lock(lock: ref mut std::sync::RwLock) -> void {
+pub fn write_lock(lock: ref mut std::sync::RawRwLock) -> void {
   while !std::sync::try_write_lock(lock) {
     std::thread::yield_now();
   }
 }
 
-pub fn write_unlock(lock: ref mut std::sync::RwLock) -> void {
+pub fn write_unlock(lock: ref mut std::sync::RawRwLock) -> void {
   std::assert(lock.state.load() < 0);
   lock.state.store(0);
 }
 
-pub fn reader_count(lock: ref std::sync::RwLock) -> i64 {
+pub fn reader_count(lock: ref std::sync::RawRwLock) -> i64 {
   let current = lock.state.load();
   if current < 0 {
     return 0;
@@ -280,11 +280,11 @@ pub fn reader_count(lock: ref std::sync::RwLock) -> i64 {
   return current;
 }
 
-pub fn is_read_locked(lock: ref std::sync::RwLock) -> bool {
+pub fn is_read_locked(lock: ref std::sync::RawRwLock) -> bool {
   return lock.state.load() > 0;
 }
 
-pub fn is_write_locked(lock: ref std::sync::RwLock) -> bool {
+pub fn is_write_locked(lock: ref std::sync::RawRwLock) -> bool {
   return lock.state.load() < 0;
 }
 
@@ -663,9 +663,9 @@ pub impl[T] std::sync::AtomicPtr[T] {
   }
 }
 
-pub impl std::sync::Mutex {
-  fn new() -> Mutex {
-    return Mutex { state: AtomicI64::new(0) };
+pub impl std::sync::RawMutex {
+  fn new() -> RawMutex {
+    return RawMutex { state: AtomicI64::new(0) };
   }
 
   fn try_lock_bool(self: ref mut Self) -> bool {
@@ -676,18 +676,18 @@ pub impl std::sync::Mutex {
     std::sync::lock(self);
   }
 
-  fn try_lock(self: ref mut Self) -> std::Option[std::sync::MutexGuard] {
+  fn try_lock(self: ref mut Self) -> std::Option[std::sync::RawMutexGuard] {
     if std::sync::try_lock(self) {
-      return std::Some<std::sync::MutexGuard>(
-        std::sync::MutexGuard { lock: self as ptr std::sync::Mutex, active: true }
+      return std::Some<std::sync::RawMutexGuard>(
+        std::sync::RawMutexGuard { lock: self as ptr std::sync::RawMutex, active: true }
       );
     }
-    return std::None<std::sync::MutexGuard>();
+    return std::None<std::sync::RawMutexGuard>();
   }
 
-  fn lock(self: ref mut Self) -> std::sync::MutexGuard {
+  fn lock(self: ref mut Self) -> std::sync::RawMutexGuard {
     std::sync::lock(self);
-    return std::sync::MutexGuard { lock: self as ptr std::sync::Mutex, active: true };
+    return std::sync::RawMutexGuard { lock: self as ptr std::sync::RawMutex, active: true };
   }
 
   fn unlock(self: ref mut Self) -> void {
@@ -699,7 +699,7 @@ pub impl std::sync::Mutex {
   }
 }
 
-pub impl std::sync::MutexGuard {
+pub impl std::sync::RawMutexGuard {
   fn unlock(self: ref mut Self) -> void {
     if self.active {
       std::sync::unlock(ref mut *self.lock);
@@ -712,7 +712,7 @@ pub impl std::sync::MutexGuard {
   }
 }
 
-impl std::Drop for std::sync::MutexGuard {
+impl std::Drop for std::sync::RawMutexGuard {
   fn drop(self) -> void {
     if self.active {
       std::sync::unlock(ref mut *self.lock);
@@ -720,31 +720,31 @@ impl std::Drop for std::sync::MutexGuard {
   }
 }
 
-pub impl[T] std::sync::MutexValue[T] {
-  fn new(value: T) -> std::sync::MutexValue[T] {
-    return std::sync::MutexValue<T> {
-      lock_value: std::sync::Mutex::new(),
+pub impl[T] std::sync::Mutex[T] {
+  fn new(value: T) -> std::sync::Mutex[T] {
+    return std::sync::Mutex<T> {
+      lock_value: std::sync::RawMutex::new(),
       value: value,
     };
   }
 
-  fn try_lock(self: ref mut Self) -> std::Option[std::sync::MutexValueGuard[T]] {
+  fn try_lock(self: ref mut Self) -> std::Option[std::sync::MutexGuard[T]] {
     if std::sync::try_lock(ref mut self.lock_value) {
-      return std::Some<std::sync::MutexValueGuard[T]>(
-        std::sync::MutexValueGuard<T> {
-          lock: (ref mut self.lock_value) as ptr std::sync::Mutex,
+      return std::Some<std::sync::MutexGuard[T]>(
+        std::sync::MutexGuard<T> {
+          lock: (ref mut self.lock_value) as ptr std::sync::RawMutex,
           value: (ref mut self.value) as ptr T,
           active: true,
         }
       );
     }
-    return std::None<std::sync::MutexValueGuard[T]>();
+    return std::None<std::sync::MutexGuard[T]>();
   }
 
-  fn lock(self: ref mut Self) -> std::sync::MutexValueGuard[T] {
+  fn lock(self: ref mut Self) -> std::sync::MutexGuard[T] {
     std::sync::lock(ref mut self.lock_value);
-    return std::sync::MutexValueGuard<T> {
-      lock: (ref mut self.lock_value) as ptr std::sync::Mutex,
+    return std::sync::MutexGuard<T> {
+      lock: (ref mut self.lock_value) as ptr std::sync::RawMutex,
       value: (ref mut self.value) as ptr T,
       active: true,
     };
@@ -763,7 +763,7 @@ pub impl[T] std::sync::MutexValue[T] {
   }
 }
 
-pub impl[T] std::sync::MutexValueGuard[T] {
+pub impl[T] std::sync::MutexGuard[T] {
   fn value(self: ref Self) -> T {
     return ptr_load(self.value);
   }
@@ -800,7 +800,7 @@ pub impl[T] std::sync::MutexValueGuard[T] {
   }
 }
 
-impl[T] std::Drop for std::sync::MutexValueGuard[T] {
+impl[T] std::Drop for std::sync::MutexGuard[T] {
   fn drop(self) -> void {
     if self.active {
       std::sync::unlock(ref mut *self.lock);
@@ -808,37 +808,37 @@ impl[T] std::Drop for std::sync::MutexValueGuard[T] {
   }
 }
 
-pub impl std::sync::RwLock {
-  fn new() -> RwLock {
-    return RwLock { state: AtomicI64::new(0) };
+pub impl std::sync::RawRwLock {
+  fn new() -> RawRwLock {
+    return RawRwLock { state: AtomicI64::new(0) };
   }
 
-  fn try_read(self: ref mut Self) -> std::Option[std::sync::RwLockReadGuard] {
+  fn try_read(self: ref mut Self) -> std::Option[std::sync::RawRwLockReadGuard] {
     if std::sync::try_read_lock(self) {
-      return std::Some<std::sync::RwLockReadGuard>(
-        std::sync::RwLockReadGuard { lock: self as ptr std::sync::RwLock, active: true }
+      return std::Some<std::sync::RawRwLockReadGuard>(
+        std::sync::RawRwLockReadGuard { lock: self as ptr std::sync::RawRwLock, active: true }
       );
     }
-    return std::None<std::sync::RwLockReadGuard>();
+    return std::None<std::sync::RawRwLockReadGuard>();
   }
 
-  fn read(self: ref mut Self) -> std::sync::RwLockReadGuard {
+  fn read(self: ref mut Self) -> std::sync::RawRwLockReadGuard {
     std::sync::read_lock(self);
-    return std::sync::RwLockReadGuard { lock: self as ptr std::sync::RwLock, active: true };
+    return std::sync::RawRwLockReadGuard { lock: self as ptr std::sync::RawRwLock, active: true };
   }
 
-  fn try_write(self: ref mut Self) -> std::Option[std::sync::RwLockWriteGuard] {
+  fn try_write(self: ref mut Self) -> std::Option[std::sync::RawRwLockWriteGuard] {
     if std::sync::try_write_lock(self) {
-      return std::Some<std::sync::RwLockWriteGuard>(
-        std::sync::RwLockWriteGuard { lock: self as ptr std::sync::RwLock, active: true }
+      return std::Some<std::sync::RawRwLockWriteGuard>(
+        std::sync::RawRwLockWriteGuard { lock: self as ptr std::sync::RawRwLock, active: true }
       );
     }
-    return std::None<std::sync::RwLockWriteGuard>();
+    return std::None<std::sync::RawRwLockWriteGuard>();
   }
 
-  fn write(self: ref mut Self) -> std::sync::RwLockWriteGuard {
+  fn write(self: ref mut Self) -> std::sync::RawRwLockWriteGuard {
     std::sync::write_lock(self);
-    return std::sync::RwLockWriteGuard { lock: self as ptr std::sync::RwLock, active: true };
+    return std::sync::RawRwLockWriteGuard { lock: self as ptr std::sync::RawRwLock, active: true };
   }
 
   fn try_read_lock(self: ref mut Self) -> bool {
@@ -882,7 +882,7 @@ pub impl std::sync::RwLock {
   }
 }
 
-pub impl std::sync::RwLockReadGuard {
+pub impl std::sync::RawRwLockReadGuard {
   fn unlock(self: ref mut Self) -> void {
     if self.active {
       std::sync::read_unlock(ref mut *self.lock);
@@ -895,7 +895,7 @@ pub impl std::sync::RwLockReadGuard {
   }
 }
 
-impl std::Drop for std::sync::RwLockReadGuard {
+impl std::Drop for std::sync::RawRwLockReadGuard {
   fn drop(self) -> void {
     if self.active {
       std::sync::read_unlock(ref mut *self.lock);
@@ -903,7 +903,7 @@ impl std::Drop for std::sync::RwLockReadGuard {
   }
 }
 
-pub impl std::sync::RwLockWriteGuard {
+pub impl std::sync::RawRwLockWriteGuard {
   fn unlock(self: ref mut Self) -> void {
     if self.active {
       std::sync::write_unlock(ref mut *self.lock);
@@ -916,7 +916,7 @@ pub impl std::sync::RwLockWriteGuard {
   }
 }
 
-impl std::Drop for std::sync::RwLockWriteGuard {
+impl std::Drop for std::sync::RawRwLockWriteGuard {
   fn drop(self) -> void {
     if self.active {
       std::sync::write_unlock(ref mut *self.lock);
@@ -924,53 +924,53 @@ impl std::Drop for std::sync::RwLockWriteGuard {
   }
 }
 
-pub impl[T] std::sync::RwLockValue[T] {
-  fn new(value: T) -> std::sync::RwLockValue[T] {
-    return std::sync::RwLockValue<T> {
-      lock_value: std::sync::RwLock::new(),
+pub impl[T] std::sync::RwLock[T] {
+  fn new(value: T) -> std::sync::RwLock[T] {
+    return std::sync::RwLock<T> {
+      lock_value: std::sync::RawRwLock::new(),
       value: value,
     };
   }
 
-  fn try_read(self: ref mut Self) -> std::Option[std::sync::RwLockValueReadGuard[T]] {
+  fn try_read(self: ref mut Self) -> std::Option[std::sync::RwLockReadGuard[T]] {
     if std::sync::try_read_lock(ref mut self.lock_value) {
-      return std::Some<std::sync::RwLockValueReadGuard[T]>(
-        std::sync::RwLockValueReadGuard<T> {
-          lock: (ref mut self.lock_value) as ptr std::sync::RwLock,
+      return std::Some<std::sync::RwLockReadGuard[T]>(
+        std::sync::RwLockReadGuard<T> {
+          lock: (ref mut self.lock_value) as ptr std::sync::RawRwLock,
           value: (ref self.value) as ptr T,
           active: true,
         }
       );
     }
-    return std::None<std::sync::RwLockValueReadGuard[T]>();
+    return std::None<std::sync::RwLockReadGuard[T]>();
   }
 
-  fn read(self: ref mut Self) -> std::sync::RwLockValueReadGuard[T] {
+  fn read(self: ref mut Self) -> std::sync::RwLockReadGuard[T] {
     std::sync::read_lock(ref mut self.lock_value);
-    return std::sync::RwLockValueReadGuard<T> {
-      lock: (ref mut self.lock_value) as ptr std::sync::RwLock,
+    return std::sync::RwLockReadGuard<T> {
+      lock: (ref mut self.lock_value) as ptr std::sync::RawRwLock,
       value: (ref self.value) as ptr T,
       active: true,
     };
   }
 
-  fn try_write(self: ref mut Self) -> std::Option[std::sync::RwLockValueWriteGuard[T]] {
+  fn try_write(self: ref mut Self) -> std::Option[std::sync::RwLockWriteGuard[T]] {
     if std::sync::try_write_lock(ref mut self.lock_value) {
-      return std::Some<std::sync::RwLockValueWriteGuard[T]>(
-        std::sync::RwLockValueWriteGuard<T> {
-          lock: (ref mut self.lock_value) as ptr std::sync::RwLock,
+      return std::Some<std::sync::RwLockWriteGuard[T]>(
+        std::sync::RwLockWriteGuard<T> {
+          lock: (ref mut self.lock_value) as ptr std::sync::RawRwLock,
           value: (ref mut self.value) as ptr T,
           active: true,
         }
       );
     }
-    return std::None<std::sync::RwLockValueWriteGuard[T]>();
+    return std::None<std::sync::RwLockWriteGuard[T]>();
   }
 
-  fn write(self: ref mut Self) -> std::sync::RwLockValueWriteGuard[T] {
+  fn write(self: ref mut Self) -> std::sync::RwLockWriteGuard[T] {
     std::sync::write_lock(ref mut self.lock_value);
-    return std::sync::RwLockValueWriteGuard<T> {
-      lock: (ref mut self.lock_value) as ptr std::sync::RwLock,
+    return std::sync::RwLockWriteGuard<T> {
+      lock: (ref mut self.lock_value) as ptr std::sync::RawRwLock,
       value: (ref mut self.value) as ptr T,
       active: true,
     };
@@ -1001,7 +1001,7 @@ pub impl[T] std::sync::RwLockValue[T] {
   }
 }
 
-pub impl[T] std::sync::RwLockValueReadGuard[T] {
+pub impl[T] std::sync::RwLockReadGuard[T] {
   fn value(self: ref Self) -> T {
     return ptr_load(self.value);
   }
@@ -1022,7 +1022,7 @@ pub impl[T] std::sync::RwLockValueReadGuard[T] {
   }
 }
 
-impl[T] std::Drop for std::sync::RwLockValueReadGuard[T] {
+impl[T] std::Drop for std::sync::RwLockReadGuard[T] {
   fn drop(self) -> void {
     if self.active {
       std::sync::read_unlock(ref mut *self.lock);
@@ -1030,7 +1030,7 @@ impl[T] std::Drop for std::sync::RwLockValueReadGuard[T] {
   }
 }
 
-pub impl[T] std::sync::RwLockValueWriteGuard[T] {
+pub impl[T] std::sync::RwLockWriteGuard[T] {
   fn value(self: ref Self) -> T {
     return ptr_load(self.value);
   }
@@ -1067,7 +1067,7 @@ pub impl[T] std::sync::RwLockValueWriteGuard[T] {
   }
 }
 
-impl[T] std::Drop for std::sync::RwLockValueWriteGuard[T] {
+impl[T] std::Drop for std::sync::RwLockWriteGuard[T] {
   fn drop(self) -> void {
     if self.active {
       std::sync::write_unlock(ref mut *self.lock);
@@ -1106,7 +1106,7 @@ pub impl std::sync::Condvar {
     return self.sequence.load();
   }
 
-  fn wait(self: ref mut Self, lock: ref mut std::sync::Mutex) -> void {
+  fn wait(self: ref mut Self, lock: ref mut std::sync::RawMutex) -> void {
     let seen = self.sequence.load();
     lock.unlock();
     while self.sequence.load() == seen {
@@ -1117,7 +1117,7 @@ pub impl std::sync::Condvar {
 
   fn wait_timeout(
     self: ref mut Self,
-    lock: ref mut std::sync::Mutex,
+    lock: ref mut std::sync::RawMutex,
     duration: std::time::Duration
   ) -> std::Result[std::sync::WaitTimeoutResult, std::error::Error] {
     let seen = self.sequence.load();
@@ -1138,7 +1138,7 @@ pub impl std::sync::Condvar {
     );
   }
 
-  fn wait_while(self: ref mut Self, lock: ref mut std::sync::Mutex, condition: fn() -> bool) -> void {
+  fn wait_while(self: ref mut Self, lock: ref mut std::sync::RawMutex, condition: fn() -> bool) -> void {
     while condition() {
       self.wait(lock);
     }

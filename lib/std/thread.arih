@@ -45,7 +45,7 @@ struct ThreadLocalSlot[T] {
 }
 
 struct ThreadLocalState[T] {
-  mut lock: std::sync::Mutex,
+  mut lock: std::sync::RawMutex,
   slots: ptr std::thread::ThreadLocalSlot[T],
   capacity: i64,
 }
@@ -473,7 +473,7 @@ pub impl[T] std::thread::ThreadLocal[T] {
     let state = std::zone::new<std::thread::ThreadLocalState[T]>(
       zone,
       std::thread::ThreadLocalState<T> {
-        lock: std::sync::Mutex::new(),
+        lock: std::sync::RawMutex::new(),
         slots: slots,
         capacity: capacity,
       }

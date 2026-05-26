@@ -326,10 +326,9 @@ threads, richer status values, and send/share typing remain richer
 thread-policy work.
 
 `std::sync` now starts with `AtomicI64`, `AtomicBool`, `AtomicUsize`,
-`AtomicPtr[T]`, source `Mutex`, `MutexGuard`, `RwLock`,
-`RwLockReadGuard`, `RwLockWriteGuard`, `MutexValue[T]`, `RwLockValue[T]`,
-`Once`, `OnceLock`, `Condvar`, `Barrier`, and a single-slot MPSC channel
-shape. `std::cell` adds local
+`AtomicPtr[T]`, manual `RawMutex`/`RawRwLock` primitives, value-protecting
+`Mutex[T]`/`RwLock[T]` guards, `Once`, `OnceLock`, `Condvar`, `Barrier`, and a
+single-slot MPSC channel shape. `std::cell` adds local
 interior mutability through `Cell`, runtime-checked `RefCell`, and zone-backed
 `OnceCell`/`Lazy` one-time initialization. `std::rc` adds explicit `Rc`,
 `Arc`, and `Weak` shared ownership handles. Atomic method names are the names
@@ -341,11 +340,10 @@ values to the matching LLVM ordering for load/store/RMW/compare-exchange.
 Natural compare-exchange methods return the old/current value through
 `Result`, while `_bool` forms keep the previous success-only compatibility
 shape. Invalid ordering values are programmer errors and assert.
-`Mutex` and `RwLock` are primitive no-poison spin/yield locks with explicit
-unlock guards; `MutexValue[T]` and `RwLockValue[T]` own a payload and return
-guards that expose shared or mutable payload access while the lock is held.
-The primitive names stay public, so the value-owning spelling is non-breaking
-rather than `Mutex[T]`/`RwLock[T]` today. Guard cleanup still relies on
+`RawMutex` and `RawRwLock` are primitive no-poison spin/yield locks with
+explicit unlock guards for low-level code such as `Condvar`. `Mutex[T]` and
+`RwLock[T]` own a payload and return guards that expose shared or mutable
+payload access while the lock is held. Guard cleanup still relies on
 `guard.unlock()` or explicit `drop guard`; automatic scope/early-return RAII
 cleanup is not promised. `Condvar` and `Barrier` are source coordination
 primitives; `Condvar` timeout waits are monotonic spin/yield waits rather than

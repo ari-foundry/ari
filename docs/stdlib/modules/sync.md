@@ -7,8 +7,8 @@ one-time initialization, a reusable barrier, and a first MPSC channel shape.
 
 The current implementations are intentionally teachable building blocks.
 `AtomicI64` lowers to LLVM atomics on the hosted backend, including explicit
-memory-order variants; wider wrappers compose over it. `Mutex`, `RwLock`,
-`MutexValue[T]`, `RwLockValue[T]`, `Condvar`, `Barrier`, `Once`, `OnceLock`,
+memory-order variants; wider wrappers compose over it. `Mutex[T]`,
+`RwLock[T]`, `RawMutex`, `RawRwLock`, `Condvar`, `Barrier`, `Once`, `OnceLock`,
 and channels spin/yield instead of using a futex-backed blocking runtime yet.
 That keeps the API useful while preserving space for later poisoning,
 send/share, fairness, and wait/wake policy.
@@ -97,76 +97,71 @@ The root prelude re-exports `AtomicI64`, `AtomicBool`, `AtomicUsize`, and
 ## Mutex API
 
 ```ari
-Mutex::new() -> Mutex
-
-sync::try_lock(ref mut mutex) -> bool
-sync::lock(ref mut mutex) -> void
-sync::unlock(ref mut mutex) -> void
-sync::is_locked(ref mutex) -> bool
-
-mutex.try_lock() -> Option[MutexGuard]
-mutex.lock() -> MutexGuard
-mutex.try_lock_bool() -> bool
-mutex.lock_raw() -> void
-mutex.unlock()
+Mutex::new<T>(value) -> Mutex[T]
+mutex.try_lock() -> Option[MutexGuard[T]]
+mutex.lock() -> MutexGuard[T]
+mutex.get_mut() -> ref mut T
+mutex.into_inner() -> T
 mutex.is_locked()
 
+guard.value() -> T
+guard.value_ref() -> ref T
+guard.value_mut() -> ref mut T
+guard.set(value) -> void
+guard.replace(value) -> T
 guard.unlock()
 guard.is_active()
 
-MutexValue::new<T>(value) -> MutexValue[T]
-mutex_value.try_lock() -> Option[MutexValueGuard[T]]
-mutex_value.lock() -> MutexValueGuard[T]
-mutex_value.get_mut() -> ref mut T
-mutex_value.into_inner() -> T
-mutex_value.is_locked()
+RawMutex::new() -> RawMutex
 
-value_guard.value() -> T
-value_guard.value_ref() -> ref T
-value_guard.value_mut() -> ref mut T
-value_guard.set(value) -> void
-value_guard.replace(value) -> T
-value_guard.unlock()
-value_guard.is_active()
+sync::try_lock(ref mut raw_mutex) -> bool
+sync::lock(ref mut raw_mutex) -> void
+sync::unlock(ref mut raw_mutex) -> void
+sync::is_locked(ref raw_mutex) -> bool
+
+raw_mutex.try_lock() -> Option[RawMutexGuard]
+raw_mutex.lock() -> RawMutexGuard
+raw_mutex.try_lock_bool() -> bool
+raw_mutex.lock_raw() -> void
+raw_mutex.unlock()
+raw_mutex.is_locked()
+
+raw_guard.unlock()
+raw_guard.is_active()
 ```
 
-`Mutex` is a primitive explicit lock. The natural method API now returns a
-guard: `try_lock` performs one compare-exchange and returns `Some(MutexGuard)`
-on success, while `lock` spins and calls `thread::yield_now()` until it can
-return an active guard. `MutexGuard::unlock` releases the lock once and then
-marks the guard inactive; calling it again is harmless. Explicit `drop guard`
-also releases an active guard.
+`Mutex[T]` is the value-protecting form for ordinary shared state. It owns a
+small source lock plus the payload, so `lock` returns `MutexGuard[T]` and the
+guard controls both unlock and payload access. `try_lock` performs one
+compare-exchange and returns `Some(MutexGuard[T])` on success; `lock` spins and
+calls `thread::yield_now()` until it can return an active guard. Use
+`value_ref` for shared borrowing, `value_mut` when a short mutable borrow fits
+the current borrow checker, and `set`/`replace` when you want mutation without
+keeping a returned reference alive. `get_mut` is for exclusive access to the
+whole `Mutex[T]`, before other code has an active guard; `into_inner` consumes
+the lock and returns the payload.
 
-The top-level `sync::try_lock`, `sync::lock`, and method compatibility helpers
-`try_lock_bool` and `lock_raw` expose the older manual bool/void behavior for
-low-level code such as `Condvar`. They require a matching explicit `unlock`.
-`is_locked` is a diagnostic predicate, not a proof that a later operation will
-observe the same state.
+`MutexGuard[T]::unlock` releases the lock once and then marks the guard
+inactive; calling it again is harmless. Explicit `drop guard` also releases an
+active guard. Automatic scope/early-return RAII unlock is not a language
+guarantee yet, so current Ari code should still use `guard.unlock()` or
+explicit `drop guard` at clear ownership boundaries.
 
-`MutexValue[T]` is the value-protecting form for ordinary shared state. It owns
-a `Mutex` plus a payload, so `lock` returns `MutexValueGuard[T]` and the guard
-controls both unlock and payload access. Use `value_ref` for shared borrowing,
-`value_mut` when a short mutable borrow fits the current borrow checker, and
-`set`/`replace` when you want mutation without keeping a returned reference
-alive. `get_mut` is for exclusive access to the whole `MutexValue[T]`, before
-other code has an active guard; `into_inner` consumes the lock and returns the
-payload.
+`RawMutex` is the manual primitive for low-level code such as `Condvar` and
+compatibility tests. Its top-level helpers `sync::try_lock`, `sync::lock`,
+`sync::unlock`, and method helpers `try_lock_bool` and `lock_raw` expose the
+older bool/void lock shape and require a matching explicit `unlock`.
+`RawMutex::is_locked` is a diagnostic predicate, not a proof that a later
+operation will observe the same state.
 
-The primitive `Mutex` name remains public for compatibility and for code such
-as `Condvar` that needs a raw lock. The final shorter spelling
-`Mutex[T]` would require a breaking name migration or type-overloading support;
-today the non-breaking value-owning API is `MutexValue[T]`. Current Ari code
-should use `guard.unlock()` or explicit `drop guard`; automatic
-scope/early-return RAII unlock is not a language guarantee yet.
-
-Ari's current `Mutex` is not poisoned. If code panics or otherwise fails while
-holding a lock, later lock acquisition does not report that event. Consistency
-of shared state after failure is the caller's responsibility. A future
-`PoisonMutex`/`PoisonRwLock` can add opt-in poisoning without changing this
-default no-poison policy.
+Ari's current `Mutex[T]` and `RawMutex` are not poisoned. If code panics or
+otherwise fails while holding a lock, later lock acquisition does not report
+that event. Consistency of shared state after failure is the caller's
+responsibility. A future `PoisonMutex`/`PoisonRwLock` can add opt-in poisoning
+without changing this default no-poison policy.
 
 ```ari
-var counter = std::sync::MutexValue::new<i64>(0);
+var counter = std::sync::Mutex::new<i64>(0);
 {
   var guard = counter.lock();
   guard.set(guard.value() + 1);
@@ -178,12 +173,33 @@ assert(counter.into_inner() == 1);
 ## RwLock API
 
 ```ari
-RwLock::new() -> RwLock
+RwLock::new<T>(value) -> RwLock[T]
 
-lock.try_read() -> Option[RwLockReadGuard]
-lock.read() -> RwLockReadGuard
-lock.try_write() -> Option[RwLockWriteGuard]
-lock.write() -> RwLockWriteGuard
+lock.try_read() -> Option[RwLockReadGuard[T]]
+lock.read() -> RwLockReadGuard[T]
+lock.try_write() -> Option[RwLockWriteGuard[T]]
+lock.write() -> RwLockWriteGuard[T]
+lock.get_mut() -> ref mut T
+lock.into_inner() -> T
+lock.reader_count() -> i64
+lock.is_read_locked() -> bool
+lock.is_write_locked() -> bool
+lock.is_locked() -> bool
+
+read_guard.value() -> T
+read_guard.value_ref() -> ref T
+read_guard.unlock()
+read_guard.is_active()
+
+write_guard.value() -> T
+write_guard.value_ref() -> ref T
+write_guard.value_mut() -> ref mut T
+write_guard.set(value) -> void
+write_guard.replace(value) -> T
+write_guard.unlock()
+write_guard.is_active()
+
+RawRwLock::new() -> RawRwLock
 
 sync::try_read_lock(ref mut lock) -> bool
 sync::read_lock(ref mut lock) -> void
@@ -195,69 +211,44 @@ sync::reader_count(ref lock) -> i64
 sync::is_read_locked(ref lock) -> bool
 sync::is_write_locked(ref lock) -> bool
 
-lock.try_read_lock()
-lock.read_lock()
-lock.read_unlock()
-lock.try_write_lock()
-lock.write_lock()
-lock.write_unlock()
-lock.reader_count()
-lock.is_read_locked()
-lock.is_write_locked()
-lock.is_locked()
+raw_lock.try_read_lock()
+raw_lock.read_lock()
+raw_lock.read_unlock()
+raw_lock.try_write_lock()
+raw_lock.write_lock()
+raw_lock.write_unlock()
+raw_lock.reader_count()
+raw_lock.is_read_locked()
+raw_lock.is_write_locked()
+raw_lock.is_locked()
 
-read_guard.unlock()
-read_guard.is_active()
-write_guard.unlock()
-write_guard.is_active()
-
-RwLockValue::new<T>(value) -> RwLockValue[T]
-rw_value.try_read() -> Option[RwLockValueReadGuard[T]]
-rw_value.read() -> RwLockValueReadGuard[T]
-rw_value.try_write() -> Option[RwLockValueWriteGuard[T]]
-rw_value.write() -> RwLockValueWriteGuard[T]
-rw_value.get_mut() -> ref mut T
-rw_value.into_inner() -> T
-rw_value.reader_count() -> i64
-rw_value.is_read_locked() -> bool
-rw_value.is_write_locked() -> bool
-rw_value.is_locked() -> bool
-
-read_value_guard.value() -> T
-read_value_guard.value_ref() -> ref T
-read_value_guard.unlock()
-read_value_guard.is_active()
-
-write_value_guard.value() -> T
-write_value_guard.value_ref() -> ref T
-write_value_guard.value_mut() -> ref mut T
-write_value_guard.set(value) -> void
-write_value_guard.replace(value) -> T
-write_value_guard.unlock()
-write_value_guard.is_active()
+raw_read_guard.unlock()
+raw_read_guard.is_active()
+raw_write_guard.unlock()
+raw_write_guard.is_active()
 ```
 
-`RwLock` allows multiple readers or one writer. Readers increment the state
-while no writer is present; writers use `-1` as the exclusive state. The
-natural method API returns guards: `read` and `write` spin/yield until they can
-return active guards, and `try_read`/`try_write` return `None` when acquisition
-would block. `RwLockReadGuard::unlock` and `RwLockWriteGuard::unlock` are
-idempotent, and explicit `drop guard` releases an active guard.
+`RwLock[T]` allows multiple readers or one writer around an owned payload.
+Readers increment the raw state while no writer is present; writers use `-1` as
+the exclusive state. The natural method API returns value guards: `read` and
+`write` spin/yield until they can return active guards, and `try_read`/
+`try_write` return `None` when acquisition would block. Read guards expose
+`value` and `value_ref`, while write guards also expose `value_mut`, `set`, and
+`replace`. `RwLockReadGuard[T]::unlock` and
+`RwLockWriteGuard[T]::unlock` are idempotent, and explicit `drop guard`
+releases an active guard.
 
-The `*_lock` and `*_unlock` functions and methods remain manual compatibility
-APIs for low-level code. `RwLockValue[T]` is the value-protecting form:
-read guards expose `value` and `value_ref`, while write guards also expose
-`value_mut`, `set`, and `replace`. Like the primitive lock, it is no-poison and
-spin/yield based; it does not add fairness policy or futex-backed parking.
-Use explicit `drop guard` or `guard.unlock()` today; automatic
-scope/early-return guard cleanup remains language/runtime work.
+`RawRwLock` is the manual reader-writer primitive. The `*_lock` and
+`*_unlock` functions and methods remain compatibility APIs for low-level code.
+Like the value lock, it is no-poison and spin/yield based; it does not add
+fairness policy or futex-backed parking.
 
-`RwLock` follows the same no-poison policy as `Mutex`: unlock after a panic or
-explicit failure does not mark the lock poisoned, and later readers/writers do
-not receive a poison error.
+`RwLock[T]` and `RawRwLock` follow the same no-poison policy as `Mutex[T]`:
+unlock after a panic or explicit failure does not mark the lock poisoned, and
+later readers/writers do not receive a poison error.
 
 ```ari
-var cached = std::sync::RwLockValue::new<i64>(40);
+var cached = std::sync::RwLock::new<i64>(40);
 {
   var writer = cached.write();
   writer.replace(41);
@@ -313,9 +304,9 @@ Condvar::new() -> Condvar
 condvar.notify_one() -> void
 condvar.notify_all() -> void
 condvar.generation() -> i64
-condvar.wait(ref mut mutex) -> void
-condvar.wait_timeout(ref mut mutex, duration) -> Result[WaitTimeoutResult, Error]
-condvar.wait_while(ref mut mutex, condition: fn() -> bool) -> void
+condvar.wait(ref mut raw_mutex) -> void
+condvar.wait_timeout(ref mut raw_mutex, duration) -> Result[WaitTimeoutResult, Error]
+condvar.wait_while(ref mut raw_mutex, condition: fn() -> bool) -> void
 wait.timed_out() -> bool
 ```
 
@@ -329,7 +320,7 @@ predicate returns `true`.
 
 This API gives code the usual condition-variable shape now. It does not yet
 promise OS parking, fairness, spurious wake policy, or a guard-bearing
-`Mutex[T]` integration. `notify_one` is currently not selective; like
+`RawMutex` integration. `notify_one` is currently not selective; like
 `notify_all`, it only advances the shared generation. Treat the current
 primitive as a hosted runtime spin/yield condition helper, not as a pthread
 condition variable or futex-backed sleeping wait.
@@ -421,14 +412,14 @@ fn main() -> i64 {
     return 2;
   }
 
-  var mutex = Mutex::new();
+  var mutex = Mutex::new<i64>(0);
   var guard = mutex.lock();
   if !mutex.is_locked() {
     return 3;
   }
   guard.unlock();
 
-  var rwlock = RwLock::new();
+  var rwlock = RwLock::new<i64>(0);
   var read_guard = rwlock.read();
   if rwlock.reader_count() != 1 {
     return 4;
@@ -455,14 +446,12 @@ fn main() -> i64 {
 
 - `AtomicBool`, `AtomicUsize`, and `AtomicPtr[T]` are wrappers over
   `AtomicI64`, not target-specialized native atomic widths yet.
-- `Mutex`, `RwLock`, `Condvar`, `Barrier`, and channels spin/yield; they do not
-  park on futexes or condition-variable OS primitives.
-- `Mutex` and `RwLock` do not poison after panic/failure. Shared-state
+- `Mutex[T]`, `RwLock[T]`, `RawMutex`, `RawRwLock`, `Condvar`, `Barrier`, and
+  channels spin/yield; they do not park on futexes or condition-variable OS
+  primitives.
+- `Mutex[T]`, `RwLock[T]`, `RawMutex`, and `RawRwLock` do not poison after
+  panic/failure. Shared-state
   consistency is caller-owned unless a future poison-aware type is introduced.
-- `MutexValue[T]` and `RwLockValue[T]` provide value-protecting payload guards
-  without breaking the already-public primitive `Mutex`/`RwLock` names. A
-  future `Mutex[T]`/`RwLock[T]` spelling would need a planned migration or
-  type-name overloading support.
 - Guard drops release active locks when callers use explicit `drop guard`;
   automatic RAII cleanup at scope exit or early return is not promised yet.
 - There is no `LazyLock[T]`, semaphore, sender-counted close policy, or
@@ -478,7 +467,7 @@ fn main() -> i64 {
 | --- | --- |
 | Atomic types | Current `AtomicI64`, `AtomicBool`, `AtomicUsize`, and `AtomicPtr[T]`; future target-native width policy and more integer widths. |
 | Memory ordering | Current explicit `Ordering` vocabulary with LLVM hosted lowering for load/store/RMW/compare-exchange; future examples and non-LLVM backend policy. |
-| Mutex/RwLock | Current primitive no-poison lock state with explicit unlock guards plus `MutexValue[T]`/`RwLockValue[T]` payload guards; future shorter generic spelling, optional poison-aware lock types, fairness, and futex-backed parking. |
+| Mutex/RwLock | Current value-protecting no-poison `Mutex[T]`/`RwLock[T]` guards plus manual `RawMutex`/`RawRwLock` primitives for low-level code; future optional poison-aware lock types, fairness, and futex-backed parking. |
 | Condvar | Current generation-based source API with spin/yield timeout waits; future blocking wait/wake and spurious wake documentation. |
 | Once/OnceLock | Current source one-time execution, value slot, value-preserving `set`, and fallible initializer status; future ref-in-Result return ergonomics, panic policy, and optional `LazyLock`. |
 | Barrier | Current source reusable barrier; future parking implementation. |
@@ -491,15 +480,15 @@ fn main() -> i64 {
   module functions, method wrappers, root `AtomicI64`, compare-exchange success
   and failure paths, and LLVM atomic lowering.
 - `tests/cases/standard-library/ok/sync/std-sync-mutex-once.ari` checks source
-  `Mutex` lock/unlock helpers, guard acquisition, explicit guard unlock/drop,
+  `RawMutex` lock/unlock helpers, guard acquisition, explicit guard unlock/drop,
   source `Once` transitions, method wrappers, root aliases, and
   compare-exchange lowering through the implementation.
 - `tests/cases/standard-library/ok/sync/std-sync-rwlock.ari` checks source
-  `RwLock` read/write state transitions, read/write guard acquisition,
+  `RawRwLock` read/write state transitions, read/write guard acquisition,
   explicit guard unlock/drop, method wrappers, root alias, reader counts, and
   compare-exchange/fetch-add lowering.
 - `tests/cases/standard-library/ok/sync/std-sync-value-locks.ari` checks
-  `MutexValue[T]` and `RwLockValue[T]` construction, guard payload access,
+  `Mutex[T]` and `RwLock[T]` construction, guard payload access,
   try-lock failure while a guard is active, explicit unlock idempotence, and
   explicit drop release.
 - `tests/cases/standard-library/ok/sync/std-sync-concurrency-api.ari` checks
