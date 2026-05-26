@@ -18,7 +18,9 @@ extern "C" fn raw_kill(pid: c_int, signal: c_int) -> c_int = "kill";
 extern "C" fn raw_setenv(name: ptr c_char, value: ptr c_char, overwrite: c_int) -> c_int = "setenv";
 extern "C" fn raw_clearenv() -> c_int = "clearenv";
 extern "C" fn raw_chdir(path: ptr c_char) -> c_int = "chdir";
+extern "C" fn raw_open(path: ptr c_char, flags: c_int) -> c_int = "open";
 extern "C" fn raw_dup2(source: c_int, target: c_int) -> c_int = "dup2";
+extern "C" fn raw_close(fd: c_int) -> c_int = "close";
 extern "C" fn raw_mkstemp(template_path: ptr c_char) -> c_int = "mkstemp";
 extern "C" fn raw_mkdtemp(template_path: ptr c_char) -> ptr c_char = "mkdtemp";
 extern "C" fn raw_unlink(path: ptr c_char) -> c_int = "unlink";
@@ -384,7 +386,11 @@ fn build_argv(zone: ref mut Zone, command: ref std::process::Command) -> ptr c_v
   return values as ptr c_void;
 }
 
-fn apply_setup(command: ref std::process::Command) -> std::Result[(), std::error::Error] {
+fn apply_setup_with_stdin(
+  command: ref std::process::Command,
+  stdin_enabled: bool,
+  stdin_path: std::c::CStr
+) -> std::Result[(), std::error::Error] {
   if std::process::command_clears_env(command) {
     if raw_clearenv() != 0 {
       return std::Err<(), std::error::Error>(std::c::error());
@@ -413,7 +419,20 @@ fn apply_setup(command: ref std::process::Command) -> std::Result[(), std::error
       }
     }
   }
+
+  if stdin_enabled {
+    match std::process::redirect_stdin_from_path(stdin_path) {
+      std::Ok(_) => {}
+      std::Err(reason) => {
+        return std::Err<(), std::error::Error>(reason);
+      }
+    }
+  }
   return std::Ok<(), std::error::Error>(());
+}
+
+fn apply_setup(command: ref std::process::Command) -> std::Result[(), std::error::Error] {
+  return std::process::apply_setup_with_stdin(command, false, std::c::from_string(""));
 }
 
 fn exec_with_argv(command: ref std::process::Command, argv: ptr c_void) -> std::Result[(), std::error::Error] {
@@ -428,8 +447,74 @@ fn exec_with_argv(command: ref std::process::Command, argv: ptr c_void) -> std::
   return std::Err<(), std::error::Error>(std::c::error());
 }
 
+fn exec_with_argv_stdin(
+  command: ref std::process::Command,
+  argv: ptr c_void,
+  stdin_path: std::c::CStr
+) -> std::Result[(), std::error::Error] {
+  match std::process::apply_setup_with_stdin(command, true, stdin_path) {
+    std::Ok(_) => {}
+    std::Err(reason) => {
+      return std::Err<(), std::error::Error>(reason);
+    }
+  }
+
+  raw_execvp(command.program.as_ptr(), argv);
+  return std::Err<(), std::error::Error>(std::c::error());
+}
+
 fn redirect_descriptor(source: i64, target: i64) -> bool {
   return raw_dup2(source as c_int, target as c_int) >= 0;
+}
+
+fn redirect_stdin_from_path(path: std::c::CStr) -> std::Result[(), std::error::Error] {
+  let fd = raw_open(path.as_ptr(), 0 as c_int);
+  if fd < 0 {
+    return std::Err<(), std::error::Error>(std::c::error());
+  }
+  if raw_dup2(fd, 0 as c_int) < 0 {
+    raw_close(fd);
+    return std::Err<(), std::error::Error>(std::c::error());
+  }
+  if raw_close(fd) != 0 {
+    return std::Err<(), std::error::Error>(std::c::error());
+  }
+  return std::Ok<(), std::error::Error>(());
+}
+
+fn spawn_with_stdin_cstr(
+  command: ref std::process::Command,
+  stdin_path: std::c::CStr
+) -> std::Result[std::process::Child, std::error::Error] {
+  var scratch = zone::temp(std::process::argv_capacity(command));
+  let argv = std::process::build_argv(ref mut scratch, command);
+
+  match std::process::fork() {
+    std::Err(reason) => {
+      return std::Err<std::process::Child, std::error::Error>(reason);
+    }
+    std::Ok(pid) => {
+      if std::process::is_child(pid) {
+        std::process::exec_with_argv_stdin(command, argv, stdin_path);
+        std::process::exit(127);
+      }
+      return std::Ok<std::process::Child, std::error::Error>(std::process::Child { pid_value: pid });
+    }
+  }
+}
+
+fn status_with_stdin_cstr(
+  command: ref std::process::Command,
+  stdin_path: std::c::CStr
+) -> std::Result[std::process::ExitStatus, std::error::Error] {
+  match std::process::spawn_with_stdin_cstr(command, stdin_path) {
+    std::Err(reason) => {
+      return std::Err<std::process::ExitStatus, std::error::Error>(reason);
+    }
+    std::Ok(child) => {
+      return child.wait_status();
+    }
+  }
 }
 
 fn temp_template_in(zone: ref mut Zone, prefix: string) -> std::process::TempPath {
@@ -937,8 +1022,47 @@ pub impl std::process::Command {
     }
   }
 
+  fn spawn_with_stdin_file(self: ref Self, path: string) -> std::Result[std::process::Child, std::error::Error] {
+    return std::process::spawn_with_stdin_cstr(self, std::c::from_string(path));
+  }
+
+  fn spawn_with_stdin_null(self: ref Self) -> std::Result[std::process::Child, std::error::Error] {
+    return self.spawn_with_stdin_file("/dev/null");
+  }
+
   fn status(self: ref Self) -> std::Result[std::process::ExitStatus, std::error::Error] {
     return self.exit_status();
+  }
+
+  fn status_with_stdin_file(self: ref Self, path: string) -> std::Result[std::process::ExitStatus, std::error::Error] {
+    return std::process::status_with_stdin_cstr(self, std::c::from_string(path));
+  }
+
+  fn status_with_stdin_file_bytes(
+    self: ref Self,
+    zone: ref mut Zone,
+    path: std::Slice[u8]
+  ) -> std::Result[std::process::ExitStatus, std::error::Error] {
+    match std::c::from_slice_result_in(zone, path) {
+      std::Ok(input_path) => {
+        return std::process::status_with_stdin_cstr(self, input_path.as_c_str());
+      }
+      std::Err(reason) => {
+        return std::Err<std::process::ExitStatus, std::error::Error>(reason);
+      }
+    }
+  }
+
+  fn status_with_stdin_file_path(
+    self: ref Self,
+    zone: ref mut Zone,
+    path: std::path::PathBytes
+  ) -> std::Result[std::process::ExitStatus, std::error::Error] {
+    return self.status_with_stdin_file_bytes(zone, path.as_slice());
+  }
+
+  fn status_with_stdin_null(self: ref Self) -> std::Result[std::process::ExitStatus, std::error::Error] {
+    return self.status_with_stdin_file("/dev/null");
   }
 
   fn status_code(self: ref Self) -> std::Result[i64, std::error::Error] {

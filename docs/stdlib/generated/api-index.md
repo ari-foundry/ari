@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `3128`
+- API entries: `3134`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,14 +32,14 @@ platform notes.
 | `alloc` | 848 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 853 | stable candidate |
-| `hosted` | 1240 | platform-backed |
+| `hosted` | 1246 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 28 |
 | `fn` | 1156 |
-| `method` | 1541 |
+| `method` | 1547 |
 | `module` | 39 |
 | `struct` | 166 |
 | `trait` | 39 |
@@ -79,7 +79,7 @@ platform notes.
 | `std::os` | `platform` | 50 |
 | `std::parse` | `core` | 91 |
 | `std::path` | `core` | 95 |
-| `std::process` | `hosted` | 143 |
+| `std::process` | `hosted` | 149 |
 | `std::random` | `alloc/hosted` | 36 |
 | `std::rc` | `alloc` | 32 |
 | `std::result` | `core` | 12 |
@@ -3146,8 +3146,14 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::process::Command::output` | check-prelude std-process-high-level natural output capture alias; docs/stdlib/modules/process.md |
 | `method std::process::Command::output_in` | check-prelude std-process-output zone-backed stdout/stderr capture helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::spawn` | check-prelude std-process-command spawn child process handle; docs/stdlib/modules/process.md |
+| `method std::process::Command::spawn_with_stdin_file` | check-prelude std-process-stdin spawn child process with file-backed stdin; docs/stdlib/modules/process.md |
+| `method std::process::Command::spawn_with_stdin_null` | check-prelude std-process-stdin spawn child process with /dev/null stdin; docs/stdlib/modules/process.md |
 | `method std::process::Command::status` | check-prelude std-process-command spawn and wait for typed exit status; docs/stdlib/modules/process.md |
 | `method std::process::Command::status_code` | check-prelude std-process-command explicit normal-exit-code compatibility helper; docs/stdlib/modules/process.md |
+| `method std::process::Command::status_with_stdin_file` | check-prelude std-process-stdin child status with file-backed stdin; docs/stdlib/modules/process.md |
+| `method std::process::Command::status_with_stdin_file_bytes` | check-prelude std-process-stdin Result-returning child status with owned byte path stdin; docs/stdlib/modules/process.md |
+| `method std::process::Command::status_with_stdin_file_path` | check-prelude std-process-stdin Result-returning child status with PathBytes stdin; docs/stdlib/modules/process.md |
+| `method std::process::Command::status_with_stdin_null` | check-prelude std-process-stdin child status with /dev/null stdin; docs/stdlib/modules/process.md |
 | `method std::process::Command::with_arg` | check-prelude std-process-high-level by-value chainable single argv append helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::with_args` | check-prelude std-process-command associated Command constructor with argv slice; docs/stdlib/modules/process.md |
 | `method std::process::Command::with_clear_env` | check-prelude std-process-high-level by-value child environment clearing policy helper; docs/stdlib/modules/process.md |

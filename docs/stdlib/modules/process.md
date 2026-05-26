@@ -8,10 +8,12 @@ the `Command` builder for `arg`, `args`, `env`, `env_values`, `env_var`,
 `arg_bytes`, `env_bytes`, `current_dir`, `current_dir_path`,
 by-value `with_arg`/`with_env`/`with_clear_env`/`with_inherit_env`/
 `with_current_dir` chaining, explicit child environment inheritance or clearing
-policy, `spawn`, `status`, `status_code`, `output`, `output_in`, `exec`, typed
-`ExitStatus` and `ExitCode` inspection, typed signal helpers, small
-stdout/stderr capture, child-stream endpoint aliases, current path wrappers,
-and temp file/temp dir creation.
+policy, explicit child stdin redirection from a file or `/dev/null` at execution
+time, `spawn`,
+`status`, `status_code`, `output`, `output_in`, `exec`, typed `ExitStatus` and
+`ExitCode` inspection, typed signal helpers, small stdout/stderr capture,
+child-stream endpoint aliases, current path wrappers, and temp file/temp dir
+creation.
 
 ## Current API
 
@@ -102,7 +104,13 @@ Command::with_env(zone, name, value)
 Command::with_inherit_env()
 Command::with_current_dir(path)
 Command::spawn()
+Command::spawn_with_stdin_file(path) -> Result[process::Child, process::Error]
+Command::spawn_with_stdin_null() -> Result[process::Child, process::Error]
 Command::status() -> Result[process::ExitStatus, process::Error]
+Command::status_with_stdin_file(path) -> Result[process::ExitStatus, process::Error]
+Command::status_with_stdin_file_bytes(zone, path) -> Result[process::ExitStatus, process::Error]
+Command::status_with_stdin_file_path(zone, path) -> Result[process::ExitStatus, process::Error]
+Command::status_with_stdin_null() -> Result[process::ExitStatus, process::Error]
 Command::status_code() -> Result[i64, process::Error]
 Command::exit_status()
 Command::output_in(zone)
@@ -266,6 +274,21 @@ failure happens in the child and currently appears to the parent as exit status
 `127`; richer parent-visible setup errors require a future error-reporting pipe
 in the process runtime.
 
+`status_with_stdin_file(path)` and `spawn_with_stdin_file(path)` redirect the
+child's standard input from `path` during the child setup step. They take the
+stdin source at execution time instead of storing it inside `Command`, which
+keeps the command builder's allocation and lifetime rules simple. Use
+`status_with_stdin_file_bytes(zone, bytes)` or
+`status_with_stdin_file_path(zone, path)` when the path comes from a zone-backed
+`String`, `PathBuf`, `Slice[u8]`, or `PathBytes`; those helpers reject interior
+NUL bytes with `Error(InvalidInput)`. `status_with_stdin_null()` and
+`spawn_with_stdin_null()` are the explicit no-input policy and redirect stdin
+from `/dev/null`. If `current_dir` is also configured, the command applies the
+working directory before opening the stdin path, so relative stdin paths are
+resolved in the child working directory. Open or `dup2` failures happen in the
+forked child today and surface as exit status `127`; parent-visible setup
+errors require a future error-reporting pipe in the process runtime.
+
 The module-level wrappers `process::spawn(ref command)`,
 `process::status(ref command)`, `process::status_code(ref command)`,
 `process::exit_status(ref command)`, `process::output_in(ref command, ref mut
@@ -413,6 +436,19 @@ fn compile_main(
 }
 ```
 
+Command stdin redirection:
+
+```ari
+fn run_with_manifest_input(zone: ref mut Zone) -> Result[process::ExitStatus, error::Error] {
+  var cmd = process::Command::new("sh")
+    .with_arg(zone, "-c")
+    .with_arg(zone, "read name; test \"$name\" = package")
+    .with_current_dir("build/prelude");
+
+  return cmd.status_with_stdin_file("Ari.toml");
+}
+```
+
 Typed signals and temp paths:
 
 ```ari
@@ -508,14 +544,15 @@ fn main() -> i64 {
 - `Command` currently supports `arg`, `args`, `arg_bytes`, `env`, `env_var`,
   `env_bytes`, `clear_env`, `inherit_env`, by-value
   `with_arg`/`with_env`/`with_clear_env`/`with_inherit_env`/
-  `with_current_dir`, `spawn`, `status`, `exit_status`, `output`,
-  `output_in`, `exec`, inherited stdio by default, inherited or cleared
-  environment plus selected assignments, working-directory setup, captured
-  stdout and stderr, typed status inspection, and `Child` wait/kill/signal
-  helpers.
+  `with_current_dir`, explicit file or `/dev/null` stdin redirection at
+  `spawn`/`status` time,
+  `spawn`, `status`, `exit_status`, `output`, `output_in`, `exec`, inherited
+  stdio by default, inherited or cleared environment plus selected assignments,
+  working-directory setup, captured stdout and stderr, typed status inspection,
+  and `Child` wait/kill/signal helpers.
   `output_in` is intended for small captured outputs today: large concurrent
   stdout/stderr streams need future readiness/nonblocking draining to avoid
-  pipe-buffer backpressure. Explicit stdin redirection and portable
+  pipe-buffer backpressure. Pipe-backed streaming stdin and portable
   platform-specific status detail are future work.
 - Exit runs through the host process immediately. Do not expect Ari destructors
   or zone cleanup to run after `process::exit`.
@@ -546,6 +583,7 @@ tests/cases/standard-library/ok/process/std-process-exit-status.ari
 tests/cases/standard-library/ok/process/std-process-command.ari
 tests/cases/standard-library/ok/process/std-process-output.ari
 tests/cases/standard-library/ok/process/std-process-high-level.ari
+tests/cases/standard-library/ok/process/std-process-stdin.ari
 ```
 
 `make check-prelude` emits LLVM, checks the runtime hook symbols, and executes
@@ -563,5 +601,7 @@ by-value `with_arg`/`with_env`/`with_current_dir` chains, byte-boundary
 `arg_bytes`/`env_bytes`/`current_dir_path` helpers, NUL rejection,
 `ExitCode`, typed `Signal`, child stream endpoint aliases, current path
 wrappers, and temp file/temp dir constructors.
+The stdin fixture covers file-backed stdin redirection, `/dev/null`, owned-byte
+path validation, `PathBytes` input, and current-directory-relative stdin paths.
 Public declarations are tracked in
 `tests/std_api_manifest.txt` and checked by `make check-std-api`.

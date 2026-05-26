@@ -1,0 +1,67 @@
+// Covers explicit child stdin redirection for Command. The API keeps inherited
+// stdin as the default and redirects on the status_with_stdin_* execution path.
+fn status_is(value: Result[process::ExitStatus, error::Error], expected: i64) -> bool {
+  match value {
+    Ok(status) => { return status.exited() && status.code_or(-1) == expected; }
+    Err(_) => { return false; }
+  }
+}
+
+fn main() -> i64 {
+  var zone = zone::temp(1024);
+  var score = 0;
+
+  let path = "build/prelude/std-process-stdin-input.txt";
+  if fs::write_string(path, "ari\n").is_err() {
+    return 1;
+  }
+
+  var file_cmd = process::Command::new("sh")
+    .with_arg(ref mut zone, "-c")
+    .with_arg(ref mut zone, "read value; test \"$value\" = ari");
+  if status_is(file_cmd.status_with_stdin_file(path), 0) {
+    score = score + 11;
+  }
+
+  var null_cmd = process::Command::new("sh")
+    .with_arg(ref mut zone, "-c")
+    .with_arg(ref mut zone, "if read value; then exit 9; else exit 17; fi");
+  if status_is(null_cmd.status_with_stdin_null(), 17) {
+    score = score + 13;
+  }
+
+  var owned_path = std::string::from_string(ref mut zone, path);
+  var bytes_cmd = process::Command::new("sh")
+    .with_arg(ref mut zone, "-c")
+    .with_arg(ref mut zone, "read value; test \"$value\" = ari");
+  if status_is(bytes_cmd.status_with_stdin_file_bytes(ref mut zone, owned_path.as_slice()), 0) {
+    score = score + 17;
+  }
+
+  var bad = [65u8, 0u8, 66u8];
+  if bytes_cmd.status_with_stdin_file_bytes(ref mut zone, bad.as_slice()).is_err() {
+    score = score + 19;
+  }
+
+  let cwd_path = "build/prelude/std-process-stdin-cwd.txt";
+  if fs::write_string(cwd_path, "cwd\n").is_err() {
+    return 2;
+  }
+  var cwd_cmd = process::Command::new("sh")
+    .with_arg(ref mut zone, "-c")
+    .with_arg(ref mut zone, "read value; test \"$value\" = cwd")
+    .with_current_dir("build/prelude");
+  if status_is(cwd_cmd.status_with_stdin_file("std-process-stdin-cwd.txt"), 0) {
+    score = score + 23;
+  }
+
+  var path_cmd = process::Command::new("sh")
+    .with_arg(ref mut zone, "-c")
+    .with_arg(ref mut zone, "read value; test \"$value\" = ari");
+  if status_is(path_cmd.status_with_stdin_file_path(ref mut zone, std::path::bytes(std::string::bytes(path))), 0) {
+    score = score + 29;
+  }
+
+  assert_eq_i64(score, 112);
+  return score;
+}
