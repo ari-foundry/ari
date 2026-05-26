@@ -4098,6 +4098,16 @@ parse::ParseError
 parse::ParseErrorKind
 parse_error.kind()
 parse_error.offset()
+parse_error.name()
+parse_error.message()
+parse_error.is_empty_input()
+parse_error.is_expected_digit()
+parse_error.is_invalid_radix()
+parse_error.is_invalid_digit()
+parse_error.is_invalid_sign()
+parse_error.is_invalid_separator()
+parse_error.is_overflow()
+parse_error.is_underflow()
 parse::parse[T: Parse](bytes)
 parse::parse_or[T: Parse](bytes, fallback)
 parse::is_parse[T: Parse](bytes)
@@ -4198,6 +4208,10 @@ When a caller needs a precise diagnostic, `integer_error`,
 ASCII-trimmed input where parsing failed. Integer diagnostics distinguish
 `EmptyInput`, `ExpectedDigit`, `InvalidRadix`, `InvalidDigit`,
 `InvalidSeparator`, and `Overflow`.
+`ParseError::name()` returns a stable lowercase diagnostic label,
+`ParseError::message()` returns a short explanatory sentence, and the
+`is_*` predicates mirror each `ParseErrorKind` for direct branching in CLI and
+configuration parser code.
 `unsigned` and `unsigned_radix` are the matching `u64` `Result` parsers: they
 accept an optional leading `+`, reject `-`, check overflow against `u64::MAX`,
 and have matching `_optional`, `is_*`, and `*_or` helpers.

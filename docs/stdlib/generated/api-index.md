@@ -24,14 +24,14 @@ platform notes.
 
 ## Summary
 
-- API entries: `3288`
+- API entries: `3298`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
 | `alloc` | 887 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 890 | stable candidate |
+| `core` | 900 | stable candidate |
 | `hosted` | 1324 | platform-backed |
 | `platform` | 151 | platform-specific |
 
@@ -39,7 +39,7 @@ platform notes.
 | --- | ---: |
 | `enum` | 32 |
 | `fn` | 1182 |
-| `method` | 1663 |
+| `method` | 1673 |
 | `module` | 39 |
 | `struct` | 173 |
 | `trait` | 39 |
@@ -77,7 +77,7 @@ platform notes.
 | `std::net` | `hosted` | 272 |
 | `std::option` | `core` | 12 |
 | `std::os` | `platform` | 50 |
-| `std::parse` | `core` | 91 |
+| `std::parse` | `core` | 101 |
 | `std::path` | `core` | 120 |
 | `std::process` | `hosted` | 149 |
 | `std::random` | `alloc/hosted` | 36 |
@@ -2981,7 +2981,17 @@ Tier: `core`. Stability reading: stable candidate.
 
 | API | Coverage note |
 | --- | --- |
+| `method std::parse::ParseError::is_empty_input` | check-prelude std-parse-basic parse diagnostic empty-input predicate; docs/stdlib/modules/parse.md |
+| `method std::parse::ParseError::is_expected_digit` | check-prelude std-parse-basic parse diagnostic expected-digit predicate; docs/stdlib/modules/parse.md |
+| `method std::parse::ParseError::is_invalid_digit` | check-prelude std-parse-basic parse diagnostic invalid-digit predicate; docs/stdlib/modules/parse.md |
+| `method std::parse::ParseError::is_invalid_radix` | check-prelude std-parse-basic parse diagnostic invalid-radix predicate; docs/stdlib/modules/parse.md |
+| `method std::parse::ParseError::is_invalid_separator` | check-prelude std-parse-basic parse diagnostic invalid-separator predicate; docs/stdlib/modules/parse.md |
+| `method std::parse::ParseError::is_invalid_sign` | check-prelude std-parse-basic parse diagnostic invalid-sign predicate; docs/stdlib/modules/parse.md |
+| `method std::parse::ParseError::is_overflow` | check-prelude std-parse-basic parse diagnostic overflow predicate; docs/stdlib/modules/parse.md |
+| `method std::parse::ParseError::is_underflow` | check-prelude std-parse-basic parse diagnostic underflow predicate; docs/stdlib/modules/parse.md |
 | `method std::parse::ParseError::kind` | check-prelude std-parse-basic parse diagnostic kind accessor; docs/stdlib/modules/parse.md |
+| `method std::parse::ParseError::message` | check-prelude std-parse-basic parse diagnostic explanation text; docs/stdlib/modules/parse.md |
+| `method std::parse::ParseError::name` | check-prelude std-parse-basic parse diagnostic stable label; docs/stdlib/modules/parse.md |
 | `method std::parse::ParseError::offset` | check-prelude std-parse-basic parse diagnostic offset accessor; docs/stdlib/modules/parse.md |
 
 ### module

@@ -98,6 +98,88 @@ pub impl std::parse::ParseError {
   fn offset(self: ref Self) -> i64 {
     return self.offset_value;
   }
+
+  fn name(self: ref Self) -> string {
+    match self.kind_value {
+      EmptyInput => { return "empty input"; }
+      ExpectedDigit => { return "expected digit"; }
+      InvalidRadix => { return "invalid radix"; }
+      InvalidDigit => { return "invalid digit"; }
+      InvalidSign => { return "invalid sign"; }
+      InvalidSeparator => { return "invalid separator"; }
+      Overflow => { return "overflow"; }
+      Underflow => { return "underflow"; }
+    }
+  }
+
+  fn message(self: ref Self) -> string {
+    match self.kind_value {
+      EmptyInput => { return "input is empty after ASCII trim"; }
+      ExpectedDigit => { return "expected a digit at this offset"; }
+      InvalidRadix => { return "radix must be between 2 and 36"; }
+      InvalidDigit => { return "input contains a byte that is not valid here"; }
+      InvalidSign => { return "sign is not accepted by this parser"; }
+      InvalidSeparator => { return "digit separator is missing a digit neighbor or is not allowed"; }
+      Overflow => { return "parsed value is above the accepted range"; }
+      Underflow => { return "parsed value is below the accepted nonzero range"; }
+    }
+  }
+
+  fn is_empty_input(self: ref Self) -> bool {
+    match self.kind_value {
+      EmptyInput => { return true; }
+      _ => { return false; }
+    }
+  }
+
+  fn is_expected_digit(self: ref Self) -> bool {
+    match self.kind_value {
+      ExpectedDigit => { return true; }
+      _ => { return false; }
+    }
+  }
+
+  fn is_invalid_radix(self: ref Self) -> bool {
+    match self.kind_value {
+      InvalidRadix => { return true; }
+      _ => { return false; }
+    }
+  }
+
+  fn is_invalid_digit(self: ref Self) -> bool {
+    match self.kind_value {
+      InvalidDigit => { return true; }
+      _ => { return false; }
+    }
+  }
+
+  fn is_invalid_sign(self: ref Self) -> bool {
+    match self.kind_value {
+      InvalidSign => { return true; }
+      _ => { return false; }
+    }
+  }
+
+  fn is_invalid_separator(self: ref Self) -> bool {
+    match self.kind_value {
+      InvalidSeparator => { return true; }
+      _ => { return false; }
+    }
+  }
+
+  fn is_overflow(self: ref Self) -> bool {
+    match self.kind_value {
+      Overflow => { return true; }
+      _ => { return false; }
+    }
+  }
+
+  fn is_underflow(self: ref Self) -> bool {
+    match self.kind_value {
+      Underflow => { return true; }
+      _ => { return false; }
+    }
+  }
 }
 
 pub trait Parse {

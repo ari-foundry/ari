@@ -33,6 +33,16 @@ parse::ParseError
 parse::ParseErrorKind
 parse_error.kind() -> ParseErrorKind
 parse_error.offset() -> i64
+parse_error.name() -> string
+parse_error.message() -> string
+parse_error.is_empty_input() -> bool
+parse_error.is_expected_digit() -> bool
+parse_error.is_invalid_radix() -> bool
+parse_error.is_invalid_digit() -> bool
+parse_error.is_invalid_sign() -> bool
+parse_error.is_invalid_separator() -> bool
+parse_error.is_overflow() -> bool
+parse_error.is_underflow() -> bool
 parse::parse[T: Parse](bytes) -> T
 parse::parse_or[T: Parse](bytes, fallback) -> T
 parse::is_parse[T: Parse](bytes) -> bool
@@ -149,6 +159,11 @@ condition was detected. For example, `12x` reports `InvalidDigit` at offset
 overflow reports `Overflow` at the first digit that made the value exceed
 `i64`, and extreme decimal float exponents report the exponent digit that moved
 the value outside Ari's accepted finite `f64` range.
+`ParseError::name()` returns a stable, short lowercase label such as
+`"invalid digit"` or `"overflow"`, while `ParseError::message()` returns a
+one-sentence explanation suitable for CLI diagnostics. The `is_*` predicates
+mirror every `ParseErrorKind` so callers can branch without spelling a `match`
+when they only care about one class of parse failure.
 
 Default integer parsers are strict and reject underscores. Use the explicit
 `*_with_underscores` family for human-edited configuration values such as

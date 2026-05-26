@@ -2222,7 +2222,17 @@ method std::os::Pipe::read_end|check-prelude std-os-pipe borrowed pipe read desc
 method std::os::Pipe::take_read_end|check-prelude std-os-pipe take pipe read end ownership; docs/stdlib/modules/os.md
 method std::os::Pipe::take_write_end|check-prelude std-os-pipe take pipe write end ownership; docs/stdlib/modules/os.md
 method std::os::Pipe::write_end|check-prelude std-os-pipe borrowed pipe write descriptor view; docs/stdlib/modules/os.md
+method std::parse::ParseError::is_empty_input|check-prelude std-parse-basic parse diagnostic empty-input predicate; docs/stdlib/modules/parse.md
+method std::parse::ParseError::is_expected_digit|check-prelude std-parse-basic parse diagnostic expected-digit predicate; docs/stdlib/modules/parse.md
+method std::parse::ParseError::is_invalid_digit|check-prelude std-parse-basic parse diagnostic invalid-digit predicate; docs/stdlib/modules/parse.md
+method std::parse::ParseError::is_invalid_radix|check-prelude std-parse-basic parse diagnostic invalid-radix predicate; docs/stdlib/modules/parse.md
+method std::parse::ParseError::is_invalid_separator|check-prelude std-parse-basic parse diagnostic invalid-separator predicate; docs/stdlib/modules/parse.md
+method std::parse::ParseError::is_invalid_sign|check-prelude std-parse-basic parse diagnostic invalid-sign predicate; docs/stdlib/modules/parse.md
+method std::parse::ParseError::is_overflow|check-prelude std-parse-basic parse diagnostic overflow predicate; docs/stdlib/modules/parse.md
+method std::parse::ParseError::is_underflow|check-prelude std-parse-basic parse diagnostic underflow predicate; docs/stdlib/modules/parse.md
 method std::parse::ParseError::kind|check-prelude std-parse-basic parse diagnostic kind accessor; docs/stdlib/modules/parse.md
+method std::parse::ParseError::message|check-prelude std-parse-basic parse diagnostic explanation text; docs/stdlib/modules/parse.md
+method std::parse::ParseError::name|check-prelude std-parse-basic parse diagnostic stable label; docs/stdlib/modules/parse.md
 method std::parse::ParseError::offset|check-prelude std-parse-basic parse diagnostic offset accessor; docs/stdlib/modules/parse.md
 method std::path::Component::as_slice|check-prelude std-path-components borrowed bytes for kinded path component; docs/stdlib/modules/path.md
 method std::path::Component::is_current|check-prelude std-path-components current-directory component predicate; docs/stdlib/modules/path.md
