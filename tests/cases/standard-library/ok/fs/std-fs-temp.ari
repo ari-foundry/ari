@@ -1,0 +1,63 @@
+// Covers std::fs temporary file and directory wrappers over the hosted POSIX
+// mkstemp/mkdtemp implementation.
+fn unit_ok(value: Result[(), error::Error]) -> bool {
+  match value {
+    Ok(_) => {
+      return true;
+    }
+    Err(_) => {}
+  }
+  return false;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(2048);
+  var score = 0;
+
+  match fs::temp_file(ref mut zone) {
+    Ok(temp_value) => {
+      var temp = temp_value;
+      if temp.path().len > 0 &&
+         temp.is_open() &&
+         unit_ok(temp.close()) &&
+         !temp.is_open() &&
+         unit_ok(temp.remove()) {
+        score = score + 1;
+      }
+    }
+    Err(_) => {}
+  }
+
+  match fs::temp_file_in(ref mut zone, "/tmp/ari-fs-file-") {
+    Ok(temp_value_in) => {
+      var temp_in = temp_value_in;
+      if temp_in.path().len > 0 &&
+         temp_in.is_open() &&
+         unit_ok(temp_in.close_and_remove()) {
+        score = score + 2;
+      }
+    }
+    Err(_) => {}
+  }
+
+  match fs::temp_dir(ref mut zone) {
+    Ok(dir) => {
+      if dir.path().len > 0 && unit_ok(dir.remove()) {
+        score = score + 4;
+      }
+    }
+    Err(_) => {}
+  }
+
+  match fs::temp_dir_in(ref mut zone, "/tmp/ari-fs-dir-") {
+    Ok(dir_in) => {
+      if dir_in.path().len > 0 && unit_ok(dir_in.remove()) {
+        score = score + 8;
+      }
+    }
+    Err(_) => {}
+  }
+
+  zone::destroy(zone);
+  return score;
+}

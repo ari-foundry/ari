@@ -16,7 +16,8 @@ values with names, joined paths, lazy metadata helpers, and natural
 `Error`-returning directory query forms, query basic file metadata with
 `Option` or `Result[..., Error]`, ask direct path-kind predicates such as `is_file`
 and `is_dir`, read and change POSIX permission bits, resolve an existing path
-to an absolute canonical path with `Option` or `Result` failure details, pass `File` handles to generic `std::io::Reader`
+to an absolute canonical path with `Option` or `Result` failure details, create
+hosted temporary files and directories, pass `File` handles to generic `std::io::Reader`
 and `std::io::Writer` helpers, inspect and move a file cursor through
 `std::io::Seek`, close the handle, and remove a file.
 
@@ -26,9 +27,9 @@ use natural names such as `open`, `create`, `read`, `read_to_string`,
 `symlink_metadata`, `file_type`, `mode`, `canonicalize`, `read_link`,
 `read_dir`, `read_dir_entries`, `read_dir_names`, `create_dir`,
 `create_dir_all`, `remove_file`, `remove_dir`, `remove_dir_all`, `rename`,
-`hard_link`, `symbolic_link`, `position`, `seek`, `close`, and `close_dir`,
-and they return `Result[..., fs::Error]` unless the operation is only a
-predicate such as `exists`, `can_read`, or `is_file`.
+`hard_link`, `symbolic_link`, `temp_file`, `temp_dir`, `position`, `seek`,
+`close`, and `close_dir`, and they return `Result[..., fs::Error]` unless the
+operation is only a predicate such as `exists`, `can_read`, or `is_file`.
 
 Suffixes are reserved for non-default behavior. `_optional` and older `try_*`
 helpers discard error details and return `Option`; `_or_default` helpers keep
@@ -55,17 +56,24 @@ Common natural API shapes:
 | Directories | `create_dir(path) -> Result[(), Error]`, `create_dir_all(path) -> Result[(), Error]`, `remove_dir(path) -> Result[(), Error]`, `remove_dir_all(path) -> Result[(), Error]` | `*_bool`, `*_unchecked`, `*_raw_result`, migration `*_result` aliases |
 | Files and moves | `remove_file(path) -> Result[(), Error]`, `rename(source, target) -> Result[(), Error]`, `copy(source, target) -> Result[i64, Error]` | `remove_bool`, `rename_bool`, `copy_bool`, `try_copy`, raw/result aliases |
 | Paths and directories | `canonicalize(ref mut zone, path) -> Result[PathBuf, Error]`, `read_dir(ref mut zone, path) -> Result[Vec[DirEntry], Error]` | `_optional`, `try_*`, `_unchecked`, migration `*_result` aliases |
+| Temporary paths | `temp_file(ref mut zone) -> Result[TempFile, Error]`, `temp_file_in(ref mut zone, prefix) -> Result[TempFile, Error]`, `temp_dir(ref mut zone) -> Result[TempDir, Error]`, `temp_dir_in(ref mut zone, prefix) -> Result[TempDir, Error]` | Use `TempFile::close`, `TempFile::remove`, `TempFile::close_and_remove`, and `TempDir::remove` for cleanup. |
 
 ## API
 
 ```ari
 fs::Error
 fs::ErrorKind
+fs::TempFile
+fs::TempDir
 fs::exists(path)
 fs::can_read(path)
 fs::can_write(path)
 fs::can_execute(path)
 fs::permissions(path)
+fs::temp_file(ref mut zone)
+fs::temp_file_in(ref mut zone, prefix)
+fs::temp_dir(ref mut zone)
+fs::temp_dir_in(ref mut zone, prefix)
 fs::metadata(path)
 fs::metadata_optional(path)
 fs::metadata_unchecked(path)
@@ -775,9 +783,18 @@ branching is enough, and `entry.metadata_unchecked()` or
 | file handle lifecycle | Current: explicit Result-returning `close`, `position`, and `seek` on value `File` handles, `_unchecked` compatibility helpers, and `_raw` integer-error helpers. Close once; copied handles are not disarmed. |
 | read directory | Current: Result-first entry-list `read_dir(ref mut zone, path)` and `read_dir_entries(ref mut zone, path)`, name-list `read_dir_names(ref mut zone, path)` with `try_read_dir` compatibility, `_optional`/`try_*` absence-only helpers, `_unchecked` asserting compatibility, `_result` migration aliases, `open_dir_result(path)` with `Error`, raw compatibility `open_dir_raw_result(path)`, `try_open_dir(path)`, `Dir`, `DirEntry`, `dir.next(ref mut zone)`, `dir.close()`/`dir.close_unchecked()`, borrowed entry name/path methods, and lazy `DirEntry` metadata/file-kind predicates; richer per-entry errors are roadmap. |
 | create directory | Current: Result-first single-directory `create_dir(path)`, `create_dir_result(path)` migration alias, `create_dir_bool(path)` boolean compatibility, raw compatibility `create_dir_raw_result(path)`, idempotent `ensure_dir(path)`, Result-first recursive `create_dir_all(path)`, `create_dir_all_bool(path)` boolean compatibility, raw compatibility `create_dir_all_raw_result(path)`, and `ensure_dir_all(path)` for missing parent directories. |
-| temporary files | Roadmap: secure temp file/dir constructors after owned handles and paths. |
+| temporary files | Current: Result-first `temp_file(ref mut zone)` / `temp_file_in(ref mut zone, prefix)` and `temp_dir(ref mut zone)` / `temp_dir_in(ref mut zone, prefix)` wrappers over the hosted POSIX `mkstemp`/`mkdtemp` implementation. `TempFile` owns the descriptor and path buffer, `TempDir` owns the path buffer, and callers should explicitly close/remove the resource when they want recoverable cleanup errors. |
 | path manipulation | Current: source lexical helpers in `std::path`, borrowed `PathBytes`/`Path` views, and owned POSIX `PathBuf` as a `std::string::String` alias; platform-specific owned paths remain roadmap. |
 | file locking | Optional roadmap: advisory locking after platform behavior is documented. |
+
+Temporary files and directories are exposed from `std::fs` because ordinary
+filesystem code should not need to reach through `std::process` for scratch
+paths. They reuse the same hosted POSIX implementation and handle types as
+`std::process`: `TempFile` owns an open file descriptor and the allocated path
+buffer, while `TempDir` owns the allocated path buffer. `TempFile::close()`,
+`TempFile::remove()`, `TempFile::close_and_remove()`, and `TempDir::remove()`
+return `Result[(), Error]`; call them explicitly when cleanup failures matter.
+Drop cleanup is best-effort and cannot report errors.
 
 ## Examples
 

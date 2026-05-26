@@ -9,6 +9,9 @@ pub struct File {
   fd: i64,
 }
 
+pub type TempFile = std::process::TempFile;
+pub type TempDir = std::process::TempDir;
+
 pub struct OpenOptions {
   read_enabled: bool,
   write_enabled: bool,
@@ -118,6 +121,22 @@ pub fn permissions(path: string) -> Permissions {
     writable: can_write(path),
     executable: can_execute(path),
   };
+}
+
+pub fn temp_file(zone: ref mut Zone) -> std::Result[std::fs::TempFile, std::error::Error] {
+  return std::process::temp_file(zone);
+}
+
+pub fn temp_file_in(zone: ref mut Zone, prefix: string) -> std::Result[std::fs::TempFile, std::error::Error] {
+  return std::process::temp_file_in(zone, prefix);
+}
+
+pub fn temp_dir(zone: ref mut Zone) -> std::Result[std::fs::TempDir, std::error::Error] {
+  return std::process::temp_dir(zone);
+}
+
+pub fn temp_dir_in(zone: ref mut Zone, prefix: string) -> std::Result[std::fs::TempDir, std::error::Error] {
+  return std::process::temp_dir_in(zone, prefix);
 }
 
 fn file_kind_from_raw(kind: i64) -> FileKind {

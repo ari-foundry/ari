@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `3109`
+- API entries: `3115`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,19 +32,19 @@ platform notes.
 | `alloc` | 848 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 853 | stable candidate |
-| `hosted` | 1221 | platform-backed |
+| `hosted` | 1227 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 28 |
-| `fn` | 1144 |
+| `fn` | 1148 |
 | `method` | 1536 |
 | `module` | 39 |
 | `struct` | 166 |
 | `trait` | 39 |
 | `trait-method` | 41 |
-| `type` | 21 |
+| `type` | 23 |
 | `use` | 95 |
 
 ## Modules
@@ -66,7 +66,7 @@ platform notes.
 | `std::env` | `hosted` | 72 |
 | `std::error` | `core` | 37 |
 | `std::fmt` | `core` | 57 |
-| `std::fs` | `hosted` | 259 |
+| `std::fs` | `hosted` | 265 |
 | `std::hash` | `alloc` | 24 |
 | `std::input` | `hosted` | 6 |
 | `std::io` | `hosted` | 91 |
@@ -1818,6 +1818,10 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::fs::symlink_metadata_raw_result` | check-prelude std-fs-query-result raw Result-returning no-follow metadata compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::symlink_metadata_result` | check-prelude std-fs-query-result compatibility alias for Result-returning no-follow metadata helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::symlink_metadata_unchecked` | check-prelude std-fs-query-result unchecked no-follow metadata compatibility helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::temp_dir` | check-prelude std-fs-temp hosted temporary directory constructor; docs/stdlib/modules/fs.md |
+| `fn std::fs::temp_dir_in` | check-prelude std-fs-temp prefixed hosted temporary directory constructor; docs/stdlib/modules/fs.md |
+| `fn std::fs::temp_file` | check-prelude std-fs-temp hosted temporary file constructor; docs/stdlib/modules/fs.md |
+| `fn std::fs::temp_file_in` | check-prelude std-fs-temp prefixed hosted temporary file constructor; docs/stdlib/modules/fs.md |
 | `fn std::fs::truncate` | check-prelude std-fs-create-truncate-copy source create/truncate helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::try_append` | check-prelude std-fs-read-write Option-returning append byte-count helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::try_canonicalize` | check-prelude std-fs-canonicalize Option-returning realpath-backed canonicalization helper; docs/stdlib/modules/fs.md |
@@ -1951,6 +1955,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | --- | --- |
 | `type std::fs::Error` | check-prelude std-error-integration shared filesystem error alias; docs/stdlib/modules/fs.md |
 | `type std::fs::ErrorKind` | check-prelude std-error-integration shared filesystem error-kind alias; docs/stdlib/modules/fs.md |
+| `type std::fs::TempDir` | check-prelude std-fs-temp filesystem temporary directory handle alias; docs/stdlib/modules/fs.md |
+| `type std::fs::TempFile` | check-prelude std-fs-temp filesystem temporary file handle alias; docs/stdlib/modules/fs.md |
 
 ## `std::hash`
 
