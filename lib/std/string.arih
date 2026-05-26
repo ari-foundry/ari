@@ -8,6 +8,8 @@ pub struct String {
   raw: std::string::RawString,
 }
 
+pub type StringBuilder = std::string::String;
+
 pub struct Utf8 {
   bytes: std::Slice[u8],
 }

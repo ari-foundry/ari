@@ -43,10 +43,15 @@ fn main() -> i64 {
   let replaced = std::string::replace(ref mut zone, "hello-ari-ari", "ari", "pkg");
   assert(replaced.equals_text("hello-pkg-pkg"));
 
-  var builder = std::string::empty(ref mut zone);
+  var builder: std::string::StringBuilder = std::string::empty(ref mut zone);
   builder.push_str(ref mut zone, "Created package ");
   builder.push_str(ref mut zone, name);
   assert(builder.equals_text("Created package hello"));
+
+  var root_builder: StringBuilder = std::string::empty(ref mut zone);
+  root_builder.push_str(ref mut zone, "error: ");
+  root_builder.push_str(ref mut zone, "Ari.toml not found");
+  assert(root_builder.starts_with_text("error:"));
 
   let missing = std::string::split_once("name", "=");
   assert(missing.is_none());
