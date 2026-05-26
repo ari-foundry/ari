@@ -49,6 +49,17 @@ fn equals_text(value: String, expected: string) -> bool {
   return value.equals(std::string::bytes(expected));
 }
 
+fn unit_error_is(value: Result[(), error::Error], kind: error::Kind) -> bool {
+  match value {
+    Ok(_) => {
+      return false;
+    }
+    Err(reason) => {
+      return reason.is_kind(kind);
+    }
+  }
+}
+
 fn main() -> i64 {
   var zone = zone::create(4096);
 
@@ -175,6 +186,28 @@ fn main() -> i64 {
        writer3.position == 4) {
     zone::destroy(zone);
     return 22;
+  }
+
+  var buffer4 = [0u8, 0u8, 0u8, 0u8];
+  var writer4 = MemoryWriter { data: buffer4.as_slice(), position: 0 };
+  if !unit_error_is(fmt::write_format<MemoryWriter, i64>(ref mut writer4, ref mut zone, "a{", 1), error::InvalidInput) {
+    zone::destroy(zone);
+    return 23;
+  }
+  if !(writer4.position == 1 && buffer4[0] == 'a') {
+    zone::destroy(zone);
+    return 24;
+  }
+
+  var buffer5 = [0u8, 0u8];
+  var writer5 = MemoryWriter { data: buffer5.as_slice(), position: 0 };
+  if !unit_error_is(fmt::write_format<MemoryWriter, i64>(ref mut writer5, ref mut zone, "abc{}", 1), error::BrokenPipe) {
+    zone::destroy(zone);
+    return 25;
+  }
+  if !(writer5.position == 2 && buffer5[0] == 'a' && buffer5[1] == 'b') {
+    zone::destroy(zone);
+    return 26;
   }
 
   zone::destroy(zone);

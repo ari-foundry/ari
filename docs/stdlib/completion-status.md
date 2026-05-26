@@ -80,7 +80,7 @@ tests, or CI matrix work.
 | `std::thread` | Generic `JoinHandle[T]`, captured closures, scoped threads, compiler-level thread-local declarations, generic thread return payloads, and lower-friction compiler-owned TLS ergonomics. |
 | `std::path` | Non-alias platform-specific `PathBuf`, Windows drive/UNC rules, OS-string conversion policy beyond POSIX bytes, and richer component kinds. |
 | `std::collections` | Trait-driven default constructors, general borrowed lookup beyond String keys, lazy set algebra, tree retain/range mutation, split/append operations, and first-class reference-valued iterator items. |
-| `std::fmt` | Variadic/default-zone formatting policy, fully streaming template writers, structured logging, scoped filters, and capture/backtrace integration. |
+| `std::fmt` | Variadic/default-zone formatting policy, per-value streaming `Display` writers beyond the current `Display::format_in` string step, structured logging, scoped filters, and capture/backtrace integration. |
 | `std::string` | Owned validated `Utf8String`/`OsString` policy, Unicode normalization/transcoding, grapheme iteration, and locale-sensitive case policy. A dedicated string-builder type is intentionally not planned for the basic slice. |
 | `std::parse` | Exact IEEE-754 boundary rounding diagnostics for decimal spellings adjacent to max finite/min subnormal values, and richer parse error taxonomy only where callers need it. |
 | `std::encoding` | Unicode normalization/transcoding and optional compression policy outside the core encoding module. |

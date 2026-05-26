@@ -244,9 +244,14 @@ error. The `_bool` variants are compatibility wrappers for call sites that
 intentionally discard the failure reason.
 Use `write_format`, `write_format2`, and `write_format3` for the same runtime
 template rules when the final destination is an `io::Writer`. These helpers
-currently format into the explicit zone first and then call `io::write_all`, so
-they preserve both invalid-template errors and writer errors while keeping
-allocation visible:
+parse the template and write literal bytes and placeholder values directly to
+the writer instead of building one combined output `String` first. Each
+placeholder still formats through `Display::format_in`, so per-value temporary
+allocation remains explicit through the supplied zone. Template mistakes return
+`Err(Error(InvalidInput))`; writer failures return the writer error, with the
+current byte-oriented fallback using `BrokenPipe`. Because these are streaming
+operations, bytes written before a later template or writer error are not rolled
+back:
 
 ```ari
 var stdout = io::stdout();

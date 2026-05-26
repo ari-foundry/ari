@@ -3518,9 +3518,13 @@ first writer error instead of allocating one combined output string. Their
 `_bool` variants are compatibility wrappers for call sites that deliberately
 discard the failure reason.
 `fmt::write_format`, `fmt::write_format2`, and `fmt::write_format3` apply the
-same runtime-template rules for writer destinations. They currently format into
-the explicit zone first and then call `io::write_all`, so both invalid-template
-errors and writer failures stay recoverable.
+same runtime-template rules for writer destinations. They stream literal bytes
+and placeholder values directly into the writer instead of building one
+combined output string first. Placeholder values still use
+`Display::format_in`, so the supplied zone remains the explicit temporary
+allocation capability. Invalid-template errors and writer failures stay
+recoverable; bytes written before a later template or writer error are not
+rolled back.
 
 The executable formatting path is still macro-based: `print!`, `println!`,
 `eprintln!`, and `format_in!(ref mut zone, "...", values...)`. `{}` uses
