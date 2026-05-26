@@ -130,6 +130,46 @@ fn main() -> i64 {
     return 11;
   }
 
+  var third = thread::spawn(child_value).unwrap_or(JoinHandle::invalid());
+  match third.join_result() {
+    Ok(third_result) => {
+      if !third_result.equals(37) || third_result.value() != 37 || third_result.as_i64() != 37 || !third_result.is_failure() {
+        return 21;
+      }
+    }
+    Err(_) => {
+      return 22;
+    }
+  }
+
+  var fourth = thread::spawn(child_value).unwrap_or(JoinHandle::invalid());
+  match thread::join_result(ref mut fourth) {
+    Ok(fourth_result) => {
+      if fourth_result.is_success() || !fourth_result.equals(37) {
+        return 23;
+      }
+    }
+    Err(_) => {
+      return 24;
+    }
+  }
+
+  var fifth_raw = thread::spawn_unchecked(child_value);
+  match thread::join_thread_result(fifth_raw) {
+    Ok(fifth_result) => {
+      if !fifth_result.equals(37) {
+        return 25;
+      }
+    }
+    Err(_) => {
+      return 26;
+    }
+  }
+
+  if !ThreadResult::from_i64(0).is_success() {
+    return 27;
+  }
+
   thread::yield_now();
   return 42;
 }

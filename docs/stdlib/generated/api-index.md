@@ -24,34 +24,34 @@ platform notes.
 
 ## Summary
 
-- API entries: `3180`
+- API entries: `3198`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
 | `alloc` | 848 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 853 | stable candidate |
-| `hosted` | 1292 | platform-backed |
+| `core` | 855 | stable candidate |
+| `hosted` | 1308 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
-| `enum` | 30 |
-| `fn` | 1159 |
-| `method` | 1585 |
+| `enum` | 31 |
+| `fn` | 1161 |
+| `method` | 1597 |
 | `module` | 39 |
-| `struct` | 169 |
+| `struct` | 170 |
 | `trait` | 39 |
 | `trait-method` | 41 |
 | `type` | 23 |
-| `use` | 95 |
+| `use` | 97 |
 
 ## Modules
 
 | Module | Tier | Entries |
 | --- | --- | ---: |
-| `std` | `core` | 292 |
+| `std` | `core` | 294 |
 | `std::algo` | `alloc` | 41 |
 | `std::ascii` | `core` | 33 |
 | `std::bits` | `core` | 26 |
@@ -87,7 +87,7 @@ platform notes.
 | `std::sync` | `hosted` | 169 |
 | `std::target` | `platform` | 52 |
 | `std::test` | `hosted` | 32 |
-| `std::thread` | `hosted` | 74 |
+| `std::thread` | `hosted` | 90 |
 | `std::time` | `hosted` | 74 |
 | `std::vec` | `alloc` | 115 |
 | `std::zone` | `alloc` | 21 |
@@ -380,6 +380,8 @@ Tier: `core`. Stability reading: stable candidate.
 | `use std::Thread` | check-prelude std-thread-basic root alias for std::thread::Thread; docs/stdlib/modules/thread.md |
 | `use std::ThreadId` | check-prelude std-thread-basic root alias for std::thread::ThreadId; docs/stdlib/modules/thread.md |
 | `use std::ThreadLocal` | check-prelude std-thread-local root alias for std::thread::ThreadLocal[T]; docs/stdlib/modules/thread.md |
+| `use std::ThreadLocalSetError` | check-prelude std-thread-local root alias for std::thread::ThreadLocalSetError[T]; docs/stdlib/modules/thread.md |
+| `use std::ThreadResult` | check-prelude std-thread-basic root alias for std::thread::ThreadResult; docs/stdlib/modules/thread.md |
 | `use std::TreeMap` | check-prelude std-collections-tree root alias for std::collections::TreeMap[K, V]; docs/stdlib/modules/collections.md |
 | `use std::TreeSet` | check-prelude std-collections-tree root alias for std::collections::TreeSet[T]; docs/stdlib/modules/collections.md |
 | `use std::Vec` | check-prelude std-vec-root-alias explicit-zone alias for std::vec::Vec[T]; docs/dev/test-matrix.md Explicit memory zones row |
@@ -3921,6 +3923,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | API | Coverage note |
 | --- | --- |
 | `enum std::thread::JoinError` | check-prelude std-thread-basic join handle lifecycle failure reason; docs/stdlib/modules/thread.md |
+| `enum std::thread::ThreadLocalSetError[T]` | check-prelude std-thread-local recoverable ThreadLocal set capacity failure preserving value; docs/stdlib/modules/thread.md |
 
 ### fn
 
@@ -3938,7 +3941,9 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::thread::is_main` | check-prelude std-thread-basic source main-thread predicate; docs/stdlib/modules/thread.md |
 | `fn std::thread::join` | check-prelude std-thread-basic Result-returning join handle helper; docs/stdlib/modules/thread.md |
 | `fn std::thread::join_compat` | check-prelude std-thread-basic Error-returning raw thread join compatibility helper; docs/stdlib/modules/thread.md |
+| `fn std::thread::join_result` | check-prelude std-thread-basic typed ThreadResult join handle helper; docs/stdlib/modules/thread.md |
 | `fn std::thread::join_thread` | check-prelude std-thread-basic JoinError-returning raw thread join bridge; docs/stdlib/modules/thread.md |
+| `fn std::thread::join_thread_result` | check-prelude std-thread-basic typed ThreadResult raw thread join bridge; docs/stdlib/modules/thread.md |
 | `fn std::thread::join_unchecked` | check-prelude std-thread-basic raw-status thread join compatibility hook; docs/stdlib/modules/thread.md |
 | `fn std::thread::sleep` | check-prelude std-thread-runtime-helpers duration sleep convenience wrapper; docs/stdlib/modules/thread.md |
 | `fn std::thread::spawn` | check-prelude std-thread-basic Result-returning function-pointer JoinHandle spawn helper; docs/stdlib/modules/thread.md |
@@ -3967,6 +3972,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::thread::JoinHandle::is_finished` | check-prelude std-thread-builder advisory join handle completion predicate; docs/stdlib/modules/thread.md |
 | `method std::thread::JoinHandle::is_valid` | check-prelude std-thread-basic join handle validity predicate; docs/stdlib/modules/thread.md |
 | `method std::thread::JoinHandle::join` | check-prelude std-thread-basic Result-returning join handle lifecycle helper; docs/stdlib/modules/thread.md |
+| `method std::thread::JoinHandle::join_result` | check-prelude std-thread-basic typed ThreadResult join handle lifecycle helper; docs/stdlib/modules/thread.md |
 | `method std::thread::JoinHandle::thread` | check-prelude std-thread-basic raw thread info accessor; docs/stdlib/modules/thread.md |
 | `method std::thread::JoinHandle::thread_id` | check-prelude std-thread-basic join handle thread id accessor; docs/stdlib/modules/thread.md |
 | `method std::thread::Thread::current` | check-prelude std-thread-basic associated current thread info helper; docs/stdlib/modules/thread.md |
@@ -3990,12 +3996,23 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::thread::ThreadLocal[T]::get` | check-prelude std-thread-local current-thread shared value view; docs/stdlib/modules/thread.md |
 | `method std::thread::ThreadLocal[T]::get_mut` | check-prelude std-thread-local current-thread mutable value view; docs/stdlib/modules/thread.md |
 | `method std::thread::ThreadLocal[T]::get_or_init` | check-prelude std-thread-local current-thread lazy initialization helper; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadLocal[T]::get_or_try_init` | check-prelude std-thread-local Result-returning current-thread lazy initialization helper; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadLocal[T]::is_full` | check-prelude std-thread-local thread-local capacity exhaustion predicate; docs/stdlib/modules/thread.md |
 | `method std::thread::ThreadLocal[T]::is_initialized` | check-prelude std-thread-local current-thread initialized predicate; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadLocal[T]::len` | check-prelude std-thread-local initialized slot count accessor; docs/stdlib/modules/thread.md |
 | `method std::thread::ThreadLocal[T]::new` | check-prelude std-thread-local default-capacity thread-local constructor; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadLocal[T]::remaining_capacity` | check-prelude std-thread-local remaining slot capacity accessor; docs/stdlib/modules/thread.md |
 | `method std::thread::ThreadLocal[T]::remove` | check-prelude std-thread-local current-thread value removal alias; docs/stdlib/modules/thread.md |
 | `method std::thread::ThreadLocal[T]::set` | check-prelude std-thread-local current-thread value replacement helper; docs/stdlib/modules/thread.md |
 | `method std::thread::ThreadLocal[T]::take` | check-prelude std-thread-local current-thread value extraction helper; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadLocal[T]::try_set` | check-prelude std-thread-local Result-returning current-thread value replacement helper; docs/stdlib/modules/thread.md |
 | `method std::thread::ThreadLocal[T]::with_capacity` | check-prelude std-thread-local explicit-capacity thread-local constructor; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadResult::as_i64` | check-prelude std-thread-basic typed thread result raw accessor; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadResult::equals` | check-prelude std-thread-basic typed thread result equality helper; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadResult::from_i64` | check-prelude std-thread-basic typed thread result constructor; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadResult::is_failure` | check-prelude std-thread-basic typed thread result failure predicate; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadResult::is_success` | check-prelude std-thread-basic typed thread result success predicate; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadResult::value` | check-prelude std-thread-basic typed thread result value accessor; docs/stdlib/modules/thread.md |
 
 ### module
 
@@ -4012,6 +4029,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `struct std::thread::Thread` | check-prelude std-thread-basic raw thread info handle; docs/stdlib/modules/thread.md |
 | `struct std::thread::ThreadId` | check-prelude std-thread-basic typed runtime thread id handle; docs/stdlib/modules/thread.md |
 | `struct std::thread::ThreadLocal[T]` | check-prelude std-thread-local explicit thread-local storage handle; docs/stdlib/modules/thread.md |
+| `struct std::thread::ThreadResult` | check-prelude std-thread-basic typed thread return value wrapper; docs/stdlib/modules/thread.md |
 
 ### type
 

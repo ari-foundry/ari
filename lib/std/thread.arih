@@ -19,11 +19,19 @@ pub struct JoinHandle {
   mut detached: bool,
 }
 
+pub struct ThreadResult {
+  value: i64,
+}
+
 pub enum JoinError {
   InvalidHandle,
   AlreadyJoined,
   Detached,
   JoinFailed,
+}
+
+pub enum ThreadLocalSetError[T] {
+  ThreadLocalFull(T),
 }
 
 pub struct Builder {
@@ -64,6 +72,10 @@ fn invalid_input_error() -> std::error::Error {
 
 fn other_error() -> std::error::Error {
   return std::error::new(std::error::Other);
+}
+
+fn resource_busy_error() -> std::error::Error {
+  return std::error::new(std::error::ResourceBusy);
 }
 
 fn thread_local_slot[T](state: ptr std::thread::ThreadLocalState[T], index: i64) -> ptr std::thread::ThreadLocalSlot[T] {
@@ -175,9 +187,18 @@ pub fn join(handle: ref mut std::thread::JoinHandle) -> std::Result[i64, std::th
   return handle.join();
 }
 
+pub fn join_result(handle: ref mut std::thread::JoinHandle) -> std::Result[std::thread::ThreadResult, std::thread::JoinError] {
+  return handle.join_result();
+}
+
 pub fn join_thread(thread: std::thread::Thread) -> std::Result[i64, std::thread::JoinError] {
   var handle = std::thread::JoinHandle::from_thread(thread);
   return handle.join();
+}
+
+pub fn join_thread_result(thread: std::thread::Thread) -> std::Result[std::thread::ThreadResult, std::thread::JoinError] {
+  var handle = std::thread::JoinHandle::from_thread(thread);
+  return handle.join_result();
 }
 
 pub fn join_compat(thread: std::thread::Thread) -> std::Result[i64, std::error::Error] {
@@ -389,6 +410,45 @@ pub impl std::thread::JoinHandle {
     }
     return std::Ok<i64, std::thread::JoinError>(status);
   }
+
+  fn join_result(self: ref mut Self) -> std::Result[std::thread::ThreadResult, std::thread::JoinError] {
+    match self.join() {
+      std::Ok(value) => {
+        return std::Ok<std::thread::ThreadResult, std::thread::JoinError>(
+          std::thread::ThreadResult { value: value }
+        );
+      }
+      std::Err(reason) => {
+        return std::Err<std::thread::ThreadResult, std::thread::JoinError>(reason);
+      }
+    }
+  }
+}
+
+pub impl std::thread::ThreadResult {
+  fn from_i64(value: i64) -> std::thread::ThreadResult {
+    return std::thread::ThreadResult { value: value };
+  }
+
+  fn value(self: ref Self) -> i64 {
+    return self.value;
+  }
+
+  fn as_i64(self: ref Self) -> i64 {
+    return self.value;
+  }
+
+  fn is_success(self: ref Self) -> bool {
+    return self.value == 0;
+  }
+
+  fn is_failure(self: ref Self) -> bool {
+    return self.value != 0;
+  }
+
+  fn equals(self: ref Self, value: i64) -> bool {
+    return self.value == value;
+  }
 }
 
 pub impl[T] std::thread::ThreadLocal[T] {
@@ -428,6 +488,31 @@ pub impl[T] std::thread::ThreadLocal[T] {
     return state.capacity;
   }
 
+  fn len(self: ref Self) -> i64 {
+    let raw: ptr std::thread::ThreadLocal[T] = self as ptr std::thread::ThreadLocal[T];
+    let state_ptr = std::thread::thread_local_state_ptr<T>(raw);
+    std::thread::thread_local_lock<T>(state_ptr);
+    var count = 0;
+    var index = 0;
+    while index < (*state_ptr).capacity {
+      let slot = std::thread::thread_local_slot<T>(state_ptr, index);
+      if (*slot).thread_id >= 0 && (*slot).value.is_some() {
+        count = count + 1;
+      }
+      index = index + 1;
+    }
+    std::thread::thread_local_unlock<T>(state_ptr);
+    return count;
+  }
+
+  fn remaining_capacity(self: ref Self) -> i64 {
+    return self.capacity() - self.len();
+  }
+
+  fn is_full(self: ref Self) -> bool {
+    return self.remaining_capacity() <= 0;
+  }
+
   fn is_initialized(self: ref Self) -> bool {
     let raw: ptr std::thread::ThreadLocal[T] = self as ptr std::thread::ThreadLocal[T];
     let state_ptr = std::thread::thread_local_state_ptr<T>(raw);
@@ -444,6 +529,19 @@ pub impl[T] std::thread::ThreadLocal[T] {
   }
 
   fn set(self: ref Self, value: T) -> std::Option[T] {
+    match self.try_set(value) {
+      std::Ok(previous) => {
+        return previous;
+      }
+      std::Err(failed) => {
+        drop failed;
+        std::assert(false);
+      }
+    }
+    return std::None<T>();
+  }
+
+  fn try_set(self: ref Self, value: T) -> std::Result[std::Option[T], std::thread::ThreadLocalSetError[T]] {
     let raw: ptr std::thread::ThreadLocal[T] = self as ptr std::thread::ThreadLocal[T];
     let state_ptr = std::thread::thread_local_state_ptr<T>(raw);
     std::thread::thread_local_lock<T>(state_ptr);
@@ -451,7 +549,12 @@ pub impl[T] std::thread::ThreadLocal[T] {
     var index = std::thread::thread_local_find<T>(state_ptr, thread_id);
     if index < 0 {
       index = std::thread::thread_local_empty_slot<T>(state_ptr);
-      std::assert(index >= 0);
+      if index < 0 {
+        std::thread::thread_local_unlock<T>(state_ptr);
+        return std::Err<std::Option[T], std::thread::ThreadLocalSetError[T]>(
+          std::thread::ThreadLocalFull<T>(value)
+        );
+      }
       let new_slot = std::thread::thread_local_slot<T>(state_ptr, index);
       (*new_slot).thread_id = thread_id;
     }
@@ -460,7 +563,7 @@ pub impl[T] std::thread::ThreadLocal[T] {
     let value_slot: ref mut std::Option[T] = ref mut *option_ptr;
     let previous = value_slot.replace(value);
     std::thread::thread_local_unlock<T>(state_ptr);
-    return previous;
+    return std::Ok<std::Option[T], std::thread::ThreadLocalSetError[T]>(previous);
   }
 
   fn get(self: ref Self) -> std::option::OptionRef[T] {
@@ -506,6 +609,21 @@ pub impl[T] std::thread::ThreadLocal[T] {
   }
 
   fn get_or_init(self: ref Self, initializer: fn() -> T) -> std::option::OptionRef[T] {
+    match self.get_or_try_init(initializer) {
+      std::Ok(value) => {
+        return value;
+      }
+      std::Err(_) => {
+        std::assert(false);
+      }
+    }
+    return std::option::NoneRef<T>();
+  }
+
+  fn get_or_try_init(
+    self: ref Self,
+    initializer: fn() -> T
+  ) -> std::Result[std::option::OptionRef[T], std::error::Error] {
     let raw: ptr std::thread::ThreadLocal[T] = self as ptr std::thread::ThreadLocal[T];
     let state_ptr = std::thread::thread_local_state_ptr<T>(raw);
     std::thread::thread_local_lock<T>(state_ptr);
@@ -513,7 +631,10 @@ pub impl[T] std::thread::ThreadLocal[T] {
     var index = std::thread::thread_local_find<T>(state_ptr, thread_id);
     if index < 0 {
       index = std::thread::thread_local_empty_slot<T>(state_ptr);
-      std::assert(index >= 0);
+      if index < 0 {
+        std::thread::thread_local_unlock<T>(state_ptr);
+        return std::Err<std::option::OptionRef[T], std::error::Error>(std::thread::resource_busy_error());
+      }
       let new_slot = std::thread::thread_local_slot<T>(state_ptr, index);
       (*new_slot).thread_id = thread_id;
     }
@@ -526,7 +647,7 @@ pub impl[T] std::thread::ThreadLocal[T] {
     }
     let data = std::thread::thread_local_value_ptr<T>(slot);
     std::thread::thread_local_unlock<T>(state_ptr);
-    return std::option::SomeRef<T>(data);
+    return std::Ok<std::option::OptionRef[T], std::error::Error>(std::option::SomeRef<T>(data));
   }
 
   fn take(self: ref mut Self) -> std::Option[T] {

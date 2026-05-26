@@ -19,9 +19,15 @@ fn main() -> i64 {
   var local = thread::thread_local_with_capacity<i64>(ref mut zone, 2);
 
   assert(local.capacity() == 2);
+  assert(local.len() == 0);
+  assert(local.remaining_capacity() == 2);
+  assert(!local.is_full());
   assert(!local.is_initialized());
   assert(local.get().is_none());
   assert(local.set(10).is_none());
+  assert(local.len() == 1);
+  assert(local.remaining_capacity() == 1);
+  assert(!local.is_full());
   assert(local.is_initialized());
   let first_value = local.get();
   assert(read_i64(first_value.unwrap()) == 10);
@@ -34,12 +40,27 @@ fn main() -> i64 {
   assert(replaced_value.unwrap_or(0) == 11);
   let existing_value = local.get_or_init(make_thread_value);
   assert(read_i64(existing_value.unwrap()) == 12);
+  let try_existing = local.get_or_try_init(make_thread_value);
+  assert(try_existing.is_ok());
+  let try_existing_value = try_existing.unwrap();
+  assert(read_i64(try_existing_value.unwrap()) == 12);
+  let try_replaced = local.try_set(13);
+  assert(try_replaced.is_ok());
+  let try_replaced_value = try_replaced.unwrap();
+  assert(try_replaced_value.unwrap_or(0) == 12);
   let taken_value = local.take();
-  assert(taken_value.unwrap_or(0) == 12);
+  assert(taken_value.unwrap_or(0) == 13);
+  assert(local.len() == 0);
   let removed_value = local.remove();
   assert(removed_value.is_none());
   let initialized_value = local.get_or_init(make_thread_value);
   assert(read_i64(initialized_value.unwrap()) == 88);
+
+  var one = thread::thread_local_with_capacity<i64>(ref mut zone, 1);
+  assert(one.try_set(7).is_ok());
+  assert(one.is_full());
+  assert(one.remaining_capacity() == 0);
+  drop one;
 
   drop local;
   zone::destroy(zone);

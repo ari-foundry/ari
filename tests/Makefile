@@ -1649,6 +1649,8 @@ check-prelude: $(TARGET)
 	grep -F -q "std6thread2id" $(BUILD_DIR)/prelude/std-thread-basic.ll
 	grep -F -q "std6thread7is_main" $(BUILD_DIR)/prelude/std-thread-basic.ll
 	grep -F -q "std6thread13is_join_error" $(BUILD_DIR)/prelude/std-thread-basic.ll
+	grep -F -q "std6thread11join_result" $(BUILD_DIR)/prelude/std-thread-basic.ll
+	grep -F -q "std__thread__ThreadResult" $(BUILD_DIR)/prelude/std-thread-basic.ll
 	$(TARGET) tests/cases/standard-library/ok/thread/std-thread-basic.ari -o $(BUILD_DIR)/prelude/std-thread-basic.elf
 	$(BUILD_DIR)/prelude/std-thread-basic.elf; code=$$?; test $$code -eq 42
 	$(TARGET) tests/cases/standard-library/ok/thread/std-thread-runtime-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-thread-runtime-helpers.ll
@@ -1672,6 +1674,8 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/thread/std-thread-local.ari --emit-llvm $(BUILD_DIR)/prelude/std-thread-local.ll
 	grep -F -q "std__thread__ThreadLocal" $(BUILD_DIR)/prelude/std-thread-local.ll
 	grep -F -q "_ARNv3std6thread33thread_local_with_capacity" $(BUILD_DIR)/prelude/std-thread-local.ll
+	grep -F -q "ThreadLocal" $(BUILD_DIR)/prelude/std-thread-local.ll
+	grep -F -q "get_or_try_init" $(BUILD_DIR)/prelude/std-thread-local.ll
 	$(TARGET) tests/cases/standard-library/ok/thread/std-thread-local.ari -o $(BUILD_DIR)/prelude/std-thread-local.elf
 	$(BUILD_DIR)/prelude/std-thread-local.elf; code=$$?; test $$code -eq 73
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/thread/std-thread-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-thread-basic.elf; $(BUILD_DIR)/prelude/std-thread-basic.elf; code=$$?; test $$code -eq 42; fi
