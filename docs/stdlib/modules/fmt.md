@@ -66,6 +66,12 @@ write_value[W: io::Writer, T: Display](writer: ref mut W, zone: ref mut Zone, va
 write_value_bool[W: io::Writer, T: Display](writer: ref mut W, zone: ref mut Zone, value: T) -> bool
 write_debug[W: io::Writer, T: Debug](writer: ref mut W, zone: ref mut Zone, value: T) -> Result[(), Error]
 write_debug_bool[W: io::Writer, T: Debug](writer: ref mut W, zone: ref mut Zone, value: T) -> bool
+write_line_text[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: string) -> Result[(), Error]
+write_line_text_bool[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: string) -> bool
+write_line_value[W: io::Writer, T: Display](writer: ref mut W, zone: ref mut Zone, value: T) -> Result[(), Error]
+write_line_value_bool[W: io::Writer, T: Display](writer: ref mut W, zone: ref mut Zone, value: T) -> bool
+write_line_debug[W: io::Writer, T: Debug](writer: ref mut W, zone: ref mut Zone, value: T) -> Result[(), Error]
+write_line_debug_bool[W: io::Writer, T: Debug](writer: ref mut W, zone: ref mut Zone, value: T) -> bool
 
 print_value[T: Display](zone: ref mut Zone, value: T) -> i64
 println_value[T: Display](zone: ref mut Zone, value: T) -> i64
@@ -124,7 +130,9 @@ or other type implementing `std::io::Writer`. The helpers return
 `Result[(), Error]`, preserving the writer failure from `io::write_all`; use the
 matching `_bool` wrappers only for compatibility call sites that intentionally
 discard the reason. Each helper still takes a zone because Ari keeps temporary
-formatted text allocation explicit:
+formatted text allocation explicit. The `write_line_*` helpers are the same
+operations with one trailing newline written through the same writer; they
+return the first failure from either the formatted value or the newline write:
 
 ```ari
 var stdout = io::stdout();
@@ -133,6 +141,12 @@ fmt::write_unsigned<io::Stdout>(
   ref mut zone,
   31u64,
   fmt::uppercase(fmt::hex()),
+).unwrap();
+
+fmt::write_line_value<io::Stdout, string>(
+  ref mut stdout,
+  ref mut zone,
+  "Created package hello",
 ).unwrap();
 ```
 
@@ -248,6 +262,9 @@ The source helpers complement the macros:
   value without choosing a type-suffixed writer helper and write failures should
   stay recoverable.
 - Use `write_debug` when a `std::io::Writer` should receive any `Debug` value.
+- Use `write_line_text`, `write_line_value`, and `write_line_debug` when a
+  writer should receive exactly one formatted line and failures must remain
+  recoverable.
 - Use `print_value` and `println_value` when stdout should receive any
   `Display` value without choosing a type-suffixed IO hook.
 - Use `print_debug` and `println_debug` for direct stdout debug output.

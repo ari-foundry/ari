@@ -24,21 +24,21 @@ platform notes.
 
 ## Summary
 
-- API entries: `3101`
+- API entries: `3107`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
 | `alloc` | 846 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 847 | stable candidate |
+| `core` | 853 | stable candidate |
 | `hosted` | 1221 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 28 |
-| `fn` | 1138 |
+| `fn` | 1144 |
 | `method` | 1534 |
 | `module` | 39 |
 | `struct` | 166 |
@@ -65,7 +65,7 @@ platform notes.
 | `std::encoding` | `core` | 94 |
 | `std::env` | `hosted` | 72 |
 | `std::error` | `core` | 37 |
-| `std::fmt` | `core` | 51 |
+| `std::fmt` | `core` | 57 |
 | `std::fs` | `hosted` | 259 |
 | `std::hash` | `alloc` | 24 |
 | `std::input` | `hosted` | 6 |
@@ -1618,6 +1618,12 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::fmt::write_debug_bool[W: std::io::Writer, T: std::fmt::Debug]` | check-prelude std-fmt-debug-values bool compatibility generic Writer-backed Debug formatting helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_integer[W: std::io::Writer]` | check-prelude std-fmt-format-spec Result-returning Writer-backed signed integer formatting helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_integer_bool[W: std::io::Writer]` | check-prelude std-fmt-format-spec bool compatibility Writer-backed signed integer formatting helper; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::write_line_debug[W: std::io::Writer, T: std::fmt::Debug]` | check-prelude std-fmt-format-spec Result-returning generic Writer-backed Debug line helper; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::write_line_debug_bool[W: std::io::Writer, T: std::fmt::Debug]` | check-prelude std-fmt-format-spec bool compatibility generic Writer-backed Debug line helper; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::write_line_text[W: std::io::Writer]` | check-prelude std-fmt-format-spec Result-returning Writer-backed text line helper; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::write_line_text_bool[W: std::io::Writer]` | check-prelude std-fmt-format-spec bool compatibility Writer-backed text line helper; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::write_line_value[W: std::io::Writer, T: std::fmt::Display]` | check-prelude std-fmt-format-spec Result-returning generic Writer-backed Display line helper; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::write_line_value_bool[W: std::io::Writer, T: std::fmt::Display]` | check-prelude std-fmt-format-spec bool compatibility generic Writer-backed Display line helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_text[W: std::io::Writer]` | check-prelude std-fmt-format-spec Result-returning Writer-backed text formatting helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_text_bool[W: std::io::Writer]` | check-prelude std-fmt-format-spec bool compatibility Writer-backed text formatting helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_unsigned[W: std::io::Writer]` | check-prelude std-fmt-format-spec Result-returning Writer-backed base/width/precision formatting helper; docs/stdlib/modules/fmt.md |

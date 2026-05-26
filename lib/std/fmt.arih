@@ -468,6 +468,24 @@ pub fn write_text_bool[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone
   return std::fmt::write_text<W>(writer, zone, value).is_ok();
 }
 
+fn write_newline[W: std::io::Writer](writer: ref mut W) -> std::Result[(), std::error::Error] {
+  return std::io::write_all<W>(writer, std::string::bytes("\n"));
+}
+
+pub fn write_line_text[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: string) -> std::Result[(), std::error::Error] {
+  match std::fmt::write_text<W>(writer, zone, value) {
+    std::Ok(_) => {}
+    std::Err(reason) => {
+      return std::Err<(), std::error::Error>(reason);
+    }
+  }
+  return std::fmt::write_newline<W>(writer);
+}
+
+pub fn write_line_text_bool[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: string) -> bool {
+  return std::fmt::write_line_text<W>(writer, zone, value).is_ok();
+}
+
 pub fn write_value[W: std::io::Writer, T: std::fmt::Display](writer: ref mut W, zone: ref mut Zone, value: T) -> std::Result[(), std::error::Error] {
   var text = value.format_in(zone);
   return std::io::write_all<W>(writer, text.as_slice());
@@ -475,6 +493,20 @@ pub fn write_value[W: std::io::Writer, T: std::fmt::Display](writer: ref mut W, 
 
 pub fn write_value_bool[W: std::io::Writer, T: std::fmt::Display](writer: ref mut W, zone: ref mut Zone, value: T) -> bool {
   return std::fmt::write_value<W, T>(writer, zone, value).is_ok();
+}
+
+pub fn write_line_value[W: std::io::Writer, T: std::fmt::Display](writer: ref mut W, zone: ref mut Zone, value: T) -> std::Result[(), std::error::Error] {
+  match std::fmt::write_value<W, T>(writer, zone, value) {
+    std::Ok(_) => {}
+    std::Err(reason) => {
+      return std::Err<(), std::error::Error>(reason);
+    }
+  }
+  return std::fmt::write_newline<W>(writer);
+}
+
+pub fn write_line_value_bool[W: std::io::Writer, T: std::fmt::Display](writer: ref mut W, zone: ref mut Zone, value: T) -> bool {
+  return std::fmt::write_line_value<W, T>(writer, zone, value).is_ok();
 }
 
 pub fn debug_value[T: std::fmt::Debug](zone: ref mut Zone, value: T) -> std::string::String {
@@ -585,6 +617,20 @@ pub fn write_debug[W: std::io::Writer, T: std::fmt::Debug](writer: ref mut W, zo
 
 pub fn write_debug_bool[W: std::io::Writer, T: std::fmt::Debug](writer: ref mut W, zone: ref mut Zone, value: T) -> bool {
   return std::fmt::write_debug<W, T>(writer, zone, value).is_ok();
+}
+
+pub fn write_line_debug[W: std::io::Writer, T: std::fmt::Debug](writer: ref mut W, zone: ref mut Zone, value: T) -> std::Result[(), std::error::Error] {
+  match std::fmt::write_debug<W, T>(writer, zone, value) {
+    std::Ok(_) => {}
+    std::Err(reason) => {
+      return std::Err<(), std::error::Error>(reason);
+    }
+  }
+  return std::fmt::write_newline<W>(writer);
+}
+
+pub fn write_line_debug_bool[W: std::io::Writer, T: std::fmt::Debug](writer: ref mut W, zone: ref mut Zone, value: T) -> bool {
+  return std::fmt::write_line_debug<W, T>(writer, zone, value).is_ok();
 }
 
 pub fn print_value[T: std::fmt::Display](zone: ref mut Zone, value: T) -> i64 {

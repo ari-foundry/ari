@@ -2621,11 +2621,17 @@ check-prelude: $(TARGET)
 	grep -q 'write_text_bool' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
 	grep -q 'write_value' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
 	grep -q 'write_value_bool' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
+	grep -q 'write_line_text' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
+	grep -q 'write_line_text_bool' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
+	grep -q 'write_line_value' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
+	grep -q 'write_line_value_bool' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
+	grep -q 'write_line_debug' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
+	grep -q 'write_line_debug_bool' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
 	grep -q 'write_concat2' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
 	grep -q 'write_concat2_bool' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
 	grep -q 'write_concat3' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
 	grep -q 'write_concat3_bool' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/std-fmt-format-spec.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fmt-format-spec.elf; $(BUILD_DIR)/prelude/std-fmt-format-spec.elf; code=$$?; test $$code -eq 21; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/std-fmt-format-spec.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fmt-format-spec.elf; $(BUILD_DIR)/prelude/std-fmt-format-spec.elf; code=$$?; test $$code -eq 28; fi
 	$(TARGET) tests/cases/standard-library/ok/format/std-fmt-concat-format-value.ari --emit-llvm $(BUILD_DIR)/prelude/std-fmt-concat-format-value.ll
 	grep -q 'format_value' $(BUILD_DIR)/prelude/std-fmt-concat-format-value.ll
 	grep -q 'concat2' $(BUILD_DIR)/prelude/std-fmt-concat-format-value.ll

@@ -176,6 +176,62 @@ fn main() -> i64 {
     }
   }
 
+  var line_text_buffer = [0u8, 0u8, 0u8];
+  var line_text_writer = MemoryWriter { data: line_text_buffer.as_slice(), position: 0 };
+  if fmt::write_line_text<MemoryWriter>(ref mut line_text_writer, ref mut zone, "ok").is_ok() {
+    if line_text_buffer[0] == 'o' && line_text_buffer[1] == 'k' && line_text_buffer[2] == 10u8 && line_text_writer.position == 3 {
+      score = score + 1;
+    }
+  }
+
+  var line_text_bool_buffer = [0u8, 0u8, 0u8, 0u8];
+  var line_text_bool_writer = MemoryWriter { data: line_text_bool_buffer.as_slice(), position: 0 };
+  if fmt::write_line_text_bool<MemoryWriter>(ref mut line_text_bool_writer, ref mut zone, "yes") {
+    if line_text_bool_buffer[0] == 'y' && line_text_bool_buffer[2] == 's' && line_text_bool_buffer[3] == 10u8 && line_text_bool_writer.position == 4 {
+      score = score + 1;
+    }
+  }
+
+  var short_line_text_buffer = [0u8, 0u8];
+  var short_line_text_writer = MemoryWriter { data: short_line_text_buffer.as_slice(), position: 0 };
+  if fmt::write_line_text<MemoryWriter>(ref mut short_line_text_writer, ref mut zone, "ok").is_err() {
+    if short_line_text_writer.position == 2 && short_line_text_buffer[0] == 'o' && short_line_text_buffer[1] == 'k' {
+      score = score + 1;
+    }
+  }
+
+  var line_value_buffer = [0u8, 0u8, 0u8];
+  var line_value_writer = MemoryWriter { data: line_value_buffer.as_slice(), position: 0 };
+  if fmt::write_line_value<MemoryWriter, i64>(ref mut line_value_writer, ref mut zone, -9).is_ok() {
+    if line_value_buffer[0] == '-' && line_value_buffer[1] == '9' && line_value_buffer[2] == 10u8 && line_value_writer.position == 3 {
+      score = score + 1;
+    }
+  }
+
+  var line_value_bool_buffer = [0u8, 0u8, 0u8];
+  var line_value_bool_writer = MemoryWriter { data: line_value_bool_buffer.as_slice(), position: 0 };
+  if fmt::write_line_value_bool<MemoryWriter, string>(ref mut line_value_bool_writer, ref mut zone, "hi") {
+    if line_value_bool_buffer[0] == 'h' && line_value_bool_buffer[1] == 'i' && line_value_bool_buffer[2] == 10u8 && line_value_bool_writer.position == 3 {
+      score = score + 1;
+    }
+  }
+
+  var line_debug_buffer = [0u8, 0u8, 0u8, 0u8];
+  var line_debug_writer = MemoryWriter { data: line_debug_buffer.as_slice(), position: 0 };
+  if fmt::write_line_debug<MemoryWriter, string>(ref mut line_debug_writer, ref mut zone, "x").is_ok() {
+    if line_debug_buffer[0] == 34u8 && line_debug_buffer[1] == 'x' && line_debug_buffer[2] == 34u8 && line_debug_buffer[3] == 10u8 && line_debug_writer.position == 4 {
+      score = score + 1;
+    }
+  }
+
+  var short_line_debug_buffer = [0u8, 0u8, 0u8];
+  var short_line_debug_writer = MemoryWriter { data: short_line_debug_buffer.as_slice(), position: 0 };
+  if !fmt::write_line_debug_bool<MemoryWriter, string>(ref mut short_line_debug_writer, ref mut zone, "x") {
+    if short_line_debug_writer.position == 3 && short_line_debug_buffer[0] == 34u8 && short_line_debug_buffer[2] == 34u8 {
+      score = score + 1;
+    }
+  }
+
   zone::destroy(zone);
   return score;
 }
