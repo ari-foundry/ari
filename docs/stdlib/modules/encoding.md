@@ -28,6 +28,8 @@ encoding::is_ascii(bytes) -> bool
 encoding::is_unicode_scalar(value) -> bool
 encoding::Utf8ErrorKind
 encoding::Utf8Error
+Utf8Error::name() -> string
+Utf8Error::message() -> string
 encoding::utf8_error(bytes) -> Option[Utf8Error]
 encoding::validate_utf8(bytes) -> Result[(), Utf8Error]
 encoding::validate_utf8_optional(bytes) -> Option[Utf8Error]
@@ -57,6 +59,9 @@ index, the byte that best identifies the failure, and a `Utf8ErrorKind`:
 `kind()` when reporting diagnostics, or the predicate helpers
 `is_invalid_lead()`, `is_unexpected_end()`, `is_invalid_continuation()`,
 `is_overlong()`, `is_surrogate()`, and `is_out_of_range()` when branching.
+`name()` returns a stable short diagnostic label such as `overlong encoding`,
+and `message()` returns a longer human-readable explanation suitable for CLI
+errors and logs.
 `validate_utf8` returns `Result[(), Utf8Error]`, keeping those details in the
 recoverable path instead of collapsing them into a boolean.
 `decode_utf8(ref mut zone, bytes)` first validates the whole byte slice, then
@@ -105,6 +110,8 @@ Hex helpers:
 ```ari
 encoding::CodecErrorKind
 encoding::CodecError
+CodecError::name() -> string
+CodecError::message() -> string
 encoding::hex_encoded_len(bytes) -> i64
 encoding::encode_hex_in(ref mut zone, bytes) -> String
 encoding::hex_error(bytes) -> Option[CodecError]
@@ -125,8 +132,9 @@ input. `CodecError` records the byte index, byte value, and a
 `CodecErrorKind`: `InvalidLength`, `InvalidByte`, or `InvalidPadding`. Use
 `index()`, `byte()`, and `kind()` for diagnostics, or the predicate helpers
 `is_invalid_length()`, `is_invalid_byte()`, and `is_invalid_padding()` for
-branching. Hex currently reports odd-length input as `InvalidLength` at the
-last byte.
+branching. `name()` returns a stable short label such as `invalid byte`, and
+`message()` returns a longer human-readable explanation. Hex currently reports
+odd-length input as `InvalidLength` at the last byte.
 `hex_decoded_len`, `decode_hex`, and `decode_hex_in` return
 `Error(InvalidData)` for invalid length or non-hex bytes. `decode_hex_in` is
 the compatibility spelling for the explicit-zone decoder.
@@ -244,7 +252,7 @@ Use the codec diagnostic helpers when user-facing tools need a precise message:
 match encoding::base64_url_error(input) {
   std::Some(reason) => {
     if reason.is_invalid_byte() {
-      // report reason.index() and reason.byte()
+      // report reason.index(), reason.byte(), reason.name(), and reason.message()
     }
   }
   std::None => {

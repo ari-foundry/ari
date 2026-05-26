@@ -1740,6 +1740,8 @@ method std::encoding::CodecError::is_invalid_byte|check-prelude std-encoding-cod
 method std::encoding::CodecError::is_invalid_length|check-prelude std-encoding-codec invalid codec length predicate; docs/stdlib/modules/encoding.md
 method std::encoding::CodecError::is_invalid_padding|check-prelude std-encoding-codec invalid codec padding predicate; docs/stdlib/modules/encoding.md
 method std::encoding::CodecError::kind|check-prelude std-encoding-codec codec failure kind accessor; docs/stdlib/modules/encoding.md
+method std::encoding::CodecError::message|check-prelude std-encoding-codec stable codec diagnostic message; docs/stdlib/modules/encoding.md
+method std::encoding::CodecError::name|check-prelude std-encoding-codec stable codec diagnostic name; docs/stdlib/modules/encoding.md
 method std::encoding::Utf8Char::len|check-prelude std-encoding-utf8-codepoints decoded UTF-8 byte length accessor; docs/stdlib/modules/encoding.md
 method std::encoding::Utf8Char::next_index|check-prelude std-encoding-utf8-codepoints decoded UTF-8 next byte offset accessor; docs/stdlib/modules/encoding.md
 method std::encoding::Utf8Char::scalar|check-prelude std-encoding-utf8-codepoints decoded Unicode scalar accessor; docs/stdlib/modules/encoding.md
@@ -1752,6 +1754,8 @@ method std::encoding::Utf8Error::is_overlong|check-prelude std-encoding-text UTF
 method std::encoding::Utf8Error::is_surrogate|check-prelude std-encoding-text UTF-8 surrogate scalar predicate; docs/stdlib/modules/encoding.md
 method std::encoding::Utf8Error::is_unexpected_end|check-prelude std-encoding-text UTF-8 truncated-sequence predicate; docs/stdlib/modules/encoding.md
 method std::encoding::Utf8Error::kind|check-prelude std-encoding-text UTF-8 failure kind accessor; docs/stdlib/modules/encoding.md
+method std::encoding::Utf8Error::message|check-prelude std-encoding-text stable UTF-8 diagnostic message; docs/stdlib/modules/encoding.md
+method std::encoding::Utf8Error::name|check-prelude std-encoding-text stable UTF-8 diagnostic name; docs/stdlib/modules/encoding.md
 method std::error::Error::code|check-prelude std-error-basic error platform code method; docs/stdlib/modules/error.md
 method std::error::Error::is_connection_refused|check-prelude std-error-integration connection-refused predicate method; docs/stdlib/modules/error.md
 method std::error::Error::is_interrupted|check-prelude std-error-basic interrupted predicate method; docs/stdlib/modules/error.md

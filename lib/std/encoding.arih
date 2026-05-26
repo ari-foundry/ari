@@ -49,6 +49,22 @@ pub impl std::encoding::CodecError {
     return codec_error_kind_from_id(self.kind_id);
   }
 
+  fn name(self: ref Self) -> string {
+    match self.kind() {
+      InvalidLength => { return "invalid length"; }
+      InvalidByte => { return "invalid byte"; }
+      InvalidPadding => { return "invalid padding"; }
+    }
+  }
+
+  fn message(self: ref Self) -> string {
+    match self.kind() {
+      InvalidLength => { return "encoded input has an invalid length"; }
+      InvalidByte => { return "encoded input contains a byte outside the active alphabet"; }
+      InvalidPadding => { return "encoded input has invalid padding placement"; }
+    }
+  }
+
   fn is_invalid_length(self: ref Self) -> bool {
     return self.kind_id == codec_error_kind_id(std::encoding::InvalidLength);
   }
@@ -87,6 +103,28 @@ pub impl std::encoding::Utf8Error {
 
   fn kind(self: ref Self) -> std::encoding::Utf8ErrorKind {
     return utf8_error_kind_from_id(self.kind_id);
+  }
+
+  fn name(self: ref Self) -> string {
+    match self.kind() {
+      InvalidLead => { return "invalid lead byte"; }
+      UnexpectedEnd => { return "unexpected end"; }
+      InvalidContinuation => { return "invalid continuation byte"; }
+      OverlongEncoding => { return "overlong encoding"; }
+      SurrogateCodePoint => { return "surrogate code point"; }
+      OutOfRangeCodePoint => { return "out-of-range code point"; }
+    }
+  }
+
+  fn message(self: ref Self) -> string {
+    match self.kind() {
+      InvalidLead => { return "UTF-8 sequence starts with an invalid lead byte"; }
+      UnexpectedEnd => { return "UTF-8 sequence ends before all continuation bytes are present"; }
+      InvalidContinuation => { return "UTF-8 sequence contains an invalid continuation byte"; }
+      OverlongEncoding => { return "UTF-8 sequence uses a longer form than required"; }
+      SurrogateCodePoint => { return "UTF-8 sequence encodes a surrogate code point"; }
+      OutOfRangeCodePoint => { return "UTF-8 sequence encodes a value above U+10FFFF"; }
+    }
   }
 
   fn is_invalid_lead(self: ref Self) -> bool {

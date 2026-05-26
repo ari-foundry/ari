@@ -44,6 +44,12 @@ fn check_hex(zone: ref mut Zone) -> bool {
       if !reason_length.is_invalid_length() {
         return false;
       }
+      if !std::string::bytes(reason_length.name()).equals("invalid length") {
+        return false;
+      }
+      if !std::string::bytes(reason_length.message()).equals("encoded input has an invalid length") {
+        return false;
+      }
       if reason_length.index() != 2 {
         return false;
       }
@@ -58,6 +64,9 @@ fn check_hex(zone: ref mut Zone) -> bool {
   match encoding::hex_error(invalid_hex_byte.as_slice()) {
     std::Some(reason_byte) => {
       if !reason_byte.is_invalid_byte() {
+        return false;
+      }
+      if !std::string::bytes(reason_byte.name()).equals("invalid byte") {
         return false;
       }
       match reason_byte.kind() {
@@ -223,6 +232,12 @@ fn check_base64(zone: ref mut Zone) -> bool {
   match encoding::base64_error(invalid_base64.as_slice()) {
     std::Some(reason_padding) => {
       if !reason_padding.is_invalid_padding() {
+        return false;
+      }
+      if !std::string::bytes(reason_padding.name()).equals("invalid padding") {
+        return false;
+      }
+      if !std::string::bytes(reason_padding.message()).equals("encoded input has invalid padding placement") {
         return false;
       }
       if reason_padding.index() != 1 {

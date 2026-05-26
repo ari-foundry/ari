@@ -4145,8 +4145,12 @@ encoding::is_ascii(bytes)
 encoding::is_unicode_scalar(scalar)
 encoding::CodecErrorKind
 encoding::CodecError
+CodecError::name()
+CodecError::message()
 encoding::Utf8ErrorKind
 encoding::Utf8Error
+Utf8Error::name()
+Utf8Error::message()
 encoding::utf8_error(bytes)
 encoding::validate_utf8(bytes)
 encoding::validate_utf8_optional(bytes)
@@ -4223,8 +4227,10 @@ encoding::decode_base64_url_unchecked_in(ref mut zone, bytes)
 returns `Result[(), Utf8Error]`. `utf8_error` and `validate_utf8_optional`
 return `None` for valid UTF-8 or `Some(Utf8Error)` with the failing byte index,
 byte value, and a `Utf8ErrorKind` such as `InvalidContinuation`,
-`OverlongEncoding`, or `SurrogateCodePoint`. `decode_utf8(ref mut zone, bytes)`
-validates and copies UTF-8 bytes into a zone-backed `String`;
+`OverlongEncoding`, or `SurrogateCodePoint`. `Utf8Error::name()` returns a
+stable short label and `Utf8Error::message()` returns a longer human-readable
+diagnostic for CLIs and logs. `decode_utf8(ref mut zone, bytes)` validates and
+copies UTF-8 bytes into a zone-backed `String`;
 `decode_utf8_in` is the compatibility spelling, while `_optional_in` and
 `_unchecked_in` discard details or assert trusted input.
 `Utf8Char` is the decoded UTF-8 scalar wrapper with `scalar()`, `len()`, and
@@ -4238,6 +4244,8 @@ Hex encoding emits lowercase digits and decoding accepts ASCII hex digits.
 `hex_error`, `base64_error`, `base64_mime_error`, and `base64_url_error` return
 `None` for valid input or `Some(CodecError)` with byte index, byte value, and a
 `CodecErrorKind` of `InvalidLength`, `InvalidByte`, or `InvalidPadding`.
+`CodecError::name()` and `CodecError::message()` provide stable user-facing
+diagnostic text without forcing callers to duplicate the category mapping.
 Base64 uses the standard `+`/`/` alphabet with `=` padding. MIME base64 uses
 the standard alphabet, inserts CRLF after each 76 encoded characters, and
 ignores ASCII space, tab, CR, and LF while decoding. URL-safe base64 uses
