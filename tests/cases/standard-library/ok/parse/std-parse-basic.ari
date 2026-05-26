@@ -196,6 +196,10 @@ fn main() -> i64 {
   assert((parse::float(float_text.as_slice()).unwrap_or(0.0f64) as i64) == -1250);
   assert((parse::float_optional(float_text.as_slice()).unwrap_or(0.0f64) as i64) == -1250);
   assert((parse::float_unchecked(float_text.as_slice()) as i64) == -1250);
+  match parse::float_error(float_text.as_slice()) {
+    std::Some(_) => { panic(); }
+    std::None => {}
+  }
   assert(!parse::is_float(invalid_float.as_slice()));
   assert(!parse::is_float("1_000.0"));
   assert(parse::is_float_with_underscores("1_000.5_0e1_2"));
@@ -205,6 +209,60 @@ fn main() -> i64 {
   assert((parse::float_with_underscores("1_000.5_0e1").unwrap_or(0.0f64) as i64) == 10005);
   assert(((parse::float_with_underscores_optional(".2_5").unwrap_or(0.0f64) * 100.0f64) as i64) == 25);
   assert((parse::float_with_underscores_or("1__0", 4.0f64) as i64) == 4);
+  match parse::float_with_underscores_error("1_000.5_0e1_2") {
+    std::Some(_) => { panic(); }
+    std::None => {}
+  }
+  match parse::float_error(invalid_float.as_slice()) {
+    std::Some(float_detail) => {
+      assert(float_detail.offset() == 3);
+      match float_detail.kind() {
+        parse::InvalidDigit => {}
+        _ => { panic(); }
+      }
+    }
+    std::None => { panic(); }
+  }
+  match parse::float_error(".") {
+    std::Some(dot_detail) => {
+      assert(dot_detail.offset() == 1);
+      match dot_detail.kind() {
+        parse::ExpectedDigit => {}
+        _ => { panic(); }
+      }
+    }
+    std::None => { panic(); }
+  }
+  match parse::float_error("1_000.0") {
+    std::Some(strict_separator_detail) => {
+      assert(strict_separator_detail.offset() == 1);
+      match strict_separator_detail.kind() {
+        parse::InvalidSeparator => {}
+        _ => { panic(); }
+      }
+    }
+    std::None => { panic(); }
+  }
+  match parse::float_with_underscores_error("1e_2") {
+    std::Some(exponent_separator_detail) => {
+      assert(exponent_separator_detail.offset() == 2);
+      match exponent_separator_detail.kind() {
+        parse::InvalidSeparator => {}
+        _ => { panic(); }
+      }
+    }
+    std::None => { panic(); }
+  }
+  match parse::float_error("1e+") {
+    std::Some(exponent_digit_detail) => {
+      assert(exponent_digit_detail.offset() == 3);
+      match exponent_digit_detail.kind() {
+        parse::ExpectedDigit => {}
+        _ => { panic(); }
+      }
+    }
+    std::None => { panic(); }
+  }
   match parse::float(invalid_float.as_slice()) {
     Ok(_) => { panic(); }
     Err(float_reason) => {

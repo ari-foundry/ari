@@ -151,7 +151,7 @@ the Result-returning form for callers that need `Error(NotFound)`.
   digit/prefix parsing helpers.
 - [std::parse](parse.md): whole-input ASCII-trimmed decimal, radix, hex,
   binary, octal integer, bool, and decimal float parsers with natural
-  validation/fallback helpers and integer parse diagnostics.
+  validation/fallback helpers and integer/float parse diagnostics.
 - [std::encoding](encoding.md): ASCII, UTF-8, and UTF-16 validation/counting,
   detailed UTF-8 failure diagnostics, UTF-8 byte-string decode, UTF-8 scalar
   decode/encode, lowercase hex, standard/MIME/URL-safe base64, structured

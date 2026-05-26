@@ -59,7 +59,7 @@ API evolution.
 | `std::boxed` | Zone-backed single-value owner. | `Box[T]`, `new`, `get`, `try_get`, `set`, `take`, `try_take`, `copy_to`. |
 | `std::string` | Zone-backed owned byte string and typed borrowed text-boundary views. | `String`, `Utf8`, `Codepoints`, `OsStr`, `SplitOnce`, direct string-literal coercion to `Slice[u8]` / `Vec[u8]` / `[u8, N]` / `Utf8` / `OsStr` / `PathBytes` / `CStr`, `utf8`, `codepoints`, `os_str`, `c_str`, `c_len`, `c_bytes`, `bytes`, `new`, `empty`, `from`, `copy`, `from_string`, `from_slice_in`, `join_in`, borrowed parser helpers `lines`, `trim`, `split_once`, `starts_with`, `ends_with`, `contains`, `find`, `strip_prefix`, `strip_suffix`, `substring`, allocating `replace`, `push`, `push_str`, `try_get`, `try_pop`, `remove`, `try_remove`, `retain`, `append`, `append_byte`, `append_bytes`, `find_text`, `contains_text`, `split`, `chunks`, `windows`, `push_codepoint_in`, `try_utf8`, `is_utf8`, `codepoint_count`, `codepoint_at`, `codepoint_next_index`, `codepoints`, `equals_text`, `equals_text_ignore_case`, `trimmed`, `parse_decimal`, `parse_signed_decimal`, `parse_decimal_prefix`, `parse_signed_decimal_prefix`, `as_slice`. `c_str` returns the shared `std::c::CStr` type. |
 | `std::ascii` | Source-only ASCII byte and slice helpers. | `is_digit`, `is_printable`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `parse_decimal`, `parse_decimal_prefix`, signed decimal parsers, and overflow-checked `i64` parser policy. |
-| `std::parse` | Whole-input value parsers over byte slices. | `Parse`, `ParseError`, `ParseErrorKind`, `parse<T>`, `parse_or<T>`, `is_parse<T>`, Result-returning signed `integer`/`integer_radix`, unsigned `unsigned`/`unsigned_radix`, `*_error` integer diagnostics with byte offsets, radix wrappers for hex/binary/octal signed integers, explicit `*_with_underscores` numeric parsers, `boolean`, `_optional` compatibility forms, `is_float`, `float_or`, `float`. |
+| `std::parse` | Whole-input value parsers over byte slices. | `Parse`, `ParseError`, `ParseErrorKind`, `parse<T>`, `parse_or<T>`, `is_parse<T>`, Result-returning signed `integer`/`integer_radix`, unsigned `unsigned`/`unsigned_radix`, `*_error` integer/float diagnostics with byte offsets, radix wrappers for hex/binary/octal signed integers, explicit `*_with_underscores` numeric parsers, `boolean`, `_optional` compatibility forms, `is_float`, `float_error`, `float_with_underscores_error`, `float_or`, `float`. |
 | `std::encoding` | Text validation, UTF-8 scalar helpers, and byte codecs. | `is_ascii`, `is_unicode_scalar`, detailed Result-returning `validate_utf8`, `decode_utf8`, `utf8_count`, `utf16_count`, `encode_utf8`, `encode_utf8_in`, `CodecError`, `hex_error`, `base64_error`, `base64_mime_error`, `base64_url_error`, `hex_decoded_len`, `decode_hex`, `decode_hex_in`, `base64_decoded_len`, `decode_base64`, `decode_base64_in`, MIME `base64_mime_decoded_len`, `decode_base64_mime`, `encode_base64_mime_in`, URL-safe `base64_url_decoded_len`, `decode_base64_url`, padded `encode_base64_url_in`, unpadded `encode_base64_url_unpadded_in`, `_optional` compatibility helpers, `_in` allocation aliases, `_unchecked` asserting codec helpers, `is_utf8`, `is_utf16`, `utf8_at`, `utf8_next_index`, `encode_hex_in`, and `encode_base64_in`. |
 | `std::vec` | Zone-backed growable sequence. | `Vec[T]`, `new<T>`, owning-zone `push`, `insert`, `reserve`, `reserve_extra`, `try_reserve`, `extend`, `extend_from_slice`, `extend_iter`, `append`, `resize`, `resize_with`, explicit `_in` compatibility methods, `try_get`, `try_remove`, `swap_remove`, `retain`, `dedup`, `dedup_by`, `dedup_by_key`, `fill`, `fill_range`, `copy_from`, `copy_within`, `partition`, `stable_partition`, `drain`, `drain_range`, `split_off`, `splice`, `slice`, `split_at`, `find`, `contains_slice`, `compare`, `chunks`, `windows`, `split`, `reverse`, `reverse_range`, `rotate_left`, `rotate_right`, `rotate_range`, introsort-backed `sort`, merge-sort-backed `stable_sort`, explicit-zone stable sort, `try_stable_sort`, `is_sorted`, `binary_search`, `lower_bound`, `upper_bound`, `equal_range`, `partition_point`, `min`, `max`, `as_slice`, `iter`, `iter_mut`. |
 | `std::hash` | Deterministic non-cryptographic hashing. | `Hasher`, `Hash[T]`, `new`, `reset`, `finish`, `write`, `value`, `pair`, `combine`, `bytes`, fixed-width integer and bool write helpers, and `Slice[u8]` hashing. |
@@ -131,9 +131,10 @@ integer parsing, and prefix integer parsing need no compiler knowledge.
 underscore-aware numeric parsing out of individual call sites.
 Natural integer, boolean, and float parser names return `Result[..., Error]`,
 while `_optional`, `_or`, and `_unchecked` helpers keep information-discarding
-or asserting compatibility spelled explicitly. Integer and unsigned parsers also
-offer `*_error` diagnostics for CLI/config tools that need a `ParseErrorKind`
-and trimmed-input byte offset without changing the default Result API.
+or asserting compatibility spelled explicitly. Integer, unsigned, and float
+parsers also offer `*_error` diagnostics for CLI/config tools that need a
+`ParseErrorKind` and trimmed-input byte offset without changing the default
+Result API.
 `std::encoding` validates ASCII/UTF-8/UTF-16 and encodes or decodes hex,
 standard base64, MIME line-wrapped base64, and URL-safe base64 into
 caller-provided zones. Natural UTF-8 validation, UTF-8 byte-string decoding,
@@ -142,10 +143,10 @@ return shared `std::error::Error` categories. Hex/base64 diagnostic helpers
 return `CodecError` with invalid-length, invalid-byte, and invalid-padding
 categories for tools that need precise user-facing messages. `_optional`,
 `_in`, and `_unchecked` names spell information-discarding, compatibility
-allocation spelling, and asserting compatibility explicitly. Parser error
-payloads are present for integer parsing, while
-`parse[f64]`, `parse_or[f64]`, and Result-returning `parse::float` cover
-strict, fallback, and recoverable typed float parsing today.
+allocation spelling, and asserting compatibility explicitly. Float range
+diagnostics for extreme exponents remain future work, while `parse[f64]`,
+`parse_or[f64]`, and Result-returning `parse::float` cover strict, fallback,
+and recoverable typed float parsing today.
 
 `std::random` has OS-backed hooks for `entropy()` and `fill(values)`, because
 seed material must come from the host and byte slices should be filled without

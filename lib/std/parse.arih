@@ -1144,6 +1144,184 @@ pub fn is_float_with_underscores(values: std::Slice[u8]) -> bool {
   return index == input.len;
 }
 
+fn float_error_with_separator_policy(
+  values: std::Slice[u8],
+  allow_separators: bool
+) -> std::Option[std::parse::ParseError] {
+  let input = std::ascii::trim(values);
+  if input.len == 0 {
+    return std::Some<std::parse::ParseError>(std::parse::parse_error(EmptyInput, 0));
+  }
+
+  var index = 0;
+  if input[0] == '-' {
+    index = 1;
+  } else if input[0] == '+' {
+    index = 1;
+  }
+
+  if index >= input.len {
+    return std::Some<std::parse::ParseError>(std::parse::parse_error(ExpectedDigit, index));
+  }
+
+  var seen_digit = false;
+  var previous_digit = false;
+  while index < input.len {
+    let integer_byte = input[index];
+    if integer_byte == '_' {
+      if !allow_separators {
+        return std::Some<std::parse::ParseError>(std::parse::parse_error(InvalidSeparator, index));
+      }
+      if !previous_digit {
+        return std::Some<std::parse::ParseError>(std::parse::parse_error(InvalidSeparator, index));
+      }
+      if index + 1 >= input.len {
+        return std::Some<std::parse::ParseError>(std::parse::parse_error(InvalidSeparator, index));
+      }
+      match std::ascii::digit_value(input[index + 1]) {
+        std::Some(_) => {}
+        std::None => {
+          return std::Some<std::parse::ParseError>(std::parse::parse_error(InvalidSeparator, index));
+        }
+      }
+      previous_digit = false;
+      index = index + 1;
+    } else {
+      match std::ascii::digit_value(integer_byte) {
+        std::Some(_) => {
+          seen_digit = true;
+          previous_digit = true;
+          index = index + 1;
+        }
+        std::None => {
+          break;
+        }
+      }
+    }
+  }
+
+  if index < input.len {
+    if input[index] == '.' {
+      index = index + 1;
+      var previous_fraction_digit = false;
+      while index < input.len {
+        let fraction_byte = input[index];
+        if fraction_byte == '_' {
+          if !allow_separators {
+            return std::Some<std::parse::ParseError>(std::parse::parse_error(InvalidSeparator, index));
+          }
+          if !previous_fraction_digit {
+            return std::Some<std::parse::ParseError>(std::parse::parse_error(InvalidSeparator, index));
+          }
+          if index + 1 >= input.len {
+            return std::Some<std::parse::ParseError>(std::parse::parse_error(InvalidSeparator, index));
+          }
+          match std::ascii::digit_value(input[index + 1]) {
+            std::Some(_) => {}
+            std::None => {
+              return std::Some<std::parse::ParseError>(std::parse::parse_error(InvalidSeparator, index));
+            }
+          }
+          previous_fraction_digit = false;
+          index = index + 1;
+        } else {
+          match std::ascii::digit_value(fraction_byte) {
+            std::Some(_) => {
+              seen_digit = true;
+              previous_fraction_digit = true;
+              index = index + 1;
+            }
+            std::None => {
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if !seen_digit {
+    return std::Some<std::parse::ParseError>(std::parse::parse_error(ExpectedDigit, index));
+  }
+
+  if index < input.len {
+    if input[index] == 'e' || input[index] == 'E' {
+      index = index + 1;
+      if index >= input.len {
+        return std::Some<std::parse::ParseError>(std::parse::parse_error(ExpectedDigit, index));
+      }
+
+      if input[index] == '-' {
+        index = index + 1;
+      } else if input[index] == '+' {
+        index = index + 1;
+      }
+
+      if index >= input.len {
+        return std::Some<std::parse::ParseError>(std::parse::parse_error(ExpectedDigit, index));
+      }
+
+      var seen_exponent_digit = false;
+      var previous_exponent_digit = false;
+      while index < input.len {
+        let exponent_byte = input[index];
+        if exponent_byte == '_' {
+          if !allow_separators {
+            return std::Some<std::parse::ParseError>(std::parse::parse_error(InvalidSeparator, index));
+          }
+          if !previous_exponent_digit {
+            return std::Some<std::parse::ParseError>(std::parse::parse_error(InvalidSeparator, index));
+          }
+          if index + 1 >= input.len {
+            return std::Some<std::parse::ParseError>(std::parse::parse_error(InvalidSeparator, index));
+          }
+          match std::ascii::digit_value(input[index + 1]) {
+            std::Some(_) => {}
+            std::None => {
+              return std::Some<std::parse::ParseError>(std::parse::parse_error(InvalidSeparator, index));
+            }
+          }
+          previous_exponent_digit = false;
+          index = index + 1;
+        } else {
+          match std::ascii::digit_value(exponent_byte) {
+            std::Some(_) => {
+              seen_exponent_digit = true;
+              previous_exponent_digit = true;
+            }
+            std::None => {
+              return std::Some<std::parse::ParseError>(std::parse::parse_error(InvalidDigit, index));
+            }
+          }
+          index = index + 1;
+        }
+      }
+      if !seen_exponent_digit {
+        return std::Some<std::parse::ParseError>(std::parse::parse_error(ExpectedDigit, index));
+      }
+      if allow_separators && !previous_exponent_digit {
+        return std::Some<std::parse::ParseError>(std::parse::parse_error(InvalidSeparator, input.len - 1));
+      }
+    }
+  }
+
+  if index != input.len {
+    if input[index] == '_' {
+      return std::Some<std::parse::ParseError>(std::parse::parse_error(InvalidSeparator, index));
+    }
+    return std::Some<std::parse::ParseError>(std::parse::parse_error(InvalidDigit, index));
+  }
+  return std::None<std::parse::ParseError>();
+}
+
+pub fn float_error(values: std::Slice[u8]) -> std::Option[std::parse::ParseError] {
+  return std::parse::float_error_with_separator_policy(values, false);
+}
+
+pub fn float_with_underscores_error(values: std::Slice[u8]) -> std::Option[std::parse::ParseError] {
+  return std::parse::float_error_with_separator_policy(values, true);
+}
+
 pub fn float_or(values: std::Slice[u8], fallback: f64) -> f64 {
   let input = std::ascii::trim(values);
   if input.len == 0 {

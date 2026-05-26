@@ -4044,10 +4044,12 @@ parse::is_boolean(bytes)
 parse::boolean_or(bytes, fallback)
 parse::is_float(bytes)
 parse::float(bytes)
+parse::float_error(bytes)
 parse::float_optional(bytes)
 parse::float_or(bytes, fallback)
 parse::is_float_with_underscores(bytes)
 parse::float_with_underscores(bytes)
+parse::float_with_underscores_error(bytes)
 parse::float_with_underscores_optional(bytes)
 parse::float_with_underscores_or(bytes, fallback)
 parse::float_unchecked(bytes)
@@ -4090,6 +4092,10 @@ exponent. `float` returns `Result[f64, Error]` and reports `InvalidData` for
 empty, invalid, or trailing-garbage input. `float_optional` discards that error
 detail, `float_or` returns a fallback for invalid input, and `float_unchecked`
 preserves the old asserting behavior by panicking on invalid input.
+`float_error` and `float_with_underscores_error` return `Option[ParseError]`
+for strict and separator-aware float spelling diagnostics. They use
+`ExpectedDigit` for missing mantissa or exponent digits, `InvalidSeparator` for
+bad `_` placement, and `InvalidDigit` for unsupported trailing bytes.
 
 Use `parse::parse[T]` when the target type should choose the parser. It is the
 asserting typed entry point, `parse::parse_or[T]` is the fallback form, and

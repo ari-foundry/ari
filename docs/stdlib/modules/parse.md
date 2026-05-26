@@ -19,7 +19,7 @@ return `InvalidInput`; syntactically invalid, empty, or out-of-range values
 return `InvalidData`.
 
 For callers that need precise diagnostics without changing the default
-`Result[T, std::error::Error]` surface, the integer families also expose
+`Result[T, std::error::Error]` surface, the integer and float families expose
 `*_error` helpers. They return `Option[ParseError]`: `None` means the same
 input would parse successfully, and `Some(error)` carries a `ParseErrorKind`
 plus the byte offset in the ASCII-trimmed input where the diagnostic was
@@ -106,10 +106,12 @@ parse::is_boolean(bytes) -> bool
 parse::boolean_or(bytes, fallback) -> bool
 parse::is_float(bytes) -> bool
 parse::float(bytes) -> Result[f64, std::error::Error]
+parse::float_error(bytes) -> Option[ParseError]
 parse::float_optional(bytes) -> Option[f64]
 parse::float_or(bytes, fallback) -> f64
 parse::is_float_with_underscores(bytes) -> bool
 parse::float_with_underscores(bytes) -> Result[f64, std::error::Error]
+parse::float_with_underscores_error(bytes) -> Option[ParseError]
 parse::float_with_underscores_optional(bytes) -> Option[f64]
 parse::float_with_underscores_or(bytes, fallback) -> f64
 parse::float_unchecked(bytes) -> f64
@@ -191,7 +193,11 @@ accept `e` or `E`. Hex floats, `NaN`, `inf`, and locale decimal separators are
 future policy work.
 
 `float` returns `Result[f64, Error]` and reports `InvalidData` for empty input,
-unsupported spelling, or trailing garbage. `float_optional` is the compact
+unsupported spelling, or trailing garbage. `float_error` is the diagnostic
+helper for the same strict spelling. It returns `EmptyInput` for empty input,
+`ExpectedDigit` for sign-only input, a bare `.`, or a missing exponent digit,
+`InvalidSeparator` for `_` in the default strict parser, and `InvalidDigit` for
+other trailing or unsupported bytes. `float_optional` is the compact
 compatibility form for validation-style callers, `float_or` returns the parsed
 `f64` or the caller's fallback, and `float_unchecked` preserves the old
 asserting behavior by panicking when `is_float(bytes)` is false.
@@ -203,6 +209,8 @@ float may contain digit separators. The underscore rule is the same as for
 integers: `_` must sit between two decimal digits within the integer, fraction,
 or exponent digit run. Examples such as `1_000.5_0e1_2` and `.2_5` are valid;
 `1_.0`, `1._0`, `1e_2`, and `1__0` are invalid.
+`float_with_underscores_error` validates that same separator-aware policy and
+returns `InvalidSeparator` at the separator that made the spelling invalid.
 
 The `Parse` trait gives generic code one spelling for common built-in types:
 
@@ -260,7 +268,7 @@ tests/cases/standard-library/ok/parse/std-parse-basic.ari
 The focused test covers ASCII-trimmed signed integer parsing, radix wrappers
 for binary, octal, and hexadecimal input, unsigned integer parsing, boolean
 parsing, natural `Result` error categories for invalid data and invalid radix
-input, richer integer/unsigned `ParseError` diagnostics and offsets,
+input, richer integer/unsigned/float `ParseError` diagnostics and offsets,
 `_optional` compatibility helpers, underscore-aware integer/radix/float
 parsing, `Result` float parsing, float validation, float conversion,
 trait-backed typed parsing, and invalid whole-input cases. It is wired into
