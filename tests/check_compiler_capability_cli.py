@@ -67,11 +67,13 @@ def main():
     ok &= require_success(
         run_ari("--list-capabilities"),
         "CompilerCapabilityInventory version=1",
-        "entries=26",
+        "entries=28",
         "capability=functions status=implemented owner=parser/sema/backend",
         "capability=structs-and-field-layout status=implemented",
         "capability=generic-function-calls status=implemented",
         "capability=generic-aggregate-monomorphization status=implemented",
+        "capability=structural-capability-parameters status=planned",
+        "capability=union-by-fields status=planned",
         "capability=resolver-facing-artifact status=implemented",
         "capability=class-keyword status=rejected",
     )
@@ -84,6 +86,18 @@ def main():
         "CompilerCapability version=1 capability=trait-resolution status=implemented",
         'first_check="make check-traits"',
         "Rule status_values=[implemented, partial, planned, rejected] ordinary_compiler_work=true",
+    )
+    ok &= require_success(
+        run_ari("--explain-capability", "structural-capability-parameters"),
+        "CompilerCapability version=1 capability=structural-capability-parameters status=planned",
+        "has-method capability syntax",
+        "ordinary_compiler_work=true",
+    )
+    ok &= require_success(
+        run_ari("--explain-capability", "union-by-fields"),
+        "CompilerCapability version=1 capability=union-by-fields status=planned",
+        "discriminant-linked union fields",
+        "ordinary_compiler_work=true",
     )
     ok &= require_failure(
         run_ari("--explain-capability", "bytecode-backend"),

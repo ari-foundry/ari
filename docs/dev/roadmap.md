@@ -55,7 +55,10 @@ fn save(x: has serialize() -> String) {
 ```
 
 This is only a roadmap idea. It must not add an `interface` keyword, dynamic
-dispatch by accident, or a shortcut around normal trait-bound diagnostics.
+dispatch by accident, or a shortcut around normal trait-bound diagnostics. The
+compiler capability inventory tracks this as
+`structural-capability-parameters`; parser, type checking, trait-quality
+diagnostics, and lowering all remain future compiler work.
 
 Discriminant-linked union fields are also worth exploring for protocol and
 binary-format records whose payload shape is controlled by data already present
@@ -87,7 +90,8 @@ unchecked C unions, or `match`. A future design must specify construction
 rules, exhaustive arm checking against enum-like discriminants, ownership/drop
 for the active arm only, borrowing/narrowing after matching the discriminant,
 layout/ABI behavior, and diagnostics when the selector is not a stable field or
-context path.
+context path. The compiler capability inventory tracks this as
+`union-by-fields`.
 
 ## What Not To Track Here
 

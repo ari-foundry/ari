@@ -85,6 +85,7 @@ tests, or CI matrix work.
 | `std::parse` | Exact IEEE-754 boundary rounding diagnostics for decimal spellings adjacent to max finite/min subnormal values, and richer parse error taxonomy only where callers need it. |
 | `std::encoding` | Unicode normalization/transcoding and optional compression policy outside the core encoding module. |
 | `union by` language idea | Syntax is chosen for roadmap discussion, but construction, exhaustiveness, active-arm drop, narrowing, layout, and diagnostics remain compiler work. |
+| Structural capability parameters | The `fn save(x: has serialize() -> String)` idea is tracked as compiler capability `structural-capability-parameters`; parser syntax, type checking, trait-quality diagnostics, lowering, and final interaction with normal trait bounds remain compiler work. |
 
 ## Language Roadmap Interaction
 
@@ -102,3 +103,17 @@ fragment: union by security.cipher_type {
 It remains unimplemented. Future compiler work must define construction,
 exhaustiveness, active-arm drop, narrowing after discriminant checks, layout,
 and diagnostics before stdlib code can depend on it.
+
+Structural capability parameters are also language work rather than a stdlib
+API. The exploratory shape is:
+
+```ari
+fn save(x: has serialize() -> String) {
+  file.write(x.serialize())
+}
+```
+
+The compiler must still define whether this syntax desugars to anonymous trait
+bounds, how method names are resolved, how diagnostics point users toward named
+traits when that is clearer, and how it avoids introducing an `interface`
+keyword or accidental dynamic dispatch.
