@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `3306`
+- API entries: `3310`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,14 +32,14 @@ platform notes.
 | `alloc` | 891 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 900 | stable candidate |
-| `hosted` | 1328 | platform-backed |
+| `hosted` | 1332 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
 | `fn` | 1184 |
-| `method` | 1679 |
+| `method` | 1683 |
 | `module` | 39 |
 | `struct` | 173 |
 | `trait` | 39 |
@@ -69,7 +69,7 @@ platform notes.
 | `std::fs` | `hosted` | 325 |
 | `std::hash` | `alloc` | 24 |
 | `std::input` | `hosted` | 6 |
-| `std::io` | `hosted` | 107 |
+| `std::io` | `hosted` | 111 |
 | `std::iter` | `alloc` | 41 |
 | `std::log` | `hosted` | 12 |
 | `std::math` | `core` | 39 |
@@ -2214,7 +2214,11 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::io::PipeWriter::as_fd` | check-prelude std-io-pipe borrowed descriptor view from pipe writer; docs/stdlib/modules/io.md |
 | `method std::io::PipeWriter::close` | check-prelude std-io-pipe Result-returning pipe writer close helper; docs/stdlib/modules/io.md |
 | `method std::io::PipeWriter::close_bool` | check-prelude std-io-pipe bool compatibility pipe writer close helper; docs/stdlib/modules/io.md |
+| `method std::io::PipeWriter::close_on_exec` | check-prelude std-io-pipe Result-returning pipe writer close-on-exec descriptor flag query; docs/stdlib/modules/io.md |
+| `method std::io::PipeWriter::close_on_exec_optional` | check-prelude std-io-pipe Option-returning pipe writer close-on-exec compatibility query; docs/stdlib/modules/io.md |
 | `method std::io::PipeWriter::is_open` | check-prelude std-io-pipe pipe writer open predicate; docs/stdlib/modules/io.md |
+| `method std::io::PipeWriter::set_close_on_exec` | check-prelude std-io-pipe pipe writer close-on-exec descriptor flag setter; docs/stdlib/modules/io.md |
+| `method std::io::PipeWriter::set_close_on_exec_bool` | check-prelude std-io-pipe bool compatibility pipe writer close-on-exec setter; docs/stdlib/modules/io.md |
 | `method std::io::ReadByte::byte` | check-prelude std-io-result byte-read payload accessor; docs/stdlib/modules/io.md |
 | `method std::io::ReadByte::error` | check-prelude std-io-result byte-read error payload accessor; docs/stdlib/modules/io.md |
 | `method std::io::ReadByte::is_byte` | check-prelude std-io-result byte-read byte predicate; docs/stdlib/modules/io.md |

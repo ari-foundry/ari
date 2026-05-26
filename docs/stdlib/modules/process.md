@@ -273,10 +273,12 @@ Linux/POSIX runtime path, clearing uses `clearenv(3)` in the child setup just
 before `execvp`; assignment uses `setenv(3)` after any clear step, so explicit
 `env(...)` values remain visible to the child. `current_dir` is applied in the
 child just before `exec`. For `exec()` in the current process, setup failures
-return `Error`. For fork-based `spawn`/`status`/`output`, setup or `execvp`
-failure happens in the child and currently appears to the parent as exit status
-`127`; richer parent-visible setup errors require a future error-reporting pipe
-in the process runtime.
+return `Error`. For fork-based `spawn`/`status`/`output`, Ari creates a small
+close-on-exec setup-error pipe before forking. Child setup or `execvp` failures
+write the shared `Error` payload to that pipe, the parent waits for that failed
+child, and the public helper returns `Err(Error)` instead of reporting a
+synthetic child exit status. If `execvp` succeeds, close-on-exec closes the
+reporting pipe and the parent proceeds normally.
 
 `status_with_stdin(values)` spawns the child with a pipe connected to stdin,
 writes the provided bytes from the parent, closes the write end, and then waits
@@ -297,9 +299,10 @@ NUL bytes with `Error(InvalidInput)`. `status_with_stdin_null()` and
 `spawn_with_stdin_null()` are the explicit no-input policy and redirect stdin
 from `/dev/null`. If `current_dir` is also configured, the command applies the
 working directory before opening the stdin path, so relative stdin paths are
-resolved in the child working directory. Open or `dup2` failures happen in the
-forked child today and surface as exit status `127`; parent-visible setup
-errors require a future error-reporting pipe in the process runtime.
+resolved in the child working directory. Open or `dup2` failures use the same
+setup-error pipe as `spawn`/`status`, so a missing stdin file or failed
+descriptor redirect returns `Err(Error)` to the parent and the failed child is
+waited before the helper returns.
 
 The module-level wrappers `process::spawn(ref command)`,
 `process::status(ref command)`, `process::status_code(ref command)`,
@@ -574,8 +577,8 @@ fn main() -> i64 {
   and `Child` wait/kill/signal helpers.
   `output_in` is intended for small captured outputs today: large concurrent
   stdout/stderr streams need future readiness/nonblocking draining to avoid
-  pipe-buffer backpressure. Interactive streaming stdin, parent-visible setup
-  errors, and portable platform-specific status detail are future work.
+  pipe-buffer backpressure. Interactive streaming stdin and portable
+  platform-specific status detail are future work.
 - Exit runs through the host process immediately. Do not expect Ari destructors
   or zone cleanup to run after `process::exit`.
 - Abort also terminates immediately through the host runtime and should be
@@ -617,7 +620,8 @@ method and module-level `status`/`spawn`, module-level `exit_status`,
 wrappers. The typed-status fixture covers
 `ExitStatus`, `Command::exit_status`, `Child::wait_status`, normal exit codes,
 and signal termination. The output fixture covers method and module-level small
-stdout/stderr capture, exit status accessors, and missing command status `127`.
+stdout/stderr capture, exit status accessors, parent-visible missing-command
+setup errors, and missing stdin-file setup errors.
 The high-level fixture covers zone-backed `Command::arg`/`env_var`, typed
 by-value `with_arg`/`with_env`/`with_current_dir` chains, byte-boundary
 `arg_bytes`/`env_bytes`/`current_dir_path` helpers, NUL rejection,

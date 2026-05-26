@@ -803,8 +803,11 @@ success check, and `stdout()` / `stderr()` for borrowed `Slice[u8]` views.
 UTF-8, copy them into a zone-owned `String`, and return `Error(InvalidData)` for
 non-UTF-8 output. This slice is meant for small outputs today. File-backed and
 `/dev/null` stdin redirection helpers plus bounded pipe-backed stdin status
-helpers exist on `Command`; large concurrent streams, interactive streaming
-stdin handles, parent-visible child setup errors, portable Windows mapping, and
+helpers exist on `Command`. Fork-based `spawn`, `status`, stdin-redirection,
+and `output` helpers use a close-on-exec setup-error pipe so `chdir`, stdin
+open/`dup2`, stdout/stderr `dup2`, or `execvp` failures return `Err(Error)` to
+the parent instead of being hidden as status `127`. Large concurrent streams,
+interactive streaming stdin handles, portable Windows mapping, and
 platform-specific status detail are still future process-library work.
 
 `ChildStdin`, `ChildStdout`, and `ChildStderr` name the current pipe endpoint
@@ -2115,6 +2118,10 @@ pipe_reader.close() -> Result[(), io::Error]
 pipe_reader.close_bool() -> bool
 pipe_writer.as_fd()
 pipe_writer.is_open()
+pipe_writer.close_on_exec()
+pipe_writer.close_on_exec_optional()
+pipe_writer.set_close_on_exec(enabled)
+pipe_writer.set_close_on_exec_bool(enabled)
 pipe_writer.close() -> Result[(), io::Error]
 pipe_writer.close_bool() -> bool
 io::cursor(values)
@@ -2232,9 +2239,12 @@ returns `Result[io::Pipe, Error]` and wraps
 `io::pipe_optional()` only when the caller intentionally discards creation
 errors. The reader implements `Reader`, the writer implements `Writer`, and
 both expose explicit Result-returning close helpers plus `_bool`
-compatibility wrappers. `std::fs::File` implements `Reader`,
-`Writer`, and `Seek`; zone-owning buffered constructors remain a roadmap item
-until generic owned-buffer resource policy is specified.
+compatibility wrappers. `PipeWriter` also exposes close-on-exec query/set
+helpers over the underlying owned descriptor; process setup-error pipes use
+that flag so a successful `exec` closes the reporting channel automatically.
+`std::fs::File` implements `Reader`, `Writer`, and `Seek`; zone-owning buffered
+constructors remain a roadmap item until generic owned-buffer resource policy
+is specified.
 
 ## Memory And Zones
 

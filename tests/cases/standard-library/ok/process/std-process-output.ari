@@ -67,16 +67,15 @@ fn main() -> i64 {
 
   var missing = process::command("__ari_missing_command_for_output__");
   match missing.output_in(ref mut zone) {
-    Err(_) => {}
-    Ok(missing_value) => {
-      var missing_output = missing_value;
-      if missing_output.status() == 127 {
+    Err(reason) => {
+      if reason.is_not_found() && reason.code() == 2 {
         score = score + 23;
       }
-      if missing_output.stdout().len == 0 {
+      if reason.is_kind(error::NotFound) {
         score = score + 29;
       }
     }
+    Ok(_) => {}
   }
 
   var invalid_args = [

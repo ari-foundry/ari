@@ -23,6 +23,17 @@ fn main() -> i64 {
   if pipe.read_end().is_invalid() && pipe.write_end().is_invalid() {
     score = score + 1;
   }
+  if writer.set_close_on_exec(true).is_ok() {
+    score = score + 1;
+  }
+  match writer.close_on_exec() {
+    Ok(enabled) => {
+      if enabled {
+        score = score + 1;
+      }
+    }
+    Err(_) => {}
+  }
 
   var payload = [112u8, 105u8, 112u8, 101u8];
   if std::io::write_all<std::io::PipeWriter>(ref mut writer, payload.as_slice()).is_ok() {

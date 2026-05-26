@@ -112,6 +112,10 @@ pipe_reader.close() -> Result[(), Error]
 pipe_reader.close_bool() -> bool
 pipe_writer.as_fd()
 pipe_writer.is_open()
+pipe_writer.close_on_exec() -> Result[bool, Error]
+pipe_writer.close_on_exec_optional() -> Option[bool]
+pipe_writer.set_close_on_exec(enabled) -> Result[(), Error]
+pipe_writer.set_close_on_exec_bool(enabled) -> bool
 pipe_writer.close() -> Result[(), Error]
 pipe_writer.close_bool() -> bool
 io::cursor(values: Slice[u8]) -> io::Cursor
@@ -264,9 +268,13 @@ successful pipe owns the raw descriptor pair through `std::os::Pipe`, then
 `PipeReader` implements `Reader`, `PipeWriter` implements `Writer`, and both
 ends expose `as_fd()`, `is_open()`, and explicit Result-returning `close()`
 helpers. The `close_bool()` methods are compatibility wrappers for call sites
-that intentionally discard close errors. A pipe writer flush succeeds while
-its descriptor is open because writes go directly to the descriptor; use
-`BufWriter[PipeWriter]` for caller-managed buffering.
+that intentionally discard close errors. `PipeWriter::close_on_exec()` and
+`set_close_on_exec(enabled)` delegate to the owned descriptor flag and are used
+by process setup-error pipes so successful `exec` closes the reporting channel
+automatically. The `_optional` and `_bool` forms are compatibility wrappers for
+call sites that intentionally discard the error detail. A pipe writer flush
+succeeds while its descriptor is open because writes go directly to the
+descriptor; use `BufWriter[PipeWriter]` for caller-managed buffering.
 
 `BufReader[R]` and `BufWriter[W]` wrap any `Reader` or `Writer` with an
 explicit caller-provided `Slice[u8]` buffer. This keeps allocation visible and

@@ -28,6 +28,20 @@ fn unit_err_with_code(value: Result[(), error::Error]) -> bool {
   }
 }
 
+fn status_err_not_found(value: Result[process::ExitStatus, error::Error]) -> bool {
+  match value {
+    Ok(_) => { return false; }
+    Err(reason) => { return reason.is_not_found() && reason.code() == 2; }
+  }
+}
+
+fn child_err_not_found(value: Result[process::Child, error::Error]) -> bool {
+  match value {
+    Ok(_) => { return false; }
+    Err(reason) => { return reason.is_not_found() && reason.code() == 2; }
+  }
+}
+
 fn main() -> i64 {
   var zone = zone::temp(512);
   var score = 0;
@@ -107,6 +121,16 @@ fn main() -> i64 {
     score = score + 37;
   }
 
-  assert_eq_i64(score, 232);
+  var missing_status = process::Command::new("__ari_missing_command_for_status__");
+  if status_err_not_found(missing_status.status()) {
+    score = score + 2;
+  }
+
+  var missing_spawn = process::Command::new("__ari_missing_command_for_spawn__");
+  if child_err_not_found(missing_spawn.spawn()) {
+    score = score + 3;
+  }
+
+  assert_eq_i64(score, 237);
   return score;
 }

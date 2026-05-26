@@ -76,6 +76,18 @@ fn main() -> i64 {
     score = score + 37;
   }
 
-  assert_eq_i64(score, 180);
+  var missing_stdin_cmd = process::Command::new("sh")
+    .with_arg(ref mut zone, "-c")
+    .with_arg(ref mut zone, "cat >/dev/null");
+  match missing_stdin_cmd.status_with_stdin_file("__ari_missing_stdin_file__") {
+    Err(reason) => {
+      if reason.is_not_found() && reason.code() == 2 {
+        score = score + 13;
+      }
+    }
+    Ok(_) => {}
+  }
+
+  assert_eq_i64(score, 193);
   return score;
 }

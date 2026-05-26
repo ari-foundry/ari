@@ -826,11 +826,13 @@ check-prelude: $(TARGET)
 	grep -qx "VX" $(BUILD_DIR)/prelude/std-io-natural-api.err
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-pipe.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-pipe.ll
 	grep -F -q "std__io__PipeReader" $(BUILD_DIR)/prelude/std-io-pipe.ll
+	grep -F -q "std__io__PipeWriter8inherent13close_on_exec" $(BUILD_DIR)/prelude/std-io-pipe.ll
+	grep -F -q "std__io__PipeWriter8inherent17set_close_on_exec" $(BUILD_DIR)/prelude/std-io-pipe.ll
 	grep -q "@ari_builtin_os_read_byte" $(BUILD_DIR)/prelude/std-io-pipe.ll
 	grep -q "@ari_builtin_os_write_byte" $(BUILD_DIR)/prelude/std-io-pipe.ll
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-pipe.ari -o $(BUILD_DIR)/prelude/std-io-pipe.elf
-	$(BUILD_DIR)/prelude/std-io-pipe.elf; code=$$?; test $$code -eq 12
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/io/std-io-pipe.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-io-pipe.elf; $(BUILD_DIR)/prelude/std-io-pipe.elf; code=$$?; test $$code -eq 12; fi
+	$(BUILD_DIR)/prelude/std-io-pipe.elf; code=$$?; test $$code -eq 14
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/io/std-io-pipe.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-io-pipe.elf; $(BUILD_DIR)/prelude/std-io-pipe.elf; code=$$?; test $$code -eq 14; fi
 	$(TARGET) tests/cases/standard-library/ok/log/std-log-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-log-basic.ll
 	grep -q '_ARNv3std3log7message' $(BUILD_DIR)/prelude/std-log-basic.ll
 	grep -q '_ARNv3std3log5write' $(BUILD_DIR)/prelude/std-log-basic.ll
@@ -1589,7 +1591,7 @@ check-prelude: $(TARGET)
 	grep -F -q '@"setenv"' $(BUILD_DIR)/prelude/std-process-command.ll
 	grep -F -q '@"chdir"' $(BUILD_DIR)/prelude/std-process-command.ll
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-command.ari -o $(BUILD_DIR)/prelude/std-process-command.elf
-	$(BUILD_DIR)/prelude/std-process-command.elf; code=$$?; test $$code -eq 232
+	$(BUILD_DIR)/prelude/std-process-command.elf; code=$$?; test $$code -eq 237
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-output.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-output.ll
 	grep -F -q "std7process9output_in" $(BUILD_DIR)/prelude/std-process-output.ll
 	grep -F -q "std__process__Command8inherent9output_in" $(BUILD_DIR)/prelude/std-process-output.ll
@@ -1634,7 +1636,7 @@ check-prelude: $(TARGET)
 	grep -F -q '@"open"' $(BUILD_DIR)/prelude/std-process-stdin.ll
 	grep -F -q '@"dup2"' $(BUILD_DIR)/prelude/std-process-stdin.ll
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-stdin.ari -o $(BUILD_DIR)/prelude/std-process-stdin.elf
-	$(BUILD_DIR)/prelude/std-process-stdin.elf; code=$$?; test $$code -eq 180
+	$(BUILD_DIR)/prelude/std-process-stdin.elf; code=$$?; test $$code -eq 193
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-basic.elf; $(BUILD_DIR)/prelude/std-process-basic.elf; code=$$?; test $$code -eq 53; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-identity.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-identity.elf; $(BUILD_DIR)/prelude/std-process-identity.elf; code=$$?; test $$code -eq 26; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-exit.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-exit.elf; $(BUILD_DIR)/prelude/std-process-exit.elf; code=$$?; test $$code -eq 42; fi
@@ -1642,10 +1644,10 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-fork-wait.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-fork-wait.elf; $(BUILD_DIR)/prelude/std-process-fork-wait.elf; code=$$?; test $$code -eq 112; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-result.elf; $(BUILD_DIR)/prelude/std-process-result.elf; code=$$?; test $$code -eq 142; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-exit-status.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-exit-status.elf; $(BUILD_DIR)/prelude/std-process-exit-status.elf; code=$$?; test $$code -eq 83; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-command.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-command.elf; $(BUILD_DIR)/prelude/std-process-command.elf; code=$$?; test $$code -eq 232; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-command.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-command.elf; $(BUILD_DIR)/prelude/std-process-command.elf; code=$$?; test $$code -eq 237; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-output.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-output.elf; $(BUILD_DIR)/prelude/std-process-output.elf; code=$$?; test $$code -eq 221; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-high-level.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-high-level.elf; $(BUILD_DIR)/prelude/std-process-high-level.elf; code=$$?; test $$code -eq 110; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-stdin.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-stdin.elf; $(BUILD_DIR)/prelude/std-process-stdin.elf; code=$$?; test $$code -eq 180; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-stdin.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-stdin.elf; $(BUILD_DIR)/prelude/std-process-stdin.elf; code=$$?; test $$code -eq 193; fi
 	$(TARGET) tests/cases/standard-library/ok/thread/std-thread-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-thread-basic.ll
 	grep -q "@ari_builtin_thread_spawn" $(BUILD_DIR)/prelude/std-thread-basic.ll
 	grep -q "@ari_builtin_thread_join" $(BUILD_DIR)/prelude/std-thread-basic.ll

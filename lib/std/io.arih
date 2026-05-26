@@ -628,6 +628,22 @@ pub impl std::io::PipeWriter {
     return self.handle.is_open();
   }
 
+  fn close_on_exec_optional(self: ref Self) -> std::Option[bool] {
+    return self.close_on_exec().ok();
+  }
+
+  fn close_on_exec(self: ref Self) -> std::Result[bool, std::error::Error] {
+    return self.handle.close_on_exec();
+  }
+
+  fn set_close_on_exec_bool(self: ref Self, enabled: bool) -> bool {
+    return self.set_close_on_exec(enabled).is_ok();
+  }
+
+  fn set_close_on_exec(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
+    return self.handle.set_close_on_exec(enabled);
+  }
+
   fn close(self: ref mut Self) -> std::Result[(), std::error::Error] {
     return self.handle.close();
   }

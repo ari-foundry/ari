@@ -212,8 +212,7 @@ covers explicit-zone `Command::arg`/`env_var`, typed `ExitCode`, typed
 `Signal`, child stream endpoint aliases, current/executable path wrappers, and
 temp file/temp dir constructors. Remaining process runtime matrix work is
 large-output readiness or nonblocking draining, interactive stdin handles,
-parent-visible setup errors, richer platform status fields, and non-POSIX
-mapping.
+richer platform status fields, and non-POSIX mapping.
 
 ## Completed Sprint: C FFI
 

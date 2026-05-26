@@ -477,8 +477,144 @@ fn exec_with_argv_stdin(
   return std::Err<(), std::error::Error>(std::c::error());
 }
 
-fn redirect_descriptor(source: i64, target: i64) -> bool {
-  return raw_dup2(source as c_int, target as c_int) >= 0;
+fn redirect_descriptor_result(source: i64, target: i64) -> std::Result[(), std::error::Error] {
+  if raw_dup2(source as c_int, target as c_int) >= 0 {
+    return std::Ok<(), std::error::Error>(());
+  }
+  return std::Err<(), std::error::Error>(std::c::error());
+}
+
+fn write_setup_error(writer: ref mut std::io::PipeWriter, reason: std::error::Error) -> void {
+  var raw = reason.raw();
+  var shift = 0;
+  while shift < 64 {
+    let byte = ((raw >> shift) & 255) as u8;
+    writer.write_byte(byte);
+    shift = shift + 8;
+  }
+}
+
+fn read_setup_error(reader: ref mut std::io::PipeReader) -> std::Result[std::Option[std::error::Error], std::error::Error] {
+  match reader.read_one() {
+    std::io::ReadByteEof => {
+      return std::Ok<std::Option[std::error::Error], std::error::Error>(std::None<std::error::Error>());
+    }
+    std::io::ReadByteError(first_read_reason) => {
+      return std::Err<std::Option[std::error::Error], std::error::Error>(first_read_reason);
+    }
+    std::io::ReadByteValue(first) => {
+      var raw = first as i64;
+      var shift = 8;
+      while shift < 64 {
+        match reader.read_one() {
+          std::io::ReadByteValue(byte) => {
+            raw = raw | ((byte as i64) << shift);
+          }
+          std::io::ReadByteEof => {
+            return std::Err<std::Option[std::error::Error], std::error::Error>(
+              std::error::new(std::error::UnexpectedEof)
+            );
+          }
+          std::io::ReadByteError(next_read_reason) => {
+            return std::Err<std::Option[std::error::Error], std::error::Error>(next_read_reason);
+          }
+        }
+        shift = shift + 8;
+      }
+      return std::Ok<std::Option[std::error::Error], std::error::Error>(
+        std::Some<std::error::Error>(std::error::from_raw(raw))
+      );
+    }
+  }
+}
+
+fn wait_then_error(pid: i64, reason: std::error::Error) -> std::Result[std::process::Child, std::error::Error] {
+  std::process::wait_status(pid);
+  return std::Err<std::process::Child, std::error::Error>(reason);
+}
+
+fn spawn_checked(
+  command: ref std::process::Command,
+  stdin_enabled: bool,
+  stdin_path: std::c::CStr
+) -> std::Result[std::process::Child, std::error::Error] {
+  let maybe_setup_pipe = std::io::pipe();
+  if maybe_setup_pipe.is_err() {
+    return std::Err<std::process::Child, std::error::Error>(maybe_setup_pipe.unwrap_err());
+  }
+  var setup_pipe = maybe_setup_pipe.unwrap();
+  var setup_reader = setup_pipe.take_reader();
+  var setup_writer = setup_pipe.take_writer();
+  match setup_writer.set_close_on_exec(true) {
+    std::Err(close_on_exec_reason) => {
+      setup_reader.close();
+      setup_writer.close();
+      return std::Err<std::process::Child, std::error::Error>(close_on_exec_reason);
+    }
+    std::Ok(_) => {}
+  }
+
+  var scratch = zone::temp(std::process::argv_capacity(command));
+  let argv = std::process::build_argv(ref mut scratch, command);
+
+  match std::process::fork() {
+    std::Err(fork_reason) => {
+      setup_reader.close();
+      setup_writer.close();
+      return std::Err<std::process::Child, std::error::Error>(fork_reason);
+    }
+    std::Ok(pid) => {
+      if std::process::is_child(pid) {
+        setup_reader.close();
+        if stdin_enabled {
+          match std::process::exec_with_argv_stdin(command, argv, stdin_path) {
+            std::Err(stdin_exec_reason) => {
+              std::process::write_setup_error(ref mut setup_writer, stdin_exec_reason);
+            }
+            std::Ok(_) => {}
+          }
+        } else {
+          match std::process::exec_with_argv(command, argv) {
+            std::Err(exec_reason) => {
+              std::process::write_setup_error(ref mut setup_writer, exec_reason);
+            }
+            std::Ok(_) => {}
+          }
+        }
+        setup_writer.close();
+        std::process::exit(127);
+      }
+
+      setup_writer.close();
+      match std::process::read_setup_error(ref mut setup_reader) {
+        std::Err(read_reason) => {
+          setup_reader.close();
+          return std::process::wait_then_error(pid, read_reason);
+        }
+        std::Ok(maybe_reason) => {
+          setup_reader.close();
+          match maybe_reason {
+            std::Some(setup_reason) => {
+              return std::process::wait_then_error(pid, setup_reason);
+            }
+            std::None => {
+              return std::Ok<std::process::Child, std::error::Error>(std::process::Child { pid_value: pid });
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+fn wait_then_status_error(pid: i64, reason: std::error::Error) -> std::Result[std::process::ExitStatus, std::error::Error] {
+  std::process::wait_status(pid);
+  return std::Err<std::process::ExitStatus, std::error::Error>(reason);
+}
+
+fn wait_then_output_error(pid: i64, reason: std::error::Error) -> std::Result[std::process::Output, std::error::Error] {
+  std::process::wait_status(pid);
+  return std::Err<std::process::Output, std::error::Error>(reason);
 }
 
 fn redirect_stdin_from_path(path: std::c::CStr) -> std::Result[(), std::error::Error] {
@@ -500,21 +636,7 @@ fn spawn_with_stdin_cstr(
   command: ref std::process::Command,
   stdin_path: std::c::CStr
 ) -> std::Result[std::process::Child, std::error::Error] {
-  var scratch = zone::temp(std::process::argv_capacity(command));
-  let argv = std::process::build_argv(ref mut scratch, command);
-
-  match std::process::fork() {
-    std::Err(reason) => {
-      return std::Err<std::process::Child, std::error::Error>(reason);
-    }
-    std::Ok(pid) => {
-      if std::process::is_child(pid) {
-        std::process::exec_with_argv_stdin(command, argv, stdin_path);
-        std::process::exit(127);
-      }
-      return std::Ok<std::process::Child, std::error::Error>(std::process::Child { pid_value: pid });
-    }
-  }
+  return std::process::spawn_checked(command, true, stdin_path);
 }
 
 fn status_with_stdin_cstr(
@@ -542,6 +664,25 @@ fn status_with_stdin_pipe(
   var pipe = maybe_pipe.unwrap();
   var reader = pipe.take_reader();
   var writer = pipe.take_writer();
+  let maybe_setup_pipe = std::io::pipe();
+  if maybe_setup_pipe.is_err() {
+    reader.close();
+    writer.close();
+    return std::Err<std::process::ExitStatus, std::error::Error>(maybe_setup_pipe.unwrap_err());
+  }
+  var setup_pipe = maybe_setup_pipe.unwrap();
+  var setup_reader = setup_pipe.take_reader();
+  var setup_writer = setup_pipe.take_writer();
+  match setup_writer.set_close_on_exec(true) {
+    std::Err(close_on_exec_reason) => {
+      reader.close();
+      writer.close();
+      setup_reader.close();
+      setup_writer.close();
+      return std::Err<std::process::ExitStatus, std::error::Error>(close_on_exec_reason);
+    }
+    std::Ok(_) => {}
+  }
   var scratch = zone::temp(std::process::argv_capacity(command));
   let argv = std::process::build_argv(ref mut scratch, command);
 
@@ -549,20 +690,53 @@ fn status_with_stdin_pipe(
     std::Err(reason) => {
       reader.close();
       writer.close();
+      setup_reader.close();
+      setup_writer.close();
       return std::Err<std::process::ExitStatus, std::error::Error>(reason);
     }
     std::Ok(pid) => {
       if std::process::is_child(pid) {
+        setup_reader.close();
         writer.close();
-        if !std::process::redirect_descriptor(reader.as_fd().raw(), 0) {
-          std::process::exit(127);
+        match std::process::redirect_descriptor_result(reader.as_fd().raw(), 0) {
+          std::Err(redirect_reason) => {
+            std::process::write_setup_error(ref mut setup_writer, redirect_reason);
+            setup_writer.close();
+            std::process::exit(127);
+          }
+          std::Ok(_) => {}
         }
         reader.close();
-        std::process::exec_with_argv(command, argv);
+        match std::process::exec_with_argv(command, argv) {
+          std::Err(exec_reason) => {
+            std::process::write_setup_error(ref mut setup_writer, exec_reason);
+          }
+          std::Ok(_) => {}
+        }
+        setup_writer.close();
         std::process::exit(127);
       }
 
+      setup_writer.close();
       reader.close();
+      match std::process::read_setup_error(ref mut setup_reader) {
+        std::Err(read_reason) => {
+          setup_reader.close();
+          writer.close();
+          return std::process::wait_then_status_error(pid, read_reason);
+        }
+        std::Ok(maybe_reason) => {
+          setup_reader.close();
+          match maybe_reason {
+            std::Some(setup_reason) => {
+              writer.close();
+              return std::process::wait_then_status_error(pid, setup_reason);
+            }
+            std::None => {}
+          }
+        }
+      }
+
       match std::io::write_all<std::io::PipeWriter>(ref mut writer, values) {
         std::Err(write_reason) => {
           writer.close();
@@ -1065,21 +1239,7 @@ pub impl std::process::Command {
   }
 
   fn spawn(self: ref Self) -> std::Result[std::process::Child, std::error::Error] {
-    var scratch = zone::temp(std::process::argv_capacity(self));
-    let argv = std::process::build_argv(ref mut scratch, self);
-
-    match std::process::fork() {
-      std::Err(reason) => {
-        return std::Err<std::process::Child, std::error::Error>(reason);
-      }
-      std::Ok(pid) => {
-        if std::process::is_child(pid) {
-          std::process::exec_with_argv(self, argv);
-          std::process::exit(127);
-        }
-        return std::Ok<std::process::Child, std::error::Error>(std::process::Child { pid_value: pid });
-      }
-    }
+    return std::process::spawn_checked(self, false, std::c::from_string(""));
   }
 
   fn spawn_with_stdin_file(self: ref Self, path: string) -> std::Result[std::process::Child, std::error::Error] {
@@ -1181,11 +1341,32 @@ pub impl std::process::Command {
       return std::Err<std::process::Output, std::error::Error>(maybe_stderr_pipe.unwrap_err());
     }
     var stderr_pipe = maybe_stderr_pipe.unwrap();
+    let maybe_setup_pipe = std::io::pipe();
+    if maybe_setup_pipe.is_err() {
+      stdout_pipe.close();
+      stderr_pipe.close();
+      return std::Err<std::process::Output, std::error::Error>(maybe_setup_pipe.unwrap_err());
+    }
+    var setup_pipe = maybe_setup_pipe.unwrap();
 
     var stdout_reader = stdout_pipe.take_reader();
     var stdout_writer = stdout_pipe.take_writer();
     var stderr_reader = stderr_pipe.take_reader();
     var stderr_writer = stderr_pipe.take_writer();
+    var setup_reader = setup_pipe.take_reader();
+    var setup_writer = setup_pipe.take_writer();
+    match setup_writer.set_close_on_exec(true) {
+      std::Err(close_on_exec_reason) => {
+        stdout_reader.close();
+        stdout_writer.close();
+        stderr_reader.close();
+        stderr_writer.close();
+        setup_reader.close();
+        setup_writer.close();
+        return std::Err<std::process::Output, std::error::Error>(close_on_exec_reason);
+      }
+      std::Ok(_) => {}
+    }
     var scratch = zone::temp(std::process::argv_capacity(self));
     let argv = std::process::build_argv(ref mut scratch, self);
 
@@ -1195,26 +1376,65 @@ pub impl std::process::Command {
         stdout_writer.close();
         stderr_reader.close();
         stderr_writer.close();
+        setup_reader.close();
+        setup_writer.close();
         return std::Err<std::process::Output, std::error::Error>(reason);
       }
       std::Ok(pid) => {
         if std::process::is_child(pid) {
           stdout_reader.close();
           stderr_reader.close();
-          if !std::process::redirect_descriptor(stdout_writer.as_fd().raw(), 1) {
-            std::process::exit(127);
+          setup_reader.close();
+          match std::process::redirect_descriptor_result(stdout_writer.as_fd().raw(), 1) {
+            std::Err(stdout_reason) => {
+              std::process::write_setup_error(ref mut setup_writer, stdout_reason);
+              setup_writer.close();
+              std::process::exit(127);
+            }
+            std::Ok(_) => {}
           }
-          if !std::process::redirect_descriptor(stderr_writer.as_fd().raw(), 2) {
-            std::process::exit(127);
+          match std::process::redirect_descriptor_result(stderr_writer.as_fd().raw(), 2) {
+            std::Err(stderr_reason) => {
+              std::process::write_setup_error(ref mut setup_writer, stderr_reason);
+              setup_writer.close();
+              std::process::exit(127);
+            }
+            std::Ok(_) => {}
           }
           stdout_writer.close();
           stderr_writer.close();
-          std::process::exec_with_argv(self, argv);
+          match std::process::exec_with_argv(self, argv) {
+            std::Err(exec_reason) => {
+              std::process::write_setup_error(ref mut setup_writer, exec_reason);
+            }
+            std::Ok(_) => {}
+          }
+          setup_writer.close();
           std::process::exit(127);
         }
 
         stdout_writer.close();
         stderr_writer.close();
+        setup_writer.close();
+        match std::process::read_setup_error(ref mut setup_reader) {
+          std::Err(read_reason) => {
+            setup_reader.close();
+            stdout_reader.close();
+            stderr_reader.close();
+            return std::process::wait_then_output_error(pid, read_reason);
+          }
+          std::Ok(maybe_reason) => {
+            setup_reader.close();
+            match maybe_reason {
+              std::Some(setup_reason) => {
+                stdout_reader.close();
+                stderr_reader.close();
+                return std::process::wait_then_output_error(pid, setup_reason);
+              }
+              std::None => {}
+            }
+          }
+        }
         var stdout_bytes = std::io::read_all<std::io::PipeReader>(zone, ref mut stdout_reader);
         var stderr_bytes = std::io::read_all<std::io::PipeReader>(zone, ref mut stderr_reader);
         stdout_reader.close();

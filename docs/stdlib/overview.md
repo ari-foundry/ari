@@ -304,9 +304,10 @@ handles, typed `ExitStatus`/`ExitCode` values, typed `Signal`, `Output`
 handles, stdout/stderr capture for small outputs, child-stream endpoint
 aliases, current/executable path wrappers, temp file/dir constructors, and
 `kill`/`kill_signal`. Bounded pipe-backed stdin plus file-backed and
-`/dev/null` stdin redirection are available at execution time. Large-stream
-readiness, interactive streaming stdin handles, parent-visible child setup
-errors, richer platform status fields, and Windows process mapping remain
+`/dev/null` stdin redirection are available at execution time, and fork-based
+command helpers surface child setup and `execvp` failures through a
+close-on-exec error pipe. Large-stream readiness, interactive streaming stdin
+handles, richer platform status fields, and Windows process mapping remain
 roadmap work.
 
 `std::thread` is the first thread slice. `spawn`, `join`, `detach`,
