@@ -132,6 +132,56 @@ fn main() -> i64 {
     }
   }
 
+  match net::service_port("http") {
+    Ok(http_port) => {
+      if http_port == 80 as u16 {
+        score = score + 2097152;
+      }
+    }
+    Err(_http_reason) => {
+      panic();
+    }
+  }
+
+  match net::service_port_optional("HTTPS") {
+    Some(https_port) => {
+      if https_port == 443 as u16 {
+        score = score + 4194304;
+      }
+    }
+    None => {
+      panic();
+    }
+  }
+
+  if net::service_port("not-a-service").is_err() {
+    score = score + 8388608;
+  }
+
+  match net::resolve_service(ref mut arena, "127.0.0.1", "http") {
+    Ok(service_addrs) => {
+      if service_addrs.len() > 0 && service_addrs.get(0).is_loopback() &&
+        service_addrs.get(0).port() == 80 as u16 {
+        score = score + 16777216;
+      }
+    }
+    Err(_service_reason) => {
+      panic();
+    }
+  }
+
+  match net::to_socket_addrs_service(ref mut arena, "127.0.0.1", "https") {
+    Ok(service_module_addrs) => {
+      if service_module_addrs.len() > 0 && service_module_addrs.get(0).is_loopback() &&
+        service_module_addrs.get(0).port() == 443 as u16 {
+        score = score + 33554432;
+      }
+    }
+    Err(_service_module_reason) => {
+      panic();
+    }
+  }
+
   match net::resolve("[::1]:8088") {
     Ok(resolved_v6) => {
       if resolved_v6.is_loopback() && resolved_v6.port() == 8088 as u16 && resolved_v6.ip().is_v6() {
@@ -191,6 +241,6 @@ fn main() -> i64 {
   }
 
   zone::destroy(arena);
-  assert_eq_i64(score, 1572863);
+  assert_eq_i64(score, 66584575);
   return score;
 }

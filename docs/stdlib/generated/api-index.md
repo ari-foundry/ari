@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `3382`
+- API entries: `3388`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,13 +32,13 @@ platform notes.
 | `alloc` | 893 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 902 | stable candidate |
-| `hosted` | 1388 | platform-backed |
+| `hosted` | 1394 | platform-backed |
 | `platform` | 163 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1188 |
+| `fn` | 1194 |
 | `method` | 1744 |
 | `module` | 39 |
 | `struct` | 178 |
@@ -74,7 +74,7 @@ platform notes.
 | `std::log` | `hosted` | 12 |
 | `std::math` | `core` | 39 |
 | `std::mem` | `core` | 13 |
-| `std::net` | `hosted` | 288 |
+| `std::net` | `hosted` | 294 |
 | `std::option` | `core` | 12 |
 | `std::os` | `platform` | 62 |
 | `std::parse` | `core` | 101 |
@@ -2496,6 +2496,11 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::net::resolve_all` | check-prelude std-net-dns-lookup zone-backed multi-address host resolver; docs/stdlib/modules/net.md |
 | `fn std::net::resolve_optional` | check-prelude std-net-dns-lookup Option-returning host-port endpoint resolver compatibility helper; docs/stdlib/modules/net.md |
 | `fn std::net::resolve_raw` | check-prelude std-net-dns-lookup raw Result-returning host-port endpoint resolver; docs/stdlib/modules/net.md |
+| `fn std::net::resolve_service` | check-prelude std-net-dns-lookup service-name host resolver using the stdlib service table; docs/stdlib/modules/net.md |
+| `fn std::net::service_port` | check-prelude std-net-dns-lookup Result-returning well-known service-name port lookup; docs/stdlib/modules/net.md |
+| `fn std::net::service_port_bytes` | check-prelude std-net-dns-lookup byte-slice service-name port lookup; docs/stdlib/modules/net.md |
+| `fn std::net::service_port_bytes_optional` | check-prelude std-net-dns-lookup Option-returning byte-slice service-name port lookup; docs/stdlib/modules/net.md |
+| `fn std::net::service_port_optional` | check-prelude std-net-dns-lookup Option-returning well-known service-name port lookup; docs/stdlib/modules/net.md |
 | `fn std::net::socket_addr` | check-prelude std-net-addresses source socket address constructor; docs/stdlib/modules/net.md |
 | `fn std::net::tcp_connect` | check-prelude std-net-tcp-loopback explicit TCP connect helper returning Error; docs/stdlib/modules/net.md |
 | `fn std::net::tcp_connect_host` | check-prelude std-net-dns-lookup explicit host-port TCP connect helper; docs/stdlib/modules/net.md |
@@ -2503,6 +2508,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::net::tcp_listen` | check-prelude std-net-tcp-loopback explicit TCP listener helper returning Error; docs/stdlib/modules/net.md |
 | `fn std::net::tcp_listen_v6` | check-prelude std-net-ipv6-socket explicit IPv6 TCP listener helper returning Error; docs/stdlib/modules/net.md |
 | `fn std::net::to_socket_addrs` | check-prelude std-net-dns-lookup module-level ToSocketAddrs-shaped endpoint resolver returning Vec; docs/stdlib/modules/net.md |
+| `fn std::net::to_socket_addrs_service` | check-prelude std-net-dns-lookup module-level service-name resolver returning Vec; docs/stdlib/modules/net.md |
 | `fn std::net::try_lookup_v4` | check-prelude std-net-dns-lookup Option-returning IPv4 name lookup compatibility alias; docs/stdlib/modules/net.md |
 | `fn std::net::try_lookup_v6` | check-prelude std-net-dns-lookup Option-returning IPv6 name lookup compatibility alias; docs/stdlib/modules/net.md |
 | `fn std::net::try_resolve` | check-prelude std-net-dns-lookup Option-returning host-port endpoint resolver compatibility alias; docs/stdlib/modules/net.md |

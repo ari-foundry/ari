@@ -225,6 +225,69 @@ pub fn try_lookup_v6(host: string, port: u16) -> std::Option[SocketAddr] {
   return lookup_v6_optional(host, port);
 }
 
+fn known_service_port(name: std::Slice[u8]) -> std::Option[u16] {
+  if std::ascii::equals_ignore_case(name, std::string::bytes("http")) {
+    return std::Some<u16>(80 as u16);
+  }
+  if std::ascii::equals_ignore_case(name, std::string::bytes("https")) {
+    return std::Some<u16>(443 as u16);
+  }
+  if std::ascii::equals_ignore_case(name, std::string::bytes("ssh")) {
+    return std::Some<u16>(22 as u16);
+  }
+  if std::ascii::equals_ignore_case(name, std::string::bytes("domain")) {
+    return std::Some<u16>(53 as u16);
+  }
+  if std::ascii::equals_ignore_case(name, std::string::bytes("dns")) {
+    return std::Some<u16>(53 as u16);
+  }
+  if std::ascii::equals_ignore_case(name, std::string::bytes("smtp")) {
+    return std::Some<u16>(25 as u16);
+  }
+  if std::ascii::equals_ignore_case(name, std::string::bytes("submission")) {
+    return std::Some<u16>(587 as u16);
+  }
+  if std::ascii::equals_ignore_case(name, std::string::bytes("imap")) {
+    return std::Some<u16>(143 as u16);
+  }
+  if std::ascii::equals_ignore_case(name, std::string::bytes("imaps")) {
+    return std::Some<u16>(993 as u16);
+  }
+  if std::ascii::equals_ignore_case(name, std::string::bytes("pop3")) {
+    return std::Some<u16>(110 as u16);
+  }
+  if std::ascii::equals_ignore_case(name, std::string::bytes("pop3s")) {
+    return std::Some<u16>(995 as u16);
+  }
+  if std::ascii::equals_ignore_case(name, std::string::bytes("ntp")) {
+    return std::Some<u16>(123 as u16);
+  }
+  return std::None<u16>();
+}
+
+pub fn service_port_bytes(name: std::Slice[u8]) -> std::Result[u16, std::error::Error] {
+  match known_service_port(name) {
+    std::Some(port) => {
+      return std::Ok<u16, std::error::Error>(port);
+    }
+    std::None => {
+      return std::Err<u16, std::error::Error>(std::error::new(std::error::InvalidInput));
+    }
+  }
+}
+
+pub fn service_port_bytes_optional(name: std::Slice[u8]) -> std::Option[u16] {
+  return known_service_port(name);
+}
+
+pub fn service_port(name: string) -> std::Result[u16, std::error::Error] {
+  return service_port_bytes(std::string::bytes(name));
+}
+
+pub fn service_port_optional(name: string) -> std::Option[u16] {
+  return service_port_bytes_optional(std::string::bytes(name));
+}
+
 fn endpoint_port(endpoint: string) -> std::Option[u16] {
   let bytes = std::string::bytes(endpoint);
   if bytes.len > 0 && bytes[0] == '[' {
@@ -297,6 +360,29 @@ fn endpoint_port(endpoint: string) -> std::Option[u16] {
   }
 
   return std::Some<u16>(port as u16);
+}
+
+pub fn resolve_service(
+  zone: ref mut Zone,
+  host: string,
+  service: string
+) -> std::Result[std::vec::Vec[SocketAddr], std::error::Error] {
+  match service_port(service) {
+    std::Ok(port) => {
+      return resolve_all(zone, host, port);
+    }
+    std::Err(reason) => {
+      return std::Err<std::vec::Vec<SocketAddr>, std::error::Error>(reason);
+    }
+  }
+}
+
+pub fn to_socket_addrs_service(
+  zone: ref mut Zone,
+  host: string,
+  service: string
+) -> std::Result[std::vec::Vec[SocketAddr], std::error::Error] {
+  return resolve_service(zone, host, service);
 }
 
 fn endpoint_is_bracketed_v6(endpoint: string) -> bool {

@@ -1852,12 +1852,18 @@ net::lookup_v6(host, port)
 net::lookup_v6_optional(host, port)
 net::try_lookup_v6(host, port)
 net::lookup_v6_raw(host, port)
+net::service_port(name)
+net::service_port_optional(name)
+net::service_port_bytes(bytes)
+net::service_port_bytes_optional(bytes)
 net::resolve(endpoint)
 net::resolve_optional(endpoint)
 net::try_resolve(endpoint)
 net::resolve_raw(endpoint)
 net::resolve_all(zone, host, port)
+net::resolve_service(zone, host, service)
 net::to_socket_addrs(zone, endpoint)
+net::to_socket_addrs_service(zone, host, service)
 net::listen(addr)
 net::tcp_listen(addr)
 net::tcp_listen_v6(addr)
@@ -2062,9 +2068,15 @@ the same Result/optional/raw naming policy. `resolve("host:port")`,
 and bracketed IPv6 endpoint spellings, rejecting malformed endpoints as
 `InvalidInput` before calling the resolver.
 `resolve_optional` and `try_resolve` keep the old absence-only shape.
-`resolve_all(zone, host, port)` and `to_socket_addrs(zone, endpoint)` return
-zone-backed `Vec[SocketAddr]` values; the hosted implementation currently
-collects the first IPv4 and first IPv6 address exposed by the resolver.
+`service_port(name)` and `service_port_bytes(bytes)` map the documented
+well-known service table to numeric ports, returning `Error(InvalidInput)` for
+unknown names. `_optional` forms intentionally collapse unknown service names
+to absence.
+`resolve_all(zone, host, port)`, `resolve_service(zone, host, service)`,
+`to_socket_addrs(zone, endpoint)`, and
+`to_socket_addrs_service(zone, host, service)` return zone-backed
+`Vec[SocketAddr]` values; the hosted implementation currently collects the
+first IPv4 and first IPv6 address exposed by the resolver.
 `string` implements the matching `ToSocketAddrs` trait shape.
 Matching `*_raw` helpers are compatibility-only bridges for
 low-level callers that still need raw integer errors.
@@ -2092,9 +2104,10 @@ compatibility call sites concise when they intentionally discard the reason.
 Host-port `connect_host` first resolves through `resolve`, then delegates to
 `TcpStream::connect`. `*_ready` helpers expose single-descriptor readiness
 over `std::os::poll_read`/`poll_write`; they are advisory and callers must
-still handle the actual operation result. Full `getaddrinfo` iteration,
-multicast, TTL/hop-limit, multi-descriptor poll/event loops, TLS packaging
-decisions, and timeout-specific error results remain roadmap work.
+still handle the actual operation result. Full `getaddrinfo` iteration, host
+service-database lookup, multicast, TTL/hop-limit, multi-descriptor poll/event
+loops, TLS packaging decisions, and timeout-specific error results remain
+roadmap work.
 
 ## IO And Input
 

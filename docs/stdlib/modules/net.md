@@ -47,12 +47,18 @@ net::lookup_v6(host, port)
 net::lookup_v6_optional(host, port)
 net::try_lookup_v6(host, port)
 net::lookup_v6_raw(host, port)
+net::service_port(name)
+net::service_port_optional(name)
+net::service_port_bytes(bytes)
+net::service_port_bytes_optional(bytes)
 net::resolve(endpoint)
 net::resolve_optional(endpoint)
 net::try_resolve(endpoint)
 net::resolve_raw(endpoint)
 net::resolve_all(zone, host, port)
+net::resolve_service(zone, host, service)
 net::to_socket_addrs(zone, endpoint)
+net::to_socket_addrs_service(zone, host, service)
 net::listen(addr)
 net::tcp_listen(addr)
 net::tcp_listen_v6(addr)
@@ -356,6 +362,15 @@ returns `Result[SocketAddr, Error]`; `lookup_v6_optional`/`try_lookup_v6`
 discard the reason intentionally, and `lookup_v6_raw` keeps the compact
 raw bridge for runtime tests.
 
+`service_port(name)` maps a small documented table of well-known service names
+to numeric ports and returns `Result[u16, Error]`. The table is
+ASCII-case-insensitive and currently covers `http`, `https`, `ssh`, `domain`,
+`dns`, `smtp`, `submission`, `imap`, `imaps`, `pop3`, `pop3s`, and `ntp`.
+Unknown names return `Error(InvalidInput)`. Use `service_port_optional(name)`
+or `service_port_bytes_optional(bytes)` only when an unknown service should be
+ordinary absence. This is a deterministic stdlib table, not a lookup through
+the host `/etc/services` database.
+
 `resolve(endpoint)` accepts the common `"host:port"` IPv4 spelling and the
 bracketed IPv6 spelling `"[host]:port"`, returning
 `Result[SocketAddr, Error]`. `resolve_optional(endpoint)` and
@@ -372,19 +387,24 @@ neither family resolves. `to_socket_addrs(zone, endpoint)` is the module-level
 host-port convenience wrapper for code that wants the same `Vec[SocketAddr]`
 shape as the `ToSocketAddrs` trait. `string` implements `ToSocketAddrs`, so
 generic code can ask a host-port string for addresses without spelling the
-resolver function directly. Use brackets for IPv6 endpoints:
+resolver function directly. `resolve_service(zone, host, service)` and
+`to_socket_addrs_service(zone, host, service)` are the service-name variants:
+they first map the service with `service_port`, then call `resolve_all`.
+Use brackets for IPv6 endpoints:
 
 ```ari
 var zone = zone::create(1024);
 let loopback = net::lookup_v6("::1", 8080 as u16).unwrap();
 let endpoint = net::resolve("[::1]:8080").unwrap();
 let addrs = net::to_socket_addrs(ref mut zone, "[::1]:8080").unwrap();
+let web = net::resolve_service(ref mut zone, "127.0.0.1", "http").unwrap();
 assert(addrs.len() > 0);
+assert(web.get(0).port() == 80 as u16);
 zone::destroy(zone);
 ```
 
-Detailed `getaddrinfo` error categories, service names, canonical names, and
-full `getaddrinfo` linked-list iteration are future work.
+Detailed `getaddrinfo` error categories, host service-database lookup,
+canonical names, and full `getaddrinfo` linked-list iteration are future work.
 
 ## TCP Sockets
 
@@ -639,7 +659,7 @@ return ptr_load(output.as_slice().as_ptr()) as i64;
 | --- | --- |
 | IP address | Current: `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, constructors, strict and fallible indexed accessors, family predicates, loopback/unspecified checks. |
 | Socket address | Current: `SocketAddr`, `socket_addr`, `localhost`, `ip`, `port`, `with_port`. |
-| DNS lookup | Current hosted IPv4/IPv6 slice: `lookup_v4`, `lookup_v6`, `"host:port"`, and `"[host]:port"` `resolve` return `Error`; `resolve_all(zone, host, port)` and `to_socket_addrs(zone, endpoint)` return zone-backed `Vec[SocketAddr]`; `_optional`/`try_*` helpers discard error detail intentionally; `_raw` helpers are raw compatibility bridges. |
+| DNS lookup | Current hosted IPv4/IPv6 slice: `lookup_v4`, `lookup_v6`, `"host:port"`, and `"[host]:port"` `resolve` return `Error`; `service_port` maps common service names to ports; `resolve_all(zone, host, port)`, `resolve_service(zone, host, service)`, `to_socket_addrs(zone, endpoint)`, and `to_socket_addrs_service(zone, host, service)` return zone-backed `Vec[SocketAddr]`; `_optional`/`try_*` helpers discard error detail intentionally; `_raw` helpers are raw compatibility bridges. |
 | TCP listener | Current hosted IPv4/IPv6 slice: module-level `listen`/`tcp_listen`, explicit IPv6 `tcp_listen_v6`, `TcpListener::bind`, and `accept` return `Error`; optional/try compatibility and raw compatibility forms remain; Result-returning `local_port`/`local_addr` plus IPv6-specific `local_addr_v6`, descriptor/open/close-on-exec helpers, nonblocking, reuse-address, and reuse-port setter/query with Result defaults, `Duration` and raw-millisecond accept timeout setters, accept readiness probes, unchecked timeout compatibility, and explicit close/close_unchecked. |
 | TCP stream | Current hosted IPv4/IPv6 slice: module-level `connect`/`tcp_connect`, explicit IPv6 `tcp_connect_v6`, and host-port `connect_host`/`tcp_connect_host`; `TcpStream::connect` returns `Error`, optional/try and raw compatibility forms remain, local/peer address helpers dispatch across IPv4/IPv6 with IPv6-specific `local_addr_v6`/`peer_addr_v6`, descriptor/open/close-on-exec helpers, nonblocking, TCP nodelay, keepalive, send/receive buffer-size helpers with Result defaults, `Duration` timeouts, read/write readiness probes, shutdown, byte and buffer IO, close/close_unchecked, and `std::io::Reader`/`Writer` adapters. |
 | UDP socket | Current hosted IPv4/IPv6 slice: module-level `udp_bind` plus explicit IPv6 `udp_bind_v6`, `UdpSocket::bind` returns `Error`, optional/try and raw compatibility forms remain, Result-returning local-port/local-address helpers including `local_addr_v6`, descriptor/open/close-on-exec helpers, nonblocking, reuse-address, reuse-port, broadcast, send/receive buffer-size helpers with Result defaults, `Duration` timeouts, send/receive readiness probes, datagram `send_to`/`recv_from`/`peek_from`, connected `send`/`recv`, single-byte compatibility helpers, and close/close_unchecked. |
@@ -655,9 +675,11 @@ return ptr_load(output.as_slice().as_ptr()) as i64;
   plus hosted IPv4 and IPv6 UDP on Linux/POSIX-like targets.
 - DNS lookup exposes owned address lists, but the hosted implementation only
   collects the first IPv4 and first IPv6 address today. Full `getaddrinfo`
-  iteration, canonical names, service names, and detailed resolver status are
-  future work. The endpoint parser accepts `"host:port"` for IPv4/host names
-  and `"[host]:port"` for IPv6; service-name ports are future work.
+  iteration, canonical names, host service-database lookup, and detailed
+  resolver status are future work. The endpoint parser accepts `"host:port"`
+  for IPv4/host names and `"[host]:port"` for IPv6. Service-name resolution is
+  available through `resolve_service` and `to_socket_addrs_service` using the
+  deterministic stdlib service table.
 - UDP supports buffer datagrams, source-address return values, connected UDP,
   and peek. Multicast and TTL/hop-limit controls are future slices.
 - Unix sockets are stream-only and path-based. Abstract namespace sockets,
@@ -727,8 +749,8 @@ IPv6 input for the IPv4 resolver, and edge IPv4 addresses.
 - Add address parsing and formatting once `std::string` formatting and parse
   policy can express dotted IPv4 and compressed IPv6 cleanly.
 - Expand DNS from the current first-IPv4 plus first-IPv6 list into fuller
-  `getaddrinfo` result iteration, including service-name ports, canonical
-  names, and detailed resolver status.
+  `getaddrinfo` result iteration, including host service-database lookup,
+  canonical names, and detailed resolver status.
 - Add timeout-specific error categories once the runtime can distinguish
   deadline expiry from ordinary read, write, accept, and connect failures.
 - Add remaining socket options such as linger, TTL/hop-limit, multicast

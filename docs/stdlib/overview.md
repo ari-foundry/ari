@@ -410,17 +410,19 @@ before C-string or hosted filesystem boundaries.
 `std::net` starts with deterministic value types: IPv4, IPv6, generic IP, and
 socket addresses. Address components support strict access for known-good
 indexes and fallible access for parsed indexes. The hosted socket layer now
-adds one-address IPv4/IPv6 lookup, zone-backed resolver lists, bracketed IPv6
-endpoint parsing, IPv4/IPv6 `TcpListener`/`TcpStream` handles, IPv4/IPv6
+adds one-address IPv4/IPv6 lookup, zone-backed resolver lists, deterministic
+well-known service-name port lookup, service-name resolver wrappers, bracketed
+IPv6 endpoint parsing, IPv4/IPv6 `TcpListener`/`TcpStream` handles, IPv4/IPv6
 `UdpSocket` datagrams with source-address receive helpers, Unix stream
 sockets, ephemeral local-port and local-address lookup where it applies,
 descriptor views, nonblocking flags, `std::time::Duration` timeout setters
 with raw millisecond compatibility helpers, stream shutdown, explicit close,
 common socket options, single-descriptor readiness probes, and TCP/Unix
 `std::io::Reader`/`Writer` byte adapters plus method-style
-`read_exact`/`write_all` stream buffer helpers. Full DNS iteration,
-service-name ports, multi-descriptor poll/event loops, linger, TTL/hop-limit,
-multicast, and timeout-specific error results remain roadmap work.
+`read_exact`/`write_all` stream buffer helpers. Full DNS iteration, host
+service-database lookup, multi-descriptor poll/event loops, linger,
+TTL/hop-limit, multicast, and timeout-specific error results remain roadmap
+work.
 
 `std::collections` is source Ari over typed zone allocation. `Set[T]` remains a
 small, insertion-order, linear set with iterator support and stable in-place

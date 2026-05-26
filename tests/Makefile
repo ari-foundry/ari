@@ -1517,7 +1517,10 @@ check-prelude: $(TARGET)
 	grep -F -q "std3net16resolve_optional" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net11try_resolve" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net11resolve_raw" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -F -q "std3net12service_port" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -F -q "std3net15resolve_service" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net15to_socket_addrs" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -F -q "std3net23to_socket_addrs_service" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net12connect_host" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net16tcp_connect_host" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-dns-lookup.ari -o $(BUILD_DIR)/prelude/std-net-dns-lookup.elf
