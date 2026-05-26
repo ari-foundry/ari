@@ -2850,7 +2850,7 @@ Tier: `core`. Stability reading: stable candidate.
 
 | API | Coverage note |
 | --- | --- |
-| `enum std::parse::ParseErrorKind` | check-prelude std-parse-basic integer parse diagnostic categories; docs/stdlib/modules/parse.md |
+| `enum std::parse::ParseErrorKind` | check-prelude std-parse-basic integer and float parse diagnostic categories; docs/stdlib/modules/parse.md |
 
 ### fn
 
@@ -2866,12 +2866,12 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::parse::boolean_optional` | check-prelude std-parse-basic Option-returning lowercase bool compatibility parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::boolean_or` | check-prelude std-parse-basic lowercase bool parser with fallback; docs/stdlib/modules/parse.md |
 | `fn std::parse::float` | check-prelude std-parse-basic Result-returning decimal float parser; docs/stdlib/modules/parse.md |
-| `fn std::parse::float_error` | check-prelude std-parse-basic decimal float parse diagnostic helper; docs/stdlib/modules/parse.md |
+| `fn std::parse::float_error` | check-prelude std-parse-basic decimal float syntax and range diagnostic helper; docs/stdlib/modules/parse.md |
 | `fn std::parse::float_optional` | check-prelude std-parse-basic Option-returning decimal float compatibility parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::float_or` | check-prelude std-parse-basic fallback decimal float parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::float_unchecked` | check-prelude std-parse-basic asserting decimal float compatibility parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::float_with_underscores` | check-prelude std-parse-basic Result-returning decimal float parser with digit separators; docs/stdlib/modules/parse.md |
-| `fn std::parse::float_with_underscores_error` | check-prelude std-parse-basic decimal float parse diagnostic helper with digit separators; docs/stdlib/modules/parse.md |
+| `fn std::parse::float_with_underscores_error` | check-prelude std-parse-basic decimal float syntax and range diagnostic helper with digit separators; docs/stdlib/modules/parse.md |
 | `fn std::parse::float_with_underscores_optional` | check-prelude std-parse-basic Option-returning decimal float parser with digit separators; docs/stdlib/modules/parse.md |
 | `fn std::parse::float_with_underscores_or` | check-prelude std-parse-basic fallback decimal float parser with digit separators; docs/stdlib/modules/parse.md |
 | `fn std::parse::hex_integer` | check-prelude std-parse-basic Result-returning signed hexadecimal integer parser; docs/stdlib/modules/parse.md |

@@ -75,6 +75,7 @@ pub enum ParseErrorKind {
   InvalidSign,
   InvalidSeparator,
   Overflow,
+  Underflow,
 }
 
 pub struct ParseError {
@@ -913,96 +914,20 @@ pub fn boolean_or(values: std::Slice[u8], fallback: bool) -> bool {
 }
 
 pub fn is_float(values: std::Slice[u8]) -> bool {
-  let input = std::ascii::trim(values);
-  if input.len == 0 {
-    return false;
-  }
-
-  var index = 0;
-  if input[0] == '-' {
-    index = 1;
-  } else if input[0] == '+' {
-    index = 1;
-  }
-
-  var seen_digit = false;
-  while index < input.len {
-    match std::ascii::digit_value(input[index]) {
-      std::Some(integer_digit) => {
-        seen_digit = true;
-        index = index + 1;
-      }
-      std::None => {
-        break;
-      }
-    }
-  }
-
-  if index < input.len {
-    if input[index] == '.' {
-      index = index + 1;
-      while index < input.len {
-        match std::ascii::digit_value(input[index]) {
-          std::Some(fraction_digit) => {
-            seen_digit = true;
-            index = index + 1;
-          }
-          std::None => {
-            break;
-          }
-        }
-      }
-    }
-  }
-
-  if !seen_digit {
-    return false;
-  }
-
-  if index < input.len {
-    if input[index] == 'e' || input[index] == 'E' {
-      index = index + 1;
-      if index >= input.len {
-        return false;
-      }
-
-      var exponent_sign = 1;
-      if input[index] == '-' {
-        exponent_sign = -1;
-        index = index + 1;
-      } else if input[index] == '+' {
-        index = index + 1;
-      }
-
-      if index >= input.len {
-        return false;
-      }
-
-      var seen_exponent_digit = false;
-      while index < input.len {
-        match std::ascii::digit_value(input[index]) {
-          std::Some(exponent_digit) => {
-            seen_exponent_digit = true;
-          }
-          std::None => {
-            return false;
-          }
-        }
-        index = index + 1;
-      }
-      if !seen_exponent_digit {
-        return false;
-      }
-    }
-  }
-
-  return index == input.len;
+  return std::parse::float_error(values).is_none();
 }
 
 pub fn is_float_with_underscores(values: std::Slice[u8]) -> bool {
+  return std::parse::float_with_underscores_error(values).is_none();
+}
+
+fn float_range_error_with_separator_policy(
+  values: std::Slice[u8],
+  allow_separators: bool
+) -> std::Option[std::parse::ParseError] {
   let input = std::ascii::trim(values);
   if input.len == 0 {
-    return false;
+    return std::None<std::parse::ParseError>();
   }
 
   var index = 0;
@@ -1012,30 +937,26 @@ pub fn is_float_with_underscores(values: std::Slice[u8]) -> bool {
     index = 1;
   }
 
-  var seen_digit = false;
-  var previous_digit = false;
+  var first_significant_offset = -1;
+  var first_fraction_significant_offset = -1;
+  var integer_significant_digits = 0;
+  var integer_overflow_offset = -1;
   while index < input.len {
     let integer_byte = input[index];
     if integer_byte == '_' {
-      if !previous_digit {
-        return false;
-      }
-      if index + 1 >= input.len {
-        return false;
-      }
-      match std::ascii::digit_value(input[index + 1]) {
-        std::Some(_) => {}
-        std::None => {
-          return false;
-        }
-      }
-      previous_digit = false;
       index = index + 1;
     } else {
       match std::ascii::digit_value(integer_byte) {
-        std::Some(_) => {
-          seen_digit = true;
-          previous_digit = true;
+        std::Some(integer_digit) => {
+          if integer_digit != 0 || first_significant_offset >= 0 {
+            if first_significant_offset < 0 {
+              first_significant_offset = index;
+            }
+            integer_significant_digits = integer_significant_digits + 1;
+            if integer_significant_digits == 310 {
+              integer_overflow_offset = index;
+            }
+          }
           index = index + 1;
         }
         std::None => {
@@ -1045,32 +966,24 @@ pub fn is_float_with_underscores(values: std::Slice[u8]) -> bool {
     }
   }
 
+  var fraction_base_exponent = 0;
   if index < input.len {
     if input[index] == '.' {
       index = index + 1;
-      var previous_fraction_digit = false;
+      var fraction_digit_count = 0;
       while index < input.len {
         let fraction_byte = input[index];
         if fraction_byte == '_' {
-          if !previous_fraction_digit {
-            return false;
-          }
-          if index + 1 >= input.len {
-            return false;
-          }
-          match std::ascii::digit_value(input[index + 1]) {
-            std::Some(_) => {}
-            std::None => {
-              return false;
-            }
-          }
-          previous_fraction_digit = false;
           index = index + 1;
         } else {
           match std::ascii::digit_value(fraction_byte) {
-            std::Some(_) => {
-              seen_digit = true;
-              previous_fraction_digit = true;
+            std::Some(fraction_digit) => {
+              fraction_digit_count = fraction_digit_count + 1;
+              if first_significant_offset < 0 && fraction_digit != 0 {
+                first_significant_offset = index;
+                first_fraction_significant_offset = index;
+                fraction_base_exponent = 0 - fraction_digit_count;
+              }
               index = index + 1;
             }
             std::None => {
@@ -1082,66 +995,79 @@ pub fn is_float_with_underscores(values: std::Slice[u8]) -> bool {
     }
   }
 
-  if !seen_digit {
-    return false;
+  if first_significant_offset < 0 {
+    return std::None<std::parse::ParseError>();
   }
 
+  var base_exponent = fraction_base_exponent;
+  if integer_significant_digits > 0 {
+    base_exponent = integer_significant_digits - 1;
+  }
+  if first_fraction_significant_offset >= 0 && base_exponent < -324 {
+    return std::Some<std::parse::ParseError>(
+      std::parse::parse_error(Underflow, first_fraction_significant_offset)
+    );
+  }
+
+  var exponent_offset = -1;
+  var exponent_sign = 1;
+  var exponent_value = 0;
   if index < input.len {
     if input[index] == 'e' || input[index] == 'E' {
       index = index + 1;
-      if index >= input.len {
-        return false;
-      }
-
       if input[index] == '-' {
+        exponent_sign = -1;
         index = index + 1;
       } else if input[index] == '+' {
         index = index + 1;
       }
 
-      if index >= input.len {
-        return false;
-      }
-
-      var seen_exponent_digit = false;
-      var previous_exponent_digit = false;
       while index < input.len {
         let exponent_byte = input[index];
         if exponent_byte == '_' {
-          if !previous_exponent_digit {
-            return false;
-          }
-          if index + 1 >= input.len {
-            return false;
-          }
-          match std::ascii::digit_value(input[index + 1]) {
-            std::Some(_) => {}
-            std::None => {
-              return false;
-            }
-          }
-          previous_exponent_digit = false;
           index = index + 1;
         } else {
           match std::ascii::digit_value(exponent_byte) {
-            std::Some(_) => {
-              seen_exponent_digit = true;
-              previous_exponent_digit = true;
+            std::Some(exponent_digit) => {
+              if exponent_offset < 0 {
+                exponent_offset = index;
+              }
+              if exponent_value < 10000 {
+                exponent_value = (exponent_value * 10) + exponent_digit;
+              }
+              let signed_exponent = exponent_value * exponent_sign;
+              let effective_exponent = base_exponent + signed_exponent;
+              if effective_exponent > 308 {
+                return std::Some<std::parse::ParseError>(
+                  std::parse::parse_error(Overflow, index)
+                );
+              }
+              if effective_exponent < -324 {
+                return std::Some<std::parse::ParseError>(
+                  std::parse::parse_error(Underflow, index)
+                );
+              }
             }
             std::None => {
-              return false;
+              return std::None<std::parse::ParseError>();
             }
           }
           index = index + 1;
         }
       }
-      if !seen_exponent_digit || !previous_exponent_digit {
-        return false;
-      }
     }
   }
 
-  return index == input.len;
+  let final_exponent = base_exponent + (exponent_value * exponent_sign);
+  if final_exponent > 308 {
+    let overflow_offset = if exponent_offset >= 0 { exponent_offset } else { integer_overflow_offset };
+    return std::Some<std::parse::ParseError>(std::parse::parse_error(Overflow, overflow_offset));
+  }
+  if final_exponent < -324 {
+    let underflow_offset = if exponent_offset >= 0 { exponent_offset } else { first_significant_offset };
+    return std::Some<std::parse::ParseError>(std::parse::parse_error(Underflow, underflow_offset));
+  }
+  return std::None<std::parse::ParseError>();
 }
 
 fn float_error_with_separator_policy(
@@ -1311,6 +1237,12 @@ fn float_error_with_separator_policy(
     }
     return std::Some<std::parse::ParseError>(std::parse::parse_error(InvalidDigit, index));
   }
+  match std::parse::float_range_error_with_separator_policy(values, allow_separators) {
+    std::Some(range_error) => {
+      return std::Some<std::parse::ParseError>(range_error);
+    }
+    std::None => {}
+  }
   return std::None<std::parse::ParseError>();
 }
 
@@ -1323,6 +1255,10 @@ pub fn float_with_underscores_error(values: std::Slice[u8]) -> std::Option[std::
 }
 
 pub fn float_or(values: std::Slice[u8], fallback: f64) -> f64 {
+  if !is_float(values) {
+    return fallback;
+  }
+
   let input = std::ascii::trim(values);
   if input.len == 0 {
     return fallback;

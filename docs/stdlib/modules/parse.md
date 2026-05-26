@@ -142,11 +142,13 @@ that need to explain a parse failure. They do not replace the natural
 Result-returning parser; instead, they return `None` for valid input and
 `Some(ParseError)` for invalid input. `ParseError::kind()` returns one of:
 `EmptyInput`, `ExpectedDigit`, `InvalidRadix`, `InvalidDigit`,
-`InvalidSign`, `InvalidSeparator`, or `Overflow`. `ParseError::offset()` is
-the byte offset in the trimmed input where that condition was detected. For
-example, `12x` reports `InvalidDigit` at offset `2`, an invalid radix reports
-`InvalidRadix` at offset `0`, and signed integer overflow reports `Overflow` at
-the first digit that made the value exceed `i64`.
+`InvalidSign`, `InvalidSeparator`, `Overflow`, or `Underflow`.
+`ParseError::offset()` is the byte offset in the trimmed input where that
+condition was detected. For example, `12x` reports `InvalidDigit` at offset
+`2`, an invalid radix reports `InvalidRadix` at offset `0`, signed integer
+overflow reports `Overflow` at the first digit that made the value exceed
+`i64`, and extreme decimal float exponents report the exponent digit that moved
+the value outside Ari's accepted finite `f64` range.
 
 Default integer parsers are strict and reject underscores. Use the explicit
 `*_with_underscores` family for human-edited configuration values such as
@@ -193,11 +195,17 @@ accept `e` or `E`. Hex floats, `NaN`, `inf`, and locale decimal separators are
 future policy work.
 
 `float` returns `Result[f64, Error]` and reports `InvalidData` for empty input,
-unsupported spelling, or trailing garbage. `float_error` is the diagnostic
-helper for the same strict spelling. It returns `EmptyInput` for empty input,
-`ExpectedDigit` for sign-only input, a bare `.`, or a missing exponent digit,
-`InvalidSeparator` for `_` in the default strict parser, and `InvalidDigit` for
-other trailing or unsupported bytes. `float_optional` is the compact
+unsupported spelling, trailing garbage, overflow, or underflow outside Ari's
+accepted finite `f64` range. `float_error` is the diagnostic helper for the same
+strict spelling. It returns `EmptyInput` for empty input, `ExpectedDigit` for
+sign-only input, a bare `.`, or a missing exponent digit, `InvalidSeparator` for
+`_` in the default strict parser, `InvalidDigit` for other trailing or
+unsupported bytes, `Overflow` for values whose decimal exponent is too large
+for finite `f64`, and `Underflow` for decimal exponents below the accepted
+subnormal range. Range diagnostics use the byte offset of the exponent digit
+that crossed the range boundary when an exponent is present; for long mantissas
+without an exponent they report the significant digit that made the effective
+decimal exponent too large or too small. `float_optional` is the compact
 compatibility form for validation-style callers, `float_or` returns the parsed
 `f64` or the caller's fallback, and `float_unchecked` preserves the old
 asserting behavior by panicking when `is_float(bytes)` is false.
@@ -211,6 +219,8 @@ or exponent digit run. Examples such as `1_000.5_0e1_2` and `.2_5` are valid;
 `1_.0`, `1._0`, `1e_2`, and `1__0` are invalid.
 `float_with_underscores_error` validates that same separator-aware policy and
 returns `InvalidSeparator` at the separator that made the spelling invalid.
+It uses the same `Overflow` and `Underflow` range diagnostics as strict
+`float_error` after ignoring valid digit separators.
 
 The `Parse` trait gives generic code one spelling for common built-in types:
 
@@ -269,11 +279,13 @@ The focused test covers ASCII-trimmed signed integer parsing, radix wrappers
 for binary, octal, and hexadecimal input, unsigned integer parsing, boolean
 parsing, natural `Result` error categories for invalid data and invalid radix
 input, richer integer/unsigned/float `ParseError` diagnostics and offsets,
-`_optional` compatibility helpers, underscore-aware integer/radix/float
-parsing, `Result` float parsing, float validation, float conversion,
-trait-backed typed parsing, and invalid whole-input cases. It is wired into
-`make check-prelude` with LLVM symbol checks for the public helpers.
+float overflow/underflow range diagnostics, `_optional` compatibility helpers,
+underscore-aware integer/radix/float parsing, `Result` float parsing, float
+validation, float conversion, trait-backed typed parsing, and invalid
+whole-input cases. It is wired into `make check-prelude` with LLVM symbol
+checks for the public helpers.
 
 ## Future Work
 
-- clearer overflow/range diagnostics for extreme decimal float exponents
+- exact IEEE-754 boundary rounding diagnostics for decimal spellings adjacent
+  to the maximum finite value or minimum subnormal value

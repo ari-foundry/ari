@@ -4108,13 +4108,19 @@ valid in the underscore-aware helpers; `_1`, `1_`, `1__0`, `1_.0`, `1._0`, and
 `1e_2` are invalid.
 `is_float` validates a decimal float shape with optional sign, fraction, and
 exponent. `float` returns `Result[f64, Error]` and reports `InvalidData` for
-empty, invalid, or trailing-garbage input. `float_optional` discards that error
-detail, `float_or` returns a fallback for invalid input, and `float_unchecked`
-preserves the old asserting behavior by panicking on invalid input.
+empty, invalid, trailing-garbage, or range-invalid input. `float_optional`
+discards that error detail, `float_or` returns a fallback for invalid input, and
+`float_unchecked` preserves the old asserting behavior by panicking on invalid
+input.
 `float_error` and `float_with_underscores_error` return `Option[ParseError]`
 for strict and separator-aware float spelling diagnostics. They use
 `ExpectedDigit` for missing mantissa or exponent digits, `InvalidSeparator` for
-bad `_` placement, and `InvalidDigit` for unsupported trailing bytes.
+bad `_` placement, `InvalidDigit` for unsupported trailing bytes, `Overflow`
+for decimal exponents too large for finite `f64`, and `Underflow` for decimal
+exponents below Ari's accepted subnormal range. When an exponent is present,
+the range diagnostic offset points at the exponent digit that crossed the
+accepted range; otherwise it points at the significant mantissa digit that made
+the effective decimal exponent too large or too small.
 
 Use `parse::parse[T]` when the target type should choose the parser. It is the
 asserting typed entry point, `parse::parse_or[T]` is the fallback form, and

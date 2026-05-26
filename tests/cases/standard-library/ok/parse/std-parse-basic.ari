@@ -263,6 +263,65 @@ fn main() -> i64 {
     }
     std::None => { panic(); }
   }
+  if parse::is_float("1e309") {
+    return 31;
+  }
+  match parse::float_error("1e309") {
+    std::Some(float_overflow_detail) => {
+      if float_overflow_detail.offset() != 4 {
+        return 32;
+      }
+      match float_overflow_detail.kind() {
+        parse::Overflow => {}
+        _ => { return 33; }
+      }
+    }
+    std::None => { return 34; }
+  }
+  match parse::float("1e309") {
+    Ok(_) => { return 35; }
+    Err(float_overflow_reason) => {
+      if !float_overflow_reason.is_kind(error::InvalidData) {
+        return 36;
+      }
+    }
+  }
+  if !parse::float_optional("1e309").is_none() {
+    return 37;
+  }
+  if (parse::float_or("1e309", 7.0f64) as i64) != 7 {
+    return 38;
+  }
+  if parse::is_float("1e-325") {
+    return 39;
+  }
+  match parse::float_error("1e-325") {
+    std::Some(float_underflow_detail) => {
+      if float_underflow_detail.offset() != 5 {
+        return 40;
+      }
+      match float_underflow_detail.kind() {
+        parse::Underflow => {}
+        _ => { return 41; }
+      }
+    }
+    std::None => { return 42; }
+  }
+  if parse::is_float_with_underscores("1e3_0_9") {
+    return 43;
+  }
+  match parse::float_with_underscores_error("1e3_0_9") {
+    std::Some(float_separator_overflow_detail) => {
+      if float_separator_overflow_detail.offset() != 6 {
+        return 44;
+      }
+      match float_separator_overflow_detail.kind() {
+        parse::Overflow => {}
+        _ => { return 45; }
+      }
+    }
+    std::None => { return 46; }
+  }
   match parse::float(invalid_float.as_slice()) {
     Ok(_) => { panic(); }
     Err(float_reason) => {
