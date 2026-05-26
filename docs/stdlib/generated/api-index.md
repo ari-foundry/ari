@@ -24,34 +24,34 @@ platform notes.
 
 ## Summary
 
-- API entries: `3310`
+- API entries: `3352`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
 | `alloc` | 891 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 900 | stable candidate |
-| `hosted` | 1332 | platform-backed |
+| `core` | 902 | stable candidate |
+| `hosted` | 1372 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
 | `fn` | 1184 |
-| `method` | 1683 |
+| `method` | 1718 |
 | `module` | 39 |
-| `struct` | 173 |
+| `struct` | 178 |
 | `trait` | 39 |
 | `trait-method` | 41 |
 | `type` | 22 |
-| `use` | 97 |
+| `use` | 99 |
 
 ## Modules
 
 | Module | Tier | Entries |
 | --- | --- | ---: |
-| `std` | `core` | 294 |
+| `std` | `core` | 296 |
 | `std::algo` | `alloc` | 41 |
 | `std::ascii` | `core` | 33 |
 | `std::bits` | `core` | 26 |
@@ -84,7 +84,7 @@ platform notes.
 | `std::rc` | `alloc` | 32 |
 | `std::result` | `core` | 12 |
 | `std::string` | `alloc` | 171 |
-| `std::sync` | `hosted` | 169 |
+| `std::sync` | `hosted` | 209 |
 | `std::target` | `platform` | 52 |
 | `std::test` | `hosted` | 32 |
 | `std::thread` | `hosted` | 90 |
@@ -363,6 +363,7 @@ Tier: `core`. Stability reading: stable candidate.
 | `use std::Library` | check-prelude std-c-interop root alias for std::c::Library; docs/stdlib/modules/c.md |
 | `use std::LinkedList` | check-prelude std-collections-linked-list root alias for std::collections::LinkedList[T]; docs/stdlib/modules/collections.md |
 | `use std::Mutex` | check-prelude std-sync-mutex-once root alias for std::sync::Mutex; docs/stdlib/modules/sync.md |
+| `use std::MutexValue` | check-prelude std-sync-value-locks root alias for std::sync::MutexValue[T]; docs/stdlib/modules/sync.md |
 | `use std::Once` | check-prelude std-sync-mutex-once root alias for std::sync::Once; docs/stdlib/modules/sync.md |
 | `use std::OnceCell` | check-prelude std-cell-basic root alias for std::cell::OnceCell[T]; docs/stdlib/modules/cell.md |
 | `use std::OnceLock` | check-prelude std-sync-concurrency-api root alias for std::sync::OnceLock[T]; docs/stdlib/modules/sync.md |
@@ -373,6 +374,7 @@ Tier: `core`. Stability reading: stable candidate.
 | `use std::RefCell` | check-prelude std-cell-basic root alias for std::cell::RefCell[T]; docs/stdlib/modules/cell.md |
 | `use std::RingBuffer` | check-prelude std-collections-ring-buffer root alias for std::collections::RingBuffer[T]; docs/stdlib/modules/collections.md |
 | `use std::RwLock` | check-prelude std-sync-rwlock root alias for std::sync::RwLock; docs/stdlib/modules/sync.md |
+| `use std::RwLockValue` | check-prelude std-sync-value-locks root alias for std::sync::RwLockValue[T]; docs/stdlib/modules/sync.md |
 | `use std::Sender` | check-prelude std-sync-concurrency-api root alias for std::sync::Sender[T]; docs/stdlib/modules/sync.md |
 | `use std::Set` | check-prelude std-collections-set root alias for std::collections::Set[T]; docs/stdlib/modules/collections.md |
 | `use std::String` | prelude root String tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows |
@@ -3828,6 +3830,19 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::sync::Mutex::unlock` | check-prelude std-sync-mutex-once mutex method unlock helper; docs/stdlib/modules/sync.md |
 | `method std::sync::MutexGuard::is_active` | check-prelude std-sync-mutex-once mutex guard active-state predicate; docs/stdlib/modules/sync.md |
 | `method std::sync::MutexGuard::unlock` | check-prelude std-sync-mutex-once mutex guard idempotent unlock helper; docs/stdlib/modules/sync.md |
+| `method std::sync::MutexValueGuard[T]::is_active` | check-prelude std-sync-value-locks value mutex guard active-state predicate; docs/stdlib/modules/sync.md |
+| `method std::sync::MutexValueGuard[T]::replace` | check-prelude std-sync-value-locks value mutex guard replace helper; docs/stdlib/modules/sync.md |
+| `method std::sync::MutexValueGuard[T]::set` | check-prelude std-sync-value-locks value mutex guard set helper; docs/stdlib/modules/sync.md |
+| `method std::sync::MutexValueGuard[T]::unlock` | check-prelude std-sync-value-locks value mutex guard idempotent unlock helper; docs/stdlib/modules/sync.md |
+| `method std::sync::MutexValueGuard[T]::value` | check-prelude std-sync-value-locks value mutex guard copy accessor; docs/stdlib/modules/sync.md |
+| `method std::sync::MutexValueGuard[T]::value_mut` | check-prelude std-sync-value-locks value mutex guard mutable reference accessor; docs/stdlib/modules/sync.md |
+| `method std::sync::MutexValueGuard[T]::value_ref` | check-prelude std-sync-value-locks value mutex guard shared reference accessor; docs/stdlib/modules/sync.md |
+| `method std::sync::MutexValue[T]::get_mut` | check-prelude std-sync-value-locks value mutex exclusive unlocked payload accessor; docs/stdlib/modules/sync.md |
+| `method std::sync::MutexValue[T]::into_inner` | check-prelude std-sync-value-locks value mutex consuming payload extraction; docs/stdlib/modules/sync.md |
+| `method std::sync::MutexValue[T]::is_locked` | check-prelude std-sync-value-locks value mutex state predicate; docs/stdlib/modules/sync.md |
+| `method std::sync::MutexValue[T]::lock` | check-prelude std-sync-value-locks value mutex guard-returning lock helper; docs/stdlib/modules/sync.md |
+| `method std::sync::MutexValue[T]::new` | check-prelude std-sync-value-locks value mutex constructor; docs/stdlib/modules/sync.md |
+| `method std::sync::MutexValue[T]::try_lock` | check-prelude std-sync-value-locks value mutex optional guard nonblocking lock helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Once::call_once` | check-prelude std-sync-mutex-once once method execution helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Once::is_completed` | check-prelude std-sync-mutex-once once method completion predicate; docs/stdlib/modules/sync.md |
 | `method std::sync::Once::new` | check-prelude std-sync-mutex-once once associated constructor; docs/stdlib/modules/sync.md |
@@ -3866,6 +3881,28 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::sync::RwLock::write_unlock` | check-prelude std-sync-rwlock rwlock method write unlock helper; docs/stdlib/modules/sync.md |
 | `method std::sync::RwLockReadGuard::is_active` | check-prelude std-sync-rwlock rwlock read guard active-state predicate; docs/stdlib/modules/sync.md |
 | `method std::sync::RwLockReadGuard::unlock` | check-prelude std-sync-rwlock rwlock read guard idempotent unlock helper; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockValueReadGuard[T]::is_active` | check-prelude std-sync-value-locks value rwlock read guard active-state predicate; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockValueReadGuard[T]::unlock` | check-prelude std-sync-value-locks value rwlock read guard idempotent unlock helper; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockValueReadGuard[T]::value` | check-prelude std-sync-value-locks value rwlock read guard copy accessor; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockValueReadGuard[T]::value_ref` | check-prelude std-sync-value-locks value rwlock read guard shared reference accessor; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockValueWriteGuard[T]::is_active` | check-prelude std-sync-value-locks value rwlock write guard active-state predicate; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockValueWriteGuard[T]::replace` | check-prelude std-sync-value-locks value rwlock write guard replace helper; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockValueWriteGuard[T]::set` | check-prelude std-sync-value-locks value rwlock write guard set helper; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockValueWriteGuard[T]::unlock` | check-prelude std-sync-value-locks value rwlock write guard idempotent unlock helper; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockValueWriteGuard[T]::value` | check-prelude std-sync-value-locks value rwlock write guard copy accessor; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockValueWriteGuard[T]::value_mut` | check-prelude std-sync-value-locks value rwlock write guard mutable reference accessor; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockValueWriteGuard[T]::value_ref` | check-prelude std-sync-value-locks value rwlock write guard shared reference accessor; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockValue[T]::get_mut` | check-prelude std-sync-value-locks value rwlock exclusive unlocked payload accessor; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockValue[T]::into_inner` | check-prelude std-sync-value-locks value rwlock consuming payload extraction; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockValue[T]::is_locked` | check-prelude std-sync-value-locks value rwlock any-lock predicate; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockValue[T]::is_read_locked` | check-prelude std-sync-value-locks value rwlock read-lock predicate; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockValue[T]::is_write_locked` | check-prelude std-sync-value-locks value rwlock write-lock predicate; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockValue[T]::new` | check-prelude std-sync-value-locks value rwlock constructor; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockValue[T]::read` | check-prelude std-sync-value-locks value rwlock guard-returning read helper; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockValue[T]::reader_count` | check-prelude std-sync-value-locks value rwlock reader count helper; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockValue[T]::try_read` | check-prelude std-sync-value-locks value rwlock optional read guard helper; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockValue[T]::try_write` | check-prelude std-sync-value-locks value rwlock optional write guard helper; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockValue[T]::write` | check-prelude std-sync-value-locks value rwlock guard-returning write helper; docs/stdlib/modules/sync.md |
 | `method std::sync::RwLockWriteGuard::is_active` | check-prelude std-sync-rwlock rwlock write guard active-state predicate; docs/stdlib/modules/sync.md |
 | `method std::sync::RwLockWriteGuard::unlock` | check-prelude std-sync-rwlock rwlock write guard idempotent unlock helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Sender[T]::clone` | check-prelude std-sync-concurrency-api sender handle clone sharing the same single-slot channel state; docs/stdlib/modules/sync.md |
@@ -3895,11 +3932,16 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `struct std::sync::Condvar` | check-prelude std-sync-concurrency-api source condition variable primitive; docs/stdlib/modules/sync.md |
 | `struct std::sync::Mutex` | check-prelude std-sync-mutex-once source mutex primitive; docs/stdlib/modules/sync.md |
 | `struct std::sync::MutexGuard` | check-prelude std-sync-mutex-once explicit mutex unlock guard; docs/stdlib/modules/sync.md |
+| `struct std::sync::MutexValueGuard[T]` | check-prelude std-sync-value-locks value mutex payload guard; docs/stdlib/modules/sync.md |
+| `struct std::sync::MutexValue[T]` | check-prelude std-sync-value-locks value-protecting mutex payload handle; docs/stdlib/modules/sync.md |
 | `struct std::sync::Once` | check-prelude std-sync-mutex-once source one-time initialization primitive; docs/stdlib/modules/sync.md |
 | `struct std::sync::OnceLock[T]` | check-prelude std-sync-concurrency-api source thread-facing one-time slot; docs/stdlib/modules/sync.md |
 | `struct std::sync::Receiver[T]` | check-prelude std-sync-concurrency-api channel receiver handle; docs/stdlib/modules/sync.md |
 | `struct std::sync::RwLock` | check-prelude std-sync-rwlock source reader-writer lock primitive; docs/stdlib/modules/sync.md |
 | `struct std::sync::RwLockReadGuard` | check-prelude std-sync-rwlock explicit rwlock read unlock guard; docs/stdlib/modules/sync.md |
+| `struct std::sync::RwLockValueReadGuard[T]` | check-prelude std-sync-value-locks value rwlock read payload guard; docs/stdlib/modules/sync.md |
+| `struct std::sync::RwLockValueWriteGuard[T]` | check-prelude std-sync-value-locks value rwlock write payload guard; docs/stdlib/modules/sync.md |
+| `struct std::sync::RwLockValue[T]` | check-prelude std-sync-value-locks value-protecting rwlock payload handle; docs/stdlib/modules/sync.md |
 | `struct std::sync::RwLockWriteGuard` | check-prelude std-sync-rwlock explicit rwlock write unlock guard; docs/stdlib/modules/sync.md |
 | `struct std::sync::Sender[T]` | check-prelude std-sync-concurrency-api channel sender handle; docs/stdlib/modules/sync.md |
 | `struct std::sync::WaitTimeoutResult` | check-prelude std-sync-concurrency-api condition-variable timeout result handle; docs/stdlib/modules/sync.md |

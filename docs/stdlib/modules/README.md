@@ -119,9 +119,10 @@ the Result-returning form for callers that need `Error(NotFound)`.
   cooperative sleep/yield, Result-returning available parallelism, and
   explicit `ThreadLocal[T]` handles.
 - [std::sync](sync.md): `Ordering`, concrete atomic wrappers, source `Mutex`,
-  `MutexGuard`, `RwLock`, `RwLockReadGuard`, `RwLockWriteGuard`, `Once`,
-  `OnceLock`, `Condvar`, `WaitTimeoutResult`, `Barrier`, capacity-1 channels,
-  current memory-order/no-poison policy, and blocking/runtime roadmap.
+  `MutexGuard`, `RwLock`, `RwLockReadGuard`, `RwLockWriteGuard`,
+  `MutexValue[T]`, `RwLockValue[T]`, `Once`, `OnceLock`, `Condvar`,
+  `WaitTimeoutResult`, `Barrier`, capacity-1 channels, current
+  memory-order/no-poison policy, and blocking/runtime roadmap.
 - [std::time](time.md): runtime-backed monotonic instants, wall-clock
   timestamps, non-negative durations, elapsed-time helpers, monotonic
   deadlines/timeouts, UTC calendar conversion, and sleep.

@@ -1,0 +1,109 @@
+// Covers value-protecting sync locks: guard access, try-lock failure while held,
+// explicit unlock idempotence, and explicit drop release.
+fn read_mutex_guard(guard: ref std::sync::MutexValueGuard[i64]) -> i64 {
+  let slot: ref i64 = guard.value_ref();
+  return ptr_load(slot as ptr i64);
+}
+
+fn bump_mutex_guard(guard: ref mut std::sync::MutexValueGuard[i64], amount: i64) -> void {
+  let slot: ref mut i64 = guard.value_mut();
+  let raw = slot as ptr i64;
+  ptr_store(raw, ptr_load(raw) + amount);
+}
+
+fn read_rw_guard(guard: ref std::sync::RwLockValueReadGuard[i64]) -> i64 {
+  let slot: ref i64 = guard.value_ref();
+  return ptr_load(slot as ptr i64);
+}
+
+fn bump_rw_guard(guard: ref mut std::sync::RwLockValueWriteGuard[i64], amount: i64) -> void {
+  let slot: ref mut i64 = guard.value_mut();
+  let raw = slot as ptr i64;
+  ptr_store(raw, ptr_load(raw) + amount);
+}
+
+fn main() -> i64 {
+  var score = 0;
+
+  var mutex = std::sync::MutexValue::new<i64>(10);
+  if mutex.is_locked() {
+    return 1;
+  }
+  var maybe_mutex_guard = mutex.try_lock();
+  if maybe_mutex_guard.is_none() || !mutex.is_locked() {
+    return 2;
+  }
+  if mutex.try_lock().is_some() {
+    return 3;
+  }
+  var mutex_guard = maybe_mutex_guard.unwrap();
+  if !mutex_guard.is_active() {
+    return 4;
+  }
+  if read_mutex_guard(ref mutex_guard) == 10 {
+    score = score + 1;
+  }
+  bump_mutex_guard(ref mut mutex_guard, 5);
+  if mutex_guard.replace(15) != 15 || mutex_guard.value() != 15 {
+    return 5;
+  }
+  mutex_guard.unlock();
+  mutex_guard.unlock();
+  if mutex_guard.is_active() || mutex.is_locked() {
+    return 6;
+  }
+  {
+    var scoped = mutex.lock();
+    scoped.set(scoped.value() + 2);
+    drop scoped;
+  }
+  if mutex.is_locked() {
+    return 7;
+  }
+  if mutex.into_inner() == 17 {
+    score = score + 2;
+  }
+
+  var rw = std::sync::RwLockValue::new<i64>(20);
+  {
+    var read_guard = rw.read();
+    if read_rw_guard(ref read_guard) == 20 && read_guard.is_active() && rw.reader_count() == 1 {
+      score = score + 4;
+    }
+    if rw.try_write().is_some() {
+      return 8;
+    }
+    read_guard.unlock();
+  }
+  if rw.is_locked() {
+    return 9;
+  }
+  {
+    var write_guard = rw.write();
+    if !rw.is_write_locked() || rw.try_read().is_some() {
+      return 10;
+    }
+    bump_rw_guard(ref mut write_guard, 7);
+    drop write_guard;
+  }
+  if rw.is_locked() {
+    return 11;
+  }
+  {
+    var final_read = rw.try_read();
+    if final_read.is_none() {
+      return 12;
+    }
+    var final_guard = final_read.unwrap();
+    if final_guard.value() == 27 {
+      score = score + 8;
+    }
+    drop final_guard;
+  }
+  if rw.into_inner() == 27 {
+    score = score + 16;
+  }
+
+  assert_eq_i64(score, 31);
+  return 42;
+}

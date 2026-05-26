@@ -1311,12 +1311,17 @@ idempotent, and explicit `drop guard` releases an active guard. The
 `try_lock_bool`, `lock_raw`, and top-level `sync::try_lock`/`sync::lock`
 helpers keep the older manual bool/void behavior for low-level compatibility.
 `RwLock` follows the same rule with `read`, `try_read`, `write`, and
-`try_write` returning read/write guards. These are still not value-protecting
-`Mutex[T]` or `RwLock[T]` payload locks, and automatic scope/early-return RAII
-cleanup is not promised yet. `Mutex` and `RwLock` do not poison after
-panic/failure; shared-state consistency remains caller-owned unless a future
-poison-aware type is introduced. `Once` runs a plain `fn() -> void` at most
-once and reports whether the current caller ran it. `OnceLock[T]` is the
+`try_write` returning read/write guards. `MutexValue[T]` and `RwLockValue[T]`
+are the value-protecting forms: they own a payload and return guards with
+`value`, `value_ref`, `value_mut`, `set`, and `replace` accessors as
+appropriate. The final shorter `Mutex[T]`/`RwLock[T]` spelling remains a
+future compatibility decision because primitive `Mutex`/`RwLock` are already
+public names. Automatic scope/early-return RAII cleanup is not promised yet;
+use `guard.unlock()` or explicit `drop guard`. `Mutex` and `RwLock` do not
+poison after panic/failure; shared-state consistency remains caller-owned
+unless a future poison-aware type is introduced. `Once` runs a plain
+`fn() -> void` at most once and reports whether the current caller ran it.
+`OnceLock[T]` is the
 sync-facing one-time value slot: `set` preserves the rejected value through
 `Result[(), T]`, `set_bool` is the lossy compatibility form, and
 `get_or_try_init` resets the slot to empty when the initializer returns

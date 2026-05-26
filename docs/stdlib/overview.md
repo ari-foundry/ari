@@ -327,8 +327,9 @@ thread-policy work.
 
 `std::sync` now starts with `AtomicI64`, `AtomicBool`, `AtomicUsize`,
 `AtomicPtr[T]`, source `Mutex`, `MutexGuard`, `RwLock`,
-`RwLockReadGuard`, `RwLockWriteGuard`, `Once`, `OnceLock`, `Condvar`,
-`Barrier`, and a single-slot MPSC channel shape. `std::cell` adds local
+`RwLockReadGuard`, `RwLockWriteGuard`, `MutexValue[T]`, `RwLockValue[T]`,
+`Once`, `OnceLock`, `Condvar`, `Barrier`, and a single-slot MPSC channel
+shape. `std::cell` adds local
 interior mutability through `Cell`, runtime-checked `RefCell`, and zone-backed
 `OnceCell`/`Lazy` one-time initialization. `std::rc` adds explicit `Rc`,
 `Arc`, and `Weak` shared ownership handles. Atomic method names are the names
@@ -341,16 +342,19 @@ Natural compare-exchange methods return the old/current value through
 `Result`, while `_bool` forms keep the previous success-only compatibility
 shape. Invalid ordering values are programmer errors and assert.
 `Mutex` and `RwLock` are primitive no-poison spin/yield locks with explicit
-unlock guards, but they do not yet protect typed payload borrows and do not
-promise automatic scope/early-return RAII cleanup. `Condvar` and `Barrier` are
-source coordination primitives; `Condvar` timeout waits are monotonic
-spin/yield waits rather than OS sleeping waits. Channels are capacity-1 MPSC
-handles with Result send/receive/timeout-receive errors, clonable sender
-handles, and only a shared state pointer rather than redundant zone handles.
-`Arc` uses an atomic control block, but
-send/share trait policy, value-protecting locks, semaphores, futex-backed
-blocking locks, configurable channel capacity, sender-counted close semantics, and non-LLVM
-target atomic policy remain future work.
+unlock guards; `MutexValue[T]` and `RwLockValue[T]` own a payload and return
+guards that expose shared or mutable payload access while the lock is held.
+The primitive names stay public, so the value-owning spelling is non-breaking
+rather than `Mutex[T]`/`RwLock[T]` today. Guard cleanup still relies on
+`guard.unlock()` or explicit `drop guard`; automatic scope/early-return RAII
+cleanup is not promised. `Condvar` and `Barrier` are source coordination
+primitives; `Condvar` timeout waits are monotonic spin/yield waits rather than
+OS sleeping waits. Channels are capacity-1 MPSC handles with Result
+send/receive/timeout-receive errors, clonable sender handles, and only a
+shared state pointer rather than redundant zone handles. `Arc` uses an atomic
+control block, but send/share trait policy, semaphores, futex-backed blocking
+locks, configurable channel capacity, sender-counted close semantics, and
+non-LLVM target atomic policy remain future work.
 
 `std::time` follows the same OS-facing pattern. `monotonic_nanos`,
 `unix_nanos`, and `sleep_nanos` are runtime-backed because they call the host
