@@ -72,8 +72,8 @@ def main():
         "capability=structs-and-field-layout status=implemented",
         "capability=generic-function-calls status=implemented",
         "capability=generic-aggregate-monomorphization status=implemented",
-        "capability=structural-capability-parameters status=planned",
-        "capability=union-by-fields status=planned",
+        "capability=structural-capability-parameters status=partial",
+        "capability=union-by-fields status=partial",
         "capability=resolver-facing-artifact status=implemented",
         "capability=class-keyword status=rejected",
     )
@@ -89,13 +89,13 @@ def main():
     )
     ok &= require_success(
         run_ari("--explain-capability", "structural-capability-parameters"),
-        "CompilerCapability version=1 capability=structural-capability-parameters status=planned",
+        "CompilerCapability version=1 capability=structural-capability-parameters status=partial",
         "has-method capability syntax",
         "ordinary_compiler_work=true",
     )
     ok &= require_success(
         run_ari("--explain-capability", "union-by-fields"),
-        "CompilerCapability version=1 capability=union-by-fields status=planned",
+        "CompilerCapability version=1 capability=union-by-fields status=partial",
         "discriminant-linked union fields",
         "ordinary_compiler_work=true",
     )

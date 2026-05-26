@@ -51,6 +51,32 @@ arguments:
 let value = Just(token);
 ```
 
+## Discriminant-Linked Union Fields
+
+Ari does not currently support discriminant-linked union fields inside
+structs. The reserved roadmap spelling is:
+
+```ari
+struct TLSCiphertext {
+  content_type: ContentType,
+  version: ProtocolVersion,
+  length: u16,
+  security: SecurityParameters,
+  fragment: union by security.cipher_type {
+    stream => GenericStreamCipher,
+    block => GenericBlockCipher,
+    aead => GenericAEADCipher,
+  },
+}
+```
+
+The parser recognizes `union by` in type positions and emits a targeted
+diagnostic. Model this with an ordinary enum payload today, and keep any
+external discriminant relationship explicit in constructor and validation code.
+The compiler capability inventory tracks the reserved syntax as
+`union-by-fields`. Construction, exhaustive arm checking, active-arm drop,
+narrowing, layout, and positive execution support remain future compiler work.
+
 ## Substitution
 
 Ari substitutes concrete type arguments through all aggregate positions:

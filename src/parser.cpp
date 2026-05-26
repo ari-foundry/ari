@@ -105,6 +105,19 @@ private:
         return peek().kind == kind;
     }
 
+    bool check_identifier_text(const std::string& text, int offset = 0) const {
+        const Token& token = peek(offset);
+        return token.kind == TokenKind::Identifier && token.text == text;
+    }
+
+    bool starts_union_by_field_type() const {
+        return check_identifier_text("union") && check_identifier_text("by", 1);
+    }
+
+    bool starts_structural_capability_type() const {
+        return check_identifier_text("has") && peek(1).kind == TokenKind::Identifier;
+    }
+
     bool match(TokenKind kind) {
         if (!check(kind)) return false;
         ++pos_;
@@ -493,6 +506,33 @@ private:
         throw error;
     }
 
+    [[noreturn]] static void fail_union_by_field_type(SourceLocation loc) {
+        CompileError error(std::move(loc), "union by fields are planned but not implemented");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "`union by <selector> { arm => Type, ... }` is reserved for discriminant-linked payload fields",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "use an ordinary enum payload today and keep the discriminant relationship explicit in code",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_structural_capability_type(SourceLocation loc) {
+        CompileError error(std::move(loc),
+                           "structural capability parameters are planned but not implemented");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "`has method(...) -> Type` is reserved for future parameter-local structural requirements",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "define a named trait and use a generic bound today, such as `fn save[T: Serialize](x: T)`",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     [[noreturn]] static void fail_expected_parameter_colon(SourceLocation boundary_loc,
                                                            SourceLocation parameter_loc,
                                                            const std::string& message,
@@ -877,6 +917,13 @@ private:
     }
 
     TypeRef parse_type() {
+        if (starts_union_by_field_type()) {
+            fail_union_by_field_type(peek().loc);
+        }
+        if (starts_structural_capability_type()) {
+            fail_structural_capability_type(peek().loc);
+        }
+
         TypeQualifier qualifier = TypeQualifier::Value;
         SourceLocation loc = peek().loc;
         if (match(TokenKind::KwOwn)) {
@@ -1249,6 +1296,9 @@ private:
             if (check(TokenKind::RParen)) fail(name.loc, "tuple structs require at least one field");
             while (true) {
                 bool mutable_field = match(TokenKind::KwMut);
+                if (starts_union_by_field_type()) {
+                    fail_union_by_field_type(peek().loc);
+                }
                 TypeRef field_type = parse_type();
                 SourceLocation field_loc = field_type.loc;
                 decl.fields.push_back(StructField{
@@ -1288,6 +1338,9 @@ private:
             Token field = expect(TokenKind::Identifier, "expected struct field name");
             if (!match(TokenKind::Colon)) {
                 fail_expected_struct_field_colon(peek().loc, field.loc, field.text);
+            }
+            if (starts_union_by_field_type()) {
+                fail_union_by_field_type(peek().loc);
             }
             decl.fields.push_back(StructField{field.text, parse_type(), mutable_field, field.loc});
             if (should_recover_at_nested_declaration(open.loc)) {

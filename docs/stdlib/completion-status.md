@@ -85,8 +85,8 @@ tests, or CI matrix work.
 | `std::string` | Platform-specific `OsString` storage beyond the current POSIX byte wrapper, Unicode normalization/transcoding, grapheme iteration, and locale-sensitive case policy. A dedicated string-builder type is intentionally not planned for the basic slice. |
 | `std::parse` | Exact IEEE-754 boundary rounding diagnostics for decimal spellings adjacent to max finite/min subnormal values, plus any future taxonomy split backed by real caller needs. |
 | `std::encoding` | Unicode normalization/transcoding and optional compression policy outside the core encoding module. |
-| `union by` language idea | Syntax is chosen for roadmap discussion, but construction, exhaustiveness, active-arm drop, narrowing, layout, and diagnostics remain compiler work. |
-| Structural capability parameters | The `fn save(x: has serialize() -> String)` idea is tracked as compiler capability `structural-capability-parameters`; parser syntax, type checking, trait-quality diagnostics, lowering, and final interaction with normal trait bounds remain compiler work. |
+| `union by` language idea | Syntax is chosen and the parser now reserves `union by` with a targeted diagnostic, but construction, exhaustiveness, active-arm drop, narrowing, layout, and positive execution support remain compiler work. |
+| Structural capability parameters | The `fn save(x: has serialize() -> String)` idea is tracked as compiler capability `structural-capability-parameters`; the parser now emits a targeted diagnostic for the reserved spelling, while type checking, trait-quality diagnostics, lowering, and final interaction with normal trait bounds remain compiler work. |
 
 ## Language Roadmap Interaction
 
@@ -101,9 +101,11 @@ fragment: union by security.cipher_type {
 }
 ```
 
-It remains unimplemented. Future compiler work must define construction,
-exhaustiveness, active-arm drop, narrowing after discriminant checks, layout,
-and diagnostics before stdlib code can depend on it.
+It remains unusable in programs. The parser reserves the spelling and points
+users back to ordinary enum payloads today. Future compiler work must define
+construction, exhaustiveness, active-arm drop, narrowing after discriminant
+checks, layout, and positive execution support before stdlib code can depend
+on it.
 
 Structural capability parameters are also language work rather than a stdlib
 API. The exploratory shape is:
@@ -113,6 +115,11 @@ fn save(x: has serialize() -> String) {
   file.write(x.serialize())
 }
 ```
+
+It remains unusable in programs. The parser reserves the spelling and points
+users back to named traits today. Future compiler work must define type
+checking, dispatch, diagnostics, lowering, and the final interaction with
+normal generic trait bounds before stdlib code can depend on it.
 
 The compiler must still define whether this syntax desugars to anonymous trait
 bounds, how method names are resolved, how diagnostics point users toward named

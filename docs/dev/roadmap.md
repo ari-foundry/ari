@@ -54,11 +54,13 @@ fn save(x: has serialize() -> String) {
 }
 ```
 
-This is only a roadmap idea. It must not add an `interface` keyword, dynamic
-dispatch by accident, or a shortcut around normal trait-bound diagnostics. The
-compiler capability inventory tracks this as
-`structural-capability-parameters`; parser, type checking, trait-quality
-diagnostics, and lowering all remain future compiler work.
+This is only a roadmap idea. It is a reserved spelling, not a usable feature
+yet. The parser recognizes this shape enough to report a targeted diagnostic
+and steer users back to named traits. It must not add an `interface` keyword,
+dynamic dispatch by accident, or a shortcut around normal trait-bound
+diagnostics. The compiler capability inventory tracks this as
+`structural-capability-parameters`; type checking, trait-quality diagnostics,
+lowering, and positive execution fixtures all remain future compiler work.
 
 Discriminant-linked union fields are also worth exploring for protocol and
 binary-format records whose payload shape is controlled by data already present
@@ -85,13 +87,14 @@ The spelling is `union by` for the discriminant link and `=>` arms for the
 alternatives. The union field's active payload type is determined by the named
 discriminant value.
 
-This is only a roadmap idea. It should not replace ordinary `enum` ADTs,
-unchecked C unions, or `match`. A future design must specify construction
-rules, exhaustive arm checking against enum-like discriminants, ownership/drop
-for the active arm only, borrowing/narrowing after matching the discriminant,
-layout/ABI behavior, and diagnostics when the selector is not a stable field or
-context path. The compiler capability inventory tracks this as
-`union-by-fields`.
+This is a reserved roadmap spelling, not a usable feature yet. The parser
+recognizes `union by` in type positions enough to report a targeted diagnostic.
+It should not replace ordinary `enum` ADTs, unchecked C unions, or `match`. A
+future design must specify construction rules, exhaustive arm checking against
+enum-like discriminants, ownership/drop for the active arm only,
+borrowing/narrowing after matching the discriminant, layout/ABI behavior, and
+diagnostics when the selector is not a stable field or context path. The
+compiler capability inventory tracks this as `union-by-fields`.
 
 ## What Not To Track Here
 

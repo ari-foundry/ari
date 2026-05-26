@@ -653,6 +653,35 @@ the object after the source zone is reset or destroyed is rejected. `own dyn`
 can be upcast to an owning supertrait object while preserving the data pointer
 and drop thunk.
 
+## Structural Capability Parameters
+
+Ari does not currently support anonymous structural parameter requirements.
+The reserved roadmap spelling is:
+
+```ari
+fn save(x: has serialize() -> String) {
+  file.write(x.serialize())
+}
+```
+
+The parser recognizes `has method(...) -> Type` in a type position and emits a
+targeted diagnostic. Write a named trait and a normal generic bound today:
+
+```ari
+trait Serialize {
+  fn serialize(self) -> String;
+}
+
+fn save[T: Serialize](x: T) -> i64 {
+  let text = x.serialize();
+  return 0;
+}
+```
+
+The compiler capability inventory tracks this reserved syntax as
+`structural-capability-parameters`. Type checking, dispatch, lowering, and the
+final diagnostics policy remain future compiler work.
+
 ## Current Status
 
 Trait declarations, impl conformance, bare `self` receiver inference,
