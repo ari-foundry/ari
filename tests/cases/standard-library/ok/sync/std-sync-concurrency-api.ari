@@ -1,6 +1,6 @@
 // Covers concurrency API polish that is currently expressible in Ari source:
 // explicit memory-order names, wider atomic wrappers, barrier/condvar seeds,
-// OnceLock, and the first single-slot MPSC channel shape.
+// OnceLock, and bounded MPSC channel shapes.
 fn always_false() -> bool {
   return false;
 }
@@ -158,8 +158,37 @@ fn main() -> i64 {
   if receiver.recv().is_err() && receiver.recv_optional().is_none() && sender.is_closed() {
     score = score + 4096;
   }
+
+  let bounded = sync::bounded_channel<i64>(ref mut zone, 2).unwrap();
+  var bounded_sender = bounded.sender();
+  var bounded_receiver = bounded.receiver();
+  if bounded.capacity() == 2 &&
+     bounded_sender.capacity() == 2 &&
+     bounded_receiver.capacity() == 2 &&
+     bounded_receiver.is_empty() {
+    score = score + 1048576;
+  }
+  if bounded_sender.try_send(7).is_ok() &&
+     bounded_sender.try_send(8).is_ok() &&
+     bounded_sender.try_send(9).is_err() &&
+     bounded_receiver.len() == 2 {
+    score = score + 2097152;
+  }
+  if bounded_receiver.try_recv().unwrap_or(0) == 7 &&
+     bounded_receiver.recv().unwrap_or(0) == 8 &&
+     bounded_receiver.is_empty() {
+    score = score + 4194304;
+  }
+  match sync::bounded_channel<i64>(ref mut zone, 0) {
+    std::Err(reason) => {
+      if reason.is_kind(std::error::InvalidInput) {
+        score = score + 8388608;
+      }
+    }
+    _ => {}
+  }
   zone::destroy(zone);
 
-  assert_eq_i64(score, 1048575);
+  assert_eq_i64(score, 16777215);
   return score;
 }

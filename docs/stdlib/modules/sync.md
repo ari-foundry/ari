@@ -343,15 +343,18 @@ while waiting.
 ```ari
 sync::channel<T>(ref mut zone) -> Channel[T]
 sync::mpsc_channel<T>(ref mut zone) -> Channel[T]
+sync::bounded_channel<T>(ref mut zone, capacity) -> Result[Channel[T], Error]
 
 channel.sender() -> Sender[T]
 channel.receiver() -> Receiver[T]
 channel.split() -> Channel[T]
+channel.capacity() -> i64
 
 sender.send(value) -> Result[(), SendError[T]]
 sender.try_send(value) -> Result[(), TrySendError[T]]
 sender.send_bool(value) -> bool
 sender.clone() -> Sender[T]
+sender.capacity() -> i64
 sender.close() -> void
 sender.is_closed() -> bool
 
@@ -360,36 +363,43 @@ receiver.try_recv_optional() -> Option[T]
 receiver.recv() -> Result[T, RecvError]
 receiver.recv_timeout(duration) -> Result[T, RecvTimeoutError]
 receiver.recv_optional() -> Option[T]
+receiver.capacity() -> i64
+receiver.len() -> i64
 receiver.close() -> void
 receiver.is_closed() -> bool
 receiver.is_empty() -> bool
 ```
 
-The first channel is a bounded single-slot MPSC shape. `channel` and
-`mpsc_channel` are aliases for that capacity-1 channel; there is no unbounded
-channel constructor yet. `try_send` returns `TrySendFull(value)` when the slot
-already holds a value and `TrySendClosed(value)` when the channel is closed.
-`send` yields while the slot is full and returns `SendClosed(value)` if the
-channel closes before the value is accepted. `try_recv` returns
-`TryRecvEmpty` for an open empty slot and `TryRecvClosed` for a closed empty
-channel; `recv` yields until a value arrives or the channel closes.
+Channels are bounded MPSC queues allocated in the caller's `Zone`.
+`bounded_channel(zone, capacity)` creates a queue with that many slots and
+returns `InvalidInput` when `capacity <= 0`. `channel` and `mpsc_channel`
+remain convenience constructors for capacity 1. There is no unbounded channel
+constructor yet. `try_send` returns `TrySendFull(value)` when the queue already
+holds `capacity` values and `TrySendClosed(value)` when the channel is closed.
+`send` yields while the queue is full and returns `SendClosed(value)` if the
+channel closes before the value is accepted. Values are received FIFO.
+`try_recv` returns `TryRecvEmpty` for an open empty queue and `TryRecvClosed`
+for a closed empty channel; `recv` yields until a value arrives or the channel
+closes.
 `recv_timeout(duration)` checks for an already available value first, then
 yields until a value arrives, the channel closes, or a monotonic
 `std::time::Deadline` expires. It returns `RecvTimedOut` for an open empty
 channel that reaches the deadline and `RecvTimeoutClosed` when the channel is
 closed before a value is received. The `_optional` and `_bool` helpers
-intentionally discard error detail for compatibility. The channel state is
+intentionally discard error detail for compatibility. `capacity` is stable for
+the life of the channel; `Receiver::len` is an instantaneous queue length for
+diagnostics and tests, not a synchronization contract. The channel state is
 allocated in the caller's `Zone`; `Sender`, `Receiver`, and `Channel` carry
 only the shared state pointer, not a redundant zone handle.
 
-`sender.clone()` creates another sender handle to the same single-slot channel
+`sender.clone()` creates another sender handle to the same bounded channel
 state. Cloned senders do not allocate and they do not carry separate ownership
 counts yet; closing any sender closes the shared channel for all sender and
 receiver handles.
 
-Future channel work should add explicit `bounded_channel(capacity)`,
-unbounded-channel policy if desired, sender-counted close semantics, blocking
-wake integration, richer close semantics, and send/share trait checks.
+Future channel work should add unbounded-channel policy if desired,
+sender-counted close semantics, blocking wake integration, richer close
+semantics, and send/share trait checks.
 
 ## Example
 
@@ -437,6 +447,18 @@ fn main() -> i64 {
   if rx.recv().unwrap_or(0) != 10 {
     return 6;
   }
+
+  let bounded = sync::bounded_channel<i64>(ref mut zone, 2).unwrap();
+  var btx = bounded.sender();
+  var brx = bounded.receiver();
+  btx.try_send(1).unwrap();
+  btx.try_send(2).unwrap();
+  if btx.try_send(3).is_ok() || brx.len() != 2 {
+    return 7;
+  }
+  if brx.recv().unwrap_or(0) != 1 || brx.recv().unwrap_or(0) != 2 {
+    return 8;
+  }
   zone::destroy(zone);
   return 0;
 }
@@ -455,7 +477,7 @@ fn main() -> i64 {
 - Guard drops release active locks when callers use explicit `drop guard`;
   automatic RAII cleanup at scope exit or early return is not promised yet.
 - There is no `LazyLock[T]`, semaphore, sender-counted close policy, or
-  configurable channel capacity yet. Explicit `ThreadLocal[T]` handles live in
+  unbounded channel policy yet. Explicit `ThreadLocal[T]` handles live in
   `std::thread`; compiler-level
   `thread_local` declarations remain future work.
 - Send/share trait checking is still roadmap work, so cross-thread value
@@ -471,7 +493,7 @@ fn main() -> i64 {
 | Condvar | Current generation-based source API with spin/yield timeout waits; future blocking wait/wake and spurious wake documentation. |
 | Once/OnceLock | Current source one-time execution, value slot, value-preserving `set`, and fallible initializer status; future ref-in-Result return ergonomics, panic policy, and optional `LazyLock`. |
 | Barrier | Current source reusable barrier; future parking implementation. |
-| MPSC channel | Current single-slot MPSC shape with Result errors, timeout receives, unsent-value return, and clonable sender handles; future configurable bounded queues, sender-counted close semantics, blocking wake, and richer close semantics. |
+| MPSC channel | Current configurable bounded MPSC queues with Result errors, timeout receives, unsent-value return, FIFO receive order, and clonable sender handles; future sender-counted close semantics, blocking wake, unbounded policy, and richer close semantics. |
 | Thread local | Current explicit `std::thread::ThreadLocal[T]` handles; future compiler-level static TLS declarations and destructor policy. |
 
 ## Tests
@@ -494,7 +516,7 @@ fn main() -> i64 {
 - `tests/cases/standard-library/ok/sync/std-sync-concurrency-api.ari` checks
   explicit order validation, order-specific LLVM lowering, `AtomicBool`,
   `AtomicUsize`, `AtomicPtr[T]`, `OnceLock`, `Condvar`, `Barrier`, and the
-  single-slot channel API.
+  capacity-1 and bounded channel APIs.
 
 For small sync edits, run `make check-std-api`, then compile the relevant test
 with `--emit-llvm` and run the resulting executable. Use the broader prelude

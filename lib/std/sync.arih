@@ -125,9 +125,15 @@ pub enum TryRecvError {
 }
 
 struct MpscState[T] {
-  mut ready: AtomicI64,
+  mut lock_value: std::sync::RawMutex,
   mut closed: AtomicI64,
-  mut slot: std::Option[T],
+  capacity: i64,
+  mut len: i64,
+  mut head: i64,
+  mut tail: i64,
+  // Address of a zone-backed Option[T] ring buffer. Keep this private until
+  // aggregate pointer escape checks can express owned backing buffers directly.
+  buffer: u64,
 }
 
 pub struct Sender[T] {
@@ -307,19 +313,48 @@ pub fn is_completed(once: ref std::sync::Once) -> bool {
   return once.state.load() == 2;
 }
 
-fn new_mpsc_state[T](zone: ref mut Zone) -> ptr std::sync::MpscState[T] {
+fn new_mpsc_state[T](zone: ref mut Zone, capacity: i64) -> ptr std::sync::MpscState[T] {
+  std::assert(capacity > 0);
+  let metadata = std::zone::from_zone(zone);
+  let buffer = metadata.alloc_array<std::Option[T]>(capacity);
+  var index = 0;
+  while index < capacity {
+    ptr_store(ptr_add(buffer, index), std::None<T>());
+    index = index + 1;
+  }
   return std::zone::new<std::sync::MpscState[T]>(
     zone,
     std::sync::MpscState<T> {
-      ready: AtomicI64::new(0),
+      lock_value: std::sync::RawMutex::new(),
       closed: AtomicI64::new(0),
-      slot: std::None<T>(),
+      capacity: capacity,
+      len: 0,
+      head: 0,
+      tail: 0,
+      buffer: buffer as u64,
     }
   );
 }
 
+pub fn bounded_channel[T](
+  zone: ref mut Zone,
+  capacity: i64
+) -> std::Result[std::sync::Channel[T], std::error::Error] {
+  if capacity <= 0 {
+    return std::Err<std::sync::Channel[T], std::error::Error>(
+      std::error::new(std::error::InvalidInput)
+    );
+  }
+  let state = std::sync::new_mpsc_state<T>(zone, capacity);
+  let sender = std::sync::Sender<T> { state: state };
+  let receiver = std::sync::Receiver<T> { state: state };
+  return std::Ok<std::sync::Channel[T], std::error::Error>(
+    std::sync::Channel<T> { sender: sender, receiver: receiver }
+  );
+}
+
 pub fn channel[T](zone: ref mut Zone) -> std::sync::Channel[T] {
-  let state = std::sync::new_mpsc_state<T>(zone);
+  let state = std::sync::new_mpsc_state<T>(zone, 1);
   let sender = std::sync::Sender<T> { state: state };
   let receiver = std::sync::Receiver<T> { state: state };
   return std::sync::Channel<T> { sender: sender, receiver: receiver };
@@ -1285,40 +1320,56 @@ pub impl[T] std::sync::Sender[T] {
     return self;
   }
 
+  fn capacity(self: ref Self) -> i64 {
+    let state: ref std::sync::MpscState[T] = ref *self.state;
+    return state.capacity;
+  }
+
   fn try_send(self: ref mut Self, value: T) -> std::Result[(), std::sync::TrySendError[T]] {
     let state: ref mut std::sync::MpscState[T] = ref mut *self.state;
+    std::sync::lock(ref mut state.lock_value);
     if state.closed.load() != 0 {
+      std::sync::unlock(ref mut state.lock_value);
       return std::Err<(), std::sync::TrySendError[T]>(std::sync::TrySendClosed<T>(value));
     }
-    if state.ready.compare_exchange_bool(0, -1) {
-      if state.closed.load() != 0 {
-        state.ready.store(0);
-        return std::Err<(), std::sync::TrySendError[T]>(std::sync::TrySendClosed<T>(value));
-      }
-      let previous = state.slot.replace(value);
-      drop previous;
-      state.ready.store(1);
-      return std::Ok<(), std::sync::TrySendError[T]>(());
+    if state.len >= state.capacity {
+      std::sync::unlock(ref mut state.lock_value);
+      return std::Err<(), std::sync::TrySendError[T]>(std::sync::TrySendFull<T>(value));
     }
-    return std::Err<(), std::sync::TrySendError[T]>(std::sync::TrySendFull<T>(value));
+
+    let buffer = state.buffer as ptr std::Option[T];
+    let previous = (ref mut *ptr_add(buffer, state.tail)).replace(value);
+    drop previous;
+    state.tail = state.tail + 1;
+    if state.tail >= state.capacity {
+      state.tail = 0;
+    }
+    state.len = state.len + 1;
+    std::sync::unlock(ref mut state.lock_value);
+    return std::Ok<(), std::sync::TrySendError[T]>(());
   }
 
   fn send(self: ref mut Self, value: T) -> std::Result[(), std::sync::SendError[T]] {
-    let state: ref mut std::sync::MpscState[T] = ref mut *self.state;
-    while state.closed.load() == 0 {
-      if state.ready.compare_exchange_bool(0, -1) {
-        if state.closed.load() != 0 {
-          state.ready.store(0);
-          return std::Err<(), std::sync::SendError[T]>(std::sync::SendClosed<T>(value));
+    var pending = value;
+    while true {
+      match self.try_send(pending) {
+        std::Ok(_) => {
+          return std::Ok<(), std::sync::SendError[T]>(());
         }
-        let previous = state.slot.replace(value);
-        drop previous;
-        state.ready.store(1);
-        return std::Ok<(), std::sync::SendError[T]>(());
+        std::Err(reason) => {
+          match reason {
+            std::sync::TrySendClosed(closed_value) => {
+              return std::Err<(), std::sync::SendError[T]>(std::sync::SendClosed<T>(closed_value));
+            }
+            std::sync::TrySendFull(full_value) => {
+              pending = full_value;
+            }
+          }
+        }
       }
       std::thread::yield_now();
     }
-    return std::Err<(), std::sync::SendError[T]>(std::sync::SendClosed<T>(value));
+    return std::Err<(), std::sync::SendError[T]>(std::sync::SendClosed<T>(pending));
   }
 
   fn send_bool(self: ref mut Self, value: T) -> bool {
@@ -1344,16 +1395,35 @@ pub impl[T] std::sync::Sender[T] {
 }
 
 pub impl[T] std::sync::Receiver[T] {
+  fn capacity(self: ref Self) -> i64 {
+    let state: ref std::sync::MpscState[T] = ref *self.state;
+    return state.capacity;
+  }
+
+  fn len(self: ref Self) -> i64 {
+    let state: ref std::sync::MpscState[T] = ref *self.state;
+    return state.len;
+  }
+
   fn try_recv(self: ref mut Self) -> std::Result[T, std::sync::TryRecvError] {
     let state: ref mut std::sync::MpscState[T] = ref mut *self.state;
-    if state.ready.compare_exchange_bool(1, -1) {
-      let value = state.slot.take();
-      state.ready.store(0);
+    std::sync::lock(ref mut state.lock_value);
+    if state.len > 0 {
+      let buffer = state.buffer as ptr std::Option[T];
+      let value = (ref mut *ptr_add(buffer, state.head)).take();
+      state.head = state.head + 1;
+      if state.head >= state.capacity {
+        state.head = 0;
+      }
+      state.len = state.len - 1;
+      std::sync::unlock(ref mut state.lock_value);
       return std::Ok<T, std::sync::TryRecvError>(value.unwrap());
     }
     if state.closed.load() != 0 {
+      std::sync::unlock(ref mut state.lock_value);
       return std::Err<T, std::sync::TryRecvError>(std::sync::TryRecvClosed);
     }
+    std::sync::unlock(ref mut state.lock_value);
     return std::Err<T, std::sync::TryRecvError>(std::sync::TryRecvEmpty);
   }
 
@@ -1437,14 +1507,17 @@ pub impl[T] std::sync::Receiver[T] {
   }
 
   fn is_empty(self: ref Self) -> bool {
-    let state: ref std::sync::MpscState[T] = ref *self.state;
-    return state.ready.load() != 1;
+    return self.len() == 0;
   }
 }
 
 pub impl[T] std::sync::Channel[T] {
   fn split(self) -> std::sync::Channel[T] {
     return self;
+  }
+
+  fn capacity(self: ref Self) -> i64 {
+    return self.sender.capacity();
   }
 
   fn sender(self: ref Self) -> std::sync::Sender[T] {

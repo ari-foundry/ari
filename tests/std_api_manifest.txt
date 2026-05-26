@@ -1075,8 +1075,9 @@ fn std::string::utf8_string|check-prelude std-string-text-kinds Result-returning
 fn std::string::utf8_string_optional|check-prelude std-string-text-kinds Option-returning owned UTF-8 string compatibility constructor; docs/stdlib/modules/string.md
 fn std::string::utf8_string_unchecked|check-prelude std-string-text-kinds asserting owned UTF-8 string constructor; docs/stdlib/modules/string.md
 fn std::string::with_capacity|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::sync::bounded_channel[T]|check-prelude std-sync-concurrency-api bounded MPSC channel constructor with invalid-capacity Result error; docs/stdlib/modules/sync.md
 fn std::sync::call_once|check-prelude std-sync-mutex-once source once execution helper; docs/stdlib/modules/sync.md
-fn std::sync::channel[T]|check-prelude std-sync-concurrency-api single-slot MPSC channel constructor; docs/stdlib/modules/sync.md
+fn std::sync::channel[T]|check-prelude std-sync-concurrency-api capacity-1 MPSC channel constructor; docs/stdlib/modules/sync.md
 fn std::sync::compare_exchange|check-prelude std-sync-atomic-i64 atomic compare-and-exchange hook; docs/stdlib/modules/sync.md
 fn std::sync::fetch_add|check-prelude std-sync-atomic-i64 atomic fetch-add hook; docs/stdlib/modules/sync.md
 fn std::sync::is_compare_exchange_order|check-prelude std-sync-concurrency-api memory-order validation helper for compare-exchange success/failure pairs; docs/stdlib/modules/sync.md
@@ -2676,6 +2677,7 @@ method std::sync::AtomicUsize::swap_order|check-prelude std-sync-concurrency-api
 method std::sync::Barrier::new|check-prelude std-sync-concurrency-api barrier constructor; docs/stdlib/modules/sync.md
 method std::sync::Barrier::parties|check-prelude std-sync-concurrency-api barrier party-count accessor; docs/stdlib/modules/sync.md
 method std::sync::Barrier::wait|check-prelude std-sync-concurrency-api barrier wait coordinator; docs/stdlib/modules/sync.md
+method std::sync::Channel[T]::capacity|check-prelude std-sync-concurrency-api bounded channel capacity accessor; docs/stdlib/modules/sync.md
 method std::sync::Channel[T]::receiver|check-prelude std-sync-concurrency-api channel receiver accessor; docs/stdlib/modules/sync.md
 method std::sync::Channel[T]::sender|check-prelude std-sync-concurrency-api channel sender accessor; docs/stdlib/modules/sync.md
 method std::sync::Channel[T]::split|check-prelude std-sync-concurrency-api channel split helper; docs/stdlib/modules/sync.md
@@ -2740,9 +2742,11 @@ method std::sync::RawRwLockReadGuard::is_active|check-prelude std-sync-rwlock ra
 method std::sync::RawRwLockReadGuard::unlock|check-prelude std-sync-rwlock raw rwlock read guard idempotent unlock helper; docs/stdlib/modules/sync.md
 method std::sync::RawRwLockWriteGuard::is_active|check-prelude std-sync-rwlock raw rwlock write guard active-state predicate; docs/stdlib/modules/sync.md
 method std::sync::RawRwLockWriteGuard::unlock|check-prelude std-sync-rwlock raw rwlock write guard idempotent unlock helper; docs/stdlib/modules/sync.md
+method std::sync::Receiver[T]::capacity|check-prelude std-sync-concurrency-api receiver bounded channel capacity accessor; docs/stdlib/modules/sync.md
 method std::sync::Receiver[T]::close|check-prelude std-sync-concurrency-api receiver-side channel close helper; docs/stdlib/modules/sync.md
 method std::sync::Receiver[T]::is_closed|check-prelude std-sync-concurrency-api receiver closed predicate; docs/stdlib/modules/sync.md
 method std::sync::Receiver[T]::is_empty|check-prelude std-sync-concurrency-api receiver empty predicate; docs/stdlib/modules/sync.md
+method std::sync::Receiver[T]::len|check-prelude std-sync-concurrency-api receiver instantaneous queued item count; docs/stdlib/modules/sync.md
 method std::sync::Receiver[T]::recv|check-prelude std-sync-concurrency-api yielding channel Result receive helper; docs/stdlib/modules/sync.md
 method std::sync::Receiver[T]::recv_optional|check-prelude std-sync-concurrency-api yielding channel optional receive compatibility helper; docs/stdlib/modules/sync.md
 method std::sync::Receiver[T]::recv_timeout|check-prelude std-sync-concurrency-api timeout channel Result receive helper; docs/stdlib/modules/sync.md
@@ -2770,12 +2774,13 @@ method std::sync::RwLock[T]::reader_count|check-prelude std-sync-value-locks val
 method std::sync::RwLock[T]::try_read|check-prelude std-sync-value-locks value rwlock optional read guard helper; docs/stdlib/modules/sync.md
 method std::sync::RwLock[T]::try_write|check-prelude std-sync-value-locks value rwlock optional write guard helper; docs/stdlib/modules/sync.md
 method std::sync::RwLock[T]::write|check-prelude std-sync-value-locks value rwlock guard-returning write helper; docs/stdlib/modules/sync.md
-method std::sync::Sender[T]::clone|check-prelude std-sync-concurrency-api sender handle clone sharing the same single-slot channel state; docs/stdlib/modules/sync.md
+method std::sync::Sender[T]::capacity|check-prelude std-sync-concurrency-api sender bounded channel capacity accessor; docs/stdlib/modules/sync.md
+method std::sync::Sender[T]::clone|check-prelude std-sync-concurrency-api sender handle clone sharing the same bounded channel state; docs/stdlib/modules/sync.md
 method std::sync::Sender[T]::close|check-prelude std-sync-concurrency-api sender-side channel close helper; docs/stdlib/modules/sync.md
 method std::sync::Sender[T]::is_closed|check-prelude std-sync-concurrency-api sender closed predicate; docs/stdlib/modules/sync.md
-method std::sync::Sender[T]::send|check-prelude std-sync-concurrency-api yielding single-slot Result send helper; docs/stdlib/modules/sync.md
+method std::sync::Sender[T]::send|check-prelude std-sync-concurrency-api yielding bounded-channel Result send helper; docs/stdlib/modules/sync.md
 method std::sync::Sender[T]::send_bool|check-prelude std-sync-concurrency-api lossy nonblocking send compatibility helper; docs/stdlib/modules/sync.md
-method std::sync::Sender[T]::try_send|check-prelude std-sync-concurrency-api nonblocking single-slot Result send helper; docs/stdlib/modules/sync.md
+method std::sync::Sender[T]::try_send|check-prelude std-sync-concurrency-api nonblocking bounded-channel Result send helper; docs/stdlib/modules/sync.md
 method std::sync::WaitTimeoutResult::timed_out|check-prelude std-sync-concurrency-api condition-variable timeout predicate; docs/stdlib/modules/sync.md
 method std::test::Bench::elapsed|check-prelude std-test-report benchmark elapsed duration; docs/stdlib/modules/test.md
 method std::test::Bench::elapsed_nanos|check-prelude std-test-report benchmark elapsed nanoseconds; docs/stdlib/modules/test.md
@@ -3179,7 +3184,7 @@ struct std::sync::AtomicI64|check-prelude std-sync-atomic-i64 atomic primitive v
 struct std::sync::AtomicPtr[T]|check-prelude std-sync-concurrency-api pointer atomic wrapper; docs/stdlib/modules/sync.md
 struct std::sync::AtomicUsize|check-prelude std-sync-concurrency-api pointer-sized atomic wrapper; docs/stdlib/modules/sync.md
 struct std::sync::Barrier|check-prelude std-sync-concurrency-api source barrier primitive; docs/stdlib/modules/sync.md
-struct std::sync::Channel[T]|check-prelude std-sync-concurrency-api single-slot channel pair; docs/stdlib/modules/sync.md
+struct std::sync::Channel[T]|check-prelude std-sync-concurrency-api bounded channel pair; docs/stdlib/modules/sync.md
 struct std::sync::Condvar|check-prelude std-sync-concurrency-api source condition variable primitive; docs/stdlib/modules/sync.md
 struct std::sync::MutexGuard[T]|check-prelude std-sync-value-locks value mutex payload guard; docs/stdlib/modules/sync.md
 struct std::sync::Mutex[T]|check-prelude std-sync-value-locks value-protecting mutex payload handle; docs/stdlib/modules/sync.md
