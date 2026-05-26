@@ -1463,6 +1463,11 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_net_set_reuse_addr" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -q "@ari_builtin_net_ttl" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -q "@ari_builtin_net_set_ttl" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
+	grep -q "@ari_builtin_net_multicast_loop_v4" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
+	grep -q "@ari_builtin_net_set_multicast_loop_v4" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
+	grep -q "@ari_builtin_net_multicast_ttl_v4" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
+	grep -q "@ari_builtin_net_join_multicast_v4" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
+	grep -q "@ari_builtin_net_leave_multicast_v4" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -F -q "std3net8udp_bind" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -F -q "std__net__UdpSocket8inherent10local_addr" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -F -q "std__net__UdpSocket8inherent13bind_optional" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
@@ -1471,6 +1476,9 @@ check-prelude: $(TARGET)
 	grep -F -q "std__net__UdpSocket8inherent17set_write_timeout" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -F -q "std__net__UdpSocket8inherent10reuse_addr" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -F -q "std__net__UdpSocket8inherent14set_reuse_addr" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
+	grep -F -q "std__net__UdpSocket8inherent17multicast_loop_v4" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
+	grep -F -q "std__net__UdpSocket8inherent20set_multicast_ttl_v4" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
+	grep -F -q "std__net__UdpSocket8inherent17join_multicast_v4" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-udp-socket.ari -o $(BUILD_DIR)/prelude/std-net-udp-socket.elf
 	$(BUILD_DIR)/prelude/std-net-udp-socket.elf; code=$$?; test $$code -eq 254
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-ipv6-socket.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-ipv6-socket.ll

@@ -245,6 +245,18 @@ socket.broadcast()
 socket.broadcast_optional()
 socket.set_broadcast(enabled)
 socket.set_broadcast_unchecked(enabled)
+socket.multicast_loop_v4()
+socket.multicast_loop_v4_optional()
+socket.set_multicast_loop_v4(enabled)
+socket.set_multicast_loop_v4_unchecked(enabled)
+socket.multicast_ttl_v4()
+socket.multicast_ttl_v4_optional()
+socket.set_multicast_ttl_v4(value)
+socket.set_multicast_ttl_v4_unchecked(value)
+socket.join_multicast_v4(group)
+socket.join_multicast_v4_on(group, interface)
+socket.leave_multicast_v4(group)
+socket.leave_multicast_v4_on(group, interface)
 socket.send_buffer_size()
 socket.set_send_buffer_size(value)
 socket.recv_buffer_size()
@@ -515,9 +527,9 @@ Use `send_to`, `recv_from`, `connect`, `send`, `recv`, `local_port`,
 keep invalid handles, unsupported address families, and host socket errors
 visible. Use `send_byte_to_unchecked`, `recv_byte_unchecked`, and `_optional`
 helpers only when discarding those errors is intentional. UDP exposes
-`reuse_addr`, `reuse_port`, `broadcast`, close-on-exec, send-buffer,
-receive-buffer, IPv4 TTL, and IPv6 hop-limit helpers as Result-returning
-natural methods; multicast helpers are future slices.
+`reuse_addr`, `reuse_port`, `broadcast`, IPv4 multicast loop/TTL and
+membership helpers, close-on-exec, send-buffer, receive-buffer, IPv4 TTL, and
+IPv6 hop-limit helpers as Result-returning natural methods.
 
 ## Unix Domain Sockets
 
@@ -561,7 +573,13 @@ servers, tests, and restartable tools. They also expose `reuse_port()` and
 `set_reuse_port(enabled)` on hosted Linux/POSIX targets. `TcpStream` exposes
 `nodelay()` and `set_nodelay(enabled)` for `TCP_NODELAY`, plus
 `keepalive()`/`set_keepalive(enabled)` for the common `SO_KEEPALIVE` flag.
-UDP sockets expose `broadcast()`/`set_broadcast(enabled)`. TCP streams and UDP
+UDP sockets expose `broadcast()`/`set_broadcast(enabled)`,
+`multicast_loop_v4()`/`set_multicast_loop_v4(enabled)`,
+`multicast_ttl_v4()`/`set_multicast_ttl_v4(value)`,
+`join_multicast_v4(group)`, `join_multicast_v4_on(group, interface)`,
+`leave_multicast_v4(group)`, and `leave_multicast_v4_on(group, interface)`.
+The default multicast interface is `Ipv4Addr::any()`. Multicast TTL accepts
+`0..=255`; ordinary unicast `ttl()` still uses `1..=255`. TCP streams and UDP
 sockets expose `send_buffer_size`, `set_send_buffer_size`,
 `recv_buffer_size`, and `set_recv_buffer_size` as Result-returning integer
 option helpers. TCP streams and UDP sockets also expose `ttl()`/`set_ttl(value)`
@@ -696,9 +714,9 @@ return ptr_load(output.as_slice().as_ptr()) as i64;
 | DNS lookup | Current hosted IPv4/IPv6 slice: `lookup_v4`, `lookup_v6`, `"host:port"`, and `"[host]:port"` `resolve` return `Error`; `service_port` maps common service names to ports; `resolve_all(zone, host, port)`, `resolve_service(zone, host, service)`, `to_socket_addrs(zone, endpoint)`, and `to_socket_addrs_service(zone, host, service)` return zone-backed `Vec[SocketAddr]`; `_optional`/`try_*` helpers discard error detail intentionally; `_raw` helpers are raw compatibility bridges. |
 | TCP listener | Current hosted IPv4/IPv6 slice: module-level `listen`/`tcp_listen`, explicit IPv6 `tcp_listen_v6`, `TcpListener::bind`, and `accept` return `Error`; optional/try compatibility and raw compatibility forms remain; Result-returning `local_port`/`local_addr` plus IPv6-specific `local_addr_v6`, descriptor/open/close-on-exec helpers, nonblocking, reuse-address, and reuse-port setter/query with Result defaults, `Duration` and raw-millisecond accept timeout setters, accept readiness probes, unchecked timeout compatibility, and explicit close/close_unchecked. |
 | TCP stream | Current hosted IPv4/IPv6 slice: module-level `connect`/`tcp_connect`, explicit IPv6 `tcp_connect_v6`, and host-port `connect_host`/`tcp_connect_host`; `TcpStream::connect` returns `Error`, optional/try and raw compatibility forms remain, local/peer address helpers dispatch across IPv4/IPv6 with IPv6-specific `local_addr_v6`/`peer_addr_v6`, descriptor/open/close-on-exec helpers, nonblocking, TCP nodelay, keepalive, linger, send/receive buffer-size helpers, IPv4 TTL, IPv6 hop-limit with Result defaults, `Duration` timeouts, read/write readiness probes, shutdown, byte and buffer IO, close/close_unchecked, and `std::io::Reader`/`Writer` adapters. |
-| UDP socket | Current hosted IPv4/IPv6 slice: module-level `udp_bind` plus explicit IPv6 `udp_bind_v6`, `UdpSocket::bind` returns `Error`, optional/try and raw compatibility forms remain, Result-returning local-port/local-address helpers including `local_addr_v6`, descriptor/open/close-on-exec helpers, nonblocking, reuse-address, reuse-port, broadcast, send/receive buffer-size helpers, IPv4 TTL, IPv6 hop-limit with Result defaults, `Duration` timeouts, send/receive readiness probes, datagram `send_to`/`recv_from`/`peek_from`, connected `send`/`recv`, single-byte compatibility helpers, and close/close_unchecked. |
+| UDP socket | Current hosted IPv4/IPv6 slice: module-level `udp_bind` plus explicit IPv6 `udp_bind_v6`, `UdpSocket::bind` returns `Error`, optional/try and raw compatibility forms remain, Result-returning local-port/local-address helpers including `local_addr_v6`, descriptor/open/close-on-exec helpers, nonblocking, reuse-address, reuse-port, broadcast, IPv4 multicast loop/TTL and membership helpers, send/receive buffer-size helpers, IPv4 TTL, IPv6 hop-limit with Result defaults, `Duration` timeouts, send/receive readiness probes, datagram `send_to`/`recv_from`/`peek_from`, connected `send`/`recv`, single-byte compatibility helpers, and close/close_unchecked. |
 | Unix domain socket | Current hosted stream and datagram slice: module-level `unix_listen`/`unix_connect`, `UnixListener` bind/accept and `UnixStream` connect return `Error`, optional/try compatibility helpers and raw compatibility bridges remain, IO/shutdown Result methods, close-on-exec helpers, `Duration` and raw-millisecond timeout setters, accept/read/write readiness probes, and `read`/`write`/`read_exact`/`write_all` buffer helpers. `unix_datagram(path)` binds a pathname datagram socket, `unix_datagram_unbound()` creates an unbound datagram socket, and `UnixDatagram` supports `bind`, `unbound`, `connect(path)`, `send_to(bytes, path)`, connected `send`/`recv`, close-on-exec, nonblocking, timeout, and readiness helpers. |
-| socket options | Current: nonblocking, close-on-exec, readiness probes, read/write timeout, TCP listener/UDP reuse-address and reuse-port, TCP nodelay/keepalive/linger, UDP broadcast, TCP/UDP send/receive buffer-size helpers, IPv4 TTL, and IPv6 hop-limit with Result defaults plus `_optional`/`_unchecked` compatibility where present; future multicast. |
+| socket options | Current: nonblocking, close-on-exec, readiness probes, read/write timeout, TCP listener/UDP reuse-address and reuse-port, TCP nodelay/keepalive/linger, UDP broadcast and IPv4 multicast loop/TTL/membership, TCP/UDP send/receive buffer-size helpers, IPv4 TTL, and IPv6 hop-limit with Result defaults plus `_optional`/`_unchecked` compatibility where present. |
 | timeout | Current: preferred `std::time::Duration` read/write/accept timeout setters plus raw millisecond setters, all Result-returning, with `_unchecked` raw-millisecond compatibility helpers. |
 | readiness | Current: `TcpListener::accept_ready`, `TcpStream::read_ready`/`write_ready`, `UdpSocket::recv_ready`/`send_ready`, `UnixListener::accept_ready`, `UnixStream::read_ready`/`write_ready`, and `UnixDatagram::recv_ready`/`send_ready` delegate to `std::os::poll_read`/`poll_write`. Each has a `Duration` form and a `_millis` form. They return `Ok(true)` for ready, `Ok(false)` for timeout, and `Error` for invalid descriptors or host poll failures. They do not perform the read/write/accept themselves; callers must still handle the operation result. |
 | shutdown | Current: `Shutdown::{Read, Write, Both}` and stream `shutdown(mode)` for TCP and Unix streams. |
@@ -763,7 +781,7 @@ restricted hosts it verifies that socket creation reports `PermissionDenied`
 through the shared error bridge.
 `std-net-udp-socket.ari` covers module-level `udp_bind`, IPv4 UDP bind,
 local-port/local-address lookup, timeout/nonblocking helpers, close-on-exec,
-reuse/broadcast/buffer-size/TTL options, datagram `send_to`/`recv_from`/`peek_from`,
+reuse/broadcast/multicast/buffer-size/TTL options, datagram `send_to`/`recv_from`/`peek_from`,
 connected `send`/`recv`, single-byte datagram compatibility helpers,
 restricted-host fallback, and explicit close.
 `std-net-ipv6-socket.ari` covers IPv6 lookup, bracketed endpoint resolution,
@@ -790,8 +808,8 @@ IPv6 input for the IPv4 resolver, and edge IPv4 addresses.
   canonical names, and detailed resolver status.
 - Add timeout-specific error categories once the runtime can distinguish
   deadline expiry from ordinary read, write, accept, and connect failures.
-- Add remaining socket options such as multicast join/leave and
-  close-on-exec-at-creation only with focused platform docs and tests.
+- Add close-on-exec-at-creation and IPv6 multicast policy only with focused
+  platform docs and tests.
 - Expand single-descriptor readiness into `net::Poll`/`Events` or another
   multi-descriptor event-loop API once ownership and cancellation policy are
   clearer.

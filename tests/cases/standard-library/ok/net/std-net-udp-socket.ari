@@ -1,7 +1,8 @@
 // Covers hosted UDP sockets: IPv4 bind, local port discovery, single-byte
-// datagram send/receive, timeout/nonblocking options, and explicit close. If
-// the host forbids socket creation, the test accepts PermissionDenied as an
-// environment policy and still verifies the shared error bridge.
+// datagram send/receive, timeout/nonblocking options, IPv4 multicast controls,
+// and explicit close. If the host forbids socket creation, the test accepts
+// PermissionDenied as an environment policy and still verifies the shared error
+// bridge.
 fn error_is(value: error::Error, kind: error::Kind) -> bool {
   return value.is_kind(kind);
 }
@@ -128,8 +129,23 @@ fn main() -> i64 {
     server.recv_buffer_size().unwrap_or(0) > 0 &&
     server.set_ttl(64).is_ok() &&
     server.ttl().unwrap_or(0) > 0 &&
+    server.set_multicast_loop_v4(false).is_ok() &&
+    !server.multicast_loop_v4().unwrap_or(true) &&
+    server.set_multicast_loop_v4(true).is_ok() &&
+    server.multicast_loop_v4().unwrap_or(false) &&
+    server.set_multicast_ttl_v4(1).is_ok() &&
+    server.multicast_ttl_v4().unwrap_or(-1) >= 0 &&
+    server.set_multicast_ttl_v4(256).is_err() &&
     server.set_ttl(0).is_err() {
     score = score + 8192;
+  }
+
+  let multicast_group = net::Ipv4Addr::new(224 as u8, 0 as u8, 0 as u8, 251 as u8);
+  match server.join_multicast_v4(multicast_group) {
+    Ok(_) => {
+      assert(server.leave_multicast_v4(multicast_group).is_ok());
+    }
+    Err(_multicast_reason) => {}
   }
 
   if client.close().is_ok() && server.close().is_ok() {

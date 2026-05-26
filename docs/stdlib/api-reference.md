@@ -2105,8 +2105,8 @@ bind/connect/accept, pathname Unix datagram bind/unbound/connect/send/receive,
 local bound-port and local socket-address lookup,
 borrowed descriptor views, explicit close, nonblocking flags,
 reuse-address/reuse-port helpers, close-on-exec helpers, TCP nodelay,
-keepalive, and linger helpers, UDP broadcast, send/receive buffer-size helpers,
-IPv4 TTL and IPv6 hop-limit helpers,
+keepalive, and linger helpers, UDP broadcast, IPv4 multicast loop/TTL and
+membership helpers, send/receive buffer-size helpers, IPv4 TTL and IPv6 hop-limit helpers,
 `std::time::Duration` timeout setters with raw millisecond compatibility
 helpers, and stream shutdown. TCP and
 Unix streams adapt to `std::io::Reader`/`Writer` and provide inherent
@@ -2122,8 +2122,9 @@ still handle the actual operation result. `linger_seconds` reads TCP
 `SO_LINGER` as `Option[i64]`, where `None` means disabled; `set_linger_seconds`
 enables it and `disable_linger` clears it. `ttl` controls IPv4 `IP_TTL` and
 `hop_limit` controls IPv6 `IPV6_UNICAST_HOPS`; setters accept `1..=255` and
-return `InvalidInput` outside that range. Full `getaddrinfo` iteration, host
-service-database lookup, multicast, multi-descriptor poll/event loops, Unix
+return `InvalidInput` outside that range. UDP IPv4 multicast exposes
+loopback, TTL, join, and leave helpers; multicast TTL accepts `0..=255`.
+Full `getaddrinfo` iteration, host service-database lookup, IPv6 multicast policy, multi-descriptor poll/event loops, Unix
 peer credentials, TLS packaging decisions, and timeout-specific error results
 remain roadmap work.
 

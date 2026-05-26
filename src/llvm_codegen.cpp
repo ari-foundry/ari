@@ -2171,6 +2171,24 @@ private:
         line("}");
         line();
 
+        line("define private void @ari_runtime_net_store_ipv4(ptr %out, i64 %a, i64 %b, i64 %c, i64 %d) {");
+        line("entry:");
+        line("  %a32 = trunc i64 %a to i32");
+        line("  %b32 = trunc i64 %b to i32");
+        line("  %c32 = trunc i64 %c to i32");
+        line("  %d32 = trunc i64 %d to i32");
+        line("  %a.shift = shl i32 %a32, 24");
+        line("  %b.shift = shl i32 %b32, 16");
+        line("  %c.shift = shl i32 %c32, 8");
+        line("  %ab = or i32 %a.shift, %b.shift");
+        line("  %abc = or i32 %ab, %c.shift");
+        line("  %host.addr = or i32 %abc, %d32");
+        line("  %net.addr = call i32 @htonl(i32 %host.addr)");
+        line("  store i32 %net.addr, ptr %out, align 4");
+        line("  ret void");
+        line("}");
+        line();
+
         line("define private void @ari_runtime_net_sockaddr_v6(ptr %addr, i64 %s0, i64 %s1, i64 %s2, i64 %s3, i64 %s4, i64 %s5, i64 %s6, i64 %s7, i64 %port) {");
         line("entry:");
         line("  call void @llvm.memset.p0.i64(ptr %addr, i8 0, i64 28, i1 false)");
@@ -3105,6 +3123,68 @@ private:
         line("define " + runtime_visibility + "i1 @ari_builtin_net_set_broadcast(i64 %fd, i1 %enabled) {");
         line("entry:");
         line("  %ok = call i1 @ari_runtime_net_set_bool_option(i64 %fd, i32 1, i32 6, i1 %enabled)");
+        line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_net_multicast_loop_v4(i64 %fd) {");
+        line("entry:");
+        line("  %value = call i64 @ari_runtime_net_bool_option(i64 %fd, i32 0, i32 34)");
+        line("  ret i64 %value");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_net_set_multicast_loop_v4(i64 %fd, i1 %enabled) {");
+        line("entry:");
+        line("  %ok = call i1 @ari_runtime_net_set_bool_option(i64 %fd, i32 0, i32 34, i1 %enabled)");
+        line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_net_multicast_ttl_v4(i64 %fd) {");
+        line("entry:");
+        line("  %value = call i64 @ari_runtime_net_int_option(i64 %fd, i32 0, i32 33)");
+        line("  ret i64 %value");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_net_set_multicast_ttl_v4(i64 %fd, i64 %value) {");
+        line("entry:");
+        line("  %ok = call i1 @ari_runtime_net_set_int_option(i64 %fd, i32 0, i32 33, i64 %value)");
+        line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define private i1 @ari_runtime_net_multicast_membership_v4(i64 %fd, i32 %option, i64 %ga, i64 %gb, i64 %gc, i64 %gd, i64 %ia, i64 %ib, i64 %ic, i64 %id) {");
+        line("entry:");
+        line("  %invalid = icmp slt i64 %fd, 0");
+        line("  br i1 %invalid, label %fail, label %set");
+        line("set:");
+        line("  %fd32 = trunc i64 %fd to i32");
+        line("  %mreq = alloca [8 x i8], align 4");
+        line("  %mreq.ptr = getelementptr inbounds [8 x i8], ptr %mreq, i64 0, i64 0");
+        line("  %group.ptr = getelementptr inbounds i8, ptr %mreq.ptr, i64 0");
+        line("  call void @ari_runtime_net_store_ipv4(ptr %group.ptr, i64 %ga, i64 %gb, i64 %gc, i64 %gd)");
+        line("  %interface.ptr = getelementptr inbounds i8, ptr %mreq.ptr, i64 4");
+        line("  call void @ari_runtime_net_store_ipv4(ptr %interface.ptr, i64 %ia, i64 %ib, i64 %ic, i64 %id)");
+        line("  %code = call i32 @setsockopt(i32 %fd32, i32 0, i32 %option, ptr %mreq.ptr, i32 8)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  ret i1 %ok");
+        line("fail:");
+        line("  ret i1 false");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_net_join_multicast_v4(i64 %fd, i64 %ga, i64 %gb, i64 %gc, i64 %gd, i64 %ia, i64 %ib, i64 %ic, i64 %id) {");
+        line("entry:");
+        line("  %ok = call i1 @ari_runtime_net_multicast_membership_v4(i64 %fd, i32 35, i64 %ga, i64 %gb, i64 %gc, i64 %gd, i64 %ia, i64 %ib, i64 %ic, i64 %id)");
+        line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_net_leave_multicast_v4(i64 %fd, i64 %ga, i64 %gb, i64 %gc, i64 %gd, i64 %ia, i64 %ib, i64 %ic, i64 %id) {");
+        line("entry:");
+        line("  %ok = call i1 @ari_runtime_net_multicast_membership_v4(i64 %fd, i32 36, i64 %ga, i64 %gb, i64 %gc, i64 %gd, i64 %ia, i64 %ib, i64 %ic, i64 %id)");
         line("  ret i1 %ok");
         line("}");
         line();

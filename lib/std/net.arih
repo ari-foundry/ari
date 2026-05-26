@@ -140,6 +140,34 @@ extern "ari" fn set_keepalive_raw(raw: i64, enabled: bool) -> bool =
 extern "ari" fn broadcast_raw(raw: i64) -> i64 = "ari_builtin_net_broadcast";
 extern "ari" fn set_broadcast_raw(raw: i64, enabled: bool) -> bool =
   "ari_builtin_net_set_broadcast";
+extern "ari" fn multicast_loop_v4_raw(raw: i64) -> i64 = "ari_builtin_net_multicast_loop_v4";
+extern "ari" fn set_multicast_loop_v4_raw(raw: i64, enabled: bool) -> bool =
+  "ari_builtin_net_set_multicast_loop_v4";
+extern "ari" fn multicast_ttl_v4_raw(raw: i64) -> i64 = "ari_builtin_net_multicast_ttl_v4";
+extern "ari" fn set_multicast_ttl_v4_raw(raw: i64, value: i64) -> bool =
+  "ari_builtin_net_set_multicast_ttl_v4";
+extern "ari" fn join_multicast_v4_raw(
+  raw: i64,
+  group_a: i64,
+  group_b: i64,
+  group_c: i64,
+  group_d: i64,
+  interface_a: i64,
+  interface_b: i64,
+  interface_c: i64,
+  interface_d: i64
+) -> bool = "ari_builtin_net_join_multicast_v4";
+extern "ari" fn leave_multicast_v4_raw(
+  raw: i64,
+  group_a: i64,
+  group_b: i64,
+  group_c: i64,
+  group_d: i64,
+  interface_a: i64,
+  interface_b: i64,
+  interface_c: i64,
+  interface_d: i64
+) -> bool = "ari_builtin_net_leave_multicast_v4";
 extern "ari" fn send_buffer_size_raw(raw: i64) -> i64 = "ari_builtin_net_send_buffer_size";
 extern "ari" fn set_send_buffer_size_raw(raw: i64, value: i64) -> bool =
   "ari_builtin_net_set_send_buffer_size";
@@ -889,6 +917,16 @@ fn socket_hop_count_raw(raw: i64, value: i64) -> std::Result[(), i64] {
     return std::Err<(), i64>(invalid_input_error_raw());
   }
   if value < 1 || value > 255 {
+    return std::Err<(), i64>(invalid_input_error_raw());
+  }
+  return std::Ok<(), i64>(());
+}
+
+fn socket_multicast_ttl_raw(raw: i64, value: i64) -> std::Result[(), i64] {
+  if raw < 0 {
+    return std::Err<(), i64>(invalid_input_error_raw());
+  }
+  if value < 0 || value > 255 {
     return std::Err<(), i64>(invalid_input_error_raw());
   }
   return std::Ok<(), i64>(());
@@ -2183,6 +2221,118 @@ pub impl std::net::UdpSocket {
     }
     return std::error::map_raw<()>(
       socket_unit_raw(self.handle.raw(), set_broadcast_raw(self.handle.raw(), enabled))
+    );
+  }
+
+  fn multicast_loop_v4_optional(self: ref Self) -> std::Option[bool] {
+    return socket_bool_option(multicast_loop_v4_raw(self.handle.raw()));
+  }
+
+  fn multicast_loop_v4(self: ref Self) -> std::Result[bool, std::error::Error] {
+    if !self.is_open() {
+      return std::Err<bool, std::error::Error>(std::error::new(std::error::InvalidInput));
+    }
+    return std::error::map_raw<bool>(
+      socket_flag_raw(self.handle.raw(), multicast_loop_v4_raw(self.handle.raw()))
+    );
+  }
+
+  fn set_multicast_loop_v4_unchecked(self: ref Self, enabled: bool) -> bool {
+    return self.set_multicast_loop_v4(enabled).is_ok();
+  }
+
+  fn set_multicast_loop_v4(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
+    if !self.is_open() {
+      return std::Err<(), std::error::Error>(std::error::new(std::error::InvalidInput));
+    }
+    return std::error::map_raw<()>(
+      socket_unit_raw(self.handle.raw(), set_multicast_loop_v4_raw(self.handle.raw(), enabled))
+    );
+  }
+
+  fn multicast_ttl_v4_optional(self: ref Self) -> std::Option[i64] {
+    return self.multicast_ttl_v4().ok();
+  }
+
+  fn multicast_ttl_v4(self: ref Self) -> std::Result[i64, std::error::Error] {
+    return std::error::map_raw<i64>(
+      socket_int_raw(self.handle.raw(), multicast_ttl_v4_raw(self.handle.raw()))
+    );
+  }
+
+  fn set_multicast_ttl_v4_unchecked(self: ref Self, value: i64) -> bool {
+    return self.set_multicast_ttl_v4(value).is_ok();
+  }
+
+  fn set_multicast_ttl_v4(self: ref Self, value: i64) -> std::Result[(), std::error::Error] {
+    match socket_multicast_ttl_raw(self.handle.raw(), value) {
+      std::Ok(_) => {}
+      std::Err(reason) => {
+        return std::error::map_raw<()>(std::Err<(), i64>(reason));
+      }
+    }
+    return std::error::map_raw<()>(
+      socket_unit_raw(self.handle.raw(), set_multicast_ttl_v4_raw(self.handle.raw(), value))
+    );
+  }
+
+  fn join_multicast_v4(self: ref Self, group: Ipv4Addr) -> std::Result[(), std::error::Error] {
+    return self.join_multicast_v4_on(group, Ipv4Addr::any());
+  }
+
+  fn join_multicast_v4_on(
+    self: ref Self,
+    group: Ipv4Addr,
+    interface: Ipv4Addr
+  ) -> std::Result[(), std::error::Error] {
+    if !self.is_open() {
+      return std::Err<(), std::error::Error>(std::error::new(std::error::InvalidInput));
+    }
+    return std::error::map_raw<()>(
+      socket_unit_raw(
+        self.handle.raw(),
+        join_multicast_v4_raw(
+          self.handle.raw(),
+          group.a as i64,
+          group.b as i64,
+          group.c as i64,
+          group.d as i64,
+          interface.a as i64,
+          interface.b as i64,
+          interface.c as i64,
+          interface.d as i64
+        )
+      )
+    );
+  }
+
+  fn leave_multicast_v4(self: ref Self, group: Ipv4Addr) -> std::Result[(), std::error::Error] {
+    return self.leave_multicast_v4_on(group, Ipv4Addr::any());
+  }
+
+  fn leave_multicast_v4_on(
+    self: ref Self,
+    group: Ipv4Addr,
+    interface: Ipv4Addr
+  ) -> std::Result[(), std::error::Error] {
+    if !self.is_open() {
+      return std::Err<(), std::error::Error>(std::error::new(std::error::InvalidInput));
+    }
+    return std::error::map_raw<()>(
+      socket_unit_raw(
+        self.handle.raw(),
+        leave_multicast_v4_raw(
+          self.handle.raw(),
+          group.a as i64,
+          group.b as i64,
+          group.c as i64,
+          group.d as i64,
+          interface.a as i64,
+          interface.b as i64,
+          interface.c as i64,
+          interface.d as i64
+        )
+      )
     );
   }
 

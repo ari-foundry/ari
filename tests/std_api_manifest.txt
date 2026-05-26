@@ -2129,12 +2129,20 @@ method std::net::UdpSocket::hop_limit_optional|check-prelude std-net-ipv6-socket
 method std::net::UdpSocket::is_nonblocking|check-prelude std-net-udp-socket UDP nonblocking descriptor query; docs/stdlib/modules/net.md
 method std::net::UdpSocket::is_nonblocking_optional|check-prelude std-net-udp-socket Option-returning UDP nonblocking compatibility query; docs/stdlib/modules/net.md
 method std::net::UdpSocket::is_open|check-prelude std-net-udp-socket UDP open predicate; docs/stdlib/modules/net.md
+method std::net::UdpSocket::join_multicast_v4|check-prelude std-net-udp-socket UDP IPv4 multicast join helper using the default interface; docs/stdlib/modules/net.md
+method std::net::UdpSocket::join_multicast_v4_on|check-prelude std-net-udp-socket UDP IPv4 multicast join helper using an explicit interface; docs/stdlib/modules/net.md
+method std::net::UdpSocket::leave_multicast_v4|check-prelude std-net-udp-socket UDP IPv4 multicast leave helper using the default interface; docs/stdlib/modules/net.md
+method std::net::UdpSocket::leave_multicast_v4_on|check-prelude std-net-udp-socket UDP IPv4 multicast leave helper using an explicit interface; docs/stdlib/modules/net.md
 method std::net::UdpSocket::local_addr|check-prelude std-net-udp-socket UDP local socket-address lookup; docs/stdlib/modules/net.md
 method std::net::UdpSocket::local_addr_optional|check-prelude std-net-udp-socket Option-returning UDP local address compatibility query; docs/stdlib/modules/net.md
 method std::net::UdpSocket::local_addr_v6|check-prelude std-net-ipv6-socket UDP local IPv6 socket-address lookup; docs/stdlib/modules/net.md
 method std::net::UdpSocket::local_addr_v6_optional|check-prelude std-net-ipv6-socket Option-returning UDP IPv6 local address compatibility query; docs/stdlib/modules/net.md
 method std::net::UdpSocket::local_port|check-prelude std-net-udp-socket UDP bound-port lookup; docs/stdlib/modules/net.md
 method std::net::UdpSocket::local_port_optional|check-prelude std-net-udp-socket Option-returning UDP local port compatibility query; docs/stdlib/modules/net.md
+method std::net::UdpSocket::multicast_loop_v4|check-prelude std-net-udp-socket UDP IPv4 multicast loopback socket option query; docs/stdlib/modules/net.md
+method std::net::UdpSocket::multicast_loop_v4_optional|check-prelude std-net-udp-socket Option-returning UDP IPv4 multicast loopback compatibility query; docs/stdlib/modules/net.md
+method std::net::UdpSocket::multicast_ttl_v4|check-prelude std-net-udp-socket UDP IPv4 multicast TTL socket option query; docs/stdlib/modules/net.md
+method std::net::UdpSocket::multicast_ttl_v4_optional|check-prelude std-net-udp-socket Option-returning UDP IPv4 multicast TTL compatibility query; docs/stdlib/modules/net.md
 method std::net::UdpSocket::peek_from|check-prelude std-net-udp-socket UDP source-address peek helper; docs/stdlib/modules/net.md
 method std::net::UdpSocket::recv|check-prelude std-net-udp-socket connected UDP buffer receive helper; docs/stdlib/modules/net.md
 method std::net::UdpSocket::recv_buffer_size|check-prelude std-net-udp-socket UDP receive-buffer-size query; docs/stdlib/modules/net.md
@@ -2160,6 +2168,10 @@ method std::net::UdpSocket::set_close_on_exec|check-prelude std-net-udp-socket U
 method std::net::UdpSocket::set_close_on_exec_unchecked|check-prelude std-net-udp-socket unchecked UDP close-on-exec compatibility setter; docs/stdlib/modules/net.md
 method std::net::UdpSocket::set_hop_limit|check-prelude std-net-ipv6-socket UDP IPv6 hop-limit socket option setter; docs/stdlib/modules/net.md
 method std::net::UdpSocket::set_hop_limit_unchecked|check-prelude std-net-ipv6-socket unchecked UDP IPv6 hop-limit compatibility setter; docs/stdlib/modules/net.md
+method std::net::UdpSocket::set_multicast_loop_v4|check-prelude std-net-udp-socket UDP IPv4 multicast loopback socket option setter; docs/stdlib/modules/net.md
+method std::net::UdpSocket::set_multicast_loop_v4_unchecked|check-prelude std-net-udp-socket unchecked UDP IPv4 multicast loopback compatibility setter; docs/stdlib/modules/net.md
+method std::net::UdpSocket::set_multicast_ttl_v4|check-prelude std-net-udp-socket UDP IPv4 multicast TTL socket option setter; docs/stdlib/modules/net.md
+method std::net::UdpSocket::set_multicast_ttl_v4_unchecked|check-prelude std-net-udp-socket unchecked UDP IPv4 multicast TTL compatibility setter; docs/stdlib/modules/net.md
 method std::net::UdpSocket::set_nonblocking|check-prelude std-net-udp-socket UDP nonblocking descriptor setter; docs/stdlib/modules/net.md
 method std::net::UdpSocket::set_nonblocking_unchecked|check-prelude std-net-udp-socket unchecked UDP nonblocking compatibility setter; docs/stdlib/modules/net.md
 method std::net::UdpSocket::set_read_timeout|check-prelude std-net-udp-socket Duration-based UDP read timeout setter; docs/stdlib/modules/net.md

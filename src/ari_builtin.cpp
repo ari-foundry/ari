@@ -454,6 +454,12 @@ const std::unordered_map<std::string, AriBuiltinSignatureExpectation>& ari_built
         add("ari_builtin_net_set_keepalive", builtin_sig({i64, boolean}, boolean));
         add("ari_builtin_net_broadcast", builtin_sig({i64}, i64));
         add("ari_builtin_net_set_broadcast", builtin_sig({i64, boolean}, boolean));
+        add("ari_builtin_net_multicast_loop_v4", builtin_sig({i64}, i64));
+        add("ari_builtin_net_set_multicast_loop_v4", builtin_sig({i64, boolean}, boolean));
+        add("ari_builtin_net_multicast_ttl_v4", builtin_sig({i64}, i64));
+        add("ari_builtin_net_set_multicast_ttl_v4", builtin_sig({i64, i64}, boolean));
+        add("ari_builtin_net_join_multicast_v4", builtin_sig({i64, i64, i64, i64, i64, i64, i64, i64, i64}, boolean));
+        add("ari_builtin_net_leave_multicast_v4", builtin_sig({i64, i64, i64, i64, i64, i64, i64, i64, i64}, boolean));
         add("ari_builtin_net_send_buffer_size", builtin_sig({i64}, i64));
         add("ari_builtin_net_set_send_buffer_size", builtin_sig({i64, i64}, boolean));
         add("ari_builtin_net_recv_buffer_size", builtin_sig({i64}, i64));
