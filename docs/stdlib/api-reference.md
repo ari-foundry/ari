@@ -1072,7 +1072,9 @@ Thread helpers live in `std::thread`:
 ```ari
 thread::spawn(entry)
 thread::join(ref mut handle)
+thread::join_value(ref mut handle)
 thread::join_thread(thread)
+thread::join_thread_value(thread)
 thread::join_compat(thread)
 thread::is_finished(thread)
 thread::yield_now()
@@ -1121,6 +1123,7 @@ handle.is_valid()
 handle.is_finished()
 handle.detach()
 handle.join()
+handle.join_value()
 
 ThreadLocal::new<T>(ref mut zone)
 ThreadLocal::with_capacity<T>(ref mut zone, capacity)
@@ -1139,7 +1142,10 @@ returns a `Result[JoinHandle, Error]`. `JoinHandle` owns the right to join or
 detach the native thread; join once, or call `detach()` when no result will be
 collected. `thread::join(ref mut handle)` and `handle.join()` return
 `Result[i64, JoinError]` so lifecycle mistakes do not collapse into raw
-sentinels. `Thread` is the raw thread-information value kept for inspection
+sentinels. `thread::join_value(ref mut handle)`, `thread::join_thread_value`,
+and `handle.join_value()` wrap the joined `i64` in `ThreadResult` for callers
+that prefer named success/failure predicates around the process-style status
+value. `Thread` is the raw thread-information value kept for inspection
 and compatibility, with `join_thread`, `join_compat`, and `join_unchecked`
 bridging older call sites. `id()` returns a `ThreadId`, with main thread `0`
 and spawned threads positive; use `id_raw()` for compatibility integer access.

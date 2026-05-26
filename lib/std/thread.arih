@@ -187,8 +187,8 @@ pub fn join(handle: ref mut std::thread::JoinHandle) -> std::Result[i64, std::th
   return handle.join();
 }
 
-pub fn join_result(handle: ref mut std::thread::JoinHandle) -> std::Result[std::thread::ThreadResult, std::thread::JoinError] {
-  return handle.join_result();
+pub fn join_value(handle: ref mut std::thread::JoinHandle) -> std::Result[std::thread::ThreadResult, std::thread::JoinError] {
+  return handle.join_value();
 }
 
 pub fn join_thread(thread: std::thread::Thread) -> std::Result[i64, std::thread::JoinError] {
@@ -196,9 +196,9 @@ pub fn join_thread(thread: std::thread::Thread) -> std::Result[i64, std::thread:
   return handle.join();
 }
 
-pub fn join_thread_result(thread: std::thread::Thread) -> std::Result[std::thread::ThreadResult, std::thread::JoinError] {
+pub fn join_thread_value(thread: std::thread::Thread) -> std::Result[std::thread::ThreadResult, std::thread::JoinError] {
   var handle = std::thread::JoinHandle::from_thread(thread);
-  return handle.join_result();
+  return handle.join_value();
 }
 
 pub fn join_compat(thread: std::thread::Thread) -> std::Result[i64, std::error::Error] {
@@ -411,7 +411,7 @@ pub impl std::thread::JoinHandle {
     return std::Ok<i64, std::thread::JoinError>(status);
   }
 
-  fn join_result(self: ref mut Self) -> std::Result[std::thread::ThreadResult, std::thread::JoinError] {
+  fn join_value(self: ref mut Self) -> std::Result[std::thread::ThreadResult, std::thread::JoinError] {
     match self.join() {
       std::Ok(value) => {
         return std::Ok<std::thread::ThreadResult, std::thread::JoinError>(

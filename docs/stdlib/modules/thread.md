@@ -25,9 +25,9 @@ thread::ThreadLocalSetError[T]
 thread::spawn(entry: fn() -> i64) -> Result[JoinHandle, thread::Error]
 thread::spawn_unchecked(entry: fn() -> i64) -> Thread
 thread::join(ref mut JoinHandle) -> Result[i64, JoinError]
-thread::join_result(ref mut JoinHandle) -> Result[ThreadResult, JoinError]
+thread::join_value(ref mut JoinHandle) -> Result[ThreadResult, JoinError]
 thread::join_thread(thread: Thread) -> Result[i64, JoinError]
-thread::join_thread_result(thread: Thread) -> Result[ThreadResult, JoinError]
+thread::join_thread_value(thread: Thread) -> Result[ThreadResult, JoinError]
 thread::join_compat(thread: Thread) -> Result[i64, thread::Error]
 thread::join_unchecked(thread: Thread) -> i64
 thread::is_finished(thread: Thread) -> bool
@@ -75,7 +75,7 @@ handle.is_valid() -> bool
 handle.is_finished() -> bool
 handle.detach() -> Result[(), JoinError]
 handle.join() -> Result[i64, JoinError]
-handle.join_result() -> Result[ThreadResult, JoinError]
+handle.join_value() -> Result[ThreadResult, JoinError]
 
 ThreadResult::from_i64(value: i64) -> ThreadResult
 thread_result.value() -> i64
@@ -125,8 +125,8 @@ the handle detached and consumes the join right. Dropping a live `JoinHandle`
 does not currently detach automatically, so hosted programs should explicitly
 join or detach handles they create.
 
-`join_result(ref mut handle)`, `join_thread_result(thread)`, and
-`handle.join_result()` wrap the joined `i64` in `ThreadResult`. The wrapper is
+`join_value(ref mut handle)`, `join_thread_value(thread)`, and
+`handle.join_value()` wrap the joined `i64` in `ThreadResult`. The wrapper is
 still intentionally small because thread entries return `fn() -> i64` today,
 but it gives docs and call sites a typed place for `value()`, `as_i64()`,
 `is_success()`, `is_failure()`, and `equals(value)` until generic

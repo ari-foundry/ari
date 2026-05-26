@@ -1654,7 +1654,7 @@ check-prelude: $(TARGET)
 	grep -F -q "std6thread2id" $(BUILD_DIR)/prelude/std-thread-basic.ll
 	grep -F -q "std6thread7is_main" $(BUILD_DIR)/prelude/std-thread-basic.ll
 	grep -F -q "std6thread13is_join_error" $(BUILD_DIR)/prelude/std-thread-basic.ll
-	grep -F -q "std6thread11join_result" $(BUILD_DIR)/prelude/std-thread-basic.ll
+	grep -F -q "std6thread10join_value" $(BUILD_DIR)/prelude/std-thread-basic.ll
 	grep -F -q "std__thread__ThreadResult" $(BUILD_DIR)/prelude/std-thread-basic.ll
 	$(TARGET) tests/cases/standard-library/ok/thread/std-thread-basic.ari -o $(BUILD_DIR)/prelude/std-thread-basic.elf
 	$(BUILD_DIR)/prelude/std-thread-basic.elf; code=$$?; test $$code -eq 42

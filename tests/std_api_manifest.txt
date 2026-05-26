@@ -1164,10 +1164,10 @@ fn std::thread::is_join_error|check-prelude std-thread-basic join sentinel helpe
 fn std::thread::is_main|check-prelude std-thread-basic source main-thread predicate; docs/stdlib/modules/thread.md
 fn std::thread::join|check-prelude std-thread-basic Result-returning join handle helper; docs/stdlib/modules/thread.md
 fn std::thread::join_compat|check-prelude std-thread-basic Error-returning raw thread join compatibility helper; docs/stdlib/modules/thread.md
-fn std::thread::join_result|check-prelude std-thread-basic typed ThreadResult join handle helper; docs/stdlib/modules/thread.md
 fn std::thread::join_thread|check-prelude std-thread-basic JoinError-returning raw thread join bridge; docs/stdlib/modules/thread.md
-fn std::thread::join_thread_result|check-prelude std-thread-basic typed ThreadResult raw thread join bridge; docs/stdlib/modules/thread.md
+fn std::thread::join_thread_value|check-prelude std-thread-basic typed ThreadResult raw thread join bridge; docs/stdlib/modules/thread.md
 fn std::thread::join_unchecked|check-prelude std-thread-basic raw-status thread join compatibility hook; docs/stdlib/modules/thread.md
+fn std::thread::join_value|check-prelude std-thread-basic typed ThreadResult join handle helper; docs/stdlib/modules/thread.md
 fn std::thread::sleep|check-prelude std-thread-runtime-helpers duration sleep convenience wrapper; docs/stdlib/modules/thread.md
 fn std::thread::spawn|check-prelude std-thread-basic Result-returning function-pointer JoinHandle spawn helper; docs/stdlib/modules/thread.md
 fn std::thread::spawn_configured|check-prelude std-thread-builder Result-returning configured JoinHandle spawn helper; docs/stdlib/modules/thread.md
@@ -2703,7 +2703,7 @@ method std::thread::JoinHandle::invalid|check-prelude std-thread-basic invalid j
 method std::thread::JoinHandle::is_finished|check-prelude std-thread-builder advisory join handle completion predicate; docs/stdlib/modules/thread.md
 method std::thread::JoinHandle::is_valid|check-prelude std-thread-basic join handle validity predicate; docs/stdlib/modules/thread.md
 method std::thread::JoinHandle::join|check-prelude std-thread-basic Result-returning join handle lifecycle helper; docs/stdlib/modules/thread.md
-method std::thread::JoinHandle::join_result|check-prelude std-thread-basic typed ThreadResult join handle lifecycle helper; docs/stdlib/modules/thread.md
+method std::thread::JoinHandle::join_value|check-prelude std-thread-basic typed ThreadResult join handle lifecycle helper; docs/stdlib/modules/thread.md
 method std::thread::JoinHandle::thread|check-prelude std-thread-basic raw thread info accessor; docs/stdlib/modules/thread.md
 method std::thread::JoinHandle::thread_id|check-prelude std-thread-basic join handle thread id accessor; docs/stdlib/modules/thread.md
 method std::thread::Thread::current|check-prelude std-thread-basic associated current thread info helper; docs/stdlib/modules/thread.md
