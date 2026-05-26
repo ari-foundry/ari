@@ -29,10 +29,9 @@ natural names and update bool-only call sites to the `_unchecked` names.
 
 Implemented now:
 
-- stdout/stderr text helpers: `print_text`, `println_text`, `eprint_text`,
-  `eprintln_text`; these are the recoverable plain-text helpers while
-  `io::print`/`io::println`/`io::eprintln` remain compiler-known formatting
-  calls
+- stdout/stderr text helpers: `print`, `println`, `eprint`, `eprintln`, plus
+  compatibility aliases `print_text`, `println_text`, `eprint_text`, and
+  `eprintln_text`; these write plain text and return `Result`
 - raw stdout/scalar hooks: `write_i64`, `write_u64`, `write_bool`,
   `write_byte`, `write_bytes`, `newline`
 - raw stdin/line hooks: `read_byte`, `read_line`, `read_line_owned`
@@ -130,9 +129,13 @@ io::write_all[W: Writer](writer: ref mut W, values: Slice[u8]) -> Result[(), Err
 io::write_all_unchecked[W: Writer](writer: ref mut W, values: Slice[u8]) -> bool
 io::flush[W: Writer](writer: ref mut W) -> Result[(), Error]
 io::flush_unchecked[W: Writer](writer: ref mut W) -> bool
+io::print(text) -> Result[(), Error]
 io::print_text(text) -> Result[(), Error]
+io::println(text) -> Result[(), Error]
 io::println_text(text) -> Result[(), Error]
+io::eprint(text) -> Result[(), Error]
 io::eprint_text(text) -> Result[(), Error]
+io::eprintln(text) -> Result[(), Error]
 io::eprintln_text(text) -> Result[(), Error]
 
 io::write_i64(value: i64) -> i64
@@ -207,11 +210,13 @@ values)`. Implementors with an efficient host bulk-write path, such as network
 streams, can call that host path directly while preserving the same `Result`
 semantics.
 
-`print_text`, `println_text`, `eprint_text`, and `eprintln_text` are the
-Result-returning plain-text helpers for hosted CLI messages. The shorter
-`io::print`, `io::println`, and `io::eprintln` spellings are currently compiler
-format builtins, so the stdlib uses the `_text` names for recoverable
-plain-text output until Ari has a unified formatting-Result story.
+`print`, `println`, `eprint`, and `eprintln` are the Result-returning
+plain-text helpers for hosted CLI messages. They do not interpret formatting
+placeholders; build text first with `std::fmt` or string helpers when a message
+needs interpolation. `print_text`, `println_text`, `eprint_text`, and
+`eprintln_text` remain compatibility aliases for older call sites. Root
+`print`/`println` and `std::print`/`std::println` are still compiler-lowered
+formatting calls, but the `io::` names belong to this source module.
 
 `Cursor` reads from a borrowed `Slice[u8]`. It implements `Reader` and `Seek`,
 so it is useful for tests, parsers, and examples that should not depend on
@@ -306,8 +311,8 @@ fn main() -> i64 {
 
 ```ari
 fn main() -> i64 {
-  io::println_text("Created package hello").unwrap();
-  io::eprintln_text("error: Ari.toml not found").unwrap();
+  io::println("Created package hello").unwrap();
+  io::eprintln("error: Ari.toml not found").unwrap();
   return 0;
 }
 ```

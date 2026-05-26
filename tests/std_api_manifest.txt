@@ -629,14 +629,18 @@ fn std::io::buf_writer[W: Writer]|std io buffered tests; docs/stdlib/modules/io.
 fn std::io::copy[R: Reader, W: Writer]|check-prelude std-io-copy/std-io-result Result-returning Reader-to-Writer byte-count helper; docs/stdlib/modules/io.md
 fn std::io::copy_unchecked[R: Reader, W: Writer]|check-prelude std-io-copy/std-io-result bool compatibility Reader-to-Writer copy wrapper; docs/stdlib/modules/io.md
 fn std::io::cursor|std io trait/cursor tests; docs/stdlib/modules/io.md
+fn std::io::eprint|check-prelude std-io-natural-api Result-returning stderr text helper; docs/stdlib/modules/io.md
 fn std::io::eprint_text|check-prelude std-io-natural-api Result-returning stderr text helper; docs/stdlib/modules/io.md
+fn std::io::eprintln|check-prelude std-io-natural-api Result-returning stderr line helper; docs/stdlib/modules/io.md
 fn std::io::eprintln_text|check-prelude std-io-natural-api Result-returning stderr line helper; docs/stdlib/modules/io.md
 fn std::io::flush[W: Writer]|check-prelude std-io-result/std-io-traits-cursor Result-returning writer flush helper; docs/stdlib/modules/io.md
 fn std::io::flush_unchecked[W: Writer]|check-prelude std-io-result bool compatibility writer flush helper; docs/stdlib/modules/io.md
 fn std::io::newline|prelude IO and print tests; docs/dev/test-matrix.md Prelude row
 fn std::io::pipe|check-prelude std-io-pipe Result-returning pipe Reader/Writer adapter constructor; docs/stdlib/modules/io.md
 fn std::io::pipe_optional|check-prelude std-io-pipe Option-returning pipe constructor compatibility helper; docs/stdlib/modules/io.md
+fn std::io::print|check-prelude std-io-natural-api Result-returning stdout text helper; docs/stdlib/modules/io.md
 fn std::io::print_text|check-prelude std-io-natural-api Result-returning stdout text helper; docs/stdlib/modules/io.md
+fn std::io::println|check-prelude std-io-natural-api Result-returning stdout line helper; docs/stdlib/modules/io.md
 fn std::io::println_text|check-prelude std-io-natural-api Result-returning stdout line helper; docs/stdlib/modules/io.md
 fn std::io::read_all[R: Reader]|check-prelude std-io-read-all generic Reader whole-stream collector; docs/stdlib/modules/io.md
 fn std::io::read_byte|prelude byte input tests; docs/dev/test-matrix.md Prelude row

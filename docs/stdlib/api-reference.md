@@ -2080,9 +2080,13 @@ io::write_all[W: Writer](writer: ref mut W, values)
 io::write_all_unchecked[W: Writer](writer: ref mut W, values)
 io::flush[W: Writer](writer: ref mut W)
 io::flush_unchecked[W: Writer](writer: ref mut W)
+io::print(text)
 io::print_text(text)
+io::println(text)
 io::println_text(text)
+io::eprint(text)
 io::eprint_text(text)
+io::eprintln(text)
 io::eprintln_text(text)
 io::write_i64(value)
 io::write_u64(value)
@@ -2141,10 +2145,11 @@ write. `Stdout`, `Stderr`, `PipeWriter`, `BufWriter`, `std::fs::File`,
 `io::flush(ref mut writer)` returns `Ok(())` for a successful flush and
 the writer's `Error` for a failed flush; `io::flush_unchecked` is the bool
 wrapper.
-`io::print_text`, `io::println_text`, `io::eprint_text`, and
-`io::eprintln_text` are Result-returning plain-text helpers for CLI messages.
-The shorter `io::print`/`io::println` spellings are still compiler formatting
-builtins, so the stdlib reserves `_text` for these direct byte-output helpers.
+`io::print`, `io::println`, `io::eprint`, and `io::eprintln` are
+Result-returning plain-text helpers for CLI messages. They do not parse format
+placeholders. The older `_text` spellings remain compatibility aliases. Root
+`print`/`println` and `std::print`/`std::println` are still compiler formatting
+calls; the `io::` names are ordinary stdlib functions for direct byte output.
 `io::Stdout` and `io::Stderr` implement `Writer` over the current process
 stream hooks, with `flush` currently succeeding as a no-op. `io::BufReader`
 and `io::BufWriter` wrap any `Reader` or `Writer` with an explicit

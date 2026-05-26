@@ -803,15 +803,21 @@ check-prelude: $(TARGET)
 	grep -q 'std__io__Stdout15std__io__Writer9write_all' $(BUILD_DIR)/prelude/std-io-natural-api.ll
 	grep -q 'std__io__Stderr15std__io__Writer5write' $(BUILD_DIR)/prelude/std-io-natural-api.ll
 	grep -q 'std__io__Stderr15std__io__Writer9write_all' $(BUILD_DIR)/prelude/std-io-natural-api.ll
+	grep -q '_ARNv3std2io5print' $(BUILD_DIR)/prelude/std-io-natural-api.ll
 	grep -q '_ARNv3std2io10print_text' $(BUILD_DIR)/prelude/std-io-natural-api.ll
+	grep -q '_ARNv3std2io7println' $(BUILD_DIR)/prelude/std-io-natural-api.ll
 	grep -q '_ARNv3std2io12println_text' $(BUILD_DIR)/prelude/std-io-natural-api.ll
+	grep -q '_ARNv3std2io6eprint' $(BUILD_DIR)/prelude/std-io-natural-api.ll
 	grep -q '_ARNv3std2io11eprint_text' $(BUILD_DIR)/prelude/std-io-natural-api.ll
+	grep -q '_ARNv3std2io8eprintln' $(BUILD_DIR)/prelude/std-io-natural-api.ll
 	grep -q '_ARNv3std2io13eprintln_text' $(BUILD_DIR)/prelude/std-io-natural-api.ll
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-natural-api.ari -o $(BUILD_DIR)/prelude/std-io-natural-api.elf
-	$(BUILD_DIR)/prelude/std-io-natural-api.elf >$(BUILD_DIR)/prelude/std-io-natural-api.out 2>$(BUILD_DIR)/prelude/std-io-natural-api.err; code=$$?; test $$code -eq 91
+	$(BUILD_DIR)/prelude/std-io-natural-api.elf >$(BUILD_DIR)/prelude/std-io-natural-api.out 2>$(BUILD_DIR)/prelude/std-io-natural-api.err; code=$$?; test $$code -eq 153
 	grep -qx "GWMPL" $(BUILD_DIR)/prelude/std-io-natural-api.out
+	grep -qx "pl" $(BUILD_DIR)/prelude/std-io-natural-api.out
 	grep -qx "TU" $(BUILD_DIR)/prelude/std-io-natural-api.out
 	grep -qx "EARS" $(BUILD_DIR)/prelude/std-io-natural-api.err
+	grep -qx "rs" $(BUILD_DIR)/prelude/std-io-natural-api.err
 	grep -qx "VX" $(BUILD_DIR)/prelude/std-io-natural-api.err
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-pipe.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-pipe.ll
 	grep -F -q "std__io__PipeReader" $(BUILD_DIR)/prelude/std-io-pipe.ll
@@ -1741,8 +1747,9 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/time/std-time-utc-calendar.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-time-utc-calendar.elf; $(BUILD_DIR)/prelude/std-time-utc-calendar.elf; code=$$?; test $$code -eq 0; fi
 	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-std-qualified-print.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll
 	grep -q "call i64 @ari_builtin_write_i64(i64 1)" $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll
+	grep -q "call i64 @ari_builtin_write_i64(i64 2)" $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll
 	grep -q "call i64 @ari_builtin_write_i64(i64 3)" $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude/prelude-std-qualified-print.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-std-qualified-print.elf; $(BUILD_DIR)/prelude/prelude-std-qualified-print.elf >$(BUILD_DIR)/prelude/prelude-std-qualified-print.out; code=$$?; test $$code -eq 6; grep -qx "std root 1" $(BUILD_DIR)/prelude/prelude-std-qualified-print.out; grep -qx "std io 2" $(BUILD_DIR)/prelude/prelude-std-qualified-print.out; grep -qx "std alias 3" $(BUILD_DIR)/prelude/prelude-std-qualified-print.out; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude/prelude-std-qualified-print.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-std-qualified-print.elf; $(BUILD_DIR)/prelude/prelude-std-qualified-print.elf >$(BUILD_DIR)/prelude/prelude-std-qualified-print.out; code=$$?; test $$code -eq 6; grep -qx "std root 1" $(BUILD_DIR)/prelude/prelude-std-qualified-print.out; grep -qx "std print 2" $(BUILD_DIR)/prelude/prelude-std-qualified-print.out; grep -qx "std io plain" $(BUILD_DIR)/prelude/prelude-std-qualified-print.out; grep -qx "std alias 3" $(BUILD_DIR)/prelude/prelude-std-qualified-print.out; fi
 	$(TARGET) tests/cases/standard-library/ok/input/prelude-read-line.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-read-line.ll
 	grep -q "@ari_builtin_read_line" $(BUILD_DIR)/prelude/prelude-read-line.ll
 	grep -q "declare ptr @fgets" $(BUILD_DIR)/prelude/prelude-read-line.ll

@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `3079`
+- API entries: `3083`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,13 +32,13 @@ platform notes.
 | `alloc` | 846 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 829 | stable candidate |
-| `hosted` | 1217 | platform-backed |
+| `hosted` | 1221 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 27 |
-| `fn` | 1124 |
+| `fn` | 1128 |
 | `method` | 1528 |
 | `module` | 39 |
 | `struct` | 165 |
@@ -69,7 +69,7 @@ platform notes.
 | `std::fs` | `hosted` | 259 |
 | `std::hash` | `alloc` | 24 |
 | `std::input` | `hosted` | 6 |
-| `std::io` | `hosted` | 87 |
+| `std::io` | `hosted` | 91 |
 | `std::iter` | `alloc` | 41 |
 | `std::log` | `hosted` | 12 |
 | `std::math` | `core` | 39 |
@@ -2019,14 +2019,18 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::io::copy[R: Reader, W: Writer]` | check-prelude std-io-copy/std-io-result Result-returning Reader-to-Writer byte-count helper; docs/stdlib/modules/io.md |
 | `fn std::io::copy_unchecked[R: Reader, W: Writer]` | check-prelude std-io-copy/std-io-result bool compatibility Reader-to-Writer copy wrapper; docs/stdlib/modules/io.md |
 | `fn std::io::cursor` | std io trait/cursor tests; docs/stdlib/modules/io.md |
+| `fn std::io::eprint` | check-prelude std-io-natural-api Result-returning stderr text helper; docs/stdlib/modules/io.md |
 | `fn std::io::eprint_text` | check-prelude std-io-natural-api Result-returning stderr text helper; docs/stdlib/modules/io.md |
+| `fn std::io::eprintln` | check-prelude std-io-natural-api Result-returning stderr line helper; docs/stdlib/modules/io.md |
 | `fn std::io::eprintln_text` | check-prelude std-io-natural-api Result-returning stderr line helper; docs/stdlib/modules/io.md |
 | `fn std::io::flush[W: Writer]` | check-prelude std-io-result/std-io-traits-cursor Result-returning writer flush helper; docs/stdlib/modules/io.md |
 | `fn std::io::flush_unchecked[W: Writer]` | check-prelude std-io-result bool compatibility writer flush helper; docs/stdlib/modules/io.md |
 | `fn std::io::newline` | prelude IO and print tests; docs/dev/test-matrix.md Prelude row |
 | `fn std::io::pipe` | check-prelude std-io-pipe Result-returning pipe Reader/Writer adapter constructor; docs/stdlib/modules/io.md |
 | `fn std::io::pipe_optional` | check-prelude std-io-pipe Option-returning pipe constructor compatibility helper; docs/stdlib/modules/io.md |
+| `fn std::io::print` | check-prelude std-io-natural-api Result-returning stdout text helper; docs/stdlib/modules/io.md |
 | `fn std::io::print_text` | check-prelude std-io-natural-api Result-returning stdout text helper; docs/stdlib/modules/io.md |
+| `fn std::io::println` | check-prelude std-io-natural-api Result-returning stdout line helper; docs/stdlib/modules/io.md |
 | `fn std::io::println_text` | check-prelude std-io-natural-api Result-returning stdout line helper; docs/stdlib/modules/io.md |
 | `fn std::io::read_all[R: Reader]` | check-prelude std-io-read-all generic Reader whole-stream collector; docs/stdlib/modules/io.md |
 | `fn std::io::read_byte` | prelude byte input tests; docs/dev/test-matrix.md Prelude row |

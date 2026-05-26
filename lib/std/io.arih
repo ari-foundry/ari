@@ -134,6 +134,10 @@ pub fn print_text(text: string) -> std::Result[(), std::error::Error] {
   return std::io::write_all<std::io::Stdout>(ref mut output, std::string::bytes(text));
 }
 
+pub fn print(text: string) -> std::Result[(), std::error::Error] {
+  return std::io::print_text(text);
+}
+
 pub fn println_text(text: string) -> std::Result[(), std::error::Error] {
   var output = std::io::stdout();
   match std::io::write_all<std::io::Stdout>(ref mut output, std::string::bytes(text)) {
@@ -145,9 +149,17 @@ pub fn println_text(text: string) -> std::Result[(), std::error::Error] {
   return std::io::write_all<std::io::Stdout>(ref mut output, std::string::bytes("\n"));
 }
 
+pub fn println(text: string) -> std::Result[(), std::error::Error] {
+  return std::io::println_text(text);
+}
+
 pub fn eprint_text(text: string) -> std::Result[(), std::error::Error] {
   var output = std::io::stderr();
   return std::io::write_all<std::io::Stderr>(ref mut output, std::string::bytes(text));
+}
+
+pub fn eprint(text: string) -> std::Result[(), std::error::Error] {
+  return std::io::eprint_text(text);
 }
 
 pub fn eprintln_text(text: string) -> std::Result[(), std::error::Error] {
@@ -159,6 +171,10 @@ pub fn eprintln_text(text: string) -> std::Result[(), std::error::Error] {
     std::Ok(_) => {}
   }
   return std::io::write_all<std::io::Stderr>(ref mut output, std::string::bytes("\n"));
+}
+
+pub fn eprintln(text: string) -> std::Result[(), std::error::Error] {
+  return std::io::eprintln_text(text);
 }
 
 fn unexpected_eof_error() -> std::error::Error {

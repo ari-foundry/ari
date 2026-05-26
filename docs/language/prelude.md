@@ -286,16 +286,16 @@ These forms are accepted:
 ```ari
 print("x={}", 1)
 println("x={}", 1)
-io::print("x={}", 1)
-io::println("x={}", 1)
 std::print("x={}", 1)
 std::println("x={}", 1)
-std::io::print("x={}", 1)
-std::io::println("x={}", 1)
 ```
 
 If `std` is imported under an alias, the same builtin formatting lowering is
 available through that alias, such as `use std as core; core::println("x={}", 1)`.
+`std::io::print`, `std::io::println`, `std::io::eprint`, and
+`std::io::eprintln` are ordinary source stdlib functions that write plain text
+and return `Result[(), std::error::Error]`; use the root `print`/`println` or
+`std::print`/`std::println` spellings for compiler-lowered format strings.
 
 ## Lower-Level IO
 
@@ -478,15 +478,9 @@ wrong arity, parameter types, or return types are rejected before lowering.
 print(format: string, ...) -> i64
 println(format: string, ...) -> i64
 eprintln(format: string, ...) -> i64
-io::print(format: string, ...) -> i64
-io::println(format: string, ...) -> i64
-io::eprintln(format: string, ...) -> i64
 std::print(format: string, ...) -> i64
 std::println(format: string, ...) -> i64
 std::eprintln(format: string, ...) -> i64
-std::io::print(format: string, ...) -> i64
-std::io::println(format: string, ...) -> i64
-std::io::eprintln(format: string, ...) -> i64
 io::write_i64(value: i64) -> i64
 io::write_u64(value: u64) -> i64
 io::write_bool(value: bool) -> i64

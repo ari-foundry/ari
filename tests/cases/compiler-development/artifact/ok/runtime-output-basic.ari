@@ -1,5 +1,5 @@
 fn main() -> i64 {
   println("artifact={} ok={}", 17, true);
-  io::println("layer={}", 3);
+  std::println("layer={}", 3);
   return 0;
 }

@@ -25930,6 +25930,13 @@ private:
         bool can_use_source_declared_prelude_special =
             can_use_prelude_special && source_std_generic_function_available(special_name);
 
+        if (can_use_prelude_special && is_format_print_name(expr.name)) {
+            if (!expr_type_args(expr).empty()) {
+                fail(expr.loc, "function '" + expr.name + "' does not take type arguments");
+            }
+            return check_format_print(expr, std::move(lowered), expr.name);
+        }
+
         if (can_use_prelude_special && is_format_print_name(special_name)) {
             if (!expr_type_args(expr).empty()) {
                 fail(expr.loc, "function '" + expr.name + "' does not take type arguments");

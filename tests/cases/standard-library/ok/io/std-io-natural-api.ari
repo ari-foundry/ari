@@ -40,6 +40,12 @@ fn main() -> i64 {
   if unit_ok(io::println_text("L")) {
     score = score + 5;
   }
+  if unit_ok(io::print("p")) {
+    score = score + 14;
+  }
+  if unit_ok(io::println("l")) {
+    score = score + 15;
+  }
   if trait_write_ok<io::Stdout>(ref mut out, std::string::bytes("T"), 1) {
     score = score + 10;
   }
@@ -60,6 +66,12 @@ fn main() -> i64 {
   if unit_ok(io::eprintln_text("S")) {
     score = score + 9;
   }
+  if unit_ok(io::eprint("r")) {
+    score = score + 16;
+  }
+  if unit_ok(io::eprintln("s")) {
+    score = score + 17;
+  }
   if trait_write_ok<io::Stderr>(ref mut err, std::string::bytes("V"), 1) {
     score = score + 12;
   }
@@ -67,6 +79,6 @@ fn main() -> i64 {
     score = score + 13;
   }
 
-  assert_eq_i64(score, 91);
+  assert_eq_i64(score, 153);
   return score;
 }

@@ -296,7 +296,7 @@ fn main() -> i64 {
     let cwd = env::current_dir_path().unwrap();
     let manifest = cwd.join_in(ref mut zone, "Ari.toml");
     if !fs::exists("Ari.toml") {
-      io::eprintln_text("error: Ari.toml not found").unwrap();
+      io::eprintln("error: Ari.toml not found").unwrap();
       zone::destroy(zone);
       return 1;
     }
@@ -305,7 +305,7 @@ fn main() -> i64 {
       std::Some(home) => {
         let prefix = home.join_in(ref mut zone, ".ari");
         if release && !manifest.is_empty() && !prefix.is_empty() && !compiler.is_empty() {
-          io::println_text("building release package").unwrap();
+          io::println("building release package").unwrap();
         }
       }
       std::None => {}

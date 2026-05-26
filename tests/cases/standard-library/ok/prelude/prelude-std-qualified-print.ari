@@ -2,7 +2,8 @@ use std as core;
 
 fn main() -> i64 {
   std::println("std root {}", 1);
-  std::io::print("std io {}\n", 2);
+  std::print("std print {}\n", 2);
+  std::io::println("std io plain").unwrap();
   core::println("std alias {}", 3);
   return 6;
 }
