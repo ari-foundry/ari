@@ -78,17 +78,9 @@ struct TLSCiphertext {
 }
 ```
 
-The tentative spelling is `union by` for the discriminant link and `=>` arms
-for the alternatives. Avoid `select` and `case` as the surface names: Ari
-already uses `match` for executable branching, and this feature is a
-declaration-time data layout relationship rather than a statement switch.
-Avoid `variant by` too: Ari already talks about enum variants, so using
-`variant` for a dependent struct field would blur the difference between an
-ordinary enum case and a union storage field whose active arm is selected by
-some other value. Other names such as `choice by` or `payload by` may be
-considered before implementation, but the core rule should stay explicit: the
-union field's active payload type is determined by the named discriminant
-value.
+The spelling is `union by` for the discriminant link and `=>` arms for the
+alternatives. The union field's active payload type is determined by the named
+discriminant value.
 
 This is only a roadmap idea. It should not replace ordinary `enum` ADTs,
 unchecked C unions, or `match`. A future design must specify construction
