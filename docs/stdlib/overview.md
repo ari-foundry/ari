@@ -303,10 +303,11 @@ builder for argument passing, environment setup, working-directory setup,
 handles, typed `ExitStatus`/`ExitCode` values, typed `Signal`, `Output`
 handles, stdout/stderr capture for small outputs, child-stream endpoint
 aliases, current/executable path wrappers, temp file/dir constructors, and
-`kill`/`kill_signal`. File-backed and `/dev/null` stdin redirection are
-available at execution time. Large-stream readiness, pipe-backed streaming
-stdin, parent-visible child setup errors, richer platform status fields, and
-Windows process mapping remain roadmap work.
+`kill`/`kill_signal`. Bounded pipe-backed stdin plus file-backed and
+`/dev/null` stdin redirection are available at execution time. Large-stream
+readiness, interactive streaming stdin handles, parent-visible child setup
+errors, richer platform status fields, and Windows process mapping remain
+roadmap work.
 
 `std::thread` is the first thread slice. `spawn`, `join`, `detach`,
 `is_finished`, `yield_now`, and the raw parallelism hook are runtime-backed

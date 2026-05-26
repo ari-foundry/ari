@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `3302`
+- API entries: `3306`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,14 +32,14 @@ platform notes.
 | `alloc` | 891 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 900 | stable candidate |
-| `hosted` | 1324 | platform-backed |
+| `hosted` | 1328 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1182 |
-| `method` | 1677 |
+| `fn` | 1184 |
+| `method` | 1679 |
 | `module` | 39 |
 | `struct` | 173 |
 | `trait` | 39 |
@@ -79,7 +79,7 @@ platform notes.
 | `std::os` | `platform` | 50 |
 | `std::parse` | `core` | 101 |
 | `std::path` | `core` | 120 |
-| `std::process` | `hosted` | 149 |
+| `std::process` | `hosted` | 153 |
 | `std::random` | `alloc/hosted` | 36 |
 | `std::rc` | `alloc` | 32 |
 | `std::result` | `core` | 12 |
@@ -3230,6 +3230,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::process::spawn` | check-prelude std-process-command module-level Command spawn wrapper returning Error; docs/stdlib/modules/process.md |
 | `fn std::process::status` | check-prelude std-process-command module-level Command typed status wrapper returning Error; docs/stdlib/modules/process.md |
 | `fn std::process::status_code` | check-prelude std-process-command explicit normal-exit-code compatibility wrapper returning Error; docs/stdlib/modules/process.md |
+| `fn std::process::status_with_stdin` | check-prelude std-process-stdin module-level bounded pipe-backed stdin status helper; docs/stdlib/modules/process.md |
+| `fn std::process::status_with_stdin_string` | check-prelude std-process-stdin module-level string stdin status helper; docs/stdlib/modules/process.md |
 | `fn std::process::success` | check-prelude std-process-basic source success status helper; docs/stdlib/modules/process.md |
 | `fn std::process::success_code` | check-prelude std-process-high-level typed success exit code helper; docs/stdlib/modules/process.md |
 | `fn std::process::temp_dir` | check-prelude std-process-high-level default temp directory constructor; docs/stdlib/modules/process.md |
@@ -3278,10 +3280,12 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::process::Command::spawn_with_stdin_null` | check-prelude std-process-stdin spawn child process with /dev/null stdin; docs/stdlib/modules/process.md |
 | `method std::process::Command::status` | check-prelude std-process-command spawn and wait for typed exit status; docs/stdlib/modules/process.md |
 | `method std::process::Command::status_code` | check-prelude std-process-command explicit normal-exit-code compatibility helper; docs/stdlib/modules/process.md |
+| `method std::process::Command::status_with_stdin` | check-prelude std-process-stdin bounded pipe-backed stdin status helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::status_with_stdin_file` | check-prelude std-process-stdin child status with file-backed stdin; docs/stdlib/modules/process.md |
 | `method std::process::Command::status_with_stdin_file_bytes` | check-prelude std-process-stdin Result-returning child status with owned byte path stdin; docs/stdlib/modules/process.md |
 | `method std::process::Command::status_with_stdin_file_path` | check-prelude std-process-stdin Result-returning child status with PathBytes stdin; docs/stdlib/modules/process.md |
 | `method std::process::Command::status_with_stdin_null` | check-prelude std-process-stdin child status with /dev/null stdin; docs/stdlib/modules/process.md |
+| `method std::process::Command::status_with_stdin_string` | check-prelude std-process-stdin string stdin status helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::with_arg` | check-prelude std-process-high-level by-value chainable single argv append helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::with_args` | check-prelude std-process-command associated Command constructor with argv slice; docs/stdlib/modules/process.md |
 | `method std::process::Command::with_clear_env` | check-prelude std-process-high-level by-value child environment clearing policy helper; docs/stdlib/modules/process.md |

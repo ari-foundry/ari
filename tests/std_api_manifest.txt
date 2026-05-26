@@ -991,6 +991,8 @@ fn std::process::sigterm|check-prelude std-process-high-level POSIX SIGTERM type
 fn std::process::spawn|check-prelude std-process-command module-level Command spawn wrapper returning Error; docs/stdlib/modules/process.md
 fn std::process::status|check-prelude std-process-command module-level Command typed status wrapper returning Error; docs/stdlib/modules/process.md
 fn std::process::status_code|check-prelude std-process-command explicit normal-exit-code compatibility wrapper returning Error; docs/stdlib/modules/process.md
+fn std::process::status_with_stdin|check-prelude std-process-stdin module-level bounded pipe-backed stdin status helper; docs/stdlib/modules/process.md
+fn std::process::status_with_stdin_string|check-prelude std-process-stdin module-level string stdin status helper; docs/stdlib/modules/process.md
 fn std::process::success|check-prelude std-process-basic source success status helper; docs/stdlib/modules/process.md
 fn std::process::success_code|check-prelude std-process-high-level typed success exit code helper; docs/stdlib/modules/process.md
 fn std::process::temp_dir|check-prelude std-process-high-level default temp directory constructor; docs/stdlib/modules/process.md
@@ -2338,10 +2340,12 @@ method std::process::Command::spawn_with_stdin_file|check-prelude std-process-st
 method std::process::Command::spawn_with_stdin_null|check-prelude std-process-stdin spawn child process with /dev/null stdin; docs/stdlib/modules/process.md
 method std::process::Command::status|check-prelude std-process-command spawn and wait for typed exit status; docs/stdlib/modules/process.md
 method std::process::Command::status_code|check-prelude std-process-command explicit normal-exit-code compatibility helper; docs/stdlib/modules/process.md
+method std::process::Command::status_with_stdin|check-prelude std-process-stdin bounded pipe-backed stdin status helper; docs/stdlib/modules/process.md
 method std::process::Command::status_with_stdin_file|check-prelude std-process-stdin child status with file-backed stdin; docs/stdlib/modules/process.md
 method std::process::Command::status_with_stdin_file_bytes|check-prelude std-process-stdin Result-returning child status with owned byte path stdin; docs/stdlib/modules/process.md
 method std::process::Command::status_with_stdin_file_path|check-prelude std-process-stdin Result-returning child status with PathBytes stdin; docs/stdlib/modules/process.md
 method std::process::Command::status_with_stdin_null|check-prelude std-process-stdin child status with /dev/null stdin; docs/stdlib/modules/process.md
+method std::process::Command::status_with_stdin_string|check-prelude std-process-stdin string stdin status helper; docs/stdlib/modules/process.md
 method std::process::Command::with_arg|check-prelude std-process-high-level by-value chainable single argv append helper; docs/stdlib/modules/process.md
 method std::process::Command::with_args|check-prelude std-process-command associated Command constructor with argv slice; docs/stdlib/modules/process.md
 method std::process::Command::with_clear_env|check-prelude std-process-high-level by-value child environment clearing policy helper; docs/stdlib/modules/process.md

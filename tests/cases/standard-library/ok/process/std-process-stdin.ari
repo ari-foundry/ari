@@ -62,6 +62,20 @@ fn main() -> i64 {
     score = score + 29;
   }
 
-  assert_eq_i64(score, 112);
+  var pipe_cmd = process::Command::new("sh")
+    .with_arg(ref mut zone, "-c")
+    .with_arg(ref mut zone, "read value; test \"$value\" = pipe");
+  if status_is(pipe_cmd.status_with_stdin_string("pipe\n"), 0) {
+    score = score + 31;
+  }
+
+  var module_pipe_cmd = process::Command::new("sh")
+    .with_arg(ref mut zone, "-c")
+    .with_arg(ref mut zone, "read value; test \"$value\" = module");
+  if status_is(process::status_with_stdin(ref module_pipe_cmd, std::string::bytes("module\n")), 0) {
+    score = score + 37;
+  }
+
+  assert_eq_i64(score, 180);
   return score;
 }

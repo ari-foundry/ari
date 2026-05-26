@@ -592,6 +592,8 @@ process::command_with_args(program, args)
 process::spawn(command)
 process::status(command)
 process::status_code(command)
+process::status_with_stdin(command, values)
+process::status_with_stdin_string(command, text)
 process::exit_status(command)
 process::output_in(command, zone)
 process::output(command, zone)
@@ -639,6 +641,8 @@ Command::with_inherit_env()
 Command::with_current_dir(path)
 Command::spawn()
 Command::status()
+Command::status_with_stdin(values)
+Command::status_with_stdin_string(text)
 Command::status_code()
 Command::exit_status()
 Command::output_in(zone)
@@ -766,6 +770,15 @@ zone)`, and `process::exec(ref cmd)` are
 direct wrappers over the matching `Command` methods for call sites that prefer
 function-style process APIs.
 
+`Command::status_with_stdin(values)` and
+`process::status_with_stdin(ref cmd, values)` spawn the child with a pipe
+connected to stdin, write the complete byte slice from the parent, close the
+write end, and then wait for typed `ExitStatus`. Use
+`status_with_stdin_string(text)` for string-literal or UTF-8 source text. These
+helpers are bounded-input conveniences for CLI-style programs; if the parent
+cannot write all bytes, the helper waits for the child and returns the writer
+`Error`.
+
 `ExitStatus::code()` returns `Some(code)` only for normal exits.
 `ExitStatus::signal()` returns `Some(signal)` only for signal termination.
 `code_or` and `signal_or` are convenience fallbacks for compact control flow,
@@ -789,10 +802,10 @@ success check, and `stdout()` / `stderr()` for borrowed `Slice[u8]` views.
 `stdout_string(zone)` and `stderr_string(zone)` validate the captured bytes as
 UTF-8, copy them into a zone-owned `String`, and return `Error(InvalidData)` for
 non-UTF-8 output. This slice is meant for small outputs today. File-backed and
-`/dev/null` stdin redirection helpers exist on `Command`; large concurrent
-streams, pipe-backed streaming stdin, parent-visible child setup errors,
-portable Windows mapping, and platform-specific status detail are still future
-process-library work.
+`/dev/null` stdin redirection helpers plus bounded pipe-backed stdin status
+helpers exist on `Command`; large concurrent streams, interactive streaming
+stdin handles, parent-visible child setup errors, portable Windows mapping, and
+platform-specific status detail are still future process-library work.
 
 `ChildStdin`, `ChildStdout`, and `ChildStderr` name the current pipe endpoint
 types used by future streaming process IO. `current_dir`,

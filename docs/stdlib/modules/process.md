@@ -58,6 +58,8 @@ process::command_with_args(program, args)
 process::spawn(command)
 process::status(command) -> Result[process::ExitStatus, process::Error]
 process::status_code(command) -> Result[i64, process::Error]
+process::status_with_stdin(command, values) -> Result[process::ExitStatus, process::Error]
+process::status_with_stdin_string(command, text) -> Result[process::ExitStatus, process::Error]
 process::exit_status(command)
 process::output_in(command, zone)
 process::output(command, zone)
@@ -107,6 +109,8 @@ Command::spawn()
 Command::spawn_with_stdin_file(path) -> Result[process::Child, process::Error]
 Command::spawn_with_stdin_null() -> Result[process::Child, process::Error]
 Command::status() -> Result[process::ExitStatus, process::Error]
+Command::status_with_stdin(values) -> Result[process::ExitStatus, process::Error]
+Command::status_with_stdin_string(text) -> Result[process::ExitStatus, process::Error]
 Command::status_with_stdin_file(path) -> Result[process::ExitStatus, process::Error]
 Command::status_with_stdin_file_bytes(zone, path) -> Result[process::ExitStatus, process::Error]
 Command::status_with_stdin_file_path(zone, path) -> Result[process::ExitStatus, process::Error]
@@ -274,6 +278,14 @@ failure happens in the child and currently appears to the parent as exit status
 `127`; richer parent-visible setup errors require a future error-reporting pipe
 in the process runtime.
 
+`status_with_stdin(values)` spawns the child with a pipe connected to stdin,
+writes the provided bytes from the parent, closes the write end, and then waits
+for typed `ExitStatus`. `status_with_stdin_string(text)` is the string-literal
+convenience form. These helpers are for bounded CLI-style input such as tests,
+manifest snippets, or generated config text. If the parent cannot write the
+complete byte slice, the helper waits for the child to avoid leaving a zombie
+and returns the writer `Error`.
+
 `status_with_stdin_file(path)` and `spawn_with_stdin_file(path)` redirect the
 child's standard input from `path` during the child setup step. They take the
 stdin source at execution time instead of storing it inside `Command`, which
@@ -291,6 +303,8 @@ errors require a future error-reporting pipe in the process runtime.
 
 The module-level wrappers `process::spawn(ref command)`,
 `process::status(ref command)`, `process::status_code(ref command)`,
+`process::status_with_stdin(ref command, bytes)`,
+`process::status_with_stdin_string(ref command, text)`,
 `process::exit_status(ref command)`, `process::output_in(ref command, ref mut
 zone)`, `process::output(ref command, ref mut zone)`, and
 `process::exec(ref command)` call the matching `Command` methods. They exist so
@@ -439,6 +453,14 @@ fn compile_main(
 Command stdin redirection:
 
 ```ari
+fn run_with_inline_manifest(zone: ref mut Zone) -> Result[process::ExitStatus, error::Error] {
+  var cmd = process::Command::new("sh")
+    .with_arg(zone, "-c")
+    .with_arg(zone, "read name; test \"$name\" = package");
+
+  return cmd.status_with_stdin_string("package\n");
+}
+
 fn run_with_manifest_input(zone: ref mut Zone) -> Result[process::ExitStatus, error::Error] {
   var cmd = process::Command::new("sh")
     .with_arg(zone, "-c")
@@ -545,15 +567,15 @@ fn main() -> i64 {
   `env_bytes`, `clear_env`, `inherit_env`, by-value
   `with_arg`/`with_env`/`with_clear_env`/`with_inherit_env`/
   `with_current_dir`, explicit file or `/dev/null` stdin redirection at
-  `spawn`/`status` time,
+  `spawn`/`status` time, bounded pipe-backed stdin for `status`,
   `spawn`, `status`, `exit_status`, `output`, `output_in`, `exec`, inherited
   stdio by default, inherited or cleared environment plus selected assignments,
   working-directory setup, captured stdout and stderr, typed status inspection,
   and `Child` wait/kill/signal helpers.
   `output_in` is intended for small captured outputs today: large concurrent
   stdout/stderr streams need future readiness/nonblocking draining to avoid
-  pipe-buffer backpressure. Pipe-backed streaming stdin and portable
-  platform-specific status detail are future work.
+  pipe-buffer backpressure. Interactive streaming stdin, parent-visible setup
+  errors, and portable platform-specific status detail are future work.
 - Exit runs through the host process immediately. Do not expect Ari destructors
   or zone cleanup to run after `process::exit`.
 - Abort also terminates immediately through the host runtime and should be
@@ -601,7 +623,8 @@ by-value `with_arg`/`with_env`/`with_current_dir` chains, byte-boundary
 `arg_bytes`/`env_bytes`/`current_dir_path` helpers, NUL rejection,
 `ExitCode`, typed `Signal`, child stream endpoint aliases, current path
 wrappers, and temp file/temp dir constructors.
-The stdin fixture covers file-backed stdin redirection, `/dev/null`, owned-byte
-path validation, `PathBytes` input, and current-directory-relative stdin paths.
+The stdin fixture covers pipe-backed byte and string stdin, file-backed stdin
+redirection, `/dev/null`, owned-byte path validation, `PathBytes` input, and
+current-directory-relative stdin paths.
 Public declarations are tracked in
 `tests/std_api_manifest.txt` and checked by `make check-std-api`.
