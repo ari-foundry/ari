@@ -27,6 +27,52 @@ fn component_start(values: std::Slice[u8], end: i64) -> i64 {
   return separator + 1;
 }
 
+fn is_windows_drive_letter(value: u8) -> bool {
+  if value >= 'A' && value <= 'Z' {
+    return true;
+  }
+  if value >= 'a' && value <= 'z' {
+    return true;
+  }
+  return false;
+}
+
+fn windows_unc_prefix_end(path: std::Slice[u8]) -> i64 {
+  if path.len < 5 {
+    return -1;
+  }
+  if !is_windows_separator(path[0]) || !is_windows_separator(path[1]) {
+    return -1;
+  }
+
+  var index = 2;
+  if index >= path.len || is_windows_separator(path[index]) {
+    return -1;
+  }
+  while index < path.len {
+    if is_windows_separator(path[index]) {
+      break;
+    }
+    index = index + 1;
+  }
+  if index >= path.len {
+    return -1;
+  }
+
+  index = index + 1;
+  let share_start = index;
+  if share_start >= path.len || is_windows_separator(path[share_start]) {
+    return -1;
+  }
+  while index < path.len {
+    if is_windows_separator(path[index]) {
+      return index;
+    }
+    index = index + 1;
+  }
+  return index;
+}
+
 pub struct Components {
   path: std::Slice[u8],
   mut index: i64,
@@ -66,6 +112,10 @@ fn path_buf_from_string(value: std::string::String) -> std::path::PathBuf {
 
 pub fn is_separator(value: char) -> bool {
   return value == '/';
+}
+
+pub fn is_windows_separator(value: char) -> bool {
+  return value == '/' || value == 92u8;
 }
 
 pub fn is_empty(path: std::Slice[u8]) -> bool {
@@ -116,6 +166,56 @@ pub fn is_absolute(path: std::Slice[u8]) -> bool {
 
 pub fn is_relative(path: std::Slice[u8]) -> bool {
   return !is_absolute(path);
+}
+
+pub fn has_windows_drive_prefix(path: std::Slice[u8]) -> bool {
+  if path.len < 2 {
+    return false;
+  }
+  return is_windows_drive_letter(path[0]) && path[1] == ':';
+}
+
+pub fn windows_drive(path: std::Slice[u8]) -> std::Option[std::Slice[u8]] {
+  if !has_windows_drive_prefix(path) {
+    return std::None<std::Slice[u8]>();
+  }
+  return std::Some<std::Slice[u8]>(slice_range(path, 0, 2));
+}
+
+pub fn is_windows_drive_absolute(path: std::Slice[u8]) -> bool {
+  if path.len < 3 {
+    return false;
+  }
+  return has_windows_drive_prefix(path) && is_windows_separator(path[2]);
+}
+
+pub fn is_windows_drive_relative(path: std::Slice[u8]) -> bool {
+  return has_windows_drive_prefix(path) && !is_windows_drive_absolute(path);
+}
+
+pub fn is_windows_unc(path: std::Slice[u8]) -> bool {
+  return windows_unc_prefix_end(path) >= 0;
+}
+
+pub fn windows_unc_prefix(path: std::Slice[u8]) -> std::Option[std::Slice[u8]] {
+  let end = windows_unc_prefix_end(path);
+  if end < 0 {
+    return std::None<std::Slice[u8]>();
+  }
+  return std::Some<std::Slice[u8]>(slice_range(path, 0, end));
+}
+
+pub fn is_windows_absolute(path: std::Slice[u8]) -> bool {
+  if is_windows_drive_absolute(path) {
+    return true;
+  }
+  if is_windows_unc(path) {
+    return true;
+  }
+  if path.len > 0 {
+    return is_windows_separator(path[0]);
+  }
+  return false;
 }
 
 pub fn trim_trailing_separators(path: std::Slice[u8]) -> std::Slice[u8] {
@@ -695,6 +795,34 @@ pub impl std::path::PathBytes {
     return std::path::is_relative(self.bytes);
   }
 
+  fn is_windows_absolute(self: ref Self) -> bool {
+    return std::path::is_windows_absolute(self.bytes);
+  }
+
+  fn has_windows_drive_prefix(self: ref Self) -> bool {
+    return std::path::has_windows_drive_prefix(self.bytes);
+  }
+
+  fn windows_drive(self: ref Self) -> std::Option[std::Slice[u8]] {
+    return std::path::windows_drive(self.bytes);
+  }
+
+  fn is_windows_drive_absolute(self: ref Self) -> bool {
+    return std::path::is_windows_drive_absolute(self.bytes);
+  }
+
+  fn is_windows_drive_relative(self: ref Self) -> bool {
+    return std::path::is_windows_drive_relative(self.bytes);
+  }
+
+  fn is_windows_unc(self: ref Self) -> bool {
+    return std::path::is_windows_unc(self.bytes);
+  }
+
+  fn windows_unc_prefix(self: ref Self) -> std::Option[std::Slice[u8]] {
+    return std::path::windows_unc_prefix(self.bytes);
+  }
+
   fn trim_trailing_separators(self: ref Self) -> std::Slice[u8] {
     return std::path::trim_trailing_separators(self.bytes);
   }
@@ -828,6 +956,34 @@ pub impl std::path::PathBuf {
 
   fn is_relative(self: ref Self) -> bool {
     return std::path::is_relative(self.as_bytes());
+  }
+
+  fn is_windows_absolute(self: ref Self) -> bool {
+    return std::path::is_windows_absolute(self.as_bytes());
+  }
+
+  fn has_windows_drive_prefix(self: ref Self) -> bool {
+    return std::path::has_windows_drive_prefix(self.as_bytes());
+  }
+
+  fn windows_drive(self: ref Self) -> std::Option[std::Slice[u8]] {
+    return std::path::windows_drive(self.as_bytes());
+  }
+
+  fn is_windows_drive_absolute(self: ref Self) -> bool {
+    return std::path::is_windows_drive_absolute(self.as_bytes());
+  }
+
+  fn is_windows_drive_relative(self: ref Self) -> bool {
+    return std::path::is_windows_drive_relative(self.as_bytes());
+  }
+
+  fn is_windows_unc(self: ref Self) -> bool {
+    return std::path::is_windows_unc(self.as_bytes());
+  }
+
+  fn windows_unc_prefix(self: ref Self) -> std::Option[std::Slice[u8]] {
+    return std::path::windows_unc_prefix(self.as_bytes());
   }
 
   fn components(self: ref Self) -> std::path::Components {

@@ -135,10 +135,10 @@ the Result-returning form for callers that need `Error(NotFound)`.
   and removal, directory entries with lazy metadata, non-truncating file
   ensure, hosted temporary files/directories, advisory file locks, and metadata
   access/modification/status-change timestamps.
-- [std::path](path.md): source-only POSIX-style lexical path helpers for
+- [std::path](path.md): source-only lexical path helpers for POSIX defaults,
   separators, absolute/relative checks, typed `PathBytes` views including
   direct literal coercion, borrowed components, join, and lightweight
-  normalization.
+  normalization, plus explicit Windows drive/UNC byte classifiers.
 - [std::net](net.md): IPv4, IPv6, generic IP, socket-address values, hosted
   IPv4/IPv6 DNS lookup, host-port and bracketed IPv6 endpoint resolution,
   zone-backed resolver lists, IPv4/IPv6 TCP listener/stream handles,

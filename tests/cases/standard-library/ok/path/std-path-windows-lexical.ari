@@ -1,0 +1,80 @@
+// Covers explicit Windows drive and UNC lexical helpers. These helpers do not
+// change Ari's POSIX default path policy; they are opt-in byte classifiers.
+fn expect_slice(value: Slice[u8], expected: string) -> void {
+  assert(value.equals(std::string::bytes(expected)));
+}
+
+fn expect_bytes(value: Slice[u8], expected: Slice[u8]) -> void {
+  assert(value.equals(expected));
+}
+
+fn main() -> i64 {
+  var zone = zone::create(256);
+
+  assert(std::path::is_windows_separator('/'));
+  assert(std::path::is_windows_separator(92u8));
+  assert(!std::path::is_windows_separator(':'));
+
+  assert(std::path::has_windows_drive_prefix("C:/ari/main.ari"));
+  assert(std::path::has_windows_drive_prefix("z:relative"));
+  assert(!std::path::has_windows_drive_prefix("1:/ari"));
+  assert(!std::path::has_windows_drive_prefix("/tmp/ari"));
+  expect_slice(std::path::windows_drive("C:/ari/main.ari").unwrap(), "C:");
+  assert(std::path::windows_drive("/tmp/ari").is_none());
+
+  assert(std::path::is_windows_drive_absolute("C:/ari/main.ari"));
+  assert(std::path::is_windows_drive_relative("C:ari/main.ari"));
+  assert(!std::path::is_windows_drive_absolute("C:ari/main.ari"));
+  assert(!std::path::is_windows_drive_relative("C:/ari/main.ari"));
+
+  assert(std::path::is_windows_unc("//server/share/ari"));
+  expect_slice(std::path::windows_unc_prefix("//server/share/ari").unwrap(), "//server/share");
+  assert(!std::path::is_windows_unc("//server"));
+  assert(!std::path::is_windows_unc("///share"));
+  assert(std::path::windows_unc_prefix("//server").is_none());
+
+  var unc: [u8, 18] = [
+    92u8, 92u8,
+    115u8, 114u8, 118u8,
+    92u8,
+    115u8, 104u8, 97u8, 114u8, 101u8,
+    92u8,
+    112u8, 107u8, 103u8,
+    46u8, 97u8, 114u8
+  ];
+  var unc_prefix: [u8, 11] = [
+    92u8, 92u8,
+    115u8, 114u8, 118u8,
+    92u8,
+    115u8, 104u8, 97u8, 114u8, 101u8
+  ];
+  assert(std::path::is_windows_unc(unc.as_slice()));
+  expect_bytes(std::path::windows_unc_prefix(unc.as_slice()).unwrap(), unc_prefix.as_slice());
+
+  assert(std::path::is_windows_absolute("C:/ari"));
+  assert(std::path::is_windows_absolute("//server/share"));
+  assert(std::path::is_windows_absolute("/rooted/current-drive"));
+  assert(!std::path::is_windows_absolute("C:relative"));
+  assert(!std::path::is_windows_absolute("relative/path"));
+
+  let drive_view: std::path::Path = "D:/cache/bin";
+  assert(drive_view.has_windows_drive_prefix());
+  assert(drive_view.is_windows_drive_absolute());
+  assert(drive_view.is_windows_absolute());
+  expect_slice(drive_view.windows_drive().unwrap(), "D:");
+  assert(drive_view.windows_unc_prefix().is_none());
+
+  let unc_owned = std::path::from_string(ref mut zone, "//host/share/tool");
+  assert(unc_owned.is_windows_unc());
+  assert(unc_owned.is_windows_absolute());
+  expect_slice(unc_owned.windows_unc_prefix().unwrap(), "//host/share");
+
+  let drive_owned = std::path::from_string(ref mut zone, "E:cache");
+  assert(drive_owned.has_windows_drive_prefix());
+  assert(drive_owned.is_windows_drive_relative());
+  assert(!drive_owned.is_windows_absolute());
+  expect_slice(drive_owned.windows_drive().unwrap(), "E:");
+
+  zone::destroy(zone);
+  return 0;
+}

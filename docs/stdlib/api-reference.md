@@ -887,7 +887,9 @@ remaining descriptors. `os::pipe()` returns `Result[Pipe, Error]`;
 
 ## Paths
 
-`std::path` contains source-only lexical path helpers over POSIX path bytes:
+`std::path` contains source-only lexical path helpers over path byte slices.
+POSIX-style `/` behavior remains the default; explicit `windows_*` helpers
+classify Windows-shaped bytes without changing normal join/component behavior:
 
 ```ari
 path::Path
@@ -906,6 +908,14 @@ path::contains_nul(path)
 path::as_bytes(path)
 path::is_absolute(path)
 path::is_relative(path)
+path::is_windows_separator(value: char)
+path::is_windows_absolute(path)
+path::has_windows_drive_prefix(path)
+path::windows_drive(path)
+path::is_windows_drive_absolute(path)
+path::is_windows_drive_relative(path)
+path::is_windows_unc(path)
+path::windows_unc_prefix(path)
 path::trim_trailing_separators(path)
 path::components(path)
 path::components_with_kinds(path)
@@ -944,6 +954,13 @@ path.is_empty()
 path.contains_nul()
 path.is_absolute()
 path.is_relative()
+path.is_windows_absolute()
+path.has_windows_drive_prefix()
+path.windows_drive()
+path.is_windows_drive_absolute()
+path.is_windows_drive_relative()
+path.is_windows_unc()
+path.windows_unc_prefix()
 path.trim_trailing_separators()
 path.components()
 path.components_with_kinds()
@@ -973,6 +990,13 @@ path_buf.to_string(ref mut zone)
 path_buf.contains_nul()
 path_buf.is_absolute()
 path_buf.is_relative()
+path_buf.is_windows_absolute()
+path_buf.has_windows_drive_prefix()
+path_buf.windows_drive()
+path_buf.is_windows_drive_absolute()
+path_buf.is_windows_drive_relative()
+path_buf.is_windows_unc()
+path_buf.windows_unc_prefix()
 path_buf.components()
 path_buf.components_with_kinds()
 path_buf.file_name()
@@ -986,9 +1010,9 @@ path_buf.with_file_name(ref mut zone, new_file_name)
 path_buf.with_extension(ref mut zone, new_extension)
 ```
 
-The current separator policy is hosted Linux/POSIX-style `/` only. Paths are
-byte strings, not validated UTF-8. `std::string::String` is Ari's zone-backed
-owned byte string, `std::string::Utf8` is the validated UTF-8 view, and
+The default separator policy is hosted Linux/POSIX-style `/`. Paths are byte
+strings, not validated UTF-8. `std::string::String` is Ari's zone-backed owned
+byte string, `std::string::Utf8` is the validated UTF-8 view, and
 `PathBytes`/`PathBuf` interpret bytes as lexical paths. Lexical helpers
 preserve interior NUL bytes; reject them with `path::contains_nul` before
 crossing into C-string or hosted filesystem APIs when the bytes are not known
@@ -1016,12 +1040,13 @@ helpers for replacing the final component or final extension without touching
 the filesystem. `with_file_name_in` preserves root paths, while
 `with_extension_in` leaves paths without a final component unchanged.
 `Path` is a readability alias for `PathBytes`. `PathBytes` is the typed
-borrowed path-byte view. `PathBuf` is the current owned POSIX path buffer; in
-this slice it aliases `std::string::String`, so its bytes live in the zone used
-to create it and remain valid until that zone is reset or destroyed. Use these
-types when a byte slice or `std::string::OsStr` should be treated as a path
-rather than as generic bytes or validated text. When `PathBytes` is expected,
-a string literal can be used directly as a borrowed path-byte view.
+borrowed path-byte view. `PathBuf` is the current owned POSIX path buffer; it is
+a distinct struct over an internal `std::string::String`, so APIs can request
+an owned path without accepting every byte string. Its bytes live in the zone
+used to create it and remain valid until that zone is reset or destroyed. Use
+these types when a byte slice or `std::string::OsStr` should be treated as a
+path rather than as generic bytes or validated text. When `PathBytes` is
+expected, a string literal can be used directly as a borrowed path-byte view.
 The `has_*` helpers are allocation-free predicates over `file_name`,
 `extension`, `stem`, and `file_stem`; they return `false` when the
 corresponding view is absent. `file_stem` is an explicit alias for `stem`.
@@ -1032,6 +1057,15 @@ trimmed input path.
 `current_dir_join` uses `std::env::current_dir_path()` and returns
 `Result[PathBuf, Error]` because the current-directory lookup can fail; the
 join step itself remains lexical.
+Windows helpers are opt-in classifiers. `is_windows_separator` treats `/` and
+byte value `92u8` (backslash) as separators. `has_windows_drive_prefix` and
+`windows_drive` recognize ASCII letter drive prefixes such as `C:`.
+Drive-absolute paths need a
+separator after the drive, while drive-relative paths do not. UNC helpers
+require two leading Windows separators plus non-empty server and share
+components and return the borrowed `//server/share` or byte-equivalent prefix.
+`is_windows_absolute` accepts drive-absolute, UNC, and single-rooted Windows
+paths, but not drive-relative paths such as `C:tmp`.
 
 Thread helpers live in `std::thread`:
 

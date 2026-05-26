@@ -24,22 +24,22 @@ platform notes.
 
 ## Summary
 
-- API entries: `3266`
+- API entries: `3288`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
 | `alloc` | 887 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 868 | stable candidate |
+| `core` | 890 | stable candidate |
 | `hosted` | 1324 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1174 |
-| `method` | 1649 |
+| `fn` | 1182 |
+| `method` | 1663 |
 | `module` | 39 |
 | `struct` | 173 |
 | `trait` | 39 |
@@ -78,7 +78,7 @@ platform notes.
 | `std::option` | `core` | 12 |
 | `std::os` | `platform` | 50 |
 | `std::parse` | `core` | 91 |
-| `std::path` | `core` | 98 |
+| `std::path` | `core` | 120 |
 | `std::process` | `hosted` | 149 |
 | `std::random` | `alloc/hosted` | 36 |
 | `std::rc` | `alloc` | 32 |
@@ -3041,10 +3041,16 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::path::has_file_name` | check-prelude std-path-predicates final-component predicate; docs/stdlib/modules/path.md |
 | `fn std::path::has_file_stem` | check-prelude std-path-predicates natural alias for file-stem predicate; docs/stdlib/modules/path.md |
 | `fn std::path::has_stem` | check-prelude std-path-predicates file-stem predicate; docs/stdlib/modules/path.md |
+| `fn std::path::has_windows_drive_prefix` | check-prelude std-path-windows-lexical Windows drive-prefix byte classifier; docs/stdlib/modules/path.md |
 | `fn std::path::is_absolute` | check-prelude std-path-basic POSIX absolute path predicate; docs/stdlib/modules/path.md |
 | `fn std::path::is_empty` | check-prelude std-path-buf borrowed path empty predicate; docs/stdlib/modules/path.md |
 | `fn std::path::is_relative` | check-prelude std-path-basic POSIX relative path predicate; docs/stdlib/modules/path.md |
 | `fn std::path::is_separator` | check-prelude std-path-basic POSIX slash separator predicate; docs/stdlib/modules/path.md |
+| `fn std::path::is_windows_absolute` | check-prelude std-path-windows-lexical Windows rooted/drive/UNC absolute byte classifier; docs/stdlib/modules/path.md |
+| `fn std::path::is_windows_drive_absolute` | check-prelude std-path-windows-lexical Windows drive-rooted byte classifier; docs/stdlib/modules/path.md |
+| `fn std::path::is_windows_drive_relative` | check-prelude std-path-windows-lexical Windows drive-relative byte classifier; docs/stdlib/modules/path.md |
+| `fn std::path::is_windows_separator` | check-prelude std-path-windows-lexical Windows slash/backslash byte separator predicate; docs/stdlib/modules/path.md |
+| `fn std::path::is_windows_unc` | check-prelude std-path-windows-lexical Windows UNC byte classifier; docs/stdlib/modules/path.md |
 | `fn std::path::join` | check-prelude std-path-buf owned lexical path join helper; docs/stdlib/modules/path.md |
 | `fn std::path::join_in` | check-prelude std-path-basic zone-backed lexical join helper; docs/stdlib/modules/path.md |
 | `fn std::path::join_many` | check-prelude std-path-buf owned lexical multi-part path join helper; docs/stdlib/modules/path.md |
@@ -3056,6 +3062,8 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::path::strip_suffix` | check-prelude std-path-affixes borrowed component-aware suffix removal; docs/stdlib/modules/path.md |
 | `fn std::path::to_string` | check-prelude std-path-buf owned byte-string copy from path view; docs/stdlib/modules/path.md |
 | `fn std::path::trim_trailing_separators` | check-prelude std-path-basic borrowed trailing slash trim helper; docs/stdlib/modules/path.md |
+| `fn std::path::windows_drive` | check-prelude std-path-windows-lexical borrowed Windows drive-prefix byte view helper; docs/stdlib/modules/path.md |
+| `fn std::path::windows_unc_prefix` | check-prelude std-path-windows-lexical borrowed Windows UNC prefix byte view helper; docs/stdlib/modules/path.md |
 | `fn std::path::with_extension_in` | check-prelude std-path-edit zone-backed lexical extension replacement helper; docs/stdlib/modules/path.md |
 | `fn std::path::with_file_name_in` | check-prelude std-path-edit zone-backed lexical final-component replacement helper; docs/stdlib/modules/path.md |
 
@@ -3078,15 +3086,22 @@ Tier: `core`. Stability reading: stable candidate.
 | `method std::path::PathBuf::extension` | check-prelude std-path-buf owned path extension wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::file_name` | check-prelude std-path-buf owned path file-name wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::file_stem` | check-prelude std-path-buf owned path file-stem wrapper; docs/stdlib/modules/path.md |
+| `method std::path::PathBuf::has_windows_drive_prefix` | check-prelude std-path-windows-lexical owned path Windows drive-prefix wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::is_absolute` | check-prelude std-path-buf owned path absolute predicate; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::is_empty` | check-prelude std-path-buf owned path empty predicate; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::is_relative` | check-prelude std-path-buf owned path relative predicate; docs/stdlib/modules/path.md |
+| `method std::path::PathBuf::is_windows_absolute` | check-prelude std-path-windows-lexical owned path Windows absolute wrapper; docs/stdlib/modules/path.md |
+| `method std::path::PathBuf::is_windows_drive_absolute` | check-prelude std-path-windows-lexical owned path Windows drive-rooted wrapper; docs/stdlib/modules/path.md |
+| `method std::path::PathBuf::is_windows_drive_relative` | check-prelude std-path-windows-lexical owned path Windows drive-relative wrapper; docs/stdlib/modules/path.md |
+| `method std::path::PathBuf::is_windows_unc` | check-prelude std-path-windows-lexical owned path Windows UNC wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::join` | check-prelude std-path-buf owned path lexical join method; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::len` | check-prelude std-path-buf owned path byte length accessor; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::normalize` | check-prelude std-path-buf owned path normalization method; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::parent` | check-prelude std-path-buf owned path parent wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::stem` | check-prelude std-path-buf owned path stem wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::to_string` | check-prelude std-path-buf owned path byte-string copy helper; docs/stdlib/modules/path.md |
+| `method std::path::PathBuf::windows_drive` | check-prelude std-path-windows-lexical owned path borrowed Windows drive-prefix wrapper; docs/stdlib/modules/path.md |
+| `method std::path::PathBuf::windows_unc_prefix` | check-prelude std-path-windows-lexical owned path borrowed Windows UNC-prefix wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::with_extension` | check-prelude std-path-buf owned path extension replacement helper; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::with_file_name` | check-prelude std-path-buf owned path final-component replacement helper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::as_bytes` | check-prelude std-path-buf typed path byte accessor alias; docs/stdlib/modules/path.md |
@@ -3102,9 +3117,14 @@ Tier: `core`. Stability reading: stable candidate.
 | `method std::path::PathBytes::has_file_name` | check-prelude std-path-predicates typed path file-name predicate wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::has_file_stem` | check-prelude std-path-predicates natural typed path file-stem predicate wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::has_stem` | check-prelude std-path-predicates typed path stem predicate wrapper; docs/stdlib/modules/path.md |
+| `method std::path::PathBytes::has_windows_drive_prefix` | check-prelude std-path-windows-lexical typed path Windows drive-prefix wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::is_absolute` | check-prelude std-path-bytes typed path absolute predicate; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::is_empty` | check-prelude std-path-bytes typed path empty predicate; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::is_relative` | check-prelude std-path-bytes typed path relative predicate; docs/stdlib/modules/path.md |
+| `method std::path::PathBytes::is_windows_absolute` | check-prelude std-path-windows-lexical typed path Windows absolute wrapper; docs/stdlib/modules/path.md |
+| `method std::path::PathBytes::is_windows_drive_absolute` | check-prelude std-path-windows-lexical typed path Windows drive-rooted wrapper; docs/stdlib/modules/path.md |
+| `method std::path::PathBytes::is_windows_drive_relative` | check-prelude std-path-windows-lexical typed path Windows drive-relative wrapper; docs/stdlib/modules/path.md |
+| `method std::path::PathBytes::is_windows_unc` | check-prelude std-path-windows-lexical typed path Windows UNC wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::join` | check-prelude std-path-buf typed owned lexical join helper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::join_in` | check-prelude std-path-bytes typed path lexical join wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::len` | check-prelude std-path-bytes typed path length accessor; docs/stdlib/modules/path.md |
@@ -3117,6 +3137,8 @@ Tier: `core`. Stability reading: stable candidate.
 | `method std::path::PathBytes::strip_suffix` | check-prelude std-path-affixes typed path suffix stripping wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::to_string` | check-prelude std-path-buf typed owned byte-string copy helper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::trim_trailing_separators` | check-prelude std-path-bytes typed path trailing separator trim wrapper; docs/stdlib/modules/path.md |
+| `method std::path::PathBytes::windows_drive` | check-prelude std-path-windows-lexical typed path borrowed Windows drive-prefix wrapper; docs/stdlib/modules/path.md |
+| `method std::path::PathBytes::windows_unc_prefix` | check-prelude std-path-windows-lexical typed path borrowed Windows UNC-prefix wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::with_extension_in` | check-prelude std-path-edit typed path extension replacement wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::with_file_name_in` | check-prelude std-path-edit typed path final-component replacement wrapper; docs/stdlib/modules/path.md |
 

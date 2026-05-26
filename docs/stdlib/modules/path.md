@@ -1,20 +1,23 @@
 # std::path
 
-`std::path` contains source-only lexical path helpers over POSIX path bytes. It
-exists so file and tooling code can split, join, and lightly normalize paths
-without opening the filesystem or depending on host state.
+`std::path` contains source-only lexical path helpers over path byte slices. It
+exists so file and tooling code can split, join, lightly normalize, and classify
+paths without opening the filesystem or depending on host state.
 
-This first slice is deliberately hosted Linux/POSIX-style: `/` is the only
-separator and paths are byte strings, not validated UTF-8 strings. Ari's
-zone-backed `std::string::String` is also byte-oriented, while
+This first slice keeps hosted Linux/POSIX-style `/` behavior as the default
+for normal path operations, and paths are byte strings, not validated UTF-8
+strings. Ari's zone-backed `std::string::String` is also byte-oriented, while
 `std::string::Utf8` is the explicit validated UTF-8 view. `std::string::OsStr`
 is the borrowed OS-boundary byte view, and `PathBytes` is the borrowed
 path-policy view over those bytes. `PathBuf` is the owned POSIX path buffer:
 it is a distinct path type whose storage is an internal zone-backed
 `std::string::String`.
 
-Windows drive prefixes, UNC paths, verbatim paths, alternate separators, and
-platform-specific normalization belong to future runtime/path policy work.
+Explicit `windows_*` helpers classify Windows drive prefixes, rooted drive
+paths, and UNC prefixes lexically without changing the default POSIX
+join/component/normalization policy. Verbatim paths, platform-specific
+normalization, and target-specific owned path representations remain future
+runtime/path policy work.
 Filesystem-backed existing-path canonicalization lives in
 `std::fs::canonicalize`; this module stays lexical unless a helper explicitly
 says it reads hosted process state, such as `current_dir_join`.
@@ -61,6 +64,7 @@ can fail before the lexical join happens.
 | Join against the process cwd | `path::current_dir_join(ref mut zone, child)` | Returns `Result[PathBuf, Error]` because cwd lookup can fail. |
 | Lexically clean a path | `normalize_in(ref mut zone, path)` or `path.normalize(ref mut zone)` | Collapses repeated separators and `.`, keeps `..`. |
 | Check OS-boundary safety | `contains_nul` | Lexical helpers allow NUL; hosted boundaries should reject it. |
+| Inspect Windows-shaped bytes | `is_windows_absolute`, `windows_drive`, `windows_unc_prefix` | Opt-in lexical classifiers; they do not affect POSIX default helpers. |
 
 ## API
 
@@ -81,6 +85,14 @@ path::contains_nul(path) -> bool
 path::as_bytes(path) -> Slice[u8]
 path::is_absolute(path) -> bool
 path::is_relative(path) -> bool
+path::is_windows_separator(value: char) -> bool
+path::is_windows_absolute(path) -> bool
+path::has_windows_drive_prefix(path) -> bool
+path::windows_drive(path) -> Option[Slice[u8]]
+path::is_windows_drive_absolute(path) -> bool
+path::is_windows_drive_relative(path) -> bool
+path::is_windows_unc(path) -> bool
+path::windows_unc_prefix(path) -> Option[Slice[u8]]
 path::trim_trailing_separators(path) -> Slice[u8]
 path::components(path) -> Components
 path::components_with_kinds(path) -> ComponentsWithKinds
@@ -137,6 +149,13 @@ path.is_empty()
 path.contains_nul()
 path.is_absolute()
 path.is_relative()
+path.is_windows_absolute()
+path.has_windows_drive_prefix()
+path.windows_drive()
+path.is_windows_drive_absolute()
+path.is_windows_drive_relative()
+path.is_windows_unc()
+path.windows_unc_prefix()
 path.components()
 path.components_with_kinds()
 path.file_name()
@@ -194,6 +213,13 @@ owned.is_empty()
 owned.contains_nul()
 owned.is_absolute()
 owned.is_relative()
+owned.is_windows_absolute()
+owned.has_windows_drive_prefix()
+owned.windows_drive()
+owned.is_windows_drive_absolute()
+owned.is_windows_drive_relative()
+owned.is_windows_unc()
+owned.windows_unc_prefix()
 owned.components()
 owned.components_with_kinds()
 owned.file_name()
@@ -268,6 +294,20 @@ the current-directory lookup can fail. The join itself is still lexical.
 separators and removes `.` components, but intentionally keeps `..`
 components. Removing `..` safely requires a stronger policy around roots,
 symlinks, and platform behavior.
+
+The Windows helpers are explicit opt-in byte classifiers. They accept both `/`
+and byte value `92u8` (backslash) as Windows separators, but they do not
+rewrite or normalize separators. `has_windows_drive_prefix(path)` recognizes ASCII letter
+drive prefixes such as `C:`. `windows_drive(path)` returns that two-byte prefix
+as a borrowed slice. `is_windows_drive_absolute(path)` requires a drive prefix
+followed by a Windows separator, for example `C:/ari`; `is_windows_drive_relative`
+recognizes drive-relative paths such as `C:ari`. `is_windows_unc(path)` requires
+two leading Windows separators followed by non-empty server and share
+components. `windows_unc_prefix(path)` returns the borrowed
+`//server/share` prefix or the byte-equivalent backslash form.
+`is_windows_absolute(path)` is
+true for drive-absolute paths, UNC paths, and single-rooted Windows paths such
+as `/temp`; it is false for drive-relative paths like `C:temp`.
 
 ## Examples
 
@@ -355,7 +395,8 @@ Use this section when adding or reviewing path helpers.
   as `join`, `join_many`, `normalize`, `with_file_name`, and `with_extension`
   for `PathBuf`.
 - Preserve the POSIX byte policy until a platform path model exists. Do not add
-  Windows drive/UNC behavior by guessing in individual helpers.
+  Windows behavior to default helpers by guessing; keep it behind explicit
+  `windows_*` helpers.
 - Preserve NUL bytes lexically. Add explicit boundary validation near OS or C
   calls instead of making lexical path parsing silently reject bytes.
 - Keep `normalize_in` conservative. It may collapse repeated `/` and remove
@@ -376,6 +417,7 @@ tests/cases/standard-library/ok/path/std-path-predicates.ari
 tests/cases/standard-library/ok/path/std-path-affixes.ari
 tests/cases/standard-library/ok/path/std-path-edit.ari
 tests/cases/standard-library/ok/path/std-path-buf.ari
+tests/cases/standard-library/ok/path/std-path-windows-lexical.ari
 ```
 
 The focused test covers separator policy, absolute/relative checks, trailing
@@ -386,12 +428,14 @@ allocation-free final-component predicates plus component-aware path
 prefix/suffix predicates and stripping. It also covers `Path`/`PathBuf`,
 owned path construction from strings and bytes, byte access, NUL detection,
 multi-part joins, current-directory joins, and `PathBuf` editing wrappers.
+`std-path-windows-lexical.ari` covers explicit Windows drive and UNC
+classifiers without changing POSIX default path semantics.
 `make check-prelude` checks representative helper symbols and executable
 results.
 
 ## Future Work
 
-- platform-specific separators and Windows drive/UNC rules
+- platform-specific separator behavior and verbatim Windows path rules
 - richer platform-owned path representations if Ari later separates POSIX byte
   paths from target OS strings
 - deeper integration with `std::fs::canonicalize` and other filesystem APIs as

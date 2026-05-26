@@ -2266,6 +2266,14 @@ check-prelude: $(TARGET)
 	grep -q 'std__path__PathBuf8inherent9as_string' $(BUILD_DIR)/prelude/std-path-buf.ll
 	$(TARGET) tests/cases/standard-library/ok/path/std-path-buf.ari -o $(BUILD_DIR)/prelude/std-path-buf.elf
 	$(BUILD_DIR)/prelude/std-path-buf.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/cases/standard-library/ok/path/std-path-windows-lexical.ari --emit-llvm $(BUILD_DIR)/prelude/std-path-windows-lexical.ll
+	grep -q '_ARNv3std4path20is_windows_separator' $(BUILD_DIR)/prelude/std-path-windows-lexical.ll
+	grep -q '_ARNv3std4path24has_windows_drive_prefix' $(BUILD_DIR)/prelude/std-path-windows-lexical.ll
+	grep -q '_ARNv3std4path18windows_unc_prefix' $(BUILD_DIR)/prelude/std-path-windows-lexical.ll
+	grep -q 'std__path__PathBytes8inherent19is_windows_absolute' $(BUILD_DIR)/prelude/std-path-windows-lexical.ll
+	grep -q 'std__path__PathBuf8inherent14is_windows_unc' $(BUILD_DIR)/prelude/std-path-windows-lexical.ll
+	$(TARGET) tests/cases/standard-library/ok/path/std-path-windows-lexical.ari -o $(BUILD_DIR)/prelude/std-path-windows-lexical.elf
+	$(BUILD_DIR)/prelude/std-path-windows-lexical.elf; code=$$?; test $$code -eq 0
 	$(TARGET) tests/cases/standard-library/ok/bits/std-bits-mask-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
 	grep -q '_ARNv3std4bits6is_set' $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
 	grep -q '_ARNv3std4bits7any_set' $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
