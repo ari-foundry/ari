@@ -788,10 +788,11 @@ exit code compatibility accessor, `Output::is_success()` for the standard
 success check, and `stdout()` / `stderr()` for borrowed `Slice[u8]` views.
 `stdout_string(zone)` and `stderr_string(zone)` validate the captured bytes as
 UTF-8, copy them into a zone-owned `String`, and return `Error(InvalidData)` for
-non-UTF-8 output. This slice is meant for small outputs today; large concurrent
-streams, stdin redirection, parent-visible child setup errors, portable Windows
-mapping, and platform-specific status detail are still future process-library
-work.
+non-UTF-8 output. This slice is meant for small outputs today. File-backed and
+`/dev/null` stdin redirection helpers exist on `Command`; large concurrent
+streams, pipe-backed streaming stdin, parent-visible child setup errors,
+portable Windows mapping, and platform-specific status detail are still future
+process-library work.
 
 `ChildStdin`, `ChildStdout`, and `ChildStderr` name the current pipe endpoint
 types used by future streaming process IO. `current_dir`,

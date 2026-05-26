@@ -300,8 +300,10 @@ builder for argument passing, environment setup, working-directory setup,
 handles, typed `ExitStatus`/`ExitCode` values, typed `Signal`, `Output`
 handles, stdout/stderr capture for small outputs, child-stream endpoint
 aliases, current/executable path wrappers, temp file/dir constructors, and
-`kill`/`kill_signal`. Large-stream readiness, stdin redirection, richer
-platform status fields, and Windows process mapping remain roadmap work.
+`kill`/`kill_signal`. File-backed and `/dev/null` stdin redirection are
+available at execution time. Large-stream readiness, pipe-backed streaming
+stdin, parent-visible child setup errors, richer platform status fields, and
+Windows process mapping remain roadmap work.
 
 `std::thread` is the first thread slice. `spawn`, `join`, `detach`,
 `is_finished`, `yield_now`, and the raw parallelism hook are runtime-backed
@@ -397,15 +399,16 @@ filesystem boundaries.
 `std::net` starts with deterministic value types: IPv4, IPv6, generic IP, and
 socket addresses. Address components support strict access for known-good
 indexes and fallible access for parsed indexes. The hosted socket layer now
-adds one-address IPv4/IPv6 lookup, IPv4/IPv6 `TcpListener`/`TcpStream`
-handles, IPv4/IPv6 `UdpSocket` single-byte datagrams, Unix stream sockets, ephemeral local-port
-and local-address lookup where it applies, descriptor views, nonblocking
-flags, `std::time::Duration` timeout setters with raw millisecond
-compatibility helpers, stream shutdown, explicit close, and TCP/Unix
-`std::io::Reader`/`Writer` byte adapters plus method-style
-`read_exact`/`write_all` stream buffer helpers. Buffer-oriented UDP datagrams,
-broad options, UDP source address helpers, and
-timeout-specific error results remain roadmap work.
+adds one-address IPv4/IPv6 lookup, zone-backed resolver lists, bracketed IPv6
+endpoint parsing, IPv4/IPv6 `TcpListener`/`TcpStream` handles, IPv4/IPv6
+`UdpSocket` datagrams with source-address receive helpers, Unix stream
+sockets, ephemeral local-port and local-address lookup where it applies,
+descriptor views, nonblocking flags, `std::time::Duration` timeout setters
+with raw millisecond compatibility helpers, stream shutdown, explicit close,
+common socket options, and TCP/Unix `std::io::Reader`/`Writer` byte adapters
+plus method-style `read_exact`/`write_all` stream buffer helpers. Full DNS
+iteration, service-name ports, readiness/poll, linger, TTL/hop-limit,
+multicast, and timeout-specific error results remain roadmap work.
 
 `std::collections` is source Ari over typed zone allocation. `Set[T]` remains a
 small, insertion-order, linear set with iterator support and stable in-place

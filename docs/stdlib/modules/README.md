@@ -131,18 +131,21 @@ the Result-returning form for callers that need `Error(NotFound)`.
   source byte create/read/write/append/truncate/copy plus target-following and
   no-follow metadata, path-kind predicates, rename, hard/symbolic links, and
   single-directory create/ensure/remove helpers, recursive directory creation
-  and removal, directory entries with lazy metadata, and non-truncating file
-  ensure, including metadata access/modification/status-change timestamps.
+  and removal, directory entries with lazy metadata, non-truncating file
+  ensure, hosted temporary files/directories, advisory file locks, and metadata
+  access/modification/status-change timestamps.
 - [std::path](path.md): source-only POSIX-style lexical path helpers for
   separators, absolute/relative checks, typed `PathBytes` views including
   direct literal coercion, borrowed components, join, and lightweight
   normalization.
 - [std::net](net.md): IPv4, IPv6, generic IP, socket-address values, hosted
   IPv4/IPv6 DNS lookup, host-port and bracketed IPv6 endpoint resolution,
-  IPv4/IPv6 TCP listener/stream handles, IPv4/IPv6 UDP single-byte datagrams,
+  zone-backed resolver lists, IPv4/IPv6 TCP listener/stream handles,
+  IPv4/IPv6 UDP datagrams with source-address receive helpers,
   direct `Error` results with raw compatibility variants, TCP/UDP local-address
-  helpers, TCP peer-address helpers, Unix stream sockets, TCP/Unix stream buffer helpers,
-  nonblocking/timeout/shutdown helpers, and networking runtime roadmap.
+  helpers, TCP peer-address helpers, Unix stream sockets, TCP/Unix stream
+  buffer helpers, nonblocking/timeout/shutdown helpers, common socket options,
+  and networking runtime roadmap.
 - [std::zone](zone.md): explicit allocation capability, raw typed allocation,
   `alloc_array`, placement construction, promotion, reset, and destroy rules.
 - [std::ascii](ascii.md): source-only ASCII byte classification,

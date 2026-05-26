@@ -12,6 +12,9 @@ under `lib/std/`.
   public API spelling and coverage index.
 - [Example Index](examples.md): task-oriented entry points and representative
   executable examples for each module.
+- [Completion Status](completion-status.md): current basic stdlib completion
+  gauges and the remaining standard-library work, excluding long-term
+  stability validation.
 - [Stability Policy](stability.md): stable, usable, platform-backed,
   platform-specific, and experimental API rules.
 - [Text And Path Kinds](text-kinds.md): when to use byte strings, UTF-8
@@ -64,7 +67,8 @@ direct `Error` results plus raw compatibility helpers, then adds the first
 for argument passing, child environment setup, working-directory setup,
 `spawn`, `status`, `exit_status`, `output`, `output_in`, `exec`, `kill`,
 `kill_signal`, typed status inspection, child stream aliases, temp file/temp
-dir helpers, and small stdout/stderr capture,
+dir helpers, file-backed or `/dev/null` child stdin redirection, inherited or
+cleared environment policy, and small stdout/stderr capture,
 `std::os` introduces non-owning `Fd` descriptor views and `OwnedFd` wrappers
 for raw descriptor close, duplicate, close-on-exec, and nonblocking policy,
 plus `Pipe` for owned read/write descriptor pairs,
@@ -97,14 +101,18 @@ and `std::net` adds
 IPv4, IPv6, generic IP, and socket-address values plus hosted IPv4/IPv6 DNS
 lookup and `"host:port"`/`"[host]:port"` endpoint resolution,
 IPv4/IPv6 `TcpListener`/`TcpStream` bind/connect/accept helpers, IPv4/IPv6
-`UdpSocket` single-byte datagrams, TCP/UDP local-address helpers, TCP peer-address helpers, Unix stream
-sockets, direct `Error` result helpers with raw compatibility variants,
+`UdpSocket` datagrams with source-address receive helpers, connected UDP
+send/receive, TCP/UDP local-address helpers, TCP peer-address helpers, Unix
+stream sockets, direct `Error` result helpers with raw compatibility variants,
 nonblocking flags, `std::time::Duration` socket timeouts with raw
 millisecond compatibility helpers, TCP listener/UDP reuse-address options,
-TCP nodelay options, stream shutdown, and TCP/Unix
-`read_exact`/`write_all` stream buffer helpers. Buffer-oriented datagrams,
-remaining socket options, UDP source address helpers, and
-richer error payloads remain runtime roadmap work. Source
+TCP nodelay and keepalive options, UDP broadcast, reuse-port, send/receive
+buffer-size options, stream shutdown, TCP/Unix `read`/`write`/
+`read_exact`/`write_all`/`read_to_end`/`read_to_string` helpers,
+buffer-oriented UDP datagrams, UDP source address helpers, and
+zone-backed resolver lists. Full DNS iteration, readiness/poll, richer
+timeout errors, and platform socket extensions remain runtime roadmap work.
+Source
 `std::hash` adds deterministic non-cryptographic `Hasher`/`Hash[T]` helpers
 for primitive values and byte slices, and `std::random` adds OS entropy plus a
 deterministic non-cryptographic `Prng` with booleans, unbiased bounded

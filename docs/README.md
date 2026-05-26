@@ -93,6 +93,7 @@ tracked separately from compiler-writing readiness.
 - [Standard Library API Reference](stdlib/api-reference.md)
 - [Generated Standard Library API Index](stdlib/generated/api-index.md)
 - [Standard Library Example Index](stdlib/examples.md)
+- [Standard Library Completion Status](stdlib/completion-status.md)
 - [Standard Library Stability Policy](stdlib/stability.md)
 - [Standard Library Value Movement Contracts](stdlib/value-contracts.md)
 - [Standard Library Platform Notes](stdlib/platform/README.md)

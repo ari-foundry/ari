@@ -1241,8 +1241,10 @@ absolute canonical paths, filename preservation, and missing-path `None`.
   OS-resource iterator handles.
 - Grow `std::path` from lexical helpers into owned path values after Ari has a
   clearer owned string/path story.
-- Add secure temporary files and optional file locking after the resource and
-  platform policy is documented.
+- Grow temporary-file policy beyond the current hosted POSIX wrappers only
+  after platform cleanup and directory-selection rules are documented.
+- Grow advisory locking beyond the current POSIX `flock(2)` helpers only after
+  Windows and mandatory-locking policy are documented.
 - Migrate remaining bool/Option-only filesystem helpers to richer
   `Result[..., Error]` variants where callers need diagnostics.
 - Promote `File` toward an owned resource handle when the compiler can express
