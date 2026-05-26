@@ -597,8 +597,11 @@ pub impl std::io::PipeReader {
       return std::io::ReadByteError(std::io::broken_pipe_error());
     }
     let value = std::io::read_fd_byte(self.handle.raw());
-    if value < 0 {
+    if value == -1 {
       return std::io::ReadByteEof;
+    }
+    if value < -1 {
+      return std::io::ReadByteError(std::io::broken_pipe_error());
     }
     return std::io::ReadByteValue(value as u8);
   }

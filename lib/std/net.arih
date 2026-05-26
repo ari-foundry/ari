@@ -671,8 +671,11 @@ fn read_socket_byte_raw(raw: i64) -> std::Result[u8, i64] {
     return std::Err<u8, i64>(invalid_input_error_raw());
   }
   let value = read_socket_byte_host_raw(raw);
-  if value < 0 {
+  if value == -1 {
     return std::Err<u8, i64>(unexpected_eof_error_raw());
+  }
+  if value < -1 {
+    return std::Err<u8, i64>(last_errno_error_raw());
   }
   return std::Ok<u8, i64>(value as u8);
 }
@@ -2321,9 +2324,9 @@ pub impl std::net::UnixStream {
 impl std::io::Reader for std::net::TcpStream {
   pub fn read_byte(self: ref mut Self) -> i64 {
     if !self.handle.is_open() {
-      return -1;
+      return -2;
     }
-    return read_socket_byte_raw(self.handle.raw());
+    return read_socket_byte_host_raw(self.handle.raw());
   }
 }
 
@@ -2354,9 +2357,9 @@ impl std::io::Writer for std::net::TcpStream {
 impl std::io::Reader for std::net::UnixStream {
   pub fn read_byte(self: ref mut Self) -> i64 {
     if !self.handle.is_open() {
-      return -1;
+      return -2;
     }
-    return read_socket_byte_raw(self.handle.raw());
+    return read_socket_byte_host_raw(self.handle.raw());
   }
 }
 

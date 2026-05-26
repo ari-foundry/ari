@@ -1755,7 +1755,10 @@ stored target bytes of a symbolic link. Use `read_link` when code needs the
 link text itself; use `canonicalize` when code wants the host-resolved absolute
 path. `read_link_optional` and `try_read_link` discard the reason, and
 `read_link_unchecked` asserts on failure.
-`read_byte` returns an `i64` byte value or `-1` at EOF/failure, and
+`read_byte` returns an `i64` byte value, `-1` at EOF, or a value below `-1`
+when the host read call fails. The `try_read_byte` compatibility wrappers
+collapse both non-byte states to `None`. Result-returning whole-file reads and
+copies preserve open, read, write, and close failures as `Error`.
 `write_byte` returns `Result[(), Error]`. `write_bytes` writes a `Slice[u8]`
 and returns `Result[i64, Error]` with the byte count.
 `write(path, values)` truncates or creates a small byte file, writes the whole
@@ -2173,8 +2176,9 @@ input::line()
 input::owned_line(ref mut zone)
 ```
 
-`read_byte` returns an `i64` byte value or `-1` at EOF.
-`input::try_read_byte()` wraps that shape as `Option[u8]`. `write_bytes`
+`read_byte` returns an `i64` byte value or `-1` at EOF; OS-backed adapters use
+values below `-1` for host read failures. `input::try_read_byte()` wraps the
+stdin shape as `Option[u8]`. `write_bytes`
 writes every byte in a `Slice[u8]` and returns the byte count attempted.
 Borrowed line input uses a reusable runtime buffer; use the owned forms when
 the line must survive later input reads.

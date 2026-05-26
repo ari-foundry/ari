@@ -617,9 +617,10 @@ matching `_unchecked` helpers preserve the old invalid-handle convention. New
 docs and tests should usually prefer `open`, `OpenOptions`, or `create` when
 creating a file.
 
-`read_byte(file)` returns the next byte as `i64` or `-1` at EOF or on failure.
-Use `try_read_byte(file)` or `file.try_read_byte()` when EOF is ordinary
-control flow; they return `Option[u8]` and hide the sentinel from call sites.
+`read_byte(file)` returns the next byte as `i64`, `-1` at EOF, or a value below
+`-1` when the host read call fails. Use `try_read_byte(file)` or
+`file.try_read_byte()` when EOF and read errors should both collapse to ordinary
+absence; they return `Option[u8]` and hide the sentinel from call sites.
 `write_byte(file, value)` returns `Result[(), Error]`, and
 `write_bytes(file, values)` writes a whole `Slice[u8]` and returns
 `Result[i64, Error]` with the byte count. Closed or invalid handles return
@@ -644,10 +645,10 @@ with `"a"` mode. Failed opens, short writes, or failed closes return
 boolean wrappers over `try_write` and `try_append`.
 
 `try_read_to_string(ref mut zone, path)` opens `path` with `"r"`, reads bytes
-until the current `read_byte` EOF/failure sentinel, closes the handle, and
-returns `Some[String]`. Missing or unopenable files return `None`, so this is
-the preferred whole-file helper when absence must be distinguished from an empty
-file. The current Ari `String` is byte-oriented; this helper does not validate
+until EOF, closes the handle, and returns `Some[String]`. Missing files,
+unopenable files, close failures, and mid-read host errors return `None`, so
+this is the compatibility helper for callers that intentionally discard the
+reason. The current Ari `String` is byte-oriented; this helper does not validate
 UTF-8 or any other text encoding.
 
 `try_read(ref mut zone, path)` is the short natural alias for
@@ -655,9 +656,10 @@ UTF-8 or any other text encoding.
 
 `read_to_string(ref mut zone, path)` is the natural fallible whole-file read:
 it returns `Ok(String)` with the file bytes on success and `Err(Error)` for
-open or close failures. `read_to_string_optional(ref mut zone, path)` keeps only the
-success payload as `Option[String]`, while `read_to_string_or_default(ref mut
-zone, path)` preserves the old empty-string fallback behavior.
+open, close, or mid-read host failures. `read_to_string_optional(ref mut zone,
+path)` keeps only the success payload as `Option[String]`, while
+`read_to_string_or_default(ref mut zone, path)` preserves the old empty-string
+fallback behavior.
 `read_to_string_unchecked(ref mut zone, path)` asserts on failure.
 
 `read(ref mut zone, path)` is the short natural alias for
@@ -675,11 +677,11 @@ handle, and returns whether the operation and close succeeded.
 truncating `"w"` semantics, streams bytes from one handle to the other, closes
 both handles, and returns `Some(byte_count)` when the copy and both closes
 succeeded. Missing sources, failed target opens, failed byte writes, and failed
-closes return `None`. Detailed read error reporting remains future `std::io` or
-`std::os` work because `read_byte` still uses one EOF/failure sentinel.
+closes return `None`; read errors also return `None` after both handles are
+closed. The Result-returning copy paths keep the read error detail.
 `copy(source, target)` is the natural Result-returning operation and keeps
-open/write/close failures as `Err(Error)` while returning the byte count on
-success. `copy_raw(source, target)` keeps the raw integer bridge for
+open/read/write/close failures as `Err(Error)` while returning the byte count
+on success. `copy_raw(source, target)` keeps the raw integer bridge for
 compatibility tests and low-level adapters. `copy_bool(source, target)` is the
 compatibility boolean wrapper over `try_copy`.
 
@@ -903,7 +905,7 @@ branching is enough, and `entry.metadata_unchecked()` or
 | --- | --- |
 | open | Current: `open(path, mode)` returns `Error`, `open_optional(path, mode)`/`try_open(path, mode)` discard reasons, `open_unchecked(path, mode)` preserves the invalid-handle compatibility shape, `open(path, mode)` remains a compatibility alias, raw compatibility `open_raw`, Result/optional/unchecked convenience wrappers for read/write/append modes, and `OpenOptions` for named read/write/append/truncate/create/create-new policy plus `OpenOptions::open`/`open_optional`/`try_open`/`open_unchecked`/`open`/`open_raw`. |
 | create | Current: `create(path)` returns `Error`, `create_optional(path)`/`try_create(path)` discard reasons, `create_unchecked(path)` preserves the invalid-handle compatibility shape, `create(path)` remains a compatibility alias, and `ensure_file(path)` provides non-truncating idempotent file setup. |
-| read | Current: byte `read_byte`/`try_read_byte`, Result-first whole-file `read`/`read_to_string`, byte-vector `read_bytes`, `_optional`/`try_*` absence-only helpers, `_or_default` empty-string compatibility, and `_unchecked` asserting compatibility. Splitting byte-read EOF from byte-read errors remains roadmap. |
+| read | Current: byte `read_byte`/`try_read_byte`, EOF/error-splitting host read sentinel for `std::io` adapters, Result-first whole-file `read`/`read_to_string` with open/read/close errors, byte-vector `read_bytes`, `_optional`/`try_*` absence-only helpers, `_or_default` empty-string compatibility, and `_unchecked` asserting compatibility. |
 | write | Current: byte `write_byte`, `write_bytes`, `write_byte_unchecked`, `write_bytes_unchecked`, Result-first whole-file `write`, string convenience `write_string`, `write_bool` boolean compatibility, byte-counting `try_write`, and raw compatibility `write_raw`/`write_byte_raw`/`write_bytes_raw`. |
 | append | Current: `"a"`/`"a+"` modes, Result-first whole-file `append`, `append_bool` boolean compatibility, byte-counting `try_append`, and raw compatibility `append_raw`. |
 | truncate | Current: `truncate(path)` and `"w"`/`"w+"` modes. |

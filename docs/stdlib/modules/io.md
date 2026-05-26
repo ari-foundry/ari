@@ -178,14 +178,17 @@ read_line_owned(ref mut zone)
 
 `Reader.read_byte` returns the next byte as `i64`, `-1` at EOF, or a value
 below `-1` when an adapter detects a real read failure through today's scalar
-hook. That sentinel contract matches the existing runtime hook and remains the
-compatibility layer.
+hook. OS-backed file, pipe, TCP, and Unix-stream hooks split `read(2) == 0`
+from `read(2) < 0`, so EOF and host read failures no longer share the same
+sentinel in those adapters. The scalar hook remains the compatibility layer.
 `read_one(ref mut reader)` wraps one low-level byte read in `ReadByte`:
 `ReadByteValue(byte)` for a byte, `ReadByteEof` for ordinary end-of-stream,
 and `ReadByteError(error)` when an adapter reports a real failure. Generic
 readers backed only by `Reader::read_byte` map `-1` to EOF and values below
-`-1` to the current adapter error category, `Error(BrokenPipe)`. `PipeReader`
-returns that error after its descriptor has been closed.
+`-1` to the current adapter error category, `Error(BrokenPipe)`. `PipeReader`,
+`File`, TCP streams, and Unix streams return that error for closed or invalid
+handles, and Result-returning module helpers can map host errno where they own
+the platform error channel.
 Use `is_byte()`, `is_eof()`, `is_error()`, `byte()`, and `error()` for compact
 branching.
 `read(ref mut reader, output)` fills up to `output.len` bytes and returns

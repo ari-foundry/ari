@@ -1706,13 +1706,16 @@ pub fn read_to_string(zone: ref mut Zone, path: string) -> std::Result[std::stri
     }
     std::Ok(file) => {
       var output = std::string::new(zone, 64);
-      // File byte reads currently share one EOF/failure sentinel. This helper
-      // preserves detailed open and close errors while the lower-level read
-      // error channel is still being split from EOF.
       var byte = file.read_byte();
       while byte >= 0 {
         output.push_in(zone, byte as u8);
         byte = file.read_byte();
+      }
+      if byte < -1 {
+        let read_raw_error = last_errno_error_raw();
+        file.close_unchecked();
+        drop output;
+        return std::Err<std::string::String, std::error::Error>(std::error::from_raw(read_raw_error));
       }
       if file.close().is_ok() {
         return std::Ok<std::string::String, std::error::Error>(output);
@@ -1754,12 +1757,17 @@ pub fn try_read_to_string(zone: ref mut Zone, path: string) -> std::Option[std::
     return std::None<std::string::String>();
   }
 
-  // The current String is byte-oriented; this helper preserves bytes and stops
-  // at the existing read-byte EOF/failure sentinel.
+  // The current String is byte-oriented; this compatibility helper preserves
+  // bytes and discards the reason when a read error interrupts collection.
   var byte = file.read_byte();
   while byte >= 0 {
     output.push_in(zone, byte as u8);
     byte = file.read_byte();
+  }
+  if byte < -1 {
+    file.close_unchecked();
+    drop output;
+    return std::None<std::string::String>();
   }
   file.close_unchecked();
   return std::Some<std::string::String>(output);
@@ -1819,9 +1827,6 @@ pub fn copy_raw(source: string, target: string) -> std::Result[i64, i64] {
     std::Ok(reader) => {
       match open_raw(target, "w") {
         std::Ok(writer) => {
-          // read_byte currently uses one EOF/failure sentinel, so copy
-          // preserves open, write, and close errors while keeping read errors
-          // on the existing std::io roadmap.
           var copied = 0;
           var byte = reader.read_byte();
           while byte >= 0 {
@@ -1836,6 +1841,12 @@ pub fn copy_raw(source: string, target: string) -> std::Result[i64, i64] {
                 return std::Err<i64, i64>(write_raw);
               }
             }
+          }
+          if byte < -1 {
+            let read_raw_error = last_errno_error_raw();
+            reader.close_unchecked();
+            writer.close_unchecked();
+            return std::Err<i64, i64>(read_raw_error);
           }
 
           match close_raw(reader) {
@@ -2414,7 +2425,7 @@ pub impl std::fs::OpenOptions {
 impl std::io::Reader for std::fs::File {
   pub fn read_byte(self: ref mut Self) -> i64 {
     if self.fd < 0 {
-      return -1;
+      return -2;
     }
     return std::fs::read_byte(std::fs::File { fd: self.fd });
   }

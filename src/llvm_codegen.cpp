@@ -3462,13 +3462,18 @@ private:
         line("  %byte.ptr = alloca i8, align 1");
         line("  %count = call i64 @read(i32 %fd32, ptr %byte.ptr, i64 1)");
         line("  %one = icmp eq i64 %count, 1");
-        line("  br i1 %one, label %load, label %fail");
+        line("  br i1 %one, label %load, label %check_eof");
         line("load:");
         line("  %byte = load i8, ptr %byte.ptr, align 1");
         line("  %wide = zext i8 %byte to i64");
         line("  ret i64 %wide");
-        line("fail:");
+        line("check_eof:");
+        line("  %eof = icmp eq i64 %count, 0");
+        line("  br i1 %eof, label %eof_return, label %fail");
+        line("eof_return:");
         line("  ret i64 -1");
+        line("fail:");
+        line("  ret i64 -2");
         line("}");
         line();
 
@@ -3498,13 +3503,18 @@ private:
         line("  %byte.ptr = alloca i8, align 1");
         line("  %count = call i64 @read(i32 %fd32, ptr %byte.ptr, i64 1)");
         line("  %one = icmp eq i64 %count, 1");
-        line("  br i1 %one, label %load, label %fail");
+        line("  br i1 %one, label %load, label %check_eof");
         line("load:");
         line("  %byte = load i8, ptr %byte.ptr, align 1");
         line("  %wide = zext i8 %byte to i64");
         line("  ret i64 %wide");
-        line("fail:");
+        line("check_eof:");
+        line("  %eof = icmp eq i64 %count, 0");
+        line("  br i1 %eof, label %eof_return, label %fail");
+        line("eof_return:");
         line("  ret i64 -1");
+        line("fail:");
+        line("  ret i64 -2");
         line("}");
         line();
 

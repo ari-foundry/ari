@@ -7,6 +7,13 @@ fn cleanup(path: string) -> void {
   }
 }
 
+fn unit_error_is(value: Result[(), error::Error], kind: error::Kind) -> bool {
+  match value {
+    Ok(_) => { return false; }
+    Err(reason) => { return reason.is_kind(kind); }
+  }
+}
+
 fn main() -> i64 {
   let source_path = "build/prelude/std-fs-io-traits-source.tmp";
   let copy_path = "build/prelude/std-fs-io-traits-copy.tmp";
@@ -69,7 +76,7 @@ fn main() -> i64 {
   var invalid = fs::File::invalid();
   var invalid_output = [0u8];
   let invalid_view = invalid_output.as_slice();
-  let invalid_ok = io::read_exact<std::fs::File>(ref mut invalid, invalid_view.as_ptr(), 1).is_err() &&
+  let invalid_ok = unit_error_is(io::read_exact<std::fs::File>(ref mut invalid, invalid_view.as_ptr(), 1), error::BrokenPipe) &&
                    io::flush<std::fs::File>(ref mut invalid).is_err();
 
   cleanup(source_path);
