@@ -2126,6 +2126,7 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std8encoding13encode_hex_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding15hex_decoded_len' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding24hex_decoded_len_optional' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding9hex_error' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding10decode_hex' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding13decode_hex_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding22decode_hex_optional_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
@@ -2134,6 +2135,7 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std8encoding16encode_base64_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding18base64_decoded_len' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding27base64_decoded_len_optional' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding12base64_error' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding13decode_base64' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding16decode_base64_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding25decode_base64_optional_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
@@ -2143,6 +2145,7 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std8encoding21encode_base64_mime_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding23base64_mime_decoded_len' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding32base64_mime_decoded_len_optional' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding17base64_mime_error' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding22can_decode_base64_mime' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding18decode_base64_mime' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding21decode_base64_mime_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
@@ -2153,6 +2156,7 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std8encoding29encode_base64_url_unpadded_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding22base64_url_decoded_len' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding31base64_url_decoded_len_optional' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding16base64_url_error' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding17decode_base64_url' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding20decode_base64_url_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding29decode_base64_url_optional_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll

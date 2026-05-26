@@ -10,7 +10,9 @@ needs portable hex/base64 text for byte buffers.
 Fallible UTF-8 validation and UTF-8 scalar/string conversion use the natural
 API names and return `Result[..., Utf8Error]` so callers can report the exact
 failing byte and category. Fallible UTF-16 counts and hex/base64 codecs use
-`Result[..., std::error::Error]` with `InvalidData` for malformed input. The
+`Result[..., std::error::Error]` with `InvalidData` for malformed input.
+Hex/base64 callers that need a precise failure location can query the matching
+`*_error` helper before or after choosing the shared `Result` decoder. The
 `_optional` helpers keep the compact compatibility surface when callers only
 need presence or absence, `try_*` names are compatibility aliases for those
 optional helpers, `_in` names are compatibility aliases for explicit-zone
@@ -101,8 +103,11 @@ invalid scalars.
 Hex helpers:
 
 ```ari
+encoding::CodecErrorKind
+encoding::CodecError
 encoding::hex_encoded_len(bytes) -> i64
 encoding::encode_hex_in(ref mut zone, bytes) -> String
+encoding::hex_error(bytes) -> Option[CodecError]
 encoding::hex_decoded_len(bytes) -> Result[i64, std::error::Error]
 encoding::hex_decoded_len_optional(bytes) -> Option[i64]
 encoding::can_decode_hex(bytes) -> bool
@@ -115,6 +120,13 @@ encoding::decode_hex_unchecked_in(ref mut zone, bytes) -> String
 
 Hex encoding uses lowercase `a..f`. Decoding accepts the same ASCII hex digits
 accepted by `std::ascii::hex_value`, so uppercase input is valid.
+`hex_error` returns `None` for valid input or `Some(CodecError)` for malformed
+input. `CodecError` records the byte index, byte value, and a
+`CodecErrorKind`: `InvalidLength`, `InvalidByte`, or `InvalidPadding`. Use
+`index()`, `byte()`, and `kind()` for diagnostics, or the predicate helpers
+`is_invalid_length()`, `is_invalid_byte()`, and `is_invalid_padding()` for
+branching. Hex currently reports odd-length input as `InvalidLength` at the
+last byte.
 `hex_decoded_len`, `decode_hex`, and `decode_hex_in` return
 `Error(InvalidData)` for invalid length or non-hex bytes. `decode_hex_in` is
 the compatibility spelling for the explicit-zone decoder.
@@ -128,6 +140,7 @@ Base64 helpers:
 ```ari
 encoding::base64_encoded_len(bytes) -> i64
 encoding::encode_base64_in(ref mut zone, bytes) -> String
+encoding::base64_error(bytes) -> Option[CodecError]
 encoding::base64_decoded_len(bytes) -> Result[i64, std::error::Error]
 encoding::base64_decoded_len_optional(bytes) -> Option[i64]
 encoding::can_decode_base64(bytes) -> bool
@@ -138,6 +151,7 @@ encoding::try_decode_base64_in(ref mut zone, bytes) -> Option[String]
 encoding::decode_base64_unchecked_in(ref mut zone, bytes) -> String
 encoding::base64_mime_encoded_len(bytes) -> i64
 encoding::encode_base64_mime_in(ref mut zone, bytes) -> String
+encoding::base64_mime_error(bytes) -> Option[CodecError]
 encoding::base64_mime_decoded_len(bytes) -> Result[i64, std::error::Error]
 encoding::base64_mime_decoded_len_optional(bytes) -> Option[i64]
 encoding::can_decode_base64_mime(bytes) -> bool
@@ -150,6 +164,7 @@ encoding::base64_url_encoded_len(bytes) -> i64
 encoding::base64_url_unpadded_encoded_len(bytes) -> i64
 encoding::encode_base64_url_in(ref mut zone, bytes) -> String
 encoding::encode_base64_url_unpadded_in(ref mut zone, bytes) -> String
+encoding::base64_url_error(bytes) -> Option[CodecError]
 encoding::base64_url_decoded_len(bytes) -> Result[i64, std::error::Error]
 encoding::base64_url_decoded_len_optional(bytes) -> Option[i64]
 encoding::can_decode_base64_url(bytes) -> bool
@@ -171,6 +186,16 @@ uses the same bit layout with `-` and `_` in place of `+` and `/`.
 `decode_base64_url` accepts both padded and unpadded URL-safe input, but it
 rejects the standard `+` and `/` alphabet so callers do not accidentally mix
 protocol policies.
+
+`base64_error`, `base64_mime_error`, and `base64_url_error` return
+`None<CodecError>()` for valid input and `Some(CodecError)` for invalid input.
+`InvalidLength` covers lengths that cannot encode complete base64 groups,
+including padded URL-safe input whose length is not a multiple of four and
+unpadded URL-safe input with a one-byte remainder. `InvalidByte` reports bytes
+outside the active alphabet. `InvalidPadding` reports `=` before the suffix
+padding area, too much MIME padding, or non-padding data after padding has
+started. MIME diagnostics report indexes in the original byte slice, including
+ignored whitespace positions in the scan.
 
 `base64_decoded_len`, `decode_base64`, `decode_base64_in`,
 `base64_mime_decoded_len`, `decode_base64_mime`, `decode_base64_mime_in`,
@@ -213,6 +238,21 @@ The lower-level `*_decoded_len`, `*_decoded_len_optional`, and `can_decode_*`
 helpers remain useful when a caller wants to validate before reserving storage
 or report a simpler boolean failure.
 
+Use the codec diagnostic helpers when user-facing tools need a precise message:
+
+```ari
+match encoding::base64_url_error(input) {
+  std::Some(reason) => {
+    if reason.is_invalid_byte() {
+      // report reason.index() and reason.byte()
+    }
+  }
+  std::None => {
+    // input is decodable by decode_base64_url
+  }
+}
+```
+
 ## Example
 
 ```ari
@@ -244,16 +284,15 @@ validation/count helpers.
 width, byte-offset decoding, next-index helpers, natural Result scalar
 encoding with detailed `Utf8Error`, optional compatibility scalar encoding,
 and unchecked scalar encoding.
-`std-encoding-codec.ari` covers hex/base64 length helpers, standard, MIME, and
-URL-safe base64 encoding, MIME folding and decoding, padded and unpadded
-URL-safe base64 decoding, natural Result decoding, optional compatibility
-decoding, unchecked decoding, and invalid input guards. These tests are wired
-into `make check-prelude` with LLVM symbol checks.
+`std-encoding-codec.ari` covers hex/base64 length helpers, structured
+`CodecError` diagnostics, standard, MIME, and URL-safe base64 encoding, MIME
+folding and decoding, padded and unpadded URL-safe base64 decoding, natural
+Result decoding, optional compatibility decoding, unchecked decoding, and
+invalid input guards. These tests are wired into `make check-prelude` with LLVM
+symbol checks.
 
 ## Future Work
 
-- richer structured decode errors beyond the current shared `InvalidData`
-  result category
 - Unicode normalization, grapheme clusters, and transcoding only after Ari has
   a deliberate text policy beyond byte strings
 - optional compression helpers in a separate module once byte-buffer ownership

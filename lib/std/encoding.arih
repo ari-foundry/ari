@@ -18,10 +18,48 @@ pub enum Utf8ErrorKind {
   OutOfRangeCodePoint,
 }
 
+pub enum CodecErrorKind {
+  InvalidLength,
+  InvalidByte,
+  InvalidPadding,
+}
+
+pub struct CodecError {
+  index_value: i64,
+  byte_value: u8,
+  kind_id: i64,
+}
+
 pub struct Utf8Error {
   index: i64,
   byte: u8,
   kind_id: i64,
+}
+
+pub impl std::encoding::CodecError {
+  fn index(self: ref Self) -> i64 {
+    return self.index_value;
+  }
+
+  fn byte(self: ref Self) -> u8 {
+    return self.byte_value;
+  }
+
+  fn kind(self: ref Self) -> std::encoding::CodecErrorKind {
+    return codec_error_kind_from_id(self.kind_id);
+  }
+
+  fn is_invalid_length(self: ref Self) -> bool {
+    return self.kind_id == codec_error_kind_id(std::encoding::InvalidLength);
+  }
+
+  fn is_invalid_byte(self: ref Self) -> bool {
+    return self.kind_id == codec_error_kind_id(std::encoding::InvalidByte);
+  }
+
+  fn is_invalid_padding(self: ref Self) -> bool {
+    return self.kind_id == codec_error_kind_id(std::encoding::InvalidPadding);
+  }
 }
 
 pub impl std::encoding::Utf8Char {
@@ -94,6 +132,32 @@ fn utf8_error_kind_from_id(id: i64) -> std::encoding::Utf8ErrorKind {
   if id == 4 { return OverlongEncoding; }
   if id == 5 { return SurrogateCodePoint; }
   return OutOfRangeCodePoint;
+}
+
+fn codec_error_kind_id(kind: std::encoding::CodecErrorKind) -> i64 {
+  match kind {
+    InvalidLength => { return 1; }
+    InvalidByte => { return 2; }
+    InvalidPadding => { return 3; }
+  }
+}
+
+fn codec_error_kind_from_id(id: i64) -> std::encoding::CodecErrorKind {
+  if id == 1 { return InvalidLength; }
+  if id == 2 { return InvalidByte; }
+  return InvalidPadding;
+}
+
+fn codec_error_at(index: i64, byte: u8, kind: std::encoding::CodecErrorKind) -> std::encoding::CodecError {
+  return std::encoding::CodecError {
+    index_value: index,
+    byte_value: byte,
+    kind_id: codec_error_kind_id(kind),
+  };
+}
+
+fn codec_length_error(index: i64) -> std::encoding::CodecError {
+  return codec_error_at(index, 0u8, std::encoding::InvalidLength);
 }
 
 fn utf8_error_at(index: i64, byte: u8, kind: std::encoding::Utf8ErrorKind) -> std::encoding::Utf8Error {
@@ -815,6 +879,30 @@ pub fn hex_decoded_len_optional(values: std::Slice[u8]) -> std::Option[i64] {
   return std::Some<i64>(values.len / 2);
 }
 
+pub fn hex_error(values: std::Slice[u8]) -> std::Option[std::encoding::CodecError] {
+  if values.len % 2 != 0 {
+    if values.len == 0 {
+      return std::Some<std::encoding::CodecError>(codec_length_error(0));
+    }
+    return std::Some<std::encoding::CodecError>(
+      codec_error_at(values.len - 1, values[values.len - 1], std::encoding::InvalidLength)
+    );
+  }
+  var index = 0;
+  while index != values.len {
+    match std::ascii::hex_value(values[index]) {
+      std::Some(_) => {}
+      std::None => {
+        return std::Some<std::encoding::CodecError>(
+          codec_error_at(index, values[index], std::encoding::InvalidByte)
+        );
+      }
+    }
+    index = index + 1;
+  }
+  return std::None<std::encoding::CodecError>();
+}
+
 pub fn hex_decoded_len(values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
   match hex_decoded_len_optional(values) {
     std::Some(value) => {
@@ -1074,6 +1162,51 @@ pub fn base64_decoded_len_optional(values: std::Slice[u8]) -> std::Option[i64] {
   return std::Some<i64>(((values.len / 4) * 3) - padding);
 }
 
+pub fn base64_error(values: std::Slice[u8]) -> std::Option[std::encoding::CodecError] {
+  if values.len == 0 {
+    return std::None<std::encoding::CodecError>();
+  }
+  if values.len % 4 != 0 {
+    return std::Some<std::encoding::CodecError>(codec_length_error(values.len));
+  }
+
+  var padding = 0;
+  if is_base64_padding(values[values.len - 1]) {
+    padding = padding + 1;
+  }
+  if is_base64_padding(values[values.len - 2]) {
+    padding = padding + 1;
+  }
+
+  var index = 0;
+  let payload_len = values.len - padding;
+  while index != payload_len {
+    if is_base64_padding(values[index]) {
+      return std::Some<std::encoding::CodecError>(
+        codec_error_at(index, values[index], std::encoding::InvalidPadding)
+      );
+    }
+    match base64_value(values[index]) {
+      std::Some(_) => {}
+      std::None => {
+        return std::Some<std::encoding::CodecError>(
+          codec_error_at(index, values[index], std::encoding::InvalidByte)
+        );
+      }
+    }
+    index = index + 1;
+  }
+  while index != values.len {
+    if !is_base64_padding(values[index]) {
+      return std::Some<std::encoding::CodecError>(
+        codec_error_at(index, values[index], std::encoding::InvalidPadding)
+      );
+    }
+    index = index + 1;
+  }
+  return std::None<std::encoding::CodecError>();
+}
+
 pub fn base64_url_decoded_len_optional(values: std::Slice[u8]) -> std::Option[i64] {
   if values.len == 0 {
     return std::Some<i64>(0);
@@ -1139,6 +1272,74 @@ pub fn base64_url_decoded_len_optional(values: std::Slice[u8]) -> std::Option[i6
   return std::Some<i64>(decoded);
 }
 
+pub fn base64_url_error(values: std::Slice[u8]) -> std::Option[std::encoding::CodecError] {
+  if values.len == 0 {
+    return std::None<std::encoding::CodecError>();
+  }
+
+  var padding = 0;
+  if is_base64_padding(values[values.len - 1]) {
+    padding = padding + 1;
+  }
+  if values.len >= 2 {
+    if is_base64_padding(values[values.len - 2]) {
+      padding = padding + 1;
+    }
+  }
+
+  if padding > 0 {
+    if values.len % 4 != 0 {
+      return std::Some<std::encoding::CodecError>(codec_length_error(values.len));
+    }
+    var index = 0;
+    let payload_len = values.len - padding;
+    while index != payload_len {
+      if is_base64_padding(values[index]) {
+        return std::Some<std::encoding::CodecError>(
+          codec_error_at(index, values[index], std::encoding::InvalidPadding)
+        );
+      }
+      match base64_url_value(values[index]) {
+        std::Some(_) => {}
+        std::None => {
+          return std::Some<std::encoding::CodecError>(
+            codec_error_at(index, values[index], std::encoding::InvalidByte)
+          );
+        }
+      }
+      index = index + 1;
+    }
+    while index != values.len {
+      if !is_base64_padding(values[index]) {
+        return std::Some<std::encoding::CodecError>(
+          codec_error_at(index, values[index], std::encoding::InvalidPadding)
+        );
+      }
+      index = index + 1;
+    }
+    return std::None<std::encoding::CodecError>();
+  }
+
+  let remaining = values.len % 4;
+  if remaining == 1 {
+    return std::Some<std::encoding::CodecError>(codec_length_error(values.len));
+  }
+
+  var index2 = 0;
+  while index2 != values.len {
+    match base64_url_value(values[index2]) {
+      std::Some(_) => {}
+      std::None => {
+        return std::Some<std::encoding::CodecError>(
+          codec_error_at(index2, values[index2], std::encoding::InvalidByte)
+        );
+      }
+    }
+    index2 = index2 + 1;
+  }
+  return std::None<std::encoding::CodecError>();
+}
+
 pub fn base64_mime_decoded_len_optional(values: std::Slice[u8]) -> std::Option[i64] {
   var compact_len = 0;
   var index = 0;
@@ -1183,6 +1384,51 @@ pub fn base64_mime_decoded_len_optional(values: std::Slice[u8]) -> std::Option[i
     index = index + 1;
   }
   return std::Some<i64>(((compact_len / 4) * 3) - padding);
+}
+
+pub fn base64_mime_error(values: std::Slice[u8]) -> std::Option[std::encoding::CodecError] {
+  var compact_len = 0;
+  var padding = 0;
+  var seen_padding = false;
+  var index = 0;
+  while index != values.len {
+    let byte = values[index];
+    if !is_base64_mime_ignored(byte) {
+      compact_len = compact_len + 1;
+      if is_base64_padding(byte) {
+        seen_padding = true;
+        padding = padding + 1;
+        if padding > 2 {
+          return std::Some<std::encoding::CodecError>(
+            codec_error_at(index, byte, std::encoding::InvalidPadding)
+          );
+        }
+      } else {
+        if seen_padding {
+          return std::Some<std::encoding::CodecError>(
+            codec_error_at(index, byte, std::encoding::InvalidPadding)
+          );
+        }
+        match base64_value(byte) {
+          std::Some(_) => {}
+          std::None => {
+            return std::Some<std::encoding::CodecError>(
+              codec_error_at(index, byte, std::encoding::InvalidByte)
+            );
+          }
+        }
+      }
+    }
+    index = index + 1;
+  }
+
+  if compact_len == 0 {
+    return std::None<std::encoding::CodecError>();
+  }
+  if compact_len % 4 != 0 {
+    return std::Some<std::encoding::CodecError>(codec_length_error(values.len));
+  }
+  return std::None<std::encoding::CodecError>();
 }
 
 pub fn base64_decoded_len(values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {

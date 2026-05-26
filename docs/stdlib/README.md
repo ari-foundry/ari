@@ -136,7 +136,8 @@ for sorting, binary search, lower/upper/equal-range bounds, partition-point
   `parse_or<T>`, and `is_parse<T>` helpers,
 and `std::encoding` adds ASCII/UTF-8/UTF-16 validation, detailed UTF-8
 byte-string decoding, plus hex, standard base64, MIME base64, and URL-safe
-base64 codecs with fallible owned decoders for untrusted input.
+base64 codecs with fallible owned decoders and structured codec diagnostics
+for untrusted input.
 A few declarations are still compiler-known because the
 current language cannot express them directly: layout queries, typed raw
 pointer operations, byte memory intrinsics, runtime IO hooks, explicit zone

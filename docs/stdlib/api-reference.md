@@ -4112,6 +4112,8 @@ Typed `parse[f64]` remains the asserting trait entry point; call
 ```ari
 encoding::is_ascii(bytes)
 encoding::is_unicode_scalar(scalar)
+encoding::CodecErrorKind
+encoding::CodecError
 encoding::Utf8ErrorKind
 encoding::Utf8Error
 encoding::utf8_error(bytes)
@@ -4138,6 +4140,7 @@ encoding::utf16_count_optional(words)
 encoding::is_utf16(words)
 encoding::hex_encoded_len(bytes)
 encoding::encode_hex_in(ref mut zone, bytes)
+encoding::hex_error(bytes)
 encoding::hex_decoded_len(bytes)
 encoding::hex_decoded_len_optional(bytes)
 encoding::can_decode_hex(bytes)
@@ -4148,6 +4151,7 @@ encoding::try_decode_hex_in(ref mut zone, bytes)
 encoding::decode_hex_unchecked_in(ref mut zone, bytes)
 encoding::base64_encoded_len(bytes)
 encoding::encode_base64_in(ref mut zone, bytes)
+encoding::base64_error(bytes)
 encoding::base64_decoded_len(bytes)
 encoding::base64_decoded_len_optional(bytes)
 encoding::can_decode_base64(bytes)
@@ -4158,6 +4162,7 @@ encoding::try_decode_base64_in(ref mut zone, bytes)
 encoding::decode_base64_unchecked_in(ref mut zone, bytes)
 encoding::base64_mime_encoded_len(bytes)
 encoding::encode_base64_mime_in(ref mut zone, bytes)
+encoding::base64_mime_error(bytes)
 encoding::base64_mime_decoded_len(bytes)
 encoding::base64_mime_decoded_len_optional(bytes)
 encoding::can_decode_base64_mime(bytes)
@@ -4170,6 +4175,7 @@ encoding::base64_url_encoded_len(bytes)
 encoding::base64_url_unpadded_encoded_len(bytes)
 encoding::encode_base64_url_in(ref mut zone, bytes)
 encoding::encode_base64_url_unpadded_in(ref mut zone, bytes)
+encoding::base64_url_error(bytes)
 encoding::base64_url_decoded_len(bytes)
 encoding::base64_url_decoded_len_optional(bytes)
 encoding::can_decode_base64_url(bytes)
@@ -4198,6 +4204,9 @@ returns `Result[String, Utf8Error]` for one Unicode scalar, and
 or the compatibility `try_encode_utf8_in` alias when invalid scalars should be
 `None`; use `encode_utf8_unchecked_in` only for trusted scalars.
 Hex encoding emits lowercase digits and decoding accepts ASCII hex digits.
+`hex_error`, `base64_error`, `base64_mime_error`, and `base64_url_error` return
+`None` for valid input or `Some(CodecError)` with byte index, byte value, and a
+`CodecErrorKind` of `InvalidLength`, `InvalidByte`, or `InvalidPadding`.
 Base64 uses the standard `+`/`/` alphabet with `=` padding. MIME base64 uses
 the standard alphabet, inserts CRLF after each 76 encoded characters, and
 ignores ASCII space, tab, CR, and LF while decoding. URL-safe base64 uses

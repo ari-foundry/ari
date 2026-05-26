@@ -154,8 +154,8 @@ the Result-returning form for callers that need `Error(NotFound)`.
   validation/fallback helpers and integer parse diagnostics.
 - [std::encoding](encoding.md): ASCII, UTF-8, and UTF-16 validation/counting,
   detailed UTF-8 failure diagnostics, UTF-8 byte-string decode, UTF-8 scalar
-  decode/encode, lowercase hex, standard base64, and fallible owned decode
-  helpers.
+  decode/encode, lowercase hex, standard/MIME/URL-safe base64, structured
+  codec failure diagnostics, and fallible owned decode helpers.
 - [std::math](math.md): source-only `i64` arithmetic helpers for signs,
   predicates, checked add/sub/mul/div/rem/neg/abs, saturating
   add/sub/mul/div/neg/abs, wrapping/overflowing add/sub/mul, powers, division

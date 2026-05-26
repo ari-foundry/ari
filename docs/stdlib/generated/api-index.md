@@ -24,24 +24,24 @@ platform notes.
 
 ## Summary
 
-- API entries: `3087`
+- API entries: `3099`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
 | `alloc` | 846 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 833 | stable candidate |
+| `core` | 845 | stable candidate |
 | `hosted` | 1221 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
-| `enum` | 27 |
-| `fn` | 1132 |
-| `method` | 1528 |
+| `enum` | 28 |
+| `fn` | 1136 |
+| `method` | 1534 |
 | `module` | 39 |
-| `struct` | 165 |
+| `struct` | 166 |
 | `trait` | 39 |
 | `trait-method` | 41 |
 | `type` | 21 |
@@ -62,7 +62,7 @@ platform notes.
 | `std::collections` | `alloc` | 364 |
 | `std::context` | `hosted` | 20 |
 | `std::convert` | `core` | 14 |
-| `std::encoding` | `core` | 82 |
+| `std::encoding` | `core` | 94 |
 | `std::env` | `hosted` | 72 |
 | `std::error` | `core` | 37 |
 | `std::fmt` | `core` | 51 |
@@ -1294,6 +1294,7 @@ Tier: `core`. Stability reading: stable candidate.
 
 | API | Coverage note |
 | --- | --- |
+| `enum std::encoding::CodecErrorKind` | check-prelude std-encoding-codec structured hex/base64 diagnostic categories; docs/stdlib/modules/encoding.md |
 | `enum std::encoding::Utf8ErrorKind` | check-prelude std-encoding-text detailed UTF-8 validation failure categories; docs/stdlib/modules/encoding.md |
 
 ### fn
@@ -1303,12 +1304,15 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::encoding::base64_decoded_len` | check-prelude std-encoding-codec Result-returning standard base64 decoded length validator; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::base64_decoded_len_optional` | check-prelude std-encoding-codec Option-returning standard base64 decoded length compatibility validator; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::base64_encoded_len` | check-prelude std-encoding-codec standard base64 encoded length helper; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::base64_error` | check-prelude std-encoding-codec structured standard base64 diagnostic helper; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::base64_mime_decoded_len` | check-prelude std-encoding-codec Result-returning MIME base64 decoded length validator; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::base64_mime_decoded_len_optional` | check-prelude std-encoding-codec Option-returning MIME base64 decoded length compatibility validator; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::base64_mime_encoded_len` | check-prelude std-encoding-codec line-wrapped MIME base64 encoded length helper; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::base64_mime_error` | check-prelude std-encoding-codec structured MIME base64 diagnostic helper; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::base64_url_decoded_len` | check-prelude std-encoding-codec Result-returning URL-safe base64 decoded length validator; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::base64_url_decoded_len_optional` | check-prelude std-encoding-codec Option-returning URL-safe base64 decoded length compatibility validator; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::base64_url_encoded_len` | check-prelude std-encoding-codec padded URL-safe base64 encoded length helper; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::base64_url_error` | check-prelude std-encoding-codec structured URL-safe base64 diagnostic helper; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::base64_url_unpadded_encoded_len` | check-prelude std-encoding-codec unpadded URL-safe base64 encoded length helper; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::can_decode_base64` | check-prelude std-encoding-codec standard base64 validation guard; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::can_decode_base64_mime` | check-prelude std-encoding-codec MIME base64 validation guard; docs/stdlib/modules/encoding.md |
@@ -1346,6 +1350,7 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::encoding::hex_decoded_len` | check-prelude std-encoding-codec Result-returning hexadecimal decoded length validator; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::hex_decoded_len_optional` | check-prelude std-encoding-codec Option-returning hexadecimal decoded length compatibility validator; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::hex_encoded_len` | check-prelude std-encoding-codec hexadecimal encoded length helper; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::hex_error` | check-prelude std-encoding-codec structured hexadecimal diagnostic helper; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::is_ascii` | check-prelude std-encoding-text ASCII byte-slice validation; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::is_unicode_scalar` | check-prelude std-encoding-utf8-codepoints Unicode scalar value predicate; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::is_utf16` | check-prelude std-encoding-text UTF-16 boolean validation; docs/stdlib/modules/encoding.md |
@@ -1371,6 +1376,12 @@ Tier: `core`. Stability reading: stable candidate.
 
 | API | Coverage note |
 | --- | --- |
+| `method std::encoding::CodecError::byte` | check-prelude std-encoding-codec failing codec byte accessor; docs/stdlib/modules/encoding.md |
+| `method std::encoding::CodecError::index` | check-prelude std-encoding-codec failing codec byte index accessor; docs/stdlib/modules/encoding.md |
+| `method std::encoding::CodecError::is_invalid_byte` | check-prelude std-encoding-codec invalid codec alphabet byte predicate; docs/stdlib/modules/encoding.md |
+| `method std::encoding::CodecError::is_invalid_length` | check-prelude std-encoding-codec invalid codec length predicate; docs/stdlib/modules/encoding.md |
+| `method std::encoding::CodecError::is_invalid_padding` | check-prelude std-encoding-codec invalid codec padding predicate; docs/stdlib/modules/encoding.md |
+| `method std::encoding::CodecError::kind` | check-prelude std-encoding-codec codec failure kind accessor; docs/stdlib/modules/encoding.md |
 | `method std::encoding::Utf8Char::len` | check-prelude std-encoding-utf8-codepoints decoded UTF-8 byte length accessor; docs/stdlib/modules/encoding.md |
 | `method std::encoding::Utf8Char::next_index` | check-prelude std-encoding-utf8-codepoints decoded UTF-8 next byte offset accessor; docs/stdlib/modules/encoding.md |
 | `method std::encoding::Utf8Char::scalar` | check-prelude std-encoding-utf8-codepoints decoded Unicode scalar accessor; docs/stdlib/modules/encoding.md |
@@ -1394,6 +1405,7 @@ Tier: `core`. Stability reading: stable candidate.
 
 | API | Coverage note |
 | --- | --- |
+| `struct std::encoding::CodecError` | check-prelude std-encoding-codec detailed hex/base64 validation failure value; docs/stdlib/modules/encoding.md |
 | `struct std::encoding::Utf8Char` | check-prelude std-encoding-utf8-codepoints decoded UTF-8 scalar value; docs/stdlib/modules/encoding.md |
 | `struct std::encoding::Utf8Error` | check-prelude std-encoding-text detailed UTF-8 validation failure value; docs/stdlib/modules/encoding.md |
 
