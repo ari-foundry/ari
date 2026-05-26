@@ -291,6 +291,39 @@ fn main() -> i64 {
   if parse::is_float("1e309") {
     return 31;
   }
+  if !parse::is_float("1.7976931348623157e308") {
+    return 47;
+  }
+  if parse::is_float("1.7976931348623158e308") {
+    return 48;
+  }
+  match parse::float_error("1.7976931348623158e308") {
+    std::Some(max_boundary_detail) => {
+      if max_boundary_detail.offset() != 17 {
+        return 49;
+      }
+      match max_boundary_detail.kind() {
+        parse::Overflow => {}
+        _ => { return 50; }
+      }
+    }
+    std::None => { return 51; }
+  }
+  if parse::is_float("2e308") {
+    return 52;
+  }
+  match parse::float_error("2e308") {
+    std::Some(max_digit_detail) => {
+      if max_digit_detail.offset() != 0 {
+        return 53;
+      }
+      match max_digit_detail.kind() {
+        parse::Overflow => {}
+        _ => { return 54; }
+      }
+    }
+    std::None => { return 55; }
+  }
   match parse::float_error("1e309") {
     std::Some(float_overflow_detail) => {
       if float_overflow_detail.offset() != 4 {
@@ -325,6 +358,24 @@ fn main() -> i64 {
   }
   if parse::is_float("1e-325") {
     return 39;
+  }
+  if !parse::is_float("5e-324") {
+    return 56;
+  }
+  if parse::is_float("4e-324") {
+    return 57;
+  }
+  match parse::float_error("4e-324") {
+    std::Some(min_boundary_detail) => {
+      if min_boundary_detail.offset() != 0 {
+        return 58;
+      }
+      match min_boundary_detail.kind() {
+        parse::Underflow => {}
+        _ => { return 59; }
+      }
+    }
+    std::None => { return 60; }
   }
   match parse::float_error("1e-325") {
     std::Some(float_underflow_detail) => {

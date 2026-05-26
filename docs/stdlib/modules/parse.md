@@ -211,16 +211,17 @@ future policy work.
 
 `float` returns `Result[f64, Error]` and reports `InvalidData` for empty input,
 unsupported spelling, trailing garbage, overflow, or underflow outside Ari's
-accepted finite `f64` range. `float_error` is the diagnostic helper for the same
-strict spelling. It returns `EmptyInput` for empty input, `ExpectedDigit` for
-sign-only input, a bare `.`, or a missing exponent digit, `InvalidSeparator` for
-`_` in the default strict parser, `InvalidDigit` for other trailing or
-unsupported bytes, `Overflow` for values whose decimal exponent is too large
-for finite `f64`, and `Underflow` for decimal exponents below the accepted
-subnormal range. Range diagnostics use the byte offset of the exponent digit
-that crossed the range boundary when an exponent is present; for long mantissas
-without an exponent they report the significant digit that made the effective
-decimal exponent too large or too small. `float_optional` is the compact
+accepted finite nonzero `f64` range. `float_error` is the diagnostic helper for
+the same strict spelling. It returns `EmptyInput` for empty input,
+`ExpectedDigit` for sign-only input, a bare `.`, or a missing exponent digit,
+`InvalidSeparator` for `_` in the default strict parser, `InvalidDigit` for
+other trailing or unsupported bytes, `Overflow` for values whose decimal
+spelling is above the maximum finite `f64`, and `Underflow` for nonzero decimal
+spellings below the minimum subnormal boundary. Range diagnostics use the byte
+offset of the exponent digit that crossed the broad exponent boundary when an
+exponent is present; when the exponent is exactly at the edge, they report the
+mantissa digit that crosses `1.7976931348623157e308` or the first significant
+digit below the `5e-324` subnormal boundary. `float_optional` is the compact
 compatibility form for validation-style callers, `float_or` returns the parsed
 `f64` or the caller's fallback, and `float_unchecked` preserves the old
 asserting behavior by panicking when `is_float(bytes)` is false.
@@ -294,7 +295,8 @@ The focused test covers ASCII-trimmed signed integer parsing, radix wrappers
 for binary, octal, and hexadecimal input, unsigned integer parsing, boolean
 parsing, natural `Result` error categories for invalid data and invalid radix
 input, richer integer/unsigned/float `ParseError` diagnostics and offsets,
-float overflow/underflow range diagnostics, `_optional` compatibility helpers,
+float overflow/underflow range diagnostics including finite/subnormal boundary
+edges, `_optional` compatibility helpers,
 underscore-aware integer/radix/float parsing, `Result` float parsing, float
 validation, float conversion, trait-backed typed parsing, and invalid
 whole-input cases. It is wired into `make check-prelude` with LLVM symbol
@@ -302,5 +304,5 @@ checks for the public helpers.
 
 ## Future Work
 
-- exact IEEE-754 boundary rounding diagnostics for decimal spellings adjacent
-  to the maximum finite value or minimum subnormal value
+- a richer parse error taxonomy only if real callers need more categories than
+  the current stable spelling, offset, overflow, and underflow diagnostics
