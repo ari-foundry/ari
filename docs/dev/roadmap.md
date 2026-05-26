@@ -57,7 +57,7 @@ fn save(x: has serialize() -> String) {
 This is only a roadmap idea. It must not add an `interface` keyword, dynamic
 dispatch by accident, or a shortcut around normal trait-bound diagnostics.
 
-Discriminant-linked variant fields are also worth exploring for protocol and
+Discriminant-linked union fields are also worth exploring for protocol and
 binary-format records whose payload shape is controlled by data already present
 in the surrounding value or in an explicit context value. The intent is the
 same modeling niche as a tagged union inside a struct, but with the tag tied to
@@ -70,7 +70,7 @@ struct TLSCiphertext {
   version: ProtocolVersion,
   length: u16,
   security: SecurityParameters,
-  fragment: variant by security.cipher_type {
+  fragment: union by security.cipher_type {
     stream => GenericStreamCipher,
     block => GenericBlockCipher,
     aead => GenericAEADCipher,
@@ -78,13 +78,17 @@ struct TLSCiphertext {
 }
 ```
 
-The tentative spelling is `variant by` for the discriminant link and `=>` arms
+The tentative spelling is `union by` for the discriminant link and `=>` arms
 for the alternatives. Avoid `select` and `case` as the surface names: Ari
 already uses `match` for executable branching, and this feature is a
 declaration-time data layout relationship rather than a statement switch.
-Other names such as `choice by` or `payload by` may be considered before
-implementation, but the core rule should stay explicit: the variant field's
-active payload type is determined by the named discriminant value.
+Avoid `variant by` too: Ari already talks about enum variants, so using
+`variant` for a dependent struct field would blur the difference between an
+ordinary enum case and a union storage field whose active arm is selected by
+some other value. Other names such as `choice by` or `payload by` may be
+considered before implementation, but the core rule should stay explicit: the
+union field's active payload type is determined by the named discriminant
+value.
 
 This is only a roadmap idea. It should not replace ordinary `enum` ADTs,
 unchecked C unions, or `match`. A future design must specify construction
