@@ -36,6 +36,7 @@ Use the typed view helpers when the byte source has a more specific meaning:
 
 ```ari
 std::string::utf8(bytes)
+std::string::codepoints(bytes)
 std::string::os_str(bytes)
 std::string::c_str("literal")
 std::string::c_len("literal")
@@ -44,7 +45,10 @@ std::string::bytes("literal")
 ```
 
 `utf8(bytes)` validates a borrowed `Slice[u8]` and returns
-`Option[std::string::Utf8]`. `os_str(bytes)` keeps operating-system bytes
+`Option[std::string::Utf8]`. `codepoints(bytes)` performs the same validation
+and returns `Option[std::string::Codepoints]`, a lazy scalar iterator over the
+borrowed bytes. Use `std::encoding::validate_utf8` when invalid input needs a
+detailed error instead of `None`. `os_str(bytes)` keeps operating-system bytes
 distinct from normal text; the current POSIX slice stores raw bytes and may not
 be valid UTF-8. `c_str(text)` is a convenience wrapper for
 `std::c::from_string(text)` and returns the shared `std::c::CStr` type, while
@@ -411,6 +415,7 @@ text.try_utf8()
 text.codepoint_count()
 text.codepoint_at(byte_index)
 text.codepoint_next_index(byte_index)
+text.codepoints()
 text.push_codepoint_in(ref mut zone, scalar)
 ```
 
@@ -424,8 +429,11 @@ out-of-range indexes. The returned `Utf8Char` has `scalar()`, `len()`, and
 `next_index(byte_index)` accessors. `codepoint_next_index` returns the byte
 offset after the scalar at `byte_index`, or `None<i64>()` for the same invalid
 inputs as `codepoint_at`, so callers can iterate by byte offset without
-decoding the same scalar twice. These helpers count Unicode scalar values, not
-grapheme clusters.
+decoding the same scalar twice. `text.codepoints()` validates the whole byte
+string and returns `Option[std::string::Codepoints]`; the iterator yields
+`std::encoding::Utf8Char` values in byte order and returns `None` when the input
+is invalid or after the last scalar. These helpers count Unicode scalar values,
+not grapheme clusters.
 
 Validated borrowed UTF-8 bytes use `Utf8`:
 
@@ -438,6 +446,7 @@ view.is_empty()
 view.codepoint_count()
 view.codepoint_at(byte_index)
 view.next_index(byte_index)
+view.codepoints()
 ```
 
 `Utf8` records the API intent that the bytes are text. Construct the view with
@@ -450,6 +459,25 @@ helpers, the literal can be the receiver directly:
 ```ari
 "\xC3\xA9".codepoint_count()
 "\xC3\xA9".codepoint_at(0)
+```
+
+`Utf8::codepoints()` does not revalidate because constructing `Utf8` already
+proved the borrowed bytes valid. The returned `Codepoints` handle is a normal
+`std::Iterator[std::encoding::Utf8Char]`, so it can be passed to iterator
+consumers or advanced directly:
+
+```ari
+var iter = text.try_utf8().unwrap().codepoints();
+while true {
+  match iter.next() {
+    std::Some(ch) => {
+      // ch.scalar(), ch.len()
+    }
+    std::None => {
+      break;
+    }
+  }
+}
 ```
 
 ## OS Strings And C ABI Views

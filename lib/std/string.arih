@@ -12,6 +12,11 @@ pub struct Utf8 {
   bytes: std::Slice[u8],
 }
 
+pub struct Codepoints {
+  bytes: std::Slice[u8],
+  mut index: i64,
+}
+
 pub struct OsStr {
   bytes: std::Slice[u8],
 }
@@ -41,6 +46,13 @@ pub fn utf8(bytes: std::Slice[u8]) -> std::Option[std::string::Utf8] {
     return std::None<std::string::Utf8>();
   }
   return std::Some<std::string::Utf8>(std::string::Utf8 { bytes: bytes });
+}
+
+pub fn codepoints(bytes: std::Slice[u8]) -> std::Option[std::string::Codepoints] {
+  if !std::encoding::is_utf8(bytes) {
+    return std::None<std::string::Codepoints>();
+  }
+  return std::Some<std::string::Codepoints>(std::string::Codepoints { bytes: bytes, index: 0 });
 }
 
 pub fn os_str(bytes: std::Slice[u8]) -> std::string::OsStr {
@@ -270,6 +282,29 @@ pub impl std::string::Utf8 {
 
   fn next_index(self: ref Self, byte_index: i64) -> std::Option[i64] {
     return std::encoding::utf8_next_index(self.bytes, byte_index);
+  }
+
+  fn codepoints(self: ref Self) -> std::string::Codepoints {
+    return std::string::Codepoints { bytes: self.bytes, index: 0 };
+  }
+}
+
+impl std::Iterator[std::encoding::Utf8Char] for std::string::Codepoints {
+  pub fn next(self: ref mut Self) -> std::Option[std::encoding::Utf8Char] {
+    if self.index >= self.bytes.len {
+      return std::None<std::encoding::Utf8Char>();
+    }
+
+    match std::encoding::utf8_at(self.bytes, self.index) {
+      std::Some(ch) => {
+        self.index = ch.next_index(self.index);
+        return std::Some<std::encoding::Utf8Char>(ch);
+      }
+      std::None => {
+        self.index = self.bytes.len;
+        return std::None<std::encoding::Utf8Char>();
+      }
+    }
   }
 }
 
@@ -893,6 +928,11 @@ pub impl std::string::String {
   fn codepoint_next_index(self: ref Self, byte_index: i64) -> std::Option[i64] {
     let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
     return std::encoding::utf8_next_index(view, byte_index);
+  }
+
+  fn codepoints(self: ref Self) -> std::Option[std::string::Codepoints] {
+    let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+    return std::string::codepoints(view);
   }
 
   fn trim_start(self: ref Self) -> super::Slice[u8] {

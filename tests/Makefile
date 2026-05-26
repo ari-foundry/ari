@@ -2435,11 +2435,15 @@ check-prelude: $(TARGET)
 	grep -F -q 'String8inherent15codepoint_count' $(BUILD_DIR)/prelude/std-string-unicode-helpers.ll
 	grep -F -q 'String8inherent12codepoint_at' $(BUILD_DIR)/prelude/std-string-unicode-helpers.ll
 	grep -F -q 'String8inherent20codepoint_next_index' $(BUILD_DIR)/prelude/std-string-unicode-helpers.ll
+	grep -F -q 'std6string10codepoints' $(BUILD_DIR)/prelude/std-string-unicode-helpers.ll
+	grep -F -q 'std__string__String8inherent10codepoints' $(BUILD_DIR)/prelude/std-string-unicode-helpers.ll
+	grep -F -q 'std__string__Codepoints13std__Iterator4next' $(BUILD_DIR)/prelude/std-string-unicode-helpers.ll
 	grep -F -q 'std__string__Utf88inherent10next_index' $(BUILD_DIR)/prelude/std-string-unicode-helpers.ll
+	grep -F -q 'std__string__Utf88inherent10codepoints' $(BUILD_DIR)/prelude/std-string-unicode-helpers.ll
 	grep -F -q 'String8inherent17push_codepoint_in' $(BUILD_DIR)/prelude/std-string-unicode-helpers.ll
 	$(TARGET) tests/cases/standard-library/ok/string/std-string-unicode-helpers.ari -o $(BUILD_DIR)/prelude/std-string-unicode-helpers.elf
-	$(BUILD_DIR)/prelude/std-string-unicode-helpers.elf; code=$$?; test $$code -eq 11
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-unicode-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-unicode-helpers.elf; $(BUILD_DIR)/prelude/std-string-unicode-helpers.elf; code=$$?; test $$code -eq 11; fi
+	$(BUILD_DIR)/prelude/std-string-unicode-helpers.elf; code=$$?; test $$code -eq 15
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-unicode-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-unicode-helpers.elf; $(BUILD_DIR)/prelude/std-string-unicode-helpers.elf; code=$$?; test $$code -eq 15; fi
 	$(TARGET) tests/cases/standard-library/ok/string/std-string-text-kinds.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-text-kinds.ll
 	grep -q '_ARNv3std6string4utf8' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
 	grep -q '_ARNv3std6string6os_str' $(BUILD_DIR)/prelude/std-string-text-kinds.ll

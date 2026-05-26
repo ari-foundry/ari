@@ -66,6 +66,35 @@ fn main() -> i64 {
   if expect_no_i64(view.next_index(2)) && expect_no_i64(view.next_index(10)) {
     score = score + 1;
   }
+  var view_iter = view.codepoints();
+  if view_iter.next().unwrap().scalar() == 65u32 &&
+     view_iter.next().unwrap().scalar() == 233u32 &&
+     view_iter.next().unwrap().scalar() == 8364u32 &&
+     view_iter.next().unwrap().scalar() == 128512u32 &&
+     view_iter.next().is_none() {
+    score = score + 1;
+  }
+  var text_iter = text.codepoints().unwrap();
+  var total = 0u32;
+  var seen = 0;
+  var item = text_iter.next();
+  while item.is_some() {
+    let ch = item.unwrap();
+    total = total + ch.scalar();
+    seen = seen + 1;
+    item = text_iter.next();
+  }
+  if seen == 4 && total == 137174u32 && text_iter.next().is_none() {
+    score = score + 1;
+  }
+  var slice_iter = std::string::codepoints(bytes.as_slice()).unwrap();
+  if slice_iter.next().unwrap().len() == 1 &&
+     slice_iter.next().unwrap().len() == 2 &&
+     slice_iter.next().unwrap().len() == 3 &&
+     slice_iter.next().unwrap().len() == 4 &&
+     slice_iter.next().is_none() {
+    score = score + 1;
+  }
 
   var built = std::string::new(ref mut zone, 1);
   built.push_codepoint_in(ref mut zone, 65u32);
@@ -84,8 +113,11 @@ fn main() -> i64 {
   if expect_no_char(invalid.codepoint_at(0)) && expect_no_char(text.codepoint_at(2)) {
     score = score + 1;
   }
+  if invalid.codepoints().is_none() && std::string::codepoints(invalid.as_slice()).is_none() {
+    score = score + 1;
+  }
 
   zone::destroy(zone);
-  assert_eq_i64(score, 11);
+  assert_eq_i64(score, 15);
   return score;
 }

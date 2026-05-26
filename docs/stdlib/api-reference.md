@@ -2968,8 +2968,10 @@ comparator.
 ```ari
 std::string::String
 std::string::Utf8
+std::string::Codepoints
 std::string::OsStr
 std::string::utf8(bytes)
+std::string::codepoints(bytes)
 std::string::os_str(bytes)
 std::string::c_str(text)
 std::string::c_len(text)
@@ -3071,6 +3073,8 @@ text.is_utf8()
 text.try_utf8()
 text.codepoint_count()
 text.codepoint_at(byte_index)
+text.codepoint_next_index(byte_index)
+text.codepoints()
 text.trim_start()
 text.trim_start_to(ref mut zone)
 text.trimmed_start(ref mut zone)
@@ -3096,6 +3100,8 @@ utf8.len()
 utf8.is_empty()
 utf8.codepoint_count()
 utf8.codepoint_at(byte_index)
+utf8.next_index(byte_index)
+utf8.codepoints()
 
 os.as_slice()
 os.len()
@@ -3134,7 +3140,7 @@ available when the source kind should be explicit. `text.append`, `append_byte`,
 `append_bytes`, and `push_str` grow with the owning zone while hiding the
 lower-level `append_string_in`, `append_value_in`, `append_debug_in`, and
 `extend_from_slice_in` names from normal call sites. `String` is the current
-builder shape for CLI output and parser diagnostics.
+appendable byte buffer for CLI output and parser diagnostics.
 Tracked local strings can also call `text.append_value(value)` for `Display`
 values and `text.append_debug(value)` for `Debug` values; the compiler lowers
 those convenience calls to same-zone explicit forms.
@@ -3176,16 +3182,22 @@ the first invalid byte; the signed prefix form counts an accepted sign in
 
 The UTF-8 helpers reuse `std::encoding`. `is_utf8` validates the whole byte
 string, `try_utf8` returns `Option[std::string::Utf8]`, `codepoint_count`
-returns an `Option[i64]` scalar count, and `codepoint_at` decodes one scalar at
-a byte offset into
-`Option[std::encoding::Utf8Char]`. `push_codepoint_in` appends one Unicode
-scalar encoded as UTF-8 and panics for invalid scalar values. These helpers
-work with Unicode scalar values, not grapheme clusters or normalization.
-Use `std::string::utf8(bytes)` to construct a validated borrowed `Utf8` view
-when a function requires UTF-8. Use `OsStr` for operating-system bytes that may
-not be UTF-8, `PathBytes` for path interpretation, and `std::c::CStr` or the
-builtin `string` type for NUL-terminated C ABI text. `std::string::c_str(text)`
-returns that same `std::c::CStr` borrowed view. String literals can flow
+returns an `Option[i64]` scalar count, `codepoint_at` decodes one scalar at a
+byte offset into `Option[std::encoding::Utf8Char]`, and
+`codepoint_next_index` returns the next scalar byte offset. `codepoints`
+validates the whole `String` and returns `Option[std::string::Codepoints]`;
+`Utf8::codepoints()` skips that revalidation because `Utf8` already proves the
+borrowed bytes valid. `std::string::codepoints(bytes)` is the borrowed-slice
+constructor. The iterator yields `Utf8Char` values and implements
+`std::Iterator[std::encoding::Utf8Char]`. `push_codepoint_in` appends one
+Unicode scalar encoded as UTF-8 and panics for invalid scalar values. These
+helpers work with Unicode scalar values, not grapheme clusters or
+normalization. Use `std::string::utf8(bytes)` to construct a validated borrowed
+`Utf8` view when a function requires UTF-8. Use `OsStr` for operating-system
+bytes that may not be UTF-8, `PathBytes` for path interpretation, and
+`std::c::CStr` or the builtin `string` type for NUL-terminated C ABI text.
+`std::string::c_str(text)` returns that same `std::c::CStr` borrowed view.
+String literals can flow
 directly into expected `Utf8`, `OsStr`, `PathBytes`, and `CStr` boundary views;
 direct `Utf8` literals are validated at compile time. Non-overlapping boundary
 methods can also use literal receivers: `"\xC3\xA9".codepoint_count()` uses a

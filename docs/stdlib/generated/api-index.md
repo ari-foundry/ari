@@ -24,12 +24,12 @@ platform notes.
 
 ## Summary
 
-- API entries: `3051`
+- API entries: `3055`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
-| `alloc` | 842 | usable |
+| `alloc` | 846 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 805 | stable candidate |
 | `hosted` | 1217 | platform-backed |
@@ -38,10 +38,10 @@ platform notes.
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 25 |
-| `fn` | 1114 |
-| `method` | 1516 |
+| `fn` | 1115 |
+| `method` | 1518 |
 | `module` | 39 |
-| `struct` | 161 |
+| `struct` | 162 |
 | `trait` | 39 |
 | `trait-method` | 41 |
 | `type` | 21 |
@@ -83,7 +83,7 @@ platform notes.
 | `std::random` | `alloc/hosted` | 36 |
 | `std::rc` | `alloc` | 32 |
 | `std::result` | `core` | 12 |
-| `std::string` | `alloc` | 141 |
+| `std::string` | `alloc` | 145 |
 | `std::sync` | `hosted` | 166 |
 | `std::target` | `platform` | 52 |
 | `std::test` | `hosted` | 32 |
@@ -3289,6 +3289,7 @@ Tier: `alloc`. Stability reading: usable.
 | `fn std::string::c_bytes` | check-prelude std-string-text-kinds borrowed C string byte view without terminator; docs/stdlib/modules/string.md |
 | `fn std::string::c_len` | check-prelude std-string-text-kinds C string byte length without terminator; docs/stdlib/modules/string.md |
 | `fn std::string::c_str` | check-prelude std-string-text-kinds convenience constructor returning std::c::CStr; docs/stdlib/modules/string.md |
+| `fn std::string::codepoints` | check-prelude std-string-unicode-helpers validated borrowed UTF-8 scalar iterator constructor; docs/stdlib/modules/string.md |
 | `fn std::string::contains` | check-prelude std-string-module-views borrowed byte-slice contains helper; docs/stdlib/modules/string.md |
 | `fn std::string::copy` | check-prelude std-string-natural-api natural borrowed byte copy constructor; docs/stdlib/modules/string.md |
 | `fn std::string::copy_to` | check-prelude std-string-from-copy borrowed source and target reset tests; docs/dev/test-matrix.md Explicit memory zones row |
@@ -3346,6 +3347,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::string::String::codepoint_at` | check-prelude std-string-unicode-helpers UTF-8 scalar decode at byte offset; docs/stdlib/modules/string.md |
 | `method std::string::String::codepoint_count` | check-prelude std-string-unicode-helpers UTF-8 scalar count validator; docs/stdlib/modules/string.md |
 | `method std::string::String::codepoint_next_index` | check-prelude std-string-unicode-helpers UTF-8 scalar next byte offset helper; docs/stdlib/modules/string.md |
+| `method std::string::String::codepoints` | check-prelude std-string-unicode-helpers Option-returning UTF-8 scalar iterator helper; docs/stdlib/modules/string.md |
 | `method std::string::String::contains` | check-prelude std-string-search borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `method std::string::String::contains_ignore_case` | check-prelude std-string-ascii-case-helpers borrowed receiver ASCII-only search; docs/stdlib/api-reference.md String section |
 | `method std::string::String::contains_slice` | check-prelude std-string-split-join byte-slice search predicate; docs/stdlib/modules/string.md |
@@ -3421,6 +3423,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::string::Utf8::as_slice` | check-prelude std-string-text-kinds validated UTF-8 bytes accessor; docs/stdlib/modules/string.md |
 | `method std::string::Utf8::codepoint_at` | check-prelude std-string-text-kinds validated UTF-8 scalar lookup; docs/stdlib/modules/string.md |
 | `method std::string::Utf8::codepoint_count` | check-prelude std-string-text-kinds validated UTF-8 scalar count; docs/stdlib/modules/string.md |
+| `method std::string::Utf8::codepoints` | check-prelude std-string-unicode-helpers validated UTF-8 scalar iterator helper; docs/stdlib/modules/string.md |
 | `method std::string::Utf8::is_empty` | check-prelude std-string-text-kinds UTF-8 byte empty predicate; docs/stdlib/modules/string.md |
 | `method std::string::Utf8::len` | check-prelude std-string-text-kinds UTF-8 byte length accessor; docs/stdlib/modules/string.md |
 | `method std::string::Utf8::next_index` | check-prelude std-string-unicode-helpers validated UTF-8 next byte offset helper; docs/stdlib/modules/string.md |
@@ -3435,6 +3438,7 @@ Tier: `alloc`. Stability reading: usable.
 
 | API | Coverage note |
 | --- | --- |
+| `struct std::string::Codepoints` | check-prelude std-string-unicode-helpers borrowed UTF-8 scalar iterator state; docs/stdlib/modules/string.md |
 | `struct std::string::OsStr` | check-prelude std-string-text-kinds typed borrowed OS string byte view; docs/stdlib/modules/string.md |
 | `struct std::string::RawString` | std string handle tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `struct std::string::SplitOnce` | check-prelude std-string-module-views borrowed result handle for split_once; docs/stdlib/modules/string.md |
