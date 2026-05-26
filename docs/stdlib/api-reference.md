@@ -3032,11 +3032,18 @@ comparator.
 ```ari
 std::string::String
 std::string::Utf8
+std::string::Utf8String
 std::string::Codepoints
 std::string::OsStr
+std::string::OsString
 std::string::utf8(bytes)
+std::string::utf8_string(ref mut zone, bytes)
+std::string::utf8_string_optional(ref mut zone, bytes)
+std::string::utf8_string_unchecked(ref mut zone, bytes)
 std::string::codepoints(bytes)
 std::string::os_str(bytes)
+std::string::os_string(ref mut zone, bytes)
+std::string::os_string_from_text(ref mut zone, "text")
 std::string::c_str(text)
 std::string::c_len(text)
 std::string::c_bytes(text)
@@ -3167,11 +3174,32 @@ utf8.codepoint_at(byte_index)
 utf8.next_index(byte_index)
 utf8.codepoints()
 
+utf8_string.as_string()
+utf8_string.as_slice()
+utf8_string.as_utf8()
+utf8_string.len()
+utf8_string.is_empty()
+utf8_string.codepoint_count()
+utf8_string.codepoint_at(byte_index)
+utf8_string.next_index(byte_index)
+utf8_string.codepoints()
+utf8_string.to_string(ref mut zone)
+
 os.as_slice()
 os.len()
 os.is_empty()
 os.is_utf8()
 os.try_utf8()
+
+os_string.as_string()
+os_string.as_slice()
+os_string.as_os_str()
+os_string.len()
+os_string.is_empty()
+os_string.is_utf8()
+os_string.try_utf8()
+os_string.try_utf8_string(ref mut zone)
+os_string.to_string(ref mut zone)
 
 c.as_ptr()
 c.as_slice()
@@ -3257,9 +3285,18 @@ constructor. The iterator yields `Utf8Char` values and implements
 Unicode scalar encoded as UTF-8 and panics for invalid scalar values. These
 helpers work with Unicode scalar values, not grapheme clusters or
 normalization. Use `std::string::utf8(bytes)` to construct a validated borrowed
-`Utf8` view when a function requires UTF-8. Use `OsStr` for operating-system
-bytes that may not be UTF-8, `PathBytes` for path interpretation, and
-`std::c::CStr` or the builtin `string` type for NUL-terminated C ABI text.
+`Utf8` view when a function requires UTF-8. Use
+`std::string::utf8_string(ref mut zone, bytes)` when validated UTF-8 must own
+its bytes; it returns `Result[Utf8String, std::encoding::Utf8Error]`, while
+`utf8_string_optional` intentionally discards the diagnostic and
+`utf8_string_unchecked` asserts trusted input. `Utf8String` exposes borrowed
+`Utf8` and byte views, scalar helpers, and a copy-out `to_string` method, but
+does not expose mutable byte access because mutation could break the invariant.
+Use `OsStr` for borrowed operating-system bytes that may not be UTF-8 and
+`OsString` for the owned POSIX-byte counterpart. `OsString::try_utf8` and
+`try_utf8_string` validate before crossing into UTF-8 APIs. Use `PathBytes` for
+path interpretation, and `std::c::CStr` or the builtin `string` type for
+NUL-terminated C ABI text.
 `std::string::c_str(text)` returns that same `std::c::CStr` borrowed view.
 String literals can flow
 directly into expected `Utf8`, `OsStr`, `PathBytes`, and `CStr` boundary views;

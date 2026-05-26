@@ -24,12 +24,12 @@ platform notes.
 
 ## Summary
 
-- API entries: `3240`
+- API entries: `3266`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
-| `alloc` | 861 | usable |
+| `alloc` | 887 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 868 | stable candidate |
 | `hosted` | 1324 | platform-backed |
@@ -38,10 +38,10 @@ platform notes.
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1169 |
-| `method` | 1630 |
+| `fn` | 1174 |
+| `method` | 1649 |
 | `module` | 39 |
-| `struct` | 171 |
+| `struct` | 173 |
 | `trait` | 39 |
 | `trait-method` | 41 |
 | `type` | 22 |
@@ -83,7 +83,7 @@ platform notes.
 | `std::random` | `alloc/hosted` | 36 |
 | `std::rc` | `alloc` | 32 |
 | `std::result` | `core` | 12 |
-| `std::string` | `alloc` | 145 |
+| `std::string` | `alloc` | 171 |
 | `std::sync` | `hosted` | 169 |
 | `std::target` | `platform` | 52 |
 | `std::test` | `hosted` | 32 |
@@ -3494,6 +3494,8 @@ Tier: `alloc`. Stability reading: usable.
 | `fn std::string::lines` | check-prelude std-string-module-views borrowed newline split helper for parser-style code; docs/stdlib/modules/string.md |
 | `fn std::string::new` | std string handle tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `fn std::string::os_str` | check-prelude std-string-text-kinds typed borrowed OS-string byte view constructor; docs/stdlib/modules/string.md |
+| `fn std::string::os_string` | check-prelude std-string-text-kinds owned OS-string byte constructor; docs/stdlib/modules/string.md |
+| `fn std::string::os_string_from_text` | check-prelude std-string-text-kinds owned OS-string text constructor; docs/stdlib/modules/string.md |
 | `fn std::string::replace` | check-prelude std-string-module-views allocator-backed byte-slice replacement helper; docs/stdlib/modules/string.md |
 | `fn std::string::split` | check-prelude std-string-module-views borrowed delimiter split helper; docs/stdlib/modules/string.md |
 | `fn std::string::split_once` | check-prelude std-string-module-views borrowed first-delimiter split helper; docs/stdlib/modules/string.md |
@@ -3505,6 +3507,9 @@ Tier: `alloc`. Stability reading: usable.
 | `fn std::string::trim_end` | check-prelude std-string-module-views borrowed ASCII trim-end helper; docs/stdlib/modules/string.md |
 | `fn std::string::trim_start` | check-prelude std-string-module-views borrowed ASCII trim-start helper; docs/stdlib/modules/string.md |
 | `fn std::string::utf8` | check-prelude std-string-text-kinds validated borrowed UTF-8 byte view constructor; docs/stdlib/modules/string.md |
+| `fn std::string::utf8_string` | check-prelude std-string-text-kinds Result-returning owned UTF-8 string constructor; docs/stdlib/modules/string.md |
+| `fn std::string::utf8_string_optional` | check-prelude std-string-text-kinds Option-returning owned UTF-8 string compatibility constructor; docs/stdlib/modules/string.md |
+| `fn std::string::utf8_string_unchecked` | check-prelude std-string-text-kinds asserting owned UTF-8 string constructor; docs/stdlib/modules/string.md |
 | `fn std::string::with_capacity` | std string handle tests; docs/dev/test-matrix.md Explicit memory zones row |
 
 ### method
@@ -3516,6 +3521,15 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::string::OsStr::is_utf8` | check-prelude std-string-text-kinds OS string UTF-8 validation predicate; docs/stdlib/modules/string.md |
 | `method std::string::OsStr::len` | check-prelude std-string-text-kinds OS string byte length; docs/stdlib/modules/string.md |
 | `method std::string::OsStr::try_utf8` | check-prelude std-string-text-kinds OS string validated UTF-8 conversion; docs/stdlib/modules/string.md |
+| `method std::string::OsString::as_os_str` | check-prelude std-string-text-kinds owned OS string borrowed view accessor; docs/stdlib/modules/string.md |
+| `method std::string::OsString::as_slice` | check-prelude std-string-text-kinds owned OS string byte accessor; docs/stdlib/modules/string.md |
+| `method std::string::OsString::as_string` | check-prelude std-string-text-kinds owned OS string byte-storage accessor; docs/stdlib/modules/string.md |
+| `method std::string::OsString::is_empty` | check-prelude std-string-text-kinds owned OS string empty predicate; docs/stdlib/modules/string.md |
+| `method std::string::OsString::is_utf8` | check-prelude std-string-text-kinds owned OS string UTF-8 validation predicate; docs/stdlib/modules/string.md |
+| `method std::string::OsString::len` | check-prelude std-string-text-kinds owned OS string byte length; docs/stdlib/modules/string.md |
+| `method std::string::OsString::to_string` | check-prelude std-string-text-kinds owned OS string byte copy helper; docs/stdlib/modules/string.md |
+| `method std::string::OsString::try_utf8` | check-prelude std-string-text-kinds owned OS string validated borrowed UTF-8 conversion; docs/stdlib/modules/string.md |
+| `method std::string::OsString::try_utf8_string` | check-prelude std-string-text-kinds owned OS string validated owned UTF-8 conversion; docs/stdlib/modules/string.md |
 | `method std::string::SplitOnce::left` | check-prelude std-string-module-views borrowed left side of split_once result; docs/stdlib/modules/string.md |
 | `method std::string::SplitOnce::right` | check-prelude std-string-module-views borrowed right side of split_once result; docs/stdlib/modules/string.md |
 | `method std::string::String::append` | check-prelude std-string-natural-api natural Ari string append helper; docs/stdlib/modules/string.md |
@@ -3618,6 +3632,16 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::string::Utf8::is_empty` | check-prelude std-string-text-kinds UTF-8 byte empty predicate; docs/stdlib/modules/string.md |
 | `method std::string::Utf8::len` | check-prelude std-string-text-kinds UTF-8 byte length accessor; docs/stdlib/modules/string.md |
 | `method std::string::Utf8::next_index` | check-prelude std-string-unicode-helpers validated UTF-8 next byte offset helper; docs/stdlib/modules/string.md |
+| `method std::string::Utf8String::as_slice` | check-prelude std-string-text-kinds owned UTF-8 string byte accessor; docs/stdlib/modules/string.md |
+| `method std::string::Utf8String::as_string` | check-prelude std-string-text-kinds owned UTF-8 string byte-storage accessor; docs/stdlib/modules/string.md |
+| `method std::string::Utf8String::as_utf8` | check-prelude std-string-text-kinds owned UTF-8 string borrowed UTF-8 view accessor; docs/stdlib/modules/string.md |
+| `method std::string::Utf8String::codepoint_at` | check-prelude std-string-text-kinds owned UTF-8 scalar lookup; docs/stdlib/modules/string.md |
+| `method std::string::Utf8String::codepoint_count` | check-prelude std-string-text-kinds owned UTF-8 scalar count; docs/stdlib/modules/string.md |
+| `method std::string::Utf8String::codepoints` | check-prelude std-string-text-kinds owned UTF-8 scalar iterator helper; docs/stdlib/modules/string.md |
+| `method std::string::Utf8String::is_empty` | check-prelude std-string-text-kinds owned UTF-8 byte empty predicate; docs/stdlib/modules/string.md |
+| `method std::string::Utf8String::len` | check-prelude std-string-text-kinds owned UTF-8 byte length accessor; docs/stdlib/modules/string.md |
+| `method std::string::Utf8String::next_index` | check-prelude std-string-text-kinds owned UTF-8 next byte offset helper; docs/stdlib/modules/string.md |
+| `method std::string::Utf8String::to_string` | check-prelude std-string-text-kinds owned UTF-8 byte copy helper; docs/stdlib/modules/string.md |
 
 ### module
 
@@ -3631,10 +3655,12 @@ Tier: `alloc`. Stability reading: usable.
 | --- | --- |
 | `struct std::string::Codepoints` | check-prelude std-string-unicode-helpers borrowed UTF-8 scalar iterator state; docs/stdlib/modules/string.md |
 | `struct std::string::OsStr` | check-prelude std-string-text-kinds typed borrowed OS string byte view; docs/stdlib/modules/string.md |
+| `struct std::string::OsString` | check-prelude std-string-text-kinds owned OS string byte wrapper; docs/stdlib/modules/string.md |
 | `struct std::string::RawString` | std string handle tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `struct std::string::SplitOnce` | check-prelude std-string-module-views borrowed result handle for split_once; docs/stdlib/modules/string.md |
 | `struct std::string::String` | std string handle tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `struct std::string::Utf8` | check-prelude std-string-text-kinds typed validated UTF-8 byte view; docs/stdlib/modules/string.md |
+| `struct std::string::Utf8String` | check-prelude std-string-text-kinds owned validated UTF-8 string wrapper; docs/stdlib/modules/string.md |
 
 ## `std::sync`
 

@@ -11,6 +11,7 @@ fn expect_char(value: std::Option[std::encoding::Utf8Char], scalar: u32, len: i6
 }
 
 fn main() -> i64 {
+  var zone = zone::create(256);
   var valid = [65u8, 195u8, 169u8, 226u8, 130u8, 172u8];
   let utf8 = std::string::utf8(valid.as_slice()).unwrap();
   assert_eq_i64(utf8.len(), 6);
@@ -22,6 +23,44 @@ fn main() -> i64 {
   let invalid_utf8 = std::string::utf8(invalid.as_slice());
   assert(invalid_utf8.is_none());
 
+  match std::string::utf8_string(ref mut zone, valid.as_slice()) {
+    Ok(owned_utf8) => {
+      assert_eq_i64(owned_utf8.len(), 6);
+      assert_eq_i64(owned_utf8.codepoint_count(), 3);
+      assert(expect_char(owned_utf8.codepoint_at(1), 233u32, 2, 1));
+      assert_eq_i64(owned_utf8.next_index(3).unwrap_or(-1), 6);
+      let owned_view = owned_utf8.as_utf8();
+      assert_eq_i64(owned_view.codepoint_count(), 3);
+      var owned_iter = owned_utf8.codepoints();
+      assert(owned_iter.next().unwrap().scalar() == 65u32);
+      assert(owned_iter.next().unwrap().scalar() == 233u32);
+      assert(owned_iter.next().unwrap().scalar() == 8364u32);
+      assert(owned_iter.next().is_none());
+      let copied = owned_utf8.to_string(ref mut zone);
+      assert(copied.equals(valid.as_slice()));
+      let string_ref = owned_utf8.as_string();
+      assert_eq_i64(string_ref.len(), 6);
+    }
+    Err(_) => {
+      zone::destroy(zone);
+      return 11;
+    }
+  }
+  assert(std::string::utf8_string_optional(ref mut zone, valid.as_slice()).is_some());
+  assert(std::string::utf8_string_optional(ref mut zone, invalid.as_slice()).is_none());
+  match std::string::utf8_string(ref mut zone, invalid.as_slice()) {
+    Ok(_) => {
+      zone::destroy(zone);
+      return 12;
+    }
+    Err(reason) => {
+      assert(reason.is_invalid_continuation());
+      assert_eq_i64(reason.index(), 1);
+    }
+  }
+  let unchecked_utf8 = std::string::utf8_string_unchecked(ref mut zone, valid.as_slice());
+  assert_eq_i64(unchecked_utf8.codepoint_count(), 3);
+
   let raw_os = std::string::os_str(invalid.as_slice());
   assert_eq_i64(raw_os.len(), 4);
   assert(!raw_os.is_utf8());
@@ -32,6 +71,22 @@ fn main() -> i64 {
   assert(utf8_os.is_utf8());
   let utf8_from_os = utf8_os.try_utf8().unwrap();
   assert_eq_i64(utf8_from_os.codepoint_count(), 3);
+
+  let owned_raw_os = std::string::os_string(ref mut zone, invalid.as_slice());
+  assert_eq_i64(owned_raw_os.len(), 4);
+  assert(!owned_raw_os.is_empty());
+  assert(!owned_raw_os.is_utf8());
+  assert(owned_raw_os.try_utf8().is_none());
+  assert(owned_raw_os.try_utf8_string(ref mut zone).is_none());
+  assert(owned_raw_os.as_os_str().as_slice().equals(invalid.as_slice()));
+  assert(owned_raw_os.to_string(ref mut zone).equals(invalid.as_slice()));
+  let raw_string_ref = owned_raw_os.as_string();
+  assert_eq_i64(raw_string_ref.len(), 4);
+
+  let owned_text_os = std::string::os_string_from_text(ref mut zone, "hello");
+  assert(owned_text_os.is_utf8());
+  assert_eq_i64(owned_text_os.try_utf8().unwrap().codepoint_count(), 5);
+  assert_eq_i64(owned_text_os.try_utf8_string(ref mut zone).unwrap().codepoint_count(), 5);
 
   var hello = [104u8, 101u8, 108u8, 108u8, 111u8];
   let c: std::c::CStr = std::string::c_str("hello");
@@ -45,5 +100,6 @@ fn main() -> i64 {
   assert(c_bytes.equals(hello.as_slice()));
   assert_eq_i64(std::string::c_len(""), 0);
 
+  zone::destroy(zone);
   return 0;
 }

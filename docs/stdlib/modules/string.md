@@ -36,8 +36,13 @@ Use the typed view helpers when the byte source has a more specific meaning:
 
 ```ari
 std::string::utf8(bytes)
+std::string::utf8_string(ref mut zone, bytes)
+std::string::utf8_string_optional(ref mut zone, bytes)
+std::string::utf8_string_unchecked(ref mut zone, bytes)
 std::string::codepoints(bytes)
 std::string::os_str(bytes)
+std::string::os_string(ref mut zone, bytes)
+std::string::os_string_from_text(ref mut zone, "literal")
 std::string::c_str("literal")
 std::string::c_len("literal")
 std::string::c_bytes("literal")
@@ -47,10 +52,15 @@ std::string::bytes("literal")
 `utf8(bytes)` validates a borrowed `Slice[u8]` and returns
 `Option[std::string::Utf8]`. `codepoints(bytes)` performs the same validation
 and returns `Option[std::string::Codepoints]`, a lazy scalar iterator over the
-borrowed bytes. Use `std::encoding::validate_utf8` when invalid input needs a
-detailed error instead of `None`. `os_str(bytes)` keeps operating-system bytes
-distinct from normal text; the current POSIX slice stores raw bytes and may not
-be valid UTF-8. `c_str(text)` is a convenience wrapper for
+borrowed bytes. `utf8_string(ref mut zone, bytes)` is the owned counterpart:
+it validates the bytes, copies them into the target zone, and returns
+`Result[Utf8String, std::encoding::Utf8Error]`. Use
+`std::encoding::validate_utf8` when invalid input needs a detailed error
+without allocating. `os_str(bytes)` keeps operating-system bytes distinct from
+normal text; the current POSIX slice stores raw bytes and may not be valid
+UTF-8. `os_string(ref mut zone, bytes)` is the owned raw OS-byte counterpart;
+`os_string_from_text` copies an Ari `string` literal or value into that shape.
+`c_str(text)` is a convenience wrapper for
 `std::c::from_string(text)` and returns the shared `std::c::CStr` type, while
 `c_len` and `c_bytes` expose bytes before the trailing NUL. `bytes(text)` is
 the named helper for code that wants to make the boundary explicit. In normal
@@ -480,6 +490,29 @@ while true {
 }
 ```
 
+Use `Utf8String` when validated text needs to own its storage:
+
+```ari
+let owned = std::string::utf8_string(ref mut zone, bytes).unwrap();
+owned.as_slice()
+owned.as_string()
+owned.as_utf8()
+owned.len()
+owned.is_empty()
+owned.codepoint_count()
+owned.codepoint_at(byte_index)
+owned.next_index(byte_index)
+owned.codepoints()
+owned.to_string(ref mut zone)
+```
+
+`Utf8String` is a distinct owned wrapper around a zone-backed `String`.
+Construction validates the whole byte slice before copying. `utf8_string` keeps
+the detailed `Utf8Error`; `utf8_string_optional` collapses invalid UTF-8 to
+`None`; `utf8_string_unchecked` is the asserting trusted-input form. The type
+does not expose mutable access to the underlying bytes because that would break
+the validation invariant.
+
 ## OS Strings And C ABI Views
 
 `OsStr` makes OS-boundary data explicit. C ABI text uses the single
@@ -487,12 +520,23 @@ while true {
 
 ```ari
 let os = std::string::os_str(bytes);
+let owned_os = std::string::os_string(ref mut zone, bytes);
+let owned_text_os = std::string::os_string_from_text(ref mut zone, "literal");
 let literal_os: std::string::OsStr = "literal";
 os.as_slice()
 os.len()
 os.is_empty()
 os.is_utf8()
 os.try_utf8()
+owned_os.as_slice()
+owned_os.as_string()
+owned_os.as_os_str()
+owned_os.len()
+owned_os.is_empty()
+owned_os.is_utf8()
+owned_os.try_utf8()
+owned_os.try_utf8_string(ref mut zone)
+owned_os.to_string(ref mut zone)
 
 let c = std::string::c_str("literal");
 let literal_c: std::c::CStr = "literal";
@@ -502,13 +546,16 @@ c.len()
 c.is_empty()
 ```
 
-`OsStr` is not text by default. Convert with `try_utf8` only after deciding the
-OS bytes should be interpreted as UTF-8. Use `std::path::from_os(os)` when the
-same bytes should be interpreted as path bytes. `std::c::CStr.as_slice()` and
-`std::string::c_bytes(text)` exclude the trailing NUL because Ari byte-slice
-helpers operate on logical content bytes. Keep owned C-shaped storage in
-`std::c::CString`; it lives with `std::c::CStr`, POSIX `errno`, and dynamic
-loader handles in the dedicated C ABI module.
+`OsStr` and `OsString` are not text by default. Convert with `try_utf8` only
+after deciding the OS bytes should be interpreted as UTF-8; use
+`try_utf8_string` when that validated text also needs owned storage. Use
+`std::path::from_os(os)` when the same bytes should be interpreted as path
+bytes. `OsString` is currently a POSIX byte buffer over `String`; richer
+platform-specific OS-string storage remains roadmap work.
+`std::c::CStr.as_slice()` and `std::string::c_bytes(text)` exclude the trailing
+NUL because Ari byte-slice helpers operate on logical content bytes. Keep owned
+C-shaped storage in `std::c::CString`; it lives with `std::c::CStr`, POSIX
+`errno`, and dynamic loader handles in the dedicated C ABI module.
 String literals can use the OS-boundary validation helpers directly as
 receivers too: `"name".is_utf8()` and `"name".try_utf8()`.
 

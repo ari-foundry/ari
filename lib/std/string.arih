@@ -8,6 +8,10 @@ pub struct String {
   raw: std::string::RawString,
 }
 
+pub struct Utf8String {
+  text: std::string::String,
+}
+
 pub struct Utf8 {
   bytes: std::Slice[u8],
 }
@@ -21,6 +25,10 @@ pub struct OsStr {
   bytes: std::Slice[u8],
 }
 
+pub struct OsString {
+  text: std::string::String,
+}
+
 pub struct SplitOnce {
   left: std::Slice[u8],
   right: std::Slice[u8],
@@ -31,6 +39,14 @@ pub extern "ari" fn with_capacity(zone: ref mut Zone, capacity: i64) -> RawStrin
 pub extern "ari" fn new(zone: ref mut Zone, capacity: i64) -> std::string::String = "ari_builtin_string_new";
 pub extern "ari" fn from_string(zone: ref mut Zone, text: string) -> std::string::String = "ari_builtin_string_from_string";
 pub extern "ari" fn copy_to(value: ref std::string::String, target: ref mut Zone) -> std::string::String = "ari_builtin_string_copy_to";
+
+fn utf8_string_from_owned(value: std::string::String) -> std::string::Utf8String {
+  return std::string::Utf8String { text: value };
+}
+
+fn os_string_from_owned(value: std::string::String) -> std::string::OsString {
+  return std::string::OsString { text: value };
+}
 
 fn c_string_len(text: string) -> i64 {
   let data = text as ptr u8;
@@ -48,6 +64,45 @@ pub fn utf8(bytes: std::Slice[u8]) -> std::Option[std::string::Utf8] {
   return std::Some<std::string::Utf8>(std::string::Utf8 { bytes: bytes });
 }
 
+pub fn utf8_string(
+  zone: ref mut Zone,
+  bytes: std::Slice[u8]
+) -> std::Result[std::string::Utf8String, std::encoding::Utf8Error] {
+  match std::encoding::validate_utf8(bytes) {
+    std::Err(reason) => {
+      return std::Err<std::string::Utf8String, std::encoding::Utf8Error>(reason);
+    }
+    std::Ok(_) => {}
+  }
+  let text = std::string::from_slice_in(zone, bytes);
+  return std::Ok<std::string::Utf8String, std::encoding::Utf8Error>(
+    std::string::utf8_string_from_owned(text)
+  );
+}
+
+pub fn utf8_string_optional(zone: ref mut Zone, bytes: std::Slice[u8]) -> std::Option[std::string::Utf8String] {
+  match std::string::utf8_string(zone, bytes) {
+    std::Ok(value) => {
+      return std::Some<std::string::Utf8String>(value);
+    }
+    std::Err(_) => {
+      return std::None<std::string::Utf8String>();
+    }
+  }
+}
+
+pub fn utf8_string_unchecked(zone: ref mut Zone, bytes: std::Slice[u8]) -> std::string::Utf8String {
+  match std::string::utf8_string(zone, bytes) {
+    std::Ok(value) => {
+      return value;
+    }
+    std::Err(_) => {
+      std::panic();
+    }
+  }
+  return std::string::utf8_string_from_owned(std::string::new(zone, 0));
+}
+
 pub fn codepoints(bytes: std::Slice[u8]) -> std::Option[std::string::Codepoints] {
   if !std::encoding::is_utf8(bytes) {
     return std::None<std::string::Codepoints>();
@@ -57,6 +112,16 @@ pub fn codepoints(bytes: std::Slice[u8]) -> std::Option[std::string::Codepoints]
 
 pub fn os_str(bytes: std::Slice[u8]) -> std::string::OsStr {
   return std::string::OsStr { bytes: bytes };
+}
+
+pub fn os_string(zone: ref mut Zone, bytes: std::Slice[u8]) -> std::string::OsString {
+  let text = std::string::from_slice_in(zone, bytes);
+  return std::string::os_string_from_owned(text);
+}
+
+pub fn os_string_from_text(zone: ref mut Zone, text: string) -> std::string::OsString {
+  let value = std::string::from_string(zone, text);
+  return std::string::os_string_from_owned(value);
 }
 
 pub fn c_str(text: string) -> std::c::CStr {
@@ -289,6 +354,48 @@ pub impl std::string::Utf8 {
   }
 }
 
+pub impl std::string::Utf8String {
+  fn as_string(self: ref Self) -> ref std::string::String {
+    return ref self.text;
+  }
+
+  fn as_slice(self: ref Self) -> std::Slice[u8] {
+    return self.text.as_slice();
+  }
+
+  fn as_utf8(self: ref Self) -> std::string::Utf8 {
+    return std::string::Utf8 { bytes: self.text.as_slice() };
+  }
+
+  fn len(self: ref Self) -> i64 {
+    return self.text.len();
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return self.text.is_empty();
+  }
+
+  fn codepoint_count(self: ref Self) -> i64 {
+    return self.as_utf8().codepoint_count();
+  }
+
+  fn codepoint_at(self: ref Self, byte_index: i64) -> std::Option[std::encoding::Utf8Char] {
+    return self.as_utf8().codepoint_at(byte_index);
+  }
+
+  fn next_index(self: ref Self, byte_index: i64) -> std::Option[i64] {
+    return self.as_utf8().next_index(byte_index);
+  }
+
+  fn codepoints(self: ref Self) -> std::string::Codepoints {
+    return self.as_utf8().codepoints();
+  }
+
+  fn to_string(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    return self.text.copy_to(zone);
+  }
+}
+
 impl std::Iterator[std::encoding::Utf8Char] for std::string::Codepoints {
   pub fn next(self: ref mut Self) -> std::Option[std::encoding::Utf8Char] {
     if self.index >= self.bytes.len {
@@ -327,6 +434,44 @@ pub impl std::string::OsStr {
 
   fn try_utf8(self: ref Self) -> std::Option[std::string::Utf8] {
     return std::string::utf8(self.bytes);
+  }
+}
+
+pub impl std::string::OsString {
+  fn as_string(self: ref Self) -> ref std::string::String {
+    return ref self.text;
+  }
+
+  fn as_slice(self: ref Self) -> std::Slice[u8] {
+    return self.text.as_slice();
+  }
+
+  fn as_os_str(self: ref Self) -> std::string::OsStr {
+    return std::string::OsStr { bytes: self.text.as_slice() };
+  }
+
+  fn len(self: ref Self) -> i64 {
+    return self.text.len();
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return self.text.is_empty();
+  }
+
+  fn is_utf8(self: ref Self) -> bool {
+    return self.as_os_str().is_utf8();
+  }
+
+  fn try_utf8(self: ref Self) -> std::Option[std::string::Utf8] {
+    return self.as_os_str().try_utf8();
+  }
+
+  fn try_utf8_string(self: ref Self, zone: ref mut Zone) -> std::Option[std::string::Utf8String] {
+    return std::string::utf8_string_optional(zone, self.as_slice());
+  }
+
+  fn to_string(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    return self.text.copy_to(zone);
   }
 }
 
@@ -1029,7 +1174,31 @@ impl std::zone::ZoneBacked for std::string::String {
   }
 }
 
+impl std::zone::ZoneBacked for std::string::Utf8String {
+  pub fn zone(self: ref Self) -> std::zone::ZoneMetadata {
+    return self.text.zone();
+  }
+}
+
+impl std::zone::ZoneBacked for std::string::OsString {
+  pub fn zone(self: ref Self) -> std::zone::ZoneMetadata {
+    return self.text.zone();
+  }
+}
+
 impl std::Drop for std::string::String {
+  fn drop(self) -> void {
+    return;
+  }
+}
+
+impl std::Drop for std::string::Utf8String {
+  fn drop(self) -> void {
+    return;
+  }
+}
+
+impl std::Drop for std::string::OsString {
   fn drop(self) -> void {
     return;
   }

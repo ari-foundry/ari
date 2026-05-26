@@ -2508,10 +2508,17 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-unicode-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-unicode-helpers.elf; $(BUILD_DIR)/prelude/std-string-unicode-helpers.elf; code=$$?; test $$code -eq 15; fi
 	$(TARGET) tests/cases/standard-library/ok/string/std-string-text-kinds.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-text-kinds.ll
 	grep -q '_ARNv3std6string4utf8' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
+	grep -q '_ARNv3std6string11utf8_string' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
+	grep -q '_ARNv3std6string20utf8_string_optional' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
+	grep -q '_ARNv3std6string21utf8_string_unchecked' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
 	grep -q '_ARNv3std6string6os_str' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
+	grep -q '_ARNv3std6string9os_string' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
+	grep -q '_ARNv3std6string19os_string_from_text' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
 	grep -q '_ARNv3std6string5c_str' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
 	grep -q 'std__string__Utf88inherent15codepoint_count' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
+	grep -q 'std__string__Utf8String8inherent15codepoint_count' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
 	grep -q 'std__string__OsStr8inherent8try_utf8' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
+	grep -q 'std__string__OsString8inherent15try_utf8_string' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
 	grep -q 'std__c__CStr8inherent8as_slice' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
 	$(TARGET) tests/cases/standard-library/ok/string/std-string-text-kinds.ari -o $(BUILD_DIR)/prelude/std-string-text-kinds.elf
 	$(BUILD_DIR)/prelude/std-string-text-kinds.elf; code=$$?; test $$code -eq 0
