@@ -602,13 +602,17 @@ private:
         return parse_path_after_first(first);
     }
 
-    std::vector<std::string> parse_dot_selector_path(const std::string& message) {
+    std::vector<std::string> parse_dot_selector_path(
+        const std::string& message,
+        std::vector<SourceLocation>& locs) {
         Token first = expect(TokenKind::Identifier, message);
         std::vector<std::string> parts;
         parts.push_back(first.text);
+        locs.push_back(first.loc);
         while (match(TokenKind::Dot)) {
             Token part = expect_identifier_or_contextual_name_keyword("expected selector field name after .");
             parts.push_back(part.text);
+            locs.push_back(part.loc);
         }
         return parts;
     }
@@ -1104,7 +1108,7 @@ private:
         type.name = "union by";
         type.is_union_by = true;
         type.union_by_selector =
-            parse_dot_selector_path("expected selector path after union by");
+            parse_dot_selector_path("expected selector path after union by", type.union_by_selector_locs);
 
         Token open = expect(TokenKind::LBrace, "expected { after union by selector");
         if (check(TokenKind::RBrace)) {

@@ -27,6 +27,7 @@ struct TypeRef {
     std::string associated_projection;
     std::vector<Token> macro_tokens;
     std::vector<std::string> union_by_selector;
+    std::vector<SourceLocation> union_by_selector_locs;
     std::vector<std::string> union_by_arm_names;
     std::vector<TypeRef> union_by_arm_types;
     std::vector<SourceLocation> union_by_arm_locs;

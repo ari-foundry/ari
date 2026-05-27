@@ -1,0 +1,6 @@
+diagnostic error code=T0001 family=type message="union by selector 'header.kind' must start from an earlier field in struct 'Packet'" sources=1 labels=1 notes=1 helps=1
+  Source source_id=0 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic-union-by-missing-selector.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic-union-by-missing-selector.ari" bytes=161
+  Label index=0 role=primary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-union-by-missing-selector.ari" line=7 column=22 end_line=7 end_column=28 byte_start=89 byte_end=95 message=""
+  Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-union-by-missing-selector.ari:7:22\n   |\n 7 |   fragment: union by header.kind {\n   |                      ^^^^^^"
+  Note index=0 location=none message="union field 'fragment' can only depend on stable fields declared before it"
+  Help index=0 location=none message="move the discriminant field before the union field or use an ordinary enum payload"

@@ -70,17 +70,20 @@ struct TLSCiphertext {
 }
 ```
 
-The parser now reads `union by` as a real type reference and preserves the
-selector path and arm type list in the AST. Syntax dumps and declaration
-metadata can show the field shape, but semantic lowering still rejects the
-field with a targeted type diagnostic before layout or code generation. Model
-this with an ordinary enum payload today, and keep any external discriminant
-relationship explicit in constructor and validation code.
+The parser reads `union by` as a real type reference and preserves the selector
+path and arm type list in the AST. Syntax dumps and declaration metadata can
+show the field shape. During semantic validation, the selector must start from
+an earlier field in the same struct, each nested selector segment must resolve
+through a known struct field, arm names must be unique, and every arm payload
+type must resolve. After those checks pass, executable lowering still rejects
+the field with a targeted type diagnostic before layout or code generation.
+Model this with an ordinary enum payload today, and keep any external
+discriminant relationship explicit in constructor and validation code.
 
 The compiler capability inventory tracks the reserved syntax as
-`union-by-fields`. Selector resolution, exhaustive arm checking, construction,
-active-arm drop, narrowing, layout, and positive execution support remain
-future compiler work.
+`union-by-fields`. Matching arm names against concrete discriminant values,
+exhaustive arm checking, construction, active-arm drop, narrowing, layout, and
+positive execution support remain future compiler work.
 
 ## Substitution
 

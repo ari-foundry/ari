@@ -1,0 +1,15 @@
+struct Header {
+  kind: i64,
+}
+
+struct Packet {
+  header: Header,
+  fragment: union by header.kind {
+    text => i64,
+    text => i64,
+  },
+}
+
+fn main() -> i64 {
+  return 0;
+}

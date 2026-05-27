@@ -95,7 +95,7 @@ tests, or CI matrix work.
 | `std::string` | Platform-specific `OsString` storage beyond the current POSIX byte wrapper, Unicode normalization/transcoding, grapheme iteration, and locale-sensitive case policy. A dedicated string-builder type is intentionally not planned for the basic slice. |
 | `std::parse` | Future taxonomy splits backed by real caller needs; the current basic slice already covers natural Result parsers, stable diagnostic names/messages, byte offsets, and finite/subnormal float boundary checks. |
 | `std::encoding` | Unicode normalization/transcoding and optional compression policy outside the core encoding module. |
-| `union by` language idea | Syntax is chosen, parser/AST tooling preserves selector and arm payload types, and sema now emits a targeted type diagnostic before lowering. Construction, selector type checking, exhaustiveness, active-arm drop, narrowing, layout, and positive execution support remain compiler work. |
+| `union by` language idea | Syntax is chosen, parser/AST tooling preserves selector and arm payload types, and sema now validates earlier-field selector roots, nested struct-field selector segments, unique arm names, and arm payload type refs before emitting a targeted lowering diagnostic. Construction, arm matching against concrete discriminant values, exhaustiveness, active-arm drop, narrowing, layout, and positive execution support remain compiler work. |
 | Structural capability parameters | Ordinary free functions now support initial `fn save(x: has serialize() -> i64)` structural method requirements through hidden generics, call-site method checking, and normal static method monomorphization. Remaining work is generic impl-method satisfaction, reusable aliases or multi-method capability syntax, and stronger named-trait guidance. |
 
 ## Language Roadmap Interaction
@@ -112,11 +112,12 @@ fragment: union by security.cipher_type {
 ```
 
 It remains unusable in executable programs. The parser and AST preserve the
-spelling for tooling, while semantic lowering points users back to ordinary
-enum payloads today. Future compiler work must define construction, selector
-type checking, exhaustiveness, active-arm drop, narrowing after discriminant
-checks, layout, and positive execution support before stdlib code can depend
-on it.
+spelling for tooling, and sema validates that the selector is a stable
+earlier-field path with unique, type-resolved arms before lowering points users
+back to ordinary enum payloads today. Future compiler work must define
+construction, arm matching against concrete discriminant values, exhaustiveness,
+active-arm drop, narrowing after discriminant checks, layout, and positive
+execution support before stdlib code can depend on it.
 
 Structural capability parameters are also language work rather than a stdlib
 API. The initial executable shape is:

@@ -91,17 +91,19 @@ The spelling is `union by` for the discriminant link and `=>` arms for the
 alternatives. The union field's active payload type is determined by the named
 discriminant value.
 
-This is a reserved roadmap spelling, not a usable feature yet. The parser now
+This is a reserved roadmap spelling, not a usable feature yet. The parser
 builds a `TypeRef` for `union by` that records the selector path and each arm's
-payload type, so syntax/declaration tooling can inspect the shape. Sema still
-rejects the field with a targeted type diagnostic before executable type
-lowering.
+payload type, so syntax/declaration tooling can inspect the shape. Sema now
+validates that the selector starts from an earlier struct field, nested
+selector segments resolve through known struct fields, arm names are unique,
+and arm payload types resolve. It still rejects the field with a targeted type
+diagnostic before executable type lowering.
 
 It should not replace ordinary `enum` ADTs, unchecked C unions, or `match`. A
-future design must specify construction rules, exhaustive arm checking against
-enum-like discriminants, ownership/drop for the active arm only,
+future design must specify construction rules, arm checking against concrete
+enum-like discriminant values, ownership/drop for the active arm only,
 borrowing/narrowing after matching the discriminant, layout/ABI behavior, and
-diagnostics when the selector is not a stable field or context path. The
+positive execution diagnostics once the selector model becomes usable. The
 compiler capability inventory tracks this as `union-by-fields`.
 
 ## What Not To Track Here

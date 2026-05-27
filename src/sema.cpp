@@ -2240,7 +2240,12 @@ private:
             std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
             current_module_name_ = decl.module_name;
             current_type_substitutions_ = std::move(substitutions);
-            for (const auto& field : decl.fields) {
+            for (std::size_t i = 0; i < decl.fields.size(); ++i) {
+                const auto& field = decl.fields[i];
+                if (field.type.is_union_by) {
+                    validate_union_by_struct_field(decl, i, field);
+                    continue;
+                }
                 IrType field_type = resolve_executable_type(field.type);
                 require_nonlocal_root_vector_storage(field.loc, field_type, "a struct field");
             }
@@ -5072,6 +5077,166 @@ private:
             "use an ordinary enum payload until union by lowering lands",
             DiagnosticNoteKind::Help});
         throw error;
+    }
+
+    SourceLocation union_by_selector_part_loc(const TypeRef& ast_type, std::size_t index) const {
+        if (index < ast_type.union_by_selector_locs.size()) return ast_type.union_by_selector_locs[index];
+        return ast_type.loc;
+    }
+
+    [[noreturn]] void fail_union_by_selector_root(const StructDecl& decl,
+                                                  const StructField& field,
+                                                  const TypeRef& ast_type,
+                                                  std::size_t later_index) const {
+        SourceLocation loc = union_by_selector_part_loc(ast_type, 0);
+        CompileError error(std::move(loc),
+                           "union by selector '" + union_by_selector_text(ast_type) +
+                               "' must start from an earlier field in struct '" + decl.name + "'");
+        if (later_index < decl.fields.size()) {
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "field '" + ast_type.union_by_selector[0] +
+                    "' is declared after union field '" + field.name + "'",
+                DiagnosticNoteKind::Note});
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "union field '" + field.name + "' can only depend on stable fields declared before it",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "move the discriminant field before the union field or use an ordinary enum payload",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] void fail_union_by_selector_segment(const TypeRef& ast_type,
+                                                     std::size_t segment_index,
+                                                     const IrType& current) const {
+        SourceLocation loc = union_by_selector_part_loc(ast_type, segment_index);
+        CompileError error(std::move(loc),
+                           "union by selector segment '" + ast_type.union_by_selector[segment_index] +
+                               "' is not a field of " + type_name(current));
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "selector paths may traverse only struct fields that the compiler can resolve at declaration time",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "keep the selector as a stable field path such as security.cipher_type",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] void fail_duplicate_union_by_arm(const TypeRef& ast_type,
+                                                  std::size_t duplicate_index,
+                                                  SourceLocation previous) const {
+        SourceLocation loc = duplicate_index < ast_type.union_by_arm_locs.size()
+            ? ast_type.union_by_arm_locs[duplicate_index]
+            : ast_type.loc;
+        const std::string& name = ast_type.union_by_arm_names[duplicate_index];
+        CompileError error(std::move(loc), "duplicate union by arm '" + name + "'");
+        Span previous_span = span_from_location(previous);
+        if (span_has_source(previous_span) && span_has_valid_order(previous_span)) {
+            error.add_label(DiagnosticLabel{previous_span, "previous union by arm '" + name + "'", false});
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "previous union by arm '" + name + "'",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "each discriminant arm should map to exactly one active payload type",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] void fail_union_by_lowering_after_validation(const StructDecl& decl,
+                                                             const StructField& field,
+                                                             const TypeRef& ast_type,
+                                                             const IrType& selector_type) const {
+        CompileError error(ast_type.loc, "union by field types are semantically validated but not lowered yet");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "field '" + field.name + "' in struct '" + decl.name + "' has a validated selector path '" +
+                union_by_selector_text(ast_type) + "' of type " + type_name(selector_type),
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "this field declares " + std::to_string(ast_type.union_by_arm_names.size()) +
+                " unique active-payload arms; construction, narrowing, layout, and active-arm drop are still compiler work",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "use an ordinary enum payload until union by lowering lands",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    void validate_union_by_arms(const TypeRef& ast_type) {
+        std::map<std::string, SourceLocation> seen;
+        for (std::size_t i = 0; i < ast_type.union_by_arm_names.size(); ++i) {
+            SourceLocation loc = i < ast_type.union_by_arm_locs.size() ? ast_type.union_by_arm_locs[i] : ast_type.loc;
+            auto inserted = seen.emplace(ast_type.union_by_arm_names[i], loc);
+            if (!inserted.second) {
+                fail_duplicate_union_by_arm(ast_type, i, inserted.first->second);
+            }
+            if (i < ast_type.union_by_arm_types.size()) {
+                (void)resolve_executable_type(ast_type.union_by_arm_types[i]);
+            }
+        }
+    }
+
+    IrType validate_union_by_selector(const StructDecl& decl,
+                                      std::size_t field_index,
+                                      const StructField& field,
+                                      const TypeRef& ast_type) {
+        if (ast_type.union_by_selector.empty()) {
+            fail(ast_type.loc, "union by selector path cannot be empty");
+        }
+
+        const std::string& root_name = ast_type.union_by_selector.front();
+        std::size_t root_index = decl.fields.size();
+        std::size_t later_index = decl.fields.size();
+        for (std::size_t i = 0; i < decl.fields.size(); ++i) {
+            if (decl.fields[i].name != root_name) continue;
+            if (i < field_index) {
+                root_index = i;
+                break;
+            }
+            later_index = i;
+            break;
+        }
+        if (root_index == decl.fields.size()) {
+            fail_union_by_selector_root(decl, field, ast_type, later_index);
+        }
+
+        IrType current = resolve_executable_type(decl.fields[root_index].type);
+        for (std::size_t i = 1; i < ast_type.union_by_selector.size(); ++i) {
+            if (current.primitive != IrPrimitiveKind::Struct) {
+                fail_union_by_selector_segment(ast_type, i, current);
+            }
+            bool found = false;
+            for (std::size_t field_i = 0; field_i < current.field_names.size(); ++field_i) {
+                if (current.field_names[field_i] != ast_type.union_by_selector[i]) continue;
+                current = current.field_types[field_i];
+                found = true;
+                break;
+            }
+            if (!found) {
+                fail_union_by_selector_segment(ast_type, i, current);
+            }
+        }
+        return current;
+    }
+
+    void validate_union_by_struct_field(const StructDecl& decl,
+                                        std::size_t field_index,
+                                        const StructField& field) {
+        const TypeRef& ast_type = field.type;
+        validate_union_by_arms(ast_type);
+        IrType selector_type = validate_union_by_selector(decl, field_index, field, ast_type);
+        fail_union_by_lowering_after_validation(decl, field, ast_type, selector_type);
     }
 
     IrType resolve_nullable_type(const TypeRef& ast_type) {

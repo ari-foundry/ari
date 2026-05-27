@@ -1,0 +1,6 @@
+diagnostic error code=T0001 family=type message="union by selector segment 'missing' is not a field of Header" sources=1 labels=1 notes=1 helps=1
+  Source source_id=0 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic-union-by-missing-segment.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic-union-by-missing-segment.ari" bytes=162
+  Label index=0 role=primary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-union-by-missing-segment.ari" line=7 column=29 end_line=7 end_column=36 byte_start=94 byte_end=101 message=""
+  Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-union-by-missing-segment.ari:7:29\n   |\n 7 |   fragment: union by header.missing {\n   |                             ^^^^^^^"
+  Note index=0 location=none message="selector paths may traverse only struct fields that the compiler can resolve at declaration time"
+  Help index=0 location=none message="keep the selector as a stable field path such as security.cipher_type"
