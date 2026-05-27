@@ -106,14 +106,16 @@ that records the selector path and each arm's payload type, so
 syntax/declaration tooling can inspect the shape. Sema validates that the
 selector starts from an earlier struct field, nested selector segments resolve
 through known struct fields, arm names are unique, arm payload types resolve,
-and enum selectors use arms that exactly cover the enum cases. For enum
-selectors, the compiler lowers the field to hidden enum storage and accepts
-struct literal construction with `fragment: stream => payload`. When the
+enum selectors use arms that exactly cover the enum cases, and bool selectors
+use exactly `false` and `true` arms. For enum and bool selectors, the compiler
+lowers the field to hidden enum storage and accepts struct literal construction
+with `fragment: stream => payload` or `payload: true => payload`. When the
 selector value is visible in the same struct literal, the constructor arm must
-match it. Direct enum selector fields such as `kind`, and nested selector paths
-such as `security.cipher_type` when their omitted intermediate struct value can
-be synthesized from the selector alone, may also be omitted and inferred from
-`fragment: stream => payload`; if multiple union fields share that omitted
+match it. Direct enum selector fields such as `kind`, direct bool selector
+fields such as `enabled`, and nested selector paths such as
+`security.cipher_type` when their omitted intermediate struct value can be
+synthesized from the selector alone, may also be omitted and inferred from a
+`union by` constructor arm; if multiple union fields share that omitted
 selector, their constructor arms must agree.
 The field value can also be matched directly with the same arm names, for
 example `match packet.fragment { stream(stream_payload) => ... }`; pattern
@@ -124,10 +126,10 @@ itself is rejected; rebuild the whole struct when the discriminant and active
 payload must change together.
 
 It should not replace ordinary `enum` ADTs, unchecked C unions, or `match`. A
-future design must specify arm checking against concrete non-enum discriminant
-values, public active-arm borrowing/narrowing outside direct field matches,
-runtime selector consistency policy beyond direct local assignments, selector
-inference through intermediate structs with unrelated required fields,
+future design must specify concrete-value policies for non-enum and non-bool
+discriminants, public active-arm borrowing/narrowing outside direct field
+matches, runtime selector consistency policy beyond direct local assignments,
+selector inference through intermediate structs with unrelated required fields,
 active-arm drop diagnostics, and stable ABI naming.
 The compiler capability inventory tracks this as `union-by-fields`.
 

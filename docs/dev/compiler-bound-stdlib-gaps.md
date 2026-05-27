@@ -16,7 +16,7 @@ compiler and stdlib boundary.
 | --- | --- | --- | --- |
 | `std::thread` | `thread::spawn(fn() -> i64) -> Result[JoinHandle, Error]`, `thread::spawn_raw(fn(ptr u8) -> i64, ptr u8) -> Result[JoinHandle, Error]`, nonblocking `try_join`, `ThreadScope` fixed-capacity join owners, `JoinHandle`, `JoinError`, `ThreadResult`, `Builder`, explicit `ThreadLocal[T]`. | Generic `JoinHandle[T]`, captured thread entries, borrowed scoped threads, generic return payloads, and compiler-owned `thread_local` declarations require closure environment transfer, send/share rules, result storage ownership, drop paths, borrow-scoped lifetime proofs, and TLS codegen. | `lib/std/thread.arih`, `src/std_thread_semantics.cpp`, `src/sema.cpp`, `src/llvm_codegen.cpp`, `docs/stdlib/modules/thread.md`, `tests/cases/standard-library/ok/thread/`, `tests/cases/functions/` |
 | `std::fmt` | `format_in!`, `Display::format_in`, `Debug::debug_in`, fixed-arity runtime `format`/`format2`/`format3`/`format4`, matching writer helpers, direct scalar/text streaming writer helpers, `concat2`/`concat3`, and variable-count concat/template helpers. | Variadic/default-zone formatting needs compiler lowering or variadic generic support plus an allocation-zone policy. Generic per-value streaming display needs a writer-facing formatting trait plus compiler support for selecting generic trait impls whose type parameter is carried by a trait argument such as `WriteDisplay[W]`. | `lib/std/fmt.arih`, `src/prelude_macros.cpp`, `src/sema.cpp`, `docs/stdlib/modules/fmt.md`, `tests/cases/standard-library/ok/format/`, `tests/cases/standard-library/errors/format/` |
-| `union by` | Parser and AST preserve `union by <selector> { arm => Type, ... }`; syntax/declaration tooling can print it. Sema validates earlier-field selector roots, nested struct-field selector segments, unique arm names, arm payload type references, and exact enum-case arm coverage for enum selectors. Enum-selector fields lower to internal enum storage, struct literals construct them with `field: arm => payload`, statically visible selector values must match the constructor arm, direct enum selector fields and selector-only nested paths such as `security.cipher_type` can be inferred from an omitted selector plus a union constructor arm, direct field matches use the same arm names (`match packet.fragment { stream(stream_payload) => ... }`), and direct assignment to the selector path, an ancestor selector field, or the `union by` payload field itself is rejected. | Remaining compiler work covers non-enum discriminant policy, selector inference through intermediate structs with unrelated required fields, public active-arm narrowing outside direct field matches, richer active-arm mutation/drop diagnostics, and stable ABI naming. | `src/parser.cpp`, `src/ast.hpp`, `src/sema.cpp`, `src/llvm_codegen.cpp`, `docs/language/generic-aggregates.md`, `tests/cases/structs/ok/union-by-constructor.ari`, `tests/cases/structs/ok/union-by-match.ari`, `tests/cases/structs/ok/union-by-selector-inferred.ari`, `tests/cases/structs/ok/union-by-nested-selector-inferred.ari`, `tests/cases/structs/errors/union-by-constructor-unknown-arm.ari`, `tests/cases/structs/errors/union-by-constructor-selector-mismatch.ari`, `tests/cases/structs/errors/union-by-selector-inference-conflict.ari`, `tests/cases/structs/errors/union-by-nested-selector-inference-conflict.ari`, `tests/cases/structs/errors/union-by-selector-assignment.ari`, `tests/cases/structs/errors/union-by-selector-root-assignment.ari`, `tests/cases/structs/errors/union-by-field-assignment.ari`, `tests/cases/compiler-development/artifact/ok/syntax-union-by-field.*`, `tests/cases/compiler-development/artifact/errors/diagnostic-union-by-*.{ari,diagnostic}` |
+| `union by` | Parser and AST preserve `union by <selector> { arm => Type, ... }`; syntax/declaration tooling can print it. Sema validates earlier-field selector roots, nested struct-field selector segments, unique arm names, arm payload type references, exact enum-case arm coverage for enum selectors, and exact `false`/`true` arm coverage for bool selectors. Enum and bool selector fields lower to internal enum storage, struct literals construct them with `field: arm => payload`, statically visible selector values must match the constructor arm, direct enum/bool selector fields and selector-only nested paths such as `security.cipher_type` can be inferred from an omitted selector plus a union constructor arm, direct field matches use the same arm names (`match packet.fragment { stream(stream_payload) => ... }` or `true(payload) => ...`), and direct assignment to the selector path, an ancestor selector field, or the `union by` payload field itself is rejected. | Remaining compiler work covers non-enum/non-bool discriminant policy, selector inference through intermediate structs with unrelated required fields, public active-arm narrowing outside direct field matches, richer active-arm mutation/drop diagnostics, and stable ABI naming. | `src/parser.cpp`, `src/ast.hpp`, `src/sema.cpp`, `src/llvm_codegen.cpp`, `docs/language/generic-aggregates.md`, `tests/cases/structs/ok/union-by-constructor.ari`, `tests/cases/structs/ok/union-by-match.ari`, `tests/cases/structs/ok/union-by-bool-selector.ari`, `tests/cases/structs/ok/union-by-selector-inferred.ari`, `tests/cases/structs/ok/union-by-nested-selector-inferred.ari`, `tests/cases/structs/errors/union-by-constructor-unknown-arm.ari`, `tests/cases/structs/errors/union-by-constructor-selector-mismatch.ari`, `tests/cases/structs/errors/union-by-bool-selector-missing-arm.ari`, `tests/cases/structs/errors/union-by-bool-selector-unknown-arm.ari`, `tests/cases/structs/errors/union-by-selector-inference-conflict.ari`, `tests/cases/structs/errors/union-by-nested-selector-inference-conflict.ari`, `tests/cases/structs/errors/union-by-selector-assignment.ari`, `tests/cases/structs/errors/union-by-selector-root-assignment.ari`, `tests/cases/structs/errors/union-by-field-assignment.ari`, `tests/cases/compiler-development/artifact/ok/syntax-union-by-field.*`, `tests/cases/compiler-development/artifact/errors/diagnostic-union-by-*.{ari,diagnostic}` |
 | Structural capability parameters | Ordinary free functions, inherent `impl` methods, trait methods, and trait impl methods can write `fn f(x: has method(...) -> Type)` for one method requirement, `fn f(x: has { a() -> T, b(i64) -> U })` for grouped method requirements on one parameter, `fn f[T: has method(...) -> Type](x: T)` when the structural type must be named, `type Alias = has method(...) -> Type;` plus `fn f[T: Alias](x: T)` for reusable non-generic sets, or generic aliases such as `type Mapper[Input, Output] = has map(Input) -> Output;` plus `fn f[T: Mapper[i64, bool]](x: T)`. The parser lowers anonymous parameters to hidden generics, sema substitutes alias type arguments into reusable capability requirements, trait impl conformance compares structural method signatures exactly, call sites check concrete types for every matching static method, and bodies monomorphize through normal method dispatch. Hidden capability generics do not count as visible `<T>` method type arguments. Unsupported type positions still emit a targeted diagnostic. | Remaining compiler work covers richer diagnostics that point users toward named traits and any future extension beyond method requirements. | `src/parser.cpp`, `src/ast.hpp`, `src/sema.cpp`, `src/module_ast_summary.cpp`, `docs/language/traits.md`, `docs/dev/roadmap.md`, `tests/cases/traits/ok/structural-capability-parameter.ari`, `tests/cases/traits/ok/structural-capability-multi-method.ari`, `tests/cases/traits/ok/structural-capability-impl-method.ari`, `tests/cases/traits/ok/structural-capability-generic-bound.ari`, `tests/cases/traits/ok/structural-capability-alias-bound.ari`, `tests/cases/traits/ok/structural-capability-generic-alias-bound.ari`, `tests/cases/traits/ok/structural-capability-trait-method.ari`, `tests/cases/traits/errors/structural-capability-*.ari` |
 
 ## Thread Implementation Path
@@ -127,30 +127,33 @@ Positive compiler support needs these pieces in order:
    implemented.
 4. If the selector type is an enum, require every arm name to be a real enum
    case and require every enum case to have an arm. This is implemented.
-5. For enum selectors, synthesize internal enum storage for the union field.
-   This is implemented and reuses the aggregate enum backend.
-6. Construct enum-selector fields in struct literals with
+5. If the selector type is `bool`, require exactly `false` and `true` arms.
+   This is implemented.
+6. For enum and bool selectors, synthesize internal enum storage for the union
+   field. This is implemented and reuses the aggregate enum backend.
+7. Construct enum/bool-selector fields in struct literals with
    `field: arm => payload`. This is implemented for one payload expression per
    arm and rejects unknown arms.
-7. Define selector consistency diagnostics that prove the chosen arm agrees
+8. Define selector consistency diagnostics that prove the chosen arm agrees
    with a statically visible discriminant value. This is implemented for
    same-literal selector paths.
-8. Infer enum selector fields from omitted selector fields when all union
-   constructors using that selector choose the same arm. This is implemented
-   for direct selector fields such as `kind` and selector-only nested paths
-   such as `security.cipher_type`.
-9. Define reads and borrows: the active arm should be usable only after a
+9. Infer enum and bool selector fields from omitted selector fields when all
+   union constructors using that selector choose the same arm. This is
+   implemented for direct selector fields such as `kind` and `enabled`, plus
+   selector-only nested paths such as `security.cipher_type`.
+10. Define reads and borrows: the active arm should be usable only after a
    discriminant check, match, or equivalent narrowing operation. Direct
-   `match` over the union field is implemented for enum-selector fields.
-10. Reject direct selector or payload mutation after construction. This is
+   `match` over the union field is implemented for enum and bool selector
+   fields.
+11. Reject direct selector or payload mutation after construction. This is
    implemented for local field-assignment targets that write the selector path,
    an ancestor of that path, or the union payload field itself, such as
    `packet.security.cipher_type = block`,
    `packet.security = SecurityParameters { ... }`, or
    `packet.fragment = packet.fragment`.
-11. Define layout and ABI. The payload storage is union-like, but ownership/drop
+12. Define layout and ABI. The payload storage is union-like, but ownership/drop
    must run only for the active arm.
-12. Extend positive fixtures after broader narrowing and active-arm drop
+13. Extend positive fixtures after broader narrowing and active-arm drop
     behavior are real. Until then, direct `match` over the field is the
     supported way to read active payloads.
 

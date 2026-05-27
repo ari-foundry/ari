@@ -5481,6 +5481,43 @@ private:
         throw error;
     }
 
+    [[noreturn]] void fail_unknown_union_by_bool_arm(const TypeRef& ast_type,
+                                                     std::size_t arm_index) const {
+        SourceLocation loc = arm_index < ast_type.union_by_arm_locs.size()
+            ? ast_type.union_by_arm_locs[arm_index]
+            : ast_type.loc;
+        const std::string& name = ast_type.union_by_arm_names[arm_index];
+        CompileError error(std::move(loc),
+                           "union by bool selector arm must be 'false' or 'true', got '" +
+                               name + "'");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "selector path '" + union_by_selector_text(ast_type) +
+                "' has type bool, so it must declare exactly false and true arms",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "rename the arm to false or true, or use an enum selector for named cases",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] void fail_missing_union_by_bool_arm(const TypeRef& ast_type,
+                                                     const std::string& arm_name) const {
+        CompileError error(ast_type.loc,
+                           "union by bool selector is missing arm '" + arm_name + "'");
+        error.add_label(DiagnosticLabel{
+            span_from_location(ast_type.loc),
+            "bool selector path '" + union_by_selector_text(ast_type) +
+                "' requires false and true arms",
+            true});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "bool-backed union by fields use literal arm names, for example `false => OffPayload, true => OnPayload`",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     [[noreturn]] void fail_union_by_lowering_after_validation(const StructDecl& decl,
                                                              const StructField& field,
                                                              const TypeRef& ast_type,
@@ -5659,6 +5696,29 @@ private:
         }
     }
 
+    void validate_union_by_bool_arms(const TypeRef& ast_type, const IrType& selector_type) const {
+        if (selector_type.qualifier != TypeQualifier::Value ||
+            selector_type.primitive != IrPrimitiveKind::Bool) {
+            return;
+        }
+
+        bool has_false = false;
+        bool has_true = false;
+        for (std::size_t i = 0; i < ast_type.union_by_arm_names.size(); ++i) {
+            const std::string& name = ast_type.union_by_arm_names[i];
+            if (name == "false") {
+                has_false = true;
+            } else if (name == "true") {
+                has_true = true;
+            } else {
+                fail_unknown_union_by_bool_arm(ast_type, i);
+            }
+        }
+
+        if (!has_false) fail_missing_union_by_bool_arm(ast_type, "false");
+        if (!has_true) fail_missing_union_by_bool_arm(ast_type, "true");
+    }
+
     IrType validate_union_by_selector(const StructDecl& decl,
                                       std::size_t field_index,
                                       const StructField& field,
@@ -5709,7 +5769,10 @@ private:
         validate_union_by_arms(ast_type);
         IrType selector_type = validate_union_by_selector(decl, field_index, field, ast_type);
         validate_union_by_enum_arms(ast_type, selector_type);
-        if (selector_type.primitive != IrPrimitiveKind::Enum) {
+        validate_union_by_bool_arms(ast_type, selector_type);
+        const bool bool_selector = selector_type.qualifier == TypeQualifier::Value &&
+            selector_type.primitive == IrPrimitiveKind::Bool;
+        if (selector_type.primitive != IrPrimitiveKind::Enum && !bool_selector) {
             fail_union_by_lowering_after_validation(decl, field, ast_type, selector_type);
         }
         const EnumInfo& storage = ensure_union_by_synthetic_enum_info(decl, field);
@@ -11756,13 +11819,8 @@ private:
         }
 
         std::map<std::string, LocalState> case_states;
-        for (const std::string& case_name : enum_found->second.case_names) {
-            std::string case_key = qualify_in_module(enum_found->second.module_name, case_name);
-            auto case_found = enum_cases_.find(case_key);
-            if (case_found == enum_cases_.end()) {
-                throw CompileError("internal error: missing enum case '" + case_name + "'");
-            }
-            EnumCaseInfo case_info = enum_case_for_match_value(loc, case_found->second, enum_type);
+        for (const auto& item : enum_found->second.cases) {
+            EnumCaseInfo case_info = enum_case_for_case_decl(loc, enum_found->second, item, enum_type);
             for (std::size_t payload_index = 0; payload_index < case_info.payloads.size(); ++payload_index) {
                 collect_owned_field_states(
                     case_info.payloads[payload_index],
@@ -11850,13 +11908,9 @@ private:
             fail(loc, "unknown enum type '" + subject.enum_type.name + "'");
         }
 
-        for (const std::string& case_name : enum_found->second.case_names) {
-            std::string case_key = qualify_in_module(enum_found->second.module_name, case_name);
-            auto case_found = enum_cases_.find(case_key);
-            if (case_found == enum_cases_.end()) {
-                throw CompileError("internal error: missing enum case '" + case_name + "'");
-            }
-            EnumCaseInfo case_info = enum_case_for_match_value(loc, case_found->second, subject.enum_type);
+        for (const auto& item : enum_found->second.cases) {
+            EnumCaseInfo case_info =
+                enum_case_for_case_decl(loc, enum_found->second, item, subject.enum_type);
             std::map<std::string, LocalState> case_states =
                 enum_owner_payload_states_for_case(subject, case_info, LocalState::Alive);
             if (case_states.size() != all_payload_states.size()) return false;
@@ -13883,6 +13937,23 @@ private:
             return specialize_enum_case_info(loc, info, enum_value_type.args);
         }
         return info;
+    }
+
+    EnumCaseInfo enum_case_for_case_decl(
+        SourceLocation loc,
+        const EnumInfo& enum_info,
+        const EnumInfo::Case& item,
+        const IrType& enum_value_type
+    ) {
+        auto case_found = enum_cases_.find(item.qualified_name);
+        if (case_found == enum_cases_.end()) {
+            throw CompileError("internal error: missing enum case '" + item.qualified_name + "'");
+        }
+        if (case_found->second.enum_name != enum_info.name) {
+            throw CompileError("internal error: enum case '" + item.qualified_name + "' belongs to '" +
+                               case_found->second.enum_name + "', expected '" + enum_info.name + "'");
+        }
+        return enum_case_for_match_value(loc, case_found->second, enum_value_type);
     }
 
     std::optional<EnumCaseInfo> try_enum_case_for_match_value(
@@ -21076,6 +21147,16 @@ private:
         return unqualified_name(case_found->second.name);
     }
 
+    static std::optional<std::string> static_bool_arm_name(const Expr& expr,
+                                                           const IrType& bool_type) {
+        if (bool_type.qualifier != TypeQualifier::Value ||
+            bool_type.primitive != IrPrimitiveKind::Bool ||
+            expr.kind != ExprKind::Bool) {
+            return std::nullopt;
+        }
+        return expr.bool_value ? "true" : "false";
+    }
+
     static const Expr* struct_literal_field_value(const Expr& expr,
                                                   const std::string& field_name) {
         if (expr.kind != ExprKind::StructLiteral) return nullptr;
@@ -21125,7 +21206,10 @@ private:
             current_type = current_type.field_types[field_index];
         }
         if (!current_expr) return std::nullopt;
-        return static_enum_case_arm_name(*current_expr, current_type);
+        if (auto enum_arm = static_enum_case_arm_name(*current_expr, current_type)) {
+            return enum_arm;
+        }
+        return static_bool_arm_name(*current_expr, current_type);
     }
 
     [[noreturn]] void fail_union_by_constructor_selector_mismatch(SourceLocation loc,
@@ -21260,6 +21344,16 @@ private:
                                                     const std::string& selector_field_name,
                                                     const IrType& selector_type,
                                                     const InferredUnionBySelector& inferred) {
+        if (selector_type.qualifier == TypeQualifier::Value &&
+            selector_type.primitive == IrPrimitiveKind::Bool) {
+            if (inferred.arm_name == "false") return make_bool_literal_expr(loc, false);
+            if (inferred.arm_name == "true") return make_bool_literal_expr(loc, true);
+            fail(loc,
+                 "union by constructor arm '" + inferred.arm_name +
+                     "' cannot infer bool selector field '" + selector_field_name +
+                     "' in struct '" + container_name + "'");
+        }
+
         auto case_info = try_enum_case_for_match_value(loc, inferred.arm_name, selector_type);
         if (!case_info || case_info->enum_name != selector_type.name) {
             fail(loc,
@@ -21292,7 +21386,10 @@ private:
 
             auto direct = inferred.find(field_name);
             if (direct != inferred.end()) {
-                if (field_type.primitive != IrPrimitiveKind::Enum) return std::nullopt;
+                if (field_type.primitive != IrPrimitiveKind::Enum &&
+                    field_type.primitive != IrPrimitiveKind::Bool) {
+                    return std::nullopt;
+                }
                 elements.push_back(
                     make_inferred_union_by_selector_value(
                         direct->second.loc,
@@ -21434,7 +21531,8 @@ private:
                     auto inferred = inferred_selectors.find(field.name);
                     if (inferred != inferred_selectors.end()) {
                         const IrType& selector_type = *field_expected;
-                        if (selector_type.primitive == IrPrimitiveKind::Enum) {
+                        if (selector_type.primitive == IrPrimitiveKind::Enum ||
+                            selector_type.primitive == IrPrimitiveKind::Bool) {
                             lowered_values.push_back(
                                 make_inferred_union_by_selector_value(
                                     inferred->second.loc,
@@ -23766,15 +23864,12 @@ private:
         const std::vector<IrType>& type_args
     ) {
         std::vector<TryEnumCaseShape> cases;
-        cases.reserve(enum_info.case_names.size());
-        for (const auto& name : enum_info.case_names) {
-            std::string case_key = qualify_in_module(enum_info.module_name, name);
-            auto found = enum_cases_.find(case_key);
+        cases.reserve(enum_info.cases.size());
+        for (const auto& item : enum_info.cases) {
+            auto found = enum_cases_.find(item.qualified_name);
             if (found == enum_cases_.end()) continue;
             EnumCaseInfo info = found->second;
-            if (info.is_generic) {
-                info = specialize_enum_case_info(loc, info, type_args);
-            }
+            if (info.is_generic) info = specialize_enum_case_info(loc, info, type_args);
             cases.push_back(TryEnumCaseShape{
                 info.name,
                 info.tag,

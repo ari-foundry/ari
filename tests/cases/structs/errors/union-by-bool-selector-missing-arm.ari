@@ -1,0 +1,14 @@
+struct DisabledPayload {
+  value: i64,
+}
+
+struct Feature {
+  enabled: bool,
+  payload: union by enabled {
+    false => DisabledPayload,
+  },
+}
+
+fn main() -> i64 {
+  return 0;
+}

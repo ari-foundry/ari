@@ -309,6 +309,19 @@ private:
         return tokens_[pos_++];
     }
 
+    Token expect_union_by_arm_name(const std::string& message) {
+        if (!check(TokenKind::Identifier) &&
+            !check(TokenKind::KwDrop) &&
+            !check(TokenKind::KwFalse) &&
+            !check(TokenKind::KwForget) &&
+            !check(TokenKind::KwNext) &&
+            !check(TokenKind::KwTrue) &&
+            !check(TokenKind::KwVar)) {
+            fail(peek().loc, message);
+        }
+        return tokens_[pos_++];
+    }
+
     [[noreturn]] static void fail(SourceLocation loc, const std::string& message) {
         throw CompileError(std::move(loc), message);
     }
@@ -1152,7 +1165,7 @@ private:
                     "union by arm list starts here",
                     "}");
             }
-            Token arm = expect_identifier_or_contextual_name_keyword("expected union by arm name");
+            Token arm = expect_union_by_arm_name("expected union by arm name");
             expect(TokenKind::FatArrow, "expected => after union by arm name");
             type.union_by_arm_names.push_back(arm.text);
             type.union_by_arm_locs.push_back(arm.loc);
@@ -2547,6 +2560,63 @@ private:
             pattern.literal_suffix = literal.literal_suffix;
             return finish_integer_pattern(std::move(pattern));
         }
+        if ((check(TokenKind::KwTrue) || check(TokenKind::KwFalse)) &&
+            peek(1).kind == TokenKind::LParen) {
+            Token name = tokens_[pos_++];
+            pattern.kind = PatternKind::EnumCase;
+            pattern.loc = name.loc;
+            pattern.case_name = name.text;
+            expect(TokenKind::LParen, "expected ( after enum case name");
+            pattern.has_payload_pattern = true;
+            if (!check(TokenKind::RParen)) {
+                if (match(TokenKind::DotDot)) {
+                    Pattern rest;
+                    rest.kind = PatternKind::Tuple;
+                    rest.loc = tokens_[pos_ - 1].loc;
+                    rest.has_rest = true;
+                    rest.rest_index = 0;
+                    if (match(TokenKind::Comma) && !check(TokenKind::RParen)) {
+                        do {
+                            rest.elements.push_back(parse_pattern(true));
+                        } while (match(TokenKind::Comma) && !check(TokenKind::RParen));
+                    }
+                    pattern.payload_pattern = std::make_unique<Pattern>(std::move(rest));
+                    expect(TokenKind::RParen, "expected ) after enum payload pattern");
+                    return pattern;
+                }
+                Pattern first = parse_pattern(true);
+                Pattern payload;
+                if (match(TokenKind::Comma)) {
+                    payload.kind = PatternKind::Tuple;
+                    payload.loc = first.loc;
+                    payload.elements.push_back(std::move(first));
+                    while (!check(TokenKind::RParen)) {
+                        if (match(TokenKind::DotDot)) {
+                            if (payload.has_rest) {
+                                fail(tokens_[pos_ - 1].loc, "tuple pattern can contain only one '..' rest");
+                            }
+                            payload.has_rest = true;
+                            payload.rest_index = payload.elements.size();
+                            if (!match(TokenKind::Comma)) break;
+                            if (check(TokenKind::RParen)) break;
+                            continue;
+                        }
+                        payload.elements.push_back(parse_pattern(true));
+                        if (!match(TokenKind::Comma)) break;
+                        if (check(TokenKind::RParen)) break;
+                    }
+                } else {
+                    payload = std::move(first);
+                }
+                if (payload.kind == PatternKind::Binding) {
+                    pattern.has_payload_binding = true;
+                    pattern.payload_name = payload.payload_name;
+                }
+                pattern.payload_pattern = std::make_unique<Pattern>(std::move(payload));
+            }
+            expect(TokenKind::RParen, "expected ) after enum payload pattern");
+            return pattern;
+        }
         if (match(TokenKind::KwTrue) || match(TokenKind::KwFalse)) {
             Token literal = tokens_[pos_ - 1];
             pattern.kind = PatternKind::BoolLiteral;
@@ -3499,11 +3569,13 @@ private:
                 field_names.push_back(field.text);
                 if ((check(TokenKind::Identifier) ||
                      check(TokenKind::KwDrop) ||
+                     check(TokenKind::KwFalse) ||
                      check(TokenKind::KwForget) ||
                      check(TokenKind::KwNext) ||
+                     check(TokenKind::KwTrue) ||
                      check(TokenKind::KwVar)) &&
                     peek(1).kind == TokenKind::FatArrow) {
-                    Token arm = expect_identifier_or_contextual_name_keyword("expected union by arm name");
+                    Token arm = expect_union_by_arm_name("expected union by arm name");
                     expect(TokenKind::FatArrow, "expected => after union by arm name");
                     std::vector<ExprPtr> args;
                     args.push_back(parse_expression());

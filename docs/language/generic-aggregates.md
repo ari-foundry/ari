@@ -76,10 +76,11 @@ show the field shape. During semantic validation, the selector must start from
 an earlier field in the same struct, each nested selector segment must resolve
 through a known struct field, arm names must be unique, and every arm payload
 type must resolve. When the selector type is an enum, every arm name must be an
-enum case and every enum case must have exactly one arm.
+enum case and every enum case must have exactly one arm. When the selector type
+is `bool`, the arm names must be exactly `false` and `true`.
 
-Enum-selector `union by` fields can be constructed in struct literals with the
-same arm names:
+Enum-selector and bool-selector `union by` fields can be constructed in struct
+literals with the same arm names:
 
 ```ari
 let packet = TLSCiphertext {
@@ -96,6 +97,23 @@ compiler lowers the field to internal enum storage, so the aggregate can be
 laid out and emitted by the existing enum backend. When the selector value is
 statically visible in the same struct literal, the constructor arm must match
 that value.
+
+Bool selectors use literal arm names:
+
+```ari
+struct Feature {
+  enabled: bool,
+  payload: union by enabled {
+    false => DisabledPayload,
+    true => EnabledPayload,
+  },
+}
+
+let feature = Feature {
+  enabled: true,
+  payload: true => EnabledPayload { value: 40 },
+};
+```
 
 When the selector is a direct enum field in the same struct, the selector may
 be omitted and inferred from the `union by` constructor arm:
@@ -114,7 +132,8 @@ let packet = Packet {
 };
 ```
 
-The compiler fills `kind` with the enum case named by the arm. Nested selector
+The compiler fills `kind` with the enum case named by the arm. Bool selectors
+can also be inferred from `false` and `true` constructor arms. Nested selector
 paths can be inferred the same way when the omitted selector value can be built
 from the constructor arm:
 
@@ -141,6 +160,7 @@ stream }`. If the intermediate struct has other required fields, write that
 struct field explicitly and leave only the selector field for inference. If more
 than one `union by` field uses the same omitted selector, all of their
 constructor arms must infer the same selector case.
+For bool selectors, the inferred value is the matching bool literal.
 
 Read the active arm by matching the field value. The pattern arm names are the
 same names declared in the `union by` field, and the payload binding has the
@@ -155,6 +175,8 @@ fn payload_value(packet: TLSCiphertext) -> i64 {
   };
 }
 ```
+
+Bool selector payloads are matched with `false(payload)` and `true(payload)`.
 
 Selector fields and their linked payload fields are stable after a value has
 been built. Direct assignment to the selector path, to an ancestor of that

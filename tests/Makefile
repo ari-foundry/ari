@@ -6005,6 +6005,8 @@ check-structs: $(TARGET)
 	$(BUILD_DIR)/structs/union-by-match.elf; code=$$?; test $$code -eq 42
 	$(TARGET) tests/cases/structs/ok/union-by-match.ari --emit-llvm $(BUILD_DIR)/structs/union-by-match.ll
 	grep -q "switch i64" $(BUILD_DIR)/structs/union-by-match.ll
+	$(TARGET) tests/cases/structs/ok/union-by-bool-selector.ari -o $(BUILD_DIR)/structs/union-by-bool-selector.elf
+	$(BUILD_DIR)/structs/union-by-bool-selector.elf; code=$$?; test $$code -eq 46
 	$(TARGET) tests/cases/traits/ok/impl-associated-new.ari --emit-llvm $(BUILD_DIR)/structs/impl-associated-new.ll
 	grep -q "_ARNv4impl5Point8inherent3new" $(BUILD_DIR)/structs/impl-associated-new.ll
 	grep -q "call { i64, i64 }" $(BUILD_DIR)/structs/impl-associated-new.ll
@@ -6076,6 +6078,10 @@ check-structs: $(TARGET)
 	grep -q "union by constructor arm 'record' is not declared for field 'fragment'" $(BUILD_DIR)/structs/union-by-constructor-unknown-arm.err
 	if $(TARGET) tests/cases/structs/errors/union-by-constructor-selector-mismatch.ari -o $(BUILD_DIR)/structs/union-by-constructor-selector-mismatch.elf >$(BUILD_DIR)/structs/union-by-constructor-selector-mismatch.err 2>&1; then exit 1; fi
 	grep -q "union by constructor arm 'block' does not match selector 'security.cipher_type' value 'stream'" $(BUILD_DIR)/structs/union-by-constructor-selector-mismatch.err
+	if $(TARGET) tests/cases/structs/errors/union-by-bool-selector-missing-arm.ari -o $(BUILD_DIR)/structs/union-by-bool-selector-missing-arm.elf >$(BUILD_DIR)/structs/union-by-bool-selector-missing-arm.err 2>&1; then exit 1; fi
+	grep -q "union by bool selector is missing arm 'true'" $(BUILD_DIR)/structs/union-by-bool-selector-missing-arm.err
+	if $(TARGET) tests/cases/structs/errors/union-by-bool-selector-unknown-arm.ari -o $(BUILD_DIR)/structs/union-by-bool-selector-unknown-arm.elf >$(BUILD_DIR)/structs/union-by-bool-selector-unknown-arm.err 2>&1; then exit 1; fi
+	grep -q "union by bool selector arm must be 'false' or 'true', got 'maybe'" $(BUILD_DIR)/structs/union-by-bool-selector-unknown-arm.err
 	if $(TARGET) tests/cases/structs/errors/union-by-selector-inference-conflict.ari -o $(BUILD_DIR)/structs/union-by-selector-inference-conflict.elf >$(BUILD_DIR)/structs/union-by-selector-inference-conflict.err 2>&1; then exit 1; fi
 	grep -q "union by constructors infer conflicting values for selector 'kind'" $(BUILD_DIR)/structs/union-by-selector-inference-conflict.err
 	if $(TARGET) tests/cases/structs/errors/union-by-nested-selector-inference-conflict.ari -o $(BUILD_DIR)/structs/union-by-nested-selector-inference-conflict.elf >$(BUILD_DIR)/structs/union-by-nested-selector-inference-conflict.err 2>&1; then exit 1; fi
