@@ -5542,7 +5542,9 @@ private:
                                                              const StructField& field,
                                                              const TypeRef& ast_type,
                                                              const IrType& selector_type) const {
-        CompileError error(ast_type.loc, "union by field types are semantically validated but not lowered yet");
+        CompileError error(ast_type.loc,
+                           "union by selector type must be enum or bool, got " +
+                               type_name(selector_type));
         error.add_note(DiagnosticNote{
             std::nullopt,
             "field '" + field.name + "' in struct '" + decl.name + "' has a validated selector path '" +
@@ -5550,12 +5552,11 @@ private:
             DiagnosticNoteKind::Note});
         error.add_note(DiagnosticNote{
             std::nullopt,
-            "this field declares " + std::to_string(ast_type.union_by_arm_names.size()) +
-                " unique active-payload arms; construction, narrowing, layout, and active-arm drop are still compiler work",
+            "current `union by` lowering uses a closed enum-style tag, so every arm must map to an enum case or to bool false/true",
             DiagnosticNoteKind::Note});
         error.add_note(DiagnosticNote{
             std::nullopt,
-            "use an ordinary enum payload until union by lowering lands",
+            "change the selector field to an enum or bool, or wrap the payload choices in an ordinary enum",
             DiagnosticNoteKind::Help});
         throw error;
     }

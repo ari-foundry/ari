@@ -77,7 +77,9 @@ an earlier field in the same struct, each nested selector segment must resolve
 through a known struct field, arm names must be unique, and every arm payload
 type must resolve. When the selector type is an enum, every arm name must be an
 enum case and every enum case must have exactly one arm. When the selector type
-is `bool`, the arm names must be exactly `false` and `true`.
+is `bool`, the arm names must be exactly `false` and `true`. Other selector
+types are rejected; model richer discriminants as an enum so the compiler can
+prove that every active payload arm is covered.
 
 Enum-selector and bool-selector `union by` fields can be constructed in struct
 literals with the same arm names:
@@ -117,10 +119,11 @@ let packet = TLSCiphertext {
 };
 ```
 
-This shorthand is equivalent to `fragment: stream => GenericStreamCipher {
-value: 41 }`. It still checks the payload fields against the arm's declared
-payload type. Use the explicit `arm => value` form for scalar, tuple, enum, or
-already-built payload values.
+This shorthand is equivalent to `fragment: stream(GenericStreamCipher { value:
+41 })`. It still checks the payload fields against the arm's declared payload
+type. Use the explicit `arm(value)` form for scalar, tuple, enum, or
+already-built payload values. The older `arm => value` form is accepted as a
+compatibility spelling.
 
 Bool selectors use literal arm names:
 

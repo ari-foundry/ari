@@ -1372,6 +1372,21 @@ private:
         method.name = method_name.text;
         method.loc = method_name.loc;
 
+        if (check(TokenKind::Colon)) {
+            CompileError error(
+                method_name.loc,
+                "structural capability requirements are method-only");
+            error.add_label(DiagnosticLabel{
+                peek().loc.span,
+                "field or property requirements are not supported in `has` parameters",
+                true});
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "write a method requirement such as `has " + method.name +
+                    "() -> Type`, or use a named trait for richer contracts",
+                DiagnosticNoteKind::Help});
+            throw error;
+        }
         Token open = expect(TokenKind::LParen, "expected ( after structural capability method name");
         if (!check(TokenKind::RParen)) {
             do {

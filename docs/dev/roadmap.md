@@ -71,10 +71,11 @@ method-call path. Trait impl conformance now compares structural capability
 method signatures exactly, so a trait method and its impl can use direct
 `has ...` spelling or an equivalent capability alias but cannot silently change
 the requirement. Hidden capability generics do not count as visible method type
-arguments. It must continue to avoid an `interface` keyword, accidental dynamic
-dispatch, or a shortcut around named trait-bound diagnostics. Remaining
-roadmap work includes richer diagnostics for when a named trait is better and
-any future extension beyond method requirements.
+arguments. Field or property-style requirements are rejected as method-only. It
+must continue to avoid an `interface` keyword, accidental dynamic dispatch, or
+a shortcut around named trait-bound diagnostics. Remaining roadmap work
+includes richer diagnostics for when a named trait is better and any future
+extension beyond method requirements.
 
 Discriminant-linked union fields are also worth exploring for protocol and
 binary-format records whose payload shape is controlled by data already present
@@ -128,12 +129,12 @@ assignment to the selector path, an ancestor field, or the `union by` field
 itself is rejected; rebuild the whole struct when the discriminant and active
 payload must change together.
 
-It should not replace ordinary `enum` ADTs, unchecked C unions, or `match`. A
-future design must specify concrete-value policies for non-enum and non-bool
-discriminants, public active-arm borrowing/narrowing outside direct field
-matches, runtime selector consistency policy beyond direct local assignments,
-selector inference through intermediate structs with unrelated required fields,
-active-arm drop diagnostics, and stable ABI naming.
+It should not replace ordinary `enum` ADTs, unchecked C unions, or `match`.
+Non-enum and non-bool selectors are rejected so the active-arm set stays closed
+and exhaustively checkable. Remaining design work covers public active-arm
+borrowing/narrowing outside direct field matches, runtime selector consistency
+policy beyond direct local assignments, active-arm drop diagnostics, and stable
+ABI naming.
 The compiler capability inventory tracks this as `union-by-fields`.
 
 ## What Not To Track Here

@@ -1,7 +1,7 @@
-diagnostic error code=T0001 family=type message="union by field types are semantically validated but not lowered yet" sources=1 labels=1 notes=2 helps=1
+diagnostic error code=T0001 family=type message="union by selector type must be enum or bool, got i64" sources=1 labels=1 notes=2 helps=1
   Source source_id=0 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic-parser-union-by-field.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic-parser-union-by-field.ari" bytes=245
   Label index=0 role=primary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-parser-union-by-field.ari" line=7 column=13 end_line=7 end_column=18 byte_start=118 byte_end=123 message=""
   Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-parser-union-by-field.ari:7:13\n   |\n 7 |   fragment: union by security.cipher_type {\n   |             ^^^^^"
   Note index=0 location=none message="field 'fragment' in struct 'TLSCiphertext' has a validated selector path 'security.cipher_type' of type i64"
-  Note index=1 location=none message="this field declares 3 unique active-payload arms; construction, narrowing, layout, and active-arm drop are still compiler work"
-  Help index=0 location=none message="use an ordinary enum payload until union by lowering lands"
+  Note index=1 location=none message="current `union by` lowering uses a closed enum-style tag, so every arm must map to an enum case or to bool false/true"
+  Help index=0 location=none message="change the selector field to an enum or bool, or wrap the payload choices in an ordinary enum"

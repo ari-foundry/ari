@@ -5844,6 +5844,8 @@ check-traits: $(TARGET)
 	grep -q "does not satisfy structural capability 'has add(i64) -> i64'" $(BUILD_DIR)/traits/structural-capability-multi-missing.err
 	if $(TARGET) tests/cases/traits/errors/structural-capability-duplicate-method.ari -o $(BUILD_DIR)/traits/structural-capability-duplicate-method.elf >$(BUILD_DIR)/traits/structural-capability-duplicate-method.err 2>&1; then exit 1; fi
 	grep -q "duplicate structural capability method requirement 'serialize'" $(BUILD_DIR)/traits/structural-capability-duplicate-method.err
+	if $(TARGET) tests/cases/traits/errors/structural-capability-field-requirement.ari -o $(BUILD_DIR)/traits/structural-capability-field-requirement.elf >$(BUILD_DIR)/traits/structural-capability-field-requirement.err 2>&1; then exit 1; fi
+	grep -q "structural capability requirements are method-only" $(BUILD_DIR)/traits/structural-capability-field-requirement.err
 	if $(TARGET) tests/cases/traits/errors/structural-capability-impl-method-missing.ari -o $(BUILD_DIR)/traits/structural-capability-impl-method-missing.elf >$(BUILD_DIR)/traits/structural-capability-impl-method-missing.err 2>&1; then exit 1; fi
 	grep -q "does not satisfy structural capability 'has serialize() -> i64'" $(BUILD_DIR)/traits/structural-capability-impl-method-missing.err
 	if $(TARGET) tests/cases/traits/errors/structural-capability-trait-method-mismatch.ari -o $(BUILD_DIR)/traits/structural-capability-trait-method-mismatch.elf >$(BUILD_DIR)/traits/structural-capability-trait-method-mismatch.err 2>&1; then exit 1; fi
