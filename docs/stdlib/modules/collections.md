@@ -263,8 +263,9 @@ front-to-back values in the target zone, leaving free-list holes behind.
 
 Hash collections are real hash tables, not aliases over `Set`. They use linear
 probing, tombstones for removal, and a load-factor growth rule. For ordinary
-keys that implement `std::hash::Hash`, use `with_capacity` to select the
-stdlib default hash policy. For caller-specific hash policy, use `with_hash` or
+keys that implement `std::hash::Hash`, use `new` to select the stdlib default
+hash policy, or `with_capacity` when the initial bucket count should be
+explicit. For caller-specific hash policy, use `with_hash` or
 the lower-level `collections::hash_map` / `collections::hash_set` constructors.
 For tracked local hash handles, `map.insert(key, value)`, `map.entry(key)`,
 `map.reserve(capacity)`, `map.reserve_extra(additional)`, `set.insert(value)`,
@@ -276,13 +277,13 @@ collections::hash_i64(value)
 collections::hash_string(value)
 collections::hash_map<K, V>(ref mut zone, capacity, hash)
 collections::string_hash_map<V>(ref mut zone, capacity)
-HashMap::new<K, V>(ref mut zone, capacity, hash)
+HashMap::new<K: std::hash::Hash[K], V>(ref mut zone)
 HashMap::with_capacity<K: std::hash::Hash[K], V>(ref mut zone, capacity)
 HashMap::with_hash<K, V>(ref mut zone, capacity, hash)
 HashMap::from_iter<K, V, I>(ref mut zone, capacity, hash, iter)
 collections::hash_set<T>(ref mut zone, capacity, hash)
 collections::string_hash_set(ref mut zone, capacity)
-HashSet::new<T>(ref mut zone, capacity, hash)
+HashSet::new<T: std::hash::Hash[T]>(ref mut zone)
 HashSet::with_capacity<T: std::hash::Hash[T]>(ref mut zone, capacity)
 HashSet::with_hash<T>(ref mut zone, capacity, hash)
 HashSet::from_iter<T, I>(ref mut zone, capacity, hash, iter)
@@ -296,13 +297,13 @@ compatibility helper for i64 keys and delegates to `std::hash::value<i64>`.
 `String` key case. Owned `String` equality is content-based through
 `std::cmp::Eq[String]`, so independently allocated strings with the same bytes
 find the same hash map entry.
-`HashMap::with_capacity` and `HashSet::with_capacity` are the trait-driven
-constructors: they call `std::hash::value<T>` for the key/value type and leave
-equality to the same `==`/`std::cmp::Eq` behavior used by lookups. Use
+`HashMap::new` and `HashSet::new` are the common constructors. They call
+`std::hash::value<T>` for the key/value type, use a small default starting
+capacity, and leave equality to the same `==`/`std::cmp::Eq` behavior used by
+lookups. Use `HashMap::with_capacity` and `HashSet::with_capacity` when the
+default hash policy should start with caller-chosen capacity. Use
 `HashMap::with_hash` and `HashSet::with_hash` when a custom hash policy is
-intentional; `HashMap::new(zone, capacity, hash)` and
-`HashSet::new(zone, capacity, hash)` remain compatibility spellings for the
-older explicit-hasher constructor shape.
+intentional.
 
 ```ari
 map.len()
@@ -385,8 +386,9 @@ String-key hash maps also have borrowed byte-slice lookup and removal helpers:
 `contains_key_bytes`, `try_get_bytes`, `get_bytes`, `get_or_bytes`,
 `try_get_mut_bytes`, `get_mut_bytes`, `remove_bytes`, and
 `remove_entry_bytes`. They are available on `HashMap[String, V]` values created
-with `string_hash_map` or the equivalent `HashMap::new(..., hash_string)`
-policy. These helpers hash the borrowed bytes directly and compare them against
+with `string_hash_map`, `HashMap::new<String,V>`, or an explicit
+`HashMap::with_hash(..., hash_string)` policy. These helpers hash the borrowed
+bytes directly and compare them against
 stored `String` keys by byte content, so parser-style code can look up
 `Slice[u8]` keys from an input line without allocating a temporary `String`.
 
@@ -483,30 +485,34 @@ a temporary key.
 
 Tree collections are red-black trees. They provide ordered lookup without
 needing a hash function. For ordinary keys that implement `std::cmp::Ord`, use
-`with_capacity` to select the stdlib default less-than policy. Custom orderings
-stay explicit through comparator-taking constructors.
+`new` to select the stdlib default less-than policy, or `with_capacity` when
+the initial tree storage should be explicit. Custom orderings stay explicit
+through `with_less` or the lower-level constructor functions.
 
 ```ari
 collections::less_i64(left, right)
 collections::tree_map<K, V>(ref mut zone, capacity, less)
-TreeMap::new<K, V>(ref mut zone, capacity, less)
+TreeMap::new<K: std::cmp::Ord[K], V>(ref mut zone)
 TreeMap::with_capacity<K: std::cmp::Ord[K], V>(ref mut zone, capacity)
+TreeMap::with_less<K, V>(ref mut zone, capacity, less)
 TreeMap::from_iter<K, V, I>(ref mut zone, capacity, less, iter)
 collections::tree_set<T>(ref mut zone, capacity, less)
-TreeSet::new<T>(ref mut zone, capacity, less)
+TreeSet::new<T: std::cmp::Ord[T]>(ref mut zone)
 TreeSet::with_capacity<T: std::cmp::Ord[T]>(ref mut zone, capacity)
+TreeSet::with_less<T>(ref mut zone, capacity, less)
 TreeSet::from_iter<T, I>(ref mut zone, capacity, less, iter)
 ```
 
 The comparator shape is `fn(K, K) -> bool` for `TreeMap[K, V]` and
 `fn(T, T) -> bool` for `TreeSet[T]`. `collections::less_i64` is the first
 built-in helper for i64 keys.
-`TreeMap::with_capacity` and `TreeSet::with_capacity` are the trait-driven
-constructors: they use the ordinary `<` operation available through
-`std::cmp::Ord[T]`. Keep custom orderings explicit with `TreeMap::new`,
-`TreeSet::new`, `collections::tree_map`, or `collections::tree_set`, so
-caller-specific sort policy remains readable without making the common ordered
-path noisy.
+`TreeMap::new` and `TreeSet::new` are the common constructors. They use the
+ordinary `<` operation available through `std::cmp::Ord[T]` and a small default
+starting capacity. `TreeMap::with_capacity` and `TreeSet::with_capacity` keep
+that default ordering while letting callers choose initial storage. Keep custom
+orderings explicit with `TreeMap::with_less`, `TreeSet::with_less`,
+`collections::tree_map`, or `collections::tree_set`, so caller-specific sort
+policy remains readable without making the common ordered path noisy.
 
 ```ari
 map.len()
@@ -684,19 +690,22 @@ with the same comparator.
 ## BinaryHeap And PriorityQueue
 
 `BinaryHeap[T]` and `PriorityQueue[T]` are max-priority containers. For
-ordinary values that implement `std::cmp::Ord`, use `with_capacity` to select
-the stdlib default ordering. For caller-specific priority policy, keep the
-comparator explicit: `less(a, b)` means `a` has lower priority than `b`. With
+ordinary values that implement `std::cmp::Ord`, use `new` to select the stdlib
+default ordering, or `with_capacity` when the initial heap storage should be
+explicit. For caller-specific priority policy, keep the comparator explicit:
+`less(a, b)` means `a` has lower priority than `b`. With
 `collections::less_i64`, larger integers pop first.
 
 ```ari
 collections::binary_heap<T>(ref mut zone, capacity, less)
-BinaryHeap::new<T>(ref mut zone, capacity, less)
+BinaryHeap::new<T: std::cmp::Ord[T]>(ref mut zone)
 BinaryHeap::with_capacity<T: std::cmp::Ord[T]>(ref mut zone, capacity)
+BinaryHeap::with_less<T>(ref mut zone, capacity, less)
 BinaryHeap::from_iter<T, I>(ref mut zone, capacity, less, iter)
 collections::priority_queue<T>(ref mut zone, capacity, less)
-PriorityQueue::new<T>(ref mut zone, capacity, less)
+PriorityQueue::new<T: std::cmp::Ord[T]>(ref mut zone)
 PriorityQueue::with_capacity<T: std::cmp::Ord[T]>(ref mut zone, capacity)
+PriorityQueue::with_less<T>(ref mut zone, capacity, less)
 PriorityQueue::from_iter<T, I>(ref mut zone, capacity, less, iter)
 ```
 
@@ -732,12 +741,14 @@ priority to high priority for the comparator; with `less_i64`, the resulting
 vector is ascending. `BinaryHeap::from_iter`/`PriorityQueue::from_iter` and
 `extend_iter` consume `Iterator[T]`, append every value, and sift it into the
 heap invariant.
-`BinaryHeap::with_capacity` and `PriorityQueue::with_capacity` are the
-trait-driven constructors: they use the ordinary `<` operation available
-through `std::cmp::Ord[T]`. Use `BinaryHeap::new`,
-`PriorityQueue::new`, `collections::binary_heap`, or
-`collections::priority_queue` when a custom priority relation should be
-visible at the construction site.
+`BinaryHeap::new` and `PriorityQueue::new` are the common constructors. They
+use the ordinary `<` operation available through `std::cmp::Ord[T]` and a
+small default starting capacity. `BinaryHeap::with_capacity` and
+`PriorityQueue::with_capacity` keep that default ordering while letting callers
+choose initial storage. Use `BinaryHeap::with_less`,
+`PriorityQueue::with_less`, `collections::binary_heap`, or
+`collections::priority_queue` when a custom priority relation should be visible
+at the construction site.
 For tracked local heap and priority-queue handles, `push(value)`,
 `reserve(capacity)`, and `reserve_extra(additional)` infer the constructor
 zone. `copy_to(ref mut target)` copies the heap storage and comparator into the
@@ -806,11 +817,11 @@ fn main() -> i64 {
 }
 ```
 
-`HashMap::with_capacity(ref mut zone, capacity)` is the common constructor for
-ordinary hashable keys. `HashMap::with_hash(ref mut zone, capacity, hash)` is
-the named custom-hasher constructor. `HashMap::new(ref mut zone, capacity,
-hash)` is still accepted as a compatibility spelling for the older explicit
-hash-function form. `string_hash_map` remains the concise
+`HashMap::new(ref mut zone)` is the common constructor for ordinary hashable
+keys. `HashMap::with_capacity(ref mut zone, capacity)` uses the same default
+hash policy with caller-chosen storage. `HashMap::with_hash(ref mut zone,
+capacity, hash)` is the named custom-hasher constructor. `string_hash_map`
+remains the concise
 `HashMap[String, V]` constructor and uses content hashing plus content equality
 for independently allocated `String`
 values. For parser code, use the `_bytes` methods on `HashMap[String, V]` and
@@ -821,7 +832,7 @@ Ordered tree:
 ```ari
 fn main() -> i64 {
   var zone = zone::create(2048);
-  var set = TreeSet::new<i64>(ref mut zone, 8, collections::less_i64);
+  var set = TreeSet::new<i64>(ref mut zone);
 
   set.insert(4);
   set.insert(2);
@@ -964,12 +975,12 @@ and checked by `make check-std-api`.
 - Hash and tree containers are copy-style value APIs today, matching the
   current `Set`/`Vec` source style. Use simple copyable keys and values until
   trait bounds can express copy, hash, equality, and ordering requirements.
-- Hash containers now have `with_capacity` trait-driven constructors for
-  ordinary `Hash[T]` keys. Use explicit hash constructors only when custom hash
-  policy is intentional.
-- Tree containers now have `with_capacity` trait-driven constructors for
-  ordinary `Ord[T]` keys. Use explicit comparator constructors only when custom
-  ordering policy is intentional.
+- Hash containers now have natural `new` constructors for ordinary `Hash[T]`
+  keys, plus `with_capacity` for explicit default-policy capacity. Use
+  `with_hash` only when custom hash policy is intentional.
+- Tree containers now have natural `new` constructors for ordinary `Ord[T]`
+  keys, plus `with_capacity` for explicit default-policy capacity. Use
+  `with_less` only when custom ordering policy is intentional.
 - `values_mut()` uses a `has_next()`/`next()` cursor because Ari does not yet
   lower `Iterator[ref mut T]`/`Option[ref mut T]` as a stable public iterator
   item shape. Map `iter_mut()` therefore yields `MapEntryMut[K,V]` handles
@@ -982,6 +993,7 @@ and checked by `make check-std-api`.
   rebuild path.
 - `LinkedList[T]` is zone-backed index storage rather than one allocation per
   node. Spare node storage is reused by the list and reclaimed with the zone.
-- `BinaryHeap[T]` and `PriorityQueue[T]` now have `with_capacity`
-  trait-driven constructors for ordinary `Ord[T]` values. Use explicit
-  comparator constructors only when custom priority policy is intentional.
+- `BinaryHeap[T]` and `PriorityQueue[T]` now have natural `new` constructors
+  for ordinary `Ord[T]` values, plus `with_capacity` for explicit
+  default-policy capacity. Use `with_less` only when custom priority policy is
+  intentional.

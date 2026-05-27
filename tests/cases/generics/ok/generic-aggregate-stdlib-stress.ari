@@ -152,7 +152,7 @@ fn main() -> i64 {
   let vector_result: Result[std::vec::Vec[Token], Diagnostic] =
     Ok<std::vec::Vec[Token], Diagnostic>(token_vector);
 
-  var symbols = HashMap::new<i64, Symbol>(ref mut zone, 2, symbol_hash);
+  var symbols = HashMap::with_hash<i64, Symbol>(ref mut zone, 2, symbol_hash);
   symbols.insert(ref mut zone, 101, Symbol { id: 19 });
   symbols.insert(ref mut zone, 202, Symbol { id: 23 });
   let symbol_score = symbols.get(101).id + symbols.get(202).id;

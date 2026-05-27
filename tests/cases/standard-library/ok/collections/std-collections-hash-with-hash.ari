@@ -1,5 +1,4 @@
-// Covers the explicit-hasher constructor name that lets future HashMap::new
-// become the default-hasher constructor without losing custom hash policy.
+// Covers the explicit-hasher constructor name kept beside natural HashMap::new.
 fn constant_hash(value: i64) -> u64 {
   return 5u64;
 }

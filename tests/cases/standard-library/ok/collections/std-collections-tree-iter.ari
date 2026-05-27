@@ -7,7 +7,7 @@ fn write_i64(value: ref mut i64, replacement: i64) -> void {
 
 fn main() -> i64 {
   var zone = zone::create(4096);
-  var map = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  var map = TreeMap::with_less<i64, i64>(ref mut zone, 1, collections::less_i64);
   var score = 0;
 
   map.insert(ref mut zone, 4, 40);
@@ -59,7 +59,7 @@ fn main() -> i64 {
     score = score + 19;
   }
 
-  var set = TreeSet::new<i64>(ref mut zone, 1, collections::less_i64);
+  var set = TreeSet::with_less<i64>(ref mut zone, 1, collections::less_i64);
   set.insert(ref mut zone, 6);
   set.insert(ref mut zone, 2);
   set.insert(ref mut zone, 9);

@@ -6,13 +6,33 @@ fn constant_hash(value: i64) -> u64 {
 
 fn main() -> i64 {
   var zone = zone::create(4096);
-  var hash = HashMap::new<i64, i64>(ref mut zone, 1, constant_hash);
-  var tree = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  var hash = HashMap::with_hash<i64, i64>(ref mut zone, 1, constant_hash);
+  var tree = TreeMap::with_less<i64, i64>(ref mut zone, 1, collections::less_i64);
   var default_hash = HashMap::with_capacity<i64, i64>(ref mut zone, 1);
   var default_set = HashSet::with_capacity<i64>(ref mut zone, 1);
   var default_tree = TreeMap::with_capacity<i64, i64>(ref mut zone, 1);
   var default_tree_set = TreeSet::with_capacity<i64>(ref mut zone, 1);
+  var natural_hash = HashMap::new<i64, i64>(ref mut zone);
+  var natural_set = HashSet::new<i64>(ref mut zone);
+  var natural_tree = TreeMap::new<i64, i64>(ref mut zone);
+  var natural_tree_set = TreeSet::new<i64>(ref mut zone);
   var score = 0;
+
+  assert(natural_hash.is_empty());
+  natural_hash.insert(ref mut zone, 12, 120);
+  assert(natural_hash.get_or(12, 0) == 120);
+
+  assert(natural_set.is_empty());
+  assert(natural_set.insert(ref mut zone, 12));
+  assert(natural_set.contains(12));
+
+  assert(natural_tree.is_empty());
+  natural_tree.insert(ref mut zone, 12, 120);
+  assert(natural_tree.get_or(12, 0) == 120);
+
+  assert(natural_tree_set.is_empty());
+  assert(natural_tree_set.insert(ref mut zone, 12));
+  assert(natural_tree_set.contains(12));
 
   default_hash.insert(ref mut zone, 4, 40);
   default_hash.insert(ref mut zone, 4, 41);

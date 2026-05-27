@@ -4,7 +4,7 @@ fn constant_hash(value: i64) -> u64 {
 
 fn main() -> i64 {
   var zone = zone::create(256);
-  var map = HashMap::new<i64, i64>(ref mut zone, 1, constant_hash);
+  var map = HashMap::with_hash<i64, i64>(ref mut zone, 1, constant_hash);
   map.insert(ref mut zone, 1, 10);
   var cursor = map.keys();
   zone::reset(ref mut zone);

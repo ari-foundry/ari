@@ -28,7 +28,7 @@ fn main() -> i64 {
   tree_set.append(ref mut high_set);
   assert(high_set.is_empty() && tree_set.len() == 4 && tree_set.contains(8));
 
-  var map = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  var map = TreeMap::with_less<i64, i64>(ref mut zone, 1, collections::less_i64);
   map.insert(4, 40);
   map.insert(1, 10);
   map.insert(7, 70);
@@ -44,17 +44,17 @@ fn main() -> i64 {
   map.append(ref mut tail);
   assert(tail.is_empty() && map.len() == 2 && map.get(4) == 40);
 
-  var hash_source = HashMap::new<i64, i64>(ref mut zone, 1, collections::hash_i64);
+  var hash_source = HashMap::with_hash<i64, i64>(ref mut zone, 1, collections::hash_i64);
   hash_source.insert(1, 100);
   hash_source.insert(2, 200);
-  var hash_target = HashMap::new<i64, i64>(ref mut zone, 1, collections::hash_i64);
+  var hash_target = HashMap::with_hash<i64, i64>(ref mut zone, 1, collections::hash_i64);
   hash_target.extend_iter<HashMapEntries[i64, i64]>(hash_source.entries());
   assert(hash_target.len() == 2 && hash_target.get(2) == 200);
   var hash_built: HashMap[i64, i64] =
     HashMap::from_iter<i64, i64, HashMapEntries[i64, i64]>(ref mut zone, 1, collections::hash_i64, hash_source.entries());
   assert(hash_built.len() == 2 && hash_built.get(1) == 100);
 
-  var tree_source = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  var tree_source = TreeMap::with_less<i64, i64>(ref mut zone, 1, collections::less_i64);
   tree_source.insert(9, 90);
   tree_source.insert(8, 80);
   var tree_target: TreeMap[i64, i64] =

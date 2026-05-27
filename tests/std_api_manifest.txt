@@ -1467,7 +1467,7 @@ method std::collections::BinaryHeap[T]::from_iter[I: std::Iterator[T]|check-prel
 method std::collections::BinaryHeap[T]::into_sorted_vec|check-prelude std-collections-heap draining sorted Vec conversion; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::is_empty|check-prelude std-collections-heap binary heap emptiness predicate; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::len|check-prelude std-collections-heap binary heap length metadata; docs/stdlib/modules/collections.md
-method std::collections::BinaryHeap[T]::new|check-prelude std-collections-heap associated explicit-comparator constructor; docs/stdlib/modules/collections.md
+method std::collections::BinaryHeap[T]::new|check-prelude std-collections-heap natural default-order binary heap constructor; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::peek|check-prelude std-collections-heap asserting highest-priority access; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::peek_mut|check-prelude std-collections-heap mutable top guard with drop-time sift-down; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::pop|check-prelude std-collections-heap highest-priority removal; docs/stdlib/modules/collections.md
@@ -1477,6 +1477,7 @@ method std::collections::BinaryHeap[T]::reserve_extra|check-prelude std-collecti
 method std::collections::BinaryHeap[T]::try_peek|check-prelude std-collections-heap optional highest-priority access; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::try_pop|check-prelude std-collections-heap optional highest-priority removal; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::with_capacity|check-prelude std-collections-heap trait-driven default-order binary heap constructor; docs/stdlib/modules/collections.md
+method std::collections::BinaryHeap[T]::with_less|check-prelude std-collections-heap explicit comparator binary heap constructor; docs/stdlib/modules/collections.md
 method std::collections::Deque[T]::back|check-prelude std-collections-deque asserting back accessor; docs/stdlib/modules/collections.md
 method std::collections::Deque[T]::capacity|check-prelude std-collections-deque deque capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::Deque[T]::clear|check-prelude std-collections-deque drops live deque values; docs/stdlib/modules/collections.md
@@ -1534,7 +1535,7 @@ method std::collections::HashMap[K,V]::iter|check-prelude std-collections-view-a
 method std::collections::HashMap[K,V]::iter_mut|check-prelude std-collections-view-api mutable live-bucket entry cursor; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::keys|check-prelude std-collections-hash-iter bucket-order key iterator; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::len|check-prelude std-collections-hash metadata helper; docs/stdlib/modules/collections.md
-method std::collections::HashMap[K,V]::new|check-prelude std-collections-hash associated explicit-hasher constructor; docs/stdlib/modules/collections.md
+method std::collections::HashMap[K,V]::new|check-prelude std-collections-map-natural-api natural default-hash hash map constructor; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::remove|check-prelude std-collections-hash tombstone removal; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::remove_entry|check-prelude std-collections-map-entry-api hash map key-value tombstone removal; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::replace|check-prelude std-collections-map-mut-access named hash map insert-or-replace helper; docs/stdlib/modules/collections.md
@@ -1546,7 +1547,7 @@ method std::collections::HashMap[K,V]::try_get_mut|check-prelude std-collections
 method std::collections::HashMap[K,V]::values|check-prelude std-collections-hash-iter bucket-order value iterator; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::values_mut|check-prelude std-collections-view-api mutable live-bucket value cursor; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::with_capacity|check-prelude std-collections-map-natural-api trait-driven default-hash hash map constructor; docs/stdlib/modules/collections.md
-method std::collections::HashMap[K,V]::with_hash|check-prelude std-collections-hash-with-hash explicit custom-hasher constructor and HashMap::new migration path; docs/stdlib/modules/collections.md
+method std::collections::HashMap[K,V]::with_hash|check-prelude std-collections-hash-with-hash explicit custom-hasher constructor; docs/stdlib/modules/collections.md
 method std::collections::HashMap[std::string::String,V]::contains_key_bytes|check-prelude std-collections-string-map borrowed byte-slice lookup for String-key hash maps; docs/stdlib/modules/collections.md
 method std::collections::HashMap[std::string::String,V]::get_bytes|check-prelude std-collections-string-map asserting borrowed byte-slice lookup for String-key hash maps; docs/stdlib/modules/collections.md
 method std::collections::HashMap[std::string::String,V]::get_mut_bytes|check-prelude std-collections-string-map asserting borrowed mutable byte-slice lookup for String-key hash maps; docs/stdlib/modules/collections.md
@@ -1572,7 +1573,7 @@ method std::collections::HashSet[T]::is_subset|check-prelude std-collections-has
 method std::collections::HashSet[T]::is_superset|check-prelude std-collections-hash-set-relations live-bucket superset predicate; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::iter|check-prelude std-collections-hash-iter live-bucket iterator and IntoIterator; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::len|check-prelude std-collections-hash metadata helper; docs/stdlib/modules/collections.md
-method std::collections::HashSet[T]::new|check-prelude std-collections-hash associated explicit-hasher constructor; docs/stdlib/modules/collections.md
+method std::collections::HashSet[T]::new|check-prelude std-collections-map-natural-api natural default-hash hash set constructor; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::remove|check-prelude std-collections-hash drop-on-remove membership helper; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::replace|check-prelude std-collections-hash replace-or-insert behavior; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::reserve|check-prelude std-collections-hash same-zone table growth; docs/stdlib/modules/collections.md
@@ -1581,7 +1582,7 @@ method std::collections::HashSet[T]::retain|check-prelude std-collections-retain
 method std::collections::HashSet[T]::take|check-prelude std-collections-hash Option-returning removal; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::try_get|check-prelude std-collections-set-representatives optional stored representative lookup; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::with_capacity|check-prelude std-collections-map-natural-api trait-driven default-hash hash set constructor; docs/stdlib/modules/collections.md
-method std::collections::HashSet[T]::with_hash|check-prelude std-collections-hash-with-hash explicit custom-hasher constructor and HashSet::new migration path; docs/stdlib/modules/collections.md
+method std::collections::HashSet[T]::with_hash|check-prelude std-collections-hash-with-hash explicit custom-hasher constructor; docs/stdlib/modules/collections.md
 method std::collections::HashSet[std::string::String]::contains_bytes|check-prelude std-collections-string-map borrowed byte-slice lookup for String hash sets; docs/stdlib/modules/collections.md
 method std::collections::HashSet[std::string::String]::get_bytes|check-prelude std-collections-string-map asserting borrowed byte-slice representative lookup for String hash sets; docs/stdlib/modules/collections.md
 method std::collections::HashSet[std::string::String]::remove_bytes|check-prelude std-collections-string-map borrowed byte-slice removal for String hash sets; docs/stdlib/modules/collections.md
@@ -1628,7 +1629,7 @@ method std::collections::PriorityQueue[T]::extend_iter[I: std::Iterator[T]|check
 method std::collections::PriorityQueue[T]::from_iter[I: std::Iterator[T]|check-prelude std-collections-polish-api iterator-driven priority queue constructor; docs/stdlib/modules/collections.md
 method std::collections::PriorityQueue[T]::is_empty|check-prelude std-collections-heap priority queue emptiness predicate; docs/stdlib/modules/collections.md
 method std::collections::PriorityQueue[T]::len|check-prelude std-collections-heap priority queue length metadata; docs/stdlib/modules/collections.md
-method std::collections::PriorityQueue[T]::new|check-prelude std-collections-heap associated priority queue constructor; docs/stdlib/modules/collections.md
+method std::collections::PriorityQueue[T]::new|check-prelude std-collections-heap natural default-order priority queue constructor; docs/stdlib/modules/collections.md
 method std::collections::PriorityQueue[T]::peek|check-prelude std-collections-heap highest-priority access; docs/stdlib/modules/collections.md
 method std::collections::PriorityQueue[T]::pop|check-prelude std-collections-heap highest-priority removal; docs/stdlib/modules/collections.md
 method std::collections::PriorityQueue[T]::push|check-prelude std-collections-heap same-zone priority queue insertion; docs/stdlib/modules/collections.md
@@ -1637,6 +1638,7 @@ method std::collections::PriorityQueue[T]::reserve_extra|check-prelude std-colle
 method std::collections::PriorityQueue[T]::try_peek|check-prelude std-collections-heap optional highest-priority access; docs/stdlib/modules/collections.md
 method std::collections::PriorityQueue[T]::try_pop|check-prelude std-collections-heap optional highest-priority removal; docs/stdlib/modules/collections.md
 method std::collections::PriorityQueue[T]::with_capacity|check-prelude std-collections-heap trait-driven default-order priority queue constructor; docs/stdlib/modules/collections.md
+method std::collections::PriorityQueue[T]::with_less|check-prelude std-collections-heap explicit comparator priority queue constructor; docs/stdlib/modules/collections.md
 method std::collections::RingBuffer[T]::capacity|check-prelude std-collections-ring-buffer ring buffer fixed capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::RingBuffer[T]::clear|check-prelude std-collections-ring-buffer drops live ring buffer values; docs/stdlib/modules/collections.md
 method std::collections::RingBuffer[T]::copy_to|check-prelude std-collections-structure-copy-to target-zone ring buffer copy preserving fixed capacity and FIFO order; docs/stdlib/modules/collections.md
@@ -1727,7 +1729,7 @@ method std::collections::TreeMap[K,V]::last_key|check-prelude std-collections-tr
 method std::collections::TreeMap[K,V]::last_value|check-prelude std-collections-tree-boundaries asserting value for largest key; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::len|check-prelude std-collections-tree metadata helper; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::lower_bound|check-prelude std-collections-tree-bounds optional first entry not less than key; docs/stdlib/modules/collections.md
-method std::collections::TreeMap[K,V]::new|check-prelude std-collections-tree associated explicit-comparator constructor; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::new|check-prelude std-collections-map-natural-api natural default-order tree map constructor; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::pop_first|check-prelude std-collections-polish-api optional smallest entry removal; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::pop_last|check-prelude std-collections-polish-api optional largest entry removal; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::range|check-prelude std-collections-tree-iter half-open sorted map range cursor; docs/stdlib/modules/collections.md
@@ -1750,6 +1752,7 @@ method std::collections::TreeMap[K,V]::upper_bound|check-prelude std-collections
 method std::collections::TreeMap[K,V]::values|check-prelude std-collections-tree-iter sorted-by-key value iterator; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::values_mut|check-prelude std-collections-view-api mutable sorted-by-key value cursor; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::with_capacity|check-prelude std-collections-map-natural-api trait-driven default-order tree map constructor; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::with_less|check-prelude std-collections-tree explicit comparator tree map constructor; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::append|check-prelude std-collections-polish-api same-zone ordered set drain append; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::capacity|check-prelude std-collections-tree tree set capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::clear|check-prelude std-collections-tree drops live tree set nodes; docs/stdlib/modules/collections.md
@@ -1771,7 +1774,7 @@ method std::collections::TreeSet[T]::iter|check-prelude std-collections-tree-ite
 method std::collections::TreeSet[T]::last|check-prelude std-collections-tree-boundaries asserting largest-value accessor; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::len|check-prelude std-collections-tree metadata helper; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::lower_bound|check-prelude std-collections-tree-bounds optional first value not less than target; docs/stdlib/modules/collections.md
-method std::collections::TreeSet[T]::new|check-prelude std-collections-tree associated explicit-comparator constructor; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::new|check-prelude std-collections-map-natural-api natural default-order tree set constructor; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::range|check-prelude std-collections-tree-iter half-open sorted set range cursor; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::remove|check-prelude std-collections-tree-remove direct red-black deletion predicate; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::replace|check-prelude std-collections-tree replace-or-insert behavior; docs/stdlib/modules/collections.md
@@ -1784,6 +1787,7 @@ method std::collections::TreeSet[T]::try_get|check-prelude std-collections-set-r
 method std::collections::TreeSet[T]::try_last|check-prelude std-collections-tree-boundaries optional largest-value accessor; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::upper_bound|check-prelude std-collections-tree-bounds optional first value greater than target; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::with_capacity|check-prelude std-collections-map-natural-api trait-driven default-order tree set constructor; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::with_less|check-prelude std-collections-tree explicit comparator tree set constructor; docs/stdlib/modules/collections.md
 method std::encoding::CodecError::byte|check-prelude std-encoding-codec failing codec byte accessor; docs/stdlib/modules/encoding.md
 method std::encoding::CodecError::index|check-prelude std-encoding-codec failing codec byte index accessor; docs/stdlib/modules/encoding.md
 method std::encoding::CodecError::is_invalid_byte|check-prelude std-encoding-codec invalid codec alphabet byte predicate; docs/stdlib/modules/encoding.md

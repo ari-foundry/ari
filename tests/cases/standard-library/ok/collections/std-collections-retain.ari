@@ -35,7 +35,7 @@ fn main() -> i64 {
   assert(!set.contains(2));
   assert(!set.contains(4));
 
-  var hash_set = HashSet::new<i64>(ref mut zone, 1, constant_hash);
+  var hash_set = HashSet::with_hash<i64>(ref mut zone, 1, constant_hash);
   hash_set.insert(ref mut zone, 5);
   hash_set.insert(ref mut zone, 6);
   hash_set.insert(ref mut zone, 7);
@@ -49,7 +49,7 @@ fn main() -> i64 {
   assert(hash_set.insert(ref mut zone, 9));
   assert(hash_set.contains(9));
 
-  var map = HashMap::new<i64, i64>(ref mut zone, 1, constant_hash);
+  var map = HashMap::with_hash<i64, i64>(ref mut zone, 1, constant_hash);
   map.insert(ref mut zone, 1, 10);
   map.insert(ref mut zone, 10, 100);
   map.insert(ref mut zone, 20, 200);

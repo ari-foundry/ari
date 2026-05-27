@@ -7,7 +7,7 @@ fn write_i64(value: ref mut i64, replacement: i64) -> void {
 
 fn main() -> i64 {
   var zone = zone::create(4096);
-  var heap = BinaryHeap::new<i64>(ref mut zone, 1, collections::less_i64);
+  var heap = BinaryHeap::with_less<i64>(ref mut zone, 1, collections::less_i64);
   var failure = 0;
 
   if !heap.is_empty() {
@@ -67,7 +67,17 @@ fn main() -> i64 {
     failure = 23;
   }
 
-  var sorted_heap = BinaryHeap::new<i64>(ref mut zone, 1, collections::less_i64);
+  var natural_heap = BinaryHeap::new<i64>(ref mut zone);
+  natural_heap.push(ref mut zone, 12);
+  natural_heap.push(ref mut zone, 2);
+  if natural_heap.pop() != 12 {
+    failure = 27;
+  }
+  if natural_heap.pop() != 2 {
+    failure = 28;
+  }
+
+  var sorted_heap = BinaryHeap::with_less<i64>(ref mut zone, 1, collections::less_i64);
   sorted_heap.push(ref mut zone, 2);
   sorted_heap.push(ref mut zone, 7);
   sorted_heap.push(ref mut zone, 5);
@@ -85,7 +95,7 @@ fn main() -> i64 {
     failure = 20;
   }
 
-  var queue = PriorityQueue::new<i64>(ref mut zone, 1, collections::less_i64);
+  var queue = PriorityQueue::with_less<i64>(ref mut zone, 1, collections::less_i64);
   queue.push(ref mut zone, 5);
   queue.push(ref mut zone, 2);
   queue.push(ref mut zone, 8);
@@ -121,6 +131,16 @@ fn main() -> i64 {
   }
   if default_queue.pop() != 1 {
     failure = 26;
+  }
+
+  var natural_queue = PriorityQueue::new<i64>(ref mut zone);
+  natural_queue.push(ref mut zone, 13);
+  natural_queue.push(ref mut zone, 3);
+  if natural_queue.pop() != 13 {
+    failure = 29;
+  }
+  if natural_queue.pop() != 3 {
+    failure = 30;
   }
 
   zone::destroy(zone);

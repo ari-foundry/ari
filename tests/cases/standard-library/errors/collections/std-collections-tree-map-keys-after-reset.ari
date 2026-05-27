@@ -1,6 +1,6 @@
 fn main() -> i64 {
   var zone = zone::create(256);
-  var map = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  var map = TreeMap::with_less<i64, i64>(ref mut zone, 1, collections::less_i64);
   map.insert(ref mut zone, 1, 10);
   var cursor = map.keys();
   zone::reset(ref mut zone);

@@ -6,8 +6,8 @@ fn constant_hash(value: i64) -> u64 {
 
 fn main() -> i64 {
   var zone = zone::create(8192);
-  var hash = HashMap::new<i64, i64>(ref mut zone, 1, constant_hash);
-  var tree = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  var hash = HashMap::with_hash<i64, i64>(ref mut zone, 1, constant_hash);
+  var tree = TreeMap::with_less<i64, i64>(ref mut zone, 1, collections::less_i64);
   var score = 0;
 
   if hash.entry(1).insert(10).is_none() {

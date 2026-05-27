@@ -9,27 +9,27 @@ fn main() -> i64 {
   var target = zone::create(4096);
   var score = 0;
 
-  var map = HashMap::new<i64, i64>(ref mut source, 1, constant_hash);
+  var map = HashMap::with_hash<i64, i64>(ref mut source, 1, constant_hash);
   map.insert(ref mut source, 1, 10);
   map.insert(ref mut source, 9, 90);
   map.insert(ref mut source, 17, 170);
   map.remove(1);
   var map_copy = map.copy_to(ref mut target);
 
-  var hash_set = HashSet::new<i64>(ref mut source, 1, constant_hash);
+  var hash_set = HashSet::with_hash<i64>(ref mut source, 1, constant_hash);
   hash_set.insert(ref mut source, 2);
   hash_set.insert(ref mut source, 10);
   hash_set.insert(ref mut source, 18);
   hash_set.remove(10);
   var hash_set_copy = hash_set.copy_to(ref mut target);
 
-  var tree_map = TreeMap::new<i64, i64>(ref mut source, 1, collections::less_i64);
+  var tree_map = TreeMap::with_less<i64, i64>(ref mut source, 1, collections::less_i64);
   tree_map.insert(ref mut source, 4, 40);
   tree_map.insert(ref mut source, 2, 20);
   tree_map.insert(ref mut source, 8, 80);
   var tree_map_copy = tree_map.copy_to(ref mut target);
 
-  var tree_set = TreeSet::new<i64>(ref mut source, 1, collections::less_i64);
+  var tree_set = TreeSet::with_less<i64>(ref mut source, 1, collections::less_i64);
   tree_set.insert(ref mut source, 6);
   tree_set.insert(ref mut source, 2);
   tree_set.insert(ref mut source, 9);

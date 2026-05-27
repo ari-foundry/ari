@@ -1,7 +1,7 @@
 fn main() -> i64 {
   var left = zone::create(128);
   var right = zone::create(128);
-  var heap = BinaryHeap::new<i64>(ref mut left, 1, collections::less_i64);
+  var heap = BinaryHeap::with_less<i64>(ref mut left, 1, collections::less_i64);
 
   heap.push(ref mut right, 5);
 

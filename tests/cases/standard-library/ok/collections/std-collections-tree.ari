@@ -2,7 +2,7 @@
 // insertion order, replacement, membership, and same-zone growth.
 fn main() -> i64 {
   var zone = zone::create(4096);
-  var map = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  var map = TreeMap::with_less<i64, i64>(ref mut zone, 1, collections::less_i64);
   var score = 0;
 
   if map.is_empty() {

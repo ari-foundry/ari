@@ -8,7 +8,7 @@ fn main() -> i64 {
   var zone = zone::create(4096);
   var score = 0;
 
-  var hash = HashMap::new<i64, i64>(ref mut zone, 1, constant_hash);
+  var hash = HashMap::with_hash<i64, i64>(ref mut zone, 1, constant_hash);
   hash.insert(ref mut zone, 1, 10);
   hash.insert(ref mut zone, 9, 90);
   hash.insert(ref mut zone, 17, 170);
@@ -24,7 +24,7 @@ fn main() -> i64 {
     score = score + 13;
   }
 
-  var tree = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  var tree = TreeMap::with_less<i64, i64>(ref mut zone, 1, collections::less_i64);
   tree.insert(ref mut zone, 4, 40);
   tree.insert(ref mut zone, 2, 20);
   tree.insert(ref mut zone, 8, 80);

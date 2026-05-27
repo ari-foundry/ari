@@ -10,7 +10,7 @@ fn main() -> i64 {
   var left = collections::hash_set<i64>(ref mut zone, 1, constant_hash);
   var same = collections::hash_set<i64>(ref mut zone, 1, constant_hash);
   var superset = collections::hash_set<i64>(ref mut zone, 1, constant_hash);
-  var disjoint = HashSet::new<i64>(ref mut zone, 1, constant_hash);
+  var disjoint = HashSet::with_hash<i64>(ref mut zone, 1, constant_hash);
 
   left.insert(ref mut zone, 3);
   left.insert(ref mut zone, 7);

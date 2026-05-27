@@ -1,6 +1,6 @@
 fn main() -> i64 {
   var zone = zone::create(256);
-  var set = TreeSet::new<i64>(ref mut zone, 1, collections::less_i64);
+  var set = TreeSet::with_less<i64>(ref mut zone, 1, collections::less_i64);
   set.insert(ref mut zone, 1);
   var cursor = set.iter();
   zone::reset(ref mut zone);

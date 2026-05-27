@@ -10,7 +10,7 @@ fn text(zone: ref mut Zone, value: string) -> String {
 fn main() -> i64 {
   var zone = zone::create(8192);
   var map = collections::string_hash_map<String>(ref mut zone, 2);
-  var explicit = HashMap::new<String, String>(ref mut zone, 2, collections::hash_string);
+  var explicit = HashMap::with_hash<String, String>(ref mut zone, 2, collections::hash_string);
   var set = collections::string_hash_set(ref mut zone, 2);
   var score = 0;
 

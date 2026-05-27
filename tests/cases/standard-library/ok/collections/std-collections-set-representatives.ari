@@ -6,8 +6,8 @@ fn constant_hash(value: i64) -> u64 {
 
 fn main() -> i64 {
   var zone = zone::create(4096);
-  var hash = HashSet::new<i64>(ref mut zone, 1, constant_hash);
-  var tree = TreeSet::new<i64>(ref mut zone, 1, collections::less_i64);
+  var hash = HashSet::with_hash<i64>(ref mut zone, 1, constant_hash);
+  var tree = TreeSet::with_less<i64>(ref mut zone, 1, collections::less_i64);
   var score = 0;
 
   hash.insert(ref mut zone, 4);

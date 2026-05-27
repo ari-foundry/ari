@@ -5,7 +5,7 @@ fn main() -> i64 {
   var zone = zone::create(4096);
   var score = 0;
 
-  var map = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  var map = TreeMap::with_less<i64, i64>(ref mut zone, 1, collections::less_i64);
   map.insert(ref mut zone, 4, 40);
   map.insert(ref mut zone, 2, 20);
   map.insert(ref mut zone, 8, 80);
@@ -39,7 +39,7 @@ fn main() -> i64 {
     score = score + 17;
   }
 
-  var set = TreeSet::new<i64>(ref mut zone, 1, collections::less_i64);
+  var set = TreeSet::with_less<i64>(ref mut zone, 1, collections::less_i64);
   set.insert(ref mut zone, 5);
   set.insert(ref mut zone, 2);
   set.insert(ref mut zone, 8);
@@ -62,7 +62,7 @@ fn main() -> i64 {
     score = score + 37;
   }
 
-  var stress = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  var stress = TreeMap::with_less<i64, i64>(ref mut zone, 1, collections::less_i64);
   stress.insert(ref mut zone, 10, 100);
   stress.insert(ref mut zone, 5, 50);
   stress.insert(ref mut zone, 15, 150);
@@ -98,7 +98,7 @@ fn main() -> i64 {
     }
   }
 
-  var stress_set = TreeSet::new<i64>(ref mut zone, 1, collections::less_i64);
+  var stress_set = TreeSet::with_less<i64>(ref mut zone, 1, collections::less_i64);
   stress_set.insert(ref mut zone, 10);
   stress_set.insert(ref mut zone, 5);
   stress_set.insert(ref mut zone, 15);

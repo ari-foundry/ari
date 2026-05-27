@@ -1069,14 +1069,6 @@ fn hash_map_drop_values[K, V](map: ref mut std::collections::HashMap[K, V]) -> v
 }
 
 pub impl[K, V] std::collections::HashMap[K, V] {
-  fn new(
-    zone: ref mut Zone,
-    capacity: i64,
-    hash: fn(K) -> u64
-  ) -> std::collections::HashMap[K, V] {
-    return std::collections::hash_map<K, V>(zone, capacity, hash);
-  }
-
   fn with_hash(
     zone: ref mut Zone,
     capacity: i64,
@@ -1361,6 +1353,12 @@ pub impl[K, V] std::collections::HashMap[K, V] {
 }
 
 pub impl[K: std::hash::Hash[K], V] std::collections::HashMap[K, V] {
+  fn new(
+    zone: ref mut Zone
+  ) -> std::collections::HashMap[K, V] {
+    return std::collections::HashMap::with_capacity<K, V>(zone, 4);
+  }
+
   fn with_capacity(
     zone: ref mut Zone,
     capacity: i64
@@ -1842,14 +1840,6 @@ fn hash_set_drop_values[T](set: ref mut std::collections::HashSet[T]) -> void {
 }
 
 pub impl[T] std::collections::HashSet[T] {
-  fn new(
-    zone: ref mut Zone,
-    capacity: i64,
-    hash: fn(T) -> u64
-  ) -> std::collections::HashSet[T] {
-    return std::collections::hash_set<T>(zone, capacity, hash);
-  }
-
   fn with_hash(
     zone: ref mut Zone,
     capacity: i64,
@@ -2070,6 +2060,12 @@ pub impl[T] std::collections::HashSet[T] {
 }
 
 pub impl[T: std::hash::Hash[T]] std::collections::HashSet[T] {
+  fn new(
+    zone: ref mut Zone
+  ) -> std::collections::HashSet[T] {
+    return std::collections::HashSet::with_capacity<T>(zone, 4);
+  }
+
   fn with_capacity(
     zone: ref mut Zone,
     capacity: i64
@@ -2818,7 +2814,7 @@ fn tree_map_drop_values[K, V](map: ref mut std::collections::TreeMap[K, V]) -> v
 }
 
 pub impl[K, V] std::collections::TreeMap[K, V] {
-  fn new(
+  fn with_less(
     zone: ref mut Zone,
     capacity: i64,
     less: fn(K, K) -> bool
@@ -3296,6 +3292,12 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
 }
 
 pub impl[K: std::cmp::Ord[K], V] std::collections::TreeMap[K, V] {
+  fn new(
+    zone: ref mut Zone
+  ) -> std::collections::TreeMap[K, V] {
+    return std::collections::TreeMap::with_capacity<K, V>(zone, 4);
+  }
+
   fn with_capacity(
     zone: ref mut Zone,
     capacity: i64
@@ -4088,7 +4090,7 @@ fn tree_set_drop_values[T](set: ref mut std::collections::TreeSet[T]) -> void {
 }
 
 pub impl[T] std::collections::TreeSet[T] {
-  fn new(
+  fn with_less(
     zone: ref mut Zone,
     capacity: i64,
     less: fn(T, T) -> bool
@@ -4461,6 +4463,12 @@ impl[T] std::IntoIterator[T] for std::collections::TreeSet[T] {
 }
 
 pub impl[T: std::cmp::Ord[T]] std::collections::TreeSet[T] {
+  fn new(
+    zone: ref mut Zone
+  ) -> std::collections::TreeSet[T] {
+    return std::collections::TreeSet::with_capacity<T>(zone, 4);
+  }
+
   fn with_capacity(
     zone: ref mut Zone,
     capacity: i64
@@ -5392,7 +5400,7 @@ fn binary_heap_drop_values[T](heap: ref mut std::collections::BinaryHeap[T]) -> 
 }
 
 pub impl[T] std::collections::BinaryHeap[T] {
-  fn new(
+  fn with_less(
     zone: ref mut Zone,
     capacity: i64,
     less: fn(T, T) -> bool
@@ -5527,6 +5535,12 @@ pub impl[T] std::collections::BinaryHeap[T] {
 }
 
 pub impl[T: std::cmp::Ord[T]] std::collections::BinaryHeap[T] {
+  fn new(
+    zone: ref mut Zone
+  ) -> std::collections::BinaryHeap[T] {
+    return std::collections::BinaryHeap::with_capacity<T>(zone, 4);
+  }
+
   fn with_capacity(
     zone: ref mut Zone,
     capacity: i64
@@ -5658,7 +5672,7 @@ fn priority_queue_drop_values[T](queue: ref mut std::collections::PriorityQueue[
 }
 
 pub impl[T] std::collections::PriorityQueue[T] {
-  fn new(
+  fn with_less(
     zone: ref mut Zone,
     capacity: i64,
     less: fn(T, T) -> bool
@@ -5773,6 +5787,12 @@ pub impl[T] std::collections::PriorityQueue[T] {
 }
 
 pub impl[T: std::cmp::Ord[T]] std::collections::PriorityQueue[T] {
+  fn new(
+    zone: ref mut Zone
+  ) -> std::collections::PriorityQueue[T] {
+    return std::collections::PriorityQueue::with_capacity<T>(zone, 4);
+  }
+
   fn with_capacity(
     zone: ref mut Zone,
     capacity: i64

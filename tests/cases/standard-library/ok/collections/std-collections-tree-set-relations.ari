@@ -3,7 +3,7 @@
 fn main() -> i64 {
   var zone = zone::create(2048);
   var left = collections::tree_set<i64>(ref mut zone, 1, collections::less_i64);
-  var same = TreeSet::new<i64>(ref mut zone, 1, collections::less_i64);
+  var same = TreeSet::with_less<i64>(ref mut zone, 1, collections::less_i64);
   var superset = collections::tree_set<i64>(ref mut zone, 1, collections::less_i64);
   var disjoint = collections::tree_set<i64>(ref mut zone, 1, collections::less_i64);
 
