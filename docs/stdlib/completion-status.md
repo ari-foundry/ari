@@ -96,7 +96,7 @@ tests, or CI matrix work.
 | `std::parse` | Future taxonomy splits backed by real caller needs; the current basic slice already covers natural Result parsers, stable diagnostic names/messages, byte offsets, and finite/subnormal float boundary checks. |
 | `std::encoding` | Unicode normalization/transcoding and optional compression policy outside the core encoding module. |
 | `union by` language idea | Syntax is chosen, parser/AST tooling preserves selector and arm payload types, and sema now validates earlier-field selector roots, nested struct-field selector segments, unique arm names, and arm payload type refs before emitting a targeted lowering diagnostic. Construction, arm matching against concrete discriminant values, exhaustiveness, active-arm drop, narrowing, layout, and positive execution support remain compiler work. |
-| Structural capability parameters | Ordinary free functions now support initial `fn save(x: has serialize() -> i64)` structural method requirements through hidden generics, call-site method checking, and normal static method monomorphization. Remaining work is generic impl-method satisfaction, reusable aliases or multi-method capability syntax, and stronger named-trait guidance. |
+| Structural capability parameters | Ordinary free functions now support single-method `fn save(x: has serialize() -> i64)` and grouped `fn save(x: has { serialize() -> i64, add(i64) -> i64 })` structural method requirements through hidden generics, call-site method checking, and normal static method monomorphization. Remaining work is generic impl-method satisfaction, reusable aliases, and stronger named-trait guidance. |
 
 ## Language Roadmap Interaction
 
@@ -128,11 +128,20 @@ fn save(x: has serialize() -> i64) -> i64 {
 }
 ```
 
+Grouped requirements use braces and attach every listed method requirement to
+the same hidden generic:
+
+```ari
+fn save(x: has { serialize() -> i64, add(i64) -> i64 }, amount: i64) -> i64 {
+  x.serialize() + x.add(amount)
+}
+```
+
 For ordinary free functions, the compiler desugars the parameter to a hidden
-generic, checks the concrete call-site type for a matching static method, and
+generic, checks the concrete call-site type for matching static methods, and
 lowers the function body through the same monomorphized method-call path as
 other generic functions. Unsupported type positions still get a targeted
-diagnostic. The compiler must still define reusable aliases, multi-method
-capability syntax, generic impl-method satisfaction, and stronger diagnostics
-that point users toward named traits when that boundary is clearer. The feature
-must continue to avoid an `interface` keyword or accidental dynamic dispatch.
+diagnostic. The compiler must still define reusable aliases, generic
+impl-method satisfaction, and stronger diagnostics that point users toward
+named traits when that boundary is clearer. The feature must continue to avoid
+an `interface` keyword or accidental dynamic dispatch.

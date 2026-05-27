@@ -115,7 +115,8 @@ private:
     }
 
     bool starts_structural_capability_type() const {
-        return check_identifier_text("has") && peek(1).kind == TokenKind::Identifier;
+        return check_identifier_text("has") &&
+            (peek(1).kind == TokenKind::Identifier || peek(1).kind == TokenKind::LBrace);
     }
 
     bool match(TokenKind kind) {
@@ -1264,6 +1265,60 @@ private:
     TypeRef parse_structural_capability_parameter_type(std::vector<GenericParam>& generics) {
         Token has = expect(TokenKind::Identifier, "expected has in structural capability parameter");
         if (has.text != "has") fail_structural_capability_type(has.loc);
+        std::vector<StructuralCapabilityMethod> methods;
+        if (check(TokenKind::LBrace)) {
+            Token open = expect(TokenKind::LBrace, "expected { after has in structural capability parameter");
+            if (check(TokenKind::RBrace)) {
+                fail(open.loc, "structural capability parameter requires at least one method requirement");
+            }
+            do {
+                fail_if_unterminated_delimited_at_recovery_boundary(
+                    open.loc,
+                    "unterminated structural capability method list",
+                    "structural capability method list starts here",
+                    "}");
+                methods.push_back(parse_structural_capability_method());
+            } while (match(TokenKind::Comma) && !check(TokenKind::RBrace));
+            if (!match(TokenKind::RBrace)) {
+                fail_expected_closing_delimiter(
+                    peek().loc,
+                    open.loc,
+                    "expected } after structural capability method list",
+                    "structural capability method list starts here",
+                    "}");
+            }
+        } else {
+            methods.push_back(parse_structural_capability_method());
+        }
+
+        std::string synthetic_name;
+        for (std::size_t i = generics.size();; ++i) {
+            synthetic_name = "$has" + std::to_string(i);
+            bool used = false;
+            for (const auto& generic : generics) {
+                if (generic.name == synthetic_name) {
+                    used = true;
+                    break;
+                }
+            }
+            if (!used) break;
+        }
+
+        GenericParam generic;
+        generic.name = synthetic_name;
+        generic.loc = has.loc;
+        generic.synthetic = true;
+        generic.has_structural_capability = true;
+        generic.structural_methods = std::move(methods);
+        generics.push_back(std::move(generic));
+
+        TypeRef type;
+        type.name = synthetic_name;
+        type.loc = has.loc;
+        return type;
+    }
+
+    StructuralCapabilityMethod parse_structural_capability_method() {
         Token method_name = expect_identifier_or_contextual_name_keyword(
             "expected method name after has in structural capability parameter");
         StructuralCapabilityMethod method;
@@ -1293,32 +1348,7 @@ private:
             method.result = parse_type();
             method.has_result = true;
         }
-
-        std::string synthetic_name;
-        for (std::size_t i = generics.size();; ++i) {
-            synthetic_name = "$has" + std::to_string(i);
-            bool used = false;
-            for (const auto& generic : generics) {
-                if (generic.name == synthetic_name) {
-                    used = true;
-                    break;
-                }
-            }
-            if (!used) break;
-        }
-
-        GenericParam generic;
-        generic.name = synthetic_name;
-        generic.loc = has.loc;
-        generic.synthetic = true;
-        generic.has_structural_capability = true;
-        generic.structural_methods.push_back(std::move(method));
-        generics.push_back(std::move(generic));
-
-        TypeRef type;
-        type.name = synthetic_name;
-        type.loc = has.loc;
-        return type;
+        return method;
     }
 
     Param parse_function_param(

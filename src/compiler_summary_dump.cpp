@@ -199,7 +199,7 @@ static const CapabilityRow kCapabilityRows[] = {
     {"generic-aggregate-monomorphization", "implemented", "type/sema/backend", "make check-generics",
      "generic structs, enums, aliases, nested payload layout, ownership, and compiler-shaped fixtures"},
     {"structural-capability-parameters", "partial", "parser/type/trait-diagnostics", "targeted parser diagnostic fixture",
-     "reserved parameter-local has-method capability syntax, future structural method requirements, and trait-quality diagnostics without an interface keyword"},
+     "parameter-local single and grouped has-method capability syntax, static call-site method checks, and trait-quality diagnostics without an interface keyword"},
     {"union-by-fields", "partial", "parser/type/ownership/backend", "targeted type diagnostic fixture",
      "AST-preserved discriminant-linked union fields whose active payload type follows a stable field or context path"},
     {"function-parameter-patterns", "planned", "parser/sema", "future parser and sema fixtures",

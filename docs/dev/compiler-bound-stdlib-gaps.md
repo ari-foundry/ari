@@ -17,7 +17,7 @@ compiler and stdlib boundary.
 | `std::thread` | `thread::spawn(fn() -> i64) -> Result[JoinHandle, Error]`, `thread::spawn_raw(fn(ptr u8) -> i64, ptr u8) -> Result[JoinHandle, Error]`, nonblocking `try_join`, `ThreadScope` fixed-capacity join owners, `JoinHandle`, `JoinError`, `ThreadResult`, `Builder`, explicit `ThreadLocal[T]`. | Generic `JoinHandle[T]`, captured thread entries, borrowed scoped threads, generic return payloads, and compiler-owned `thread_local` declarations require closure environment transfer, send/share rules, result storage ownership, drop paths, borrow-scoped lifetime proofs, and TLS codegen. | `lib/std/thread.arih`, `src/std_thread_semantics.cpp`, `src/sema.cpp`, `src/llvm_codegen.cpp`, `docs/stdlib/modules/thread.md`, `tests/cases/standard-library/ok/thread/`, `tests/cases/functions/` |
 | `std::fmt` | `format_in!`, `Display::format_in`, `Debug::debug_in`, fixed-arity runtime `format`/`format2`/`format3`/`format4`, matching writer helpers, direct scalar/text streaming writer helpers, `concat2`/`concat3`, and variable-count concat/template helpers. | Variadic/default-zone formatting needs compiler lowering or variadic generic support plus an allocation-zone policy. Generic per-value streaming display needs a writer-facing formatting trait plus compiler support for selecting generic trait impls whose type parameter is carried by a trait argument such as `WriteDisplay[W]`. | `lib/std/fmt.arih`, `src/prelude_macros.cpp`, `src/sema.cpp`, `docs/stdlib/modules/fmt.md`, `tests/cases/standard-library/ok/format/`, `tests/cases/standard-library/errors/format/` |
 | `union by` | Parser and AST preserve `union by <selector> { arm => Type, ... }`; syntax/declaration tooling can print it. Sema validates earlier-field selector roots, nested struct-field selector segments, unique arm names, and arm payload type references, then emits a targeted type diagnostic before lowering. Ordinary enum ADTs remain the supported model. | Positive support needs arm matching against concrete discriminant values, exhaustive arm checks, active-arm layout, construction, narrowing, and active-arm drop. | `src/parser.cpp`, `src/ast.hpp`, `src/sema.cpp`, `src/llvm_codegen.cpp`, `docs/language/generic-aggregates.md`, `tests/cases/compiler-development/artifact/ok/syntax-union-by-field.*`, `tests/cases/compiler-development/artifact/errors/diagnostic-parser-union-by-field.*`, `tests/cases/compiler-development/artifact/errors/diagnostic-union-by-*.{ari,diagnostic}` |
-| Structural capability parameters | Ordinary free functions can write `fn f(x: has method(...) -> Type)` for one method requirement per parameter. The parser lowers the parameter to a hidden generic, sema checks the concrete call-site type for a matching static method, and the body monomorphizes through normal method dispatch. Unsupported type positions still emit a targeted diagnostic. | Remaining compiler work covers generic impl-method satisfaction, reusable aliases or multi-method capability syntax, richer diagnostics that point users toward named traits, and any future extension beyond method requirements. | `src/parser.cpp`, `src/ast.hpp`, `src/sema.cpp`, `docs/language/traits.md`, `docs/dev/roadmap.md`, `tests/cases/traits/ok/structural-capability-parameter.ari`, `tests/cases/traits/errors/structural-capability-*.ari` |
+| Structural capability parameters | Ordinary free functions can write `fn f(x: has method(...) -> Type)` for one method requirement or `fn f(x: has { a() -> T, b(i64) -> U })` for grouped method requirements on one parameter. The parser lowers the parameter to a hidden generic, sema checks the concrete call-site type for every matching static method, and the body monomorphizes through normal method dispatch. Unsupported type positions still emit a targeted diagnostic. | Remaining compiler work covers generic impl-method satisfaction, reusable aliases, richer diagnostics that point users toward named traits, and any future extension beyond method requirements. | `src/parser.cpp`, `src/ast.hpp`, `src/sema.cpp`, `docs/language/traits.md`, `docs/dev/roadmap.md`, `tests/cases/traits/ok/structural-capability-parameter.ari`, `tests/cases/traits/ok/structural-capability-multi-method.ari`, `tests/cases/traits/errors/structural-capability-*.ari` |
 
 ## Thread Implementation Path
 
@@ -149,11 +149,19 @@ fn save(x: has serialize() -> i64) -> i64 {
 ```
 
 This is not an `interface` feature and should not silently become dynamic
-dispatch. The current implemented slice covers steps 1, 2, 4, and the first
-positive/negative fixtures for ordinary free functions:
+dispatch. The grouped method shape is executable too:
+
+```ari
+fn save(x: has { serialize() -> i64, add(i64) -> i64 }, amount: i64) -> i64 {
+  x.serialize() + x.add(amount)
+}
+```
+
+The current implemented slice covers steps 1, 2, 4, grouped method
+requirements, and positive/negative fixtures for ordinary free functions:
 
 1. Parse `has` capability parameter syntax into a hidden generic parameter with
-   an attached method requirement.
+   one or more attached method requirements.
 2. Lower the requirement to a method-set constraint during semantic analysis.
 3. Prefer named trait diagnostics when a named trait would be clearer or when
    multiple methods/associated types are involved.
@@ -162,7 +170,7 @@ positive/negative fixtures for ordinary free functions:
 5. Emit targeted diagnostics for missing methods, wrong receiver kind, wrong
    result type, ambiguous methods, and accidental dynamic-dispatch expectations.
 6. Extend satisfaction to generic impl methods and decide whether capability
-   aliases or multi-method shorthand belong in the language.
+   aliases belong in the language.
 
 Unsupported positions such as type aliases, struct fields, extern functions,
 trait methods, impl methods, meta functions, and lambdas still use the

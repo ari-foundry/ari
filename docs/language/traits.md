@@ -656,7 +656,8 @@ and drop thunk.
 ## Structural Capability Parameters
 
 Ari has an initial, static-only form of anonymous structural parameter
-requirements for ordinary free functions. The supported spelling is:
+requirements for ordinary free functions. Use the single-method spelling when
+one method is enough:
 
 ```ari
 struct Packet {
@@ -693,13 +694,27 @@ fn add_with(x: has add(i64) -> i64, amount: i64) -> i64 {
 }
 ```
 
+When one parameter needs several method requirements, group them after `has`
+with braces. All listed methods attach to the same hidden generic type
+parameter, and the concrete argument must satisfy every requirement:
+
+```ari
+fn save(x: has { serialize() -> i64, add(i64) -> i64 }, amount: i64) -> i64 {
+  x.serialize() + x.add(amount)
+}
+```
+
+Grouped requirements use comma separators and may have a trailing comma. A
+missing method or mismatched method signature is reported at the call site, with
+a secondary label on the exact requirement inside the grouped `has` list.
+
 The initial subset is intentionally narrow:
 
 - The syntax is accepted only in ordinary free-function parameter type
   position.
 - A `has` parameter currently describes method requirements only.
-- Associated types, field requirements, operators, capability aliases, and
-  multiple-method shorthand are not implemented yet.
+- Associated types, field requirements, operators, and capability aliases are
+  not implemented yet.
 - Generic impl-method satisfaction is still a later compiler task; use a named
   trait bound when the requirement is part of a reusable API boundary.
 - `has method(...) -> Type` in aliases, struct fields, trait methods, impl
@@ -742,5 +757,6 @@ Dyn-to-dyn upcasts are executable when the target is the same trait or an
 inherited supertrait, including `own dyn` upcasts; unrelated dyn casts are
 rejected.
 Ordinary free functions can use initial structural capability parameters such
-as `fn save(x: has serialize() -> i64)`, which are checked at call
-specialization time and then lowered through normal static dispatch.
+as `fn save(x: has serialize() -> i64)` and grouped requirements such as
+`fn save(x: has { serialize() -> i64, add(i64) -> i64 })`, which are checked at
+call specialization time and then lowered through normal static dispatch.

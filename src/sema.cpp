@@ -24138,7 +24138,6 @@ private:
 
     void require_structural_capability_method(
         SourceLocation loc,
-        const GenericParam& generic,
         const IrType& self_type,
         const StructuralCapabilityMethod& method
     ) {
@@ -24199,7 +24198,7 @@ private:
                 " does not satisfy structural capability '" + capability + "'");
         add_location_label_if_valid(
             error,
-            generic.loc,
+            method.loc,
             "parameter requires structural capability '" + capability + "'");
         if (candidates.empty()) {
             error.add_note(DiagnosticNote{
@@ -24225,7 +24224,7 @@ private:
         const IrType& self_type
     ) {
         for (const auto& method : generic.structural_methods) {
-            require_structural_capability_method(loc, generic, self_type, method);
+            require_structural_capability_method(loc, self_type, method);
         }
     }
 
