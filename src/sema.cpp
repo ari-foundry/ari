@@ -21128,6 +21128,29 @@ private:
         throw error;
     }
 
+    [[noreturn]] void fail_union_by_constructor_payload_count(SourceLocation loc,
+                                                              const StructInfo& info,
+                                                              const StructInfo::Field& field,
+                                                              const std::string& arm_name,
+                                                              std::size_t count) const {
+        CompileError error(std::move(loc),
+                           "union by constructor arm '" + arm_name +
+                               "' for field '" + field.name +
+                               "' in struct '" + info.name +
+                               "' expects exactly one payload expression");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "got " + std::to_string(count) + " payload expression" +
+                (count == 1 ? "" : "s"),
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "write `" + field.name + ": " + arm_name +
+                "(payload)`; put multiple payload values inside a struct or tuple payload type",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     [[noreturn]] void fail_unknown_union_by_constructor_arm(SourceLocation loc,
                                                             const StructInfo& info,
                                                             const StructInfo::Field& field,
@@ -21305,7 +21328,6 @@ private:
     static std::optional<std::string> union_by_constructor_arm_name(const Expr& value_expr) {
         if (value_expr.kind == ExprKind::Call &&
             !expr_operand(value_expr) &&
-            value_expr.args.size() == 1 &&
             expr_type_args(value_expr).empty()) {
             return value_expr.name;
         }
@@ -21487,6 +21509,14 @@ private:
             *arm_name);
         if (case_info.payloads.size() != 1) {
             fail_union_by_constructor_shape(value_expr.loc, info, field);
+        }
+        if (value_expr.kind == ExprKind::Call && value_expr.args.size() != 1) {
+            fail_union_by_constructor_payload_count(
+                value_expr.loc,
+                info,
+                field,
+                *arm_name,
+                value_expr.args.size());
         }
         if (auto selector_arm =
                 static_union_by_selector_arm(field.type, struct_literal_values, struct_type)) {

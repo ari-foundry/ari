@@ -95,7 +95,9 @@ let packet = TLSCiphertext {
 ```
 
 The natural constructor spelling is `arm(payload)`, which works for enum arms
-and for bool arms:
+and for bool arms. The call takes exactly one payload expression. If an arm
+needs multiple values, declare the arm payload as a struct or tuple and pass
+that one aggregate value.
 
 ```ari
 let feature = Feature {
