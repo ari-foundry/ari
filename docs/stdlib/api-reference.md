@@ -3769,14 +3769,23 @@ fmt::write_format<W: io::Writer, T: Display>(ref mut writer, ref mut zone, templ
 fmt::write_format2<W: io::Writer, A: Display, B: Display>(ref mut writer, ref mut zone, template, first, second)
 fmt::write_format3<W: io::Writer, A: Display, B: Display, C: Display>(ref mut writer, ref mut zone, template, first, second, third)
 fmt::write_format4<W: io::Writer, A: Display, B: Display, C: Display, D: Display>(ref mut writer, ref mut zone, template, first, second, third, fourth)
+fmt::write_format_stream<W: io::Writer, T: Display>(ref mut writer, ref mut zone, template, value)
+fmt::write_format_stream2<W: io::Writer, A: Display, B: Display>(ref mut writer, ref mut zone, template, first, second)
+fmt::write_format_stream3<W: io::Writer, A: Display, B: Display, C: Display>(ref mut writer, ref mut zone, template, first, second, third)
+fmt::write_format_stream4<W: io::Writer, A: Display, B: Display, C: Display, D: Display>(ref mut writer, ref mut zone, template, first, second, third, fourth)
 fmt::write_unsigned<W: io::Writer>(ref mut writer, ref mut zone, value, spec)
 fmt::write_unsigned_bool<W: io::Writer>(ref mut writer, ref mut zone, value, spec)
+fmt::write_unsigned_stream<W: io::Writer>(ref mut writer, value, spec)
 fmt::write_integer<W: io::Writer>(ref mut writer, ref mut zone, value)
 fmt::write_integer_bool<W: io::Writer>(ref mut writer, ref mut zone, value)
+fmt::write_integer_stream<W: io::Writer>(ref mut writer, value)
 fmt::write_boolean<W: io::Writer>(ref mut writer, ref mut zone, value)
 fmt::write_boolean_bool<W: io::Writer>(ref mut writer, ref mut zone, value)
+fmt::write_boolean_stream<W: io::Writer>(ref mut writer, value)
 fmt::write_text<W: io::Writer>(ref mut writer, ref mut zone, value)
 fmt::write_text_bool<W: io::Writer>(ref mut writer, ref mut zone, value)
+fmt::write_text_stream<W: io::Writer>(ref mut writer, value)
+fmt::write_char_stream<W: io::Writer>(ref mut writer, value)
 fmt::write_value<W: io::Writer, T: Display>(ref mut writer, ref mut zone, value)
 fmt::write_value_bool<W: io::Writer, T: Display>(ref mut writer, ref mut zone, value)
 fmt::write_debug<W: io::Writer, T: Debug>(ref mut writer, ref mut zone, value)
@@ -3825,6 +3834,16 @@ combined output string first. Placeholder values still use
 allocation capability. Invalid-template errors and writer failures stay
 recoverable; bytes written before a later template or writer error are not
 rolled back.
+`fmt::write_format_stream`, `fmt::write_format_stream2`,
+`fmt::write_format_stream3`, and `fmt::write_format_stream4` are explicit
+streaming-name aliases for the same writer-backed runtime-template path. Use
+them when call sites want to make the writer destination obvious. For known
+scalar and text values, `write_unsigned_stream`, `write_integer_stream`,
+`write_boolean_stream`, `write_text_stream`, and `write_char_stream` write
+directly to the writer without allocating an owned `String`. They return the
+first writer error as `Result[(), Error]`, and they are the preferred building
+blocks for fully streaming helpers until compiler support for generic
+writer-facing display dispatch lands.
 
 The executable formatting path is still macro-based: `print!`, `println!`,
 `eprintln!`, and `format_in!(ref mut zone, "...", values...)`. `{}` uses

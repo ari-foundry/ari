@@ -219,6 +219,117 @@ fn append_digits(output: ref mut std::string::String, value: u64, base: i64, upp
   append_digit(output, (value % radix) as i64, uppercase);
 }
 
+fn write_stream_byte[W: std::io::Writer](writer: ref mut W, value: u8) -> std::Result[(), std::error::Error] {
+  if writer.write_byte(value) {
+    return std::Ok<(), std::error::Error>(());
+  }
+  return std::Err<(), std::error::Error>(std::fmt::template_write_error());
+}
+
+fn write_stream_padding[W: std::io::Writer](writer: ref mut W, count: i64) -> std::Result[(), std::error::Error] {
+  var index = 0;
+  while index < count {
+    match std::fmt::write_stream_byte<W>(writer, ' ') {
+      std::Err(reason) => {
+        return std::Err<(), std::error::Error>(reason);
+      }
+      std::Ok(_) => {}
+    }
+    index = index + 1;
+  }
+  return std::Ok<(), std::error::Error>(());
+}
+
+fn write_stream_zero_padding[W: std::io::Writer](writer: ref mut W, count: i64) -> std::Result[(), std::error::Error] {
+  var index = 0;
+  while index < count {
+    match std::fmt::write_stream_byte<W>(writer, '0') {
+      std::Err(reason) => {
+        return std::Err<(), std::error::Error>(reason);
+      }
+      std::Ok(_) => {}
+    }
+    index = index + 1;
+  }
+  return std::Ok<(), std::error::Error>(());
+}
+
+fn write_stream_prefix[W: std::io::Writer](writer: ref mut W, spec: std::fmt::FormatSpec) -> std::Result[(), std::error::Error] {
+  if !spec.alternate {
+    return std::Ok<(), std::error::Error>(());
+  }
+  if spec.base == 2 {
+    match std::fmt::write_stream_byte<W>(writer, '0') {
+      std::Err(reason) => {
+        return std::Err<(), std::error::Error>(reason);
+      }
+      std::Ok(_) => {}
+    }
+    return std::fmt::write_stream_byte<W>(writer, 'b');
+  }
+  if spec.base == 8 {
+    match std::fmt::write_stream_byte<W>(writer, '0') {
+      std::Err(reason) => {
+        return std::Err<(), std::error::Error>(reason);
+      }
+      std::Ok(_) => {}
+    }
+    return std::fmt::write_stream_byte<W>(writer, 'o');
+  }
+  if spec.base == 16 {
+    match std::fmt::write_stream_byte<W>(writer, '0') {
+      std::Err(reason) => {
+        return std::Err<(), std::error::Error>(reason);
+      }
+      std::Ok(_) => {}
+    }
+    if spec.uppercase {
+      return std::fmt::write_stream_byte<W>(writer, 'X');
+    }
+    return std::fmt::write_stream_byte<W>(writer, 'x');
+  }
+  return std::Ok<(), std::error::Error>(());
+}
+
+fn write_stream_digit[W: std::io::Writer](writer: ref mut W, digit: i64, uppercase: bool) -> std::Result[(), std::error::Error] {
+  if digit < 10 {
+    return std::fmt::write_stream_byte<W>(writer, (digit + ('0' as i64)) as u8);
+  }
+  if uppercase {
+    return std::fmt::write_stream_byte<W>(writer, (digit - 10 + ('A' as i64)) as u8);
+  }
+  return std::fmt::write_stream_byte<W>(writer, (digit - 10 + ('a' as i64)) as u8);
+}
+
+fn write_stream_digits[W: std::io::Writer](writer: ref mut W, value: u64, base: i64, uppercase: bool) -> std::Result[(), std::error::Error] {
+  let radix = base as u64;
+  if value >= radix {
+    match std::fmt::write_stream_digits<W>(writer, value / radix, base, uppercase) {
+      std::Err(reason) => {
+        return std::Err<(), std::error::Error>(reason);
+      }
+      std::Ok(_) => {}
+    }
+  }
+  return std::fmt::write_stream_digit<W>(writer, (value % radix) as i64, uppercase);
+}
+
+fn write_stream_i64_digits[W: std::io::Writer](writer: ref mut W, value: i64) -> std::Result[(), std::error::Error] {
+  if value <= -10 || value >= 10 {
+    match std::fmt::write_stream_i64_digits<W>(writer, value / 10) {
+      std::Err(reason) => {
+        return std::Err<(), std::error::Error>(reason);
+      }
+      std::Ok(_) => {}
+    }
+  }
+  var digit = value % 10;
+  if digit < 0 {
+    digit = 0 - digit;
+  }
+  return std::fmt::write_stream_digit<W>(writer, digit, false);
+}
+
 pub fn unsigned_in(zone: ref mut Zone, value: u64, spec: std::fmt::FormatSpec) -> std::string::String {
   std::assert(spec.base == 2 || spec.base == 8 || spec.base == 10 || spec.base == 16);
   std::assert(spec.width >= 0);
@@ -466,6 +577,90 @@ pub fn write_text[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, val
 
 pub fn write_text_bool[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: string) -> bool {
   return std::fmt::write_text<W>(writer, zone, value).is_ok();
+}
+
+pub fn write_unsigned_stream[W: std::io::Writer](writer: ref mut W, value: u64, spec: std::fmt::FormatSpec) -> std::Result[(), std::error::Error] {
+  std::assert(spec.base == 2 || spec.base == 8 || spec.base == 10 || spec.base == 16);
+  std::assert(spec.width >= 0);
+  std::assert(spec.precision >= -1);
+  std::assert(spec.align >= 0);
+  std::assert(spec.align <= 2);
+
+  let digits = digit_len(value, spec.base);
+  var zero_padding = 0;
+  if spec.precision > digits {
+    zero_padding = spec.precision - digits;
+  }
+
+  let body_width = prefix_len(spec) + zero_padding + digits;
+  var outer_padding = 0;
+  if spec.width > body_width {
+    outer_padding = spec.width - body_width;
+  }
+
+  var left_padding = outer_padding;
+  var right_padding = 0;
+  if spec.align == 1 {
+    left_padding = 0;
+    right_padding = outer_padding;
+  }
+  if spec.align == 2 {
+    left_padding = outer_padding / 2;
+    right_padding = outer_padding - left_padding;
+  }
+
+  match std::fmt::write_stream_padding<W>(writer, left_padding) {
+    std::Err(reason) => {
+      return std::Err<(), std::error::Error>(reason);
+    }
+    std::Ok(_) => {}
+  }
+  match std::fmt::write_stream_prefix<W>(writer, spec) {
+    std::Err(prefix_reason) => {
+      return std::Err<(), std::error::Error>(prefix_reason);
+    }
+    std::Ok(_) => {}
+  }
+  match std::fmt::write_stream_zero_padding<W>(writer, zero_padding) {
+    std::Err(zero_reason) => {
+      return std::Err<(), std::error::Error>(zero_reason);
+    }
+    std::Ok(_) => {}
+  }
+  match std::fmt::write_stream_digits<W>(writer, value, spec.base, spec.uppercase) {
+    std::Err(digit_reason) => {
+      return std::Err<(), std::error::Error>(digit_reason);
+    }
+    std::Ok(_) => {}
+  }
+  return std::fmt::write_stream_padding<W>(writer, right_padding);
+}
+
+pub fn write_integer_stream[W: std::io::Writer](writer: ref mut W, value: i64) -> std::Result[(), std::error::Error] {
+  if value < 0 {
+    match std::fmt::write_stream_byte<W>(writer, '-') {
+      std::Err(reason) => {
+        return std::Err<(), std::error::Error>(reason);
+      }
+      std::Ok(_) => {}
+    }
+  }
+  return std::fmt::write_stream_i64_digits<W>(writer, value);
+}
+
+pub fn write_boolean_stream[W: std::io::Writer](writer: ref mut W, value: bool) -> std::Result[(), std::error::Error] {
+  if value {
+    return std::io::write_all<W>(writer, std::string::bytes("true"));
+  }
+  return std::io::write_all<W>(writer, std::string::bytes("false"));
+}
+
+pub fn write_text_stream[W: std::io::Writer](writer: ref mut W, value: string) -> std::Result[(), std::error::Error] {
+  return std::io::write_all<W>(writer, std::string::bytes(value));
+}
+
+pub fn write_char_stream[W: std::io::Writer](writer: ref mut W, value: char) -> std::Result[(), std::error::Error] {
+  return std::fmt::write_stream_byte<W>(writer, value);
 }
 
 fn write_newline[W: std::io::Writer](writer: ref mut W) -> std::Result[(), std::error::Error] {
@@ -1206,6 +1401,343 @@ pub fn write_format4[
         } else if used == 3 {
           let fourth_text = fourth.format_in(zone);
           match std::io::write_all<W>(writer, fourth_text.as_slice()) {
+            std::Err(f4_fourth_reason) => {
+              return std::Err<(), std::error::Error>(f4_fourth_reason);
+            }
+            std::Ok(_) => {}
+          }
+        } else {
+          return std::Err<(), std::error::Error>(std::fmt::template_error());
+        }
+        used = used + 1;
+        index = index + 2;
+      } else {
+        return std::Err<(), std::error::Error>(std::fmt::template_error());
+      }
+    } else if byte == '}' {
+      if index + 1 < bytes.len && bytes[index + 1] == '}' {
+        match std::fmt::write_template_byte<W>(writer, '}') {
+          std::Err(f4_close_brace_reason) => {
+            return std::Err<(), std::error::Error>(f4_close_brace_reason);
+          }
+          std::Ok(_) => {}
+        }
+        index = index + 2;
+      } else {
+        return std::Err<(), std::error::Error>(std::fmt::template_error());
+      }
+    } else {
+      match std::fmt::write_template_byte<W>(writer, byte) {
+        std::Err(f4_literal_reason) => {
+          return std::Err<(), std::error::Error>(f4_literal_reason);
+        }
+        std::Ok(_) => {}
+      }
+      index = index + 1;
+    }
+  }
+  if used != 4 {
+    return std::Err<(), std::error::Error>(std::fmt::template_error());
+  }
+  return std::Ok<(), std::error::Error>(());
+}
+
+pub fn write_format_stream[
+  W: std::io::Writer,
+  T: std::fmt::Display
+](
+  writer: ref mut W,
+  zone: ref mut Zone,
+  template: string,
+  value: T
+) -> std::Result[(), std::error::Error] {
+  let bytes = std::string::bytes(template);
+  var index = 0;
+  var used = false;
+  while index < bytes.len {
+    let byte = bytes[index];
+    if byte == '{' {
+      if index + 1 >= bytes.len {
+        return std::Err<(), std::error::Error>(std::fmt::template_error());
+      }
+      let following = bytes[index + 1];
+      if following == '{' {
+        match std::fmt::write_template_byte<W>(writer, '{') {
+          std::Err(open_brace_reason) => {
+            return std::Err<(), std::error::Error>(open_brace_reason);
+          }
+          std::Ok(_) => {}
+        }
+        index = index + 2;
+      } else if following == '}' {
+        if used {
+          return std::Err<(), std::error::Error>(std::fmt::template_error());
+        }
+        match std::fmt::write_value<W, T>(writer, zone, value) {
+          std::Err(value_reason) => {
+            return std::Err<(), std::error::Error>(value_reason);
+          }
+          std::Ok(_) => {}
+        }
+        used = true;
+        index = index + 2;
+      } else {
+        return std::Err<(), std::error::Error>(std::fmt::template_error());
+      }
+    } else if byte == '}' {
+      if index + 1 < bytes.len && bytes[index + 1] == '}' {
+        match std::fmt::write_template_byte<W>(writer, '}') {
+          std::Err(close_brace_reason) => {
+            return std::Err<(), std::error::Error>(close_brace_reason);
+          }
+          std::Ok(_) => {}
+        }
+        index = index + 2;
+      } else {
+        return std::Err<(), std::error::Error>(std::fmt::template_error());
+      }
+    } else {
+      match std::fmt::write_template_byte<W>(writer, byte) {
+        std::Err(literal_reason) => {
+          return std::Err<(), std::error::Error>(literal_reason);
+        }
+        std::Ok(_) => {}
+      }
+      index = index + 1;
+    }
+  }
+  if !used {
+    return std::Err<(), std::error::Error>(std::fmt::template_error());
+  }
+  return std::Ok<(), std::error::Error>(());
+}
+
+pub fn write_format_stream2[
+  W: std::io::Writer,
+  A: std::fmt::Display,
+  B: std::fmt::Display
+](
+  writer: ref mut W,
+  zone: ref mut Zone,
+  template: string,
+  first: A,
+  second: B
+) -> std::Result[(), std::error::Error] {
+  let bytes = std::string::bytes(template);
+  var index = 0;
+  var used = 0;
+  while index < bytes.len {
+    let byte = bytes[index];
+    if byte == '{' {
+      if index + 1 >= bytes.len {
+        return std::Err<(), std::error::Error>(std::fmt::template_error());
+      }
+      let following = bytes[index + 1];
+      if following == '{' {
+        match std::fmt::write_template_byte<W>(writer, '{') {
+          std::Err(f2_open_brace_reason) => {
+            return std::Err<(), std::error::Error>(f2_open_brace_reason);
+          }
+          std::Ok(_) => {}
+        }
+        index = index + 2;
+      } else if following == '}' {
+        if used == 0 {
+          match std::fmt::write_value<W, A>(writer, zone, first) {
+            std::Err(f2_first_reason) => {
+              return std::Err<(), std::error::Error>(f2_first_reason);
+            }
+            std::Ok(_) => {}
+          }
+        } else if used == 1 {
+          match std::fmt::write_value<W, B>(writer, zone, second) {
+            std::Err(f2_second_reason) => {
+              return std::Err<(), std::error::Error>(f2_second_reason);
+            }
+            std::Ok(_) => {}
+          }
+        } else {
+          return std::Err<(), std::error::Error>(std::fmt::template_error());
+        }
+        used = used + 1;
+        index = index + 2;
+      } else {
+        return std::Err<(), std::error::Error>(std::fmt::template_error());
+      }
+    } else if byte == '}' {
+      if index + 1 < bytes.len && bytes[index + 1] == '}' {
+        match std::fmt::write_template_byte<W>(writer, '}') {
+          std::Err(f2_close_brace_reason) => {
+            return std::Err<(), std::error::Error>(f2_close_brace_reason);
+          }
+          std::Ok(_) => {}
+        }
+        index = index + 2;
+      } else {
+        return std::Err<(), std::error::Error>(std::fmt::template_error());
+      }
+    } else {
+      match std::fmt::write_template_byte<W>(writer, byte) {
+        std::Err(f2_literal_reason) => {
+          return std::Err<(), std::error::Error>(f2_literal_reason);
+        }
+        std::Ok(_) => {}
+      }
+      index = index + 1;
+    }
+  }
+  if used != 2 {
+    return std::Err<(), std::error::Error>(std::fmt::template_error());
+  }
+  return std::Ok<(), std::error::Error>(());
+}
+
+pub fn write_format_stream3[
+  W: std::io::Writer,
+  A: std::fmt::Display,
+  B: std::fmt::Display,
+  C: std::fmt::Display
+](
+  writer: ref mut W,
+  zone: ref mut Zone,
+  template: string,
+  first: A,
+  second: B,
+  third: C
+) -> std::Result[(), std::error::Error] {
+  let bytes = std::string::bytes(template);
+  var index = 0;
+  var used = 0;
+  while index < bytes.len {
+    let byte = bytes[index];
+    if byte == '{' {
+      if index + 1 >= bytes.len {
+        return std::Err<(), std::error::Error>(std::fmt::template_error());
+      }
+      let following = bytes[index + 1];
+      if following == '{' {
+        match std::fmt::write_template_byte<W>(writer, '{') {
+          std::Err(f3_open_brace_reason) => {
+            return std::Err<(), std::error::Error>(f3_open_brace_reason);
+          }
+          std::Ok(_) => {}
+        }
+        index = index + 2;
+      } else if following == '}' {
+        if used == 0 {
+          match std::fmt::write_value<W, A>(writer, zone, first) {
+            std::Err(f3_first_reason) => {
+              return std::Err<(), std::error::Error>(f3_first_reason);
+            }
+            std::Ok(_) => {}
+          }
+        } else if used == 1 {
+          match std::fmt::write_value<W, B>(writer, zone, second) {
+            std::Err(f3_second_reason) => {
+              return std::Err<(), std::error::Error>(f3_second_reason);
+            }
+            std::Ok(_) => {}
+          }
+        } else if used == 2 {
+          match std::fmt::write_value<W, C>(writer, zone, third) {
+            std::Err(f3_third_reason) => {
+              return std::Err<(), std::error::Error>(f3_third_reason);
+            }
+            std::Ok(_) => {}
+          }
+        } else {
+          return std::Err<(), std::error::Error>(std::fmt::template_error());
+        }
+        used = used + 1;
+        index = index + 2;
+      } else {
+        return std::Err<(), std::error::Error>(std::fmt::template_error());
+      }
+    } else if byte == '}' {
+      if index + 1 < bytes.len && bytes[index + 1] == '}' {
+        match std::fmt::write_template_byte<W>(writer, '}') {
+          std::Err(f3_close_brace_reason) => {
+            return std::Err<(), std::error::Error>(f3_close_brace_reason);
+          }
+          std::Ok(_) => {}
+        }
+        index = index + 2;
+      } else {
+        return std::Err<(), std::error::Error>(std::fmt::template_error());
+      }
+    } else {
+      match std::fmt::write_template_byte<W>(writer, byte) {
+        std::Err(f3_literal_reason) => {
+          return std::Err<(), std::error::Error>(f3_literal_reason);
+        }
+        std::Ok(_) => {}
+      }
+      index = index + 1;
+    }
+  }
+  if used != 3 {
+    return std::Err<(), std::error::Error>(std::fmt::template_error());
+  }
+  return std::Ok<(), std::error::Error>(());
+}
+
+pub fn write_format_stream4[
+  W: std::io::Writer,
+  A: std::fmt::Display,
+  B: std::fmt::Display,
+  C: std::fmt::Display,
+  D: std::fmt::Display
+](
+  writer: ref mut W,
+  zone: ref mut Zone,
+  template: string,
+  first: A,
+  second: B,
+  third: C,
+  fourth: D
+) -> std::Result[(), std::error::Error] {
+  let bytes = std::string::bytes(template);
+  var index = 0;
+  var used = 0;
+  while index < bytes.len {
+    let byte = bytes[index];
+    if byte == '{' {
+      if index + 1 >= bytes.len {
+        return std::Err<(), std::error::Error>(std::fmt::template_error());
+      }
+      let following = bytes[index + 1];
+      if following == '{' {
+        match std::fmt::write_template_byte<W>(writer, '{') {
+          std::Err(f4_open_brace_reason) => {
+            return std::Err<(), std::error::Error>(f4_open_brace_reason);
+          }
+          std::Ok(_) => {}
+        }
+        index = index + 2;
+      } else if following == '}' {
+        if used == 0 {
+          match std::fmt::write_value<W, A>(writer, zone, first) {
+            std::Err(f4_first_reason) => {
+              return std::Err<(), std::error::Error>(f4_first_reason);
+            }
+            std::Ok(_) => {}
+          }
+        } else if used == 1 {
+          match std::fmt::write_value<W, B>(writer, zone, second) {
+            std::Err(f4_second_reason) => {
+              return std::Err<(), std::error::Error>(f4_second_reason);
+            }
+            std::Ok(_) => {}
+          }
+        } else if used == 2 {
+          match std::fmt::write_value<W, C>(writer, zone, third) {
+            std::Err(f4_third_reason) => {
+              return std::Err<(), std::error::Error>(f4_third_reason);
+            }
+            std::Ok(_) => {}
+          }
+        } else if used == 3 {
+          match std::fmt::write_value<W, D>(writer, zone, fourth) {
             std::Err(f4_fourth_reason) => {
               return std::Err<(), std::error::Error>(f4_fourth_reason);
             }

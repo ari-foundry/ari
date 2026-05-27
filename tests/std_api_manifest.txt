@@ -420,6 +420,8 @@ fn std::fmt::with_precision|check-prelude std-fmt-format-spec integer precision 
 fn std::fmt::with_width|check-prelude std-fmt-format-spec width spec helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_boolean[W: std::io::Writer]|check-prelude std-fmt-format-spec Result-returning Writer-backed bool formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_boolean_bool[W: std::io::Writer]|check-prelude std-fmt-format-spec bool compatibility Writer-backed bool formatting helper; docs/stdlib/modules/fmt.md
+fn std::fmt::write_boolean_stream[W: std::io::Writer]|check-prelude std-fmt-concat-format-value direct bool streaming writer helper; docs/stdlib/modules/fmt.md
+fn std::fmt::write_char_stream[W: std::io::Writer]|check-prelude std-fmt-concat-format-value direct byte-character streaming writer helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_concat2|check-prelude std-fmt-format-spec Result-returning two-value Writer-backed Display concatenation helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_concat2_bool|check-prelude std-fmt-format-spec bool compatibility two-value Writer-backed Display concatenation helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_concat3|check-prelude std-fmt-format-spec Result-returning three-value Writer-backed Display concatenation helper; docs/stdlib/modules/fmt.md
@@ -432,8 +434,13 @@ fn std::fmt::write_format|check-prelude std-fmt-concat-format-value Result-retur
 fn std::fmt::write_format2|check-prelude std-fmt-concat-format-value Result-returning two-value Writer-backed runtime template formatter; docs/stdlib/modules/fmt.md
 fn std::fmt::write_format3|check-prelude std-fmt-concat-format-value Result-returning three-value Writer-backed runtime template formatter; docs/stdlib/modules/fmt.md
 fn std::fmt::write_format4|check-prelude std-fmt-concat-format-value Result-returning four-value Writer-backed runtime template formatter; docs/stdlib/modules/fmt.md
+fn std::fmt::write_format_stream|check-prelude std-fmt-concat-format-value streaming-name one-value Writer-backed runtime template formatter; docs/stdlib/modules/fmt.md
+fn std::fmt::write_format_stream2|check-prelude std-fmt-concat-format-value streaming-name two-value Writer-backed runtime template formatter; docs/stdlib/modules/fmt.md
+fn std::fmt::write_format_stream3|check-prelude std-fmt-concat-format-value streaming-name three-value Writer-backed runtime template formatter; docs/stdlib/modules/fmt.md
+fn std::fmt::write_format_stream4|check-prelude std-fmt-concat-format-value streaming-name four-value Writer-backed runtime template formatter; docs/stdlib/modules/fmt.md
 fn std::fmt::write_integer[W: std::io::Writer]|check-prelude std-fmt-format-spec Result-returning Writer-backed signed integer formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_integer_bool[W: std::io::Writer]|check-prelude std-fmt-format-spec bool compatibility Writer-backed signed integer formatting helper; docs/stdlib/modules/fmt.md
+fn std::fmt::write_integer_stream[W: std::io::Writer]|check-prelude std-fmt-concat-format-value direct signed integer streaming writer helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_line_debug[W: std::io::Writer, T: std::fmt::Debug]|check-prelude std-fmt-format-spec Result-returning generic Writer-backed Debug line helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_line_debug_bool[W: std::io::Writer, T: std::fmt::Debug]|check-prelude std-fmt-format-spec bool compatibility generic Writer-backed Debug line helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_line_text[W: std::io::Writer]|check-prelude std-fmt-format-spec Result-returning Writer-backed text line helper; docs/stdlib/modules/fmt.md
@@ -442,8 +449,10 @@ fn std::fmt::write_line_value[W: std::io::Writer, T: std::fmt::Display]|check-pr
 fn std::fmt::write_line_value_bool[W: std::io::Writer, T: std::fmt::Display]|check-prelude std-fmt-format-spec bool compatibility generic Writer-backed Display line helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_text[W: std::io::Writer]|check-prelude std-fmt-format-spec Result-returning Writer-backed text formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_text_bool[W: std::io::Writer]|check-prelude std-fmt-format-spec bool compatibility Writer-backed text formatting helper; docs/stdlib/modules/fmt.md
+fn std::fmt::write_text_stream[W: std::io::Writer]|check-prelude std-fmt-concat-format-value direct string streaming writer helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_unsigned[W: std::io::Writer]|check-prelude std-fmt-format-spec Result-returning Writer-backed base/width/precision formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_unsigned_bool[W: std::io::Writer]|check-prelude std-fmt-format-spec bool compatibility Writer-backed base/width/precision formatting helper; docs/stdlib/modules/fmt.md
+fn std::fmt::write_unsigned_stream[W: std::io::Writer]|check-prelude std-fmt-concat-format-value direct unsigned integer streaming writer helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_value[W: std::io::Writer, T: std::fmt::Display]|check-prelude std-fmt-format-spec Result-returning generic Writer-backed Display formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_value_bool[W: std::io::Writer, T: std::fmt::Display]|check-prelude std-fmt-format-spec bool compatibility generic Writer-backed Display formatting helper; docs/stdlib/modules/fmt.md
 fn std::fs::append|check-prelude std-fs-read-write Result-returning whole-file append helper; docs/stdlib/modules/fs.md

@@ -64,6 +64,10 @@ write_format[W: io::Writer, T: Display](writer: ref mut W, zone: ref mut Zone, t
 write_format2[W: io::Writer, A: Display, B: Display](writer: ref mut W, zone: ref mut Zone, template: string, first: A, second: B) -> Result[(), Error]
 write_format3[W: io::Writer, A: Display, B: Display, C: Display](writer: ref mut W, zone: ref mut Zone, template: string, first: A, second: B, third: C) -> Result[(), Error]
 write_format4[W: io::Writer, A: Display, B: Display, C: Display, D: Display](writer: ref mut W, zone: ref mut Zone, template: string, first: A, second: B, third: C, fourth: D) -> Result[(), Error]
+write_format_stream[W: io::Writer, T: Display](writer: ref mut W, zone: ref mut Zone, template: string, value: T) -> Result[(), Error]
+write_format_stream2[W: io::Writer, A: Display, B: Display](writer: ref mut W, zone: ref mut Zone, template: string, first: A, second: B) -> Result[(), Error]
+write_format_stream3[W: io::Writer, A: Display, B: Display, C: Display](writer: ref mut W, zone: ref mut Zone, template: string, first: A, second: B, third: C) -> Result[(), Error]
+write_format_stream4[W: io::Writer, A: Display, B: Display, C: Display, D: Display](writer: ref mut W, zone: ref mut Zone, template: string, first: A, second: B, third: C, fourth: D) -> Result[(), Error]
 
 write_unsigned[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: u64, spec: FormatSpec) -> Result[(), Error]
 write_unsigned_bool[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: u64, spec: FormatSpec) -> bool
@@ -73,6 +77,11 @@ write_boolean[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: bool)
 write_boolean_bool[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: bool) -> bool
 write_text[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: string) -> Result[(), Error]
 write_text_bool[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: string) -> bool
+write_unsigned_stream[W: io::Writer](writer: ref mut W, value: u64, spec: FormatSpec) -> Result[(), Error]
+write_integer_stream[W: io::Writer](writer: ref mut W, value: i64) -> Result[(), Error]
+write_boolean_stream[W: io::Writer](writer: ref mut W, value: bool) -> Result[(), Error]
+write_text_stream[W: io::Writer](writer: ref mut W, value: string) -> Result[(), Error]
+write_char_stream[W: io::Writer](writer: ref mut W, value: char) -> Result[(), Error]
 write_value[W: io::Writer, T: Display](writer: ref mut W, zone: ref mut Zone, value: T) -> Result[(), Error]
 write_value_bool[W: io::Writer, T: Display](writer: ref mut W, zone: ref mut Zone, value: T) -> bool
 write_debug[W: io::Writer, T: Debug](writer: ref mut W, zone: ref mut Zone, value: T) -> Result[(), Error]
@@ -159,6 +168,19 @@ fmt::write_line_value<io::Stdout, string>(
   ref mut zone,
   "Created package hello",
 ).unwrap();
+```
+
+Use the `*_stream` scalar helpers when the caller already knows the value kind
+and wants to write directly to a `std::io::Writer` without first building an
+owned `String`. `write_integer_stream` handles the full signed `i64` range by
+streaming magnitude digits left-to-right, and `write_unsigned_stream` supports
+the same base, width, precision, alignment, uppercase, and alternate-prefix
+`FormatSpec` policy as `unsigned_in`:
+
+```ari
+var stdout = io::stdout();
+fmt::write_integer_stream<io::Stdout>(ref mut stdout, -42).unwrap();
+fmt::write_text_stream<io::Stdout>(ref mut stdout, " files").unwrap();
 ```
 
 Use `print_value` and `println_value` for direct stdout output when a macro is
@@ -270,6 +292,12 @@ fmt::write_format2<io::Stdout, string, i64>(
 ).unwrap();
 ```
 
+`write_format_stream`, `write_format_stream2`, `write_format_stream3`, and
+`write_format_stream4` are spelling-explicit aliases for the writer-backed
+runtime-template path. They distinguish writer streaming from owned-string
+`format*` helpers while the compiler does not yet support a generic
+writer-facing `Display` trait for per-value zero-temporary formatting.
+
 ## Formatting Macros
 
 The executable formatting surface today is still macro-based:
@@ -318,6 +346,9 @@ The source helpers complement the macros:
 - Use `write_format`, `write_format2`, `write_format3`, and `write_format4`
   when the writer path needs the runtime-template rules and must preserve
   writer/template failures.
+- Use `write_integer_stream`, `write_unsigned_stream`,
+  `write_boolean_stream`, `write_text_stream`, and `write_char_stream` when a
+  known scalar/text value should go directly to an `io::Writer`.
 - Use `Display::format_in` for standard display values and user-defined values
   that participate in `{}`.
 - Use `Debug::debug_in`, `{:?}`, and `debug_value` for diagnostic output that
@@ -360,9 +391,9 @@ The source helpers complement the macros:
   generic bounds, not as a suffix, unless the compiler/runtime primitive truly
   requires a distinct symbol.
 - Custom formatter objects, allocator-returning `format!` without an explicit
-  zone, true variadic/default-zone formatting, and fully streaming template
-  writers beyond the current fixed-arity one-through-four helpers remain
-  roadmap work.
+  zone, true variadic/default-zone formatting, and generic per-value streaming
+  display dispatch beyond the current fixed-arity one-through-four writer
+  helpers remain roadmap work.
 
 ## Tests
 

@@ -293,6 +293,54 @@ fn main() -> i64 {
     return 26;
   }
 
+  var stream_buffer = [0u8, 0u8, 0u8];
+  var stream_writer = MemoryWriter { data: stream_buffer.as_slice(), position: 0 };
+  if !fmt::write_integer_stream<MemoryWriter>(ref mut stream_writer, -42).is_ok() {
+    zone::destroy(zone);
+    return 37;
+  }
+  if !(stream_buffer[0] == '-' && stream_buffer[1] == '4' && stream_buffer[2] == '2' &&
+       stream_writer.position == 3) {
+    zone::destroy(zone);
+    return 38;
+  }
+
+  var stream_buffer2 = [0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8];
+  var stream_writer2 = MemoryWriter { data: stream_buffer2.as_slice(), position: 0 };
+  if !fmt::write_format_stream4<MemoryWriter, string, i64, bool, string>(
+    ref mut stream_writer2,
+    ref mut zone,
+    "a{}{}{}{}",
+    "b",
+    -3,
+    true,
+    "!"
+  ).is_ok() {
+    zone::destroy(zone);
+    return 39;
+  }
+  if !(stream_buffer2[0] == 'a' && stream_buffer2[1] == 'b' && stream_buffer2[2] == '-' &&
+       stream_buffer2[3] == '3' && stream_buffer2[4] == 't' && stream_buffer2[5] == 'r' &&
+       stream_buffer2[6] == 'u' && stream_buffer2[7] == 'e' && stream_buffer2[8] == '!' &&
+       stream_writer2.position == 9) {
+    zone::destroy(zone);
+    return 40;
+  }
+
+  var stream_buffer3 = [0u8, 0u8];
+  var stream_writer3 = MemoryWriter { data: stream_buffer3.as_slice(), position: 0 };
+  if !unit_error_is(
+    fmt::write_format_stream2<MemoryWriter, string, i64>(ref mut stream_writer3, ref mut zone, "{}={}", "x", 7),
+    error::BrokenPipe
+  ) {
+    zone::destroy(zone);
+    return 41;
+  }
+  if !(stream_writer3.position == 2 && stream_buffer3[0] == 'x' && stream_buffer3[1] == '=') {
+    zone::destroy(zone);
+    return 43;
+  }
+
   zone::destroy(zone);
   return 42;
 }

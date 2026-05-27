@@ -15,7 +15,7 @@ compiler and stdlib boundary.
 | Area | Current usable surface | Why stdlib-only work stops here | Main files |
 | --- | --- | --- | --- |
 | `std::thread` | `thread::spawn(fn() -> i64) -> Result[JoinHandle, Error]`, `JoinHandle`, `JoinError`, `ThreadResult`, `Builder`, explicit `ThreadLocal[T]`. | Generic `JoinHandle[T]`, captured thread entries, scoped threads, generic return payloads, and compiler-owned `thread_local` declarations require closure environment transfer, send/share rules, result storage ownership, drop paths, and TLS codegen. | `lib/std/thread.arih`, `src/sema.cpp`, `src/llvm_codegen.cpp`, `docs/stdlib/modules/thread.md`, `tests/cases/standard-library/ok/thread/`, `tests/cases/functions/` |
-| `std::fmt` | `format_in!`, `Display::format_in`, `Debug::debug_in`, fixed-arity runtime `format`/`format2`/`format3`/`format4`, matching writer helpers, `concat2`/`concat3`/`concat4`. | Variadic/default-zone formatting needs compiler lowering or variadic generic support plus an allocation-zone policy. Fully streaming per-value formatting needs a writer-facing formatting trait or a staged migration from string-returning `Display::format_in`. | `lib/std/fmt.arih`, `src/prelude_macros.cpp`, `src/sema.cpp`, `docs/stdlib/modules/fmt.md`, `tests/cases/standard-library/ok/format/`, `tests/cases/standard-library/errors/format/` |
+| `std::fmt` | `format_in!`, `Display::format_in`, `Debug::debug_in`, fixed-arity runtime `format`/`format2`/`format3`/`format4`, matching writer helpers, direct scalar/text streaming writer helpers, `concat2`/`concat3`/`concat4`. | Variadic/default-zone formatting needs compiler lowering or variadic generic support plus an allocation-zone policy. Generic per-value streaming display needs a writer-facing formatting trait plus compiler support for selecting generic trait impls whose type parameter is carried by a trait argument such as `WriteDisplay[W]`. | `lib/std/fmt.arih`, `src/prelude_macros.cpp`, `src/sema.cpp`, `docs/stdlib/modules/fmt.md`, `tests/cases/standard-library/ok/format/`, `tests/cases/standard-library/errors/format/` |
 | `union by` | Parser reserves `union by <selector> { arm => Type, ... }` and emits a targeted diagnostic. Ordinary enum ADTs remain the supported model. | Positive support needs an AST/type representation for discriminant-linked fields, selector resolution, arm exhaustiveness, active-arm layout, construction, narrowing, and active-arm drop. | `src/parser.cpp`, `src/ast.hpp`, `src/sema.cpp`, `src/llvm_codegen.cpp`, `docs/language/generic-aggregates.md`, `tests/cases/compiler-development/artifact/errors/diagnostic-parser-union-by-field.*` |
 | Structural capability parameters | Parser reserves `fn f(x: has method(...) -> Type)` and emits a targeted diagnostic. Named traits remain the supported model. | Positive support needs capability parameter AST nodes, method-set type checking, method lookup diagnostics, monomorphization/lowering, and a clear rule that this is not accidental dynamic dispatch or an `interface` keyword. | `src/parser.cpp`, `src/ast.hpp`, `src/sema.cpp`, `docs/dev/roadmap.md`, `tests/cases/compiler-development/artifact/errors/diagnostic-parser-structural-capability-parameter.*` |
 
@@ -64,8 +64,9 @@ The current source formatting contract is allocation-explicit:
 their template at runtime, but each placeholder still calls `format_in` and
 therefore builds a temporary value string.
 
-Fully streaming formatting needs a writer-facing contract. A conservative path
-is:
+Scalar/text streaming helpers now cover known concrete value kinds directly.
+Generic per-value streaming still needs a writer-facing contract. A
+conservative path is:
 
 1. Add a new trait instead of breaking every existing `Display` impl, for
    example a future writer trait whose method writes to `std::io::Writer` and
@@ -73,10 +74,12 @@ is:
 2. Provide blanket or adapter-style helpers that keep existing
    `Display::format_in` values usable while native streaming impls are added
    for common scalar/text types.
-3. Rework `write_value`, `write_debug`, `write_format*`, and `write_concat*`
+3. Teach trait resolution to select generic impls where the writer type is a
+   trait argument, for example `impl[W: io::Writer] WriteDisplay[W] for i64`.
+4. Rework `write_value`, `write_debug`, `write_format*`, and `write_concat*`
    to use writer-native formatting when available and fall back to
    `format_in`.
-4. Add tests that a writer failure stops the formatter without losing the
+5. Add tests that a writer failure stops the formatter without losing the
    error category and that literal bytes written before a later failure are
    documented as not rolled back.
 

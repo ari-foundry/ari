@@ -24,21 +24,21 @@ platform notes.
 
 ## Summary
 
-- API entries: `3554`
+- API entries: `3563`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
 | `alloc` | 923 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 910 | stable candidate |
+| `core` | 919 | stable candidate |
 | `hosted` | 1522 | platform-backed |
 | `platform` | 163 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1211 |
+| `fn` | 1220 |
 | `method` | 1876 |
 | `module` | 39 |
 | `struct` | 195 |
@@ -65,7 +65,7 @@ platform notes.
 | `std::encoding` | `core` | 98 |
 | `std::env` | `hosted` | 68 |
 | `std::error` | `core` | 37 |
-| `std::fmt` | `core` | 68 |
+| `std::fmt` | `core` | 77 |
 | `std::fs` | `hosted` | 325 |
 | `std::hash` | `alloc` | 24 |
 | `std::input` | `hosted` | 6 |
@@ -1670,6 +1670,8 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::fmt::with_width` | check-prelude std-fmt-format-spec width spec helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_boolean[W: std::io::Writer]` | check-prelude std-fmt-format-spec Result-returning Writer-backed bool formatting helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_boolean_bool[W: std::io::Writer]` | check-prelude std-fmt-format-spec bool compatibility Writer-backed bool formatting helper; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::write_boolean_stream[W: std::io::Writer]` | check-prelude std-fmt-concat-format-value direct bool streaming writer helper; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::write_char_stream[W: std::io::Writer]` | check-prelude std-fmt-concat-format-value direct byte-character streaming writer helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_concat2` | check-prelude std-fmt-format-spec Result-returning two-value Writer-backed Display concatenation helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_concat2_bool` | check-prelude std-fmt-format-spec bool compatibility two-value Writer-backed Display concatenation helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_concat3` | check-prelude std-fmt-format-spec Result-returning three-value Writer-backed Display concatenation helper; docs/stdlib/modules/fmt.md |
@@ -1682,8 +1684,13 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::fmt::write_format2` | check-prelude std-fmt-concat-format-value Result-returning two-value Writer-backed runtime template formatter; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_format3` | check-prelude std-fmt-concat-format-value Result-returning three-value Writer-backed runtime template formatter; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_format4` | check-prelude std-fmt-concat-format-value Result-returning four-value Writer-backed runtime template formatter; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::write_format_stream` | check-prelude std-fmt-concat-format-value streaming-name one-value Writer-backed runtime template formatter; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::write_format_stream2` | check-prelude std-fmt-concat-format-value streaming-name two-value Writer-backed runtime template formatter; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::write_format_stream3` | check-prelude std-fmt-concat-format-value streaming-name three-value Writer-backed runtime template formatter; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::write_format_stream4` | check-prelude std-fmt-concat-format-value streaming-name four-value Writer-backed runtime template formatter; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_integer[W: std::io::Writer]` | check-prelude std-fmt-format-spec Result-returning Writer-backed signed integer formatting helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_integer_bool[W: std::io::Writer]` | check-prelude std-fmt-format-spec bool compatibility Writer-backed signed integer formatting helper; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::write_integer_stream[W: std::io::Writer]` | check-prelude std-fmt-concat-format-value direct signed integer streaming writer helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_line_debug[W: std::io::Writer, T: std::fmt::Debug]` | check-prelude std-fmt-format-spec Result-returning generic Writer-backed Debug line helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_line_debug_bool[W: std::io::Writer, T: std::fmt::Debug]` | check-prelude std-fmt-format-spec bool compatibility generic Writer-backed Debug line helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_line_text[W: std::io::Writer]` | check-prelude std-fmt-format-spec Result-returning Writer-backed text line helper; docs/stdlib/modules/fmt.md |
@@ -1692,8 +1699,10 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::fmt::write_line_value_bool[W: std::io::Writer, T: std::fmt::Display]` | check-prelude std-fmt-format-spec bool compatibility generic Writer-backed Display line helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_text[W: std::io::Writer]` | check-prelude std-fmt-format-spec Result-returning Writer-backed text formatting helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_text_bool[W: std::io::Writer]` | check-prelude std-fmt-format-spec bool compatibility Writer-backed text formatting helper; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::write_text_stream[W: std::io::Writer]` | check-prelude std-fmt-concat-format-value direct string streaming writer helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_unsigned[W: std::io::Writer]` | check-prelude std-fmt-format-spec Result-returning Writer-backed base/width/precision formatting helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_unsigned_bool[W: std::io::Writer]` | check-prelude std-fmt-format-spec bool compatibility Writer-backed base/width/precision formatting helper; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::write_unsigned_stream[W: std::io::Writer]` | check-prelude std-fmt-concat-format-value direct unsigned integer streaming writer helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_value[W: std::io::Writer, T: std::fmt::Display]` | check-prelude std-fmt-format-spec Result-returning generic Writer-backed Display formatting helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_value_bool[W: std::io::Writer, T: std::fmt::Display]` | check-prelude std-fmt-format-spec bool compatibility generic Writer-backed Display formatting helper; docs/stdlib/modules/fmt.md |
 
