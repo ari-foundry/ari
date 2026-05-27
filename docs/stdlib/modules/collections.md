@@ -554,6 +554,7 @@ map.split_off(ref mut zone, start)
 map.split_off(start)
 map.append(ref mut zone, ref mut other)
 map.append(ref mut other)
+map.retain(keep)
 map.clear()
 map.extend_iter(iter)
 map.extend(iter)
@@ -613,6 +614,10 @@ link. For tracked local tree maps,
 `map.append(ref mut other)`, `map.reserve(capacity)`, and
 `map.reserve_extra(additional)` infer the constructor zone. `copy_to(ref mut
 target)` rebuilds the map in the target zone with the same comparator.
+`retain(fn(ref K, ref mut V) -> bool)` scans live tree nodes in place. The
+predicate can mutate retained values; a `false` result drops the key/value
+pair, applies the same direct red-black delete fixup used by `remove`, and
+compacts storage without allocating or rebuilding the whole tree.
 
 `TreeMap.entry(key)` mirrors `HashMap.entry(key)`, but lookup follows the map's
 strict less-than comparator. `TreeMapEntry[K, V]` supports the same
@@ -650,6 +655,7 @@ set.split_off(ref mut zone, start)
 set.split_off(start)
 set.append(ref mut zone, ref mut other)
 set.append(ref mut other)
+set.retain(keep)
 set.clear()
 set.extend_iter(iter)
 set.extend(iter)
@@ -686,6 +692,9 @@ dropped and the existing representative stays. `TreeSet::from_iter` and
 `set.reserve_extra(additional)` infer the constructor zone.
 `copy_to(ref mut target)` rebuilds the ordered set in the target zone
 with the same comparator.
+`retain(fn(ref T) -> bool)` filters the ordered set in place, dropping values
+whose predicate returns `false` and using direct red-black delete plus compacting
+slot movement for each rejected value.
 
 ## BinaryHeap And PriorityQueue
 

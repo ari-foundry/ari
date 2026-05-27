@@ -3194,6 +3194,26 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
     tree_map_drop_values<K, V>(self);
   }
 
+  fn retain(self: ref mut Self, keep: fn(ref K, ref mut V) -> bool) -> void {
+    var index = 0;
+    while index < self.len {
+      let key_ptr = ptr_add(self.keys, index);
+      let value_ptr = ptr_add(self.values, index);
+      if keep(ref *key_ptr, ref mut *value_ptr) {
+        index = index + 1;
+      } else {
+        let key = ptr_load(key_ptr);
+        let value = ptr_load(value_ptr);
+        let last = self.len - 1;
+        drop key;
+        drop value;
+        tree_map_delete_slot<K, V>(self, index);
+        tree_map_move_last_slot<K, V>(self, index, last);
+        self.len = last;
+      }
+    }
+  }
+
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
     tree_map_grow_to_capacity<K, V>(self, capacity);
   }
@@ -4346,6 +4366,23 @@ pub impl[T] std::collections::TreeSet[T] {
 
   fn clear(self: ref mut Self) -> void {
     tree_set_drop_values<T>(self);
+  }
+
+  fn retain(self: ref mut Self, keep: fn(ref T) -> bool) -> void {
+    var index = 0;
+    while index < self.len {
+      let value_ptr = ptr_add(self.data, index);
+      if keep(ref *value_ptr) {
+        index = index + 1;
+      } else {
+        let value = ptr_load(value_ptr);
+        let last = self.len - 1;
+        drop value;
+        tree_set_delete_slot<T>(self, index);
+        tree_set_move_last_slot<T>(self, index, last);
+        self.len = last;
+      }
+    }
   }
 
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {

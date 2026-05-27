@@ -1,5 +1,5 @@
-// Covers retain-style filtering for linear sets and hash-table collections.
-// HashMap::retain also verifies that predicates may mutate retained values.
+// Covers retain-style filtering for linear, hash-table, and tree collections.
+// Map retain predicates also verify that retained values may be mutated.
 
 fn constant_hash(value: i64) -> u64 {
   return 5;
@@ -21,7 +21,7 @@ fn keep_large_key_and_bump(key: ref i64, value: ref mut i64) -> bool {
 }
 
 fn main() -> i64 {
-  var zone = zone::create(8192);
+  var zone = zone::create(16384);
 
   var set = Set::new<i64>(ref mut zone, 1);
   set.insert(ref mut zone, 1);
@@ -60,6 +60,34 @@ fn main() -> i64 {
   assert(map.get(20) == 201);
   map.insert(ref mut zone, 30, 300);
   assert(map.get(30) == 300);
+
+  var tree_map = TreeMap::with_less<i64, i64>(ref mut zone, 1, collections::less_i64);
+  tree_map.insert(ref mut zone, 1, 10);
+  tree_map.insert(ref mut zone, 10, 100);
+  tree_map.insert(ref mut zone, 20, 200);
+  tree_map.insert(ref mut zone, 5, 50);
+  tree_map.retain(keep_large_key_and_bump);
+  assert(tree_map.len() == 2);
+  assert(!tree_map.contains_key(1));
+  assert(!tree_map.contains_key(5));
+  assert(tree_map.get(10) == 101);
+  assert(tree_map.get(20) == 201);
+  tree_map.insert(ref mut zone, 30, 300);
+  assert(tree_map.get(30) == 300);
+
+  var tree_set = TreeSet::with_less<i64>(ref mut zone, 1, collections::less_i64);
+  tree_set.insert(ref mut zone, 9);
+  tree_set.insert(ref mut zone, 10);
+  tree_set.insert(ref mut zone, 11);
+  tree_set.insert(ref mut zone, 12);
+  tree_set.retain(keep_odd);
+  assert(tree_set.len() == 2);
+  assert(tree_set.contains(9));
+  assert(tree_set.contains(11));
+  assert(!tree_set.contains(10));
+  assert(!tree_set.contains(12));
+  assert(tree_set.insert(ref mut zone, 13));
+  assert(tree_set.contains(13));
 
   zone::destroy(zone);
   return 0;

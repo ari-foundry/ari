@@ -3165,6 +3165,8 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl26std__collections__Set_i64_8inherent6retain' $(BUILD_DIR)/prelude/std-collections-retain.ll
 	grep -q '_ARNv4impl30std__collections__HashSet_i64_8inherent6retain' $(BUILD_DIR)/prelude/std-collections-retain.ll
 	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent6retain' $(BUILD_DIR)/prelude/std-collections-retain.ll
+	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent6retain' $(BUILD_DIR)/prelude/std-collections-retain.ll
+	grep -q '_ARNv4impl30std__collections__TreeSet_i64_8inherent6retain' $(BUILD_DIR)/prelude/std-collections-retain.ll
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-retain.ari -o $(BUILD_DIR)/prelude/std-collections-retain.elf
 	$(BUILD_DIR)/prelude/std-collections-retain.elf
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-value-predicates.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-map-value-predicates.ll

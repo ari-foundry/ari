@@ -3158,6 +3158,7 @@ map.entry(ref mut zone, key)
 map.entry(key)
 map.remove(key)
 map.remove_entry(key)
+map.retain(keep)
 map.clear()
 map.reserve(ref mut zone, capacity)
 map.reserve_extra(ref mut zone, additional)
@@ -3194,6 +3195,7 @@ set.insert(ref mut zone, value)
 set.replace(ref mut zone, value)
 set.take(value)
 set.remove(value)
+set.retain(keep)
 set.clear()
 set.reserve(ref mut zone, capacity)
 set.reserve_extra(ref mut zone, additional)
@@ -3227,6 +3229,9 @@ needed together. `TreeMap.lower_bound(key)` returns the first entry whose key
 is not less than `key`; `TreeMap.upper_bound(key)` returns the first entry
 whose key is greater than `key`. `TreeMap.remove_entry(key)` returns
 `Option[MapEntry[K,V]]`, keeping the removed key and value together.
+`TreeMap.retain(fn(ref K, ref mut V) -> bool)` filters live entries in place;
+the predicate may mutate retained values, and rejected entries are dropped via
+the same direct red-black deletion and compacting storage path as `remove`.
 `TreeSet` relationship methods compare
 ordered-set membership, not internal tree shape.
 `TreeSet.first()` and `TreeSet.last()` read the smallest and largest values,
@@ -3237,6 +3242,8 @@ representative. `TreeSet.take(value)` returns the removed value as `Option[T]`;
 `TreeSet.remove(value)` drops it and returns a boolean. `TreeMap.keys()`,
 `TreeMap.values()`, `TreeMap.entries()`, `TreeMap.iter()`, `TreeSet.iter()`,
 and direct `for value in tree_set` walk values in ascending comparator order.
+`TreeSet.retain(fn(ref T) -> bool)` filters values in place and drops rejected
+values through the direct tree deletion path.
 `TreeMap.values_mut()` exposes a mutable sorted value cursor,
 `TreeMap.iter_mut()` walks sorted `MapEntryMut[K,V]` handles, direct
 `for entry in tree_map` walks `MapEntry[K,V]`, and `TreeMap.drain()`/

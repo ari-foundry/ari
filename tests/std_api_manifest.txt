@@ -1748,6 +1748,7 @@ method std::collections::TreeMap[K,V]::remove_entry|check-prelude std-collection
 method std::collections::TreeMap[K,V]::replace|check-prelude std-collections-map-mut-access named ordered map insert-or-replace helper; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::reserve|check-prelude std-collections-tree same-zone tree storage growth; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::reserve_extra|check-prelude std-collections-implicit-zone spare tree storage growth; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::retain|check-prelude std-collections-retain tree map in-place predicate filtering; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::split_off|check-prelude std-collections-polish-api same-zone ordered map split at lower bound; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::try_first_entry|check-prelude std-collections-tree-entry-boundaries optional smallest key-value accessor; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::try_first_key|check-prelude std-collections-tree-boundaries optional smallest-key accessor; docs/stdlib/modules/collections.md
@@ -1789,6 +1790,7 @@ method std::collections::TreeSet[T]::remove|check-prelude std-collections-tree-r
 method std::collections::TreeSet[T]::replace|check-prelude std-collections-tree replace-or-insert behavior; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::reserve|check-prelude std-collections-tree same-zone tree storage growth; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::reserve_extra|check-prelude std-collections-implicit-zone spare tree storage growth; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::retain|check-prelude std-collections-retain tree set in-place predicate filtering; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::split_off|check-prelude std-collections-polish-api same-zone ordered set split at lower bound; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::take|check-prelude std-collections-tree-remove Option-returning direct red-black deletion; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::try_first|check-prelude std-collections-tree-boundaries optional smallest-value accessor; docs/stdlib/modules/collections.md

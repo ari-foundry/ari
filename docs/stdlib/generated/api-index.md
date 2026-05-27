@@ -24,12 +24,12 @@ platform notes.
 
 ## Summary
 
-- API entries: `3517`
+- API entries: `3519`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
-| `alloc` | 897 | usable |
+| `alloc` | 899 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 905 | stable candidate |
 | `hosted` | 1516 | platform-backed |
@@ -39,7 +39,7 @@ platform notes.
 | --- | ---: |
 | `enum` | 32 |
 | `fn` | 1206 |
-| `method` | 1857 |
+| `method` | 1859 |
 | `module` | 39 |
 | `struct` | 182 |
 | `trait` | 39 |
@@ -59,7 +59,7 @@ platform notes.
 | `std::c` | `platform` | 49 |
 | `std::cell` | `alloc` | 44 |
 | `std::cmp` | `core` | 38 |
-| `std::collections` | `alloc` | 389 |
+| `std::collections` | `alloc` | 391 |
 | `std::context` | `hosted` | 20 |
 | `std::convert` | `core` | 14 |
 | `std::encoding` | `core` | 98 |
@@ -1142,6 +1142,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::collections::TreeMap[K,V]::replace` | check-prelude std-collections-map-mut-access named ordered map insert-or-replace helper; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeMap[K,V]::reserve` | check-prelude std-collections-tree same-zone tree storage growth; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeMap[K,V]::reserve_extra` | check-prelude std-collections-implicit-zone spare tree storage growth; docs/stdlib/modules/collections.md |
+| `method std::collections::TreeMap[K,V]::retain` | check-prelude std-collections-retain tree map in-place predicate filtering; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeMap[K,V]::split_off` | check-prelude std-collections-polish-api same-zone ordered map split at lower bound; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeMap[K,V]::try_first_entry` | check-prelude std-collections-tree-entry-boundaries optional smallest key-value accessor; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeMap[K,V]::try_first_key` | check-prelude std-collections-tree-boundaries optional smallest-key accessor; docs/stdlib/modules/collections.md |
@@ -1183,6 +1184,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::collections::TreeSet[T]::replace` | check-prelude std-collections-tree replace-or-insert behavior; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::reserve` | check-prelude std-collections-tree same-zone tree storage growth; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::reserve_extra` | check-prelude std-collections-implicit-zone spare tree storage growth; docs/stdlib/modules/collections.md |
+| `method std::collections::TreeSet[T]::retain` | check-prelude std-collections-retain tree set in-place predicate filtering; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::split_off` | check-prelude std-collections-polish-api same-zone ordered set split at lower bound; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::take` | check-prelude std-collections-tree-remove Option-returning direct red-black deletion; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::try_first` | check-prelude std-collections-tree-boundaries optional smallest-value accessor; docs/stdlib/modules/collections.md |
