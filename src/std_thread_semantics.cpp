@@ -6,6 +6,7 @@ bool is_std_thread_zone_handle_type(const IrType& type) {
     return type.qualifier == TypeQualifier::Value &&
            type.primitive == IrPrimitiveKind::Struct &&
            (type.name == "std::thread::ThreadLocal" ||
+            type.name == "std::thread::ThreadScope" ||
             type.name == "std::thread::ThreadLocalState");
 }
 
@@ -23,6 +24,12 @@ std::optional<std::size_t> std_thread_zone_handle_source_field_index(const IrTyp
         if (type.field_names[1] != "slots") return std::nullopt;
         if (type.field_types[1].qualifier != TypeQualifier::Ptr) return std::nullopt;
         return 1;
+    }
+    if (type.name == "std::thread::ThreadScope") {
+        if (type.field_names.size() != 4 || type.field_types.size() != 4) return std::nullopt;
+        if (type.field_names[0] != "handles") return std::nullopt;
+        if (type.field_types[0].qualifier != TypeQualifier::Ptr) return std::nullopt;
+        return 0;
     }
     return std::nullopt;
 }

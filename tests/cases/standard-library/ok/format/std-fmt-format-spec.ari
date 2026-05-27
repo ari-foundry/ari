@@ -160,6 +160,14 @@ fn main() -> i64 {
     }
   }
 
+  var concat2_bool_buffer = [0u8, 0u8, 0u8, 0u8];
+  var concat2_bool_writer = MemoryWriter { data: concat2_bool_buffer.as_slice(), position: 0 };
+  if fmt::write_concat2_bool<MemoryWriter, string, string>(ref mut concat2_bool_writer, ref mut zone, "A", "B") {
+    if concat2_bool_buffer[0] == 'A' && concat2_bool_buffer[1] == 'B' && concat2_bool_writer.position == 2 {
+      score = score + 1;
+    }
+  }
+
   var concat3_buffer = [0u8, 0u8, 0u8];
   var concat3_writer = MemoryWriter { data: concat3_buffer.as_slice(), position: 0 };
   if fmt::write_concat3_bool<MemoryWriter, string, i64, string>(ref mut concat3_writer, ref mut zone, "v", 7, "!") {

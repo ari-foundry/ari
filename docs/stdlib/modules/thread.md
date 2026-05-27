@@ -4,12 +4,16 @@
 pointer on the current LLVM/Linux runtime path, join or detach the returned
 owning handle, yield or sleep the current OS thread, read Ari's runtime thread
 id, query hosted parallelism, use a small `Builder` value for thread options,
-inspect a typed `ThreadResult` wrapper for joined `i64` exits, and keep
-per-thread values in an explicit `ThreadLocal[T]` handle.
+start a raw-data entry point when a caller owns the lifetime of an explicit
+payload pointer, collect fixed-capacity scoped thread groups, inspect a typed
+`ThreadResult` wrapper for joined `i64` exits, and keep per-thread values in
+an explicit `ThreadLocal[T]` handle.
 
 The API is deliberately explicit. Thread entries are still `fn() -> i64`, not
 capturing closures, because cross-thread ownership transfer needs send/share
-rules before Ari can make that surface safe. Shared-state primitives live in
+rules before Ari can make that surface safe. `spawn_raw` is a low-level bridge
+for runtime and library code that already has a stable payload pointer; it does
+not make captured closures safe by itself. Shared-state primitives live in
 `std::sync`.
 
 ## API
@@ -21,11 +25,17 @@ thread::ThreadId
 thread::JoinHandle
 thread::JoinError
 thread::ThreadResult
+thread::ThreadGroupResult
+thread::ThreadScope
 thread::ThreadLocalSetError[T]
 thread::spawn(entry: fn() -> i64) -> Result[JoinHandle, thread::Error]
 thread::spawn_unchecked(entry: fn() -> i64) -> Thread
+thread::spawn_raw(entry: fn(ptr u8) -> i64, data: ptr u8) -> Result[JoinHandle, thread::Error]
+thread::spawn_raw_unchecked(entry: fn(ptr u8) -> i64, data: ptr u8) -> Thread
 thread::join(ref mut JoinHandle) -> Result[i64, JoinError]
 thread::join_value(ref mut JoinHandle) -> Result[ThreadResult, JoinError]
+thread::try_join(ref mut JoinHandle) -> Result[Option[i64], JoinError]
+thread::try_join_value(ref mut JoinHandle) -> Result[Option[ThreadResult], JoinError]
 thread::join_thread(thread: Thread) -> Result[i64, JoinError]
 thread::join_thread_value(thread: Thread) -> Result[ThreadResult, JoinError]
 thread::join_compat(thread: Thread) -> Result[i64, thread::Error]
@@ -44,6 +54,9 @@ thread::is_join_error(status: i64) -> bool
 thread::builder() -> Builder
 thread::spawn_configured(entry: fn() -> i64, name: string, stack_size: i64) -> Result[JoinHandle, thread::Error]
 thread::spawn_configured_unchecked(entry: fn() -> i64, name: string, stack_size: i64) -> Thread
+thread::spawn_raw_configured(entry: fn(ptr u8) -> i64, data: ptr u8, name: string, stack_size: i64) -> Result[JoinHandle, thread::Error]
+thread::spawn_raw_configured_unchecked(entry: fn(ptr u8) -> i64, data: ptr u8, name: string, stack_size: i64) -> Thread
+thread::scope(ref mut Zone, capacity: i64) -> ThreadScope
 thread::thread_local<T>(ref mut Zone) -> ThreadLocal[T]
 thread::thread_local_with_capacity<T>(ref mut Zone, capacity: i64) -> ThreadLocal[T]
 
@@ -56,6 +69,8 @@ thread_id.equals(other: ThreadId) -> bool
 
 Thread::spawn(entry: fn() -> i64) -> Result[JoinHandle, thread::Error]
 Thread::spawn_unchecked(entry: fn() -> i64) -> Thread
+Thread::spawn_raw(entry: fn(ptr u8) -> i64, data: ptr u8) -> Result[JoinHandle, thread::Error]
+Thread::spawn_raw_unchecked(entry: fn(ptr u8) -> i64, data: ptr u8) -> Thread
 Thread::current() -> Thread
 Thread::invalid() -> Thread
 thread.id() -> ThreadId
@@ -76,6 +91,8 @@ handle.is_finished() -> bool
 handle.detach() -> Result[(), JoinError]
 handle.join() -> Result[i64, JoinError]
 handle.join_value() -> Result[ThreadResult, JoinError]
+handle.try_join() -> Result[Option[i64], JoinError]
+handle.try_join_value() -> Result[Option[ThreadResult], JoinError]
 
 ThreadResult::from_i64(value: i64) -> ThreadResult
 thread_result.value() -> i64
@@ -84,6 +101,14 @@ thread_result.is_success() -> bool
 thread_result.is_failure() -> bool
 thread_result.equals(value: i64) -> bool
 
+ThreadGroupResult::empty() -> ThreadGroupResult
+group.spawned() -> i64
+group.joined() -> i64
+group.failed_statuses() -> i64
+group.status_sum() -> i64
+group.all_joined() -> bool
+group.all_success() -> bool
+
 Builder::new() -> Builder
 builder.name(value: string) -> Builder
 builder.stack_size(bytes: i64) -> Builder
@@ -91,6 +116,23 @@ builder.configured_name() -> string
 builder.configured_stack_size() -> i64
 builder.spawn(entry: fn() -> i64) -> Result[JoinHandle, thread::Error]
 builder.spawn_unchecked(entry: fn() -> i64) -> Thread
+builder.spawn_raw(entry: fn(ptr u8) -> i64, data: ptr u8) -> Result[JoinHandle, thread::Error]
+builder.spawn_raw_unchecked(entry: fn(ptr u8) -> i64, data: ptr u8) -> Thread
+
+ThreadScope::new(ref mut Zone, capacity: i64) -> ThreadScope
+scope.capacity() -> i64
+scope.len() -> i64
+scope.is_empty() -> bool
+scope.remaining_capacity() -> i64
+scope.is_full() -> bool
+scope.is_closed() -> bool
+scope.push_handle(handle: JoinHandle) -> Result[(), thread::Error]
+scope.spawn(entry: fn() -> i64) -> Result[(), thread::Error]
+scope.spawn_configured(entry: fn() -> i64, name: string, stack_size: i64) -> Result[(), thread::Error]
+scope.spawn_raw(entry: fn(ptr u8) -> i64, data: ptr u8) -> Result[(), thread::Error]
+scope.spawn_raw_configured(entry: fn(ptr u8) -> i64, data: ptr u8, name: string, stack_size: i64) -> Result[(), thread::Error]
+scope.join_all() -> Result[ThreadGroupResult, JoinError]
+scope.close() -> Result[ThreadGroupResult, JoinError]
 
 ThreadLocal::new<T>(ref mut Zone) -> ThreadLocal[T]
 ThreadLocal::with_capacity<T>(ref mut Zone, capacity: i64) -> ThreadLocal[T]
@@ -125,10 +167,17 @@ the handle detached and consumes the join right. Dropping a live `JoinHandle`
 does not currently detach automatically, so hosted programs should explicitly
 join or detach handles they create.
 
+`try_join(ref mut handle)` and `handle.try_join()` are nonblocking lifecycle
+helpers. They return `Ok(None)` while the thread still appears to be running,
+`Ok(Some(status))` after a successful join, or the same `JoinError` cases as
+`join` for invalid, already joined, detached, or failed joins. The readiness
+test is advisory and host-specific, so a later `JoinFailed` is still possible.
+
 `join_value(ref mut handle)`, `join_thread_value(thread)`, and
-`handle.join_value()` wrap the joined `i64` in `ThreadResult`. The wrapper is
-still intentionally small because thread entries return `fn() -> i64` today,
-but it gives docs and call sites a typed place for `value()`, `as_i64()`,
+`handle.join_value()` wrap the joined `i64` in `ThreadResult`.
+`try_join_value` does the same for the nonblocking path. The wrapper is still
+intentionally small because thread entries return `fn() -> i64` today, but it
+gives docs and call sites a typed place for `value()`, `as_i64()`,
 `is_success()`, `is_failure()`, and `equals(value)` until generic
 `JoinHandle[T]` exists.
 
@@ -158,6 +207,30 @@ returned handles into `Error(Other)`. `spawn_unchecked`,
 `spawn_configured_unchecked`, `Thread::spawn_unchecked`, and
 `Builder::spawn_unchecked` are compatibility forms that return invalid handles
 instead of `Error`.
+
+`spawn_raw(entry, data)` starts a thread whose entry has type
+`fn(ptr u8) -> i64`. This is intentionally a raw API even though it returns
+`Result`: the runtime owns only the small start packet used to call the entry.
+The caller owns `data`, must keep it alive and valid until the thread has been
+joined or safely detached, and must provide any synchronization needed for
+shared mutation. `spawn_raw_configured`, `Thread::spawn_raw`, and
+`Builder::spawn_raw` provide the same raw-data entry shape with module,
+associated, and builder spellings. The `_unchecked` forms are compatibility
+hooks that return invalid raw `Thread` handles instead of `Error`.
+
+`ThreadScope` is a fixed-capacity, zone-backed owner for a group of
+`JoinHandle` values. Use `thread::scope(ref mut zone, capacity)` or
+`ThreadScope::new` to allocate the handle table, then call `spawn`,
+`spawn_configured`, `spawn_raw`, `spawn_raw_configured`, or `push_handle` to
+adopt join rights. `join_all()` joins every valid handle once and closes the
+scope, returning `ThreadGroupResult` with the number spawned, joined, nonzero
+statuses, and the sum of statuses. `close()` is an alias for `join_all()`.
+Dropping a still-open `ThreadScope` performs a best-effort `join_all` and
+ignores the result, so explicit `join_all` is preferred when failures matter.
+The backing zone must outlive the scope and any raw payloads used by spawned
+threads. After a scope is closed, further spawn attempts return
+`Error(InvalidInput)`; if a full or closed scope rejects a handle, it detaches
+that rejected handle so the join right is not silently leaked.
 
 `yield_now()` asks the host scheduler to let another runnable thread make
 progress. It is only a hint and does not create a synchronization boundary.
@@ -202,6 +275,14 @@ fn make_local_value() -> i64 {
   return 99;
 }
 
+fn raw_worker(data: ptr u8) -> i64 {
+  thread::sleep(time::milliseconds(25));
+  let slot = data as ptr i64;
+  let value = ptr_load(slot);
+  ptr_store(slot, value + 1);
+  return value + 10;
+}
+
 fn main() -> i64 {
   var zone = zone::create(4096);
   var local = thread::thread_local_with_capacity<i64>(ref mut zone, 2);
@@ -233,6 +314,32 @@ fn main() -> i64 {
     return 3;
   }
 
+  let slot = zone::new<i64>(ref mut zone, 32);
+  var raw = thread::spawn_raw(raw_worker, slot as ptr u8).unwrap();
+  match raw.try_join() {
+    Ok(maybe_status) => {
+      if maybe_status.is_some() {
+        return 4;
+      }
+    }
+    Err(_) => {
+      return 5;
+    }
+  }
+  if raw.join().unwrap() != 42 {
+    return 6;
+  }
+
+  var scope = thread::scope(ref mut zone, 2);
+  let scoped_slot = zone::new<i64>(ref mut zone, 7);
+  scope.spawn(worker).unwrap();
+  scope.spawn_raw(raw_worker, scoped_slot as ptr u8).unwrap();
+  let group = scope.join_all().unwrap();
+  if !group.all_joined() || group.spawned() != 2 {
+    return 7;
+  }
+  drop scope;
+
   return 0;
 }
 ```
@@ -240,6 +347,12 @@ fn main() -> i64 {
 ## Current Limits
 
 - Thread entry is a plain `fn() -> i64`, not a closure with captured state.
+- `spawn_raw` accepts an explicit `ptr u8` payload. It is useful for runtime
+  bridges and carefully owned zone-backed payloads, but it does not provide
+  closure capture, send/share checking, or generic result storage.
+- `ThreadScope` gives current Ari code a concrete join-lifecycle owner for a
+  fixed group of handles. It is not yet borrowed scoped threads: the compiler
+  does not prove that stack borrows outlive worker threads.
 - `JoinHandle` owns a join right, but Ari values can still be copied in places
   that expose the raw `Thread`. Do not join the same native handle through a
   copied raw handle.
@@ -281,6 +394,11 @@ fn main() -> i64 {
   access, lazy initialization, recoverable `try_set`/`get_or_try_init`,
   capacity introspection, removal, root alias coverage, and zone-backed
   provenance.
+- `tests/cases/standard-library/ok/thread/std-thread-scope-raw.ari` checks
+  raw payload thread entries, `Builder::spawn_raw`, nonblocking `try_join` and
+  `try_join_value`, zone-backed `ThreadScope`, scoped raw/function-pointer
+  spawn helpers, group join summaries, rejected spawns after close, and the
+  LLVM raw trampoline path.
 
 Run `make check-std-api` after public API edits and `make check-prelude` for
 the focused source/runtime coverage.

@@ -24,34 +24,34 @@ platform notes.
 
 ## Summary
 
-- API entries: `3563`
+- API entries: `3601`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
 | `alloc` | 923 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 919 | stable candidate |
-| `hosted` | 1522 | platform-backed |
+| `core` | 921 | stable candidate |
+| `hosted` | 1558 | platform-backed |
 | `platform` | 163 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1220 |
-| `method` | 1876 |
+| `fn` | 1227 |
+| `method` | 1903 |
 | `module` | 39 |
-| `struct` | 195 |
+| `struct` | 197 |
 | `trait` | 39 |
 | `trait-method` | 41 |
 | `type` | 22 |
-| `use` | 99 |
+| `use` | 101 |
 
 ## Modules
 
 | Module | Tier | Entries |
 | --- | --- | ---: |
-| `std` | `core` | 296 |
+| `std` | `core` | 298 |
 | `std::algo` | `alloc` | 41 |
 | `std::ascii` | `core` | 33 |
 | `std::bits` | `core` | 26 |
@@ -87,7 +87,7 @@ platform notes.
 | `std::sync` | `hosted` | 224 |
 | `std::target` | `platform` | 52 |
 | `std::test` | `hosted` | 32 |
-| `std::thread` | `hosted` | 90 |
+| `std::thread` | `hosted` | 126 |
 | `std::time` | `hosted` | 74 |
 | `std::vec` | `alloc` | 115 |
 | `std::zone` | `alloc` | 21 |
@@ -380,10 +380,12 @@ Tier: `core`. Stability reading: stable candidate.
 | `use std::String` | prelude root String tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows |
 | `use std::Symbol` | check-prelude std-c-interop root alias for std::c::Symbol; docs/stdlib/modules/c.md |
 | `use std::Thread` | check-prelude std-thread-basic root alias for std::thread::Thread; docs/stdlib/modules/thread.md |
+| `use std::ThreadGroupResult` | check-prelude std-thread-scope-raw root alias for std::thread::ThreadGroupResult; docs/stdlib/modules/thread.md |
 | `use std::ThreadId` | check-prelude std-thread-basic root alias for std::thread::ThreadId; docs/stdlib/modules/thread.md |
 | `use std::ThreadLocal` | check-prelude std-thread-local root alias for std::thread::ThreadLocal[T]; docs/stdlib/modules/thread.md |
 | `use std::ThreadLocalSetError` | check-prelude std-thread-local root alias for std::thread::ThreadLocalSetError[T]; docs/stdlib/modules/thread.md |
 | `use std::ThreadResult` | check-prelude std-thread-basic root alias for std::thread::ThreadResult; docs/stdlib/modules/thread.md |
+| `use std::ThreadScope` | check-prelude std-thread-scope-raw root alias for std::thread::ThreadScope; docs/stdlib/modules/thread.md |
 | `use std::TreeMap` | check-prelude std-collections-tree root alias for std::collections::TreeMap[K, V]; docs/stdlib/modules/collections.md |
 | `use std::TreeSet` | check-prelude std-collections-tree root alias for std::collections::TreeSet[T]; docs/stdlib/modules/collections.md |
 | `use std::Vec` | check-prelude std-vec-root-alias explicit-zone alias for std::vec::Vec[T]; docs/dev/test-matrix.md Explicit memory zones row |
@@ -4315,13 +4317,20 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::thread::join_thread_value` | check-prelude std-thread-basic typed ThreadResult raw thread join bridge; docs/stdlib/modules/thread.md |
 | `fn std::thread::join_unchecked` | check-prelude std-thread-basic raw-status thread join compatibility hook; docs/stdlib/modules/thread.md |
 | `fn std::thread::join_value` | check-prelude std-thread-basic typed ThreadResult join handle helper; docs/stdlib/modules/thread.md |
+| `fn std::thread::scope` | check-prelude std-thread-scope-raw scoped thread group constructor; docs/stdlib/modules/thread.md |
 | `fn std::thread::sleep` | check-prelude std-thread-runtime-helpers duration sleep convenience wrapper; docs/stdlib/modules/thread.md |
 | `fn std::thread::spawn` | check-prelude std-thread-basic Result-returning function-pointer JoinHandle spawn helper; docs/stdlib/modules/thread.md |
 | `fn std::thread::spawn_configured` | check-prelude std-thread-builder Result-returning configured JoinHandle spawn helper; docs/stdlib/modules/thread.md |
 | `fn std::thread::spawn_configured_unchecked` | check-prelude std-thread-builder unchecked configured thread spawn hook; docs/stdlib/modules/thread.md |
+| `fn std::thread::spawn_raw` | check-prelude std-thread-scope-raw Result-returning raw-data thread spawn helper; docs/stdlib/modules/thread.md |
+| `fn std::thread::spawn_raw_configured` | check-prelude std-thread-scope-raw Result-returning configured raw-data thread spawn helper; docs/stdlib/modules/thread.md |
+| `fn std::thread::spawn_raw_configured_unchecked` | check-prelude std-thread-scope-raw unchecked configured raw-data thread spawn hook; docs/stdlib/modules/thread.md |
+| `fn std::thread::spawn_raw_unchecked` | check-prelude std-thread-scope-raw unchecked raw-data thread spawn hook; docs/stdlib/modules/thread.md |
 | `fn std::thread::spawn_unchecked` | check-prelude std-thread-basic unchecked function-pointer spawn hook; docs/stdlib/modules/thread.md |
 | `fn std::thread::thread_local[T]` | check-prelude std-thread-local default-capacity thread-local handle constructor; docs/stdlib/modules/thread.md |
 | `fn std::thread::thread_local_with_capacity[T]` | check-prelude std-thread-local explicit-capacity thread-local handle constructor; docs/stdlib/modules/thread.md |
+| `fn std::thread::try_join` | check-prelude std-thread-scope-raw nonblocking join handle helper; docs/stdlib/modules/thread.md |
+| `fn std::thread::try_join_value` | check-prelude std-thread-scope-raw nonblocking typed ThreadResult join helper; docs/stdlib/modules/thread.md |
 | `fn std::thread::yield_now` | check-prelude std-thread-basic scheduler yield hook; docs/stdlib/modules/thread.md |
 
 ### method
@@ -4333,6 +4342,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::thread::Builder::name` | check-prelude std-thread-builder builder name setter; docs/stdlib/modules/thread.md |
 | `method std::thread::Builder::new` | check-prelude std-thread-builder builder constructor; docs/stdlib/modules/thread.md |
 | `method std::thread::Builder::spawn` | check-prelude std-thread-builder Result-returning JoinHandle builder spawn helper; docs/stdlib/modules/thread.md |
+| `method std::thread::Builder::spawn_raw` | check-prelude std-thread-scope-raw builder raw-data JoinHandle spawn helper; docs/stdlib/modules/thread.md |
+| `method std::thread::Builder::spawn_raw_unchecked` | check-prelude std-thread-scope-raw unchecked builder raw-data spawn method; docs/stdlib/modules/thread.md |
 | `method std::thread::Builder::spawn_unchecked` | check-prelude std-thread-builder unchecked builder spawn compatibility method; docs/stdlib/modules/thread.md |
 | `method std::thread::Builder::stack_size` | check-prelude std-thread-builder builder stack-size setter; docs/stdlib/modules/thread.md |
 | `method std::thread::JoinHandle::detach` | check-prelude std-thread-builder explicit thread detach lifecycle helper; docs/stdlib/modules/thread.md |
@@ -4345,6 +4356,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::thread::JoinHandle::join_value` | check-prelude std-thread-basic typed ThreadResult join handle lifecycle helper; docs/stdlib/modules/thread.md |
 | `method std::thread::JoinHandle::thread` | check-prelude std-thread-basic raw thread info accessor; docs/stdlib/modules/thread.md |
 | `method std::thread::JoinHandle::thread_id` | check-prelude std-thread-basic join handle thread id accessor; docs/stdlib/modules/thread.md |
+| `method std::thread::JoinHandle::try_join` | check-prelude std-thread-scope-raw nonblocking join lifecycle helper; docs/stdlib/modules/thread.md |
+| `method std::thread::JoinHandle::try_join_value` | check-prelude std-thread-scope-raw nonblocking typed ThreadResult join helper; docs/stdlib/modules/thread.md |
 | `method std::thread::Thread::current` | check-prelude std-thread-basic associated current thread info helper; docs/stdlib/modules/thread.md |
 | `method std::thread::Thread::id` | check-prelude std-thread-basic typed raw thread id accessor; docs/stdlib/modules/thread.md |
 | `method std::thread::Thread::id_raw` | check-prelude std-thread-basic raw thread id accessor; docs/stdlib/modules/thread.md |
@@ -4355,7 +4368,16 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::thread::Thread::join` | check-prelude std-thread-basic Result-returning raw thread join bridge; docs/stdlib/modules/thread.md |
 | `method std::thread::Thread::join_unchecked` | check-prelude std-thread-basic raw-status raw thread join compatibility method; docs/stdlib/modules/thread.md |
 | `method std::thread::Thread::spawn` | check-prelude std-thread-basic associated Result-returning JoinHandle spawn helper; docs/stdlib/modules/thread.md |
+| `method std::thread::Thread::spawn_raw` | check-prelude std-thread-scope-raw associated raw-data JoinHandle spawn helper; docs/stdlib/modules/thread.md |
+| `method std::thread::Thread::spawn_raw_unchecked` | check-prelude std-thread-scope-raw associated unchecked raw-data spawn method; docs/stdlib/modules/thread.md |
 | `method std::thread::Thread::spawn_unchecked` | check-prelude std-thread-basic associated unchecked spawn compatibility method; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadGroupResult::all_joined` | check-prelude std-thread-scope-raw scoped thread all-joined predicate; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadGroupResult::all_success` | check-prelude std-thread-scope-raw scoped thread all-zero-status predicate; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadGroupResult::empty` | check-prelude std-thread-scope-raw empty scoped thread summary constructor; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadGroupResult::failed_statuses` | check-prelude std-thread-scope-raw scoped thread nonzero-status count accessor; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadGroupResult::joined` | check-prelude std-thread-scope-raw scoped thread joined count accessor; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadGroupResult::spawned` | check-prelude std-thread-scope-raw scoped thread spawned count accessor; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadGroupResult::status_sum` | check-prelude std-thread-scope-raw scoped thread status sum accessor; docs/stdlib/modules/thread.md |
 | `method std::thread::ThreadId::as_i64` | check-prelude std-thread-basic typed thread id raw accessor; docs/stdlib/modules/thread.md |
 | `method std::thread::ThreadId::current` | check-prelude std-thread-basic associated current thread id helper; docs/stdlib/modules/thread.md |
 | `method std::thread::ThreadId::equals` | check-prelude std-thread-basic typed thread id equality helper; docs/stdlib/modules/thread.md |
@@ -4383,6 +4405,20 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::thread::ThreadResult::is_failure` | check-prelude std-thread-basic typed thread result failure predicate; docs/stdlib/modules/thread.md |
 | `method std::thread::ThreadResult::is_success` | check-prelude std-thread-basic typed thread result success predicate; docs/stdlib/modules/thread.md |
 | `method std::thread::ThreadResult::value` | check-prelude std-thread-basic typed thread result value accessor; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadScope::capacity` | check-prelude std-thread-scope-raw scoped thread capacity accessor; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadScope::close` | check-prelude std-thread-scope-raw scoped thread join-and-close alias; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadScope::is_closed` | check-prelude std-thread-scope-raw scoped thread closed-state predicate; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadScope::is_empty` | check-prelude std-thread-scope-raw scoped thread empty predicate; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadScope::is_full` | check-prelude std-thread-scope-raw scoped thread capacity exhaustion predicate; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadScope::join_all` | check-prelude std-thread-scope-raw scoped thread join-all helper; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadScope::len` | check-prelude std-thread-scope-raw scoped thread length accessor; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadScope::new` | check-prelude std-thread-scope-raw scoped thread constructor; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadScope::push_handle` | check-prelude std-thread-scope-raw scoped thread adopt JoinHandle helper; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadScope::remaining_capacity` | check-prelude std-thread-scope-raw scoped thread remaining capacity accessor; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadScope::spawn` | check-prelude std-thread-scope-raw scoped function-pointer spawn helper; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadScope::spawn_configured` | check-prelude std-thread-scope-raw scoped configured function-pointer spawn helper; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadScope::spawn_raw` | check-prelude std-thread-scope-raw scoped raw-data spawn helper; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadScope::spawn_raw_configured` | check-prelude std-thread-scope-raw scoped configured raw-data spawn helper; docs/stdlib/modules/thread.md |
 
 ### module
 
@@ -4397,9 +4433,11 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `struct std::thread::Builder` | check-prelude std-thread-builder thread builder options handle; docs/stdlib/modules/thread.md |
 | `struct std::thread::JoinHandle` | check-prelude std-thread-basic owning thread join/detach handle; docs/stdlib/modules/thread.md |
 | `struct std::thread::Thread` | check-prelude std-thread-basic raw thread info handle; docs/stdlib/modules/thread.md |
+| `struct std::thread::ThreadGroupResult` | check-prelude std-thread-scope-raw scoped thread group join summary; docs/stdlib/modules/thread.md |
 | `struct std::thread::ThreadId` | check-prelude std-thread-basic typed runtime thread id handle; docs/stdlib/modules/thread.md |
 | `struct std::thread::ThreadLocal[T]` | check-prelude std-thread-local explicit thread-local storage handle; docs/stdlib/modules/thread.md |
 | `struct std::thread::ThreadResult` | check-prelude std-thread-basic typed thread return value wrapper; docs/stdlib/modules/thread.md |
+| `struct std::thread::ThreadScope` | check-prelude std-thread-scope-raw scoped thread group join owner; docs/stdlib/modules/thread.md |
 
 ### type
 

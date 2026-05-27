@@ -34,9 +34,23 @@ pub enum ThreadLocalSetError[T] {
   ThreadLocalFull(T),
 }
 
+pub struct ThreadGroupResult {
+  spawned: i64,
+  mut joined: i64,
+  mut failed_statuses: i64,
+  mut status_sum: i64,
+}
+
 pub struct Builder {
   name: string,
   stack_size_bytes: i64,
+}
+
+pub struct ThreadScope {
+  handles: ptr std::thread::JoinHandle,
+  capacity: i64,
+  mut len: i64,
+  mut closed: bool,
 }
 
 struct ThreadLocalSlot[T] {
@@ -56,6 +70,8 @@ pub struct ThreadLocal[T] {
 
 pub extern "ari" fn spawn_unchecked(entry: fn() -> i64) -> Thread = "ari_builtin_thread_spawn";
 pub extern "ari" fn spawn_configured_unchecked(entry: fn() -> i64, name: string, stack_size: i64) -> Thread = "ari_builtin_thread_spawn_configured";
+pub extern "ari" fn spawn_raw_unchecked(entry: fn(ptr u8) -> i64, data: ptr u8) -> Thread = "ari_builtin_thread_spawn_raw";
+pub extern "ari" fn spawn_raw_configured_unchecked(entry: fn(ptr u8) -> i64, data: ptr u8, name: string, stack_size: i64) -> Thread = "ari_builtin_thread_spawn_raw_configured";
 pub extern "ari" fn join_unchecked(thread: Thread) -> i64 = "ari_builtin_thread_join";
 pub extern "ari" fn is_finished(thread: Thread) -> bool = "ari_builtin_thread_is_finished";
 pub extern "ari" fn yield_now() -> void = "ari_builtin_thread_yield";
@@ -130,12 +146,20 @@ fn thread_local_unlock[T](state: ptr std::thread::ThreadLocalState[T]) -> void {
   return;
 }
 
+fn thread_scope_slot(scope: ptr std::thread::ThreadScope, index: i64) -> ptr std::thread::JoinHandle {
+  return ptr_add((*scope).handles, index);
+}
+
 pub fn thread_local[T](zone: ref mut Zone) -> std::thread::ThreadLocal[T] {
   return std::thread::ThreadLocal<T>::new(zone);
 }
 
 pub fn thread_local_with_capacity[T](zone: ref mut Zone, capacity: i64) -> std::thread::ThreadLocal[T] {
   return std::thread::ThreadLocal<T>::with_capacity(zone, capacity);
+}
+
+pub fn scope(zone: ref mut Zone, capacity: i64) -> std::thread::ThreadScope {
+  return std::thread::ThreadScope::new(zone, capacity);
 }
 
 pub fn sleep(duration: std::time::Duration) -> void {
@@ -183,12 +207,44 @@ pub fn spawn_configured(
   return std::Err<std::thread::JoinHandle, std::error::Error>(std::thread::other_error());
 }
 
+pub fn spawn_raw(
+  entry: fn(ptr u8) -> i64,
+  data: ptr u8
+) -> std::Result[std::thread::JoinHandle, std::error::Error] {
+  let thread = std::thread::spawn_raw_unchecked(entry, data);
+  if thread.is_joinable() {
+    return std::Ok<std::thread::JoinHandle, std::error::Error>(std::thread::JoinHandle::from_thread(thread));
+  }
+  return std::Err<std::thread::JoinHandle, std::error::Error>(std::thread::other_error());
+}
+
+pub fn spawn_raw_configured(
+  entry: fn(ptr u8) -> i64,
+  data: ptr u8,
+  name: string,
+  stack_size: i64
+) -> std::Result[std::thread::JoinHandle, std::error::Error] {
+  let thread = std::thread::spawn_raw_configured_unchecked(entry, data, name, stack_size);
+  if thread.is_joinable() {
+    return std::Ok<std::thread::JoinHandle, std::error::Error>(std::thread::JoinHandle::from_thread(thread));
+  }
+  return std::Err<std::thread::JoinHandle, std::error::Error>(std::thread::other_error());
+}
+
 pub fn join(handle: ref mut std::thread::JoinHandle) -> std::Result[i64, std::thread::JoinError] {
   return handle.join();
 }
 
 pub fn join_value(handle: ref mut std::thread::JoinHandle) -> std::Result[std::thread::ThreadResult, std::thread::JoinError] {
   return handle.join_value();
+}
+
+pub fn try_join(handle: ref mut std::thread::JoinHandle) -> std::Result[std::Option[i64], std::thread::JoinError] {
+  return handle.try_join();
+}
+
+pub fn try_join_value(handle: ref mut std::thread::JoinHandle) -> std::Result[std::Option[std::thread::ThreadResult], std::thread::JoinError] {
+  return handle.try_join_value();
 }
 
 pub fn join_thread(thread: std::thread::Thread) -> std::Result[i64, std::thread::JoinError] {
@@ -260,6 +316,18 @@ pub impl std::thread::Builder {
   fn spawn(self: ref Self, entry: fn() -> i64) -> std::Result[std::thread::JoinHandle, std::error::Error] {
     return std::thread::spawn_configured(entry, self.name, self.stack_size_bytes);
   }
+
+  fn spawn_raw_unchecked(self: ref Self, entry: fn(ptr u8) -> i64, data: ptr u8) -> std::thread::Thread {
+    return std::thread::spawn_raw_configured_unchecked(entry, data, self.name, self.stack_size_bytes);
+  }
+
+  fn spawn_raw(
+    self: ref Self,
+    entry: fn(ptr u8) -> i64,
+    data: ptr u8
+  ) -> std::Result[std::thread::JoinHandle, std::error::Error] {
+    return std::thread::spawn_raw_configured(entry, data, self.name, self.stack_size_bytes);
+  }
 }
 
 pub impl std::thread::ThreadId {
@@ -305,6 +373,14 @@ pub impl std::thread::Thread {
     return std::thread::spawn(entry);
   }
 
+  fn spawn_raw_unchecked(entry: fn(ptr u8) -> i64, data: ptr u8) -> Thread {
+    return std::thread::spawn_raw_unchecked(entry, data);
+  }
+
+  fn spawn_raw(entry: fn(ptr u8) -> i64, data: ptr u8) -> std::Result[std::thread::JoinHandle, std::error::Error] {
+    return std::thread::spawn_raw(entry, data);
+  }
+
   fn id(self: ref Self) -> std::thread::ThreadId {
     return std::thread::ThreadId { raw: self.id };
   }
@@ -332,6 +408,41 @@ pub impl std::thread::Thread {
 
   fn join(self) -> std::Result[i64, std::thread::JoinError] {
     return std::thread::join_thread(self);
+  }
+}
+
+pub impl std::thread::ThreadGroupResult {
+  fn empty() -> std::thread::ThreadGroupResult {
+    return std::thread::ThreadGroupResult {
+      spawned: 0,
+      joined: 0,
+      failed_statuses: 0,
+      status_sum: 0,
+    };
+  }
+
+  fn spawned(self: ref Self) -> i64 {
+    return self.spawned;
+  }
+
+  fn joined(self: ref Self) -> i64 {
+    return self.joined;
+  }
+
+  fn failed_statuses(self: ref Self) -> i64 {
+    return self.failed_statuses;
+  }
+
+  fn status_sum(self: ref Self) -> i64 {
+    return self.status_sum;
+  }
+
+  fn all_joined(self: ref Self) -> bool {
+    return self.joined == self.spawned;
+  }
+
+  fn all_success(self: ref Self) -> bool {
+    return self.failed_statuses == 0;
   }
 }
 
@@ -423,6 +534,51 @@ pub impl std::thread::JoinHandle {
       }
     }
   }
+
+  fn try_join(self: ref mut Self) -> std::Result[std::Option[i64], std::thread::JoinError] {
+    if self.joined {
+      return std::Err<std::Option[i64], std::thread::JoinError>(std::thread::AlreadyJoined);
+    }
+    if self.detached {
+      return std::Err<std::Option[i64], std::thread::JoinError>(std::thread::Detached);
+    }
+    if !self.thread.is_joinable() {
+      return std::Err<std::Option[i64], std::thread::JoinError>(std::thread::InvalidHandle);
+    }
+    if !self.thread.is_finished() {
+      return std::Ok<std::Option[i64], std::thread::JoinError>(std::None<i64>());
+    }
+    match self.join() {
+      std::Ok(value) => {
+        return std::Ok<std::Option[i64], std::thread::JoinError>(std::Some<i64>(value));
+      }
+      std::Err(reason) => {
+        return std::Err<std::Option[i64], std::thread::JoinError>(reason);
+      }
+    }
+  }
+
+  fn try_join_value(self: ref mut Self) -> std::Result[std::Option[std::thread::ThreadResult], std::thread::JoinError] {
+    match self.try_join() {
+      std::Ok(maybe_value) => {
+        match maybe_value {
+          std::Some(value) => {
+            return std::Ok<std::Option[std::thread::ThreadResult], std::thread::JoinError>(
+              std::Some<std::thread::ThreadResult>(std::thread::ThreadResult { value: value })
+            );
+          }
+          std::None => {
+            return std::Ok<std::Option[std::thread::ThreadResult], std::thread::JoinError>(
+              std::None<std::thread::ThreadResult>()
+            );
+          }
+        }
+      }
+      std::Err(reason) => {
+        return std::Err<std::Option[std::thread::ThreadResult], std::thread::JoinError>(reason);
+      }
+    }
+  }
 }
 
 pub impl std::thread::ThreadResult {
@@ -448,6 +604,187 @@ pub impl std::thread::ThreadResult {
 
   fn equals(self: ref Self, value: i64) -> bool {
     return self.value == value;
+  }
+}
+
+pub impl std::thread::ThreadScope {
+  fn new(zone: ref mut Zone, capacity: i64) -> std::thread::ThreadScope {
+    std::assert(capacity > 0);
+    let handles = std::zone::alloc_array<std::thread::JoinHandle>(zone, capacity);
+    var index = 0;
+    while index < capacity {
+      ptr_store(ptr_add(handles, index), std::thread::JoinHandle::invalid());
+      index = index + 1;
+    }
+    return std::thread::ThreadScope {
+      handles: handles,
+      capacity: capacity,
+      len: 0,
+      closed: false,
+    };
+  }
+
+  fn capacity(self: ref Self) -> i64 {
+    return self.capacity;
+  }
+
+  fn len(self: ref Self) -> i64 {
+    return self.len;
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return self.len == 0;
+  }
+
+  fn remaining_capacity(self: ref Self) -> i64 {
+    return self.capacity - self.len;
+  }
+
+  fn is_full(self: ref Self) -> bool {
+    return self.remaining_capacity() <= 0;
+  }
+
+  fn is_closed(self: ref Self) -> bool {
+    return self.closed;
+  }
+
+  fn push_handle(self: ref mut Self, handle: std::thread::JoinHandle) -> std::Result[(), std::error::Error] {
+    if self.closed {
+      var rejected = handle;
+      let _ = rejected.detach();
+      return std::Err<(), std::error::Error>(std::thread::invalid_input_error());
+    }
+    if self.len >= self.capacity {
+      var overflow = handle;
+      let _ = overflow.detach();
+      return std::Err<(), std::error::Error>(std::thread::resource_busy_error());
+    }
+    ptr_store(ptr_add(self.handles, self.len), handle);
+    self.len = self.len + 1;
+    return std::Ok<(), std::error::Error>(());
+  }
+
+  fn spawn(self: ref mut Self, entry: fn() -> i64) -> std::Result[(), std::error::Error] {
+    match std::thread::spawn(entry) {
+      std::Ok(handle) => {
+        return self.push_handle(handle);
+      }
+      std::Err(reason) => {
+        return std::Err<(), std::error::Error>(reason);
+      }
+    }
+  }
+
+  fn spawn_configured(
+    self: ref mut Self,
+    entry: fn() -> i64,
+    name: string,
+    stack_size: i64
+  ) -> std::Result[(), std::error::Error] {
+    match std::thread::spawn_configured(entry, name, stack_size) {
+      std::Ok(handle) => {
+        return self.push_handle(handle);
+      }
+      std::Err(reason) => {
+        return std::Err<(), std::error::Error>(reason);
+      }
+    }
+  }
+
+  fn spawn_raw(
+    self: ref mut Self,
+    entry: fn(ptr u8) -> i64,
+    data: ptr u8
+  ) -> std::Result[(), std::error::Error] {
+    match std::thread::spawn_raw(entry, data) {
+      std::Ok(handle) => {
+        return self.push_handle(handle);
+      }
+      std::Err(reason) => {
+        return std::Err<(), std::error::Error>(reason);
+      }
+    }
+  }
+
+  fn spawn_raw_configured(
+    self: ref mut Self,
+    entry: fn(ptr u8) -> i64,
+    data: ptr u8,
+    name: string,
+    stack_size: i64
+  ) -> std::Result[(), std::error::Error] {
+    match std::thread::spawn_raw_configured(entry, data, name, stack_size) {
+      std::Ok(handle) => {
+        return self.push_handle(handle);
+      }
+      std::Err(reason) => {
+        return std::Err<(), std::error::Error>(reason);
+      }
+    }
+  }
+
+  fn join_all(self: ref mut Self) -> std::Result[std::thread::ThreadGroupResult, std::thread::JoinError] {
+    if self.closed {
+      return std::Ok<std::thread::ThreadGroupResult, std::thread::JoinError>(
+        std::thread::ThreadGroupResult::empty()
+      );
+    }
+    var result = std::thread::ThreadGroupResult {
+      spawned: self.len,
+      joined: 0,
+      failed_statuses: 0,
+      status_sum: 0,
+    };
+    var first_error = std::None<std::thread::JoinError>();
+    var index = 0;
+    while index < self.len {
+      let handle_ptr = std::thread::thread_scope_slot((ref mut self) as ptr std::thread::ThreadScope, index);
+      let handle: ref mut std::thread::JoinHandle = ref mut *handle_ptr;
+      if handle.is_valid() {
+        match handle.join() {
+          std::Ok(status) => {
+            result.joined = result.joined + 1;
+            result.status_sum = result.status_sum + status;
+            if status != 0 {
+              result.failed_statuses = result.failed_statuses + 1;
+            }
+          }
+          std::Err(reason) => {
+            if first_error.is_none() {
+              first_error = std::Some<std::thread::JoinError>(reason);
+            }
+          }
+        }
+      }
+      index = index + 1;
+    }
+    self.closed = true;
+    match first_error {
+      std::Some(join_all_reason) => {
+        return std::Err<std::thread::ThreadGroupResult, std::thread::JoinError>(join_all_reason);
+      }
+      std::None => {
+        return std::Ok<std::thread::ThreadGroupResult, std::thread::JoinError>(result);
+      }
+    }
+  }
+
+  fn close(self: ref mut Self) -> std::Result[std::thread::ThreadGroupResult, std::thread::JoinError] {
+    return self.join_all();
+  }
+}
+
+impl std::zone::ZoneBacked for std::thread::ThreadScope {
+  pub fn zone(self: ref Self) -> std::zone::ZoneMetadata {
+    return std::zone::metadata(self.handles as ptr u8);
+  }
+}
+
+impl std::Drop for std::thread::ThreadScope {
+  fn drop(self) -> void {
+    var scope = self;
+    let _ = scope.join_all();
+    return;
   }
 }
 

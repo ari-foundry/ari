@@ -1652,7 +1652,7 @@ check-prelude: $(TARGET)
 	grep -F -q "std__process__Output8inherent6stderr" $(BUILD_DIR)/prelude/std-process-output.ll
 	grep -F -q "std__process__Output8inherent13stdout_string" $(BUILD_DIR)/prelude/std-process-output.ll
 	grep -F -q "std__process__Output8inherent13stderr_string" $(BUILD_DIR)/prelude/std-process-output.ll
-	grep -F -q "std7process19redirect_descriptor" $(BUILD_DIR)/prelude/std-process-output.ll
+	grep -F -q "std7process26redirect_descriptor_result" $(BUILD_DIR)/prelude/std-process-output.ll
 	grep -F -q '@"dup2"' $(BUILD_DIR)/prelude/std-process-output.ll
 	grep -q "@ari_builtin_os_poll_read" $(BUILD_DIR)/prelude/std-process-output.ll
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-output.ari -o $(BUILD_DIR)/prelude/std-process-output.elf
@@ -1706,7 +1706,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-exit-status.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-exit-status.elf; $(BUILD_DIR)/prelude/std-process-exit-status.elf; code=$$?; test $$code -eq 83; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-command.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-command.elf; $(BUILD_DIR)/prelude/std-process-command.elf; code=$$?; test $$code -eq 237; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-output.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-output.elf; $(BUILD_DIR)/prelude/std-process-output.elf; code=$$?; test $$code -eq 221; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-high-level.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-high-level.elf; $(BUILD_DIR)/prelude/std-process-high-level.elf; code=$$?; test $$code -eq 110; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-high-level.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-high-level.elf; $(BUILD_DIR)/prelude/std-process-high-level.elf; code=$$?; test $$code -eq 183; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-stdin.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-stdin.elf; $(BUILD_DIR)/prelude/std-process-stdin.elf; code=$$?; test $$code -eq 193; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-piped.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-piped.elf; $(BUILD_DIR)/prelude/std-process-piped.elf; code=$$?; test $$code -eq 180; fi
 	$(TARGET) tests/cases/standard-library/ok/thread/std-thread-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-thread-basic.ll
@@ -1748,6 +1748,13 @@ check-prelude: $(TARGET)
 	grep -F -q "get_or_try_init" $(BUILD_DIR)/prelude/std-thread-local.ll
 	$(TARGET) tests/cases/standard-library/ok/thread/std-thread-local.ari -o $(BUILD_DIR)/prelude/std-thread-local.elf
 	$(BUILD_DIR)/prelude/std-thread-local.elf; code=$$?; test $$code -eq 73
+	$(TARGET) tests/cases/standard-library/ok/thread/std-thread-scope-raw.ari --emit-llvm $(BUILD_DIR)/prelude/std-thread-scope-raw.ll
+	grep -q "@ari_builtin_thread_spawn_raw" $(BUILD_DIR)/prelude/std-thread-scope-raw.ll
+	grep -q "@ari_thread_trampoline_raw" $(BUILD_DIR)/prelude/std-thread-scope-raw.ll
+	grep -F -q "std__thread__ThreadScope" $(BUILD_DIR)/prelude/std-thread-scope-raw.ll
+	grep -F -q "try_join" $(BUILD_DIR)/prelude/std-thread-scope-raw.ll
+	$(TARGET) tests/cases/standard-library/ok/thread/std-thread-scope-raw.ari -o $(BUILD_DIR)/prelude/std-thread-scope-raw.elf
+	$(BUILD_DIR)/prelude/std-thread-scope-raw.elf; code=$$?; test $$code -eq 42
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/thread/std-thread-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-thread-basic.elf; $(BUILD_DIR)/prelude/std-thread-basic.elf; code=$$?; test $$code -eq 42; fi
 	$(TARGET) tests/cases/standard-library/ok/sync/std-sync-atomic-i64.ari --emit-llvm $(BUILD_DIR)/prelude/std-sync-atomic-i64.ll
 	grep -q "@ari_builtin_sync_atomic_i64_load" $(BUILD_DIR)/prelude/std-sync-atomic-i64.ll
@@ -2760,7 +2767,7 @@ check-prelude: $(TARGET)
 	grep -q 'write_concat2_bool' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
 	grep -q 'write_concat3' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
 	grep -q 'write_concat3_bool' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/std-fmt-format-spec.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fmt-format-spec.elf; $(BUILD_DIR)/prelude/std-fmt-format-spec.elf; code=$$?; test $$code -eq 28; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/std-fmt-format-spec.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fmt-format-spec.elf; $(BUILD_DIR)/prelude/std-fmt-format-spec.elf; code=$$?; test $$code -eq 29; fi
 	$(TARGET) tests/cases/standard-library/ok/format/std-fmt-concat-format-value.ari --emit-llvm $(BUILD_DIR)/prelude/std-fmt-concat-format-value.ll
 	grep -q 'format_value' $(BUILD_DIR)/prelude/std-fmt-concat-format-value.ll
 	grep -q 'std3fmt13format' $(BUILD_DIR)/prelude/std-fmt-concat-format-value.ll

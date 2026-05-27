@@ -14,17 +14,22 @@ compiler and stdlib boundary.
 
 | Area | Current usable surface | Why stdlib-only work stops here | Main files |
 | --- | --- | --- | --- |
-| `std::thread` | `thread::spawn(fn() -> i64) -> Result[JoinHandle, Error]`, `JoinHandle`, `JoinError`, `ThreadResult`, `Builder`, explicit `ThreadLocal[T]`. | Generic `JoinHandle[T]`, captured thread entries, scoped threads, generic return payloads, and compiler-owned `thread_local` declarations require closure environment transfer, send/share rules, result storage ownership, drop paths, and TLS codegen. | `lib/std/thread.arih`, `src/sema.cpp`, `src/llvm_codegen.cpp`, `docs/stdlib/modules/thread.md`, `tests/cases/standard-library/ok/thread/`, `tests/cases/functions/` |
+| `std::thread` | `thread::spawn(fn() -> i64) -> Result[JoinHandle, Error]`, `thread::spawn_raw(fn(ptr u8) -> i64, ptr u8) -> Result[JoinHandle, Error]`, nonblocking `try_join`, `ThreadScope` fixed-capacity join owners, `JoinHandle`, `JoinError`, `ThreadResult`, `Builder`, explicit `ThreadLocal[T]`. | Generic `JoinHandle[T]`, captured thread entries, borrowed scoped threads, generic return payloads, and compiler-owned `thread_local` declarations require closure environment transfer, send/share rules, result storage ownership, drop paths, borrow-scoped lifetime proofs, and TLS codegen. | `lib/std/thread.arih`, `src/std_thread_semantics.cpp`, `src/sema.cpp`, `src/llvm_codegen.cpp`, `docs/stdlib/modules/thread.md`, `tests/cases/standard-library/ok/thread/`, `tests/cases/functions/` |
 | `std::fmt` | `format_in!`, `Display::format_in`, `Debug::debug_in`, fixed-arity runtime `format`/`format2`/`format3`/`format4`, matching writer helpers, direct scalar/text streaming writer helpers, `concat2`/`concat3`/`concat4`. | Variadic/default-zone formatting needs compiler lowering or variadic generic support plus an allocation-zone policy. Generic per-value streaming display needs a writer-facing formatting trait plus compiler support for selecting generic trait impls whose type parameter is carried by a trait argument such as `WriteDisplay[W]`. | `lib/std/fmt.arih`, `src/prelude_macros.cpp`, `src/sema.cpp`, `docs/stdlib/modules/fmt.md`, `tests/cases/standard-library/ok/format/`, `tests/cases/standard-library/errors/format/` |
 | `union by` | Parser reserves `union by <selector> { arm => Type, ... }` and emits a targeted diagnostic. Ordinary enum ADTs remain the supported model. | Positive support needs an AST/type representation for discriminant-linked fields, selector resolution, arm exhaustiveness, active-arm layout, construction, narrowing, and active-arm drop. | `src/parser.cpp`, `src/ast.hpp`, `src/sema.cpp`, `src/llvm_codegen.cpp`, `docs/language/generic-aggregates.md`, `tests/cases/compiler-development/artifact/errors/diagnostic-parser-union-by-field.*` |
 | Structural capability parameters | Parser reserves `fn f(x: has method(...) -> Type)` and emits a targeted diagnostic. Named traits remain the supported model. | Positive support needs capability parameter AST nodes, method-set type checking, method lookup diagnostics, monomorphization/lowering, and a clear rule that this is not accidental dynamic dispatch or an `interface` keyword. | `src/parser.cpp`, `src/ast.hpp`, `src/sema.cpp`, `docs/dev/roadmap.md`, `tests/cases/compiler-development/artifact/errors/diagnostic-parser-structural-capability-parameter.*` |
 
 ## Thread Implementation Path
 
-The current thread ABI starts a native thread with a plain `fn() -> i64`. That
-keeps the trampoline simple: the runtime sets Ari's thread id, calls the entry
-function, stores the integer status in the native thread result, and lets
-`JoinHandle::join` map host failures to `JoinError`.
+The current thread ABI starts a native thread with either a plain
+`fn() -> i64` entry or an explicit raw-data `fn(ptr u8) -> i64` entry. The
+plain path keeps the trampoline simple: the runtime sets Ari's thread id, calls
+the entry function, stores the integer status in the native thread result, and
+lets `JoinHandle::join` map host failures to `JoinError`. The raw-data path
+adds a small runtime-owned start packet that carries the entry function and a
+caller-owned `ptr u8` payload. It is enough for low-level library bridges and
+zone-backed payload tests, but it intentionally does not own or drop the
+payload and does not perform send/share checking.
 
 Generic or captured thread entries need a different ownership shape:
 
@@ -47,9 +52,13 @@ Generic or captured thread entries need a different ownership shape:
 6. Add focused tests for plain generic returns, invalid captured values,
    detach-before-join, join-once behavior, and result drop behavior.
 
-Scoped threads are a separate compiler feature. They require a lexical scope
-API and borrow checker rules proving that borrowed data outlives all spawned
-workers in that scope. Do not model them as ordinary detached threads.
+`ThreadScope` is a source-level lifecycle owner for a fixed group of join
+handles. It closes a practical leak in current Ari programs by joining a group
+explicitly, or best-effort in `Drop`, but it is not the borrowed scoped-thread
+feature. Borrowed scoped threads remain a separate compiler feature. They
+require a lexical scope API and borrow checker rules proving that borrowed data
+outlives all spawned workers in that scope. Do not model borrowed scoped
+threads as ordinary detached threads.
 
 Compiler-level `thread_local` declarations are also separate from
 `std::thread::ThreadLocal[T]`. They need parser/AST syntax, static TLS storage

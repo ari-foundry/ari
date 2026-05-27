@@ -148,6 +148,10 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::thread::spawn", "ari_builtin_thread_spawn"},
         {"thread::spawn_configured", "ari_builtin_thread_spawn_configured"},
         {"std::thread::spawn_configured", "ari_builtin_thread_spawn_configured"},
+        {"thread::spawn_raw", "ari_builtin_thread_spawn_raw"},
+        {"std::thread::spawn_raw", "ari_builtin_thread_spawn_raw"},
+        {"thread::spawn_raw_configured", "ari_builtin_thread_spawn_raw_configured"},
+        {"std::thread::spawn_raw_configured", "ari_builtin_thread_spawn_raw_configured"},
         {"thread::join", "ari_builtin_thread_join"},
         {"std::thread::join", "ari_builtin_thread_join"},
         {"thread::is_finished", "ari_builtin_thread_is_finished"},
@@ -334,6 +338,7 @@ const std::unordered_map<std::string, AriBuiltinSignatureExpectation>& ari_built
         const AriBuiltinTypeExpectation void_type = builtin_type("void");
         const AriBuiltinTypeExpectation source_string = builtin_type("string");
         const AriBuiltinTypeExpectation thread_entry = builtin_type("fn() -> i64");
+        const AriBuiltinTypeExpectation thread_raw_entry = builtin_type("fn(ptr u8) -> i64");
         const AriBuiltinTypeExpectation thread_handle = builtin_type("std::thread::Thread");
         const AriBuiltinTypeExpectation target_arch = builtin_type("std::target::Arch");
         const AriBuiltinTypeExpectation target_os = builtin_type("std::target::Os");
@@ -389,6 +394,8 @@ const std::unordered_map<std::string, AriBuiltinSignatureExpectation>& ari_built
         add("ari_builtin_mem_page_size", builtin_sig({}, i64));
         add("ari_builtin_thread_spawn", builtin_sig({thread_entry}, thread_handle));
         add("ari_builtin_thread_spawn_configured", builtin_sig({thread_entry, source_string, i64}, thread_handle));
+        add("ari_builtin_thread_spawn_raw", builtin_sig({thread_raw_entry, ptr_u8}, thread_handle));
+        add("ari_builtin_thread_spawn_raw_configured", builtin_sig({thread_raw_entry, ptr_u8, source_string, i64}, thread_handle));
         add("ari_builtin_thread_join", builtin_sig({thread_handle}, i64));
         add("ari_builtin_thread_is_finished", builtin_sig({thread_handle}, boolean));
         add("ari_builtin_thread_yield", builtin_sig({}, void_type));

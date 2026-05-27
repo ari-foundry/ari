@@ -1149,8 +1149,11 @@ Thread helpers live in `std::thread`:
 
 ```ari
 thread::spawn(entry)
+thread::spawn_raw(entry, data)
 thread::join(ref mut handle)
 thread::join_value(ref mut handle)
+thread::try_join(ref mut handle)
+thread::try_join_value(ref mut handle)
 thread::join_thread(thread)
 thread::join_thread_value(thread)
 thread::join_compat(thread)
@@ -1166,6 +1169,7 @@ thread::available_parallelism_or(default)
 thread::available_parallelism_raw()
 thread::is_join_error(status)
 thread::builder()
+thread::scope(ref mut zone, capacity)
 thread::thread_local<T>(ref mut zone)
 thread::thread_local_with_capacity<T>(ref mut zone, capacity)
 
@@ -1182,7 +1186,9 @@ builder.stack_size(bytes)
 builder.configured_name()
 builder.configured_stack_size()
 builder.spawn(entry)
+builder.spawn_raw(entry, data)
 Thread::spawn(entry)
+Thread::spawn_raw(entry, data)
 Thread::current()
 Thread::invalid()
 thread.id()
@@ -1202,6 +1208,26 @@ handle.is_finished()
 handle.detach()
 handle.join()
 handle.join_value()
+handle.try_join()
+handle.try_join_value()
+
+ThreadGroupResult::empty()
+group.spawned()
+group.joined()
+group.failed_statuses()
+group.status_sum()
+group.all_joined()
+group.all_success()
+
+ThreadScope::new(ref mut zone, capacity)
+scope.capacity()
+scope.len()
+scope.remaining_capacity()
+scope.is_closed()
+scope.spawn(entry)
+scope.spawn_raw(entry, data)
+scope.join_all()
+scope.close()
 
 ThreadLocal::new<T>(ref mut zone)
 ThreadLocal::with_capacity<T>(ref mut zone, capacity)
@@ -1220,18 +1246,29 @@ returns a `Result[JoinHandle, Error]`. `JoinHandle` owns the right to join or
 detach the native thread; join once, or call `detach()` when no result will be
 collected. `thread::join(ref mut handle)` and `handle.join()` return
 `Result[i64, JoinError]` so lifecycle mistakes do not collapse into raw
-sentinels. `thread::join_value(ref mut handle)`, `thread::join_thread_value`,
-and `handle.join_value()` wrap the joined `i64` in `ThreadResult` for callers
-that prefer named success/failure predicates around the process-style status
-value. `Thread` is the raw thread-information value kept for inspection
-and compatibility, with `join_thread`, `join_compat`, and `join_unchecked`
-bridging older call sites. `id()` returns a `ThreadId`, with main thread `0`
-and spawned threads positive; use `id_raw()` for compatibility integer access.
-`yield_now()` is a host scheduler hint, not synchronization. `sleep(duration)`
-forwards to `std::time::sleep`. `available_parallelism()` now preserves host
-failure as `Result[u64, Error]`; use `available_parallelism_or(default)` for a
-fallback and `available_parallelism_raw()` only at runtime boundaries.
-`is_finished` is advisory and does not replace `join`.
+sentinels. `try_join` and `handle.try_join()` return `Ok(None)` when the
+thread still appears to be running, `Ok(Some(status))` after joining, or the
+same `JoinError` lifecycle cases as `join`. `thread::join_value(ref mut
+handle)`, `thread::join_thread_value`, `handle.join_value()`, and
+`try_join_value` wrap the joined `i64` in `ThreadResult` for callers that
+prefer named success/failure predicates around the process-style status value.
+`Thread` is the raw thread-information value kept for inspection and
+compatibility, with `join_thread`, `join_compat`, and `join_unchecked`
+bridging older call sites.
+`spawn_raw(entry, data)` starts a raw-data thread with entry type
+`fn(ptr u8) -> i64`. The runtime owns only the start packet; the caller owns
+the pointed-to data and must keep it valid until the handle is joined or
+detached. `ThreadScope` is a fixed-capacity, zone-backed join owner that can
+spawn function-pointer or raw-data workers, then `join_all` them into
+`ThreadGroupResult`. Dropping a still-open scope performs best-effort joining,
+but explicit `join_all` is the recoverable path.
+`id()` returns a `ThreadId`, with main thread `0` and spawned threads positive;
+use `id_raw()` for compatibility integer access. `yield_now()` is a host
+scheduler hint, not synchronization. `sleep(duration)` forwards to
+`std::time::sleep`. `available_parallelism()` now preserves host failure as
+`Result[u64, Error]`; use `available_parallelism_or(default)` for a fallback
+and `available_parallelism_raw()` only at runtime boundaries. `is_finished` is
+advisory and does not replace `join`.
 `Builder` records a requested thread name and stack size and delegates through
 `spawn_configured`; the LLVM/Linux pthread backend applies stack size with
 thread attributes and applies the name as a best-effort host hint.
@@ -1239,8 +1276,8 @@ thread attributes and applies the name as a best-effort host hint.
 fixed-capacity, uses a caller-owned zone, and returns `OptionRef[T]` from
 `get_or_init` until Ari can expose a direct borrowed `ref T` from indexed heap
 slots. Compiler-level `thread_local` declarations, TLS destructors, captured
-thread entries, scoped threads, and generic `JoinHandle[T]` remain roadmap
-work.
+thread entries, borrowed scoped threads, and generic `JoinHandle[T]` remain
+roadmap work.
 
 Synchronization helpers live in `std::sync`:
 

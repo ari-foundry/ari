@@ -1,0 +1,124 @@
+// Covers raw data thread entries, nonblocking join, and scoped join cleanup.
+fn plain_worker() -> i64 {
+  thread::yield_now();
+  return 5;
+}
+
+fn raw_worker(data: ptr u8) -> i64 {
+  let slot = data as ptr i64;
+  let value = ptr_load(slot);
+  ptr_store(slot, value + 1);
+  return value + 10;
+}
+
+fn raw_slow_worker(data: ptr u8) -> i64 {
+  thread::sleep(time::milliseconds(25));
+  return raw_worker(data);
+}
+
+fn main() -> i64 {
+  var zone = zone::create(4096);
+
+  let slot = std::zone::new<i64>(ref mut zone, 32);
+  var raw_handle = thread::spawn_raw(raw_slow_worker, slot as ptr u8).unwrap_or(JoinHandle::invalid());
+  match raw_handle.try_join() {
+    Ok(maybe_early) => {
+      if maybe_early.is_some() {
+        zone::destroy(zone);
+        return 1;
+      }
+    }
+    Err(_) => {
+      zone::destroy(zone);
+      return 2;
+    }
+  }
+  let raw_status = raw_handle.join().unwrap_or(-1);
+  if raw_status != 42 || ptr_load(slot) != 33 {
+    zone::destroy(zone);
+    return 3;
+  }
+  if raw_handle.try_join().is_ok() {
+    zone::destroy(zone);
+    return 4;
+  }
+
+  let builder_slot = std::zone::new<i64>(ref mut zone, 7);
+  let builder = thread::builder().name("ari-raw").stack_size(1048576);
+  var builder_handle = builder.spawn_raw(raw_slow_worker, builder_slot as ptr u8).unwrap_or(JoinHandle::invalid());
+  match builder_handle.try_join_value() {
+    Ok(maybe_value) => {
+      if maybe_value.is_some() {
+        zone::destroy(zone);
+        return 5;
+      }
+    }
+    Err(_) => {
+      zone::destroy(zone);
+      return 6;
+    }
+  }
+  match builder_handle.join_value() {
+    Ok(value) => {
+      if value.as_i64() != 17 || ptr_load(builder_slot) != 8 {
+        zone::destroy(zone);
+        return 7;
+      }
+    }
+    Err(_) => {
+      zone::destroy(zone);
+      return 8;
+    }
+  }
+
+  var scope = thread::scope(ref mut zone, 3);
+  if scope.capacity() != 3 || !scope.is_empty() || scope.is_closed() {
+    zone::destroy(zone);
+    return 9;
+  }
+  let scoped_slot = std::zone::new<i64>(ref mut zone, 11);
+  if scope.spawn(plain_worker).is_err() {
+    zone::destroy(zone);
+    return 10;
+  }
+  if scope.spawn_raw(raw_worker, scoped_slot as ptr u8).is_err() {
+    zone::destroy(zone);
+    return 11;
+  }
+  if scope.len() != 2 || scope.remaining_capacity() != 1 || scope.is_full() {
+    zone::destroy(zone);
+    return 12;
+  }
+  match scope.join_all() {
+    Ok(result) => {
+      if result.spawned() != 2 || result.joined() != 2 || !result.all_joined() {
+        zone::destroy(zone);
+        return 13;
+      }
+      if result.status_sum() != 26 || result.failed_statuses() != 2 || result.all_success() {
+        zone::destroy(zone);
+        return 14;
+      }
+      if ptr_load(scoped_slot) != 12 {
+        zone::destroy(zone);
+        return 15;
+      }
+    }
+    Err(_) => {
+      zone::destroy(zone);
+      return 16;
+    }
+  }
+  if !scope.is_closed() {
+    zone::destroy(zone);
+    return 17;
+  }
+  if scope.spawn(plain_worker).is_ok() {
+    zone::destroy(zone);
+    return 18;
+  }
+  drop scope;
+
+  zone::destroy(zone);
+  return 42;
+}

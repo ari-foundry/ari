@@ -187,10 +187,12 @@ pub use thread::Builder;
 pub use thread::JoinError;
 pub use thread::JoinHandle;
 pub use thread::Thread;
+pub use thread::ThreadGroupResult;
 pub use thread::ThreadId;
 pub use thread::ThreadLocal;
 pub use thread::ThreadLocalSetError;
 pub use thread::ThreadResult;
+pub use thread::ThreadScope;
 
 pub impl[T] Slice[T] {
   fn len(self: ref Self) -> i64 {

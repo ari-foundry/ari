@@ -24121,6 +24121,12 @@ private:
         bool local_decl_shadows_prelude = unqualified_decl_shadows_prelude_name(expr.name, prelude_name);
         if (prelude_specials_available() && !local_decl_shadows_prelude) {
             PreludeMacroKind prelude = prelude_macro_kind_for_resolved_name(prelude_name);
+            if (prelude == PreludeMacroKind::None) {
+                prelude = prelude_macro_kind_for_resolved_name(expr.name);
+            }
+            if (prelude == PreludeMacroKind::None && !is_qualified_name(expr.name)) {
+                prelude = prelude_macro_kind(expr.name);
+            }
             if (prelude != PreludeMacroKind::None) return check_prelude_macro_call(expr, prelude);
         }
 

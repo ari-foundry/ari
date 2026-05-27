@@ -67,7 +67,7 @@ library evolves.
 | `std::sync` | Atomics, mutexes, rwlocks, once, once-lock, condvar, barrier, channels. | `std-sync-concurrency-api.ari` |
 | `std::target` | Target triple, architecture, OS, ABI, object/debug formats. | `std-target-basic.ari`, `std-target-linux64.ari` |
 | `std::test` | Reports, equality checks, temp paths, snapshots, benchmarks, `@test`. | `std-test-report.ari` |
-| `std::thread` | Spawn, join, builder, sleep, yield, thread-local values. | `std-thread-basic.ari`, `std-thread-builder.ari` |
+| `std::thread` | Spawn, join, raw-data entries, scoped join groups, builder, sleep, yield, thread-local values. | `std-thread-basic.ari`, `std-thread-builder.ari`, `std-thread-scope-raw.ari` |
 | `std::time` | Durations, instants, deadlines, UTC calendar conversion. | `std-time-basic.ari`, `std-time-timeout.ari` |
 | `std::vec` | Capacity, reserve, append, extend, drain, splice, split, dedup. | `std-vec-complete-convenience-api.ari` |
 | `std::zone` | Explicit allocation capability, placement, promotion, reset, destroy. | `std-zone-alloc-array.ari` |

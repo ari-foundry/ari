@@ -46,7 +46,7 @@ API evolution.
 | `std::target` | Compiler-known target and platform facts. | `triple`, `arch`, `os`, `env`, `pointer_bits`, `uses_elf`, `uses_dwarf`, `syscall_abi`, Linux API-family predicates. |
 | `std::env` | User-facing process argument, environment-variable, OS-string, and path-state helpers. | `arg_count`, `args`, `args_os`, `try_arg`, `try_arg_os`, `program_name`, `program_name_os`, Option-returning `var`, `var_os`, Result-returning `get`, `get_os`, `set_var`, `remove_var`, `set`, `remove`, compatibility `try_get`, `try_get_os`, `get_or_default`, `get_os_or_default`, `set_unchecked`, `remove_unchecked`, Result-returning `current_dir`, `current_dir_os`, `current_dir_path`, `set_current_dir`, `executable_path`, `executable_path_os`, `executable_path_path`, `home_dir`, plus `_optional`, `_or_default`, `_raw`, and `_unchecked` path compatibility helpers. |
 | `std::process` | Current-process helpers and POSIX child-process control. | `id`, `uid`, `gid`, `exit`, `abort`, `success`, `failure`, `ExitCode`, typed `Signal`, direct `Error` helpers `fork`, `wait_status`, `wait`, raw compatibility `fork_raw`, `wait_raw`, `Arg`, `EnvVar`, `Command`, `Child`, `ChildStdin`/`ChildStdout`/`ChildStderr`, `ExitStatus`, `Output`, `TempFile`, `TempDir`, `arg`, `arg_bytes`, `env_var`, `env_var_bytes`, `command`, `command_with_args`, `kill`, `kill_signal`, `terminate`, command `arg`/`arg_bytes`/`args`/`env`/`env_bytes`/`env_var`/`clear_env`/`inherit_env`/`current_dir`/`current_dir_path`/`with_arg`/`with_env`/`with_clear_env`/`with_inherit_env`/`with_current_dir`/`spawn`/`status`/`exit_status`/`output`/`output_in`/`exec`, current/executable path wrappers, temp file/dir constructors, status/output/child accessors. |
-| `std::thread` | Function-pointer thread spawn/join, runtime ids, sleep/yield hints, hosted parallelism, and explicit thread-local handles. | `ThreadId`, raw `Thread`, `JoinHandle`, `JoinError`, `ThreadResult`, `Builder`, `ThreadLocal`, Result-returning `spawn`, `join`, `join_value`, `available_parallelism`, `detach`, advisory `is_finished`, `yield_now`, `sleep`, `id`, `id_raw`, `current`, `is_main`, `ThreadLocal` capacity/try-init helpers, and raw/compatibility helpers. |
+| `std::thread` | Function-pointer and explicit raw-data thread spawn/join, runtime ids, sleep/yield hints, hosted parallelism, fixed-capacity scoped join owners, and explicit thread-local handles. | `ThreadId`, raw `Thread`, `JoinHandle`, `JoinError`, `ThreadResult`, `ThreadGroupResult`, `ThreadScope`, `Builder`, `ThreadLocal`, Result-returning `spawn`, `spawn_raw`, `join`, `join_value`, `try_join`, `try_join_value`, `available_parallelism`, `detach`, advisory `is_finished`, `yield_now`, `sleep`, `id`, `id_raw`, `current`, `is_main`, `scope`, `ThreadLocal` capacity/try-init helpers, and raw/compatibility helpers. |
 | `std::sync` | Small explicit synchronization primitives. | `Ordering`, `AtomicI64`, `AtomicBool`, `AtomicUsize`, `AtomicPtr`, `Mutex`, `RwLock`, `Once`, `OnceLock`, `Condvar`, `Barrier`, `Semaphore`, `SemaphorePermit`, `Channel`, `Sender`, `Receiver`, atomic helpers, lock helpers, `call_once`, `channel`, `bounded_channel`, `mpsc_channel`. |
 | `std::cell` | Interior mutability and one-time initialization. | `Cell`, `RefCell`, `Ref`, `RefMut`, `OnceCell`, `Lazy`. |
 | `std::rc` | Reference-counted shared ownership. | `Rc`, `Arc`, `Weak`, strong/weak counts, downgrade, upgrade, pointer equality. |
@@ -312,20 +312,24 @@ POSIX wait-status detail accessors, and explicit detach vocabulary are
 available; Windows process mapping and stronger background lifecycle policy
 remain roadmap work.
 
-`std::thread` is the first thread slice. `spawn`, `join`, `detach`,
-`is_finished`, `yield_now`, and the raw parallelism hook are runtime-backed
-because they call the host threading or process APIs and install Ari's
-per-thread runtime id before source code runs. Natural `spawn` returns
-`Result[JoinHandle, Error]`, natural join returns `Result[i64, JoinError]`,
-and `available_parallelism` preserves host failure as `Result[u64, Error]`.
-`sleep` delegates to `std::time`, while `id`, `ThreadId`, `is_main`,
-`is_join_error`, the `Builder` accessors, and most `Thread`/`JoinHandle`
-methods are source helpers. `Builder` records a requested name and stack size
-for the LLVM/Linux pthread backend. `ThreadLocal[T]` is an explicit
-zone-backed fixed-capacity handle for current-thread values; compiler-level
-`thread_local` statics, capturing closures, generic `JoinHandle[T]`, scoped
-threads, richer status values, and send/share typing remain richer
-thread-policy work.
+`std::thread` is the first thread slice. `spawn`, `spawn_raw`, `join`,
+`detach`, `is_finished`, `yield_now`, and the raw parallelism hook are
+runtime-backed because they call the host threading or process APIs and install
+Ari's per-thread runtime id before source code runs. Natural `spawn` returns
+`Result[JoinHandle, Error]`, raw-data spawn accepts an explicit
+`fn(ptr u8) -> i64` entry plus caller-owned payload pointer, natural join
+returns `Result[i64, JoinError]`, `try_join` gives a nonblocking
+`Result[Option[i64], JoinError]` path, and `available_parallelism` preserves
+host failure as `Result[u64, Error]`. `sleep` delegates to `std::time`, while
+`id`, `ThreadId`, `is_main`, `is_join_error`, the `Builder` accessors, and
+most `Thread`/`JoinHandle` methods are source helpers. `Builder` records a
+requested name and stack size for the LLVM/Linux pthread backend.
+`ThreadScope` is a zone-backed fixed-capacity owner for groups of join handles
+and returns `ThreadGroupResult` from `join_all`. `ThreadLocal[T]` is an
+explicit zone-backed fixed-capacity handle for current-thread values;
+compiler-level `thread_local` statics, capturing closures, generic
+`JoinHandle[T]`, borrowed scoped threads, richer status values, and send/share
+typing remain richer thread-policy work.
 
 `std::sync` now starts with `AtomicI64`, `AtomicBool`, `AtomicUsize`,
 `AtomicPtr[T]`, manual `RawMutex`/`RawRwLock` primitives, value-protecting
