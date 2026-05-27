@@ -1,5 +1,18 @@
 // Covers linear Set[T] relationship predicates. These APIs compare set
 // membership, not insertion order, and borrow the other set explicitly.
+fn score_iter[I: std::Iterator[i64]](iter: I) -> i64 {
+  var cursor = iter;
+  var sum = 0;
+  var count = 0;
+  var item = cursor.next();
+  while item.is_some() {
+    sum = sum + item.unwrap();
+    count = count + 1;
+    item = cursor.next();
+  }
+  return sum * 10 + count;
+}
+
 fn main() -> i64 {
   var zone = zone::create(1024);
   var left = collections::new<i64>(ref mut zone, 4);
@@ -38,6 +51,18 @@ fn main() -> i64 {
   }
   if !left.is_disjoint(ref same) {
     score = score + 19;
+  }
+  if score_iter(left.intersection(ref superset)) == 102 {
+    score = score + 23;
+  }
+  if score_iter(superset.difference(ref left)) == 91 {
+    score = score + 29;
+  }
+  if score_iter(left.union(ref disjoint)) == 134 {
+    score = score + 31;
+  }
+  if score_iter(superset.symmetric_difference(ref left)) == 91 {
+    score = score + 37;
   }
 
   zone::destroy(zone);

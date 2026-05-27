@@ -24,12 +24,12 @@ platform notes.
 
 ## Summary
 
-- API entries: `3530`
+- API entries: `3554`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
-| `alloc` | 899 | usable |
+| `alloc` | 923 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 910 | stable candidate |
 | `hosted` | 1522 | platform-backed |
@@ -39,9 +39,9 @@ platform notes.
 | --- | ---: |
 | `enum` | 32 |
 | `fn` | 1211 |
-| `method` | 1864 |
+| `method` | 1876 |
 | `module` | 39 |
-| `struct` | 183 |
+| `struct` | 195 |
 | `trait` | 39 |
 | `trait-method` | 41 |
 | `type` | 22 |
@@ -59,7 +59,7 @@ platform notes.
 | `std::c` | `platform` | 49 |
 | `std::cell` | `alloc` | 44 |
 | `std::cmp` | `core` | 38 |
-| `std::collections` | `alloc` | 391 |
+| `std::collections` | `alloc` | 415 |
 | `std::context` | `hosted` | 20 |
 | `std::convert` | `core` | 14 |
 | `std::encoding` | `core` | 98 |
@@ -963,6 +963,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::collections::HashSet[T]::clear` | check-prelude std-collections-hash drops live hash set entries; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::contains` | check-prelude std-collections-hash hash set lookup predicate; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::copy_to` | check-prelude std-collections-copy-to target-zone hash set copy without tombstones; docs/stdlib/modules/collections.md |
+| `method std::collections::HashSet[T]::difference` | check-prelude std-collections-hash-set-relations lazy hash-set difference cursor; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::drain` | check-prelude std-collections-view-api hash set draining value cursor; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::equals` | check-prelude std-collections-hash-set-relations membership equality predicate; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::extend[I: std::Iterator[T]` | check-prelude std-collections-polish-api iterator alias for hash set insertion; docs/stdlib/modules/collections.md |
@@ -970,6 +971,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::collections::HashSet[T]::from_iter[I: std::Iterator[T]` | check-prelude std-collections-polish-api iterator-driven hash set constructor; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::get` | check-prelude std-collections-set-representatives asserting stored representative lookup; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::insert` | check-prelude std-collections-hash hash set insertion with same-zone growth; docs/stdlib/modules/collections.md |
+| `method std::collections::HashSet[T]::intersection` | check-prelude std-collections-hash-set-relations lazy hash-set intersection cursor; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::is_disjoint` | check-prelude std-collections-hash-set-relations live-bucket disjointness predicate; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::is_empty` | check-prelude std-collections-hash metadata helper; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::is_subset` | check-prelude std-collections-hash-set-relations live-bucket subset predicate; docs/stdlib/modules/collections.md |
@@ -982,8 +984,10 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::collections::HashSet[T]::reserve` | check-prelude std-collections-hash same-zone table growth; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::reserve_extra` | check-prelude std-collections-implicit-zone spare table growth; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::retain` | check-prelude std-collections-retain hash set in-place predicate filtering; docs/stdlib/modules/collections.md |
+| `method std::collections::HashSet[T]::symmetric_difference` | check-prelude std-collections-hash-set-relations lazy hash-set symmetric-difference cursor; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::take` | check-prelude std-collections-hash Option-returning removal; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::try_get` | check-prelude std-collections-set-representatives optional stored representative lookup; docs/stdlib/modules/collections.md |
+| `method std::collections::HashSet[T]::union` | check-prelude std-collections-hash-set-relations lazy hash-set union cursor; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::with_capacity` | check-prelude std-collections-map-natural-api trait-driven default-hash hash set constructor; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::with_hash` | check-prelude std-collections-hash-with-hash explicit custom-hasher constructor; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[std::string::String]::contains_bytes` | check-prelude std-collections-string-map borrowed byte-slice lookup for String hash sets; docs/stdlib/modules/collections.md |
@@ -1063,6 +1067,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::collections::Set[T]::clear` | check-prelude std-collections-set value drop clear; docs/stdlib/modules/collections.md |
 | `method std::collections::Set[T]::contains` | check-prelude std-collections-set linear membership lookup; docs/stdlib/modules/collections.md |
 | `method std::collections::Set[T]::copy_to` | check-prelude std-collections-set target-zone copy; docs/stdlib/modules/collections.md |
+| `method std::collections::Set[T]::difference` | check-prelude std-collections-set-relations lazy linear-set difference cursor; docs/stdlib/modules/collections.md |
 | `method std::collections::Set[T]::drain` | check-prelude std-collections-view-api insertion-order draining value cursor; docs/stdlib/modules/collections.md |
 | `method std::collections::Set[T]::equals` | check-prelude std-collections-set-relations membership equality predicate; docs/stdlib/modules/collections.md |
 | `method std::collections::Set[T]::extend[I: std::Iterator[T]` | check-prelude std-collections-polish-api iterator alias for linear set insertion; docs/stdlib/modules/collections.md |
@@ -1072,6 +1077,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::collections::Set[T]::get` | check-prelude std-collections-set-access insertion-order indexed accessor; docs/stdlib/modules/collections.md |
 | `method std::collections::Set[T]::index_of` | check-prelude std-collections-set stable insertion-order index lookup; docs/stdlib/modules/collections.md |
 | `method std::collections::Set[T]::insert` | check-prelude std-collections-set same-zone insertion and duplicate rejection; docs/stdlib/modules/collections.md |
+| `method std::collections::Set[T]::intersection` | check-prelude std-collections-set-relations lazy linear-set intersection cursor; docs/stdlib/modules/collections.md |
 | `method std::collections::Set[T]::is_disjoint` | check-prelude std-collections-set-relations membership disjointness predicate; docs/stdlib/modules/collections.md |
 | `method std::collections::Set[T]::is_empty` | check-prelude std-collections-set metadata helper; docs/stdlib/modules/collections.md |
 | `method std::collections::Set[T]::is_subset` | check-prelude std-collections-set-relations membership subset predicate; docs/stdlib/modules/collections.md |
@@ -1086,11 +1092,13 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::collections::Set[T]::reserve` | check-prelude std-collections-set-access same-zone capacity growth; docs/stdlib/modules/collections.md |
 | `method std::collections::Set[T]::reserve_extra` | check-prelude std-collections-set-access same-zone spare-capacity growth; docs/stdlib/modules/collections.md |
 | `method std::collections::Set[T]::retain` | check-prelude std-collections-retain linear set in-place predicate filtering; docs/stdlib/modules/collections.md |
+| `method std::collections::Set[T]::symmetric_difference` | check-prelude std-collections-set-relations lazy linear-set symmetric-difference cursor; docs/stdlib/modules/collections.md |
 | `method std::collections::Set[T]::take` | check-prelude std-collections-set Option-returning removal; docs/stdlib/modules/collections.md |
 | `method std::collections::Set[T]::try_first` | check-prelude std-collections-set-access optional first accessor; docs/stdlib/modules/collections.md |
 | `method std::collections::Set[T]::try_get` | check-prelude std-collections-set-access optional indexed accessor; docs/stdlib/modules/collections.md |
 | `method std::collections::Set[T]::try_last` | check-prelude std-collections-set-access optional last accessor; docs/stdlib/modules/collections.md |
 | `method std::collections::Set[T]::try_pop` | check-prelude std-collections-set-access optional last-value removal; docs/stdlib/modules/collections.md |
+| `method std::collections::Set[T]::union` | check-prelude std-collections-set-relations lazy linear-set union cursor; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeMapEntry[K,V]::and_modify` | check-prelude std-collections-map-entry-api tree map occupied-entry mutation hook; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeMapEntry[K,V]::insert` | check-prelude std-collections-map-entry-accessors tree map entry replacement helper; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeMapEntry[K,V]::insert_entry` | check-prelude std-collections-map-entry-defaults tree map insert and return entry helper; docs/stdlib/modules/collections.md |
@@ -1162,6 +1170,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::collections::TreeSet[T]::clear` | check-prelude std-collections-tree drops live tree set nodes; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::contains` | check-prelude std-collections-tree ordered set lookup predicate; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::copy_to` | check-prelude std-collections-copy-to target-zone ordered set copy; docs/stdlib/modules/collections.md |
+| `method std::collections::TreeSet[T]::difference` | check-prelude std-collections-tree-set-relations lazy ordered-set difference cursor; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::drain` | check-prelude std-collections-view-api sorted draining value cursor; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::equals` | check-prelude std-collections-tree-set-relations membership equality predicate; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::extend[I: std::Iterator[T]` | check-prelude std-collections-polish-api iterator alias for ordered set insertion; docs/stdlib/modules/collections.md |
@@ -1170,6 +1179,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::collections::TreeSet[T]::from_iter[I: std::Iterator[T]` | check-prelude std-collections-polish-api iterator-driven ordered set constructor; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::get` | check-prelude std-collections-set-representatives asserting ordered representative lookup; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::insert` | check-prelude std-collections-tree red-black set insertion with same-zone growth; docs/stdlib/modules/collections.md |
+| `method std::collections::TreeSet[T]::intersection` | check-prelude std-collections-tree-set-relations lazy ordered-set intersection cursor; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::is_disjoint` | check-prelude std-collections-tree-set-relations ordered-set disjointness predicate; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::is_empty` | check-prelude std-collections-tree metadata helper; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::is_subset` | check-prelude std-collections-tree-set-relations ordered-set subset predicate; docs/stdlib/modules/collections.md |
@@ -1186,10 +1196,12 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::collections::TreeSet[T]::reserve_extra` | check-prelude std-collections-implicit-zone spare tree storage growth; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::retain` | check-prelude std-collections-retain tree set in-place predicate filtering; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::split_off` | check-prelude std-collections-polish-api same-zone ordered set split at lower bound; docs/stdlib/modules/collections.md |
+| `method std::collections::TreeSet[T]::symmetric_difference` | check-prelude std-collections-tree-set-relations lazy ordered-set symmetric-difference cursor; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::take` | check-prelude std-collections-tree-remove Option-returning direct red-black deletion; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::try_first` | check-prelude std-collections-tree-boundaries optional smallest-value accessor; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::try_get` | check-prelude std-collections-set-representatives optional ordered representative lookup; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::try_last` | check-prelude std-collections-tree-boundaries optional largest-value accessor; docs/stdlib/modules/collections.md |
+| `method std::collections::TreeSet[T]::union` | check-prelude std-collections-tree-set-relations lazy ordered-set union cursor; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::upper_bound` | check-prelude std-collections-tree-bounds optional first value greater than target; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::with_capacity` | check-prelude std-collections-map-natural-api trait-driven default-order tree set constructor; docs/stdlib/modules/collections.md |
 | `method std::collections::TreeSet[T]::with_less` | check-prelude std-collections-tree explicit comparator tree set constructor; docs/stdlib/modules/collections.md |
@@ -1216,8 +1228,12 @@ Tier: `alloc`. Stability reading: usable.
 | `struct std::collections::HashMapValuesMut[V]` | std collections mutable hash value cursor tests; docs/stdlib/modules/collections.md |
 | `struct std::collections::HashMapValues[V]` | std collections hash iterator tests; docs/stdlib/modules/collections.md |
 | `struct std::collections::HashMap[K, V]` | std collections hash map tests; docs/stdlib/modules/collections.md |
+| `struct std::collections::HashSetDifference[T]` | check-prelude std-collections-hash-set-relations lazy hash set difference cursor; docs/stdlib/modules/collections.md |
 | `struct std::collections::HashSetDrain[T]` | std collections hash set drain tests; docs/stdlib/modules/collections.md |
+| `struct std::collections::HashSetIntersection[T]` | check-prelude std-collections-hash-set-relations lazy hash set intersection cursor; docs/stdlib/modules/collections.md |
 | `struct std::collections::HashSetIter[T]` | std collections hash iterator tests; docs/stdlib/modules/collections.md |
+| `struct std::collections::HashSetSymmetricDifference[T]` | check-prelude std-collections-hash-set-relations lazy hash set symmetric-difference cursor; docs/stdlib/modules/collections.md |
+| `struct std::collections::HashSetUnion[T]` | check-prelude std-collections-hash-set-relations lazy hash set union cursor; docs/stdlib/modules/collections.md |
 | `struct std::collections::HashSet[T]` | std collections hash set tests; docs/stdlib/modules/collections.md |
 | `struct std::collections::Iter[T]` | std collections iterator tests; docs/stdlib/modules/collections.md |
 | `struct std::collections::LinkedListIter[T]` | std collections linked list iterator tests; docs/stdlib/modules/collections.md |
@@ -1228,7 +1244,11 @@ Tier: `alloc`. Stability reading: usable.
 | `struct std::collections::PriorityQueue[T]` | std collections priority queue tests; docs/stdlib/modules/collections.md |
 | `struct std::collections::RingBufferIter[T]` | std collections ring buffer iterator tests; docs/stdlib/modules/collections.md |
 | `struct std::collections::RingBuffer[T]` | std collections ring buffer tests; docs/stdlib/modules/collections.md |
+| `struct std::collections::SetDifference[T]` | check-prelude std-collections-set-relations lazy linear set difference cursor; docs/stdlib/modules/collections.md |
 | `struct std::collections::SetDrain[T]` | std collections linear set drain tests; docs/stdlib/modules/collections.md |
+| `struct std::collections::SetIntersection[T]` | check-prelude std-collections-set-relations lazy linear set intersection cursor; docs/stdlib/modules/collections.md |
+| `struct std::collections::SetSymmetricDifference[T]` | check-prelude std-collections-set-relations lazy linear set symmetric-difference cursor; docs/stdlib/modules/collections.md |
+| `struct std::collections::SetUnion[T]` | check-prelude std-collections-set-relations lazy linear set union cursor; docs/stdlib/modules/collections.md |
 | `struct std::collections::Set[T]` | std collections linear set tests; docs/stdlib/modules/collections.md |
 | `struct std::collections::TreeMapDrain[K, V]` | std collections tree map drain tests; docs/stdlib/modules/collections.md |
 | `struct std::collections::TreeMapEntriesMut[K, V]` | std collections mutable tree map entry cursor tests; docs/stdlib/modules/collections.md |
@@ -1240,9 +1260,13 @@ Tier: `alloc`. Stability reading: usable.
 | `struct std::collections::TreeMapValuesMut[V]` | std collections mutable tree value cursor tests; docs/stdlib/modules/collections.md |
 | `struct std::collections::TreeMapValues[V]` | std collections tree iterator tests; docs/stdlib/modules/collections.md |
 | `struct std::collections::TreeMap[K, V]` | std collections tree map tests; docs/stdlib/modules/collections.md |
+| `struct std::collections::TreeSetDifference[T]` | check-prelude std-collections-tree-set-relations lazy tree set difference cursor; docs/stdlib/modules/collections.md |
 | `struct std::collections::TreeSetDrain[T]` | std collections tree set drain tests; docs/stdlib/modules/collections.md |
+| `struct std::collections::TreeSetIntersection[T]` | check-prelude std-collections-tree-set-relations lazy tree set intersection cursor; docs/stdlib/modules/collections.md |
 | `struct std::collections::TreeSetIter[T]` | std collections tree iterator tests; docs/stdlib/modules/collections.md |
 | `struct std::collections::TreeSetRange[T]` | std collections tree set range tests; docs/stdlib/modules/collections.md |
+| `struct std::collections::TreeSetSymmetricDifference[T]` | check-prelude std-collections-tree-set-relations lazy tree set symmetric-difference cursor; docs/stdlib/modules/collections.md |
+| `struct std::collections::TreeSetUnion[T]` | check-prelude std-collections-tree-set-relations lazy tree set union cursor; docs/stdlib/modules/collections.md |
 | `struct std::collections::TreeSet[T]` | std collections tree set tests; docs/stdlib/modules/collections.md |
 
 ## `std::context`

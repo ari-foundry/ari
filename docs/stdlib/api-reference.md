@@ -2873,6 +2873,10 @@ set.equals(ref other)
 set.is_subset(ref other)
 set.is_superset(ref other)
 set.is_disjoint(ref other)
+set.intersection(ref other)
+set.difference(ref other)
+set.union(ref other)
+set.symmetric_difference(ref other)
 set.insert(ref mut zone, value)
 set.replace(ref mut zone, value)
 set.remove(value)
@@ -2911,8 +2915,11 @@ through the same source zone. The set preserves insertion order in accessors,
 `index_of`, `as_slice`,
 `iter`, and `copy_to`. `std::collections::Iter[T]` implements `Iterator[T]`,
 and `Set[T]` implements `IntoIterator[T]`, so `for value in set` works through
-the standard iterator path. `drain()` yields insertion-order values and leaves
-the source set empty.
+the standard iterator path. `intersection`, `difference`, `union`, and
+`symmetric_difference` are lazy `Iterator[T]` cursors that borrow both sets and
+yield copied values; linear set algebra preserves insertion-order behavior for
+the side being walked. Do not mutate either set while one of these cursors is
+live. `drain()` yields insertion-order values and leaves the source set empty.
 
 Double-ended and bounded sequence collections:
 
@@ -3056,6 +3063,10 @@ set.equals(ref other)
 set.is_subset(ref other)
 set.is_superset(ref other)
 set.is_disjoint(ref other)
+set.intersection(ref other)
+set.difference(ref other)
+set.union(ref other)
+set.symmetric_difference(ref other)
 set.insert(ref mut zone, value)
 set.replace(ref mut zone, value)
 set.take(value)
@@ -3128,6 +3139,10 @@ tombstones for probing correctness. Hash
 `reserve_extra(additional)` grows enough buckets for `len + additional` live
 items without immediately violating the load-factor rule. Hash `copy_to`
 methods copy only live entries into the target zone, leaving tombstones behind.
+`HashSet.intersection`, `difference`, `union`, and `symmetric_difference` are
+lazy live-bucket cursors. They borrow both sets, skip tombstones, yield copied
+values, and use the current hash-bucket order rather than insertion or sorted
+order, so callers should consume the cursor before mutating either set.
 
 Tree collections use explicit strict less-than comparators:
 
@@ -3201,6 +3216,10 @@ set.equals(ref other)
 set.is_subset(ref other)
 set.is_superset(ref other)
 set.is_disjoint(ref other)
+set.intersection(ref other)
+set.difference(ref other)
+set.union(ref other)
+set.symmetric_difference(ref other)
 set.insert(ref mut zone, value)
 set.replace(ref mut zone, value)
 set.take(value)
@@ -3254,6 +3273,10 @@ representative. `TreeSet.take(value)` returns the removed value as `Option[T]`;
 and direct `for value in tree_set` walk values in ascending comparator order.
 `TreeSet.retain(fn(ref T) -> bool)` filters values in place and drops rejected
 values through the direct tree deletion path.
+`TreeSet.intersection`, `difference`, `union`, and `symmetric_difference` are
+lazy `Iterator[T]` cursors in comparator order. The merge-style operations
+borrow both trees, yield copied values, and should be consumed before either
+tree is mutated.
 `TreeMap.values_mut()` exposes a mutable sorted value cursor,
 `TreeMap.iter_mut()` walks sorted `MapEntryMut[K,V]` handles, direct
 `for entry in tree_map` walks `MapEntry[K,V]`, and `TreeMap.drain()`/

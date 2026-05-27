@@ -85,6 +85,10 @@ set.equals(ref other)
 set.is_subset(ref other)
 set.is_superset(ref other)
 set.is_disjoint(ref other)
+set.intersection(ref other)
+set.difference(ref other)
+set.union(ref other)
+set.symmetric_difference(ref other)
 set.insert(ref mut zone, value)
 set.replace(ref mut zone, value)
 set.remove(value)
@@ -113,6 +117,12 @@ from the iterator are dropped, preserving the first representative already in
 the set.
 `equals`, `is_subset`, `is_superset`, and `is_disjoint` compare membership,
 not insertion order, and borrow the other set explicitly.
+The lazy algebra helpers return `Iterator[T]` cursors that also borrow both
+sets. `intersection` and `difference` walk the left set in insertion order;
+`union` walks all left values first, then right-only values in the right set's
+insertion order; `symmetric_difference` walks left-only values first, then
+right-only values. They yield copied values, and neither set should be mutated
+while one of these cursors is live.
 When a local `Set[T]` comes from a tracked zone allocation, the common growth
 calls can omit the repeated zone argument: `set.insert(value)`,
 `set.replace(value)`, `set.reserve(capacity)`, and
@@ -442,6 +452,10 @@ set.equals(ref other)
 set.is_subset(ref other)
 set.is_superset(ref other)
 set.is_disjoint(ref other)
+set.intersection(ref other)
+set.difference(ref other)
+set.union(ref other)
+set.symmetric_difference(ref other)
 set.insert(ref mut zone, value)
 set.replace(ref mut zone, value)
 set.take(value)
@@ -474,6 +488,14 @@ returns a live-bucket draining cursor and leaves the set empty.
 are dropped and the first stored representative is retained.
 `copy_to(ref mut target)` copies live values into a fresh target-zone hash
 table without tombstones.
+`intersection`, `difference`, `union`, and `symmetric_difference` return lazy
+`Iterator[T]` cursors over live hash buckets. `intersection` and `difference`
+walk the left table's live buckets; `union` walks all left live values and then
+right-only live values; `symmetric_difference` walks left-only values and then
+right-only values. The order is hash-bucket order for the current table states,
+not insertion order or sorted order. These cursors borrow both sets, yield
+copied values, skip tombstones, and should be consumed before mutating either
+set.
 
 String hash sets mirror the map borrowed lookup surface with
 `contains_bytes`, `try_get_bytes`, `get_bytes`, `take_bytes`, and
@@ -647,6 +669,10 @@ set.equals(ref other)
 set.is_subset(ref other)
 set.is_superset(ref other)
 set.is_disjoint(ref other)
+set.intersection(ref other)
+set.difference(ref other)
+set.union(ref other)
+set.symmetric_difference(ref other)
 set.insert(ref mut zone, value)
 set.replace(ref mut zone, value)
 set.take(value)
@@ -695,6 +721,12 @@ with the same comparator.
 `retain(fn(ref T) -> bool)` filters the ordered set in place, dropping values
 whose predicate returns `false` and using direct red-black delete plus compacting
 slot movement for each rejected value.
+`intersection`, `difference`, `union`, and `symmetric_difference` return lazy
+`Iterator[T]` cursors in comparator order. `intersection` and `difference`
+walk the left tree's sorted iterator and check membership in the right tree.
+`union` and `symmetric_difference` merge the two sorted cursors so duplicates
+are yielded once or skipped as appropriate. These cursors borrow both trees,
+yield copied values, and should be consumed before mutating either set.
 
 ## BinaryHeap And PriorityQueue
 
@@ -929,11 +961,14 @@ destroy reads from target-zone storage.
 ring buffer, linked list, binary heap, and priority queue after source-zone
 destroy, with logical order checks for sequence-like collections and priority
 order checks for heap-backed collections.
+`std-collections-set-relations.ari` checks linear-set relationship predicates
+and insertion-order lazy set algebra cursors.
 `std-collections-hash.ari` forces collisions with a custom hash function so the
 linear-probing and tombstone paths are exercised.
 `std-collections-hash-set-relations.ari` keeps that collision pressure and
-checks set relationship predicates after a tombstone. `std-collections-hash-iter`
-checks key, value, and set cursors after tombstones.
+checks set relationship predicates and lazy set algebra cursors after a
+tombstone. `std-collections-hash-iter` checks key, value, and set cursors after
+tombstones.
 `std-collections-map-entries.ari` checks hash entries over live buckets and
 tree entries in sorted key order.
 `std-collections-view-api.ari` checks map `values_mut()` cursors, map
@@ -958,8 +993,9 @@ lookup for tree maps and sets.
 missing-removal paths, and verifies sorted entries/boundaries after direct
 red-black deletion with compacting slot movement.
 `std-collections-tree-set-relations.ari` inserts the same values in different
-orders to verify relationship predicates are membership-based, while
-`std-collections-tree-iter.ari` checks sorted successor traversal plus tree
+orders to verify relationship predicates are membership-based and lazy set
+algebra cursors stay sorted, while `std-collections-tree-iter.ari` checks
+sorted successor traversal plus tree
 map/set range cursors and mutable range value updates.
 `std-collections-polish-api.ari` checks iterator-driven constructors and
 extension across set/map/sequence/heap collections, plus tree boundary pops,

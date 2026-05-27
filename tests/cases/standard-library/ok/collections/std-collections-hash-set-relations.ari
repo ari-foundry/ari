@@ -5,6 +5,19 @@ fn constant_hash(value: i64) -> u64 {
   return 11;
 }
 
+fn score_iter[I: std::Iterator[i64]](iter: I) -> i64 {
+  var cursor = iter;
+  var sum = 0;
+  var count = 0;
+  var item = cursor.next();
+  while item.is_some() {
+    sum = sum + item.unwrap();
+    count = count + 1;
+    item = cursor.next();
+  }
+  return sum * 10 + count;
+}
+
 fn main() -> i64 {
   var zone = zone::create(2048);
   var left = collections::hash_set<i64>(ref mut zone, 1, constant_hash);
@@ -45,6 +58,18 @@ fn main() -> i64 {
   }
   if !left.is_disjoint(ref same) {
     score = score + 19;
+  }
+  if score_iter(left.intersection(ref superset)) == 102 {
+    score = score + 23;
+  }
+  if score_iter(superset.difference(ref left)) == 91 {
+    score = score + 29;
+  }
+  if score_iter(left.union(ref disjoint)) == 134 {
+    score = score + 31;
+  }
+  if score_iter(superset.symmetric_difference(ref left)) == 91 {
+    score = score + 37;
   }
 
   zone::destroy(zone);

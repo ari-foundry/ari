@@ -18,6 +18,41 @@ pub struct SetDrain[T] {
   mut index: i64,
 }
 
+pub struct SetIntersection[T] {
+  data: ptr T,
+  len: i64,
+  mut index: i64,
+  other: ptr std::collections::Set[T],
+}
+
+pub struct SetDifference[T] {
+  data: ptr T,
+  len: i64,
+  mut index: i64,
+  other: ptr std::collections::Set[T],
+}
+
+pub struct SetUnion[T] {
+  data: ptr T,
+  len: i64,
+  mut index: i64,
+  other_data: ptr T,
+  other_len: i64,
+  mut other_index: i64,
+  left: ptr std::collections::Set[T],
+}
+
+pub struct SetSymmetricDifference[T] {
+  data: ptr T,
+  len: i64,
+  mut index: i64,
+  other_data: ptr T,
+  other_len: i64,
+  mut other_index: i64,
+  left: ptr std::collections::Set[T],
+  other: ptr std::collections::Set[T],
+}
+
 pub struct MapEntry[K, V] {
   key: K,
   value: V,
@@ -101,6 +136,47 @@ pub struct HashSetDrain[T] {
   states: ptr i64,
   capacity: i64,
   mut index: i64,
+}
+
+pub struct HashSetIntersection[T] {
+  data: ptr T,
+  states: ptr i64,
+  capacity: i64,
+  mut index: i64,
+  other: ptr std::collections::HashSet[T],
+}
+
+pub struct HashSetDifference[T] {
+  data: ptr T,
+  states: ptr i64,
+  capacity: i64,
+  mut index: i64,
+  other: ptr std::collections::HashSet[T],
+}
+
+pub struct HashSetUnion[T] {
+  data: ptr T,
+  states: ptr i64,
+  capacity: i64,
+  mut index: i64,
+  other_data: ptr T,
+  other_states: ptr i64,
+  other_capacity: i64,
+  mut other_index: i64,
+  left: ptr std::collections::HashSet[T],
+}
+
+pub struct HashSetSymmetricDifference[T] {
+  data: ptr T,
+  states: ptr i64,
+  capacity: i64,
+  mut index: i64,
+  other_data: ptr T,
+  other_states: ptr i64,
+  other_capacity: i64,
+  mut other_index: i64,
+  left: ptr std::collections::HashSet[T],
+  other: ptr std::collections::HashSet[T],
 }
 
 pub struct TreeMapKeys[K] {
@@ -204,6 +280,52 @@ pub struct TreeSetDrain[T] {
   colors: ptr i64,
   len: i64,
   mut current: i64,
+}
+
+pub struct TreeSetIntersection[T] {
+  data: ptr T,
+  left: ptr i64,
+  right: ptr i64,
+  parent: ptr i64,
+  mut current: i64,
+  other: ptr std::collections::TreeSet[T],
+}
+
+pub struct TreeSetDifference[T] {
+  data: ptr T,
+  left: ptr i64,
+  right: ptr i64,
+  parent: ptr i64,
+  mut current: i64,
+  other: ptr std::collections::TreeSet[T],
+}
+
+pub struct TreeSetUnion[T] {
+  data: ptr T,
+  left: ptr i64,
+  right: ptr i64,
+  parent: ptr i64,
+  mut current: i64,
+  other_data: ptr T,
+  other_left: ptr i64,
+  other_right: ptr i64,
+  other_parent: ptr i64,
+  mut other_current: i64,
+  less: fn(T, T) -> bool,
+}
+
+pub struct TreeSetSymmetricDifference[T] {
+  data: ptr T,
+  left: ptr i64,
+  right: ptr i64,
+  parent: ptr i64,
+  mut current: i64,
+  other_data: ptr T,
+  other_left: ptr i64,
+  other_right: ptr i64,
+  other_parent: ptr i64,
+  mut other_current: i64,
+  less: fn(T, T) -> bool,
 }
 
 pub impl[K, V] std::collections::MapEntry[K, V] {
@@ -569,6 +691,49 @@ pub impl[T] std::collections::Set[T] {
     return self.is_subset(other);
   }
 
+  fn intersection(self: ref Self, other: ref Self) -> std::collections::SetIntersection[T] {
+    return std::collections::SetIntersection<T> {
+      data: self.data,
+      len: self.len,
+      index: 0,
+      other: other as ptr std::collections::Set[T],
+    };
+  }
+
+  fn difference(self: ref Self, other: ref Self) -> std::collections::SetDifference[T] {
+    return std::collections::SetDifference<T> {
+      data: self.data,
+      len: self.len,
+      index: 0,
+      other: other as ptr std::collections::Set[T],
+    };
+  }
+
+  fn union(self: ref Self, other: ref Self) -> std::collections::SetUnion[T] {
+    return std::collections::SetUnion<T> {
+      data: self.data,
+      len: self.len,
+      index: 0,
+      other_data: other.data,
+      other_len: other.len,
+      other_index: 0,
+      left: self as ptr std::collections::Set[T],
+    };
+  }
+
+  fn symmetric_difference(self: ref Self, other: ref Self) -> std::collections::SetSymmetricDifference[T] {
+    return std::collections::SetSymmetricDifference<T> {
+      data: self.data,
+      len: self.len,
+      index: 0,
+      other_data: other.data,
+      other_len: other.len,
+      other_index: 0,
+      left: self as ptr std::collections::Set[T],
+      other: other as ptr std::collections::Set[T],
+    };
+  }
+
   fn insert(self: ref mut Self, zone: ref mut Zone, value: T) -> bool {
     if self.contains(value) {
       return false;
@@ -731,6 +896,75 @@ impl[T] std::Iterator[T] for std::collections::SetDrain[T] {
     let value = ptr_load(ptr_add(self.data, self.index));
     self.index = self.index + 1;
     return std::Some<T>(value);
+  }
+}
+
+impl[T] std::Iterator[T] for std::collections::SetIntersection[T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    let other: ref std::collections::Set[T] = ref *self.other;
+    while self.index < self.len {
+      let index = self.index;
+      self.index = self.index + 1;
+      if other.contains(ptr_load(ptr_add(self.data, index))) {
+        return std::Some<T>(ptr_load(ptr_add(self.data, index)));
+      }
+    }
+    return std::None<T>();
+  }
+}
+
+impl[T] std::Iterator[T] for std::collections::SetDifference[T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    let other: ref std::collections::Set[T] = ref *self.other;
+    while self.index < self.len {
+      let index = self.index;
+      self.index = self.index + 1;
+      if !other.contains(ptr_load(ptr_add(self.data, index))) {
+        return std::Some<T>(ptr_load(ptr_add(self.data, index)));
+      }
+    }
+    return std::None<T>();
+  }
+}
+
+impl[T] std::Iterator[T] for std::collections::SetUnion[T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    if self.index < self.len {
+      let index = self.index;
+      self.index = self.index + 1;
+      return std::Some<T>(ptr_load(ptr_add(self.data, index)));
+    }
+    let left: ref std::collections::Set[T] = ref *self.left;
+    while self.other_index < self.other_len {
+      let other_index = self.other_index;
+      self.other_index = self.other_index + 1;
+      if !left.contains(ptr_load(ptr_add(self.other_data, other_index))) {
+        return std::Some<T>(ptr_load(ptr_add(self.other_data, other_index)));
+      }
+    }
+    return std::None<T>();
+  }
+}
+
+impl[T] std::Iterator[T] for std::collections::SetSymmetricDifference[T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    let other: ref std::collections::Set[T] = ref *self.other;
+    while self.index < self.len {
+      let index = self.index;
+      self.index = self.index + 1;
+      if !other.contains(ptr_load(ptr_add(self.data, index))) {
+        return std::Some<T>(ptr_load(ptr_add(self.data, index)));
+      }
+    }
+    let left: ref std::collections::Set[T] = ref *self.left;
+    while self.other_index < self.other_len {
+      let other_index = self.other_index;
+      self.other_index = self.other_index + 1;
+      if !left.contains(ptr_load(ptr_add(self.other_data, other_index))) {
+        return std::Some<T>(ptr_load(ptr_add(self.other_data, other_index)));
+      }
+    }
+    return std::None<T>();
   }
 }
 
@@ -1926,6 +2160,55 @@ pub impl[T] std::collections::HashSet[T] {
     return self.is_subset(other);
   }
 
+  fn intersection(self: ref Self, other: ref Self) -> std::collections::HashSetIntersection[T] {
+    return std::collections::HashSetIntersection<T> {
+      data: self.data,
+      states: self.states,
+      capacity: self.capacity,
+      index: 0,
+      other: other as ptr std::collections::HashSet[T],
+    };
+  }
+
+  fn difference(self: ref Self, other: ref Self) -> std::collections::HashSetDifference[T] {
+    return std::collections::HashSetDifference<T> {
+      data: self.data,
+      states: self.states,
+      capacity: self.capacity,
+      index: 0,
+      other: other as ptr std::collections::HashSet[T],
+    };
+  }
+
+  fn union(self: ref Self, other: ref Self) -> std::collections::HashSetUnion[T] {
+    return std::collections::HashSetUnion<T> {
+      data: self.data,
+      states: self.states,
+      capacity: self.capacity,
+      index: 0,
+      other_data: other.data,
+      other_states: other.states,
+      other_capacity: other.capacity,
+      other_index: 0,
+      left: self as ptr std::collections::HashSet[T],
+    };
+  }
+
+  fn symmetric_difference(self: ref Self, other: ref Self) -> std::collections::HashSetSymmetricDifference[T] {
+    return std::collections::HashSetSymmetricDifference<T> {
+      data: self.data,
+      states: self.states,
+      capacity: self.capacity,
+      index: 0,
+      other_data: other.data,
+      other_states: other.states,
+      other_capacity: other.capacity,
+      other_index: 0,
+      left: self as ptr std::collections::HashSet[T],
+      other: other as ptr std::collections::HashSet[T],
+    };
+  }
+
   fn insert(self: ref mut Self, zone: ref mut Zone, value: T) -> bool {
     if hash_set_find_slot_mut<T>(self, value) >= 0 {
       return false;
@@ -2143,6 +2426,80 @@ impl[T] std::Iterator[T] for std::collections::HashSetDrain[T] {
     self.index = bucket + 1;
     ptr_store(ptr_add(self.states, bucket), 0);
     return std::Some<T>(ptr_load(ptr_add(self.data, bucket)));
+  }
+}
+
+impl[T] std::Iterator[T] for std::collections::HashSetIntersection[T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    let other: ref std::collections::HashSet[T] = ref *self.other;
+    var bucket = next_live_bucket(self.states, self.capacity, self.index);
+    while bucket >= 0 {
+      self.index = bucket + 1;
+      if other.contains(ptr_load(ptr_add(self.data, bucket))) {
+        return std::Some<T>(ptr_load(ptr_add(self.data, bucket)));
+      }
+      bucket = next_live_bucket(self.states, self.capacity, self.index);
+    }
+    return std::None<T>();
+  }
+}
+
+impl[T] std::Iterator[T] for std::collections::HashSetDifference[T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    let other: ref std::collections::HashSet[T] = ref *self.other;
+    var bucket = next_live_bucket(self.states, self.capacity, self.index);
+    while bucket >= 0 {
+      self.index = bucket + 1;
+      if !other.contains(ptr_load(ptr_add(self.data, bucket))) {
+        return std::Some<T>(ptr_load(ptr_add(self.data, bucket)));
+      }
+      bucket = next_live_bucket(self.states, self.capacity, self.index);
+    }
+    return std::None<T>();
+  }
+}
+
+impl[T] std::Iterator[T] for std::collections::HashSetUnion[T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    let left_bucket = next_live_bucket(self.states, self.capacity, self.index);
+    if left_bucket >= 0 {
+      self.index = left_bucket + 1;
+      return std::Some<T>(ptr_load(ptr_add(self.data, left_bucket)));
+    }
+    let left: ref std::collections::HashSet[T] = ref *self.left;
+    var right_bucket = next_live_bucket(self.other_states, self.other_capacity, self.other_index);
+    while right_bucket >= 0 {
+      self.other_index = right_bucket + 1;
+      if !left.contains(ptr_load(ptr_add(self.other_data, right_bucket))) {
+        return std::Some<T>(ptr_load(ptr_add(self.other_data, right_bucket)));
+      }
+      right_bucket = next_live_bucket(self.other_states, self.other_capacity, self.other_index);
+    }
+    return std::None<T>();
+  }
+}
+
+impl[T] std::Iterator[T] for std::collections::HashSetSymmetricDifference[T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    let other: ref std::collections::HashSet[T] = ref *self.other;
+    var left_bucket = next_live_bucket(self.states, self.capacity, self.index);
+    while left_bucket >= 0 {
+      self.index = left_bucket + 1;
+      if !other.contains(ptr_load(ptr_add(self.data, left_bucket))) {
+        return std::Some<T>(ptr_load(ptr_add(self.data, left_bucket)));
+      }
+      left_bucket = next_live_bucket(self.states, self.capacity, self.index);
+    }
+    let left: ref std::collections::HashSet[T] = ref *self.left;
+    var right_bucket = next_live_bucket(self.other_states, self.other_capacity, self.other_index);
+    while right_bucket >= 0 {
+      self.other_index = right_bucket + 1;
+      if !left.contains(ptr_load(ptr_add(self.other_data, right_bucket))) {
+        return std::Some<T>(ptr_load(ptr_add(self.other_data, right_bucket)));
+      }
+      right_bucket = next_live_bucket(self.other_states, self.other_capacity, self.other_index);
+    }
+    return std::None<T>();
   }
 }
 
@@ -4248,6 +4605,60 @@ pub impl[T] std::collections::TreeSet[T] {
     return self.is_subset(other);
   }
 
+  fn intersection(self: ref Self, other: ref Self) -> std::collections::TreeSetIntersection[T] {
+    return std::collections::TreeSetIntersection<T> {
+      data: self.data,
+      left: self.left,
+      right: self.right,
+      parent: self.parent,
+      current: tree_first_node(self.root, self.left),
+      other: other as ptr std::collections::TreeSet[T],
+    };
+  }
+
+  fn difference(self: ref Self, other: ref Self) -> std::collections::TreeSetDifference[T] {
+    return std::collections::TreeSetDifference<T> {
+      data: self.data,
+      left: self.left,
+      right: self.right,
+      parent: self.parent,
+      current: tree_first_node(self.root, self.left),
+      other: other as ptr std::collections::TreeSet[T],
+    };
+  }
+
+  fn union(self: ref Self, other: ref Self) -> std::collections::TreeSetUnion[T] {
+    return std::collections::TreeSetUnion<T> {
+      data: self.data,
+      left: self.left,
+      right: self.right,
+      parent: self.parent,
+      current: tree_first_node(self.root, self.left),
+      other_data: other.data,
+      other_left: other.left,
+      other_right: other.right,
+      other_parent: other.parent,
+      other_current: tree_first_node(other.root, other.left),
+      less: self.less,
+    };
+  }
+
+  fn symmetric_difference(self: ref Self, other: ref Self) -> std::collections::TreeSetSymmetricDifference[T] {
+    return std::collections::TreeSetSymmetricDifference<T> {
+      data: self.data,
+      left: self.left,
+      right: self.right,
+      parent: self.parent,
+      current: tree_first_node(self.root, self.left),
+      other_data: other.data,
+      other_left: other.left,
+      other_right: other.right,
+      other_parent: other.parent,
+      other_current: tree_first_node(other.root, other.left),
+      less: self.less,
+    };
+  }
+
   fn insert(self: ref mut Self, zone: ref mut Zone, value: T) -> bool {
     let less = self.less;
     var parent = -1;
@@ -4468,6 +4879,97 @@ impl[T] std::Iterator[T] for std::collections::TreeSetDrain[T] {
     self.current = tree_next_node(node, self.left, self.right, self.parent);
     ptr_store(ptr_add(self.colors, node), -2);
     return std::Some<T>(ptr_load(ptr_add(self.data, node)));
+  }
+}
+
+impl[T] std::Iterator[T] for std::collections::TreeSetIntersection[T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    let other: ref std::collections::TreeSet[T] = ref *self.other;
+    while self.current >= 0 {
+      let node = self.current;
+      self.current = tree_next_node(node, self.left, self.right, self.parent);
+      if other.contains(ptr_load(ptr_add(self.data, node))) {
+        return std::Some<T>(ptr_load(ptr_add(self.data, node)));
+      }
+    }
+    return std::None<T>();
+  }
+}
+
+impl[T] std::Iterator[T] for std::collections::TreeSetDifference[T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    let other: ref std::collections::TreeSet[T] = ref *self.other;
+    while self.current >= 0 {
+      let node = self.current;
+      self.current = tree_next_node(node, self.left, self.right, self.parent);
+      if !other.contains(ptr_load(ptr_add(self.data, node))) {
+        return std::Some<T>(ptr_load(ptr_add(self.data, node)));
+      }
+    }
+    return std::None<T>();
+  }
+}
+
+impl[T] std::Iterator[T] for std::collections::TreeSetUnion[T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    let less = self.less;
+    while self.current >= 0 && self.other_current >= 0 {
+      let left_node = self.current;
+      let right_node = self.other_current;
+      if less(ptr_load(ptr_add(self.data, left_node)), ptr_load(ptr_add(self.other_data, right_node))) {
+        self.current = tree_next_node(left_node, self.left, self.right, self.parent);
+        return std::Some<T>(ptr_load(ptr_add(self.data, left_node)));
+      }
+      if less(ptr_load(ptr_add(self.other_data, right_node)), ptr_load(ptr_add(self.data, left_node))) {
+        self.other_current = tree_next_node(right_node, self.other_left, self.other_right, self.other_parent);
+        return std::Some<T>(ptr_load(ptr_add(self.other_data, right_node)));
+      }
+      self.current = tree_next_node(left_node, self.left, self.right, self.parent);
+      self.other_current = tree_next_node(right_node, self.other_left, self.other_right, self.other_parent);
+      return std::Some<T>(ptr_load(ptr_add(self.data, left_node)));
+    }
+    if self.current >= 0 {
+      let node = self.current;
+      self.current = tree_next_node(node, self.left, self.right, self.parent);
+      return std::Some<T>(ptr_load(ptr_add(self.data, node)));
+    }
+    if self.other_current >= 0 {
+      let other_node = self.other_current;
+      self.other_current = tree_next_node(other_node, self.other_left, self.other_right, self.other_parent);
+      return std::Some<T>(ptr_load(ptr_add(self.other_data, other_node)));
+    }
+    return std::None<T>();
+  }
+}
+
+impl[T] std::Iterator[T] for std::collections::TreeSetSymmetricDifference[T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    let less = self.less;
+    while self.current >= 0 && self.other_current >= 0 {
+      let left_node = self.current;
+      let right_node = self.other_current;
+      if less(ptr_load(ptr_add(self.data, left_node)), ptr_load(ptr_add(self.other_data, right_node))) {
+        self.current = tree_next_node(left_node, self.left, self.right, self.parent);
+        return std::Some<T>(ptr_load(ptr_add(self.data, left_node)));
+      }
+      if less(ptr_load(ptr_add(self.other_data, right_node)), ptr_load(ptr_add(self.data, left_node))) {
+        self.other_current = tree_next_node(right_node, self.other_left, self.other_right, self.other_parent);
+        return std::Some<T>(ptr_load(ptr_add(self.other_data, right_node)));
+      }
+      self.current = tree_next_node(left_node, self.left, self.right, self.parent);
+      self.other_current = tree_next_node(right_node, self.other_left, self.other_right, self.other_parent);
+    }
+    if self.current >= 0 {
+      let node = self.current;
+      self.current = tree_next_node(node, self.left, self.right, self.parent);
+      return std::Some<T>(ptr_load(ptr_add(self.data, node)));
+    }
+    if self.other_current >= 0 {
+      let other_node = self.other_current;
+      self.other_current = tree_next_node(other_node, self.other_left, self.other_right, self.other_parent);
+      return std::Some<T>(ptr_load(ptr_add(self.other_data, other_node)));
+    }
+    return std::None<T>();
   }
 }
 

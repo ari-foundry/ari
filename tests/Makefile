@@ -3043,8 +3043,10 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl26std__collections__Set_i64_8inherent9is_subset' $(BUILD_DIR)/prelude/std-collections-set-relations.ll
 	grep -q '_ARNv4impl26std__collections__Set_i64_8inherent11is_superset' $(BUILD_DIR)/prelude/std-collections-set-relations.ll
 	grep -q '_ARNv4impl26std__collections__Set_i64_8inherent11is_disjoint' $(BUILD_DIR)/prelude/std-collections-set-relations.ll
+	grep -q 'intersection' $(BUILD_DIR)/prelude/std-collections-set-relations.ll
+	grep -q 'symmetric_difference' $(BUILD_DIR)/prelude/std-collections-set-relations.ll
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-relations.ari -o $(BUILD_DIR)/prelude/std-collections-set-relations.elf
-	$(BUILD_DIR)/prelude/std-collections-set-relations.elf; code=$$?; test $$code -eq 75
+	$(BUILD_DIR)/prelude/std-collections-set-relations.elf; code=$$?; test $$code -eq 195
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-iter.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-set-iter.ll
 	grep -q '_ARNv4impl26std__collections__Set_i64_8inherent4iter' $(BUILD_DIR)/prelude/std-collections-set-iter.ll
 	grep -q 'std__collections__Iter_i64_13std__Iterator4next' $(BUILD_DIR)/prelude/std-collections-set-iter.ll
@@ -3067,8 +3069,10 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl30std__collections__HashSet_i64_8inherent9is_subset' $(BUILD_DIR)/prelude/std-collections-hash-set-relations.ll
 	grep -q '_ARNv4impl30std__collections__HashSet_i64_8inherent11is_superset' $(BUILD_DIR)/prelude/std-collections-hash-set-relations.ll
 	grep -q '_ARNv4impl30std__collections__HashSet_i64_8inherent11is_disjoint' $(BUILD_DIR)/prelude/std-collections-hash-set-relations.ll
+	grep -q 'HashSetIntersection' $(BUILD_DIR)/prelude/std-collections-hash-set-relations.ll
+	grep -q 'HashSetSymmetricDifference' $(BUILD_DIR)/prelude/std-collections-hash-set-relations.ll
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash-set-relations.ari -o $(BUILD_DIR)/prelude/std-collections-hash-set-relations.elf
-	$(BUILD_DIR)/prelude/std-collections-hash-set-relations.elf; code=$$?; test $$code -eq 75
+	$(BUILD_DIR)/prelude/std-collections-hash-set-relations.elf; code=$$?; test $$code -eq 195
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash-iter.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-hash-iter.ll
 	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent4keys' $(BUILD_DIR)/prelude/std-collections-hash-iter.ll
 	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent6values' $(BUILD_DIR)/prelude/std-collections-hash-iter.ll
@@ -3228,8 +3232,10 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl30std__collections__TreeSet_i64_8inherent9is_subset' $(BUILD_DIR)/prelude/std-collections-tree-set-relations.ll
 	grep -q '_ARNv4impl30std__collections__TreeSet_i64_8inherent11is_superset' $(BUILD_DIR)/prelude/std-collections-tree-set-relations.ll
 	grep -q '_ARNv4impl30std__collections__TreeSet_i64_8inherent11is_disjoint' $(BUILD_DIR)/prelude/std-collections-tree-set-relations.ll
+	grep -q 'TreeSetUnion' $(BUILD_DIR)/prelude/std-collections-tree-set-relations.ll
+	grep -q 'TreeSetSymmetricDifference' $(BUILD_DIR)/prelude/std-collections-tree-set-relations.ll
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-set-relations.ari -o $(BUILD_DIR)/prelude/std-collections-tree-set-relations.elf
-	$(BUILD_DIR)/prelude/std-collections-tree-set-relations.elf; code=$$?; test $$code -eq 75
+	$(BUILD_DIR)/prelude/std-collections-tree-set-relations.elf; code=$$?; test $$code -eq 195
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-iter.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-tree-iter.ll
 	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent4keys' $(BUILD_DIR)/prelude/std-collections-tree-iter.ll
 	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent6values' $(BUILD_DIR)/prelude/std-collections-tree-iter.ll
@@ -3549,10 +3555,10 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-replace.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-replace.elf; $(BUILD_DIR)/prelude/std-collections-set-replace.elf; code=$$?; test $$code -eq 127; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-implicit-zone.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-implicit-zone.elf; $(BUILD_DIR)/prelude/std-collections-set-implicit-zone.elf; code=$$?; test $$code -eq 119; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-implicit-zone.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-implicit-zone.elf; $(BUILD_DIR)/prelude/std-collections-implicit-zone.elf; code=$$?; test $$code -eq 190; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-relations.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-relations.elf; $(BUILD_DIR)/prelude/std-collections-set-relations.elf; code=$$?; test $$code -eq 75; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-relations.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-relations.elf; $(BUILD_DIR)/prelude/std-collections-set-relations.elf; code=$$?; test $$code -eq 195; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-iter.elf; $(BUILD_DIR)/prelude/std-collections-set-iter.elf; code=$$?; test $$code -eq 37; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-hash.elf; $(BUILD_DIR)/prelude/std-collections-hash.elf; code=$$?; test $$code -eq 255; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash-set-relations.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-hash-set-relations.elf; $(BUILD_DIR)/prelude/std-collections-hash-set-relations.elf; code=$$?; test $$code -eq 75; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash-set-relations.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-hash-set-relations.elf; $(BUILD_DIR)/prelude/std-collections-hash-set-relations.elf; code=$$?; test $$code -eq 195; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-hash-iter.elf; $(BUILD_DIR)/prelude/std-collections-hash-iter.elf; code=$$?; test $$code -eq 164; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-string-map.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-string-map.elf; $(BUILD_DIR)/prelude/std-collections-string-map.elf; code=$$?; test $$code -eq 255; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-representatives.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-representatives.elf; $(BUILD_DIR)/prelude/std-collections-set-representatives.elf; code=$$?; test $$code -eq 236; fi
@@ -3568,7 +3574,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-copy-to.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-copy-to.elf; $(BUILD_DIR)/prelude/std-collections-copy-to.elf; code=$$?; test $$code -eq 48; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-structure-copy-to.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-structure-copy-to.elf; $(BUILD_DIR)/prelude/std-collections-structure-copy-to.elf; code=$$?; test $$code -eq 53; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-remove.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-remove.elf; $(BUILD_DIR)/prelude/std-collections-tree-remove.elf; code=$$?; test $$code -eq 23; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-set-relations.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-set-relations.elf; $(BUILD_DIR)/prelude/std-collections-tree-set-relations.elf; code=$$?; test $$code -eq 75; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-set-relations.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-set-relations.elf; $(BUILD_DIR)/prelude/std-collections-tree-set-relations.elf; code=$$?; test $$code -eq 195; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-iter.elf; $(BUILD_DIR)/prelude/std-collections-tree-iter.elf; code=$$?; test $$code -eq 98; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/deque/std-collections-deque.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-deque.elf; $(BUILD_DIR)/prelude/std-collections-deque.elf; code=$$?; test $$code -eq 42; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/ring-buffer/std-collections-ring-buffer.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-ring-buffer.elf; $(BUILD_DIR)/prelude/std-collections-ring-buffer.elf; code=$$?; test $$code -eq 42; fi
