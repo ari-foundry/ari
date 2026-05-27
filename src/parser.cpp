@@ -157,6 +157,17 @@ private:
         return true;
     }
 
+    bool is_trait_member_start() const {
+        return check(TokenKind::KwFn) ||
+               (check(TokenKind::Identifier) && peek().text == "type");
+    }
+
+    bool is_impl_member_start() const {
+        return check(TokenKind::KwPub) ||
+               check(TokenKind::KwFn) ||
+               (check(TokenKind::Identifier) && peek().text == "type");
+    }
+
     int delimiter_depth_between(std::size_t begin, std::size_t end) const {
         int depth = 0;
         end = std::min(end, tokens_.size());
@@ -1602,7 +1613,7 @@ private:
                     "trait body starts here",
                     "}");
             }
-            if (should_recover_at_nested_declaration(open.loc)) {
+            if (should_recover_at_nested_declaration(open.loc) && !is_trait_member_start()) {
                 fail_unterminated_delimited(
                     peek().loc,
                     open.loc,
@@ -1660,7 +1671,7 @@ private:
                     "impl body starts here",
                     "}");
             }
-            if (should_recover_at_nested_declaration(open.loc)) {
+            if (should_recover_at_nested_declaration(open.loc) && !is_impl_member_start()) {
                 fail_unterminated_delimited(
                     peek().loc,
                     open.loc,

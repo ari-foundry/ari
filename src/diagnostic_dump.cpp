@@ -301,8 +301,9 @@ std::string classify_diagnostic_code(const std::string& message) {
         contains(diagnostic, "drop")) {
         return "O0001";
     }
-    if (contains(diagnostic, "expected") ||
+    if ((contains(diagnostic, "expected") && !contains(diagnostic, "got ")) ||
         contains(diagnostic, "unexpected token") ||
+        contains(diagnostic, "mismatched delimiter") ||
         contains(diagnostic, "unterminated") ||
         contains(diagnostic, "union by fields are planned") ||
         contains(diagnostic, "structural capability parameters are planned") ||

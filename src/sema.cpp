@@ -11797,10 +11797,95 @@ private:
         promote_temporary_borrows_to_aggregate(borrow_mark, base_name, path);
     }
 
+    static bool collect_local_field_assignment_path(const Expr& expr,
+                                                    std::string& base_name,
+                                                    std::vector<std::string>& fields) {
+        if (expr.kind == ExprKind::Name) {
+            base_name = expr.name;
+            fields.clear();
+            return true;
+        }
+        if (expr.kind != ExprKind::FieldAccess || !expr_operand(expr)) return false;
+        if (!collect_local_field_assignment_path(*expr_operand(expr), base_name, fields)) {
+            return false;
+        }
+        fields.push_back(expr.name);
+        return true;
+    }
+
+    static bool path_is_prefix(const std::vector<std::string>& prefix,
+                               const std::vector<std::string>& path) {
+        if (prefix.size() > path.size()) return false;
+        for (std::size_t i = 0; i < prefix.size(); ++i) {
+            if (prefix[i] != path[i]) return false;
+        }
+        return true;
+    }
+
+    static std::string field_path_text(const std::vector<std::string>& fields) {
+        std::string text;
+        for (std::size_t i = 0; i < fields.size(); ++i) {
+            if (i > 0) text += ".";
+            text += fields[i];
+        }
+        return text;
+    }
+
+    [[noreturn]] void fail_union_by_selector_assignment(SourceLocation loc,
+                                                        const std::string& base_name,
+                                                        const std::vector<std::string>& target_fields,
+                                                        const StructInfo& info,
+                                                        const StructInfo::Field& union_field) const {
+        const std::string selector_path = union_by_selector_text(union_field.type);
+        const std::string target_path =
+            target_fields.empty() ? base_name : base_name + "." + field_path_text(target_fields);
+        CompileError error(
+            std::move(loc),
+            "cannot assign to union by selector path '" + selector_path +
+                "' through '" + target_path + "'");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "union by field '" + union_field.name + "' in struct '" + info.name +
+                "' uses selector '" + selector_path + "' to choose its active payload",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "changing the selector without rebuilding the union payload could make the stored arm inconsistent",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "rebuild the whole struct value with a matching selector and union by constructor arm",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    void reject_union_by_selector_assignment(const Expr& target) {
+        std::string base_name;
+        std::vector<std::string> target_fields;
+        if (!collect_local_field_assignment_path(target, base_name, target_fields)) return;
+        if (target_fields.empty()) return;
+
+        LocalInfo* local = find_local_slot(base_name);
+        if (!local) return;
+        IrType base_type = value_qualified_type(local->type);
+        if (base_type.primitive != IrPrimitiveKind::Struct) return;
+
+        auto struct_found = structs_.find(base_type.name);
+        if (struct_found == structs_.end()) return;
+        const StructInfo& info = struct_found->second;
+        for (const StructInfo::Field& field : info.fields) {
+            if (!field.type.is_union_by) continue;
+            if (path_is_prefix(target_fields, field.type.union_by_selector)) {
+                fail_union_by_selector_assignment(target.loc, base_name, target_fields, info, field);
+            }
+        }
+    }
+
     void check_assign(const Stmt& stmt, IrStmt& lowered) {
         const ExprPtr& assign_target = stmt_assign_target(stmt);
         const ExprPtr& rhs = stmt_assign_rhs(stmt);
         if (assign_target) {
+            reject_union_by_selector_assignment(*assign_target);
             IrExprPtr target = check_assignment_target(*assign_target);
             IrType target_type = target->type;
             std::size_t borrow_mark = temporary_borrow_mark();

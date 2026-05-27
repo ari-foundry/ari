@@ -1,0 +1,39 @@
+enum CipherType {
+  stream,
+  block,
+  aead,
+}
+
+struct SecurityParameters {
+  mut cipher_type: CipherType,
+}
+
+struct GenericStreamCipher {
+  value: i64,
+}
+
+struct GenericBlockCipher {
+  value: i64,
+}
+
+struct GenericAeadCipher {
+  value: i64,
+}
+
+struct TLSCiphertext {
+  mut security: SecurityParameters,
+  fragment: union by security.cipher_type {
+    stream => GenericStreamCipher,
+    block => GenericBlockCipher,
+    aead => GenericAeadCipher,
+  },
+}
+
+fn main() -> i64 {
+  var packet = TLSCiphertext {
+    security: SecurityParameters { cipher_type: stream },
+    fragment: stream => GenericStreamCipher { value: 1 },
+  };
+  packet.security.cipher_type = block;
+  return 0;
+}

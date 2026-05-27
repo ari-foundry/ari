@@ -111,11 +111,33 @@ fn payload_value(packet: TLSCiphertext) -> i64 {
 }
 ```
 
+Selector fields are stable after a value has been built. Direct assignment to
+the selector path, or to an ancestor of that path, is rejected because it could
+make the stored payload arm disagree with the discriminant:
+
+```ari
+packet.security.cipher_type = block; // rejected
+packet.security = SecurityParameters { cipher_type: block }; // rejected
+```
+
+Replace the whole struct value instead, using a selector and a `union by`
+constructor arm that agree:
+
+```ari
+packet = TLSCiphertext {
+  content_type: application_data,
+  version: tls12,
+  length: 9 as u16,
+  security: SecurityParameters { cipher_type: block },
+  fragment: block => GenericBlockCipher { value: 99 },
+};
+```
+
 This is intentionally still an early executable slice: non-enum selector
-policies, selector-mutation rules, active-arm drop diagnostics, and stable ABI
-naming remain compiler work. Use ordinary `enum` ADTs when the discriminant is
-not an existing product field or when the type must be part of a stable public
-ABI.
+policies, active-arm mutation beyond direct reconstruction, active-arm drop
+diagnostics, and stable ABI naming remain compiler work. Use ordinary `enum`
+ADTs when the discriminant is not an existing product field or when the type
+must be part of a stable public ABI.
 
 The compiler capability inventory tracks this as `union-by-fields`.
 
