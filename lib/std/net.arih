@@ -334,6 +334,30 @@ pub fn service_port_optional(name: string) -> std::Option[u16] {
   return service_port_bytes_optional(std::string::bytes(name));
 }
 
+pub fn is_timeout(reason: ref std::error::Error) -> bool {
+  return std::error::is_kind(reason, std::error::TimedOut);
+}
+
+pub fn is_timed_out(reason: ref std::error::Error) -> bool {
+  return is_timeout(reason);
+}
+
+pub fn is_would_block(reason: ref std::error::Error) -> bool {
+  return std::error::is_kind(reason, std::error::WouldBlock);
+}
+
+pub fn is_interrupted(reason: ref std::error::Error) -> bool {
+  return std::error::is_kind(reason, std::error::Interrupted);
+}
+
+pub fn is_connection_refused(reason: ref std::error::Error) -> bool {
+  return std::error::is_kind(reason, std::error::ConnectionRefused);
+}
+
+pub fn is_retryable(reason: ref std::error::Error) -> bool {
+  return std::error::is_retryable(reason);
+}
+
 fn endpoint_port(endpoint: string) -> std::Option[u16] {
   let bytes = std::string::bytes(endpoint);
   if bytes.len > 0 && bytes[0] == '[' {

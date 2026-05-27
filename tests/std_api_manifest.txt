@@ -789,6 +789,12 @@ fn std::net::connect|check-prelude std-net-tcp-loopback module-level TCP connect
 fn std::net::connect_host|check-prelude std-net-dns-lookup host-port TCP connect helper input validation; docs/stdlib/modules/net.md
 fn std::net::ipv4|check-prelude std-net-addresses source IPv4 constructor; docs/stdlib/modules/net.md
 fn std::net::ipv6|check-prelude std-net-addresses source IPv6 constructor; docs/stdlib/modules/net.md
+fn std::net::is_connection_refused|check-prelude std-net-error-policy socket connection-refused error predicate; docs/stdlib/modules/net.md
+fn std::net::is_interrupted|check-prelude std-net-error-policy socket interrupted error predicate; docs/stdlib/modules/net.md
+fn std::net::is_retryable|check-prelude std-net-error-policy socket retryable transient error predicate; docs/stdlib/modules/net.md
+fn std::net::is_timed_out|check-prelude std-net-error-policy socket timeout error predicate alias; docs/stdlib/modules/net.md
+fn std::net::is_timeout|check-prelude std-net-error-policy socket timeout error predicate; docs/stdlib/modules/net.md
+fn std::net::is_would_block|check-prelude std-net-error-policy socket would-block error predicate; docs/stdlib/modules/net.md
 fn std::net::listen|check-prelude std-net-tcp-loopback module-level TCP listener helper returning Error; docs/stdlib/modules/net.md
 fn std::net::localhost|check-prelude std-net-addresses source loopback socket address constructor; docs/stdlib/modules/net.md
 fn std::net::lookup_v4|check-prelude std-net-dns-lookup Result-returning IPv4 name lookup with Error payload; docs/stdlib/modules/net.md

@@ -51,6 +51,12 @@ net::service_port(name)
 net::service_port_optional(name)
 net::service_port_bytes(bytes)
 net::service_port_bytes_optional(bytes)
+net::is_timeout(ref error)
+net::is_timed_out(ref error)
+net::is_would_block(ref error)
+net::is_interrupted(ref error)
+net::is_connection_refused(ref error)
+net::is_retryable(ref error)
 net::resolve(endpoint)
 net::resolve_optional(endpoint)
 net::try_resolve(endpoint)
@@ -603,6 +609,26 @@ Prefer the `Duration` setters in application and library code. The
 FFI-style callers and tests that need to assert the runtime hook boundary
 directly while discarding the error.
 
+## Error Policy
+
+Socket operations use the shared `std::error::Error` vocabulary. Host
+`ETIMEDOUT` maps to `TimedOut`, nonblocking readiness failures such as
+`EAGAIN`/`EWOULDBLOCK` map to `WouldBlock`, interrupted syscalls map to
+`Interrupted`, and refused TCP connects map to `ConnectionRefused` when the
+runtime can observe that category. Use `net::is_timeout(ref error)` or its
+`is_timed_out` alias when deadline expiry should be handled separately from
+other IO failures. Use `net::is_would_block(ref error)` for nonblocking retry
+paths, `net::is_interrupted(ref error)` for interrupted syscalls, and
+`net::is_connection_refused(ref error)` for refused connects.
+
+`net::is_retryable(ref error)` follows the shared stdlib policy from
+`std::error::is_retryable`: `Interrupted`, `WouldBlock`, `TimedOut`, and
+`InProgress` are transient. `ConnectionRefused` is deliberately not retryable
+by default because many command-line tools should surface it immediately
+instead of silently looping. Readiness probes still return `Ok(false)` for a
+poll deadline expiry; the later `read`, `write`, `accept`, `send`, or `recv`
+call may return a timeout-shaped `Error` if the host reports one.
+
 ## Examples
 
 Create loopback socket addresses:
@@ -718,6 +744,7 @@ return ptr_load(output.as_slice().as_ptr()) as i64;
 | Unix domain socket | Current hosted stream and datagram slice: module-level `unix_listen`/`unix_connect`, `UnixListener` bind/accept and `UnixStream` connect return `Error`, optional/try compatibility helpers and raw compatibility bridges remain, IO/shutdown Result methods, close-on-exec helpers, `Duration` and raw-millisecond timeout setters, accept/read/write readiness probes, and `read`/`write`/`read_exact`/`write_all` buffer helpers. `unix_datagram(path)` binds a pathname datagram socket, `unix_datagram_unbound()` creates an unbound datagram socket, and `UnixDatagram` supports `bind`, `unbound`, `connect(path)`, `send_to(bytes, path)`, connected `send`/`recv`, close-on-exec, nonblocking, timeout, and readiness helpers. |
 | socket options | Current: nonblocking, close-on-exec, readiness probes, read/write timeout, TCP listener/UDP reuse-address and reuse-port, TCP nodelay/keepalive/linger, UDP broadcast and IPv4 multicast loop/TTL/membership, TCP/UDP send/receive buffer-size helpers, IPv4 TTL, and IPv6 hop-limit with Result defaults plus `_optional`/`_unchecked` compatibility where present. |
 | timeout | Current: preferred `std::time::Duration` read/write/accept timeout setters plus raw millisecond setters, all Result-returning, with `_unchecked` raw-millisecond compatibility helpers. |
+| error policy | Current: shared socket error predicates `is_timeout`, `is_timed_out`, `is_would_block`, `is_interrupted`, `is_connection_refused`, and `is_retryable` make timeout, nonblocking, interrupted, refused, and retry decisions visible without callers matching raw host codes. |
 | readiness | Current: `TcpListener::accept_ready`, `TcpStream::read_ready`/`write_ready`, `UdpSocket::recv_ready`/`send_ready`, `UnixListener::accept_ready`, `UnixStream::read_ready`/`write_ready`, and `UnixDatagram::recv_ready`/`send_ready` delegate to `std::os::poll_read`/`poll_write`. Each has a `Duration` form and a `_millis` form. They return `Ok(true)` for ready, `Ok(false)` for timeout, and `Error` for invalid descriptors or host poll failures. They do not perform the read/write/accept themselves; callers must still handle the operation result. |
 | shutdown | Current: `Shutdown::{Read, Write, Both}` and stream `shutdown(mode)` for TCP and Unix streams. |
 
@@ -759,6 +786,7 @@ return ptr_load(output.as_slice().as_ptr()) as i64;
 ```text
 tests/cases/standard-library/ok/net/std-net-addresses.ari
 tests/cases/standard-library/ok/net/std-net-address-validation.ari
+tests/cases/standard-library/ok/net/std-net-error-policy.ari
 tests/cases/standard-library/ok/net/std-net-tcp-loopback.ari
 tests/cases/standard-library/ok/net/std-net-udp-socket.ari
 tests/cases/standard-library/ok/net/std-net-ipv6-socket.ari
@@ -771,6 +799,9 @@ family predicates, loopback/unspecified checks, socket-address construction,
 port replacement, and associated/module constructor forms.
 `std-net-address-validation.ari` covers strict and fallible IPv4 octet and
 IPv6 segment accessors.
+`std-net-error-policy.ari` covers socket-oriented predicates for shared
+`TimedOut`, `WouldBlock`, `Interrupted`, `ConnectionRefused`, and retryable
+error policy.
 `std-net-tcp-loopback.ari` covers module-level `listen`/`connect` and
 explicit `tcp_*` aliases, IPv4 listener bind, ephemeral
 local-port/local-address lookup, stream connect, accept, stream local-address
@@ -806,8 +837,6 @@ IPv6 input for the IPv4 resolver, and edge IPv4 addresses.
 - Expand DNS from the current first-IPv4 plus first-IPv6 list into fuller
   `getaddrinfo` result iteration, including host service-database lookup,
   canonical names, and detailed resolver status.
-- Add timeout-specific error categories once the runtime can distinguish
-  deadline expiry from ordinary read, write, accept, and connect failures.
 - Add close-on-exec-at-creation and IPv6 multicast policy only with focused
   platform docs and tests.
 - Expand single-descriptor readiness into `net::Poll`/`Events` or another

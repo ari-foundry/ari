@@ -1937,6 +1937,12 @@ net::service_port(name)
 net::service_port_optional(name)
 net::service_port_bytes(bytes)
 net::service_port_bytes_optional(bytes)
+net::is_timeout(ref error)
+net::is_timed_out(ref error)
+net::is_would_block(ref error)
+net::is_interrupted(ref error)
+net::is_connection_refused(ref error)
+net::is_retryable(ref error)
 net::resolve(endpoint)
 net::resolve_optional(endpoint)
 net::try_resolve(endpoint)
@@ -2205,9 +2211,13 @@ enables it and `disable_linger` clears it. `ttl` controls IPv4 `IP_TTL` and
 `hop_limit` controls IPv6 `IPV6_UNICAST_HOPS`; setters accept `1..=255` and
 return `InvalidInput` outside that range. UDP IPv4 multicast exposes
 loopback, TTL, join, and leave helpers; multicast TTL accepts `0..=255`.
+Socket error predicates mirror the shared error vocabulary in names that are
+local to the networking module: `is_timeout`/`is_timed_out`, `is_would_block`,
+`is_interrupted`, `is_connection_refused`, and `is_retryable`. Timeout,
+would-block, interrupted, and in-progress errors are retryable by stdlib
+policy; connection refused is not retryable by default.
 Full `getaddrinfo` iteration, host service-database lookup, IPv6 multicast policy, multi-descriptor poll/event loops, Unix
-peer credentials, TLS packaging decisions, and timeout-specific error results
-remain roadmap work.
+peer credentials, and TLS packaging decisions remain roadmap work.
 
 ## IO And Input
 

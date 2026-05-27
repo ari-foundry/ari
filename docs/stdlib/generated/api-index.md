@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `3507`
+- API entries: `3513`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,13 +32,13 @@ platform notes.
 | `alloc` | 897 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 905 | stable candidate |
-| `hosted` | 1506 | platform-backed |
+| `hosted` | 1512 | platform-backed |
 | `platform` | 163 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1198 |
+| `fn` | 1204 |
 | `method` | 1855 |
 | `module` | 39 |
 | `struct` | 182 |
@@ -74,7 +74,7 @@ platform notes.
 | `std::log` | `hosted` | 12 |
 | `std::math` | `core` | 39 |
 | `std::mem` | `core` | 13 |
-| `std::net` | `hosted` | 363 |
+| `std::net` | `hosted` | 369 |
 | `std::option` | `core` | 12 |
 | `std::os` | `platform` | 62 |
 | `std::parse` | `core` | 101 |
@@ -2488,6 +2488,12 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::net::connect_host` | check-prelude std-net-dns-lookup host-port TCP connect helper input validation; docs/stdlib/modules/net.md |
 | `fn std::net::ipv4` | check-prelude std-net-addresses source IPv4 constructor; docs/stdlib/modules/net.md |
 | `fn std::net::ipv6` | check-prelude std-net-addresses source IPv6 constructor; docs/stdlib/modules/net.md |
+| `fn std::net::is_connection_refused` | check-prelude std-net-error-policy socket connection-refused error predicate; docs/stdlib/modules/net.md |
+| `fn std::net::is_interrupted` | check-prelude std-net-error-policy socket interrupted error predicate; docs/stdlib/modules/net.md |
+| `fn std::net::is_retryable` | check-prelude std-net-error-policy socket retryable transient error predicate; docs/stdlib/modules/net.md |
+| `fn std::net::is_timed_out` | check-prelude std-net-error-policy socket timeout error predicate alias; docs/stdlib/modules/net.md |
+| `fn std::net::is_timeout` | check-prelude std-net-error-policy socket timeout error predicate; docs/stdlib/modules/net.md |
+| `fn std::net::is_would_block` | check-prelude std-net-error-policy socket would-block error predicate; docs/stdlib/modules/net.md |
 | `fn std::net::listen` | check-prelude std-net-tcp-loopback module-level TCP listener helper returning Error; docs/stdlib/modules/net.md |
 | `fn std::net::localhost` | check-prelude std-net-addresses source loopback socket address constructor; docs/stdlib/modules/net.md |
 | `fn std::net::lookup_v4` | check-prelude std-net-dns-lookup Result-returning IPv4 name lookup with Error payload; docs/stdlib/modules/net.md |

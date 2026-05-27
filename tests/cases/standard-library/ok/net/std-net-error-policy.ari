@@ -1,0 +1,35 @@
+// Covers std::net's socket-oriented names for shared recoverable error kinds.
+fn main() -> i64 {
+  var score = 0;
+
+  let timed_out = error::new(error::TimedOut);
+  if net::is_timeout(ref timed_out) && net::is_timed_out(ref timed_out) &&
+    net::is_retryable(ref timed_out) {
+    score = score + 1;
+  }
+
+  let would_block = error::new(error::WouldBlock);
+  if net::is_would_block(ref would_block) && net::is_retryable(ref would_block) &&
+    !net::is_timeout(ref would_block) {
+    score = score + 2;
+  }
+
+  let interrupted = error::new(error::Interrupted);
+  if net::is_interrupted(ref interrupted) && net::is_retryable(ref interrupted) {
+    score = score + 4;
+  }
+
+  let refused = error::new(error::ConnectionRefused);
+  if net::is_connection_refused(ref refused) && !net::is_retryable(ref refused) {
+    score = score + 8;
+  }
+
+  let invalid = error::new(error::InvalidInput);
+  if !net::is_timeout(ref invalid) && !net::is_would_block(ref invalid) &&
+    !net::is_interrupted(ref invalid) && !net::is_retryable(ref invalid) {
+    score = score + 16;
+  }
+
+  assert_eq_i64(score, 31);
+  return score;
+}

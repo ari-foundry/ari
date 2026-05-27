@@ -1412,6 +1412,12 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-address-validation.ari -o $(BUILD_DIR)/prelude/std-net-address-validation.elf
 	$(BUILD_DIR)/prelude/std-net-address-validation.elf; code=$$?; test $$code -eq 55
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/net/std-net-address-validation.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-net-address-validation.elf; $(BUILD_DIR)/prelude/std-net-address-validation.elf; code=$$?; test $$code -eq 55; fi
+	$(TARGET) tests/cases/standard-library/ok/net/std-net-error-policy.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-error-policy.ll
+	grep -F -q "std3net10is_timeout" $(BUILD_DIR)/prelude/std-net-error-policy.ll
+	grep -F -q "std3net14is_would_block" $(BUILD_DIR)/prelude/std-net-error-policy.ll
+	grep -F -q "std3net12is_retryable" $(BUILD_DIR)/prelude/std-net-error-policy.ll
+	$(TARGET) tests/cases/standard-library/ok/net/std-net-error-policy.ari -o $(BUILD_DIR)/prelude/std-net-error-policy.elf
+	$(BUILD_DIR)/prelude/std-net-error-policy.elf; code=$$?; test $$code -eq 31
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-tcp-loopback.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -q "@ari_builtin_net_tcp_listen_v4" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -q "@ari_builtin_net_tcp_connect_v4" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
