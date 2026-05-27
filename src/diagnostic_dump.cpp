@@ -305,7 +305,8 @@ std::string classify_diagnostic_code(const std::string& message) {
         contains(diagnostic, "unexpected token") ||
         contains(diagnostic, "unterminated") ||
         contains(diagnostic, "union by fields are planned") ||
-        contains(diagnostic, "structural capability parameters are planned")) {
+        contains(diagnostic, "structural capability parameters are planned") ||
+        contains(diagnostic, "structural capability syntax is only supported")) {
         return "P0001";
     }
     if (contains(diagnostic, "unknown type") ||

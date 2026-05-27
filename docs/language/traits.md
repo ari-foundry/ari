@@ -655,32 +655,69 @@ and drop thunk.
 
 ## Structural Capability Parameters
 
-Ari does not currently support anonymous structural parameter requirements.
-The reserved roadmap spelling is:
+Ari has an initial, static-only form of anonymous structural parameter
+requirements for ordinary free functions. The supported spelling is:
 
 ```ari
-fn save(x: has serialize() -> String) {
-  file.write(x.serialize())
+struct Packet {
+  value: i64,
+}
+
+impl Packet {
+  fn serialize(self) -> i64 {
+    self.value
+  }
+}
+
+fn save(x: has serialize() -> i64) -> i64 {
+  x.serialize()
+}
+
+fn main() -> i64 {
+  return save(Packet { value: 42 });
 }
 ```
 
-The parser recognizes `has method(...) -> Type` in a type position and emits a
-targeted diagnostic. Write a named trait and a normal generic bound today:
+The compiler lowers the parameter to a hidden generic type parameter, infers
+that type from the argument at each call site, and then checks that the concrete
+type has a callable method with the requested name, non-receiver parameter
+types, and result type. Calls inside the function body still lower through the
+normal static method-dispatch and monomorphization path. This is not dynamic
+dispatch and it does not introduce an `interface` keyword.
+
+Capability method parameter lists contain types, not parameter names:
+
+```ari
+fn add_with(x: has add(i64) -> i64, amount: i64) -> i64 {
+  x.add(amount)
+}
+```
+
+The initial subset is intentionally narrow:
+
+- The syntax is accepted only in ordinary free-function parameter type
+  position.
+- A `has` parameter currently describes method requirements only.
+- Associated types, field requirements, operators, capability aliases, and
+  multiple-method shorthand are not implemented yet.
+- Generic impl-method satisfaction is still a later compiler task; use a named
+  trait bound when the requirement is part of a reusable API boundary.
+- `has method(...) -> Type` in aliases, struct fields, trait methods, impl
+  methods, extern declarations, meta functions, lambdas, or other type
+  positions is rejected with a targeted diagnostic.
+
+Use a named trait when the contract should be shared across APIs, documented as
+part of a stable interface, or implemented through trait-object dispatch:
 
 ```ari
 trait Serialize {
-  fn serialize(self) -> String;
+  fn serialize(self) -> i64
 }
 
-fn save[T: Serialize](x: T) -> i64 {
-  let text = x.serialize();
-  return 0;
+fn save_named[T: Serialize](x: T) -> i64 {
+  x.serialize()
 }
 ```
-
-The compiler capability inventory tracks this reserved syntax as
-`structural-capability-parameters`. Type checking, dispatch, lowering, and the
-final diagnostics policy remain future compiler work.
 
 ## Current Status
 
@@ -704,3 +741,6 @@ separate hardening area.
 Dyn-to-dyn upcasts are executable when the target is the same trait or an
 inherited supertrait, including `own dyn` upcasts; unrelated dyn casts are
 rejected.
+Ordinary free functions can use initial structural capability parameters such
+as `fn save(x: has serialize() -> i64)`, which are checked at call
+specialization time and then lowered through normal static dispatch.

@@ -96,7 +96,7 @@ tests, or CI matrix work.
 | `std::parse` | Future taxonomy splits backed by real caller needs; the current basic slice already covers natural Result parsers, stable diagnostic names/messages, byte offsets, and finite/subnormal float boundary checks. |
 | `std::encoding` | Unicode normalization/transcoding and optional compression policy outside the core encoding module. |
 | `union by` language idea | Syntax is chosen and the parser now reserves `union by` with a targeted diagnostic, but construction, exhaustiveness, active-arm drop, narrowing, layout, and positive execution support remain compiler work. |
-| Structural capability parameters | The `fn save(x: has serialize() -> String)` idea is tracked as compiler capability `structural-capability-parameters`; the parser now emits a targeted diagnostic for the reserved spelling, while type checking, trait-quality diagnostics, lowering, and final interaction with normal trait bounds remain compiler work. |
+| Structural capability parameters | Ordinary free functions now support initial `fn save(x: has serialize() -> i64)` structural method requirements through hidden generics, call-site method checking, and normal static method monomorphization. Remaining work is generic impl-method satisfaction, reusable aliases or multi-method capability syntax, and stronger named-trait guidance. |
 
 ## Language Roadmap Interaction
 
@@ -118,20 +118,19 @@ checks, layout, and positive execution support before stdlib code can depend
 on it.
 
 Structural capability parameters are also language work rather than a stdlib
-API. The exploratory shape is:
+API. The initial executable shape is:
 
 ```ari
-fn save(x: has serialize() -> String) {
-  file.write(x.serialize())
+fn save(x: has serialize() -> i64) -> i64 {
+  x.serialize()
 }
 ```
 
-It remains unusable in programs. The parser reserves the spelling and points
-users back to named traits today. Future compiler work must define type
-checking, dispatch, diagnostics, lowering, and the final interaction with
-normal generic trait bounds before stdlib code can depend on it.
-
-The compiler must still define whether this syntax desugars to anonymous trait
-bounds, how method names are resolved, how diagnostics point users toward named
-traits when that is clearer, and how it avoids introducing an `interface`
-keyword or accidental dynamic dispatch.
+For ordinary free functions, the compiler desugars the parameter to a hidden
+generic, checks the concrete call-site type for a matching static method, and
+lowers the function body through the same monomorphized method-call path as
+other generic functions. Unsupported type positions still get a targeted
+diagnostic. The compiler must still define reusable aliases, multi-method
+capability syntax, generic impl-method satisfaction, and stronger diagnostics
+that point users toward named traits when that boundary is clearer. The feature
+must continue to avoid an `interface` keyword or accidental dynamic dispatch.

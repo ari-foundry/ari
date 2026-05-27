@@ -47,22 +47,24 @@ The few stdlib polish items that are blocked by compiler features are mapped in
 
 ## Language Ideas Parked For Later
 
-Structural capability parameters are worth exploring after the current trait
-and diagnostic path is solid:
+Structural capability parameters now have a narrow executable seed for ordinary
+free functions:
 
 ```ari
-fn save(x: has serialize() -> String) {
-    file.write(x.serialize())
+fn save(x: has serialize() -> i64) -> i64 {
+    x.serialize()
 }
 ```
 
-This is only a roadmap idea. It is a reserved spelling, not a usable feature
-yet. The parser recognizes this shape enough to report a targeted diagnostic
-and steer users back to named traits. It must not add an `interface` keyword,
-dynamic dispatch by accident, or a shortcut around normal trait-bound
-diagnostics. The compiler capability inventory tracks this as
-`structural-capability-parameters`; type checking, trait-quality diagnostics,
-lowering, and positive execution fixtures all remain future compiler work.
+The parser accepts `has method(...) -> Type` only in ordinary free-function
+parameter type position. Semantic analysis lowers it to a hidden generic
+parameter, checks the concrete call-site type for a matching static method, and
+monomorphizes the body through the ordinary method-call path. It must continue
+to avoid an `interface` keyword, accidental dynamic dispatch, or a shortcut
+around named trait-bound diagnostics. Remaining roadmap work includes generic
+impl-method satisfaction, reusable capability aliases, richer diagnostics for
+when a named trait is better, and any future extension beyond method
+requirements.
 
 Discriminant-linked union fields are also worth exploring for protocol and
 binary-format records whose payload shape is controlled by data already present

@@ -2649,6 +2649,39 @@ private:
         return substitutions;
     }
 
+    static bool generic_param_is_visible(const GenericParam& generic) {
+        return !generic.synthetic;
+    }
+
+    static std::size_t visible_generic_param_count(const std::vector<GenericParam>& generics) {
+        std::size_t count = 0;
+        for (const auto& generic : generics) {
+            if (generic_param_is_visible(generic)) ++count;
+        }
+        return count;
+    }
+
+    static const GenericParam* visible_generic_param_at(const std::vector<GenericParam>& generics, std::size_t index) {
+        std::size_t visible_index = 0;
+        for (const auto& generic : generics) {
+            if (!generic_param_is_visible(generic)) continue;
+            if (visible_index == index) return &generic;
+            ++visible_index;
+        }
+        return nullptr;
+    }
+
+    static const GenericParam* first_visible_generic_param(const std::vector<GenericParam>& generics) {
+        for (const auto& generic : generics) {
+            if (generic_param_is_visible(generic)) return &generic;
+        }
+        return nullptr;
+    }
+
+    static bool generic_has_any_constraint(const GenericParam& generic) {
+        return generic.has_constraint || generic.has_structural_capability;
+    }
+
     GenericTraitBound resolve_generic_trait_bound(const GenericParam& generic) {
         const TypeRef& constraint = generic.constraint;
         if (constraint.qualifier != TypeQualifier::Value) {
@@ -2685,6 +2718,23 @@ private:
             if (generic.has_constraint) bounds.push_back(resolve_generic_trait_bound(generic));
         }
         return bounds;
+    }
+
+    void validate_structural_capability_signature(const GenericParam& generic) {
+        for (const auto& method : generic.structural_methods) {
+            for (const auto& param : method.params) {
+                IrType type = resolve_executable_type(param);
+                bool vec_view = false;
+                (void)vector_parameter_abi_type(
+                    param.loc,
+                    type,
+                    "a structural capability method parameter",
+                    vec_view);
+            }
+            if (method.has_result) {
+                (void)resolve_executable_type(method.result);
+            }
+        }
     }
 
     GenericTraitBound substitute_trait_bound(
@@ -3073,7 +3123,7 @@ private:
         if (generics.empty()) return;
         bool has_constraint = false;
         for (const auto& generic : generics) {
-            if (generic.has_constraint) {
+            if (generic_has_any_constraint(generic)) {
                 has_constraint = true;
                 break;
             }
@@ -3086,6 +3136,7 @@ private:
         current_type_substitutions_ = std::move(substitutions);
         for (const auto& generic : generics) {
             if (generic.has_constraint) (void)resolve_generic_trait_bound(generic);
+            if (generic.has_structural_capability) validate_structural_capability_signature(generic);
         }
         current_type_substitutions_ = std::move(previous_substitutions);
         current_module_name_ = previous_module;
@@ -23836,6 +23887,154 @@ private:
         return true;
     }
 
+    static std::string structural_capability_display(
+        const StructuralCapabilityMethod& method,
+        const std::vector<IrType>& params,
+        const IrType& result
+    ) {
+        std::string text = "has " + method.name + "(";
+        for (std::size_t i = 0; i < params.size(); ++i) {
+            if (i != 0) text += ", ";
+            text += type_name(params[i]);
+        }
+        text += ")";
+        if (method.has_result || result.primitive != IrPrimitiveKind::Void) {
+            text += " -> " + type_name(result);
+        }
+        return text;
+    }
+
+    bool structural_method_signature_matches(
+        const FunctionSig& sig,
+        const std::vector<IrType>& expected_params,
+        const IrType& expected_result,
+        std::string* mismatch
+    ) const {
+        if (sig.params.size() != expected_params.size() + 1) {
+            if (mismatch) {
+                *mismatch = "expected " +
+                    std::to_string(expected_params.size()) +
+                    " non-receiver parameter" +
+                    (expected_params.size() == 1 ? "" : "s") +
+                    ", found " +
+                    std::to_string(non_receiver_parameter_count(sig.params.size()));
+            }
+            return false;
+        }
+        for (std::size_t i = 0; i < expected_params.size(); ++i) {
+            const IrType& actual = sig.params[i + 1];
+            if (!same_type(actual, expected_params[i])) {
+                if (mismatch) {
+                    *mismatch = "parameter " + std::to_string(i + 1) +
+                        " expects " + type_name(expected_params[i]) +
+                        ", found " + type_name(actual);
+                }
+                return false;
+            }
+        }
+        if (!same_type(sig.result, expected_result)) {
+            if (mismatch) {
+                *mismatch = "return type expects " + type_name(expected_result) +
+                    ", found " + type_name(sig.result);
+            }
+            return false;
+        }
+        return true;
+    }
+
+    void require_structural_capability_method(
+        SourceLocation loc,
+        const GenericParam& generic,
+        const IrType& self_type,
+        const StructuralCapabilityMethod& method
+    ) {
+        std::vector<IrType> expected_params;
+        expected_params.reserve(method.params.size());
+        for (const auto& param : method.params) {
+            IrType source = resolve_executable_type(param);
+            bool vec_view = false;
+            expected_params.push_back(vector_parameter_abi_type(
+                param.loc,
+                source,
+                "a structural capability method parameter",
+                vec_view));
+        }
+        IrType expected_result = method.has_result
+            ? resolve_executable_type(method.result)
+            : void_type(method.loc);
+        std::string capability = structural_capability_display(method, expected_params, expected_result);
+
+        IrType lookup_type = impl_receiver_lookup_type(self_type);
+        auto found = method_impls_.find(method_lookup_key(lookup_type, method.name));
+        if (found == method_impls_.end() && is_receiver_borrow_type(self_type)) {
+            lookup_type = impl_receiver_lookup_type(value_qualified_type(self_type));
+            found = method_impls_.find(method_lookup_key(lookup_type, method.name));
+        }
+
+        std::vector<const ImplMethodInfo*> candidates;
+        if (found != method_impls_.end()) {
+            candidates = best_receiver_method_candidates(found->second, self_type);
+            candidates = prefer_current_module_method_candidates(candidates);
+        }
+
+        std::string first_mismatch;
+        const ImplMethodInfo* matched = nullptr;
+        for (const auto* candidate : candidates) {
+            std::string mismatch;
+            if (structural_method_signature_matches(
+                    candidate->sig,
+                    expected_params,
+                    expected_result,
+                    &mismatch)) {
+                if (matched) {
+                    fail(loc,
+                         "type " + type_name(self_type) +
+                             " satisfies structural capability '" + capability +
+                             "' through more than one method named '" + method.name + "'");
+                }
+                matched = candidate;
+                continue;
+            }
+            if (first_mismatch.empty()) first_mismatch = std::move(mismatch);
+        }
+        if (matched) return;
+
+        CompileError error(
+            loc,
+            "type " + type_name(self_type) +
+                " does not satisfy structural capability '" + capability + "'");
+        add_location_label_if_valid(
+            error,
+            generic.loc,
+            "parameter requires structural capability '" + capability + "'");
+        if (candidates.empty()) {
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "no callable method '" + method.name + "' was found for " + type_name(self_type),
+                DiagnosticNoteKind::Note});
+        } else {
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "found method '" + method.name + "', but its signature does not match: " + first_mismatch,
+                DiagnosticNoteKind::Note});
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "add a compatible method or use a named trait bound when the requirement should be reusable",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    void require_structural_capabilities(
+        SourceLocation loc,
+        const GenericParam& generic,
+        const IrType& self_type
+    ) {
+        for (const auto& method : generic.structural_methods) {
+            require_structural_capability_method(loc, generic, self_type, method);
+        }
+    }
+
     void require_generic_bounds(
         SourceLocation loc,
         const FunctionDecl& fn,
@@ -23843,7 +24042,7 @@ private:
     ) {
         bool has_constraint = false;
         for (const auto& generic : fn.generics) {
-            if (generic.has_constraint) {
+            if (generic_has_any_constraint(generic)) {
                 has_constraint = true;
                 break;
             }
@@ -23855,9 +24054,12 @@ private:
         current_module_name_ = fn.module_name;
         current_type_substitutions_ = substitutions;
         for (const auto& generic : fn.generics) {
-            if (!generic.has_constraint) continue;
             auto self_found = substitutions.find(generic.name);
             if (self_found == substitutions.end()) continue;
+            if (generic.has_structural_capability) {
+                require_structural_capabilities(loc, generic, self_found->second);
+            }
+            if (!generic.has_constraint) continue;
             GenericTraitBound bound = resolve_generic_trait_bound(generic);
             if (!type_implements_trait(bound.trait_name, bound.trait_args, self_found->second)) {
                 const std::string trait_display =
@@ -24168,13 +24370,18 @@ private:
         std::map<std::string, IrType> substitutions;
         const ExprTypeArgs& type_args = expr_type_args(expr);
         if (!type_args.empty()) {
-            if (type_args.size() != fn.generics.size()) {
+            std::size_t visible_count = visible_generic_param_count(fn.generics);
+            if (type_args.size() != visible_count) {
                 fail_generic_type_argument_count(expr.loc, expr.name, fn, type_args.size());
             }
             for (std::size_t i = 0; i < type_args.size(); ++i) {
+                const GenericParam* generic = visible_generic_param_at(fn.generics, i);
+                if (!generic) {
+                    fail_generic_type_argument_count(expr.loc, expr.name, fn, type_args.size());
+                }
                 bind_generic_type(
                     type_args[i].loc,
-                    fn.generics[i].name,
+                    generic->name,
                     resolve_executable_type(type_args[i]),
                     substitutions
                 );
@@ -27564,14 +27771,15 @@ private:
                                                              const std::string& call_name,
                                                              const FunctionDecl& fn,
                                                              std::size_t actual_count) {
+        std::size_t expected_count = visible_generic_param_count(fn.generics);
         CompileError error(
             std::move(loc),
-            "generic function '" + call_name + "' expects " + type_argument_count_text(fn.generics.size()));
-        if (!fn.generics.empty()) {
+            "generic function '" + call_name + "' expects " + type_argument_count_text(expected_count));
+        if (const GenericParam* first_visible = first_visible_generic_param(fn.generics)) {
             add_location_label_if_valid(
                 error,
-                fn.generics.front().loc,
-                "function '" + call_name + "' declares " + type_parameter_count_text(fn.generics.size()));
+                first_visible->loc,
+                "function '" + call_name + "' declares " + type_parameter_count_text(expected_count));
         } else {
             add_location_label_if_valid(
                 error,
@@ -27584,7 +27792,7 @@ private:
             DiagnosticNoteKind::Note});
         error.add_note(DiagnosticNote{
             std::nullopt,
-            "pass " + type_argument_count_text(fn.generics.size()) + " to '" + call_name +
+            "pass " + type_argument_count_text(expected_count) + " to '" + call_name +
                 "' instead of " + type_argument_count_text(actual_count),
             DiagnosticNoteKind::Help});
         throw error;

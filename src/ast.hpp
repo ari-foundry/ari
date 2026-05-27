@@ -51,10 +51,21 @@ struct ModuleDecl {
     SourceLocation loc;
 };
 
+struct StructuralCapabilityMethod {
+    std::string name;
+    std::vector<TypeRef> params;
+    bool has_result = false;
+    TypeRef result;
+    SourceLocation loc;
+};
+
 struct GenericParam {
     std::string name;
     TypeRef constraint;
     bool has_constraint = false;
+    bool synthetic = false;
+    bool has_structural_capability = false;
+    std::vector<StructuralCapabilityMethod> structural_methods;
     SourceLocation loc;
 };
 

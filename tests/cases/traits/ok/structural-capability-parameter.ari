@@ -1,0 +1,30 @@
+struct Packet {
+  value: i64,
+}
+
+impl Packet {
+  fn serialize(self) -> i64 {
+    self.value + 1
+  }
+
+  fn add(self, amount: i64) -> i64 {
+    self.value + amount
+  }
+}
+
+fn save(value: has serialize() -> i64) -> i64 {
+  value.serialize()
+}
+
+fn add_with(value: has add(i64) -> i64, amount: i64) -> i64 {
+  value.add(amount)
+}
+
+fn tagged[T](tag: T, value: has serialize() -> i64) -> i64 {
+  value.serialize()
+}
+
+fn main() -> i64 {
+  let packet = Packet { value: 20 };
+  return save(packet) + add_with(Packet { value: 10 }, 11) + tagged<i64>(7, Packet { value: 0 });
+}

@@ -521,14 +521,28 @@ private:
 
     [[noreturn]] static void fail_structural_capability_type(SourceLocation loc) {
         CompileError error(std::move(loc),
-                           "structural capability parameters are planned but not implemented");
+                           "structural capability syntax is only supported in function parameter types");
         error.add_note(DiagnosticNote{
             std::nullopt,
-            "`has method(...) -> Type` is reserved for future parameter-local structural requirements",
+            "`has method(...) -> Type` introduces a parameter-local structural requirement",
             DiagnosticNoteKind::Note});
         error.add_note(DiagnosticNote{
             std::nullopt,
-            "define a named trait and use a generic bound today, such as `fn save[T: Serialize](x: T)`",
+            "write it directly after a parameter colon, such as `fn save(x: has serialize() -> String)`",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_structural_capability_parameter_context(SourceLocation loc) {
+        CompileError error(std::move(loc),
+                           "structural capability parameters are only supported on ordinary function declarations");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "the current implementation lowers `has method(...) -> Type` to a hidden generic parameter",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "use a named trait bound in extern declarations, trait methods, impl methods, meta functions, and lambdas",
             DiagnosticNoteKind::Help});
         throw error;
     }
@@ -659,7 +673,7 @@ private:
             decl.source_tokens = declaration_source_tokens(source_start);
             target.type_aliases.push_back(std::move(decl));
         } else if (match(TokenKind::KwFn)) {
-            FunctionDecl fn = parse_function(false, true, public_decl, std::move(attributes));
+            FunctionDecl fn = parse_function(false, true, public_decl, std::move(attributes), true);
             fn.source_tokens = declaration_source_tokens(source_start);
             target.functions.push_back(std::move(fn));
         } else if (match(TokenKind::KwStruct)) {
@@ -1147,7 +1161,8 @@ private:
         bool meta,
         bool body_allowed,
         bool public_decl,
-        std::vector<Attribute> attributes = {}
+        std::vector<Attribute> attributes = {},
+        bool allow_structural_capability_params = false
     ) {
         Token name = expect_identifier_or_contextual_name_keyword("expected function name");
         FunctionDecl fn;
@@ -1169,7 +1184,7 @@ private:
                     }
                     break;
                 }
-                fn.params.push_back(parse_function_param());
+                fn.params.push_back(parse_function_param(fn.generics, allow_structural_capability_params));
             } while (match(TokenKind::Comma));
         }
         expect(TokenKind::RParen, "expected ) after parameter list");
@@ -1190,7 +1205,81 @@ private:
         return fn;
     }
 
-    Param parse_function_param() {
+    TypeRef parse_function_parameter_type(
+        std::vector<GenericParam>& generics,
+        bool allow_structural_capability_params
+    ) {
+        if (!starts_structural_capability_type()) return parse_type();
+        if (!allow_structural_capability_params) {
+            fail_structural_capability_parameter_context(peek().loc);
+        }
+        return parse_structural_capability_parameter_type(generics);
+    }
+
+    TypeRef parse_structural_capability_parameter_type(std::vector<GenericParam>& generics) {
+        Token has = expect(TokenKind::Identifier, "expected has in structural capability parameter");
+        if (has.text != "has") fail_structural_capability_type(has.loc);
+        Token method_name = expect_identifier_or_contextual_name_keyword(
+            "expected method name after has in structural capability parameter");
+        StructuralCapabilityMethod method;
+        method.name = method_name.text;
+        method.loc = method_name.loc;
+
+        Token open = expect(TokenKind::LParen, "expected ( after structural capability method name");
+        if (!check(TokenKind::RParen)) {
+            do {
+                fail_if_unterminated_delimited_at_recovery_boundary(
+                    open.loc,
+                    "unterminated structural capability parameter list",
+                    "structural capability parameter list starts here",
+                    ")");
+                method.params.push_back(parse_type());
+            } while (match(TokenKind::Comma));
+        }
+        if (!match(TokenKind::RParen)) {
+            fail_expected_closing_delimiter(
+                peek().loc,
+                open.loc,
+                "expected ) after structural capability parameter list",
+                "structural capability parameter list starts here",
+                ")");
+        }
+        if (match(TokenKind::Arrow)) {
+            method.result = parse_type();
+            method.has_result = true;
+        }
+
+        std::string synthetic_name;
+        for (std::size_t i = generics.size();; ++i) {
+            synthetic_name = "$has" + std::to_string(i);
+            bool used = false;
+            for (const auto& generic : generics) {
+                if (generic.name == synthetic_name) {
+                    used = true;
+                    break;
+                }
+            }
+            if (!used) break;
+        }
+
+        GenericParam generic;
+        generic.name = synthetic_name;
+        generic.loc = has.loc;
+        generic.synthetic = true;
+        generic.has_structural_capability = true;
+        generic.structural_methods.push_back(std::move(method));
+        generics.push_back(std::move(generic));
+
+        TypeRef type;
+        type.name = synthetic_name;
+        type.loc = has.loc;
+        return type;
+    }
+
+    Param parse_function_param(
+        std::vector<GenericParam>& generics,
+        bool allow_structural_capability_params
+    ) {
         BindingMode binding_mode = BindingMode::Value;
         parse_reference_binding_mode_prefix(binding_mode);
         if (binding_mode == BindingMode::Value && check(TokenKind::KwMut)) {
@@ -1211,7 +1300,7 @@ private:
             }
             Param param;
             param.name = "$pattern";
-            param.type = parse_type();
+            param.type = parse_function_parameter_type(generics, allow_structural_capability_params);
             param.has_pattern = true;
             param.pattern = std::move(pattern);
             param.binding_mode = binding_mode;
@@ -1238,7 +1327,7 @@ private:
                 match(TokenKind::Colon);
                 Param param;
                 param.name = param_name.text;
-                param.type = parse_type();
+                param.type = parse_function_parameter_type(generics, allow_structural_capability_params);
                 param.loc = param_name.loc;
                 return param;
             }
@@ -1268,7 +1357,7 @@ private:
         }
         Param param;
         param.name = "$pattern";
-        param.type = parse_type();
+        param.type = parse_function_parameter_type(generics, allow_structural_capability_params);
         param.has_pattern = true;
         param.pattern = std::move(pattern);
         param.loc = loc;
