@@ -70,12 +70,17 @@ struct TLSCiphertext {
 }
 ```
 
-The parser recognizes `union by` in type positions and emits a targeted
-diagnostic. Model this with an ordinary enum payload today, and keep any
-external discriminant relationship explicit in constructor and validation code.
+The parser now reads `union by` as a real type reference and preserves the
+selector path and arm type list in the AST. Syntax dumps and declaration
+metadata can show the field shape, but semantic lowering still rejects the
+field with a targeted type diagnostic before layout or code generation. Model
+this with an ordinary enum payload today, and keep any external discriminant
+relationship explicit in constructor and validation code.
+
 The compiler capability inventory tracks the reserved syntax as
-`union-by-fields`. Construction, exhaustive arm checking, active-arm drop,
-narrowing, layout, and positive execution support remain future compiler work.
+`union-by-fields`. Selector resolution, exhaustive arm checking, construction,
+active-arm drop, narrowing, layout, and positive execution support remain
+future compiler work.
 
 ## Substitution
 

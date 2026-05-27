@@ -110,6 +110,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/syntax-dump-basic.syntax $(BUILD_DIR)/compiler-development/artifact/syntax-dump-basic.syntax
 	$(TARGET) tests/cases/compiler-development/artifact/ok/syntax-declarations.ari --emit-syntax $(BUILD_DIR)/compiler-development/artifact/syntax-declarations.syntax
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/syntax-declarations.syntax $(BUILD_DIR)/compiler-development/artifact/syntax-declarations.syntax
+	$(TARGET) tests/cases/compiler-development/artifact/ok/syntax-union-by-field.ari --emit-syntax $(BUILD_DIR)/compiler-development/artifact/syntax-union-by-field.syntax
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/syntax-union-by-field.syntax $(BUILD_DIR)/compiler-development/artifact/syntax-union-by-field.syntax
 	$(TARGET) tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari --emit-syntax $(BUILD_DIR)/compiler-development/artifact/syntax-control-flow.syntax
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/syntax-control-flow.syntax $(BUILD_DIR)/compiler-development/artifact/syntax-control-flow.syntax
 	$(TARGET) tests/cases/compiler-development/artifact/errors/syntax-recovery-top-level.ari --emit-syntax $(BUILD_DIR)/compiler-development/artifact/syntax-recovery-top-level.syntax

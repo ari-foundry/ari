@@ -16,7 +16,7 @@ compiler and stdlib boundary.
 | --- | --- | --- | --- |
 | `std::thread` | `thread::spawn(fn() -> i64) -> Result[JoinHandle, Error]`, `thread::spawn_raw(fn(ptr u8) -> i64, ptr u8) -> Result[JoinHandle, Error]`, nonblocking `try_join`, `ThreadScope` fixed-capacity join owners, `JoinHandle`, `JoinError`, `ThreadResult`, `Builder`, explicit `ThreadLocal[T]`. | Generic `JoinHandle[T]`, captured thread entries, borrowed scoped threads, generic return payloads, and compiler-owned `thread_local` declarations require closure environment transfer, send/share rules, result storage ownership, drop paths, borrow-scoped lifetime proofs, and TLS codegen. | `lib/std/thread.arih`, `src/std_thread_semantics.cpp`, `src/sema.cpp`, `src/llvm_codegen.cpp`, `docs/stdlib/modules/thread.md`, `tests/cases/standard-library/ok/thread/`, `tests/cases/functions/` |
 | `std::fmt` | `format_in!`, `Display::format_in`, `Debug::debug_in`, fixed-arity runtime `format`/`format2`/`format3`/`format4`, matching writer helpers, direct scalar/text streaming writer helpers, `concat2`/`concat3`/`concat4`. | Variadic/default-zone formatting needs compiler lowering or variadic generic support plus an allocation-zone policy. Generic per-value streaming display needs a writer-facing formatting trait plus compiler support for selecting generic trait impls whose type parameter is carried by a trait argument such as `WriteDisplay[W]`. | `lib/std/fmt.arih`, `src/prelude_macros.cpp`, `src/sema.cpp`, `docs/stdlib/modules/fmt.md`, `tests/cases/standard-library/ok/format/`, `tests/cases/standard-library/errors/format/` |
-| `union by` | Parser reserves `union by <selector> { arm => Type, ... }` and emits a targeted diagnostic. Ordinary enum ADTs remain the supported model. | Positive support needs an AST/type representation for discriminant-linked fields, selector resolution, arm exhaustiveness, active-arm layout, construction, narrowing, and active-arm drop. | `src/parser.cpp`, `src/ast.hpp`, `src/sema.cpp`, `src/llvm_codegen.cpp`, `docs/language/generic-aggregates.md`, `tests/cases/compiler-development/artifact/errors/diagnostic-parser-union-by-field.*` |
+| `union by` | Parser and AST preserve `union by <selector> { arm => Type, ... }`; syntax/declaration tooling can print it, and sema emits a targeted type diagnostic before lowering. Ordinary enum ADTs remain the supported model. | Positive support needs selector resolution, arm exhaustiveness, active-arm layout, construction, narrowing, and active-arm drop. | `src/parser.cpp`, `src/ast.hpp`, `src/sema.cpp`, `src/llvm_codegen.cpp`, `docs/language/generic-aggregates.md`, `tests/cases/compiler-development/artifact/ok/syntax-union-by-field.*`, `tests/cases/compiler-development/artifact/errors/diagnostic-parser-union-by-field.*` |
 | Structural capability parameters | Ordinary free functions can write `fn f(x: has method(...) -> Type)` for one method requirement per parameter. The parser lowers the parameter to a hidden generic, sema checks the concrete call-site type for a matching static method, and the body monomorphizes through normal method dispatch. Unsupported type positions still emit a targeted diagnostic. | Remaining compiler work covers generic impl-method satisfaction, reusable aliases or multi-method capability syntax, richer diagnostics that point users toward named traits, and any future extension beyond method requirements. | `src/parser.cpp`, `src/ast.hpp`, `src/sema.cpp`, `docs/language/traits.md`, `docs/dev/roadmap.md`, `tests/cases/traits/ok/structural-capability-parameter.ari`, `tests/cases/traits/errors/structural-capability-*.ari` |
 
 ## Thread Implementation Path
@@ -118,19 +118,21 @@ fragment: union by security.cipher_type {
 
 Positive compiler support needs these pieces in order:
 
-1. Parse the field type into an AST node instead of emitting the current
-   reserved-syntax diagnostic.
-2. Resolve the selector to a stable field or explicit context path. Arbitrary
+1. Parse the field type into an AST node and preserve the selector and arms in
+   syntax/declaration metadata. This is implemented.
+2. Reject executable lowering with a targeted type diagnostic until the
+   semantic model is complete. This is implemented.
+3. Resolve the selector to a stable field or explicit context path. Arbitrary
    expressions should stay rejected until lifetime and mutation rules are clear.
-3. Type-check arms against enum-like discriminant values and report missing or
+4. Type-check arms against enum-like discriminant values and report missing or
    duplicate arms.
-4. Define construction syntax and require that the discriminant value and
+5. Define construction syntax and require that the discriminant value and
    active payload agree.
-5. Define reads and borrows: the active arm should be usable only after a
+6. Define reads and borrows: the active arm should be usable only after a
    discriminant check, match, or equivalent narrowing operation.
-6. Define layout and ABI. The payload storage is union-like, but ownership/drop
+7. Define layout and ABI. The payload storage is union-like, but ownership/drop
    must run only for the active arm.
-7. Add positive fixtures only after layout, narrowing, and drop behavior are
+8. Add positive fixtures only after layout, narrowing, and drop behavior are
    real. Until then, ordinary enum ADTs are the supported representation.
 
 ## Structural Capability Parameter Path

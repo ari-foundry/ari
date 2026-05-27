@@ -5046,6 +5046,34 @@ private:
         throw error;
     }
 
+    static std::string union_by_selector_text(const TypeRef& ast_type) {
+        std::string text;
+        for (std::size_t i = 0; i < ast_type.union_by_selector.size(); ++i) {
+            if (i > 0) text += ".";
+            text += ast_type.union_by_selector[i];
+        }
+        return text.empty() ? "<missing selector>" : text;
+    }
+
+    [[noreturn]] static void fail_union_by_type(SourceLocation loc, const TypeRef& ast_type) {
+        CompileError error(std::move(loc), "union by field types are parsed but not lowered yet");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "`union by " + union_by_selector_text(ast_type) +
+                " { arm => Type, ... }` is now represented in the AST for aggregate fields",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "this field declares " + std::to_string(ast_type.union_by_arm_names.size()) +
+                " active-payload arms; type checking, layout, construction, narrowing, and drop are still compiler work",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "use an ordinary enum payload until union by lowering lands",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     IrType resolve_nullable_type(const TypeRef& ast_type) {
         if (ast_type.qualifier != TypeQualifier::Value) {
             fail(ast_type.loc, "nullable type suffix ? cannot be combined with own, ref, or ptr qualifiers");
@@ -5240,6 +5268,7 @@ private:
     }
 
     IrType resolve_executable_type(const TypeRef& ast_type) {
+        if (ast_type.is_union_by) fail_union_by_type(ast_type.loc, ast_type);
         if (ast_type.is_macro_invocation) return resolve_type_macro_invocation(ast_type);
         if (ast_type.has_associated_projection) {
             return resolve_associated_type_projection(ast_type);

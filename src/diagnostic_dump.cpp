@@ -321,6 +321,7 @@ std::string classify_diagnostic_code(const std::string& message) {
         contains(diagnostic, "type arguments") ||
         contains(diagnostic, "type argument") ||
         contains(diagnostic, "recursive aggregate value type") ||
+        contains(diagnostic, "union by field types are parsed") ||
         contains(diagnostic, "generic type") ||
         contains(diagnostic, "generic function") ||
         contains(diagnostic, "generic parameter") ||

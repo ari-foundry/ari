@@ -41,6 +41,22 @@ std::string qualifier_text(TypeQualifier qualifier) {
 
 std::string type_text(const TypeRef& type) {
     std::string text = qualifier_text(type.qualifier);
+    if (type.is_union_by) {
+        text += "union by ";
+        for (std::size_t i = 0; i < type.union_by_selector.size(); ++i) {
+            if (i > 0) text += ".";
+            text += type.union_by_selector[i];
+        }
+        text += " { ";
+        for (std::size_t i = 0; i < type.union_by_arm_names.size(); ++i) {
+            if (i > 0) text += ", ";
+            text += type.union_by_arm_names[i] + " => ";
+            if (i < type.union_by_arm_types.size()) text += type_text(type.union_by_arm_types[i]);
+        }
+        text += " }";
+        if (type.nullable) text += "?";
+        return text;
+    }
     if (type.is_dyn_object) text += "dyn ";
     text += type.name.empty() ? "<infer>" : type.name;
     if (!type.args.empty()) {

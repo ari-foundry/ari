@@ -1,0 +1,10 @@
+Program source=tests/cases/compiler-development/artifact/ok/syntax-union-by-field.ari
+  Struct name=SecurityParameters @tests/cases/compiler-development/artifact/ok/syntax-union-by-field.ari:1:8 source_id=0 bytes=7..25
+    Field name=cipher_type type=i64 @tests/cases/compiler-development/artifact/ok/syntax-union-by-field.ari:2:3 source_id=0 bytes=30..41
+  Struct name=TLSCiphertext @tests/cases/compiler-development/artifact/ok/syntax-union-by-field.ari:5:8 source_id=0 bytes=58..71
+    Field name=security type=SecurityParameters @tests/cases/compiler-development/artifact/ok/syntax-union-by-field.ari:6:3 source_id=0 bytes=76..84
+    Field name=fragment type=union by security.cipher_type { stream => i64, block => i64, aead => i64 } @tests/cases/compiler-development/artifact/ok/syntax-union-by-field.ari:7:3 source_id=0 bytes=108..116
+  Function name=main return=i64 @tests/cases/compiler-development/artifact/ok/syntax-union-by-field.ari:14:4 source_id=0 bytes=215..219
+    Body
+      Return @tests/cases/compiler-development/artifact/ok/syntax-union-by-field.ari:15:3 source_id=0 bytes=233..239
+        Integer value=0 @tests/cases/compiler-development/artifact/ok/syntax-union-by-field.ari:15:10 source_id=0 bytes=240..241

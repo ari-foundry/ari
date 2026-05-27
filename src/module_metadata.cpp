@@ -310,6 +310,25 @@ std::string type_ref_summary(const TypeRef& type) {
         case TypeQualifier::MutRef: name += "ref mut "; break;
         case TypeQualifier::Ptr: name += "ptr "; break;
     }
+    if (type.is_union_by) {
+        name += "union by ";
+        for (std::size_t i = 0; i < type.union_by_selector.size(); ++i) {
+            if (i > 0) name += ".";
+            name += type.union_by_selector[i];
+        }
+        name += " { ";
+        for (std::size_t i = 0; i < type.union_by_arm_names.size(); ++i) {
+            if (i > 0) name += ", ";
+            name += type.union_by_arm_names[i];
+            name += " => ";
+            if (i < type.union_by_arm_types.size()) {
+                name += type_ref_summary(type.union_by_arm_types[i]);
+            }
+        }
+        name += " }";
+        if (type.nullable) name += "?";
+        return name;
+    }
     if (type.is_dyn_object) name += "dyn ";
     if (type.name == "Array") {
         name += "[" + type_ref_summary(type.args.empty() ? TypeRef{} : type.args[0]) +

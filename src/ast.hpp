@@ -23,8 +23,13 @@ struct TypeRef {
     bool nullable = false;
     bool is_macro_invocation = false;
     bool has_associated_projection = false;
+    bool is_union_by = false;
     std::string associated_projection;
     std::vector<Token> macro_tokens;
+    std::vector<std::string> union_by_selector;
+    std::vector<std::string> union_by_arm_names;
+    std::vector<TypeRef> union_by_arm_types;
+    std::vector<SourceLocation> union_by_arm_locs;
 };
 
 struct UseDecl {

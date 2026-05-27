@@ -506,19 +506,6 @@ private:
         throw error;
     }
 
-    [[noreturn]] static void fail_union_by_field_type(SourceLocation loc) {
-        CompileError error(std::move(loc), "union by fields are planned but not implemented");
-        error.add_note(DiagnosticNote{
-            std::nullopt,
-            "`union by <selector> { arm => Type, ... }` is reserved for discriminant-linked payload fields",
-            DiagnosticNoteKind::Note});
-        error.add_note(DiagnosticNote{
-            std::nullopt,
-            "use an ordinary enum payload today and keep the discriminant relationship explicit in code",
-            DiagnosticNoteKind::Help});
-        throw error;
-    }
-
     [[noreturn]] static void fail_structural_capability_type(SourceLocation loc) {
         CompileError error(std::move(loc),
                            "structural capability syntax is only supported in function parameter types");
@@ -613,6 +600,17 @@ private:
     std::string parse_path(const std::string& message) {
         Token first = expect(TokenKind::Identifier, message);
         return parse_path_after_first(first);
+    }
+
+    std::vector<std::string> parse_dot_selector_path(const std::string& message) {
+        Token first = expect(TokenKind::Identifier, message);
+        std::vector<std::string> parts;
+        parts.push_back(first.text);
+        while (match(TokenKind::Dot)) {
+            Token part = expect_identifier_or_contextual_name_keyword("expected selector field name after .");
+            parts.push_back(part.text);
+        }
+        return parts;
     }
 
     static bool is_cfg_attribute(const Attribute& attr) {
@@ -932,7 +930,7 @@ private:
 
     TypeRef parse_type() {
         if (starts_union_by_field_type()) {
-            fail_union_by_field_type(peek().loc);
+            return parse_union_by_type();
         }
         if (starts_structural_capability_type()) {
             fail_structural_capability_type(peek().loc);
@@ -1093,6 +1091,49 @@ private:
                 type.has_associated_projection = true;
                 type.associated_projection = projection.text;
             }
+        }
+        return finish_type(std::move(type));
+    }
+
+    TypeRef parse_union_by_type() {
+        Token union_token = expect(TokenKind::Identifier, "expected union");
+        expect(TokenKind::Identifier, "expected by after union");
+
+        TypeRef type;
+        type.loc = union_token.loc;
+        type.name = "union by";
+        type.is_union_by = true;
+        type.union_by_selector =
+            parse_dot_selector_path("expected selector path after union by");
+
+        Token open = expect(TokenKind::LBrace, "expected { after union by selector");
+        if (check(TokenKind::RBrace)) {
+            fail(open.loc, "union by fields require at least one arm");
+        }
+        while (!match(TokenKind::RBrace)) {
+            if (check(TokenKind::End)) {
+                fail_unterminated_delimited(
+                    peek().loc,
+                    open.loc,
+                    "unterminated union by field type",
+                    "union by arm list starts here",
+                    "}");
+            }
+            Token arm = expect_identifier_or_contextual_name_keyword("expected union by arm name");
+            expect(TokenKind::FatArrow, "expected => after union by arm name");
+            type.union_by_arm_names.push_back(arm.text);
+            type.union_by_arm_locs.push_back(arm.loc);
+            type.union_by_arm_types.push_back(parse_type());
+            if (!match(TokenKind::Comma)) {
+                expect_closing_delimiter_with_open(
+                    TokenKind::RBrace,
+                    open.loc,
+                    "expected , or } after union by arm",
+                    "union by arm list starts here",
+                    "}");
+                break;
+            }
+            if (match(TokenKind::RBrace)) break;
         }
         return finish_type(std::move(type));
     }
@@ -1385,9 +1426,6 @@ private:
             if (check(TokenKind::RParen)) fail(name.loc, "tuple structs require at least one field");
             while (true) {
                 bool mutable_field = match(TokenKind::KwMut);
-                if (starts_union_by_field_type()) {
-                    fail_union_by_field_type(peek().loc);
-                }
                 TypeRef field_type = parse_type();
                 SourceLocation field_loc = field_type.loc;
                 decl.fields.push_back(StructField{
@@ -1427,9 +1465,6 @@ private:
             Token field = expect(TokenKind::Identifier, "expected struct field name");
             if (!match(TokenKind::Colon)) {
                 fail_expected_struct_field_colon(peek().loc, field.loc, field.text);
-            }
-            if (starts_union_by_field_type()) {
-                fail_union_by_field_type(peek().loc);
             }
             decl.fields.push_back(StructField{field.text, parse_type(), mutable_field, field.loc});
             if (should_recover_at_nested_declaration(open.loc)) {

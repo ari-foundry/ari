@@ -1,6 +1,7 @@
-diagnostic error code=P0001 family=parser message="union by fields are planned but not implemented" sources=1 labels=1 notes=1 helps=1
+diagnostic error code=T0001 family=type message="union by field types are parsed but not lowered yet" sources=1 labels=1 notes=2 helps=1
   Source source_id=0 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic-parser-union-by-field.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic-parser-union-by-field.ari" bytes=245
   Label index=0 role=primary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-parser-union-by-field.ari" line=7 column=13 end_line=7 end_column=18 byte_start=118 byte_end=123 message=""
   Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-parser-union-by-field.ari:7:13\n   |\n 7 |   fragment: union by security.cipher_type {\n   |             ^^^^^"
-  Note index=0 location=none message="`union by <selector> { arm => Type, ... }` is reserved for discriminant-linked payload fields"
-  Help index=0 location=none message="use an ordinary enum payload today and keep the discriminant relationship explicit in code"
+  Note index=0 location=none message="`union by security.cipher_type { arm => Type, ... }` is now represented in the AST for aggregate fields"
+  Note index=1 location=none message="this field declares 3 active-payload arms; type checking, layout, construction, narrowing, and drop are still compiler work"
+  Help index=0 location=none message="use an ordinary enum payload until union by lowering lands"

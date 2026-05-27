@@ -89,6 +89,16 @@ void append_type(std::ostringstream& out, const TypeRef& type) {
     }
     append_bool(out, type.has_associated_projection);
     if (type.has_associated_projection) append_field(out, type.associated_projection);
+    append_bool(out, type.is_union_by);
+    if (type.is_union_by) {
+        append_count(out, type.union_by_selector.size());
+        for (const auto& part : type.union_by_selector) append_field(out, part);
+        append_count(out, type.union_by_arm_names.size());
+        for (std::size_t i = 0; i < type.union_by_arm_names.size(); ++i) {
+            append_field(out, type.union_by_arm_names[i]);
+            if (i < type.union_by_arm_types.size()) append_type(out, type.union_by_arm_types[i]);
+        }
+    }
     append_count(out, type.args.size());
     for (const auto& arg : type.args) append_type(out, arg);
 }
@@ -1314,6 +1324,23 @@ private:
         type.has_associated_projection = read_bool(label + " associated type projection flag");
         if (type.has_associated_projection) {
             type.associated_projection = read_field(label + " associated type projection name");
+        }
+        type.is_union_by = read_bool(label + " union by flag");
+        if (type.is_union_by) {
+            std::uint64_t selector_count = read_count(label + " union by selector count");
+            type.union_by_selector.reserve(static_cast<std::size_t>(selector_count));
+            for (std::uint64_t i = 0; i < selector_count; ++i) {
+                type.union_by_selector.push_back(read_field(label + " union by selector part"));
+            }
+            std::uint64_t arm_count = read_count(label + " union by arm count");
+            type.union_by_arm_names.reserve(static_cast<std::size_t>(arm_count));
+            type.union_by_arm_types.reserve(static_cast<std::size_t>(arm_count));
+            type.union_by_arm_locs.reserve(static_cast<std::size_t>(arm_count));
+            for (std::uint64_t i = 0; i < arm_count; ++i) {
+                type.union_by_arm_names.push_back(read_field(label + " union by arm name"));
+                type.union_by_arm_types.push_back(read_type(label + " union by arm type"));
+                type.union_by_arm_locs.push_back(default_loc());
+            }
         }
         std::uint64_t arg_count = read_count(label + " argument count");
         type.args.reserve(static_cast<std::size_t>(arg_count));

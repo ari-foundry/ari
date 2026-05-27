@@ -91,8 +91,12 @@ The spelling is `union by` for the discriminant link and `=>` arms for the
 alternatives. The union field's active payload type is determined by the named
 discriminant value.
 
-This is a reserved roadmap spelling, not a usable feature yet. The parser
-recognizes `union by` in type positions enough to report a targeted diagnostic.
+This is a reserved roadmap spelling, not a usable feature yet. The parser now
+builds a `TypeRef` for `union by` that records the selector path and each arm's
+payload type, so syntax/declaration tooling can inspect the shape. Sema still
+rejects the field with a targeted type diagnostic before executable type
+lowering.
+
 It should not replace ordinary `enum` ADTs, unchecked C unions, or `match`. A
 future design must specify construction rules, exhaustive arm checking against
 enum-like discriminants, ownership/drop for the active arm only,

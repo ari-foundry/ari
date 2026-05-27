@@ -1,0 +1,16 @@
+struct SecurityParameters {
+  cipher_type: i64,
+}
+
+struct TLSCiphertext {
+  security: SecurityParameters,
+  fragment: union by security.cipher_type {
+    stream => i64,
+    block => i64,
+    aead => i64,
+  },
+}
+
+fn main() -> i64 {
+  return 0;
+}

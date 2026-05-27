@@ -317,6 +317,24 @@ std::string type_ref_key(const TypeRef& type) {
             break;
     }
 
+    if (type.is_union_by) {
+        key += "union by ";
+        for (std::size_t i = 0; i < type.union_by_selector.size(); ++i) {
+            if (i > 0) key += ".";
+            key += type.union_by_selector[i];
+        }
+        key += " { ";
+        for (std::size_t i = 0; i < type.union_by_arm_names.size(); ++i) {
+            if (i > 0) key += ", ";
+            key += type.union_by_arm_names[i];
+            key += " => ";
+            if (i < type.union_by_arm_types.size()) key += type_ref_key(type.union_by_arm_types[i]);
+        }
+        key += " }";
+        if (type.nullable) key += "?";
+        return key;
+    }
+
     if (type.name == "Array" && type.args.size() == 1) {
         key += "[" + type_ref_key(type.args[0]) + ", " + std::to_string(type.array_size) + "]";
         if (type.nullable) key += "?";
