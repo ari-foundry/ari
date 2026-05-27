@@ -156,6 +156,28 @@ private:
         return text;
     }
 
+    static std::string structural_method_ref(const StructuralCapabilityMethod& method) {
+        std::string text = method.name + "(";
+        for (std::size_t i = 0; i < method.params.size(); ++i) {
+            if (i != 0) text += ", ";
+            text += type_ref(method.params[i]);
+        }
+        text += ")";
+        if (method.has_result) text += " -> " + type_ref(method.result);
+        return text;
+    }
+
+    static std::string structural_methods_ref(const std::vector<StructuralCapabilityMethod>& methods) {
+        if (methods.size() == 1) return "has " + structural_method_ref(methods.front());
+        std::string text = "has { ";
+        for (std::size_t i = 0; i < methods.size(); ++i) {
+            if (i != 0) text += ", ";
+            text += structural_method_ref(methods[i]);
+        }
+        text += " }";
+        return text;
+    }
+
     static std::string generic_params(const std::vector<GenericParam>& generics) {
         if (generics.empty()) return "";
         std::string text = "[";
@@ -163,6 +185,9 @@ private:
             if (i != 0) text += ", ";
             text += generics[i].name;
             if (generics[i].has_constraint) text += ": " + type_ref(generics[i].constraint);
+            if (generics[i].has_structural_capability) {
+                text += ": " + structural_methods_ref(generics[i].structural_methods);
+            }
         }
         text += "]";
         return text;
@@ -220,8 +245,11 @@ private:
     }
 
     void dump_type_alias(const TypeAliasDecl& alias) {
+        std::string target = alias.is_structural_capability
+            ? structural_methods_ref(alias.structural_methods)
+            : type_ref(alias.target);
         line(1, "TypeAlias name=" + alias.name + generic_params(alias.generics) +
-                    " target=" + type_ref(alias.target) + loc(alias.loc));
+                    " target=" + target + loc(alias.loc));
     }
 
     void dump_struct(const StructDecl& structure) {

@@ -228,6 +228,8 @@ struct TypeAliasInfo {
     bool is_public = false;
     std::vector<std::string> generic_names;
     TypeRef target;
+    bool is_structural_capability = false;
+    std::vector<StructuralCapabilityMethod> structural_methods;
     SourceLocation loc;
 };
 
@@ -2141,6 +2143,8 @@ private:
             info.module_name = decl.module_name;
             info.is_public = decl.is_public;
             info.target = decl.target;
+            info.is_structural_capability = decl.is_structural_capability;
+            info.structural_methods = decl.structural_methods;
             info.loc = decl.loc;
             for (const auto& generic : decl.generics) info.generic_names.push_back(generic.name);
 
@@ -2165,7 +2169,19 @@ private:
             std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
             current_module_name_ = decl.module_name;
             current_type_substitutions_ = std::move(substitutions);
-            (void)resolve_executable_type(decl.target);
+            if (decl.is_structural_capability) {
+                if (!decl.generics.empty()) {
+                    fail(decl.loc, "structural capability aliases cannot be generic yet");
+                }
+                GenericParam alias_generic;
+                alias_generic.name = basename_of_qualified_name(decl.name);
+                alias_generic.loc = decl.loc;
+                alias_generic.has_structural_capability = true;
+                alias_generic.structural_methods = decl.structural_methods;
+                validate_structural_capability_signature(alias_generic);
+            } else {
+                (void)resolve_executable_type(decl.target);
+            }
             current_type_substitutions_ = std::move(previous_substitutions);
             current_module_name_ = previous_module;
         });
@@ -2699,6 +2715,22 @@ private:
         if (constraint.qualifier != TypeQualifier::Value) {
             fail(constraint.loc, "trait bounds cannot use ownership qualifiers");
         }
+        if (const TypeAliasInfo* alias = find_structural_capability_alias_bound(constraint)) {
+            require_type_alias_access(constraint.loc, *alias);
+            CompileError error(
+                constraint.loc,
+                "structural capability alias '" + alias->name +
+                    "' is only supported on free functions and inherent impl methods");
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "structural capability aliases lower to call-site method checks, not named trait impls",
+                DiagnosticNoteKind::Note});
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "use `has ...` directly on a supported function generic bound, or define a named trait for broader APIs",
+                DiagnosticNoteKind::Help});
+            throw error;
+        }
 
         std::string trait_name = resolve_trait_name(constraint.name);
         auto found = traits_.find(trait_name);
@@ -2724,10 +2756,59 @@ private:
         return bound;
     }
 
+    void require_structural_capability_alias_arity(const TypeRef& constraint, const TypeAliasInfo& alias) const {
+        if (constraint.args.size() == alias.generic_names.size()) return;
+        fail(constraint.loc,
+             "type alias '" + alias.name + "' expects " + std::to_string(alias.generic_names.size()) +
+                 " type argument" + (alias.generic_names.size() == 1 ? "" : "s"));
+    }
+
+    void validate_structural_capability_alias_bound(const GenericParam& generic,
+                                                    const TypeAliasInfo& alias,
+                                                    bool allow_structural_capability_alias_bounds) {
+        require_type_alias_access(generic.constraint.loc, alias);
+        require_structural_capability_alias_arity(generic.constraint, alias);
+        if (!allow_structural_capability_alias_bounds) {
+            CompileError error(
+                generic.constraint.loc,
+                "structural capability alias '" + alias.name +
+                    "' is only supported on free functions and inherent impl methods");
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "capability aliases lower to call-site method checks and are not named trait bounds",
+                DiagnosticNoteKind::Note});
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "use a named trait when a bound must appear on structs, enums, traits, or trait impl methods",
+                DiagnosticNoteKind::Help});
+            throw error;
+        }
+        GenericParam alias_generic;
+        alias_generic.name = generic.name;
+        alias_generic.loc = generic.loc;
+        alias_generic.has_structural_capability = true;
+        alias_generic.structural_methods = alias.structural_methods;
+        std::string previous_module = current_module_name_;
+        std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
+        current_module_name_ = alias.module_name;
+        current_type_substitutions_.clear();
+        try {
+            validate_structural_capability_signature(alias_generic);
+        } catch (...) {
+            current_type_substitutions_ = std::move(previous_substitutions);
+            current_module_name_ = previous_module;
+            throw;
+        }
+        current_type_substitutions_ = std::move(previous_substitutions);
+        current_module_name_ = previous_module;
+    }
+
     std::vector<GenericTraitBound> resolve_generic_trait_bounds(const std::vector<GenericParam>& generics) {
         std::vector<GenericTraitBound> bounds;
         for (const auto& generic : generics) {
-            if (generic.has_constraint) bounds.push_back(resolve_generic_trait_bound(generic));
+            if (!generic.has_constraint) continue;
+            if (find_structural_capability_alias_bound(generic.constraint)) continue;
+            bounds.push_back(resolve_generic_trait_bound(generic));
         }
         return bounds;
     }
@@ -3130,7 +3211,8 @@ private:
     void validate_generic_constraints_for(
         const std::vector<GenericParam>& generics,
         const std::string& module_name,
-        std::map<std::string, IrType> substitutions
+        std::map<std::string, IrType> substitutions,
+        bool allow_structural_capability_alias_bounds = false
     ) {
         if (generics.empty()) return;
         bool has_constraint = false;
@@ -3147,7 +3229,16 @@ private:
         current_module_name_ = module_name;
         current_type_substitutions_ = std::move(substitutions);
         for (const auto& generic : generics) {
-            if (generic.has_constraint) (void)resolve_generic_trait_bound(generic);
+            if (generic.has_constraint) {
+                if (const TypeAliasInfo* alias = find_structural_capability_alias_bound(generic.constraint)) {
+                    validate_structural_capability_alias_bound(
+                        generic,
+                        *alias,
+                        allow_structural_capability_alias_bounds);
+                } else {
+                    (void)resolve_generic_trait_bound(generic);
+                }
+            }
             if (generic.has_structural_capability) validate_structural_capability_signature(generic);
         }
         current_type_substitutions_ = std::move(previous_substitutions);
@@ -3156,9 +3247,14 @@ private:
 
     void validate_generic_constraints_for(
         const std::vector<GenericParam>& generics,
-        const std::string& module_name
+        const std::string& module_name,
+        bool allow_structural_capability_alias_bounds = false
     ) {
-        validate_generic_constraints_for(generics, module_name, generic_placeholder_substitutions(generics));
+        validate_generic_constraints_for(
+            generics,
+            module_name,
+            generic_placeholder_substitutions(generics),
+            allow_structural_capability_alias_bounds);
     }
 
     void validate_generic_constraints() {
@@ -3180,7 +3276,7 @@ private:
             }
         });
         for_each_function_decl([&](const FunctionDecl& fn) {
-            validate_generic_constraints_for(fn.generics, fn.module_name);
+            validate_generic_constraints_for(fn.generics, fn.module_name, true);
         });
         for_each_impl_decl([&](const ImplDecl& impl) {
             validate_generic_constraints_for(impl.generics, impl.module_name);
@@ -3190,7 +3286,11 @@ private:
                 for (const auto& item : generic_placeholder_substitutions(method.generics)) {
                     method_substitutions.emplace(item.first, item.second);
                 }
-                validate_generic_constraints_for(method.generics, impl.module_name, std::move(method_substitutions));
+                validate_generic_constraints_for(
+                    method.generics,
+                    impl.module_name,
+                    std::move(method_substitutions),
+                    !impl.has_trait);
             }
         });
     }
@@ -5604,8 +5704,29 @@ private:
         return &found->second;
     }
 
+    const TypeAliasInfo* find_structural_capability_alias_bound(const TypeRef& ast_type) const {
+        const TypeAliasInfo* alias = find_type_alias_application(ast_type);
+        if (!alias || !alias->is_structural_capability) return nullptr;
+        return alias;
+    }
+
     IrType resolve_type_alias_application(const TypeRef& ast_type, const TypeAliasInfo& info) {
         require_type_alias_access(ast_type.loc, info);
+        if (info.is_structural_capability) {
+            CompileError error(
+                ast_type.loc,
+                "structural capability alias '" + info.name + "' can only be used as a generic bound");
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "capability aliases name method requirements, not runtime values or storage types",
+                DiagnosticNoteKind::Note});
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "use it in a bound such as `fn save[T: " + basename_of_qualified_name(info.name) +
+                    "](value: T)`",
+                DiagnosticNoteKind::Help});
+            throw error;
+        }
         if (ast_type.args.size() != info.generic_names.size()) {
             fail(ast_type.loc,
                  "type alias '" + info.name + "' expects " + std::to_string(info.generic_names.size()) +
@@ -5998,7 +6119,9 @@ private:
         current_type_substitutions_ = std::move(substitutions);
         current_generic_bounds_.clear();
         for (const auto& generic : fn.generics) {
-            if (generic.has_constraint) current_generic_bounds_.push_back(resolve_generic_trait_bound(generic));
+            if (generic.has_constraint && !find_structural_capability_alias_bound(generic.constraint)) {
+                current_generic_bounds_.push_back(resolve_generic_trait_bound(generic));
+            }
         }
         current_zone_pointer_return_param_index_.reset();
         current_zone_pointer_return_source_.clear();
@@ -25029,6 +25152,30 @@ private:
         }
     }
 
+    void require_structural_capability_alias_bound(SourceLocation loc,
+                                                   const GenericParam& generic,
+                                                   const TypeAliasInfo& alias,
+                                                   const IrType& self_type) {
+        require_type_alias_access(generic.constraint.loc, alias);
+        require_structural_capability_alias_arity(generic.constraint, alias);
+
+        std::string previous_module = current_module_name_;
+        std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
+        current_module_name_ = alias.module_name;
+        current_type_substitutions_.clear();
+        try {
+            for (const auto& method : alias.structural_methods) {
+                require_structural_capability_method(loc, self_type, method);
+            }
+        } catch (...) {
+            current_type_substitutions_ = std::move(previous_substitutions);
+            current_module_name_ = previous_module;
+            throw;
+        }
+        current_type_substitutions_ = std::move(previous_substitutions);
+        current_module_name_ = previous_module;
+    }
+
     void require_structural_capability_generics(
         SourceLocation loc,
         const FunctionDecl& fn,
@@ -25036,7 +25183,8 @@ private:
     ) {
         bool has_structural = false;
         for (const auto& generic : fn.generics) {
-            if (generic.has_structural_capability) {
+            if (generic.has_structural_capability ||
+                (generic.has_constraint && find_structural_capability_alias_bound(generic.constraint))) {
                 has_structural = true;
                 break;
             }
@@ -25049,10 +25197,16 @@ private:
         current_type_substitutions_ = substitutions;
         try {
             for (const auto& generic : fn.generics) {
-                if (!generic.has_structural_capability) continue;
                 auto self_found = substitutions.find(generic.name);
                 if (self_found == substitutions.end()) continue;
-                require_structural_capabilities(loc, generic, self_found->second);
+                if (generic.has_structural_capability) {
+                    require_structural_capabilities(loc, generic, self_found->second);
+                }
+                if (generic.has_constraint) {
+                    if (const TypeAliasInfo* alias = find_structural_capability_alias_bound(generic.constraint)) {
+                        require_structural_capability_alias_bound(loc, generic, *alias, self_found->second);
+                    }
+                }
             }
         } catch (...) {
             current_type_substitutions_ = std::move(previous_substitutions);
@@ -25086,6 +25240,12 @@ private:
             if (self_found == substitutions.end()) continue;
             if (generic.has_structural_capability) {
                 require_structural_capabilities(loc, generic, self_found->second);
+            }
+            if (generic.has_constraint) {
+                if (const TypeAliasInfo* alias = find_structural_capability_alias_bound(generic.constraint)) {
+                    require_structural_capability_alias_bound(loc, generic, *alias, self_found->second);
+                    continue;
+                }
             }
             if (!generic.has_constraint) continue;
             GenericTraitBound bound = resolve_generic_trait_bound(generic);

@@ -1,0 +1,9 @@
+type Serializable = has serialize() -> i64;
+
+struct Box[T: Serializable] {
+  value: T,
+}
+
+fn main() -> i64 {
+  return 0;
+}

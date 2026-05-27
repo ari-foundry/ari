@@ -103,12 +103,29 @@ void append_type(std::ostringstream& out, const TypeRef& type) {
     for (const auto& arg : type.args) append_type(out, arg);
 }
 
+void append_structural_capability_methods(std::ostringstream& out,
+                                          const std::vector<StructuralCapabilityMethod>& methods) {
+    append_count(out, methods.size());
+    for (const auto& method : methods) {
+        append_field(out, method.name);
+        append_count(out, method.params.size());
+        for (const auto& param : method.params) append_type(out, param);
+        append_bool(out, method.has_result);
+        if (method.has_result) append_type(out, method.result);
+    }
+}
+
 void append_generics(std::ostringstream& out, const std::vector<GenericParam>& generics) {
     append_count(out, generics.size());
     for (const auto& generic : generics) {
         append_field(out, generic.name);
         append_bool(out, generic.has_constraint);
         if (generic.has_constraint) append_type(out, generic.constraint);
+        append_bool(out, generic.synthetic);
+        append_bool(out, generic.has_structural_capability);
+        if (generic.has_structural_capability) {
+            append_structural_capability_methods(out, generic.structural_methods);
+        }
     }
 }
 
@@ -943,7 +960,12 @@ public:
             read_field("type alias name");
             read_bool("type alias visibility");
             skip_generics();
-            skip_type("type alias target");
+            bool is_structural_capability = read_bool("type alias structural capability flag");
+            if (is_structural_capability) {
+                (void)read_structural_capability_methods("type alias structural capability");
+            } else {
+                skip_type("type alias target");
+            }
         }
 
         counts.function_count = read_count("function count");
@@ -1095,7 +1117,13 @@ public:
             decl.name = read_field("type alias name");
             decl.is_public = read_bool("type alias visibility");
             decl.generics = read_generics();
-            decl.target = read_type("type alias target");
+            decl.is_structural_capability = read_bool("type alias structural capability flag");
+            if (decl.is_structural_capability) {
+                decl.structural_methods =
+                    read_structural_capability_methods("type alias structural capability");
+            } else {
+                decl.target = read_type("type alias target");
+            }
             decl.loc = default_loc();
             program.type_aliases.push_back(std::move(decl));
         }
@@ -1355,6 +1383,26 @@ private:
         (void)read_type(label);
     }
 
+    std::vector<StructuralCapabilityMethod> read_structural_capability_methods(const std::string& label) {
+        std::uint64_t count = read_count(label + " method count");
+        std::vector<StructuralCapabilityMethod> methods;
+        methods.reserve(static_cast<std::size_t>(count));
+        for (std::uint64_t i = 0; i < count; ++i) {
+            StructuralCapabilityMethod method;
+            method.name = read_field(label + " method name");
+            std::uint64_t param_count = read_count(label + " method parameter count");
+            method.params.reserve(static_cast<std::size_t>(param_count));
+            for (std::uint64_t param_i = 0; param_i < param_count; ++param_i) {
+                method.params.push_back(read_type(label + " method parameter"));
+            }
+            method.has_result = read_bool(label + " method result flag");
+            if (method.has_result) method.result = read_type(label + " method result");
+            method.loc = default_loc();
+            methods.push_back(std::move(method));
+        }
+        return methods;
+    }
+
     std::vector<GenericParam> read_generics() {
         std::uint64_t count = read_count("generic parameter count");
         std::vector<GenericParam> generics;
@@ -1364,6 +1412,12 @@ private:
             generic.name = read_field("generic parameter name");
             generic.has_constraint = read_bool("generic constraint flag");
             if (generic.has_constraint) generic.constraint = read_type("generic constraint type");
+            generic.synthetic = read_bool("generic synthetic flag");
+            generic.has_structural_capability = read_bool("generic structural capability flag");
+            if (generic.has_structural_capability) {
+                generic.structural_methods =
+                    read_structural_capability_methods("generic structural capability");
+            }
             generic.loc = default_loc();
             generics.push_back(std::move(generic));
         }
@@ -2036,7 +2090,12 @@ std::string declaration_summary_payload(const Program& program) {
         append_field(out, decl.name);
         append_bool(out, decl.is_public);
         append_generics(out, decl.generics);
-        append_type(out, decl.target);
+        append_bool(out, decl.is_structural_capability);
+        if (decl.is_structural_capability) {
+            append_structural_capability_methods(out, decl.structural_methods);
+        } else {
+            append_type(out, decl.target);
+        }
     }
 
     append_count(out, program.functions.size());

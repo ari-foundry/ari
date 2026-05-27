@@ -74,6 +74,28 @@ std::string type_text(const TypeRef& type) {
     return text;
 }
 
+std::string structural_method_text(const StructuralCapabilityMethod& method) {
+    std::string text = method.name + "(";
+    for (std::size_t i = 0; i < method.params.size(); ++i) {
+        if (i > 0) text += ", ";
+        text += type_text(method.params[i]);
+    }
+    text += ")";
+    if (method.has_result) text += " -> " + type_text(method.result);
+    return text;
+}
+
+std::string structural_methods_text(const std::vector<StructuralCapabilityMethod>& methods) {
+    if (methods.size() == 1) return "has " + structural_method_text(methods.front());
+    std::string text = "has { ";
+    for (std::size_t i = 0; i < methods.size(); ++i) {
+        if (i > 0) text += ", ";
+        text += structural_method_text(methods[i]);
+    }
+    text += " }";
+    return text;
+}
+
 std::string generic_text(const std::vector<GenericParam>& generics) {
     if (generics.empty()) return "[]";
     std::string text = "[";
@@ -81,6 +103,9 @@ std::string generic_text(const std::vector<GenericParam>& generics) {
         if (i > 0) text += ", ";
         text += generics[i].name;
         if (generics[i].has_constraint) text += ": " + type_text(generics[i].constraint);
+        if (generics[i].has_structural_capability) {
+            text += ": " + structural_methods_text(generics[i].structural_methods);
+        }
     }
     text += "]";
     return text;
@@ -262,7 +287,9 @@ std::string dump_declaration_index(const Program& program,
         std::string text = base_decl_text(path_by_module, decl.module_name, "type", decl.name,
                                           decl.is_public, decl.loc);
         text += " generics=" + generic_text(decl.generics);
-        text += " target=" + type_text(decl.target);
+        text += " target=" + (decl.is_structural_capability
+            ? structural_methods_text(decl.structural_methods)
+            : type_text(decl.target));
         add_line(lines, decl.module_name, "type", decl.name, decl.loc, std::move(text));
     }
     for (const auto& decl : program.structs) {

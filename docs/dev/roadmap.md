@@ -59,13 +59,15 @@ fn save(x: has serialize() -> i64) -> i64 {
 The parser accepts `has method(...) -> Type` and grouped
 `has { method(...) -> Type, other(...) -> Type }` in ordinary free-function and
 inherent `impl` method parameter type positions, plus explicit generic bounds
-such as `fn save[T: has serialize() -> i64](x: T)`. Semantic analysis lowers
+such as `fn save[T: has serialize() -> i64](x: T)`. Non-generic capability
+aliases such as `type Serializable = has serialize() -> i64;` can be reused as
+supported function and inherent-method generic bounds. Semantic analysis lowers
 anonymous parameters to hidden generics, checks concrete call-site types for
 every listed static method, and monomorphizes the body through the ordinary
 method-call path. Hidden capability generics do not count as visible method type
 arguments. It must continue to avoid an `interface` keyword, accidental dynamic
 dispatch, or a shortcut around named trait-bound diagnostics. Remaining roadmap
-work includes reusable capability aliases, trait-method policy, richer
+work includes generic capability aliases, trait-method policy, richer
 diagnostics for when a named trait is better, and any future extension beyond
 method requirements.
 

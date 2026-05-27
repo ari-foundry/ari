@@ -109,6 +109,8 @@ struct TypeAliasDecl {
     bool is_public = false;
     std::vector<GenericParam> generics;
     TypeRef target;
+    bool is_structural_capability = false;
+    std::vector<StructuralCapabilityMethod> structural_methods;
     SourceLocation loc;
     std::vector<Token> source_tokens;
 };

@@ -96,7 +96,7 @@ tests, or CI matrix work.
 | `std::parse` | Future taxonomy splits backed by real caller needs; the current basic slice already covers natural Result parsers, stable diagnostic names/messages, byte offsets, and finite/subnormal float boundary checks. |
 | `std::encoding` | Unicode normalization/transcoding and optional compression policy outside the core encoding module. |
 | `union by` language idea | Syntax is chosen, parser/AST tooling preserves selector and arm payload types, sema validates earlier-field selector roots, nested struct-field selector segments, unique arm names, arm payload type refs, and exact enum-case arm coverage, and enum-selector fields can now be constructed in struct literals with `field: arm => payload`. Same-literal selector mismatches are diagnosed, and direct `match` over the field reads active payloads with the declared arm names. Non-enum discriminant arm policy, broader active-arm narrowing, runtime selector consistency, active-arm drop diagnostics, and stable ABI naming remain compiler work. |
-| Structural capability parameters | Ordinary free functions and inherent `impl` methods now support single-method `fn save(x: has serialize() -> i64)` and grouped `fn save(x: has { serialize() -> i64, add(i64) -> i64 })` structural method requirements through hidden generics, call-site method checking, and normal static method monomorphization. Hidden capability generics stay out of visible method type-argument counts. Remaining work is reusable aliases, trait-method policy, and stronger named-trait guidance. |
+| Structural capability parameters | Ordinary free functions and inherent `impl` methods now support single-method `fn save(x: has serialize() -> i64)`, grouped `fn save(x: has { serialize() -> i64, add(i64) -> i64 })`, explicit generic bounds, and non-generic reusable aliases such as `type Serializable = has serialize() -> i64;` plus `fn save[T: Serializable](x: T)`. These requirements lower through hidden or named generics, call-site method checking, and normal static method monomorphization. Hidden capability generics stay out of visible method type-argument counts. Remaining work is generic capability aliases, trait-method policy, and stronger named-trait guidance. |
 
 ## Language Roadmap Interaction
 
@@ -142,8 +142,11 @@ For ordinary free functions and inherent `impl` methods, the compiler desugars
 the parameter to a hidden generic, checks the concrete call-site type for
 matching static methods, and lowers the function body through the same
 monomorphized method-call path as other generic functions. Unsupported type
-positions still get a targeted diagnostic. The compiler must still define
-reusable aliases, trait-method policy, and stronger diagnostics that point
-users toward named traits when that boundary is clearer. The feature must
-continue to avoid
-an `interface` keyword or accidental dynamic dispatch.
+positions still get a targeted diagnostic. Non-generic aliases make reusable
+capability sets available in supported function and inherent-method bounds;
+using a capability alias as a runtime value type, storage field, struct bound,
+enum bound, trait bound, trait-impl bound, or generic alias is rejected for now.
+The compiler must still define generic capability aliases, trait-method policy,
+and stronger diagnostics that point users toward named traits when that
+boundary is clearer. The feature must continue to avoid an `interface` keyword
+or accidental dynamic dispatch.

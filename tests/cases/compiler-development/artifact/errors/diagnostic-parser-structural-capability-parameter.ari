@@ -1,4 +1,6 @@
-type Save = has serialize() -> String;
+struct Bad {
+  value: has serialize() -> String,
+}
 
 fn main() -> i64 {
   return 0;

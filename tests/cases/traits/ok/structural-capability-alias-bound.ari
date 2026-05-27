@@ -1,0 +1,41 @@
+type Serializable = has serialize() -> i64;
+type Addable = has add(i64) -> i64;
+
+struct Packet {
+  value: i64,
+}
+
+impl Packet {
+  fn serialize(self) -> i64 {
+    self.value + 1
+  }
+
+  fn add(self, amount: i64) -> i64 {
+    self.value + amount
+  }
+}
+
+struct Runner {
+  base: i64,
+}
+
+impl Runner {
+  fn run[T: Serializable](self, value: T) -> i64 {
+    self.base + value.serialize()
+  }
+}
+
+fn save[T: Serializable](value: T) -> i64 {
+  value.serialize()
+}
+
+fn add_to[T: Addable](value: T, amount: i64) -> i64 {
+  value.add(amount)
+}
+
+fn main() -> i64 {
+  let runner = Runner { base: 2 };
+  return save(Packet { value: 10 }) +
+      add_to(Packet { value: 20 }, 3) +
+      runner.run(Packet { value: 5 });
+}

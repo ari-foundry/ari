@@ -738,7 +738,14 @@ private:
         decl.loc = name.loc;
         decl.generics = parse_generics();
         expect(TokenKind::Equal, "expected = in type alias declaration");
-        decl.target = parse_type();
+        if (starts_structural_capability_type()) {
+            Token has = expect(TokenKind::Identifier, "expected has in structural capability alias");
+            if (has.text != "has") fail_structural_capability_type(has.loc);
+            decl.is_structural_capability = true;
+            decl.structural_methods = parse_structural_capability_methods(has.loc);
+        } else {
+            decl.target = parse_type();
+        }
         require_semicolon("expected ; after type alias declaration");
         return decl;
     }
