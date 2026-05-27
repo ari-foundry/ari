@@ -5842,6 +5842,8 @@ check-traits: $(TARGET)
 	grep -q "does not satisfy structural capability 'has serialize() -> i64'" $(BUILD_DIR)/traits/structural-capability-missing.err
 	if $(TARGET) tests/cases/traits/errors/structural-capability-multi-missing.ari -o $(BUILD_DIR)/traits/structural-capability-multi-missing.elf >$(BUILD_DIR)/traits/structural-capability-multi-missing.err 2>&1; then exit 1; fi
 	grep -q "does not satisfy structural capability 'has add(i64) -> i64'" $(BUILD_DIR)/traits/structural-capability-multi-missing.err
+	if $(TARGET) tests/cases/traits/errors/structural-capability-duplicate-method.ari -o $(BUILD_DIR)/traits/structural-capability-duplicate-method.elf >$(BUILD_DIR)/traits/structural-capability-duplicate-method.err 2>&1; then exit 1; fi
+	grep -q "duplicate structural capability method requirement 'serialize'" $(BUILD_DIR)/traits/structural-capability-duplicate-method.err
 	if $(TARGET) tests/cases/traits/errors/structural-capability-impl-method-missing.ari -o $(BUILD_DIR)/traits/structural-capability-impl-method-missing.elf >$(BUILD_DIR)/traits/structural-capability-impl-method-missing.err 2>&1; then exit 1; fi
 	grep -q "does not satisfy structural capability 'has serialize() -> i64'" $(BUILD_DIR)/traits/structural-capability-impl-method-missing.err
 	if $(TARGET) tests/cases/traits/errors/structural-capability-trait-method-mismatch.ari -o $(BUILD_DIR)/traits/structural-capability-trait-method-mismatch.elf >$(BUILD_DIR)/traits/structural-capability-trait-method-mismatch.err 2>&1; then exit 1; fi
@@ -6007,6 +6009,8 @@ check-structs: $(TARGET)
 	grep -q "switch i64" $(BUILD_DIR)/structs/union-by-match.ll
 	$(TARGET) tests/cases/structs/ok/union-by-bool-selector.ari -o $(BUILD_DIR)/structs/union-by-bool-selector.elf
 	$(BUILD_DIR)/structs/union-by-bool-selector.elf; code=$$?; test $$code -eq 46
+	$(TARGET) tests/cases/structs/ok/union-by-bool-call-constructor.ari -o $(BUILD_DIR)/structs/union-by-bool-call-constructor.elf
+	$(BUILD_DIR)/structs/union-by-bool-call-constructor.elf; code=$$?; test $$code -eq 44
 	$(TARGET) tests/cases/structs/ok/union-by-shorthand-constructor.ari -o $(BUILD_DIR)/structs/union-by-shorthand-constructor.elf
 	$(BUILD_DIR)/structs/union-by-shorthand-constructor.elf; code=$$?; test $$code -eq 47
 	$(TARGET) tests/cases/traits/ok/impl-associated-new.ari --emit-llvm $(BUILD_DIR)/structs/impl-associated-new.ll

@@ -707,6 +707,9 @@ fn save(x: has { serialize() -> i64, add(i64) -> i64 }, amount: i64) -> i64 {
 Grouped requirements use comma separators and may have a trailing comma. A
 missing method or mismatched method signature is reported at the call site, with
 a secondary label on the exact requirement inside the grouped `has` list.
+Each method name may appear only once in the same structural capability; use a
+named trait when a contract needs overloaded or more elaborate method
+relationships.
 
 When a function needs to name the same structural type more than once, return
 it, or use the type parameter in another generic position, put the capability

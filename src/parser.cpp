@@ -3581,6 +3581,35 @@ private:
                     args.push_back(parse_expression());
                     field_values.push_back(make_ast_call_expr(arm.loc, arm.text, nullptr, std::move(args)));
                 } else if ((check(TokenKind::KwFalse) || check(TokenKind::KwTrue)) &&
+                           peek(1).kind == TokenKind::LParen) {
+                    Token arm = tokens_[pos_++];
+                    Token call_open = expect(TokenKind::LParen, "expected ( after union by bool arm name");
+                    std::vector<ExprPtr> args;
+                    if (!check(TokenKind::RParen)) {
+                        do {
+                            fail_if_unterminated_delimited_at_recovery_boundary(
+                                call_open.loc,
+                                "unterminated union by bool arm constructor arguments",
+                                "union by bool arm constructor argument list starts here",
+                                ")");
+                            args.push_back(parse_expression());
+                        } while (match(TokenKind::Comma));
+                    }
+                    if (!match(TokenKind::RParen)) {
+                        fail_if_unterminated_delimited_at_recovery_boundary(
+                            call_open.loc,
+                            "unterminated union by bool arm constructor arguments",
+                            "union by bool arm constructor argument list starts here",
+                            ")");
+                        fail_expected_closing_delimiter(
+                            peek().loc,
+                            call_open.loc,
+                            "expected ) after union by bool arm constructor arguments",
+                            "union by bool arm constructor argument list starts here",
+                            ")");
+                    }
+                    field_values.push_back(make_ast_call_expr(arm.loc, arm.text, nullptr, std::move(args)));
+                } else if ((check(TokenKind::KwFalse) || check(TokenKind::KwTrue)) &&
                            peek(1).kind == TokenKind::LBrace) {
                     Token arm = tokens_[pos_++];
                     field_values.push_back(parse_struct_literal(make_ast_name_expr(arm.loc, arm.text)));

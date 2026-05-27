@@ -92,6 +92,15 @@ let packet = TLSCiphertext {
 };
 ```
 
+The natural constructor spelling is `arm(payload)`, which works for enum arms
+and for bool arms:
+
+```ari
+let feature = Feature {
+  payload: true(40),
+};
+```
+
 The field payload is checked against the selected arm's payload type. The
 compiler lowers the field to internal enum storage, so the aggregate can be
 laid out and emitted by the existing enum backend. When the selector value is
@@ -126,7 +135,7 @@ struct Feature {
 
 let feature = Feature {
   enabled: true,
-  payload: true => EnabledPayload { value: 40 },
+  payload: true(EnabledPayload { value: 40 }),
 };
 ```
 
@@ -148,11 +157,12 @@ let packet = Packet {
 ```
 
 The compiler fills `kind` with the enum case named by the arm. The same
-inference works with either `arm => payload` or the struct-payload shorthand.
-Bool selectors can also be inferred from `false` and `true` constructor arms;
-for example `payload: true { value: 1 }` fills an omitted `enabled: bool`
-selector with `true`. Nested selector paths can be inferred the same way when
-the omitted selector value can be built from the constructor arm:
+inference works with `arm(payload)`, `arm => payload`, or the struct-payload
+shorthand. Bool selectors can also be inferred from `false` and `true`
+constructor arms; for example `payload: true(1)` or `payload: true { value: 1 }`
+fills an omitted `enabled: bool` selector with `true`. Nested selector paths
+can be inferred the same way when the omitted selector value can be built from
+the constructor arm:
 
 ```ari
 struct SecurityParameters {

@@ -1,0 +1,25 @@
+struct Feature {
+  enabled: bool,
+  payload: union by enabled {
+    false => i64,
+    true => i64,
+  },
+}
+
+fn score(feature: Feature) -> i64 {
+  return match feature.payload {
+    false(disabled_value) => disabled_value + 1,
+    true(enabled_value) => enabled_value + 2,
+  };
+}
+
+fn main() -> i64 {
+  let inferred = Feature {
+    payload: true(40),
+  };
+  let explicit = Feature {
+    enabled: false,
+    payload: false(1),
+  };
+  return score(inferred) + score(explicit);
+}

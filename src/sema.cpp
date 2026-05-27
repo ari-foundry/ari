@@ -2822,7 +2822,27 @@ private:
     }
 
     void validate_structural_capability_signature(const GenericParam& generic) {
+        std::map<std::string, SourceLocation> seen_methods;
         for (const auto& method : generic.structural_methods) {
+            auto inserted = seen_methods.emplace(method.name, method.loc);
+            if (!inserted.second) {
+                CompileError error(
+                    method.loc,
+                    "duplicate structural capability method requirement '" + method.name + "'");
+                error.add_label(DiagnosticLabel{
+                    inserted.first->second.span,
+                    "previous requirement for method '" + method.name + "'",
+                    false});
+                error.add_note(DiagnosticNote{
+                    std::nullopt,
+                    "a structural capability parameter describes one required method set; each method name may appear once",
+                    DiagnosticNoteKind::Note});
+                error.add_note(DiagnosticNote{
+                    std::nullopt,
+                    "use a named trait if this contract needs overloaded or more elaborate method relationships",
+                    DiagnosticNoteKind::Help});
+                throw error;
+            }
             for (const auto& param : method.params) {
                 IrType type = resolve_executable_type(param);
                 bool vec_view = false;
@@ -21072,7 +21092,8 @@ private:
                                "' must be constructed with an arm payload");
         error.add_note(DiagnosticNote{
             std::nullopt,
-            "write the field as `" + field.name + ": arm => payload`, or as `" +
+            "write the field as `" + field.name + ": arm(payload)`, as `" +
+                field.name + ": arm => payload` for compatibility, or as `" +
                 field.name + ": arm { ... }` when the arm payload is a struct",
             DiagnosticNoteKind::Help});
         throw error;
