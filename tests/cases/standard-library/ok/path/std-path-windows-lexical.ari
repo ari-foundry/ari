@@ -33,14 +33,14 @@ fn main() -> i64 {
   assert(!std::path::is_windows_unc("///share"));
   assert(std::path::windows_unc_prefix("//server").is_none());
 
-  var unc: [u8, 18] = [
+  var unc: [u8, 19] = [
     92u8, 92u8,
     115u8, 114u8, 118u8,
     92u8,
     115u8, 104u8, 97u8, 114u8, 101u8,
     92u8,
     112u8, 107u8, 103u8,
-    46u8, 97u8, 114u8
+    46u8, 97u8, 114u8, 105u8
   ];
   var unc_prefix: [u8, 11] = [
     92u8, 92u8,
@@ -74,6 +74,55 @@ fn main() -> i64 {
   assert(drive_owned.is_windows_drive_relative());
   assert(!drive_owned.is_windows_absolute());
   expect_slice(drive_owned.windows_drive().unwrap(), "E:");
+
+  var drive_components = std::path::components_with_kinds("C:/ari/main.ari");
+  let drive_component0 = drive_components.next().unwrap();
+  assert(drive_component0.is_windows_drive_prefix());
+  assert(drive_component0.is_windows_prefix());
+  expect_slice(drive_component0.as_slice(), "C:");
+  match drive_component0.kind() {
+    path::WindowsDrivePrefix => {}
+    _ => { panic(); }
+  }
+  let drive_component1 = drive_components.next().unwrap();
+  assert(drive_component1.is_normal());
+  expect_slice(drive_component1.as_slice(), "ari");
+  let drive_component2 = drive_components.next().unwrap();
+  assert(drive_component2.is_normal());
+  expect_slice(drive_component2.as_slice(), "main.ari");
+  assert(drive_components.next().is_none());
+
+  var drive_relative_components = std::path::components_with_kinds("E:cache");
+  let drive_relative_component0 = drive_relative_components.next().unwrap();
+  assert(drive_relative_component0.is_windows_drive_prefix());
+  expect_slice(drive_relative_component0.as_slice(), "E:");
+  let drive_relative_component1 = drive_relative_components.next().unwrap();
+  assert(drive_relative_component1.is_normal());
+  expect_slice(drive_relative_component1.as_slice(), "cache");
+  assert(drive_relative_components.next().is_none());
+
+  var unc_components = std::path::components_with_kinds("//server/share/pkg");
+  let unc_component0 = unc_components.next().unwrap();
+  assert(unc_component0.is_windows_unc_prefix());
+  assert(unc_component0.is_windows_prefix());
+  expect_slice(unc_component0.as_slice(), "//server/share");
+  match unc_component0.kind() {
+    path::WindowsUncPrefix => {}
+    _ => { panic(); }
+  }
+  let unc_component1 = unc_components.next().unwrap();
+  assert(unc_component1.is_normal());
+  expect_slice(unc_component1.as_slice(), "pkg");
+  assert(unc_components.next().is_none());
+
+  var slash_unc_components = std::path::components_with_kinds(unc.as_slice());
+  let slash_unc_component0 = slash_unc_components.next().unwrap();
+  assert(slash_unc_component0.is_windows_unc_prefix());
+  expect_bytes(slash_unc_component0.as_slice(), unc_prefix.as_slice());
+  let slash_unc_component1 = slash_unc_components.next().unwrap();
+  assert(slash_unc_component1.is_normal());
+  expect_slice(slash_unc_component1.as_slice(), "pkg.ari");
+  assert(slash_unc_components.next().is_none());
 
   zone::destroy(zone);
   return 0;

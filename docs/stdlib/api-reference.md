@@ -982,6 +982,9 @@ component.is_root()
 component.is_current()
 component.is_parent()
 component.is_normal()
+component.is_windows_drive_prefix()
+component.is_windows_unc_prefix()
+component.is_windows_prefix()
 path::file_name(path)
 path::parent(path)
 path::extension(path)
@@ -1082,10 +1085,14 @@ and skips leading, repeated, and trailing separators.
 `components_with_kinds(path)` yields `Component` values so callers can keep the
 lexical meaning that plain components intentionally discard. Absolute paths
 start with one `RootDir` component for `/`; `.` yields `CurrentDir`, `..` yields
-`ParentDir`, and all other non-empty components are `Normal`. `as_slice()` keeps
-returning borrowed bytes from the original path, and the `is_root`,
-`is_current`, `is_parent`, and `is_normal` helpers are the branch-friendly
-accessors for the enum kind.
+`ParentDir`, and all other non-empty components are `Normal`. Windows drive
+prefixes such as `C:` yield `WindowsDrivePrefix`, and UNC prefixes such as
+`//server/share` or the byte-equivalent backslash form yield
+`WindowsUncPrefix`. After a Windows prefix, the kinded iterator treats both `/`
+and backslash as separators. `as_slice()` keeps returning borrowed bytes from
+the original path, and the `is_root`, `is_current`, `is_parent`, `is_normal`,
+`is_windows_drive_prefix`, `is_windows_unc_prefix`, and `is_windows_prefix`
+helpers are the branch-friendly accessors for the enum kind.
 `join_in` and `normalize_in` are the string-returning compatibility helpers;
 the owned-path wrappers `join`, `join_many`, `PathBytes::join`,
 `PathBytes::normalize`, and the matching `PathBuf` methods return `PathBuf`.
@@ -1123,6 +1130,9 @@ require two leading Windows separators plus non-empty server and share
 components and return the borrowed `//server/share` or byte-equivalent prefix.
 `is_windows_absolute` accepts drive-absolute, UNC, and single-rooted Windows
 paths, but not drive-relative paths such as `C:tmp`.
+`components_with_kinds` uses the same drive and UNC recognizers to expose
+Windows prefix components when source-level tools need to preserve those
+prefixes.
 
 Thread helpers live in `std::thread`:
 

@@ -24,14 +24,14 @@ platform notes.
 
 ## Summary
 
-- API entries: `3486`
+- API entries: `3489`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
 | `alloc` | 897 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 902 | stable candidate |
+| `core` | 905 | stable candidate |
 | `hosted` | 1488 | platform-backed |
 | `platform` | 163 | platform-specific |
 
@@ -39,7 +39,7 @@ platform notes.
 | --- | ---: |
 | `enum` | 32 |
 | `fn` | 1198 |
-| `method` | 1836 |
+| `method` | 1839 |
 | `module` | 39 |
 | `struct` | 180 |
 | `trait` | 39 |
@@ -78,7 +78,7 @@ platform notes.
 | `std::option` | `core` | 12 |
 | `std::os` | `platform` | 62 |
 | `std::parse` | `core` | 101 |
-| `std::path` | `core` | 120 |
+| `std::path` | `core` | 123 |
 | `std::process` | `hosted` | 173 |
 | `std::random` | `alloc/hosted` | 36 |
 | `std::rc` | `alloc` | 32 |
@@ -3205,6 +3205,9 @@ Tier: `core`. Stability reading: stable candidate.
 | `method std::path::Component::is_normal` | check-prelude std-path-components normal component predicate; docs/stdlib/modules/path.md |
 | `method std::path::Component::is_parent` | check-prelude std-path-components parent-directory component predicate; docs/stdlib/modules/path.md |
 | `method std::path::Component::is_root` | check-prelude std-path-components root component predicate; docs/stdlib/modules/path.md |
+| `method std::path::Component::is_windows_drive_prefix` | check-prelude std-path-windows-lexical Windows drive-prefix component predicate; docs/stdlib/modules/path.md |
+| `method std::path::Component::is_windows_prefix` | check-prelude std-path-windows-lexical Windows prefix component predicate; docs/stdlib/modules/path.md |
+| `method std::path::Component::is_windows_unc_prefix` | check-prelude std-path-windows-lexical Windows UNC-prefix component predicate; docs/stdlib/modules/path.md |
 | `method std::path::Component::kind` | check-prelude std-path-components kinded path component classifier accessor; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::as_bytes` | check-prelude std-path-buf owned path byte accessor; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::as_path` | check-prelude std-path-buf borrowed view from owned path buffer; docs/stdlib/modules/path.md |

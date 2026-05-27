@@ -399,7 +399,8 @@ modeled by the language.
 `std::path` is source-only and deliberately lexical. It works over borrowed
 `Slice[u8]` values, typed `Path`/`PathBytes` views, plain and kinded borrowed
 component iterators, and owned zone-backed `PathBuf` byte buffers, so tools can
-split, preserve root/`.`/`..` meaning when needed, join, iterate, check
+split, preserve root/`.`/`..` and Windows prefix meaning when needed, join,
+iterate, check
 component-aware prefixes/suffixes, strip path affixes, and lightly normalize
 paths without touching the filesystem. The default policy is hosted
 Linux/POSIX-style `/` separators over bytes, not validated UTF-8; explicit

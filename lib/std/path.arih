@@ -83,6 +83,8 @@ pub enum ComponentKind {
   CurrentDir,
   ParentDir,
   Normal,
+  WindowsDrivePrefix,
+  WindowsUncPrefix,
 }
 
 pub struct Component {
@@ -94,6 +96,8 @@ pub struct ComponentsWithKinds {
   path: std::Slice[u8],
   mut index: i64,
   mut yielded_root: bool,
+  mut yielded_windows_prefix: bool,
+  mut windows_mode: bool,
 }
 
 pub struct PathBytes {
@@ -254,8 +258,21 @@ fn component_kind(bytes: std::Slice[u8]) -> std::path::ComponentKind {
   return Normal;
 }
 
+fn component_separator(windows_mode: bool, value: u8) -> bool {
+  if windows_mode {
+    return is_windows_separator(value);
+  }
+  return is_separator(value);
+}
+
 pub fn components_with_kinds(path: std::Slice[u8]) -> std::path::ComponentsWithKinds {
-  return ComponentsWithKinds { path: path, index: 0, yielded_root: false };
+  return ComponentsWithKinds {
+    path: path,
+    index: 0,
+    yielded_root: false,
+    yielded_windows_prefix: false,
+    windows_mode: false,
+  };
 }
 
 pub fn file_name(path: std::Slice[u8]) -> std::Option[std::Slice[u8]] {
@@ -614,6 +631,31 @@ impl std::Iterator[std::Slice[u8]] for std::path::Components {
 
 impl std::Iterator[std::path::Component] for std::path::ComponentsWithKinds {
   pub fn next(self: ref mut Self) -> std::Option[std::path::Component] {
+    if !self.yielded_windows_prefix {
+      self.yielded_windows_prefix = true;
+
+      let unc_end = windows_unc_prefix_end(self.path);
+      if unc_end >= 0 {
+        self.index = unc_end;
+        self.yielded_root = true;
+        self.windows_mode = true;
+        return std::Some<std::path::Component>(std::path::Component {
+          kind_value: WindowsUncPrefix,
+          bytes: slice_range(self.path, 0, unc_end),
+        });
+      }
+
+      if has_windows_drive_prefix(self.path) {
+        self.index = 2;
+        self.yielded_root = true;
+        self.windows_mode = true;
+        return std::Some<std::path::Component>(std::path::Component {
+          kind_value: WindowsDrivePrefix,
+          bytes: slice_range(self.path, 0, 2),
+        });
+      }
+    }
+
     if !self.yielded_root {
       self.yielded_root = true;
       if self.path.len > 0 {
@@ -629,7 +671,7 @@ impl std::Iterator[std::path::Component] for std::path::ComponentsWithKinds {
     }
 
     while self.index < self.path.len {
-      if !is_separator(self.path[self.index]) {
+      if !component_separator(self.windows_mode, self.path[self.index]) {
         break;
       }
       self.index = self.index + 1;
@@ -641,7 +683,7 @@ impl std::Iterator[std::path::Component] for std::path::ComponentsWithKinds {
 
     let start = self.index;
     while self.index < self.path.len {
-      if is_separator(self.path[self.index]) {
+      if component_separator(self.windows_mode, self.path[self.index]) {
         break;
       }
       self.index = self.index + 1;
@@ -670,6 +712,8 @@ pub impl std::path::Component {
       CurrentDir => { return false; }
       ParentDir => { return false; }
       Normal => { return false; }
+      WindowsDrivePrefix => { return false; }
+      WindowsUncPrefix => { return false; }
     }
   }
 
@@ -679,6 +723,8 @@ pub impl std::path::Component {
       CurrentDir => { return true; }
       ParentDir => { return false; }
       Normal => { return false; }
+      WindowsDrivePrefix => { return false; }
+      WindowsUncPrefix => { return false; }
     }
   }
 
@@ -688,6 +734,8 @@ pub impl std::path::Component {
       CurrentDir => { return false; }
       ParentDir => { return true; }
       Normal => { return false; }
+      WindowsDrivePrefix => { return false; }
+      WindowsUncPrefix => { return false; }
     }
   }
 
@@ -697,6 +745,41 @@ pub impl std::path::Component {
       CurrentDir => { return false; }
       ParentDir => { return false; }
       Normal => { return true; }
+      WindowsDrivePrefix => { return false; }
+      WindowsUncPrefix => { return false; }
+    }
+  }
+
+  fn is_windows_drive_prefix(self: ref Self) -> bool {
+    match self.kind_value {
+      RootDir => { return false; }
+      CurrentDir => { return false; }
+      ParentDir => { return false; }
+      Normal => { return false; }
+      WindowsDrivePrefix => { return true; }
+      WindowsUncPrefix => { return false; }
+    }
+  }
+
+  fn is_windows_unc_prefix(self: ref Self) -> bool {
+    match self.kind_value {
+      RootDir => { return false; }
+      CurrentDir => { return false; }
+      ParentDir => { return false; }
+      Normal => { return false; }
+      WindowsDrivePrefix => { return false; }
+      WindowsUncPrefix => { return true; }
+    }
+  }
+
+  fn is_windows_prefix(self: ref Self) -> bool {
+    match self.kind_value {
+      RootDir => { return false; }
+      CurrentDir => { return false; }
+      ParentDir => { return false; }
+      Normal => { return false; }
+      WindowsDrivePrefix => { return true; }
+      WindowsUncPrefix => { return true; }
     }
   }
 }

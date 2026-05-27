@@ -58,13 +58,13 @@ can fail before the lexical join happens.
 | Convert from OS boundary data | `path::from_os(os)` | Keeps bytes borrowed from `OsStr`; no UTF-8 validation. |
 | Own a path | `path::from_bytes(ref mut zone, bytes)` or `path::from_string(ref mut zone, text)` | Copies bytes into the zone and returns `PathBuf`. |
 | Copy a borrowed path to owned text | `path::to_string(ref mut zone, path)` or `path_buf.to_string(ref mut zone)` | Still byte-oriented text, not validated UTF-8. |
-| Inspect components | `components`, `components_with_kinds`, `file_name`, `parent`, `extension`, `stem`, `file_stem` | Borrowed slices point into the original path; kinded components preserve root, `.`, and `..`. |
+| Inspect components | `components`, `components_with_kinds`, `file_name`, `parent`, `extension`, `stem`, `file_stem` | Borrowed slices point into the original path; kinded components preserve root, `.`, `..`, and Windows drive/UNC prefixes. |
 | Compare path prefixes/suffixes | `starts_with`, `strip_prefix`, `ends_with`, `strip_suffix` | Component-aware: `src` matches `src/main.ari` but not `src2/main.ari`. |
 | Join paths | `path::join(ref mut zone, base, child)`, `base.join(ref mut zone, child)`, or `join_many` | Returns `PathBuf`; absolute children replace the accumulated base. |
 | Join against the process cwd | `path::current_dir_join(ref mut zone, child)` | Returns `Result[PathBuf, Error]` because cwd lookup can fail. |
 | Lexically clean a path | `normalize_in(ref mut zone, path)` or `path.normalize(ref mut zone)` | Collapses repeated separators and `.`, keeps `..`. |
 | Check OS-boundary safety | `contains_nul` | Lexical helpers allow NUL; hosted boundaries should reject it. |
-| Inspect Windows-shaped bytes | `is_windows_absolute`, `windows_drive`, `windows_unc_prefix` | Opt-in lexical classifiers; they do not affect POSIX default helpers. |
+| Inspect Windows-shaped bytes | `is_windows_absolute`, `windows_drive`, `windows_unc_prefix`, `components_with_kinds` | Opt-in lexical classifiers; they do not affect POSIX default helpers such as `join` and `normalize_in`. |
 
 ## API
 
@@ -102,6 +102,9 @@ component.is_root() -> bool
 component.is_current() -> bool
 component.is_parent() -> bool
 component.is_normal() -> bool
+component.is_windows_drive_prefix() -> bool
+component.is_windows_unc_prefix() -> bool
+component.is_windows_prefix() -> bool
 path::file_name(path) -> Option[Slice[u8]]
 path::parent(path) -> Option[Slice[u8]]
 path::extension(path) -> Option[Slice[u8]]
@@ -251,9 +254,15 @@ need lightweight lexical cleanup should call `normalize_in` first.
 `components_with_kinds(path)` returns `Component` values. It yields a single
 `RootDir` component for leading `/`, skips repeated separators, and then yields
 `CurrentDir` for `.`, `ParentDir` for `..`, and `Normal` for every other
-component. `Component::as_slice()` returns the borrowed bytes for the component:
-`/` for `RootDir`, `.` for `CurrentDir`, `..` for `ParentDir`, or the normal
-component bytes. Use `is_root`, `is_current`, `is_parent`, and `is_normal` for
+component. If the input starts with a Windows drive prefix such as `C:` or a
+UNC prefix such as `//server/share`, the first component is
+`WindowsDrivePrefix` or `WindowsUncPrefix`. After one of those Windows
+prefixes, both `/` and backslash are treated as separators for the remaining
+kinded iteration. `Component::as_slice()` returns the borrowed bytes for the
+component: `/` for `RootDir`, `.` for `CurrentDir`, `..` for `ParentDir`, the
+prefix bytes for Windows prefix kinds, or the normal component bytes. Use
+`is_root`, `is_current`, `is_parent`, `is_normal`,
+`is_windows_drive_prefix`, `is_windows_unc_prefix`, and `is_windows_prefix` for
 branching without matching on the enum directly. `components_with_kinds` is the
 path parser to use when a caller needs to preserve lexical meaning instead of
 just the raw non-empty names.
@@ -308,6 +317,9 @@ components. `windows_unc_prefix(path)` returns the borrowed
 `is_windows_absolute(path)` is
 true for drive-absolute paths, UNC paths, and single-rooted Windows paths such
 as `/temp`; it is false for drive-relative paths like `C:temp`.
+`components_with_kinds(path)` uses the same drive and UNC recognizers to expose
+Windows prefix components when a caller needs to preserve those prefixes during
+source-level parsing.
 
 ## Examples
 

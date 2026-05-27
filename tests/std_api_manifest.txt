@@ -2359,6 +2359,9 @@ method std::path::Component::is_current|check-prelude std-path-components curren
 method std::path::Component::is_normal|check-prelude std-path-components normal component predicate; docs/stdlib/modules/path.md
 method std::path::Component::is_parent|check-prelude std-path-components parent-directory component predicate; docs/stdlib/modules/path.md
 method std::path::Component::is_root|check-prelude std-path-components root component predicate; docs/stdlib/modules/path.md
+method std::path::Component::is_windows_drive_prefix|check-prelude std-path-windows-lexical Windows drive-prefix component predicate; docs/stdlib/modules/path.md
+method std::path::Component::is_windows_prefix|check-prelude std-path-windows-lexical Windows prefix component predicate; docs/stdlib/modules/path.md
+method std::path::Component::is_windows_unc_prefix|check-prelude std-path-windows-lexical Windows UNC-prefix component predicate; docs/stdlib/modules/path.md
 method std::path::Component::kind|check-prelude std-path-components kinded path component classifier accessor; docs/stdlib/modules/path.md
 method std::path::PathBuf::as_bytes|check-prelude std-path-buf owned path byte accessor; docs/stdlib/modules/path.md
 method std::path::PathBuf::as_path|check-prelude std-path-buf borrowed view from owned path buffer; docs/stdlib/modules/path.md
