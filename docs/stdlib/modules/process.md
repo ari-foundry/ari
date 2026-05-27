@@ -133,11 +133,19 @@ ExitCode::exit()
 ExitStatus::raw()
 ExitStatus::exited()
 ExitStatus::signaled()
+ExitStatus::stopped()
+ExitStatus::is_stopped()
+ExitStatus::continued()
+ExitStatus::is_continued()
 ExitStatus::code()
 ExitStatus::code_or(fallback)
 ExitStatus::exit_code()
 ExitStatus::signal()
 ExitStatus::signal_or(fallback)
+ExitStatus::stop_signal()
+ExitStatus::stop_signal_or(fallback)
+ExitStatus::core_dumped()
+ExitStatus::is_core_dumped()
 ExitStatus::is_success()
 ExitStatus::success()
 ExitStatus::is_failure()
@@ -226,6 +234,10 @@ instead of spelling those comparisons at every call site.
 `Err(std::c::error())`; normal exit and signal termination are represented in
 the returned `ExitStatus`. Use `ExitStatus::code()` for an optional normal exit
 code and `ExitStatus::signal()` for an optional terminating signal number.
+Hosted POSIX wait-status detail is exposed through `stopped`, `continued`,
+`stop_signal`, and `core_dumped`/`is_core_dumped`; these are diagnostic
+accessors over the raw wait-status bits and do not make Windows status mapping
+portable yet.
 
 `wait(pid)` returns `Ok(exit_code)` only for a normal child exit and reports
 non-normal child states as `Error(Other)`. `wait_raw(pid)` is the raw

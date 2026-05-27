@@ -308,8 +308,9 @@ aliases, current/executable path wrappers, temp file/dir constructors, and
 `/dev/null` stdin redirection are available at execution time, and fork-based
 command helpers surface child setup and `execvp` failures through a
 close-on-exec error pipe. Interactive streaming stdin/stdout/stderr handles,
-richer platform status fields, and Windows process mapping remain
-roadmap work.
+POSIX wait-status detail accessors, and explicit detach vocabulary are
+available; Windows process mapping and stronger background lifecycle policy
+remain roadmap work.
 
 `std::thread` is the first thread slice. `spawn`, `join`, `detach`,
 `is_finished`, `yield_now`, and the raw parallelism hook are runtime-backed

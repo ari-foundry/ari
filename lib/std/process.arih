@@ -316,6 +316,22 @@ fn signal_from_raw(raw_status: i64) -> i64 {
   return raw_status & 127;
 }
 
+fn stopped_from_raw(raw_status: i64) -> bool {
+  return (raw_status & 255) == 127;
+}
+
+fn continued_from_raw(raw_status: i64) -> bool {
+  return raw_status == 65535;
+}
+
+fn stop_signal_from_raw(raw_status: i64) -> i64 {
+  return (raw_status / 256) & 255;
+}
+
+fn core_dumped_from_raw(raw_status: i64) -> bool {
+  return (raw_status & 128) != 0;
+}
+
 pub fn fork() -> std::Result[i64, std::error::Error] {
   let raw = raw_fork();
   if raw < 0 {
@@ -887,6 +903,22 @@ pub impl std::process::ExitStatus {
     return signal != 0 && signal != 127;
   }
 
+  fn stopped(self: ref Self) -> bool {
+    return std::process::stopped_from_raw(self.raw_value);
+  }
+
+  fn is_stopped(self: ref Self) -> bool {
+    return self.stopped();
+  }
+
+  fn continued(self: ref Self) -> bool {
+    return std::process::continued_from_raw(self.raw_value);
+  }
+
+  fn is_continued(self: ref Self) -> bool {
+    return self.continued();
+  }
+
   fn code(self: ref Self) -> std::Option[i64] {
     if self.exited() {
       return std::Some<i64>(std::process::exit_code_from_raw(self.raw_value));
@@ -931,6 +963,32 @@ pub impl std::process::ExitStatus {
         return fallback;
       }
     }
+  }
+
+  fn stop_signal(self: ref Self) -> std::Option[i64] {
+    if self.stopped() {
+      return std::Some<i64>(std::process::stop_signal_from_raw(self.raw_value));
+    }
+    return std::None<i64>();
+  }
+
+  fn stop_signal_or(self: ref Self, fallback: i64) -> i64 {
+    match self.stop_signal() {
+      std::Some(signal) => {
+        return signal;
+      }
+      std::None => {
+        return fallback;
+      }
+    }
+  }
+
+  fn core_dumped(self: ref Self) -> bool {
+    return self.signaled() && std::process::core_dumped_from_raw(self.raw_value);
+  }
+
+  fn is_core_dumped(self: ref Self) -> bool {
+    return self.core_dumped();
   }
 
   fn is_success(self: ref Self) -> bool {

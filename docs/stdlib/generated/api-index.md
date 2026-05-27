@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `3499`
+- API entries: `3507`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,14 +32,14 @@ platform notes.
 | `alloc` | 897 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 905 | stable candidate |
-| `hosted` | 1498 | platform-backed |
+| `hosted` | 1506 | platform-backed |
 | `platform` | 163 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
 | `fn` | 1198 |
-| `method` | 1847 |
+| `method` | 1855 |
 | `module` | 39 |
 | `struct` | 182 |
 | `trait` | 39 |
@@ -79,7 +79,7 @@ platform notes.
 | `std::os` | `platform` | 62 |
 | `std::parse` | `core` | 101 |
 | `std::path` | `core` | 123 |
-| `std::process` | `hosted` | 173 |
+| `std::process` | `hosted` | 181 |
 | `std::random` | `alloc/hosted` | 36 |
 | `std::rc` | `alloc` | 32 |
 | `std::result` | `core` | 12 |
@@ -3436,14 +3436,22 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::process::ExitCode::raw` | check-prelude std-process-high-level raw exit code accessor; docs/stdlib/modules/process.md |
 | `method std::process::ExitStatus::code` | check-prelude std-process-exit-status optional normal exit code accessor; docs/stdlib/modules/process.md |
 | `method std::process::ExitStatus::code_or` | check-prelude std-process-exit-status normal exit code fallback accessor; docs/stdlib/modules/process.md |
+| `method std::process::ExitStatus::continued` | check-prelude std-process-exit-status POSIX continued wait-status predicate; docs/stdlib/modules/process.md |
+| `method std::process::ExitStatus::core_dumped` | check-prelude std-process-exit-status POSIX core-dump wait-status predicate; docs/stdlib/modules/process.md |
 | `method std::process::ExitStatus::exit_code` | check-prelude std-process-high-level typed ExitCode extraction from status; docs/stdlib/modules/process.md |
 | `method std::process::ExitStatus::exited` | check-prelude std-process-exit-status normal exit predicate; docs/stdlib/modules/process.md |
+| `method std::process::ExitStatus::is_continued` | check-prelude std-process-exit-status POSIX continued wait-status predicate alias; docs/stdlib/modules/process.md |
+| `method std::process::ExitStatus::is_core_dumped` | check-prelude std-process-exit-status POSIX core-dump wait-status predicate alias; docs/stdlib/modules/process.md |
 | `method std::process::ExitStatus::is_failure` | check-prelude std-process-exit-status typed exit failure predicate; docs/stdlib/modules/process.md |
+| `method std::process::ExitStatus::is_stopped` | check-prelude std-process-exit-status POSIX stopped wait-status predicate alias; docs/stdlib/modules/process.md |
 | `method std::process::ExitStatus::is_success` | check-prelude std-process-exit-status typed exit success predicate; docs/stdlib/modules/process.md |
 | `method std::process::ExitStatus::raw` | check-prelude std-process-exit-status raw hosted wait-status accessor; docs/stdlib/modules/process.md |
 | `method std::process::ExitStatus::signal` | check-prelude std-process-exit-status optional signal number accessor; docs/stdlib/modules/process.md |
 | `method std::process::ExitStatus::signal_or` | check-prelude std-process-exit-status signal fallback accessor; docs/stdlib/modules/process.md |
 | `method std::process::ExitStatus::signaled` | check-prelude std-process-exit-status signal termination predicate; docs/stdlib/modules/process.md |
+| `method std::process::ExitStatus::stop_signal` | check-prelude std-process-exit-status optional POSIX stopped-child signal accessor; docs/stdlib/modules/process.md |
+| `method std::process::ExitStatus::stop_signal_or` | check-prelude std-process-exit-status stopped-child signal fallback accessor; docs/stdlib/modules/process.md |
+| `method std::process::ExitStatus::stopped` | check-prelude std-process-exit-status POSIX stopped wait-status predicate; docs/stdlib/modules/process.md |
 | `method std::process::ExitStatus::success` | check-prelude std-process-exit-status natural success predicate alias; docs/stdlib/modules/process.md |
 | `method std::process::Output::exit_status` | check-prelude std-process-exit-status captured typed ExitStatus accessor; docs/stdlib/modules/process.md |
 | `method std::process::Output::is_success` | check-prelude std-process-output captured exit-success predicate; docs/stdlib/modules/process.md |

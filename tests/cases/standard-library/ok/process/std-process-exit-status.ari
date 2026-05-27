@@ -20,8 +20,16 @@ fn status_ok(value: Result[process::ExitStatus, error::Error], expected: i64) ->
     Ok(status) => {
       return status.exited()
         && !status.signaled()
+        && !status.stopped()
+        && !status.is_stopped()
+        && !status.continued()
+        && !status.is_continued()
+        && !status.core_dumped()
+        && !status.is_core_dumped()
         && code_is(status.code(), expected)
         && status.code_or(-1) == expected
+        && is_none_i64(status.stop_signal())
+        && status.stop_signal_or(77) == 77
         && status.signal_or(0) == 0
         && status.is_success() == (expected == 0)
         && status.success() == (expected == 0)
@@ -36,8 +44,16 @@ fn signal_ok(value: Result[process::ExitStatus, error::Error], expected: i64) ->
     Ok(status) => {
       return !status.exited()
         && status.signaled()
+        && !status.stopped()
+        && !status.is_stopped()
+        && !status.continued()
+        && !status.is_continued()
+        && !status.core_dumped()
+        && !status.is_core_dumped()
         && is_none_i64(status.code())
         && status.code_or(99) == 99
+        && is_none_i64(status.stop_signal())
+        && status.stop_signal_or(77) == 77
         && code_is(status.signal(), expected)
         && status.signal_or(-1) == expected
         && status.is_failure();

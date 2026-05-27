@@ -667,11 +667,19 @@ ExitCode::exit()
 ExitStatus::raw()
 ExitStatus::exited()
 ExitStatus::signaled()
+ExitStatus::stopped()
+ExitStatus::is_stopped()
+ExitStatus::continued()
+ExitStatus::is_continued()
 ExitStatus::code()
 ExitStatus::code_or(fallback)
 ExitStatus::exit_code()
 ExitStatus::signal()
 ExitStatus::signal_or(fallback)
+ExitStatus::stop_signal()
+ExitStatus::stop_signal_or(fallback)
+ExitStatus::core_dumped()
+ExitStatus::is_core_dumped()
 ExitStatus::is_success()
 ExitStatus::success()
 ExitStatus::is_failure()
@@ -811,9 +819,12 @@ cannot write all bytes, the helper waits for the child and returns the writer
 
 `ExitStatus::code()` returns `Some(code)` only for normal exits.
 `ExitStatus::signal()` returns `Some(signal)` only for signal termination.
-`code_or` and `signal_or` are convenience fallbacks for compact control flow,
-`exit_code()` returns the typed `ExitCode` form. `raw()` exposes the hosted
-wait-status bits for diagnostics.
+`ExitStatus::stopped()`/`is_stopped()` and `stop_signal()` expose stopped-child
+wait-status detail, `continued()`/`is_continued()` recognizes a continued
+status, and `core_dumped()`/`is_core_dumped()` reports the POSIX core-dump bit
+for signaled children. `code_or`, `signal_or`, and `stop_signal_or` are
+convenience fallbacks for compact control flow, `exit_code()` returns the typed
+`ExitCode` form. `raw()` exposes the hosted wait-status bits for diagnostics.
 
 `output_in(zone)` is the captured-output helper. It spawns the child with
 stdout and stderr redirected to pipes, drains both streams with descriptor

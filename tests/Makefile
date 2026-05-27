@@ -1610,6 +1610,10 @@ check-prelude: $(TARGET)
 	grep -F -q "std__process__Command8inherent11exit_status" $(BUILD_DIR)/prelude/std-process-exit-status.ll
 	grep -F -q "std__process__Child8inherent11wait_status" $(BUILD_DIR)/prelude/std-process-exit-status.ll
 	grep -F -q "std__process__ExitStatus8inherent6signal" $(BUILD_DIR)/prelude/std-process-exit-status.ll
+	grep -F -q "std__process__ExitStatus8inherent7stopped" $(BUILD_DIR)/prelude/std-process-exit-status.ll
+	grep -F -q "std__process__ExitStatus8inherent9continued" $(BUILD_DIR)/prelude/std-process-exit-status.ll
+	grep -F -q "std__process__ExitStatus8inherent11stop_signal" $(BUILD_DIR)/prelude/std-process-exit-status.ll
+	grep -F -q "std__process__ExitStatus8inherent11core_dumped" $(BUILD_DIR)/prelude/std-process-exit-status.ll
 	grep -F -q "std__process__ExitStatus8inherent7success" $(BUILD_DIR)/prelude/std-process-exit-status.ll
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-exit-status.ari -o $(BUILD_DIR)/prelude/std-process-exit-status.elf
 	$(BUILD_DIR)/prelude/std-process-exit-status.elf; code=$$?; test $$code -eq 83
