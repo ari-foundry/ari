@@ -693,6 +693,67 @@ pub fn format3[A: std::fmt::Display, B: std::fmt::Display, C: std::fmt::Display]
   return std::Ok<std::string::String, std::error::Error>(output);
 }
 
+pub fn format4[A: std::fmt::Display, B: std::fmt::Display, C: std::fmt::Display, D: std::fmt::Display](
+  zone: ref mut Zone,
+  template: string,
+  first: A,
+  second: B,
+  third: C,
+  fourth: D
+) -> std::Result[std::string::String, std::error::Error] {
+  let bytes = std::string::bytes(template);
+  var output = std::string::new(zone, bytes.len);
+  var index = 0;
+  var used = 0;
+  while index < bytes.len {
+    let byte = bytes[index];
+    if byte == '{' {
+      if index + 1 >= bytes.len {
+        return std::Err<std::string::String, std::error::Error>(std::fmt::template_error());
+      }
+      let following = bytes[index + 1];
+      if following == '{' {
+        output.push_in(zone, '{');
+        index = index + 2;
+      } else if following == '}' {
+        if used == 0 {
+          let first_text = first.format_in(zone);
+          output.append_bytes(zone, first_text.as_slice());
+        } else if used == 1 {
+          let second_text = second.format_in(zone);
+          output.append_bytes(zone, second_text.as_slice());
+        } else if used == 2 {
+          let third_text = third.format_in(zone);
+          output.append_bytes(zone, third_text.as_slice());
+        } else if used == 3 {
+          let fourth_text = fourth.format_in(zone);
+          output.append_bytes(zone, fourth_text.as_slice());
+        } else {
+          return std::Err<std::string::String, std::error::Error>(std::fmt::template_error());
+        }
+        used = used + 1;
+        index = index + 2;
+      } else {
+        return std::Err<std::string::String, std::error::Error>(std::fmt::template_error());
+      }
+    } else if byte == '}' {
+      if index + 1 < bytes.len && bytes[index + 1] == '}' {
+        output.push_in(zone, '}');
+        index = index + 2;
+      } else {
+        return std::Err<std::string::String, std::error::Error>(std::fmt::template_error());
+      }
+    } else {
+      output.push_in(zone, byte);
+      index = index + 1;
+    }
+  }
+  if used != 4 {
+    return std::Err<std::string::String, std::error::Error>(std::fmt::template_error());
+  }
+  return std::Ok<std::string::String, std::error::Error>(output);
+}
+
 pub fn concat2[A: std::fmt::Display, B: std::fmt::Display](
   zone: ref mut Zone,
   first: A,
@@ -715,6 +776,19 @@ pub fn concat3[A: std::fmt::Display, B: std::fmt::Display, C: std::fmt::Display]
   var output = std::fmt::concat2<A, B>(zone, first, second);
   let third_text = third.format_in(zone);
   output.append_bytes(zone, third_text.as_slice());
+  return output;
+}
+
+pub fn concat4[A: std::fmt::Display, B: std::fmt::Display, C: std::fmt::Display, D: std::fmt::Display](
+  zone: ref mut Zone,
+  first: A,
+  second: B,
+  third: C,
+  fourth: D
+) -> std::string::String {
+  var output = std::fmt::concat3<A, B, C>(zone, first, second, third);
+  let fourth_text = fourth.format_in(zone);
+  output.append_bytes(zone, fourth_text.as_slice());
   return output;
 }
 
@@ -784,6 +858,46 @@ pub fn write_concat3_bool[
   third: C
 ) -> bool {
   return std::fmt::write_concat3<W, A, B, C>(writer, zone, first, second, third).is_ok();
+}
+
+pub fn write_concat4[
+  W: std::io::Writer,
+  A: std::fmt::Display,
+  B: std::fmt::Display,
+  C: std::fmt::Display,
+  D: std::fmt::Display
+](
+  writer: ref mut W,
+  zone: ref mut Zone,
+  first: A,
+  second: B,
+  third: C,
+  fourth: D
+) -> std::Result[(), std::error::Error] {
+  match std::fmt::write_concat3<W, A, B, C>(writer, zone, first, second, third) {
+    std::Ok(_) => {}
+    std::Err(reason) => {
+      return std::Err<(), std::error::Error>(reason);
+    }
+  }
+  return std::fmt::write_value<W, D>(writer, zone, fourth);
+}
+
+pub fn write_concat4_bool[
+  W: std::io::Writer,
+  A: std::fmt::Display,
+  B: std::fmt::Display,
+  C: std::fmt::Display,
+  D: std::fmt::Display
+](
+  writer: ref mut W,
+  zone: ref mut Zone,
+  first: A,
+  second: B,
+  third: C,
+  fourth: D
+) -> bool {
+  return std::fmt::write_concat4<W, A, B, C, D>(writer, zone, first, second, third, fourth).is_ok();
 }
 
 pub fn write_format[
@@ -1026,6 +1140,108 @@ pub fn write_format3[
     }
   }
   if used != 3 {
+    return std::Err<(), std::error::Error>(std::fmt::template_error());
+  }
+  return std::Ok<(), std::error::Error>(());
+}
+
+pub fn write_format4[
+  W: std::io::Writer,
+  A: std::fmt::Display,
+  B: std::fmt::Display,
+  C: std::fmt::Display,
+  D: std::fmt::Display
+](
+  writer: ref mut W,
+  zone: ref mut Zone,
+  template: string,
+  first: A,
+  second: B,
+  third: C,
+  fourth: D
+) -> std::Result[(), std::error::Error] {
+  let bytes = std::string::bytes(template);
+  var index = 0;
+  var used = 0;
+  while index < bytes.len {
+    let byte = bytes[index];
+    if byte == '{' {
+      if index + 1 >= bytes.len {
+        return std::Err<(), std::error::Error>(std::fmt::template_error());
+      }
+      let following = bytes[index + 1];
+      if following == '{' {
+        match std::fmt::write_template_byte<W>(writer, '{') {
+          std::Err(f4_open_brace_reason) => {
+            return std::Err<(), std::error::Error>(f4_open_brace_reason);
+          }
+          std::Ok(_) => {}
+        }
+        index = index + 2;
+      } else if following == '}' {
+        if used == 0 {
+          let first_text = first.format_in(zone);
+          match std::io::write_all<W>(writer, first_text.as_slice()) {
+            std::Err(f4_first_reason) => {
+              return std::Err<(), std::error::Error>(f4_first_reason);
+            }
+            std::Ok(_) => {}
+          }
+        } else if used == 1 {
+          let second_text = second.format_in(zone);
+          match std::io::write_all<W>(writer, second_text.as_slice()) {
+            std::Err(f4_second_reason) => {
+              return std::Err<(), std::error::Error>(f4_second_reason);
+            }
+            std::Ok(_) => {}
+          }
+        } else if used == 2 {
+          let third_text = third.format_in(zone);
+          match std::io::write_all<W>(writer, third_text.as_slice()) {
+            std::Err(f4_third_reason) => {
+              return std::Err<(), std::error::Error>(f4_third_reason);
+            }
+            std::Ok(_) => {}
+          }
+        } else if used == 3 {
+          let fourth_text = fourth.format_in(zone);
+          match std::io::write_all<W>(writer, fourth_text.as_slice()) {
+            std::Err(f4_fourth_reason) => {
+              return std::Err<(), std::error::Error>(f4_fourth_reason);
+            }
+            std::Ok(_) => {}
+          }
+        } else {
+          return std::Err<(), std::error::Error>(std::fmt::template_error());
+        }
+        used = used + 1;
+        index = index + 2;
+      } else {
+        return std::Err<(), std::error::Error>(std::fmt::template_error());
+      }
+    } else if byte == '}' {
+      if index + 1 < bytes.len && bytes[index + 1] == '}' {
+        match std::fmt::write_template_byte<W>(writer, '}') {
+          std::Err(f4_close_brace_reason) => {
+            return std::Err<(), std::error::Error>(f4_close_brace_reason);
+          }
+          std::Ok(_) => {}
+        }
+        index = index + 2;
+      } else {
+        return std::Err<(), std::error::Error>(std::fmt::template_error());
+      }
+    } else {
+      match std::fmt::write_template_byte<W>(writer, byte) {
+        std::Err(f4_literal_reason) => {
+          return std::Err<(), std::error::Error>(f4_literal_reason);
+        }
+        std::Ok(_) => {}
+      }
+      index = index + 1;
+    }
+  }
+  if used != 4 {
     return std::Err<(), std::error::Error>(std::fmt::template_error());
   }
   return std::Ok<(), std::error::Error>(());

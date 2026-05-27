@@ -82,6 +82,12 @@ fn main() -> i64 {
     return 3;
   }
 
+  let command = fmt::concat4<string, string, string, i64>(ref mut zone, "arix ", "build ", "--jobs=", 4);
+  if !equals_text(command, "arix build --jobs=4") {
+    zone::destroy(zone);
+    return 27;
+  }
+
   let point = Point { x: 3, y: 5 };
   let display = fmt::format_value<Point>(ref mut zone, point);
   if !equals_text(display, "(3,5)") {
@@ -141,6 +147,22 @@ fn main() -> i64 {
             zone::destroy(zone);
             return 14;
           }
+          match fmt::format4<string, string, string, i64>(ref mut zone, "{} {} {}{}", "arix", "build", "--jobs=", 4) {
+            Ok(formatted4) => {
+              if !equals_text(formatted4, "arix build --jobs=4") {
+                zone::destroy(zone);
+                return 28;
+              }
+              if !fmt::format4<string, string, string, i64>(ref mut zone, "{} {} {}", "arix", "build", "--jobs=", 4).is_err() {
+                zone::destroy(zone);
+                return 29;
+              }
+            }
+            Err(_) => {
+              zone::destroy(zone);
+              return 30;
+            }
+          }
         }
         Err(_) => {
           zone::destroy(zone);
@@ -186,6 +208,67 @@ fn main() -> i64 {
        writer3.position == 4) {
     zone::destroy(zone);
     return 22;
+  }
+
+  var buffer6 = [0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8];
+  var writer6 = MemoryWriter { data: buffer6.as_slice(), position: 0 };
+  if !fmt::write_format4<MemoryWriter, string, string, string, i64>(
+    ref mut writer6,
+    ref mut zone,
+    "{} {} {}{}",
+    "arix",
+    "build",
+    "--jobs=",
+    4
+  ).is_ok() {
+    zone::destroy(zone);
+    return 31;
+  }
+  if !(buffer6[0] == 'a' && buffer6[1] == 'r' && buffer6[2] == 'i' && buffer6[3] == 'x' &&
+       buffer6[4] == ' ' && buffer6[5] == 'b' && buffer6[6] == 'u' && buffer6[7] == 'i' &&
+       buffer6[8] == 'l' && buffer6[9] == 'd' && buffer6[10] == ' ' && buffer6[11] == '-' &&
+       buffer6[12] == '-' && buffer6[13] == 'j' && buffer6[14] == 'o' && buffer6[15] == 'b' &&
+       buffer6[16] == 's' && buffer6[17] == '=' && buffer6[18] == '4' && writer6.position == 19) {
+    zone::destroy(zone);
+    return 32;
+  }
+
+  var buffer7 = [0u8, 0u8, 0u8, 0u8];
+  var writer7 = MemoryWriter { data: buffer7.as_slice(), position: 0 };
+  if !fmt::write_concat4<MemoryWriter, string, string, i64, string>(
+    ref mut writer7,
+    ref mut zone,
+    "a",
+    "b",
+    3,
+    "!"
+  ).is_ok() {
+    zone::destroy(zone);
+    return 33;
+  }
+  if !(buffer7[0] == 'a' && buffer7[1] == 'b' && buffer7[2] == '3' && buffer7[3] == '!' &&
+       writer7.position == 4) {
+    zone::destroy(zone);
+    return 34;
+  }
+
+  var buffer8 = [0u8, 0u8, 0u8, 0u8];
+  var writer8 = MemoryWriter { data: buffer8.as_slice(), position: 0 };
+  if !fmt::write_concat4_bool<MemoryWriter, string, string, i64, string>(
+    ref mut writer8,
+    ref mut zone,
+    "c",
+    "d",
+    5,
+    "?"
+  ) {
+    zone::destroy(zone);
+    return 35;
+  }
+  if !(buffer8[0] == 'c' && buffer8[1] == 'd' && buffer8[2] == '5' && buffer8[3] == '?' &&
+       writer8.position == 4) {
+    zone::destroy(zone);
+    return 36;
   }
 
   var buffer4 = [0u8, 0u8, 0u8, 0u8];
