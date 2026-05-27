@@ -5971,6 +5971,10 @@ check-structs: $(TARGET)
 	$(TARGET) tests/cases/structs/ok/struct-lowering.ari --emit-llvm $(BUILD_DIR)/structs/struct-lowering.ll
 	grep -q "insertvalue { i64, i64, i1 }" $(BUILD_DIR)/structs/struct-lowering.ll
 	grep -q "extractvalue { i64, i64, i1 }" $(BUILD_DIR)/structs/struct-lowering.ll
+	$(TARGET) tests/cases/structs/ok/union-by-constructor.ari -o $(BUILD_DIR)/structs/union-by-constructor.elf
+	$(BUILD_DIR)/structs/union-by-constructor.elf; code=$$?; test $$code -eq 7
+	$(TARGET) tests/cases/structs/ok/union-by-constructor.ari --emit-llvm $(BUILD_DIR)/structs/union-by-constructor.ll
+	grep -q "insertvalue" $(BUILD_DIR)/structs/union-by-constructor.ll
 	$(TARGET) tests/cases/traits/ok/impl-associated-new.ari --emit-llvm $(BUILD_DIR)/structs/impl-associated-new.ll
 	grep -q "_ARNv4impl5Point8inherent3new" $(BUILD_DIR)/structs/impl-associated-new.ll
 	grep -q "call { i64, i64 }" $(BUILD_DIR)/structs/impl-associated-new.ll
@@ -6034,6 +6038,10 @@ check-structs: $(TARGET)
 	grep -q "duplicate field 'x' in struct literal" $(BUILD_DIR)/structs/struct-literal-duplicate-field.err
 	if $(TARGET) tests/cases/structs/errors/struct-literal-field-type.ari -o $(BUILD_DIR)/structs/struct-literal-field-type.elf >$(BUILD_DIR)/structs/struct-literal-field-type.err 2>&1; then exit 1; fi
 	grep -q "type mismatch: expected i64, got bool" $(BUILD_DIR)/structs/struct-literal-field-type.err
+	if $(TARGET) tests/cases/structs/errors/union-by-constructor-unknown-arm.ari -o $(BUILD_DIR)/structs/union-by-constructor-unknown-arm.elf >$(BUILD_DIR)/structs/union-by-constructor-unknown-arm.err 2>&1; then exit 1; fi
+	grep -q "union by constructor arm 'record' is not declared for field 'fragment'" $(BUILD_DIR)/structs/union-by-constructor-unknown-arm.err
+	if $(TARGET) tests/cases/structs/errors/union-by-constructor-selector-mismatch.ari -o $(BUILD_DIR)/structs/union-by-constructor-selector-mismatch.elf >$(BUILD_DIR)/structs/union-by-constructor-selector-mismatch.err 2>&1; then exit 1; fi
+	grep -q "union by constructor arm 'block' does not match selector 'security.cipher_type' value 'stream'" $(BUILD_DIR)/structs/union-by-constructor-selector-mismatch.err
 	if $(TARGET) tests/cases/structs/errors/struct-field-access-non-struct.ari -o $(BUILD_DIR)/structs/struct-field-access-non-struct.elf >$(BUILD_DIR)/structs/struct-field-access-non-struct.err 2>&1; then exit 1; fi
 	grep -q "field access requires a struct value, got i64" $(BUILD_DIR)/structs/struct-field-access-non-struct.err
 	if $(TARGET) tests/cases/traits/errors/impl-associated-private.ari -o $(BUILD_DIR)/structs/impl-associated-private.elf >$(BUILD_DIR)/structs/impl-associated-private.err 2>&1; then exit 1; fi

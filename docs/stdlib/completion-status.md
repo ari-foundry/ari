@@ -95,7 +95,7 @@ tests, or CI matrix work.
 | `std::string` | Platform-specific `OsString` storage beyond the current POSIX byte wrapper, Unicode normalization/transcoding, grapheme iteration, and locale-sensitive case policy. A dedicated string-builder type is intentionally not planned for the basic slice. |
 | `std::parse` | Future taxonomy splits backed by real caller needs; the current basic slice already covers natural Result parsers, stable diagnostic names/messages, byte offsets, and finite/subnormal float boundary checks. |
 | `std::encoding` | Unicode normalization/transcoding and optional compression policy outside the core encoding module. |
-| `union by` language idea | Syntax is chosen, parser/AST tooling preserves selector and arm payload types, and sema now validates earlier-field selector roots, nested struct-field selector segments, unique arm names, arm payload type refs, and exact enum-case arm coverage before emitting a targeted lowering diagnostic. Construction, non-enum discriminant arm policy, active-arm drop, narrowing, layout, ABI, and positive execution support remain compiler work. |
+| `union by` language idea | Syntax is chosen, parser/AST tooling preserves selector and arm payload types, sema validates earlier-field selector roots, nested struct-field selector segments, unique arm names, arm payload type refs, and exact enum-case arm coverage, and enum-selector fields can now be constructed in struct literals with `field: arm => payload`. Same-literal selector mismatches are diagnosed. Non-enum discriminant arm policy, public active-arm narrowing, runtime selector consistency, active-arm drop diagnostics, and stable ABI naming remain compiler work. |
 | Structural capability parameters | Ordinary free functions now support single-method `fn save(x: has serialize() -> i64)` and grouped `fn save(x: has { serialize() -> i64, add(i64) -> i64 })` structural method requirements through hidden generics, call-site method checking, and normal static method monomorphization. Remaining work is generic impl-method satisfaction, reusable aliases, and stronger named-trait guidance. |
 
 ## Language Roadmap Interaction
@@ -111,14 +111,14 @@ fragment: union by security.cipher_type {
 }
 ```
 
-It remains unusable in executable programs. The parser and AST preserve the
-spelling for tooling, and sema validates that the selector is a stable
-earlier-field path with unique, type-resolved arms. If that selector is an
-enum, sema also requires arm names to exactly cover the enum cases before
-lowering points users back to ordinary enum payloads today. Future compiler
-work must define construction, non-enum discriminant policy, active-arm drop,
-narrowing after discriminant checks, layout, ABI, and positive execution
-support before stdlib code can depend on it.
+Enum-selector forms are now usable for construction in executable programs.
+The parser and AST preserve the spelling for tooling, and sema validates that
+the selector is a stable earlier-field path with unique, type-resolved arms. If
+that selector is an enum, sema also requires arm names to exactly cover the enum
+cases and lowers the field through internal enum storage. Future compiler work
+must define non-enum discriminant policy, runtime selector consistency,
+public active-arm narrowing after discriminant checks, active-arm drop
+diagnostics, and stable ABI naming before stdlib code should depend on it.
 
 Structural capability parameters are also language work rather than a stdlib
 API. The initial executable shape is:

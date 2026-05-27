@@ -3463,7 +3463,20 @@ private:
                 Token field = expect(TokenKind::Identifier, "expected struct literal field name");
                 expect(TokenKind::Colon, "expected : after struct literal field name");
                 field_names.push_back(field.text);
-                field_values.push_back(parse_expression());
+                if ((check(TokenKind::Identifier) ||
+                     check(TokenKind::KwDrop) ||
+                     check(TokenKind::KwForget) ||
+                     check(TokenKind::KwNext) ||
+                     check(TokenKind::KwVar)) &&
+                    peek(1).kind == TokenKind::FatArrow) {
+                    Token arm = expect_identifier_or_contextual_name_keyword("expected union by arm name");
+                    expect(TokenKind::FatArrow, "expected => after union by arm name");
+                    std::vector<ExprPtr> args;
+                    args.push_back(parse_expression());
+                    field_values.push_back(make_ast_call_expr(arm.loc, arm.text, nullptr, std::move(args)));
+                } else {
+                    field_values.push_back(parse_expression());
+                }
             } while (match(TokenKind::Comma) && !check(TokenKind::RBrace));
         }
         if (!match(TokenKind::RBrace)) {

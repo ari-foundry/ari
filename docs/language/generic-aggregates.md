@@ -76,16 +76,30 @@ show the field shape. During semantic validation, the selector must start from
 an earlier field in the same struct, each nested selector segment must resolve
 through a known struct field, arm names must be unique, and every arm payload
 type must resolve. When the selector type is an enum, every arm name must be an
-enum case and every enum case must have exactly one arm. After those checks
-pass, executable lowering still rejects the field with a targeted type
-diagnostic before layout or code generation.
-Model this with an ordinary enum payload today, and keep any external
-discriminant relationship explicit in constructor and validation code.
+enum case and every enum case must have exactly one arm.
 
-The compiler capability inventory tracks the reserved syntax as
-`union-by-fields`. Enum selector arm checking is implemented as a semantic
-diagnostic layer. Construction, active-arm drop, narrowing, layout, ABI, and
-positive execution support remain future compiler work.
+Enum-selector `union by` fields can be constructed in struct literals with the
+same arm names:
+
+```ari
+let packet = TLSCiphertext {
+  content_type: application_data,
+  version: tls12,
+  length: 7 as u16,
+  security: SecurityParameters { cipher_type: stream },
+  fragment: stream => GenericStreamCipher { value: 41 },
+};
+```
+
+The field payload is checked against the selected arm's payload type. The
+compiler lowers the field to internal enum storage, so the aggregate can be
+laid out and emitted by the existing enum backend. When the selector value is
+statically visible in the same struct literal, the constructor arm must match
+that value. This is intentionally still an early executable slice: non-enum
+selector policies, public narrowing/match syntax for reading the active arm,
+selector-mutation rules, and active-arm drop diagnostics remain compiler work.
+
+The compiler capability inventory tracks this as `union-by-fields`.
 
 ## Substitution
 

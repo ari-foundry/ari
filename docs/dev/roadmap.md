@@ -92,21 +92,23 @@ The spelling is `union by` for the discriminant link and `=>` arms for the
 alternatives. The union field's active payload type is determined by the named
 discriminant value.
 
-This is a reserved roadmap spelling, not a usable feature yet. The parser
-builds a `TypeRef` for `union by` that records the selector path and each arm's
-payload type, so syntax/declaration tooling can inspect the shape. Sema now
-validates that the selector starts from an earlier struct field, nested
-selector segments resolve through known struct fields, arm names are unique,
-arm payload types resolve, and enum selectors use arms that exactly cover the
-enum cases. It still rejects the field with a targeted type diagnostic before
-executable type lowering.
+This is no longer syntax-only. The parser builds a `TypeRef` for `union by`
+that records the selector path and each arm's payload type, so
+syntax/declaration tooling can inspect the shape. Sema validates that the
+selector starts from an earlier struct field, nested selector segments resolve
+through known struct fields, arm names are unique, arm payload types resolve,
+and enum selectors use arms that exactly cover the enum cases. For enum
+selectors, the compiler lowers the field to hidden enum storage and accepts
+struct literal construction with `fragment: stream => payload`. When the
+selector value is visible in the same struct literal, the constructor arm must
+match it.
 
 It should not replace ordinary `enum` ADTs, unchecked C unions, or `match`. A
-future design must specify construction rules, arm checking against concrete
-non-enum discriminant values, ownership/drop for the active arm only,
-borrowing/narrowing after matching the discriminant, layout/ABI behavior, and
-positive execution diagnostics once the selector model becomes usable. The
-compiler capability inventory tracks this as `union-by-fields`.
+future design must specify arm checking against concrete non-enum discriminant
+values, public active-arm borrowing/narrowing after matching the discriminant,
+runtime selector consistency policy, selector mutation policy, active-arm drop
+diagnostics, and stable ABI naming.
+The compiler capability inventory tracks this as `union-by-fields`.
 
 ## What Not To Track Here
 

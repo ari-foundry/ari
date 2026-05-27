@@ -5213,6 +5213,124 @@ private:
         throw error;
     }
 
+    static std::string union_by_synthetic_enum_name(const std::string& struct_name,
+                                                    const std::string& field_name) {
+        return struct_name + "::$union_by$" + field_name;
+    }
+
+    static std::string union_by_synthetic_case_name(const std::string& enum_name,
+                                                    const std::string& arm_name) {
+        return enum_name + "::" + arm_name;
+    }
+
+    void register_union_by_synthetic_enum_case(const EnumInfo& enum_info,
+                                               const EnumInfo::Case& item) {
+        EnumCaseInfo info;
+        info.enum_name = enum_info.name;
+        info.enum_type = enum_info.type;
+        info.name = item.qualified_name;
+        info.module_name = enum_info.module_name;
+        info.tag = item.tag;
+        info.payload_refs = item.payloads;
+        info.generic_names = enum_info.generic_names;
+        info.is_generic = enum_info.generic_arity != 0;
+        info.loc = item.loc;
+
+        if (info.is_generic) {
+            for (const auto& payload : item.payloads) {
+                info.payloads.push_back(generic_enum_payload_placeholder(payload));
+            }
+        } else {
+            info = specialize_enum_case_info(item.loc, info, {});
+        }
+
+        auto inserted = enum_cases_.emplace(info.name, std::move(info));
+        if (!inserted.second) {
+            fail_duplicate_declaration(
+                item.loc,
+                inserted.first->second.loc,
+                "duplicate union by case constructor '" + item.qualified_name + "'",
+                "previous union by case constructor '" + item.qualified_name + "'",
+                "rename the union by field or its arm");
+        }
+    }
+
+    const EnumInfo& ensure_union_by_synthetic_enum_info(const StructDecl& decl,
+                                                        const StructField& field) {
+        const std::string enum_name = union_by_synthetic_enum_name(decl.name, field.name);
+        auto existing = enums_.find(enum_name);
+        if (existing != enums_.end()) return existing->second;
+
+        const TypeRef& ast_type = field.type;
+        IrType enum_type;
+        enum_type.qualifier = TypeQualifier::Value;
+        enum_type.primitive = IrPrimitiveKind::Enum;
+        enum_type.name = enum_name;
+        enum_type.loc = ast_type.loc;
+
+        EnumInfo info;
+        info.name = enum_name;
+        info.module_name = decl.module_name;
+        info.type = enum_type;
+        info.loc = ast_type.loc;
+        info.generic_arity = decl.generics.size();
+        info.is_public = false;
+        for (const auto& generic : decl.generics) info.generic_names.push_back(generic.name);
+
+        for (std::size_t i = 0; i < ast_type.union_by_arm_names.size(); ++i) {
+            EnumInfo::Case case_info;
+            case_info.name = ast_type.union_by_arm_names[i];
+            case_info.qualified_name = union_by_synthetic_case_name(enum_name, case_info.name);
+            case_info.tag = static_cast<std::uint32_t>(i);
+            case_info.loc = i < ast_type.union_by_arm_locs.size()
+                ? ast_type.union_by_arm_locs[i]
+                : ast_type.loc;
+            if (i < ast_type.union_by_arm_types.size()) {
+                case_info.payloads.push_back(ast_type.union_by_arm_types[i]);
+            }
+            info.case_names.push_back(case_info.name);
+            info.cases.push_back(std::move(case_info));
+        }
+
+        auto inserted = enums_.emplace(enum_name, std::move(info));
+        if (!inserted.second) {
+            fail(ast_type.loc, "duplicate union by storage enum '" + enum_name + "'");
+        }
+
+        EnumInfo& stored = inserted.first->second;
+        if (stored.generic_arity == 0) {
+            stored.type = resolve_enum_type_application(stored.loc, stored, {});
+        }
+        for (const auto& item : stored.cases) {
+            register_union_by_synthetic_enum_case(stored, item);
+        }
+        return stored;
+    }
+
+    IrType resolve_union_by_field_storage_type(SourceLocation loc,
+                                               const StructInfo& info,
+                                               const StructInfo::Field& field,
+                                               const std::vector<IrType>& struct_type_args) {
+        const std::string enum_name = union_by_synthetic_enum_name(info.name, field.name);
+        auto enum_found = enums_.find(enum_name);
+        if (enum_found == enums_.end()) {
+            fail(loc,
+                 "internal error: missing storage enum for union by field '" +
+                     field.name + "' in struct '" + info.name + "'");
+        }
+        return resolve_enum_type_application(loc, enum_found->second, struct_type_args);
+    }
+
+    IrType resolve_struct_field_storage_type(SourceLocation loc,
+                                             const StructInfo& info,
+                                             const StructInfo::Field& field,
+                                             const std::vector<IrType>& struct_type_args) {
+        if (field.type.is_union_by) {
+            return resolve_union_by_field_storage_type(loc, info, field, struct_type_args);
+        }
+        return resolve_executable_type(field.type);
+    }
+
     void validate_union_by_arms(const TypeRef& ast_type) {
         std::map<std::string, SourceLocation> seen;
         for (std::size_t i = 0; i < ast_type.union_by_arm_names.size(); ++i) {
@@ -5301,7 +5419,22 @@ private:
         validate_union_by_arms(ast_type);
         IrType selector_type = validate_union_by_selector(decl, field_index, field, ast_type);
         validate_union_by_enum_arms(ast_type, selector_type);
-        fail_union_by_lowering_after_validation(decl, field, ast_type, selector_type);
+        if (selector_type.primitive != IrPrimitiveKind::Enum) {
+            fail_union_by_lowering_after_validation(decl, field, ast_type, selector_type);
+        }
+        const EnumInfo& storage = ensure_union_by_synthetic_enum_info(decl, field);
+        std::vector<IrType> storage_type_args;
+        storage_type_args.reserve(decl.generics.size());
+        for (const auto& generic : decl.generics) {
+            auto found = current_type_substitutions_.find(generic.name);
+            if (found != current_type_substitutions_.end()) {
+                storage_type_args.push_back(found->second);
+            }
+        }
+        IrType storage_type = storage.generic_arity == 0
+            ? storage.type
+            : resolve_enum_type_application(ast_type.loc, storage, storage_type_args);
+        require_nonlocal_root_vector_storage(field.loc, storage_type, "a union by struct field");
     }
 
     IrType resolve_nullable_type(const TypeRef& ast_type) {
@@ -5751,7 +5884,8 @@ private:
                 for (const auto& item : substitutions) current_type_substitutions_.emplace(item.first, item.second);
                 for (const auto& field : info.fields) {
                     type.field_names.push_back(field.name);
-                    type.field_types.push_back(resolve_executable_type(field.type));
+                    type.field_types.push_back(
+                        resolve_struct_field_storage_type(field.loc, info, field, type.args));
                     type.field_mutable.push_back(field.mutable_field);
                 }
                 current_module_name_ = previous_module;
@@ -20155,7 +20289,8 @@ private:
         for (const auto& item : substitutions) current_type_substitutions_.emplace(item.first, item.second);
         for (const auto& field : info.fields) {
             type.field_names.push_back(field.name);
-            type.field_types.push_back(resolve_executable_type(field.type));
+            type.field_types.push_back(
+                resolve_struct_field_storage_type(field.loc, info, field, type.args));
             type.field_mutable.push_back(field.mutable_field);
         }
         current_type_substitutions_ = std::move(previous_substitutions);
@@ -20407,6 +20542,203 @@ private:
         return make_ir_tuple_expr(expr.loc, std::move(tuple_type), std::move(elements));
     }
 
+    [[noreturn]] void fail_union_by_constructor_shape(SourceLocation loc,
+                                                      const StructInfo& info,
+                                                      const StructInfo::Field& field) const {
+        CompileError error(std::move(loc),
+                           "union by field '" + field.name +
+                               "' in struct '" + info.name +
+                               "' must be constructed with an arm payload");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "write the field as `" + field.name + ": arm => payload`, for example `" +
+                field.name + ": stream => StreamPayload { ... }`",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] void fail_unknown_union_by_constructor_arm(SourceLocation loc,
+                                                            const StructInfo& info,
+                                                            const StructInfo::Field& field,
+                                                            const std::string& arm_name) const {
+        CompileError error(std::move(loc),
+                           "union by constructor arm '" + arm_name +
+                               "' is not declared for field '" + field.name +
+                               "' in struct '" + info.name + "'");
+        std::string arms;
+        for (std::size_t i = 0; i < field.type.union_by_arm_names.size(); ++i) {
+            if (i > 0) arms += ", ";
+            arms += field.type.union_by_arm_names[i];
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "declared arms for '" + field.name + "': " + arms,
+            DiagnosticNoteKind::Note});
+        throw error;
+    }
+
+    EnumCaseInfo union_by_constructor_case_info(SourceLocation loc,
+                                                const StructInfo& info,
+                                                const StructInfo::Field& field,
+                                                const IrType& field_type,
+                                                const std::string& arm_name) {
+        if (field_type.primitive != IrPrimitiveKind::Enum) {
+            fail(loc,
+                 "internal error: union by field '" + field.name +
+                     "' in struct '" + info.name + "' did not lower to enum storage");
+        }
+        auto enum_found = enums_.find(field_type.name);
+        if (enum_found == enums_.end()) {
+            fail(loc,
+                 "internal error: unknown union by storage enum '" + field_type.name + "'");
+        }
+        for (const auto& item : enum_found->second.cases) {
+            if (item.name != arm_name) continue;
+            auto case_found = enum_cases_.find(item.qualified_name);
+            if (case_found == enum_cases_.end()) {
+                fail(loc,
+                     "internal error: unknown union by case '" + item.qualified_name + "'");
+            }
+            return enum_case_for_match_value(loc, case_found->second, field_type);
+        }
+        fail_unknown_union_by_constructor_arm(loc, info, field, arm_name);
+    }
+
+    std::optional<std::string> static_enum_case_arm_name(const Expr& expr,
+                                                         const IrType& enum_type) const {
+        if (enum_type.primitive != IrPrimitiveKind::Enum) return std::nullopt;
+        std::string candidate;
+        if (expr.kind == ExprKind::Name) {
+            candidate = expr.name;
+        } else if (expr.kind == ExprKind::Call &&
+                   !expr_operand(expr) &&
+                   expr.args.empty() &&
+                   expr_type_args(expr).empty()) {
+            candidate = expr.name;
+        } else {
+            return std::nullopt;
+        }
+
+        std::string case_name = resolve_enum_case_name(candidate);
+        auto case_found = enum_cases_.find(case_name);
+        if (case_found == enum_cases_.end()) return std::nullopt;
+        if (case_found->second.enum_name != enum_type.name) return std::nullopt;
+        return unqualified_name(case_found->second.name);
+    }
+
+    static const Expr* struct_literal_field_value(const Expr& expr,
+                                                  const std::string& field_name) {
+        if (expr.kind != ExprKind::StructLiteral) return nullptr;
+        const ExprFieldNames& names = expr_field_names(expr);
+        for (std::size_t i = 0; i < names.size(); ++i) {
+            if (names[i] == field_name && i < expr.args.size()) return expr.args[i].get();
+        }
+        return nullptr;
+    }
+
+    std::optional<std::string> static_union_by_selector_arm(
+        const TypeRef& ast_type,
+        const std::map<std::string, const Expr*>& struct_literal_values,
+        const IrType& struct_type
+    ) const {
+        if (ast_type.union_by_selector.empty()) return std::nullopt;
+        const std::string& root_name = ast_type.union_by_selector.front();
+
+        std::size_t root_index = struct_type.field_names.size();
+        for (std::size_t i = 0; i < struct_type.field_names.size(); ++i) {
+            if (struct_type.field_names[i] == root_name) {
+                root_index = i;
+                break;
+            }
+        }
+        if (root_index == struct_type.field_names.size()) return std::nullopt;
+
+        auto root_expr = struct_literal_values.find(root_name);
+        if (root_expr == struct_literal_values.end()) return std::nullopt;
+
+        const Expr* current_expr = root_expr->second;
+        IrType current_type = struct_type.field_types[root_index];
+        for (std::size_t i = 1; i < ast_type.union_by_selector.size(); ++i) {
+            if (!current_expr || current_type.primitive != IrPrimitiveKind::Struct) {
+                return std::nullopt;
+            }
+            const std::string& segment = ast_type.union_by_selector[i];
+            std::size_t field_index = current_type.field_names.size();
+            for (std::size_t field_i = 0; field_i < current_type.field_names.size(); ++field_i) {
+                if (current_type.field_names[field_i] == segment) {
+                    field_index = field_i;
+                    break;
+                }
+            }
+            if (field_index == current_type.field_names.size()) return std::nullopt;
+            current_expr = struct_literal_field_value(*current_expr, segment);
+            current_type = current_type.field_types[field_index];
+        }
+        if (!current_expr) return std::nullopt;
+        return static_enum_case_arm_name(*current_expr, current_type);
+    }
+
+    [[noreturn]] void fail_union_by_constructor_selector_mismatch(SourceLocation loc,
+                                                                  const StructInfo& info,
+                                                                  const StructInfo::Field& field,
+                                                                  const std::string& selector_arm,
+                                                                  const std::string& constructor_arm) const {
+        CompileError error(std::move(loc),
+                           "union by constructor arm '" + constructor_arm +
+                               "' does not match selector '" +
+                               union_by_selector_text(field.type) + "' value '" +
+                               selector_arm + "'");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "field '" + field.name + "' in struct '" + info.name +
+                "' follows selector path '" + union_by_selector_text(field.type) + "'",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "use arm '" + selector_arm + "' or change the selector value",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    IrExprPtr check_union_by_field_constructor(const Expr& value_expr,
+                                               const StructInfo& info,
+                                               const StructInfo::Field& field,
+                                               const IrType& field_type,
+                                               const std::map<std::string, const Expr*>& struct_literal_values,
+                                               const IrType& struct_type) {
+        if (value_expr.kind != ExprKind::Call ||
+            expr_operand(value_expr) ||
+            value_expr.args.size() != 1 ||
+            !expr_type_args(value_expr).empty()) {
+            fail_union_by_constructor_shape(value_expr.loc, info, field);
+        }
+
+        EnumCaseInfo case_info = union_by_constructor_case_info(
+            value_expr.loc,
+            info,
+            field,
+            field_type,
+            value_expr.name);
+        if (case_info.payloads.size() != 1) {
+            fail_union_by_constructor_shape(value_expr.loc, info, field);
+        }
+        if (auto selector_arm =
+                static_union_by_selector_arm(field.type, struct_literal_values, struct_type)) {
+            if (*selector_arm != value_expr.name) {
+                fail_union_by_constructor_selector_mismatch(
+                    value_expr.loc,
+                    info,
+                    field,
+                    *selector_arm,
+                    value_expr.name);
+            }
+        }
+
+        std::vector<IrExprPtr> args;
+        args.push_back(check_expr_maybe_expected(*value_expr.args[0], &case_info.payloads[0]));
+        return make_enum_construct(value_expr.loc, case_info, std::move(args));
+    }
+
     IrExprPtr check_struct_literal(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
         (void)lowered;
         std::string struct_name = resolve_struct_type_name(expr.name);
@@ -20469,7 +20801,23 @@ private:
             }
             const IrType* field_expected = has_struct_type ? &struct_type.field_types[i] : nullptr;
             std::size_t field_borrow_mark = temporary_borrow_mark();
-            lowered_values.push_back(check_expr_maybe_expected(*found->second, field_expected));
+            if (field.type.is_union_by) {
+                if (!field_expected) {
+                    fail(found->second->loc,
+                         "generic struct literal field '" + field.name +
+                             "' needs explicit struct type arguments or an expected struct type before union by construction");
+                }
+                lowered_values.push_back(
+                    check_union_by_field_constructor(
+                        *found->second,
+                        info,
+                        field,
+                        *field_expected,
+                        values,
+                        struct_type));
+            } else {
+                lowered_values.push_back(check_expr_maybe_expected(*found->second, field_expected));
+            }
             prefix_temporary_borrow_targets(field_borrow_mark, std::to_string(i));
         }
 
