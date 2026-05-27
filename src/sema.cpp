@@ -20827,6 +20827,18 @@ private:
         SourceLocation loc;
     };
 
+    using UnionBySelectorInferenceMap = std::map<std::string, InferredUnionBySelector>;
+
+    static std::string union_by_selector_key(const std::vector<std::string>& selector,
+                                             std::size_t start = 0) {
+        std::string text;
+        for (std::size_t i = start; i < selector.size(); ++i) {
+            if (!text.empty()) text += ".";
+            text += selector[i];
+        }
+        return text;
+    }
+
     static std::optional<std::string> union_by_constructor_arm_name(const Expr& value_expr) {
         if (value_expr.kind != ExprKind::Call ||
             expr_operand(value_expr) ||
@@ -20865,13 +20877,42 @@ private:
         throw error;
     }
 
-    std::map<std::string, InferredUnionBySelector> infer_direct_union_by_selectors(
-        const StructInfo& info,
-        const std::map<std::string, const Expr*>& struct_literal_values
+    void add_union_by_selector_inference(
+        UnionBySelectorInferenceMap& inferred,
+        const std::string& selector_name,
+        const InferredUnionBySelector& current
     ) const {
-        std::map<std::string, InferredUnionBySelector> inferred;
+        auto inserted = inferred.emplace(selector_name, current);
+        if (!inserted.second && inserted.first->second.arm_name != current.arm_name) {
+            fail_union_by_inferred_selector_conflict(
+                current.loc,
+                selector_name,
+                inserted.first->second,
+                current);
+        }
+    }
+
+    static UnionBySelectorInferenceMap selector_inferences_for_child(
+        const UnionBySelectorInferenceMap& inferred,
+        const std::string& field_name
+    ) {
+        UnionBySelectorInferenceMap child;
+        const std::string prefix = field_name + ".";
+        for (const auto& [selector_name, inference] : inferred) {
+            if (selector_name.size() <= prefix.size()) continue;
+            if (selector_name.compare(0, prefix.size(), prefix) != 0) continue;
+            child.emplace(selector_name.substr(prefix.size()), inference);
+        }
+        return child;
+    }
+
+    void infer_union_by_selectors(
+        const StructInfo& info,
+        const std::map<std::string, const Expr*>& struct_literal_values,
+        UnionBySelectorInferenceMap& inferred
+    ) const {
         for (const StructInfo::Field& field : info.fields) {
-            if (!field.type.is_union_by || field.type.union_by_selector.size() != 1) continue;
+            if (!field.type.is_union_by || field.type.union_by_selector.empty()) continue;
 
             auto value_found = struct_literal_values.find(field.name);
             if (value_found == struct_literal_values.end()) continue;
@@ -20879,40 +20920,72 @@ private:
             auto arm_name = union_by_constructor_arm_name(*value_found->second);
             if (!arm_name) continue;
 
-            const std::string& selector_name = field.type.union_by_selector.front();
+            const std::string selector_name = union_by_selector_key(field.type.union_by_selector);
             InferredUnionBySelector current{*arm_name, field.name, value_found->second->loc};
-            auto inserted = inferred.emplace(selector_name, current);
-            if (!inserted.second && inserted.first->second.arm_name != current.arm_name) {
-                fail_union_by_inferred_selector_conflict(
-                    current.loc,
-                    selector_name,
-                    inserted.first->second,
-                    current);
-            }
+            add_union_by_selector_inference(inferred, selector_name, current);
         }
-        return inferred;
     }
 
     IrExprPtr make_inferred_union_by_selector_value(SourceLocation loc,
-                                                    const StructInfo& info,
-                                                    const StructInfo::Field& selector_field,
+                                                    const std::string& container_name,
+                                                    const std::string& selector_field_name,
                                                     const IrType& selector_type,
                                                     const InferredUnionBySelector& inferred) {
         auto case_info = try_enum_case_for_match_value(loc, inferred.arm_name, selector_type);
         if (!case_info || case_info->enum_name != selector_type.name) {
             fail(loc,
                  "union by constructor arm '" + inferred.arm_name +
-                     "' cannot infer selector field '" + selector_field.name +
-                     "' in struct '" + info.name + "'");
+                     "' cannot infer selector field '" + selector_field_name +
+                     "' in struct '" + container_name + "'");
         }
         require_enum_case_access(loc, *case_info);
         if (!case_info->payloads.empty()) {
             fail(loc,
-                 "union by selector field '" + selector_field.name +
+                 "union by selector field '" + selector_field_name +
                      "' cannot be inferred from payload-carrying enum case '" +
                      inferred.arm_name + "'");
         }
         return make_enum_construct(loc, *case_info, {});
+    }
+
+    std::optional<IrExprPtr> try_make_inferred_selector_struct_value(
+        SourceLocation loc,
+        const IrType& struct_type,
+        const UnionBySelectorInferenceMap& inferred
+    ) {
+        if (struct_type.primitive != IrPrimitiveKind::Struct) return std::nullopt;
+
+        std::vector<IrExprPtr> elements;
+        elements.reserve(struct_type.field_names.size());
+        for (std::size_t i = 0; i < struct_type.field_names.size(); ++i) {
+            const std::string& field_name = struct_type.field_names[i];
+            const IrType& field_type = struct_type.field_types[i];
+
+            auto direct = inferred.find(field_name);
+            if (direct != inferred.end()) {
+                if (field_type.primitive != IrPrimitiveKind::Enum) return std::nullopt;
+                elements.push_back(
+                    make_inferred_union_by_selector_value(
+                        direct->second.loc,
+                        type_name(struct_type),
+                        field_name,
+                        field_type,
+                        direct->second));
+                continue;
+            }
+
+            UnionBySelectorInferenceMap child = selector_inferences_for_child(inferred, field_name);
+            if (!child.empty()) {
+                auto value = try_make_inferred_selector_struct_value(loc, field_type, child);
+                if (!value) return std::nullopt;
+                elements.push_back(std::move(*value));
+                continue;
+            }
+
+            return std::nullopt;
+        }
+
+        return make_ir_tuple_expr(loc, struct_type, std::move(elements));
     }
 
     IrExprPtr check_union_by_field_constructor(const Expr& value_expr,
@@ -20954,7 +21027,10 @@ private:
         return make_enum_construct(value_expr.loc, case_info, std::move(args));
     }
 
-    IrExprPtr check_struct_literal(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
+    IrExprPtr check_struct_literal(const Expr& expr,
+                                   IrExprPtr lowered,
+                                   const IrType* expected = nullptr,
+                                   const UnionBySelectorInferenceMap* outer_inferred_selectors = nullptr) {
         (void)lowered;
         std::string struct_name = resolve_struct_type_name(expr.name);
         auto struct_found = structs_.find(struct_name);
@@ -21006,36 +21082,53 @@ private:
             has_struct_type = true;
         }
 
-        std::map<std::string, InferredUnionBySelector> inferred_selectors;
+        UnionBySelectorInferenceMap inferred_selectors;
+        if (outer_inferred_selectors) {
+            for (const auto& [selector_name, inferred] : *outer_inferred_selectors) {
+                add_union_by_selector_inference(inferred_selectors, selector_name, inferred);
+            }
+        }
         if (has_struct_type) {
-            inferred_selectors = infer_direct_union_by_selectors(info, values);
+            infer_union_by_selectors(info, values, inferred_selectors);
         }
 
         std::vector<IrExprPtr> lowered_values;
         lowered_values.reserve(info.fields.size());
         for (std::size_t i = 0; i < info.fields.size(); ++i) {
             const auto& field = info.fields[i];
+            const IrType* field_expected = has_struct_type ? &struct_type.field_types[i] : nullptr;
+            UnionBySelectorInferenceMap nested_inferred =
+                selector_inferences_for_child(inferred_selectors, field.name);
             auto found = values.find(field.name);
             if (found == values.end()) {
                 if (has_struct_type) {
                     auto inferred = inferred_selectors.find(field.name);
                     if (inferred != inferred_selectors.end()) {
-                        const IrType& selector_type = struct_type.field_types[i];
+                        const IrType& selector_type = *field_expected;
                         if (selector_type.primitive == IrPrimitiveKind::Enum) {
                             lowered_values.push_back(
                                 make_inferred_union_by_selector_value(
                                     inferred->second.loc,
-                                    info,
-                                    field,
+                                    info.name,
+                                    field.name,
                                     selector_type,
                                     inferred->second));
+                            continue;
+                        }
+                    }
+                    if (!nested_inferred.empty() && field_expected) {
+                        auto nested_value = try_make_inferred_selector_struct_value(
+                            expr.loc,
+                            *field_expected,
+                            nested_inferred);
+                        if (nested_value) {
+                            lowered_values.push_back(std::move(*nested_value));
                             continue;
                         }
                     }
                 }
                 fail_struct_literal_missing_field(expr.loc, info, field);
             }
-            const IrType* field_expected = has_struct_type ? &struct_type.field_types[i] : nullptr;
             std::size_t field_borrow_mark = temporary_borrow_mark();
             if (field.type.is_union_by) {
                 if (!field_expected) {
@@ -21052,7 +21145,20 @@ private:
                         values,
                         struct_type));
             } else {
-                lowered_values.push_back(check_expr_maybe_expected(*found->second, field_expected));
+                if (field_expected &&
+                    found->second->kind == ExprKind::StructLiteral &&
+                    !nested_inferred.empty()) {
+                    auto nested_lowered = std::make_unique<IrExpr>();
+                    nested_lowered->loc = found->second->loc;
+                    lowered_values.push_back(
+                        check_struct_literal(
+                            *found->second,
+                            std::move(nested_lowered),
+                            field_expected,
+                            &nested_inferred));
+                } else {
+                    lowered_values.push_back(check_expr_maybe_expected(*found->second, field_expected));
+                }
             }
             prefix_temporary_borrow_targets(field_borrow_mark, std::to_string(i));
         }

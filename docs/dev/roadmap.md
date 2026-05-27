@@ -103,9 +103,11 @@ and enum selectors use arms that exactly cover the enum cases. For enum
 selectors, the compiler lowers the field to hidden enum storage and accepts
 struct literal construction with `fragment: stream => payload`. When the
 selector value is visible in the same struct literal, the constructor arm must
-match it. For a direct enum selector field such as `kind`, the selector field
-may also be omitted and inferred from `fragment: stream => payload`; if multiple
-union fields share that omitted selector, their constructor arms must agree.
+match it. Direct enum selector fields such as `kind`, and nested selector paths
+such as `security.cipher_type` when their omitted intermediate struct value can
+be synthesized from the selector alone, may also be omitted and inferred from
+`fragment: stream => payload`; if multiple union fields share that omitted
+selector, their constructor arms must agree.
 The field value can also be matched directly with the same arm names, for
 example `match packet.fragment { stream(stream_payload) => ... }`; pattern
 resolution prefers the subject enum type before global case names so `union by`
@@ -116,8 +118,9 @@ whole struct when the discriminant and active payload must change together.
 It should not replace ordinary `enum` ADTs, unchecked C unions, or `match`. A
 future design must specify arm checking against concrete non-enum discriminant
 values, public active-arm borrowing/narrowing outside direct field matches,
-runtime selector consistency policy beyond direct local assignments, nested
-selector inference, active-arm drop diagnostics, and stable ABI naming.
+runtime selector consistency policy beyond direct local assignments, selector
+inference through intermediate structs with unrelated required fields,
+active-arm drop diagnostics, and stable ABI naming.
 The compiler capability inventory tracks this as `union-by-fields`.
 
 ## What Not To Track Here

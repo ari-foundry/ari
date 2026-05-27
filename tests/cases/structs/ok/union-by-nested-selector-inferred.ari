@@ -1,0 +1,42 @@
+enum CipherType {
+  stream,
+  block,
+}
+
+struct SecurityParameters {
+  cipher_type: CipherType,
+}
+
+struct StreamPayload {
+  value: i64,
+}
+
+struct BlockPayload {
+  value: i64,
+}
+
+struct TLSCiphertext {
+  security: SecurityParameters,
+  fragment: union by security.cipher_type {
+    stream => StreamPayload,
+    block => BlockPayload,
+  },
+}
+
+fn score(packet: TLSCiphertext) -> i64 {
+  return match packet.fragment {
+    stream(stream_payload) => stream_payload.value + 1,
+    block(block_payload) => block_payload.value + 2,
+  };
+}
+
+fn main() -> i64 {
+  let omitted_root = TLSCiphertext {
+    fragment: stream => StreamPayload { value: 41 },
+  };
+  let omitted_leaf = TLSCiphertext {
+    security: SecurityParameters {},
+    fragment: block => BlockPayload { value: 40 },
+  };
+  return score(omitted_root) + score(omitted_leaf);
+}

@@ -114,10 +114,33 @@ let packet = Packet {
 };
 ```
 
-The compiler fills `kind` with the enum case named by the arm. If more than one
-`union by` field uses the same omitted selector, all of their constructor arms
-must infer the same selector case. Nested selectors such as
-`security.cipher_type` are still written explicitly.
+The compiler fills `kind` with the enum case named by the arm. Nested selector
+paths can be inferred the same way when the omitted selector value can be built
+from the constructor arm:
+
+```ari
+struct SecurityParameters {
+  cipher_type: CipherType,
+}
+
+struct TLSCiphertext {
+  security: SecurityParameters,
+  fragment: union by security.cipher_type {
+    stream => StreamPayload,
+    block => BlockPayload,
+  },
+}
+
+let packet = TLSCiphertext {
+  fragment: stream => StreamPayload { value: 41 },
+};
+```
+
+Here the compiler synthesizes `security: SecurityParameters { cipher_type:
+stream }`. If the intermediate struct has other required fields, write that
+struct field explicitly and leave only the selector field for inference. If more
+than one `union by` field uses the same omitted selector, all of their
+constructor arms must infer the same selector case.
 
 Read the active arm by matching the field value. The pattern arm names are the
 same names declared in the `union by` field, and the payload binding has the
@@ -156,10 +179,11 @@ packet = TLSCiphertext {
 ```
 
 This is intentionally still an early executable slice: non-enum selector
-policies, nested selector inference, active-arm mutation beyond direct
-reconstruction, active-arm drop diagnostics, and stable ABI naming remain
-compiler work. Use ordinary `enum` ADTs when the discriminant is not an
-existing product field or when the type must be part of a stable public ABI.
+policies, selector inference through intermediate structs that need unrelated
+required fields, active-arm mutation beyond direct reconstruction, active-arm
+drop diagnostics, and stable ABI naming remain compiler work. Use ordinary
+`enum` ADTs when the discriminant is not an existing product field or when the
+type must be part of a stable public ABI.
 
 The compiler capability inventory tracks this as `union-by-fields`.
 
