@@ -96,6 +96,15 @@ pub struct Barrier {
   mut generation: AtomicI64,
 }
 
+pub struct Semaphore {
+  mut permits: AtomicI64,
+}
+
+pub struct SemaphorePermit {
+  semaphore: ptr std::sync::Semaphore,
+  mut active: bool,
+}
+
 pub struct OnceLock[T] {
   mut state: AtomicI64,
   mut value: std::Option[T],
@@ -1212,6 +1221,82 @@ pub impl std::sync::Barrier {
 
   fn parties(self: ref Self) -> i64 {
     return self.parties;
+  }
+}
+
+pub impl std::sync::Semaphore {
+  fn new(permits: i64) -> std::sync::Semaphore {
+    std::assert(permits >= 0);
+    return std::sync::Semaphore { permits: AtomicI64::new(permits) };
+  }
+
+  fn available_permits(self: ref Self) -> i64 {
+    return self.permits.load();
+  }
+
+  fn try_acquire(self: ref mut Self) -> std::Option[std::sync::SemaphorePermit] {
+    while true {
+      let current = self.permits.load();
+      if current <= 0 {
+        return std::None<std::sync::SemaphorePermit>();
+      }
+      if self.permits.compare_exchange_bool(current, current - 1) {
+        return std::Some<std::sync::SemaphorePermit>(
+          std::sync::SemaphorePermit {
+            semaphore: self as ptr std::sync::Semaphore,
+            active: true,
+          }
+        );
+      }
+    }
+    return std::None<std::sync::SemaphorePermit>();
+  }
+
+  fn acquire(self: ref mut Self) -> std::sync::SemaphorePermit {
+    while true {
+      match self.try_acquire() {
+        std::Some(permit) => {
+          return permit;
+        }
+        std::None => {
+          std::thread::yield_now();
+        }
+      }
+    }
+    return std::sync::SemaphorePermit {
+      semaphore: self as ptr std::sync::Semaphore,
+      active: false,
+    };
+  }
+
+  fn release(self: ref mut Self) -> void {
+    self.permits.fetch_add(1);
+  }
+
+  fn add_permits(self: ref mut Self, permits: i64) -> void {
+    std::assert(permits >= 0);
+    self.permits.fetch_add(permits);
+  }
+}
+
+pub impl std::sync::SemaphorePermit {
+  fn release(self: ref mut Self) -> void {
+    if self.active {
+      (ref mut *self.semaphore).release();
+      self.active = false;
+    }
+  }
+
+  fn is_active(self: ref Self) -> bool {
+    return self.active;
+  }
+}
+
+impl std::Drop for std::sync::SemaphorePermit {
+  fn drop(self) -> void {
+    if self.active {
+      (ref mut *self.semaphore).release();
+    }
   }
 }
 

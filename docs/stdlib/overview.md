@@ -47,7 +47,7 @@ API evolution.
 | `std::env` | User-facing process argument, environment-variable, OS-string, and path-state helpers. | `arg_count`, `args`, `args_os`, `try_arg`, `try_arg_os`, `program_name`, `program_name_os`, Option-returning `var`, `var_os`, Result-returning `get`, `get_os`, `set_var`, `remove_var`, `set`, `remove`, compatibility `try_get`, `try_get_os`, `get_or_default`, `get_os_or_default`, `set_unchecked`, `remove_unchecked`, Result-returning `current_dir`, `current_dir_os`, `current_dir_path`, `set_current_dir`, `executable_path`, `executable_path_os`, `executable_path_path`, `home_dir`, plus `_optional`, `_or_default`, `_raw`, and `_unchecked` path compatibility helpers. |
 | `std::process` | Current-process helpers and POSIX child-process control. | `id`, `uid`, `gid`, `exit`, `abort`, `success`, `failure`, `ExitCode`, typed `Signal`, direct `Error` helpers `fork`, `wait_status`, `wait`, raw compatibility `fork_raw`, `wait_raw`, `Arg`, `EnvVar`, `Command`, `Child`, `ChildStdin`/`ChildStdout`/`ChildStderr`, `ExitStatus`, `Output`, `TempFile`, `TempDir`, `arg`, `arg_bytes`, `env_var`, `env_var_bytes`, `command`, `command_with_args`, `kill`, `kill_signal`, `terminate`, command `arg`/`arg_bytes`/`args`/`env`/`env_bytes`/`env_var`/`clear_env`/`inherit_env`/`current_dir`/`current_dir_path`/`with_arg`/`with_env`/`with_clear_env`/`with_inherit_env`/`with_current_dir`/`spawn`/`status`/`exit_status`/`output`/`output_in`/`exec`, current/executable path wrappers, temp file/dir constructors, status/output/child accessors. |
 | `std::thread` | Function-pointer thread spawn/join, runtime ids, sleep/yield hints, hosted parallelism, and explicit thread-local handles. | `ThreadId`, raw `Thread`, `JoinHandle`, `JoinError`, `ThreadResult`, `Builder`, `ThreadLocal`, Result-returning `spawn`, `join`, `join_value`, `available_parallelism`, `detach`, advisory `is_finished`, `yield_now`, `sleep`, `id`, `id_raw`, `current`, `is_main`, `ThreadLocal` capacity/try-init helpers, and raw/compatibility helpers. |
-| `std::sync` | Small explicit synchronization primitives. | `Ordering`, `AtomicI64`, `AtomicBool`, `AtomicUsize`, `AtomicPtr`, `Mutex`, `RwLock`, `Once`, `OnceLock`, `Condvar`, `Barrier`, `Channel`, `Sender`, `Receiver`, atomic helpers, lock helpers, `call_once`, `channel`, `mpsc_channel`. |
+| `std::sync` | Small explicit synchronization primitives. | `Ordering`, `AtomicI64`, `AtomicBool`, `AtomicUsize`, `AtomicPtr`, `Mutex`, `RwLock`, `Once`, `OnceLock`, `Condvar`, `Barrier`, `Semaphore`, `SemaphorePermit`, `Channel`, `Sender`, `Receiver`, atomic helpers, lock helpers, `call_once`, `channel`, `bounded_channel`, `mpsc_channel`. |
 | `std::cell` | Interior mutability and one-time initialization. | `Cell`, `RefCell`, `Ref`, `RefMut`, `OnceCell`, `Lazy`. |
 | `std::rc` | Reference-counted shared ownership. | `Rc`, `Arc`, `Weak`, strong/weak counts, downgrade, upgrade, pointer equality. |
 | `std::time` | Monotonic time, wall-clock time, sleep, deadlines, and UTC calendar values. | `Duration`, `Instant`, `SystemTime`, `Deadline`, `UtcDateTime`, strict and fallible duration constructors, strict and fallible Unix timestamp constructors, strict and fallible calendar helpers, `now`, `system_now`, `elapsed`, `sleep`, `timeout`, `timeout_after`, `deadline_at`. |
@@ -328,8 +328,8 @@ thread-policy work.
 
 `std::sync` now starts with `AtomicI64`, `AtomicBool`, `AtomicUsize`,
 `AtomicPtr[T]`, manual `RawMutex`/`RawRwLock` primitives, value-protecting
-`Mutex[T]`/`RwLock[T]` guards, `Once`, `OnceLock`, `Condvar`, `Barrier`, and a
-single-slot MPSC channel shape. `std::cell` adds local
+`Mutex[T]`/`RwLock[T]` guards, `Once`, `OnceLock`, `Condvar`, `Barrier`,
+`Semaphore`, and a bounded MPSC channel shape. `std::cell` adds local
 interior mutability through `Cell`, runtime-checked `RefCell`, and zone-backed
 `OnceCell`/`Lazy` one-time initialization. `std::rc` adds explicit `Rc`,
 `Arc`, and `Weak` shared ownership handles. Atomic method names are the names
@@ -346,13 +346,14 @@ explicit unlock guards for low-level code such as `Condvar`. `Mutex[T]` and
 `RwLock[T]` own a payload and return guards that expose shared or mutable
 payload access while the lock is held. Guard cleanup still relies on
 `guard.unlock()` or explicit `drop guard`; automatic scope/early-return RAII
-cleanup is not promised. `Condvar` and `Barrier` are source coordination
+cleanup is not promised. `Condvar`, `Barrier`, and `Semaphore` are source coordination
 primitives; `Condvar` timeout waits are monotonic spin/yield waits rather than
-OS sleeping waits. Channels are capacity-1 MPSC handles with Result
+OS sleeping waits, and semaphore acquire waits use the same yield policy.
+Channels are bounded MPSC handles with Result
 send/receive/timeout-receive errors, clonable sender handles, and only a
 shared state pointer rather than redundant zone handles. `Arc` uses an atomic
-control block, but send/share trait policy, semaphores, futex-backed blocking
-locks, configurable channel capacity, sender-counted close semantics, and
+control block, but send/share trait policy, futex-backed blocking
+locks, sender-counted close semantics, and
 non-LLVM target atomic policy remain future work.
 
 `std::time` follows the same OS-facing pattern. `monotonic_nanos`,

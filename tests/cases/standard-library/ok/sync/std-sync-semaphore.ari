@@ -1,0 +1,60 @@
+// Covers source semaphore permits: nonblocking acquire, yielding acquire,
+// explicit release idempotence, drop release, and manual permit addition.
+fn main() -> i64 {
+  var score = 0;
+
+  var semaphore = std::sync::Semaphore::new(2);
+  if semaphore.available_permits() == 2 {
+    score = score + 1;
+  }
+
+  var first_option = semaphore.try_acquire();
+  if first_option.is_none() {
+    return 1;
+  }
+  var first = first_option.unwrap();
+  if first.is_active() && semaphore.available_permits() == 1 {
+    score = score + 2;
+  }
+
+  var second = semaphore.acquire();
+  if second.is_active() && semaphore.available_permits() == 0 {
+    score = score + 4;
+  }
+  if semaphore.try_acquire().is_none() {
+    score = score + 8;
+  }
+
+  first.release();
+  first.release();
+  if !first.is_active() && semaphore.available_permits() == 1 {
+    score = score + 16;
+  }
+
+  var third_option = semaphore.try_acquire();
+  if third_option.is_none() {
+    return 2;
+  }
+  var third = third_option.unwrap();
+  if third.is_active() && semaphore.available_permits() == 0 {
+    score = score + 32;
+  }
+  third.release();
+  if !third.is_active() && semaphore.available_permits() == 1 {
+    score = score + 64;
+  }
+
+  drop second;
+  if semaphore.available_permits() == 2 {
+    score = score + 128;
+  }
+
+  semaphore.add_permits(3);
+  semaphore.release();
+  if semaphore.available_permits() == 6 {
+    score = score + 256;
+  }
+
+  assert_eq_i64(score, 511);
+  return 42;
+}

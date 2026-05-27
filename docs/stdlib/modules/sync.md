@@ -3,13 +3,15 @@
 `std::sync` is Ari's explicit thread-coordination module. It now covers the
 small production vocabulary that other standard-library modules need first:
 concrete atomics, primitive locks, value-protecting locks, condition variables,
-one-time initialization, a reusable barrier, and a first MPSC channel shape.
+one-time initialization, a reusable barrier, counting semaphores, and a first
+MPSC channel shape.
 
 The current implementations are intentionally teachable building blocks.
 `AtomicI64` lowers to LLVM atomics on the hosted backend, including explicit
 memory-order variants; wider wrappers compose over it. `Mutex[T]`,
-`RwLock[T]`, `RawMutex`, `RawRwLock`, `Condvar`, `Barrier`, `Once`, `OnceLock`,
-and channels spin/yield instead of using a futex-backed blocking runtime yet.
+`RwLock[T]`, `RawMutex`, `RawRwLock`, `Condvar`, `Barrier`, `Semaphore`,
+`Once`, `OnceLock`, and channels spin/yield instead of using a futex-backed
+blocking runtime yet.
 That keeps the API useful while preserving space for later poisoning,
 send/share, fairness, and wait/wake policy.
 
@@ -338,6 +340,34 @@ caller that completes the generation and `false` to callers released by that
 completion. The implementation is reusable across generations and spins/yields
 while waiting.
 
+## Semaphore
+
+```ari
+Semaphore::new(permits) -> Semaphore
+
+semaphore.available_permits() -> i64
+semaphore.try_acquire() -> Option[SemaphorePermit]
+semaphore.acquire() -> SemaphorePermit
+semaphore.release() -> void
+semaphore.add_permits(permits) -> void
+
+permit.release() -> void
+permit.is_active() -> bool
+```
+
+`Semaphore` is a source counting semaphore for limiting a fixed number of
+concurrent entries. `new` requires a non-negative permit count.
+`try_acquire` returns `Some(SemaphorePermit)` after decrementing the permit
+count, or `None` when no permit is available. `acquire` spins and yields until
+it can return an active permit. `SemaphorePermit::release` is idempotent:
+calling it once returns the permit and marks the guard inactive; calling it
+again is harmless. Explicit `drop permit` also releases an active permit.
+
+`Semaphore::release` and `add_permits` are manual permit producers. They do
+not track a maximum count, so over-release is a caller policy decision. Like
+the other current sync primitives, this semaphore is spin/yield based; it does
+not park waiters on an OS semaphore or futex yet.
+
 ## Channel And MPSC
 
 ```ari
@@ -468,17 +498,16 @@ fn main() -> i64 {
 
 - `AtomicBool`, `AtomicUsize`, and `AtomicPtr[T]` are wrappers over
   `AtomicI64`, not target-specialized native atomic widths yet.
-- `Mutex[T]`, `RwLock[T]`, `RawMutex`, `RawRwLock`, `Condvar`, `Barrier`, and
-  channels spin/yield; they do not park on futexes or condition-variable OS
-  primitives.
+- `Mutex[T]`, `RwLock[T]`, `RawMutex`, `RawRwLock`, `Condvar`, `Barrier`,
+  `Semaphore`, and channels spin/yield; they do not park on futexes or
+  condition-variable OS primitives.
 - `Mutex[T]`, `RwLock[T]`, `RawMutex`, and `RawRwLock` do not poison after
   panic/failure. Shared-state
   consistency is caller-owned unless a future poison-aware type is introduced.
 - Guard drops release active locks when callers use explicit `drop guard`;
   automatic RAII cleanup at scope exit or early return is not promised yet.
-- There is no `LazyLock[T]`, semaphore, sender-counted close policy, or
-  unbounded channel policy yet. Explicit `ThreadLocal[T]` handles live in
-  `std::thread`; compiler-level
+- There is no `LazyLock[T]`, sender-counted close policy, or unbounded channel
+  policy yet. Explicit `ThreadLocal[T]` handles live in `std::thread`; compiler-level
   `thread_local` declarations remain future work.
 - Send/share trait checking is still roadmap work, so cross-thread value
   transfer APIs remain conservative.
@@ -493,6 +522,7 @@ fn main() -> i64 {
 | Condvar | Current generation-based source API with spin/yield timeout waits; future blocking wait/wake and spurious wake documentation. |
 | Once/OnceLock | Current source one-time execution, value slot, value-preserving `set`, and fallible initializer status; future ref-in-Result return ergonomics, panic policy, and optional `LazyLock`. |
 | Barrier | Current source reusable barrier; future parking implementation. |
+| Semaphore | Current source counting semaphore with optional/yielding acquire and permit guards; future parking/fairness policy. |
 | MPSC channel | Current configurable bounded MPSC queues with Result errors, timeout receives, unsent-value return, FIFO receive order, and clonable sender handles; future sender-counted close semantics, blocking wake, unbounded policy, and richer close semantics. |
 | Thread local | Current explicit `std::thread::ThreadLocal[T]` handles; future compiler-level static TLS declarations and destructor policy. |
 
@@ -513,6 +543,9 @@ fn main() -> i64 {
   `Mutex[T]` and `RwLock[T]` construction, guard payload access,
   try-lock failure while a guard is active, explicit unlock idempotence, and
   explicit drop release.
+- `tests/cases/standard-library/ok/sync/std-sync-semaphore.ari` checks
+  semaphore construction, nonblocking and yielding acquire, explicit permit
+  release idempotence, drop release, and manual permit addition.
 - `tests/cases/standard-library/ok/sync/std-sync-concurrency-api.ari` checks
   explicit order validation, order-specific LLVM lowering, `AtomicBool`,
   `AtomicUsize`, `AtomicPtr[T]`, `OnceLock`, `Condvar`, `Barrier`, and the

@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `3489`
+- API entries: `3499`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,16 +32,16 @@ platform notes.
 | `alloc` | 897 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 905 | stable candidate |
-| `hosted` | 1488 | platform-backed |
+| `hosted` | 1498 | platform-backed |
 | `platform` | 163 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
 | `fn` | 1198 |
-| `method` | 1839 |
+| `method` | 1847 |
 | `module` | 39 |
-| `struct` | 180 |
+| `struct` | 182 |
 | `trait` | 39 |
 | `trait-method` | 41 |
 | `type` | 22 |
@@ -84,7 +84,7 @@ platform notes.
 | `std::rc` | `alloc` | 32 |
 | `std::result` | `core` | 12 |
 | `std::string` | `alloc` | 171 |
-| `std::sync` | `hosted` | 214 |
+| `std::sync` | `hosted` | 224 |
 | `std::target` | `platform` | 52 |
 | `std::test` | `hosted` | 32 |
 | `std::thread` | `hosted` | 90 |
@@ -4041,6 +4041,14 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::sync::RwLock[T]::try_read` | check-prelude std-sync-value-locks value rwlock optional read guard helper; docs/stdlib/modules/sync.md |
 | `method std::sync::RwLock[T]::try_write` | check-prelude std-sync-value-locks value rwlock optional write guard helper; docs/stdlib/modules/sync.md |
 | `method std::sync::RwLock[T]::write` | check-prelude std-sync-value-locks value rwlock guard-returning write helper; docs/stdlib/modules/sync.md |
+| `method std::sync::Semaphore::acquire` | check-prelude std-sync-semaphore semaphore yielding permit acquire helper; docs/stdlib/modules/sync.md |
+| `method std::sync::Semaphore::add_permits` | check-prelude std-sync-semaphore semaphore manual permit addition helper; docs/stdlib/modules/sync.md |
+| `method std::sync::Semaphore::available_permits` | check-prelude std-sync-semaphore semaphore current permit count accessor; docs/stdlib/modules/sync.md |
+| `method std::sync::Semaphore::new` | check-prelude std-sync-semaphore semaphore constructor; docs/stdlib/modules/sync.md |
+| `method std::sync::Semaphore::release` | check-prelude std-sync-semaphore semaphore manual release helper; docs/stdlib/modules/sync.md |
+| `method std::sync::Semaphore::try_acquire` | check-prelude std-sync-semaphore semaphore optional nonblocking permit acquire helper; docs/stdlib/modules/sync.md |
+| `method std::sync::SemaphorePermit::is_active` | check-prelude std-sync-semaphore semaphore permit active-state predicate; docs/stdlib/modules/sync.md |
+| `method std::sync::SemaphorePermit::release` | check-prelude std-sync-semaphore semaphore permit idempotent release helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Sender[T]::capacity` | check-prelude std-sync-concurrency-api sender bounded channel capacity accessor; docs/stdlib/modules/sync.md |
 | `method std::sync::Sender[T]::clone` | check-prelude std-sync-concurrency-api sender handle clone sharing the same bounded channel state; docs/stdlib/modules/sync.md |
 | `method std::sync::Sender[T]::close` | check-prelude std-sync-concurrency-api sender-side channel close helper; docs/stdlib/modules/sync.md |
@@ -4080,6 +4088,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `struct std::sync::RwLockReadGuard[T]` | check-prelude std-sync-value-locks value rwlock read payload guard; docs/stdlib/modules/sync.md |
 | `struct std::sync::RwLockWriteGuard[T]` | check-prelude std-sync-value-locks value rwlock write payload guard; docs/stdlib/modules/sync.md |
 | `struct std::sync::RwLock[T]` | check-prelude std-sync-value-locks value-protecting rwlock payload handle; docs/stdlib/modules/sync.md |
+| `struct std::sync::Semaphore` | check-prelude std-sync-semaphore source counting semaphore; docs/stdlib/modules/sync.md |
+| `struct std::sync::SemaphorePermit` | check-prelude std-sync-semaphore source semaphore permit guard; docs/stdlib/modules/sync.md |
 | `struct std::sync::Sender[T]` | check-prelude std-sync-concurrency-api channel sender handle; docs/stdlib/modules/sync.md |
 | `struct std::sync::WaitTimeoutResult` | check-prelude std-sync-concurrency-api condition-variable timeout result handle; docs/stdlib/modules/sync.md |
 

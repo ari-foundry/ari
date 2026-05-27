@@ -1246,9 +1246,11 @@ Once::new()
 OnceLock::new<T>()
 Condvar::new()
 Barrier::new(parties)
+Semaphore::new(permits)
 
 sync::channel<T>(ref mut zone)
 sync::mpsc_channel<T>(ref mut zone)
+sync::bounded_channel<T>(ref mut zone, capacity)
 sync::seq_cst()
 sync::is_load_order(ordering)
 sync::is_store_order(ordering)
@@ -1334,15 +1336,34 @@ wait_timeout.timed_out()
 
 barrier.wait()
 
+semaphore.available_permits()
+semaphore.try_acquire()
+semaphore.acquire()
+semaphore.release()
+semaphore.add_permits(permits)
+permit.release()
+permit.is_active()
+
 channel.sender()
 channel.receiver()
+channel.capacity()
 sender.send(value)
 sender.try_send(value)
 sender.send_bool(value)
+sender.clone()
+sender.capacity()
+sender.close()
+sender.is_closed()
 receiver.try_recv()
 receiver.try_recv_optional()
 receiver.recv()
+receiver.recv_timeout(duration)
 receiver.recv_optional()
+receiver.capacity()
+receiver.len()
+receiver.close()
+receiver.is_closed()
+receiver.is_empty()
 ```
 
 The atomic slice now has `AtomicI64`, `AtomicBool`, `AtomicUsize`, and
@@ -1377,19 +1398,20 @@ poison-aware type is introduced. `Once` runs a plain
 sync-facing one-time value slot: `set` preserves the rejected value through
 `Result[(), T]`, `set_bool` is the lossy compatibility form, and
 `get_or_try_init` resets the slot to empty when the initializer returns
-`Err`. `Condvar`, `Barrier`, and single-slot MPSC channels provide the
+`Err`. `Condvar`, `Barrier`, `Semaphore`, and bounded MPSC channels provide the
 standard shapes now, using spin/yield internals until Ari grows blocking
 wait/wake runtime support. `Condvar::wait_timeout` is a monotonic deadline
-spin/yield wait, not an OS sleeping condvar. Channels are capacity-1 MPSC:
-`send`/`try_send`, `recv`/`try_recv`, and `recv_timeout` return Result errors,
-while `_bool` and `_optional` helpers intentionally discard detail.
-`Sender[T]::clone` creates another handle to the same capacity-1 channel state;
-closing any sender closes the shared channel.
+spin/yield wait, not an OS sleeping condvar. `Semaphore::try_acquire` returns
+`Option[SemaphorePermit]`, `acquire` yields until a permit is available, and an
+active permit releases on explicit `release` or `drop permit`. Channels are
+bounded MPSC queues: `send`/`try_send`, `recv`/`try_recv`, and `recv_timeout`
+return Result errors, while `_bool` and `_optional` helpers intentionally
+discard detail. `Sender[T]::clone` creates another handle to the same bounded
+channel state; closing any sender closes the shared channel.
 
 Shared-ownership handles live in `std::rc` as `Rc`, `Arc`, and `Weak`.
-`LazyLock`, semaphores, value-protecting lock payload guards,
-poison-aware lock variants, futex-backed blocking locks, sender-counted close
-semantics, send/share trait checks, compiler-owned
+`LazyLock`, poison-aware lock variants, futex-backed blocking locks,
+sender-counted close semantics, send/share trait checks, compiler-owned
 `thread_local` declarations, and target-native relaxed ordering remain future
 concurrency work.
 

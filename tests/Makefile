@@ -1767,6 +1767,11 @@ check-prelude: $(TARGET)
 	grep -F -q "std__sync__RwLock" $(BUILD_DIR)/prelude/std-sync-value-locks.ll
 	$(TARGET) tests/cases/standard-library/ok/sync/std-sync-value-locks.ari -o $(BUILD_DIR)/prelude/std-sync-value-locks.elf
 	$(BUILD_DIR)/prelude/std-sync-value-locks.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/cases/standard-library/ok/sync/std-sync-semaphore.ari --emit-llvm $(BUILD_DIR)/prelude/std-sync-semaphore.ll
+	grep -F -q "std__sync__Semaphore" $(BUILD_DIR)/prelude/std-sync-semaphore.ll
+	grep -F -q "std__sync__SemaphorePermit" $(BUILD_DIR)/prelude/std-sync-semaphore.ll
+	$(TARGET) tests/cases/standard-library/ok/sync/std-sync-semaphore.ari -o $(BUILD_DIR)/prelude/std-sync-semaphore.elf
+	$(BUILD_DIR)/prelude/std-sync-semaphore.elf; code=$$?; test $$code -eq 42
 	$(TARGET) tests/cases/standard-library/ok/sync/std-sync-concurrency-api.ari --emit-llvm $(BUILD_DIR)/prelude/std-sync-concurrency-api.ll
 	grep -F -q "std__sync__AtomicBool" $(BUILD_DIR)/prelude/std-sync-concurrency-api.ll
 	grep -F -q "std__sync__AtomicUsize" $(BUILD_DIR)/prelude/std-sync-concurrency-api.ll
