@@ -59,6 +59,14 @@ fn main() -> i64 {
     score = score + 4;
   }
 
+  let credentials = client.peer_credentials().unwrap();
+  if credentials.pid() > 0 &&
+    credentials.uid() >= 0 &&
+    credentials.gid() >= 0 &&
+    client.peer_credentials_optional().is_some() {
+    score = score + 8192;
+  }
+
   let timeout = time::milliseconds(1000);
   if listener.set_nonblocking(false).is_ok() &&
     client.set_nonblocking(false).is_ok() &&
@@ -182,6 +190,6 @@ fn main() -> i64 {
   }
   assert(datagram_server.close().is_err());
 
-  assert_eq_i64(score, 8191);
+  assert_eq_i64(score, 16383);
   return score;
 }

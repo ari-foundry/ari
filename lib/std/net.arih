@@ -74,6 +74,12 @@ pub struct UnixDatagram {
   mut handle: std::os::OwnedFd,
 }
 
+pub struct UnixPeerCredentials {
+  pid_value: i64,
+  uid_value: i64,
+  gid_value: i64,
+}
+
 pub enum Shutdown {
   Read,
   Write,
@@ -194,6 +200,9 @@ extern "ari" fn unix_datagram_connect_host_raw(raw: i64, path: string) -> bool =
   "ari_builtin_net_unix_datagram_connect";
 extern "ari" fn unix_datagram_send_to_host_raw(raw: i64, values: ptr u8, len: i64, path: string) -> i64 =
   "ari_builtin_net_unix_datagram_send_to";
+extern "ari" fn unix_peer_pid_raw(raw: i64) -> i64 = "ari_builtin_net_unix_peer_pid";
+extern "ari" fn unix_peer_uid_raw(raw: i64) -> i64 = "ari_builtin_net_unix_peer_uid";
+extern "ari" fn unix_peer_gid_raw(raw: i64) -> i64 = "ari_builtin_net_unix_peer_gid";
 extern "ari" fn lookup_v4_host_raw(host: string, port: i64) -> i64 = "ari_builtin_net_lookup_v4";
 extern "ari" fn lookup_v4_endpoint_host_raw(endpoint: string) -> i64 = "ari_builtin_net_lookup_v4_endpoint";
 extern "ari" fn lookup_v6_host_raw(host: string, port: i64, output: ptr u16) -> i64 = "ari_builtin_net_lookup_v6";
@@ -936,6 +945,27 @@ fn socket_int_raw(raw: i64, value: i64) -> std::Result[i64, i64] {
   return std::Ok<i64, i64>(value);
 }
 
+fn unix_peer_credentials_raw(raw: i64) -> std::Result[UnixPeerCredentials, i64] {
+  if raw < 0 {
+    return std::Err<UnixPeerCredentials, i64>(invalid_input_error_raw());
+  }
+  let pid = unix_peer_pid_raw(raw);
+  if pid < 0 {
+    return std::Err<UnixPeerCredentials, i64>(last_errno_error_raw());
+  }
+  let uid = unix_peer_uid_raw(raw);
+  if uid < 0 {
+    return std::Err<UnixPeerCredentials, i64>(last_errno_error_raw());
+  }
+  let gid = unix_peer_gid_raw(raw);
+  if gid < 0 {
+    return std::Err<UnixPeerCredentials, i64>(last_errno_error_raw());
+  }
+  return std::Ok<UnixPeerCredentials, i64>(
+    UnixPeerCredentials { pid_value: pid, uid_value: uid, gid_value: gid }
+  );
+}
+
 fn socket_hop_count_raw(raw: i64, value: i64) -> std::Result[(), i64] {
   if raw < 0 {
     return std::Err<(), i64>(invalid_input_error_raw());
@@ -1501,6 +1531,20 @@ pub impl std::net::UdpRecvFrom {
 
   fn source(self: ref Self) -> SocketAddr {
     return self.addr;
+  }
+}
+
+pub impl std::net::UnixPeerCredentials {
+  fn pid(self: ref Self) -> i64 {
+    return self.pid_value;
+  }
+
+  fn uid(self: ref Self) -> i64 {
+    return self.uid_value;
+  }
+
+  fn gid(self: ref Self) -> i64 {
+    return self.gid_value;
   }
 }
 
@@ -2882,6 +2926,14 @@ pub impl std::net::UnixStream {
 
   fn descriptor(self: ref Self) -> std::os::Fd {
     return self.handle.as_fd();
+  }
+
+  fn peer_credentials(self: ref Self) -> std::Result[UnixPeerCredentials, std::error::Error] {
+    return std::error::map_raw<UnixPeerCredentials>(unix_peer_credentials_raw(self.handle.raw()));
+  }
+
+  fn peer_credentials_optional(self: ref Self) -> std::Option[UnixPeerCredentials] {
+    return self.peer_credentials().ok();
   }
 
   fn is_open(self: ref Self) -> bool {

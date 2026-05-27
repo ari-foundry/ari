@@ -480,6 +480,9 @@ const std::unordered_map<std::string, AriBuiltinSignatureExpectation>& ari_built
         add("ari_builtin_net_unix_datagram_bind", builtin_sig({source_string}, i64));
         add("ari_builtin_net_unix_datagram_connect", builtin_sig({i64, source_string}, boolean));
         add("ari_builtin_net_unix_datagram_send_to", builtin_sig({i64, ptr_u8, i64, source_string}, i64));
+        add("ari_builtin_net_unix_peer_pid", builtin_sig({i64}, i64));
+        add("ari_builtin_net_unix_peer_uid", builtin_sig({i64}, i64));
+        add("ari_builtin_net_unix_peer_gid", builtin_sig({i64}, i64));
         add("ari_builtin_net_lookup_v4", builtin_sig({source_string, i64}, i64));
         add("ari_builtin_net_lookup_v4_endpoint", builtin_sig({source_string}, i64));
         add("ari_builtin_net_lookup_v6", builtin_sig({source_string, i64, ptr_u16}, i64));

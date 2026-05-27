@@ -2137,6 +2137,8 @@ UnixStream::connect_optional(path)
 UnixStream::try_connect(path)
 UnixStream::connect_raw(path)
 stream.descriptor()
+stream.peer_credentials()
+stream.peer_credentials_optional()
 stream.is_open()
 stream.is_nonblocking()
 stream.set_nonblocking(enabled)
@@ -2157,6 +2159,10 @@ stream.write(values)
 stream.write_all(values)
 stream.flush()
 stream.close()
+
+credentials.pid()
+credentials.uid()
+credentials.gid()
 ```
 
 Address values are deterministic source structs. Use `octet`/`segment` for
@@ -2202,7 +2208,10 @@ helpers, and stream shutdown. TCP and
 Unix streams adapt to `std::io::Reader`/`Writer` and provide inherent
 `read`, `write`, `read_exact(output, len)`, `read_exact_slice(output)`,
 `read_to_end(zone)`, `read_to_string(zone)`, and `write_all(values)` helpers for natural stream
-method syntax. Natural bind/connect/accept/resolve names return
+method syntax. Connected Unix streams expose `peer_credentials()` as
+`Result[UnixPeerCredentials, Error]`, with `pid()`, `uid()`, and `gid()`
+accessors for the snapshot returned by the hosted Unix socket. Natural
+bind/connect/accept/resolve names return
 `Result[..., Error]`; matching `_optional` and `try_*` helpers keep
 compatibility call sites concise when they intentionally discard the reason.
 Host-port `connect_host` first resolves through `resolve`, then delegates to
@@ -2219,8 +2228,9 @@ local to the networking module: `is_timeout`/`is_timed_out`, `is_would_block`,
 `is_interrupted`, `is_connection_refused`, and `is_retryable`. Timeout,
 would-block, interrupted, and in-progress errors are retryable by stdlib
 policy; connection refused is not retryable by default.
-Full `getaddrinfo` iteration, host service-database lookup, IPv6 multicast policy, multi-descriptor poll/event loops, Unix
-peer credentials, and TLS packaging decisions remain roadmap work.
+Full `getaddrinfo` iteration, host service-database lookup, IPv6 multicast
+policy, multi-descriptor poll/event loops, and TLS packaging decisions remain
+roadmap work.
 
 ## IO And Input
 

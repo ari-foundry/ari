@@ -2264,6 +2264,9 @@ method std::net::UnixListener::set_nonblocking|check-prelude std-net-unix-socket
 method std::net::UnixListener::set_nonblocking_unchecked|check-prelude std-net-unix-socket unchecked Unix listener nonblocking compatibility setter; docs/stdlib/modules/net.md
 method std::net::UnixListener::try_accept|check-prelude std-net-unix-socket Option-returning Unix accept compatibility alias; docs/stdlib/modules/net.md
 method std::net::UnixListener::try_bind|check-prelude std-net-unix-socket Option-returning Unix bind compatibility alias; docs/stdlib/modules/net.md
+method std::net::UnixPeerCredentials::gid|check-prelude std-net-unix-socket Unix peer effective group id accessor; docs/stdlib/modules/net.md
+method std::net::UnixPeerCredentials::pid|check-prelude std-net-unix-socket Unix peer process id accessor; docs/stdlib/modules/net.md
+method std::net::UnixPeerCredentials::uid|check-prelude std-net-unix-socket Unix peer effective user id accessor; docs/stdlib/modules/net.md
 method std::net::UnixStream::close|check-prelude std-net-unix-socket explicit Unix stream close helper; docs/stdlib/modules/net.md
 method std::net::UnixStream::close_on_exec|check-prelude std-net-unix-socket Result-returning Unix stream close-on-exec descriptor flag query; docs/stdlib/modules/net.md
 method std::net::UnixStream::close_on_exec_optional|check-prelude std-net-unix-socket Option-returning Unix stream close-on-exec compatibility query; docs/stdlib/modules/net.md
@@ -2276,6 +2279,8 @@ method std::net::UnixStream::flush|check-prelude std-net-unix-socket Unix stream
 method std::net::UnixStream::is_nonblocking|check-prelude std-net-unix-socket Unix stream nonblocking descriptor query; docs/stdlib/modules/net.md
 method std::net::UnixStream::is_nonblocking_optional|check-prelude std-net-unix-socket Option-returning Unix stream nonblocking compatibility query; docs/stdlib/modules/net.md
 method std::net::UnixStream::is_open|check-prelude std-net-unix-socket Unix stream open predicate; docs/stdlib/modules/net.md
+method std::net::UnixStream::peer_credentials|check-prelude std-net-unix-socket Result-returning connected Unix stream peer credential snapshot; docs/stdlib/modules/net.md
+method std::net::UnixStream::peer_credentials_optional|check-prelude std-net-unix-socket Option-returning Unix stream peer credential compatibility query; docs/stdlib/modules/net.md
 method std::net::UnixStream::read|check-prelude std-net-unix-socket Unix stream partial buffer read helper; docs/stdlib/modules/net.md
 method std::net::UnixStream::read_exact|check-prelude std-net-unix-socket Unix stream buffer read helper; docs/stdlib/modules/net.md
 method std::net::UnixStream::read_exact_slice|check-prelude std-net-unix-socket Unix stream exact slice read helper; docs/stdlib/modules/net.md
@@ -3249,6 +3254,7 @@ struct std::net::UdpRecvFrom|check-prelude std-net-udp-socket UDP receive metada
 struct std::net::UdpSocket|check-prelude std-net-udp-socket owned UDP datagram socket handle; docs/stdlib/modules/net.md
 struct std::net::UnixDatagram|check-prelude std-net-unix-socket owned Unix domain datagram handle; docs/stdlib/modules/net.md
 struct std::net::UnixListener|check-prelude std-net-unix-socket owned Unix domain listener handle; docs/stdlib/modules/net.md
+struct std::net::UnixPeerCredentials|check-prelude std-net-unix-socket connected Unix peer process/user/group credential snapshot; docs/stdlib/modules/net.md
 struct std::net::UnixStream|check-prelude std-net-unix-socket owned Unix domain stream handle and IO traits; docs/stdlib/modules/net.md
 struct std::os::Fd|check-prelude std-os-fd non-owning file descriptor view; docs/stdlib/modules/os.md
 struct std::os::OwnedFd|check-prelude std-os-owned-fd owning file descriptor close wrapper; docs/stdlib/modules/os.md

@@ -3416,6 +3416,50 @@ private:
         line("}");
         line();
 
+        line("define private i64 @ari_runtime_net_unix_peer_cred_field(i64 %fd, i64 %offset) {");
+        line("entry:");
+        line("  %invalid = icmp slt i64 %fd, 0");
+        line("  br i1 %invalid, label %fail, label %get");
+        line("get:");
+        line("  %fd32 = trunc i64 %fd to i32");
+        line("  %cred = alloca [12 x i8], align 4");
+        line("  %cred.ptr = getelementptr inbounds [12 x i8], ptr %cred, i64 0, i64 0");
+        line("  %len.ptr = alloca i32, align 4");
+        line("  store i32 12, ptr %len.ptr, align 4");
+        line("  %code = call i32 @getsockopt(i32 %fd32, i32 1, i32 17, ptr %cred.ptr, ptr %len.ptr)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  br i1 %ok, label %load, label %fail");
+        line("load:");
+        line("  %field.ptr = getelementptr inbounds i8, ptr %cred.ptr, i64 %offset");
+        line("  %field = load i32, ptr %field.ptr, align 4");
+        line("  %wide = zext i32 %field to i64");
+        line("  ret i64 %wide");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_net_unix_peer_pid(i64 %fd) {");
+        line("entry:");
+        line("  %value = call i64 @ari_runtime_net_unix_peer_cred_field(i64 %fd, i64 0)");
+        line("  ret i64 %value");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_net_unix_peer_uid(i64 %fd) {");
+        line("entry:");
+        line("  %value = call i64 @ari_runtime_net_unix_peer_cred_field(i64 %fd, i64 4)");
+        line("  ret i64 %value");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_net_unix_peer_gid(i64 %fd) {");
+        line("entry:");
+        line("  %value = call i64 @ari_runtime_net_unix_peer_cred_field(i64 %fd, i64 8)");
+        line("  ret i64 %value");
+        line("}");
+        line();
+
         line("define " + runtime_visibility + "i64 @ari_builtin_net_unix_datagram_unbound() {");
         line("entry:");
         line("  %fd32 = call i32 @socket(i32 1, i32 2, i32 0)");

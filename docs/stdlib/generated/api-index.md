@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `3519`
+- API entries: `3525`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,16 +32,16 @@ platform notes.
 | `alloc` | 899 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 905 | stable candidate |
-| `hosted` | 1516 | platform-backed |
+| `hosted` | 1522 | platform-backed |
 | `platform` | 163 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
 | `fn` | 1206 |
-| `method` | 1859 |
+| `method` | 1864 |
 | `module` | 39 |
-| `struct` | 182 |
+| `struct` | 183 |
 | `trait` | 39 |
 | `trait-method` | 41 |
 | `type` | 22 |
@@ -74,7 +74,7 @@ platform notes.
 | `std::log` | `hosted` | 12 |
 | `std::math` | `core` | 39 |
 | `std::mem` | `core` | 13 |
-| `std::net` | `hosted` | 369 |
+| `std::net` | `hosted` | 375 |
 | `std::option` | `core` | 12 |
 | `std::os` | `platform` | 62 |
 | `std::parse` | `core` | 101 |
@@ -2811,6 +2811,9 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::UnixListener::set_nonblocking_unchecked` | check-prelude std-net-unix-socket unchecked Unix listener nonblocking compatibility setter; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::try_accept` | check-prelude std-net-unix-socket Option-returning Unix accept compatibility alias; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::try_bind` | check-prelude std-net-unix-socket Option-returning Unix bind compatibility alias; docs/stdlib/modules/net.md |
+| `method std::net::UnixPeerCredentials::gid` | check-prelude std-net-unix-socket Unix peer effective group id accessor; docs/stdlib/modules/net.md |
+| `method std::net::UnixPeerCredentials::pid` | check-prelude std-net-unix-socket Unix peer process id accessor; docs/stdlib/modules/net.md |
+| `method std::net::UnixPeerCredentials::uid` | check-prelude std-net-unix-socket Unix peer effective user id accessor; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::close` | check-prelude std-net-unix-socket explicit Unix stream close helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::close_on_exec` | check-prelude std-net-unix-socket Result-returning Unix stream close-on-exec descriptor flag query; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::close_on_exec_optional` | check-prelude std-net-unix-socket Option-returning Unix stream close-on-exec compatibility query; docs/stdlib/modules/net.md |
@@ -2823,6 +2826,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::UnixStream::is_nonblocking` | check-prelude std-net-unix-socket Unix stream nonblocking descriptor query; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::is_nonblocking_optional` | check-prelude std-net-unix-socket Option-returning Unix stream nonblocking compatibility query; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::is_open` | check-prelude std-net-unix-socket Unix stream open predicate; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::peer_credentials` | check-prelude std-net-unix-socket Result-returning connected Unix stream peer credential snapshot; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::peer_credentials_optional` | check-prelude std-net-unix-socket Option-returning Unix stream peer credential compatibility query; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::read` | check-prelude std-net-unix-socket Unix stream partial buffer read helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::read_exact` | check-prelude std-net-unix-socket Unix stream buffer read helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::read_exact_slice` | check-prelude std-net-unix-socket Unix stream exact slice read helper; docs/stdlib/modules/net.md |
@@ -2868,6 +2873,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `struct std::net::UdpSocket` | check-prelude std-net-udp-socket owned UDP datagram socket handle; docs/stdlib/modules/net.md |
 | `struct std::net::UnixDatagram` | check-prelude std-net-unix-socket owned Unix domain datagram handle; docs/stdlib/modules/net.md |
 | `struct std::net::UnixListener` | check-prelude std-net-unix-socket owned Unix domain listener handle; docs/stdlib/modules/net.md |
+| `struct std::net::UnixPeerCredentials` | check-prelude std-net-unix-socket connected Unix peer process/user/group credential snapshot; docs/stdlib/modules/net.md |
 | `struct std::net::UnixStream` | check-prelude std-net-unix-socket owned Unix domain stream handle and IO traits; docs/stdlib/modules/net.md |
 
 ### trait
