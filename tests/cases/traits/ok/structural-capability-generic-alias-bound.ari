@@ -1,0 +1,59 @@
+type Combiner[T] = has add(T) -> T;
+type Mapper[Input, Output] = has map(Input) -> Output;
+type Echo[T] = has echo(T) -> T;
+
+struct Counter {
+  value: i64,
+}
+
+impl Counter {
+  fn add(self, amount: i64) -> i64 {
+    self.value + amount
+  }
+}
+
+struct Truth {
+  expected: i64,
+}
+
+impl Truth {
+  fn map(self, value: i64) -> bool {
+    value == self.expected
+  }
+}
+
+struct Echoer {
+  marker: i64,
+}
+
+impl Echoer {
+  fn echo(self, value: bool) -> bool {
+    value
+  }
+}
+
+fn combine_i64[T: Combiner[i64]](value: T, amount: i64) -> i64 {
+  value.add(amount)
+}
+
+fn map_i64_to_bool[T: Mapper[i64, bool]](value: T, input: i64) -> i64 {
+  if value.map(input) {
+    30
+  } else {
+    1
+  }
+}
+
+fn echo_bool[T: Echo[bool]](value: T) -> i64 {
+  if value.echo(true) {
+    8
+  } else {
+    0
+  }
+}
+
+fn main() -> i64 {
+  return combine_i64(Counter { value: 0 }, 4) +
+      map_i64_to_bool(Truth { expected: 5 }, 5) +
+      echo_bool(Echoer { marker: 0 });
+}

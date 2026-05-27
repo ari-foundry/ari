@@ -5737,6 +5737,8 @@ check-traits: $(TARGET)
 	$(BUILD_DIR)/traits/structural-capability-generic-bound.elf; code=$$?; test $$code -eq 62
 	$(TARGET) tests/cases/traits/ok/structural-capability-alias-bound.ari -o $(BUILD_DIR)/traits/structural-capability-alias-bound.elf
 	$(BUILD_DIR)/traits/structural-capability-alias-bound.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/cases/traits/ok/structural-capability-generic-alias-bound.ari -o $(BUILD_DIR)/traits/structural-capability-generic-alias-bound.elf
+	$(BUILD_DIR)/traits/structural-capability-generic-alias-bound.elf; code=$$?; test $$code -eq 42
 	$(TARGET) tests/cases/traits/ok/trait-minimum-compiler-shaped.ari -o $(BUILD_DIR)/traits/trait-minimum-compiler-shaped.elf
 	$(BUILD_DIR)/traits/trait-minimum-compiler-shaped.elf; code=$$?; test $$code -eq 74
 	$(TARGET) tests/cases/traits/ok/trait-minimum-compiler-shaped.ari --emit-llvm $(BUILD_DIR)/traits/trait-minimum-compiler-shaped.ll
@@ -5850,8 +5852,10 @@ check-traits: $(TARGET)
 	grep -q "structural capability alias 'Serializable' can only be used as a generic bound" $(BUILD_DIR)/traits/structural-capability-alias-as-type.err
 	if $(TARGET) tests/cases/traits/errors/structural-capability-alias-struct-bound.ari -o $(BUILD_DIR)/traits/structural-capability-alias-struct-bound.elf >$(BUILD_DIR)/traits/structural-capability-alias-struct-bound.err 2>&1; then exit 1; fi
 	grep -q "structural capability alias 'Serializable' is only supported on free functions and inherent impl methods" $(BUILD_DIR)/traits/structural-capability-alias-struct-bound.err
-	if $(TARGET) tests/cases/traits/errors/structural-capability-alias-generic.ari -o $(BUILD_DIR)/traits/structural-capability-alias-generic.elf >$(BUILD_DIR)/traits/structural-capability-alias-generic.err 2>&1; then exit 1; fi
-	grep -q "structural capability aliases cannot be generic yet" $(BUILD_DIR)/traits/structural-capability-alias-generic.err
+	if $(TARGET) tests/cases/traits/errors/structural-capability-generic-alias-missing.ari -o $(BUILD_DIR)/traits/structural-capability-generic-alias-missing.elf >$(BUILD_DIR)/traits/structural-capability-generic-alias-missing.err 2>&1; then exit 1; fi
+	grep -q "does not satisfy structural capability 'has add(i64) -> i64'" $(BUILD_DIR)/traits/structural-capability-generic-alias-missing.err
+	if $(TARGET) tests/cases/traits/errors/structural-capability-generic-alias-arity.ari -o $(BUILD_DIR)/traits/structural-capability-generic-alias-arity.elf >$(BUILD_DIR)/traits/structural-capability-generic-alias-arity.err 2>&1; then exit 1; fi
+	grep -q "type alias 'Combiner' expects 1 type argument" $(BUILD_DIR)/traits/structural-capability-generic-alias-arity.err
 	if $(TARGET) tests/cases/traits/errors/structural-capability-struct-generic-bound.ari -o $(BUILD_DIR)/traits/structural-capability-struct-generic-bound.elf >$(BUILD_DIR)/traits/structural-capability-struct-generic-bound.err 2>&1; then exit 1; fi
 	grep -q "structural capability parameters and bounds are only supported on free functions and inherent impl methods" $(BUILD_DIR)/traits/structural-capability-struct-generic-bound.err
 	if $(TARGET) tests/cases/traits/errors/unknown-trait-impl.ari -o $(BUILD_DIR)/traits/unknown-trait-impl.elf >$(BUILD_DIR)/traits/unknown-trait-impl.err 2>&1; then exit 1; fi

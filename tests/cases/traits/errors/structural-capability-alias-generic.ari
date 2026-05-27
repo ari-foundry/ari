@@ -1,5 +1,0 @@
-type HasAdd[T] = has add(T) -> T;
-
-fn main() -> i64 {
-  return 0;
-}

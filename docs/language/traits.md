@@ -726,11 +726,14 @@ This spelling uses the ordinary generic specialization path. At each call site,
 the concrete `T` must provide every listed method with the requested
 non-receiver parameter types and result type.
 
-Reusable capability aliases can name a non-generic method requirement set:
+Reusable capability aliases can name method requirement sets. Aliases may be
+generic, and their type arguments are substituted into the required method
+signatures at the bound site:
 
 ```ari
 type Serializable = has serialize() -> i64;
 type Addable = has add(i64) -> i64;
+type Mapper[Input, Output] = has map(Input) -> Output;
 
 fn save[T: Serializable](x: T) -> i64 {
   x.serialize()
@@ -739,13 +742,21 @@ fn save[T: Serializable](x: T) -> i64 {
 fn add_to[T: Addable](x: T, amount: i64) -> i64 {
   x.add(amount)
 }
+
+fn map_to_bool[T: Mapper[i64, bool]](x: T, input: i64) -> i64 {
+  if x.map(input) {
+    1
+  } else {
+    0
+  }
+}
 ```
 
 Capability aliases are bound-only names. They do not describe storage or a
 runtime value type, so use them as generic bounds (`T: Serializable`) rather
-than parameter types (`x: Serializable`). The current implementation keeps
-aliases non-generic; use a direct `has ...` bound when the requirement itself
-needs type parameters.
+than parameter types (`x: Serializable`). A generic alias must receive exactly
+the declared number of type arguments, and those arguments are resolved in the
+same context as the function or method bound using the alias.
 
 Inherent `impl` methods and associated functions can use the same parameter
 syntax and the same explicit generic-bound syntax. A hidden capability generic
@@ -784,10 +795,9 @@ The initial subset is intentionally narrow:
 - The syntax is accepted only in ordinary free-function and inherent `impl`
   method parameter type position, plus their generic parameter bounds.
 - A `has` parameter or bound currently describes method requirements only.
-- Non-generic capability aliases can be used as free-function and inherent
-  `impl` method generic bounds.
-- Associated types, field requirements, operators, and generic capability
-  aliases are not implemented yet.
+- Capability aliases, including generic aliases, can be used as free-function
+  and inherent `impl` method generic bounds.
+- Associated types, field requirements, and operators are not implemented yet.
 - Trait methods and trait impl methods still use named trait bounds.
 - `has method(...) -> Type` in struct fields, trait methods, trait
   impl methods, extern declarations, meta functions, lambdas, struct/enum/trait
@@ -834,5 +844,6 @@ capability parameters such as `fn save(x: has serialize() -> i64)` and grouped
 requirements such as
 `fn save(x: has { serialize() -> i64, add(i64) -> i64 })`, which are checked at
 call specialization time and then lowered through normal static dispatch.
-Non-generic aliases such as `type Serializable = has serialize() -> i64;` can
-be reused as supported function or inherent method generic bounds.
+Capability aliases such as `type Serializable = has serialize() -> i64;` and
+generic aliases such as `type Mapper[Input, Output] = has map(Input) -> Output;`
+can be reused as supported function or inherent method generic bounds.

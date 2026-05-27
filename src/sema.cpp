@@ -2170,9 +2170,6 @@ private:
             current_module_name_ = decl.module_name;
             current_type_substitutions_ = std::move(substitutions);
             if (decl.is_structural_capability) {
-                if (!decl.generics.empty()) {
-                    fail(decl.loc, "structural capability aliases cannot be generic yet");
-                }
                 GenericParam alias_generic;
                 alias_generic.name = basename_of_qualified_name(decl.name);
                 alias_generic.loc = decl.loc;
@@ -2763,11 +2760,22 @@ private:
                  " type argument" + (alias.generic_names.size() == 1 ? "" : "s"));
     }
 
+    std::map<std::string, IrType> structural_capability_alias_substitutions(const TypeRef& constraint,
+                                                                            const TypeAliasInfo& alias) {
+        require_structural_capability_alias_arity(constraint, alias);
+        std::map<std::string, IrType> substitutions;
+        for (std::size_t i = 0; i < constraint.args.size(); ++i) {
+            substitutions.emplace(alias.generic_names[i], resolve_executable_type(constraint.args[i]));
+        }
+        return substitutions;
+    }
+
     void validate_structural_capability_alias_bound(const GenericParam& generic,
                                                     const TypeAliasInfo& alias,
                                                     bool allow_structural_capability_alias_bounds) {
         require_type_alias_access(generic.constraint.loc, alias);
-        require_structural_capability_alias_arity(generic.constraint, alias);
+        std::map<std::string, IrType> alias_substitutions =
+            structural_capability_alias_substitutions(generic.constraint, alias);
         if (!allow_structural_capability_alias_bounds) {
             CompileError error(
                 generic.constraint.loc,
@@ -2791,7 +2799,7 @@ private:
         std::string previous_module = current_module_name_;
         std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
         current_module_name_ = alias.module_name;
-        current_type_substitutions_.clear();
+        current_type_substitutions_ = std::move(alias_substitutions);
         try {
             validate_structural_capability_signature(alias_generic);
         } catch (...) {
@@ -25157,12 +25165,13 @@ private:
                                                    const TypeAliasInfo& alias,
                                                    const IrType& self_type) {
         require_type_alias_access(generic.constraint.loc, alias);
-        require_structural_capability_alias_arity(generic.constraint, alias);
+        std::map<std::string, IrType> alias_substitutions =
+            structural_capability_alias_substitutions(generic.constraint, alias);
 
         std::string previous_module = current_module_name_;
         std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
         current_module_name_ = alias.module_name;
-        current_type_substitutions_.clear();
+        current_type_substitutions_ = std::move(alias_substitutions);
         try {
             for (const auto& method : alias.structural_methods) {
                 require_structural_capability_method(loc, self_type, method);

@@ -60,16 +60,18 @@ The parser accepts `has method(...) -> Type` and grouped
 `has { method(...) -> Type, other(...) -> Type }` in ordinary free-function and
 inherent `impl` method parameter type positions, plus explicit generic bounds
 such as `fn save[T: has serialize() -> i64](x: T)`. Non-generic capability
-aliases such as `type Serializable = has serialize() -> i64;` can be reused as
-supported function and inherent-method generic bounds. Semantic analysis lowers
-anonymous parameters to hidden generics, checks concrete call-site types for
-every listed static method, and monomorphizes the body through the ordinary
-method-call path. Hidden capability generics do not count as visible method type
-arguments. It must continue to avoid an `interface` keyword, accidental dynamic
-dispatch, or a shortcut around named trait-bound diagnostics. Remaining roadmap
-work includes generic capability aliases, trait-method policy, richer
-diagnostics for when a named trait is better, and any future extension beyond
-method requirements.
+aliases such as `type Serializable = has serialize() -> i64;` and generic
+aliases such as `type Mapper[Input, Output] = has map(Input) -> Output;` can be
+reused as supported function and inherent-method generic bounds. Semantic
+analysis lowers anonymous parameters to hidden generics, substitutes alias type
+arguments into reusable capability requirements, checks concrete call-site
+types for every listed static method, and monomorphizes the body through the
+ordinary method-call path. Hidden capability generics do not count as visible
+method type arguments. It must continue to avoid an `interface` keyword,
+accidental dynamic dispatch, or a shortcut around named trait-bound diagnostics.
+Remaining roadmap work includes trait-method policy, richer diagnostics for
+when a named trait is better, and any future extension beyond method
+requirements.
 
 Discriminant-linked union fields are also worth exploring for protocol and
 binary-format records whose payload shape is controlled by data already present
