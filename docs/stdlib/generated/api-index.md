@@ -24,21 +24,21 @@ platform notes.
 
 ## Summary
 
-- API entries: `3601`
+- API entries: `3613`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
 | `alloc` | 923 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 921 | stable candidate |
+| `core` | 933 | stable candidate |
 | `hosted` | 1558 | platform-backed |
 | `platform` | 163 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1227 |
+| `fn` | 1239 |
 | `method` | 1903 |
 | `module` | 39 |
 | `struct` | 197 |
@@ -65,7 +65,7 @@ platform notes.
 | `std::encoding` | `core` | 98 |
 | `std::env` | `hosted` | 68 |
 | `std::error` | `core` | 37 |
-| `std::fmt` | `core` | 77 |
+| `std::fmt` | `core` | 89 |
 | `std::fs` | `hosted` | 325 |
 | `std::hash` | `alloc` | 24 |
 | `std::input` | `hosted` | 6 |
@@ -1644,6 +1644,8 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::fmt::concat2[A: std::fmt::Display, B: std::fmt::Display]` | check-prelude std-fmt-concat-format-value two-value Display concatenation helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::concat3[A: std::fmt::Display, B: std::fmt::Display, C: std::fmt::Display]` | check-prelude std-fmt-concat-format-value three-value Display concatenation helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::concat4[A: std::fmt::Display, B: std::fmt::Display, C: std::fmt::Display, D: std::fmt::Display]` | check-prelude std-fmt-concat-format-value four-value Display concatenation helper; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::concat_all` | check-prelude std-fmt-concat-format-value variable-count borrowed-string concatenation helper; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::concat_strings` | check-prelude std-fmt-concat-format-value variable-count owned String concatenation helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::debug_char_in` | check-prelude std-fmt-char-values allocator-backed byte character debug helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::debug_text_in` | check-prelude std-fmt-format-spec source debug text quoting helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::debug_value[T: std::fmt::Debug]` | check-prelude std-fmt-debug-values generic allocator-backed Debug formatting helper; docs/stdlib/modules/fmt.md |
@@ -1653,7 +1655,9 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::fmt::format3[A: std::fmt::Display, B: std::fmt::Display, C: std::fmt::Display]` | check-prelude std-fmt-concat-format-value Result-returning three-value runtime template formatter; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::format4[A: std::fmt::Display, B: std::fmt::Display, C: std::fmt::Display, D: std::fmt::Display]` | check-prelude std-fmt-concat-format-value Result-returning four-value runtime template formatter; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::format[T: std::fmt::Display]` | check-prelude std-fmt-concat-format-value Result-returning one-value runtime template formatter; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::format_texts` | check-prelude std-fmt-concat-format-value variable-count borrowed-string runtime template formatter; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::format_value[T: std::fmt::Display]` | check-prelude std-fmt-concat-format-value generic allocator-backed Display formatting helper; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::format_values` | check-prelude std-fmt-concat-format-value variable-count preformatted String runtime template formatter; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::hex` | check-prelude std-fmt-format-spec hexadecimal integer spec helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::integer_in` | check-prelude std-fmt-format-spec allocator-backed signed integer formatting helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::left` | check-prelude std-fmt-format-spec left alignment spec helper; docs/stdlib/modules/fmt.md |
@@ -1680,6 +1684,10 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::fmt::write_concat3_bool` | check-prelude std-fmt-format-spec bool compatibility three-value Writer-backed Display concatenation helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_concat4` | check-prelude std-fmt-concat-format-value Result-returning four-value Writer-backed Display concatenation helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_concat4_bool` | check-prelude std-fmt-concat-format-value bool compatibility four-value Writer-backed Display concatenation helper; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::write_concat_all[W: std::io::Writer]` | check-prelude std-fmt-concat-format-value variable-count borrowed-string Writer-backed concatenation helper; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::write_concat_all_bool[W: std::io::Writer]` | check-prelude std-fmt-concat-format-value bool compatibility variable-count borrowed-string Writer-backed concatenation helper; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::write_concat_strings[W: std::io::Writer]` | check-prelude std-fmt-concat-format-value variable-count owned String Writer-backed concatenation helper; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::write_concat_strings_bool[W: std::io::Writer]` | check-prelude std-fmt-concat-format-value bool compatibility variable-count owned String Writer-backed concatenation helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_debug[W: std::io::Writer, T: std::fmt::Debug]` | check-prelude std-fmt-debug-values Result-returning generic Writer-backed Debug formatting helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_debug_bool[W: std::io::Writer, T: std::fmt::Debug]` | check-prelude std-fmt-debug-values bool compatibility generic Writer-backed Debug formatting helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_format` | check-prelude std-fmt-concat-format-value Result-returning one-value Writer-backed runtime template formatter; docs/stdlib/modules/fmt.md |
@@ -1690,6 +1698,10 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::fmt::write_format_stream2` | check-prelude std-fmt-concat-format-value streaming-name two-value Writer-backed runtime template formatter; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_format_stream3` | check-prelude std-fmt-concat-format-value streaming-name three-value Writer-backed runtime template formatter; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_format_stream4` | check-prelude std-fmt-concat-format-value streaming-name four-value Writer-backed runtime template formatter; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::write_format_texts[W: std::io::Writer]` | check-prelude std-fmt-concat-format-value variable-count borrowed-string Writer-backed runtime template formatter; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::write_format_texts_bool[W: std::io::Writer]` | check-prelude std-fmt-concat-format-value bool compatibility variable-count borrowed-string Writer-backed runtime template formatter; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::write_format_values[W: std::io::Writer]` | check-prelude std-fmt-concat-format-value variable-count preformatted String Writer-backed runtime template formatter; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::write_format_values_bool[W: std::io::Writer]` | check-prelude std-fmt-concat-format-value bool compatibility variable-count preformatted String Writer-backed runtime template formatter; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_integer[W: std::io::Writer]` | check-prelude std-fmt-format-spec Result-returning Writer-backed signed integer formatting helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_integer_bool[W: std::io::Writer]` | check-prelude std-fmt-format-spec bool compatibility Writer-backed signed integer formatting helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_integer_stream[W: std::io::Writer]` | check-prelude std-fmt-concat-format-value direct signed integer streaming writer helper; docs/stdlib/modules/fmt.md |

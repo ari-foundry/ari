@@ -88,6 +88,26 @@ fn main() -> i64 {
     return 27;
   }
 
+  var text_parts = ["arix", " ", "run", " ", "--release"];
+  let text_joined = fmt::concat_all(ref mut zone, text_parts.as_slice());
+  if !equals_text(text_joined, "arix run --release") {
+    zone::destroy(zone);
+    return 44;
+  }
+
+  let owned_a = std::string::from(ref mut zone, "target/");
+  let owned_b = std::string::from(ref mut zone, "debug/");
+  let owned_c = std::string::from(ref mut zone, "hello");
+  var owned_parts = std::vec::new<std::string::String>(ref mut zone, 3);
+  owned_parts.push(owned_a);
+  owned_parts.push(owned_b);
+  owned_parts.push(owned_c);
+  let owned_joined = fmt::concat_strings(ref mut zone, owned_parts.as_slice());
+  if !equals_text(owned_joined, "target/debug/hello") {
+    zone::destroy(zone);
+    return 45;
+  }
+
   let point = Point { x: 3, y: 5 };
   let display = fmt::format_value<Point>(ref mut zone, point);
   if !equals_text(display, "(3,5)") {
@@ -161,6 +181,43 @@ fn main() -> i64 {
             Err(_) => {
               zone::destroy(zone);
               return 30;
+            }
+          }
+          var template_texts = ["arix", "build", "--jobs=", "4", "done"];
+          match fmt::format_texts(ref mut zone, "{} {} {}{} {}", template_texts.as_slice()) {
+            Ok(formatted_texts) => {
+              if !equals_text(formatted_texts, "arix build --jobs=4 done") {
+                zone::destroy(zone);
+                return 46;
+              }
+            }
+            Err(_) => {
+              zone::destroy(zone);
+              return 47;
+            }
+          }
+          var missing_texts = ["one"];
+          if !fmt::format_texts(ref mut zone, "{} {}", missing_texts.as_slice()).is_err() {
+            zone::destroy(zone);
+            return 48;
+          }
+          let value_a = fmt::format_value<string>(ref mut zone, "point=");
+          let value_b = fmt::format_value<Point>(ref mut zone, other);
+          let value_c = fmt::format_value<string>(ref mut zone, "!");
+          var template_values = std::vec::new<std::string::String>(ref mut zone, 3);
+          template_values.push(value_a);
+          template_values.push(value_b);
+          template_values.push(value_c);
+          match fmt::format_values(ref mut zone, "{}{}{}", template_values.as_slice()) {
+            Ok(formatted_values) => {
+              if !equals_text(formatted_values, "point=(8,13)!") {
+                zone::destroy(zone);
+                return 49;
+              }
+            }
+            Err(_) => {
+              zone::destroy(zone);
+              return 50;
             }
           }
         }
@@ -269,6 +326,51 @@ fn main() -> i64 {
        writer8.position == 4) {
     zone::destroy(zone);
     return 36;
+  }
+
+  var buffer9 = [0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8];
+  var writer9 = MemoryWriter { data: buffer9.as_slice(), position: 0 };
+  var write_text_parts = ["a", "b", "3", "?", "!"];
+  if !fmt::write_concat_all<MemoryWriter>(ref mut writer9, write_text_parts.as_slice()).is_ok() {
+    zone::destroy(zone);
+    return 51;
+  }
+  if !(buffer9[0] == 'a' && buffer9[1] == 'b' && buffer9[2] == '3' &&
+       buffer9[3] == '?' && buffer9[4] == '!' && writer9.position == 5) {
+    zone::destroy(zone);
+    return 52;
+  }
+
+  var buffer10 = [0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8];
+  var writer10 = MemoryWriter { data: buffer10.as_slice(), position: 0 };
+  var write_format_parts = ["A", "B", "C", "D", "E"];
+  if !fmt::write_format_texts<MemoryWriter>(ref mut writer10, "{}{}{}{}{}", write_format_parts.as_slice()).is_ok() {
+    zone::destroy(zone);
+    return 53;
+  }
+  if !(buffer10[0] == 'A' && buffer10[1] == 'B' && buffer10[2] == 'C' &&
+       buffer10[3] == 'D' && buffer10[4] == 'E' && writer10.position == 5) {
+    zone::destroy(zone);
+    return 54;
+  }
+
+  var buffer11 = [0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8];
+  var writer11 = MemoryWriter { data: buffer11.as_slice(), position: 0 };
+  let write_value_a = fmt::format_value<string>(ref mut zone, "X");
+  let write_value_b = fmt::format_value<i64>(ref mut zone, 9);
+  let write_value_c = fmt::format_value<string>(ref mut zone, "Z");
+  var write_value_parts = std::vec::new<std::string::String>(ref mut zone, 3);
+  write_value_parts.push(write_value_a);
+  write_value_parts.push(write_value_b);
+  write_value_parts.push(write_value_c);
+  if !fmt::write_format_values<MemoryWriter>(ref mut writer11, "{}-{}-{}", write_value_parts.as_slice()).is_ok() {
+    zone::destroy(zone);
+    return 55;
+  }
+  if !(buffer11[0] == 'X' && buffer11[1] == '-' && buffer11[2] == '9' &&
+       buffer11[3] == '-' && buffer11[4] == 'Z' && writer11.position == 5) {
+    zone::destroy(zone);
+    return 56;
   }
 
   var buffer4 = [0u8, 0u8, 0u8, 0u8];
