@@ -16,6 +16,8 @@ The roadmap is for production compiler behavior:
 This page is not a self-host implementation plan. Do not use it to create an
 Ari-written compiler tree, bootstrap/stage directories, or a cargo-like build
 tool. Standard-library/library maturity is tracked separately.
+The few stdlib polish items that are blocked by compiler features are mapped in
+[Compiler-Bound Standard Library Gaps](compiler-bound-stdlib-gaps.md).
 
 ## Near-Term Order
 

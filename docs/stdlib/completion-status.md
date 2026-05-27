@@ -34,6 +34,9 @@ the current Ari stdlib against a practical basic hosted standard library.
 Overall basic hosted stdlib completion is about **90%**. The remaining work is
 mostly final polish, trait-driven ergonomics, platform policy, and runtime
 blocking/readiness behavior rather than missing first-use APIs.
+For the remaining items that require compiler features before stdlib APIs can
+be finished, see
+[Compiler-Bound Standard Library Gaps](../dev/compiler-bound-stdlib-gaps.md).
 
 ## Already Completed From Older Gap Lists
 

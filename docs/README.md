@@ -68,6 +68,7 @@ Use these when changing the current C++ hosted compiler:
 - [Compiler Artifact Authoring](dev/compiler-artifact-authoring.md)
 - [Compiler Test Authoring](dev/compiler-test-authoring.md)
 - [Compiler Readiness Inventory](dev/compiler-readiness-inventory.md)
+- [Compiler-Bound Standard Library Gaps](dev/compiler-bound-stdlib-gaps.md)
 - [Compiler Pass Contracts](dev/compiler-pass-contracts.md)
 - [Core Language Readiness](dev/core-language-readiness.md)
 - [Minimum Trait Readiness](dev/trait-minimum-readiness.md)
