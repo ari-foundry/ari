@@ -112,8 +112,9 @@ The field value can also be matched directly with the same arm names, for
 example `match packet.fragment { stream(stream_payload) => ... }`; pattern
 resolution prefers the subject enum type before global case names so `union by`
 arms can share names with the selector enum cases. After construction, direct
-assignment to the selector path or an ancestor field is rejected; rebuild the
-whole struct when the discriminant and active payload must change together.
+assignment to the selector path, an ancestor field, or the `union by` field
+itself is rejected; rebuild the whole struct when the discriminant and active
+payload must change together.
 
 It should not replace ordinary `enum` ADTs, unchecked C unions, or `match`. A
 future design must specify arm checking against concrete non-enum discriminant

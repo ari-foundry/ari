@@ -156,13 +156,15 @@ fn payload_value(packet: TLSCiphertext) -> i64 {
 }
 ```
 
-Selector fields are stable after a value has been built. Direct assignment to
-the selector path, or to an ancestor of that path, is rejected because it could
-make the stored payload arm disagree with the discriminant:
+Selector fields and their linked payload fields are stable after a value has
+been built. Direct assignment to the selector path, to an ancestor of that
+path, or to the `union by` field itself is rejected because it could make the
+stored payload arm disagree with the discriminant:
 
 ```ari
 packet.security.cipher_type = block; // rejected
 packet.security = SecurityParameters { cipher_type: block }; // rejected
+packet.fragment = packet.fragment; // rejected
 ```
 
 Replace the whole struct value instead, using a selector and a `union by`

@@ -6070,6 +6070,8 @@ check-structs: $(TARGET)
 	grep -q "cannot assign to union by selector path 'security.cipher_type' through 'packet.security.cipher_type'" $(BUILD_DIR)/structs/union-by-selector-assignment.err
 	if $(TARGET) tests/cases/structs/errors/union-by-selector-root-assignment.ari -o $(BUILD_DIR)/structs/union-by-selector-root-assignment.elf >$(BUILD_DIR)/structs/union-by-selector-root-assignment.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to union by selector path 'security.cipher_type' through 'packet.security'" $(BUILD_DIR)/structs/union-by-selector-root-assignment.err
+	if $(TARGET) tests/cases/structs/errors/union-by-field-assignment.ari -o $(BUILD_DIR)/structs/union-by-field-assignment.elf >$(BUILD_DIR)/structs/union-by-field-assignment.err 2>&1; then exit 1; fi
+	grep -q "cannot assign to union by field 'fragment' through 'packet.fragment'" $(BUILD_DIR)/structs/union-by-field-assignment.err
 	if $(TARGET) tests/cases/structs/errors/struct-field-access-non-struct.ari -o $(BUILD_DIR)/structs/struct-field-access-non-struct.elf >$(BUILD_DIR)/structs/struct-field-access-non-struct.err 2>&1; then exit 1; fi
 	grep -q "field access requires a struct value, got i64" $(BUILD_DIR)/structs/struct-field-access-non-struct.err
 	if $(TARGET) tests/cases/traits/errors/impl-associated-private.ari -o $(BUILD_DIR)/structs/impl-associated-private.elf >$(BUILD_DIR)/structs/impl-associated-private.err 2>&1; then exit 1; fi

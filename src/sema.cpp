@@ -11859,6 +11859,34 @@ private:
         throw error;
     }
 
+    [[noreturn]] void fail_union_by_field_assignment(SourceLocation loc,
+                                                     const std::string& base_name,
+                                                     const std::vector<std::string>& target_fields,
+                                                     const StructInfo& info,
+                                                     const StructInfo::Field& union_field) const {
+        const std::string selector_path = union_by_selector_text(union_field.type);
+        const std::string target_path =
+            target_fields.empty() ? base_name : base_name + "." + field_path_text(target_fields);
+        CompileError error(
+            std::move(loc),
+            "cannot assign to union by field '" + union_field.name +
+                "' through '" + target_path + "'");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "union by field '" + union_field.name + "' in struct '" + info.name +
+                "' uses selector '" + selector_path + "' to choose its active payload",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "changing only the payload could make the stored arm inconsistent with the selector",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "rebuild the whole struct value with a matching selector and union by constructor arm",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     void reject_union_by_selector_assignment(const Expr& target) {
         std::string base_name;
         std::vector<std::string> target_fields;
@@ -11875,6 +11903,9 @@ private:
         const StructInfo& info = struct_found->second;
         for (const StructInfo::Field& field : info.fields) {
             if (!field.type.is_union_by) continue;
+            if (target_fields.size() == 1 && target_fields[0] == field.name) {
+                fail_union_by_field_assignment(target.loc, base_name, target_fields, info, field);
+            }
             if (path_is_prefix(target_fields, field.type.union_by_selector)) {
                 fail_union_by_selector_assignment(target.loc, base_name, target_fields, info, field);
             }
