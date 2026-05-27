@@ -101,11 +101,14 @@ and enum selectors use arms that exactly cover the enum cases. For enum
 selectors, the compiler lowers the field to hidden enum storage and accepts
 struct literal construction with `fragment: stream => payload`. When the
 selector value is visible in the same struct literal, the constructor arm must
-match it.
+match it. The field value can also be matched directly with the same arm names,
+for example `match packet.fragment { stream(stream_payload) => ... }`; pattern
+resolution prefers the subject enum type before global case names so `union by`
+arms can share names with the selector enum cases.
 
 It should not replace ordinary `enum` ADTs, unchecked C unions, or `match`. A
 future design must specify arm checking against concrete non-enum discriminant
-values, public active-arm borrowing/narrowing after matching the discriminant,
+values, public active-arm borrowing/narrowing outside direct field matches,
 runtime selector consistency policy, selector mutation policy, active-arm drop
 diagnostics, and stable ABI naming.
 The compiler capability inventory tracks this as `union-by-fields`.

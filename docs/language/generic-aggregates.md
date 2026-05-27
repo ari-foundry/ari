@@ -53,8 +53,8 @@ let value = Just(token);
 
 ## Discriminant-Linked Union Fields
 
-Ari does not currently support discriminant-linked union fields inside
-structs. The reserved roadmap spelling is:
+Ari supports an early executable slice of discriminant-linked union fields
+inside structs. The spelling is:
 
 ```ari
 struct TLSCiphertext {
@@ -95,9 +95,27 @@ The field payload is checked against the selected arm's payload type. The
 compiler lowers the field to internal enum storage, so the aggregate can be
 laid out and emitted by the existing enum backend. When the selector value is
 statically visible in the same struct literal, the constructor arm must match
-that value. This is intentionally still an early executable slice: non-enum
-selector policies, public narrowing/match syntax for reading the active arm,
-selector-mutation rules, and active-arm drop diagnostics remain compiler work.
+that value.
+
+Read the active arm by matching the field value. The pattern arm names are the
+same names declared in the `union by` field, and the payload binding has the
+payload type declared for that arm:
+
+```ari
+fn payload_value(packet: TLSCiphertext) -> i64 {
+  return match packet.fragment {
+    stream(stream_payload) => stream_payload.value,
+    block(block_payload) => block_payload.value,
+    aead(aead_payload) => aead_payload.value,
+  };
+}
+```
+
+This is intentionally still an early executable slice: non-enum selector
+policies, selector-mutation rules, active-arm drop diagnostics, and stable ABI
+naming remain compiler work. Use ordinary `enum` ADTs when the discriminant is
+not an existing product field or when the type must be part of a stable public
+ABI.
 
 The compiler capability inventory tracks this as `union-by-fields`.
 

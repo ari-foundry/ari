@@ -9201,12 +9201,11 @@ private:
             fail(pattern.loc, "unknown enum type '" + enum_value_type.name + "'");
         }
 
-        std::string case_name = resolve_enum_case_name(pattern.case_name);
-        auto case_found = enum_cases_.find(case_name);
-        if (case_found == enum_cases_.end()) {
+        auto resolved_case = try_enum_case_for_match_value(pattern.loc, pattern.case_name, enum_value_type);
+        if (!resolved_case) {
             fail_unknown_enum_match_case(pattern.loc, pattern.case_name, enum_found->second);
         }
-        EnumCaseInfo case_info = enum_case_for_match_value(pattern.loc, case_found->second, enum_value_type);
+        EnumCaseInfo case_info = *resolved_case;
         require_enum_case_access(pattern.loc, case_info);
         if (case_info.enum_name != enum_found->second.name) {
             fail_wrong_enum_match_case(pattern.loc, pattern.case_name, case_info, enum_found->second);
@@ -9389,10 +9388,10 @@ private:
             case PatternKind::EnumCase: {
                 IrType enum_value_type = value_qualified_type(source_type);
                 if (!is_value_enum_type(enum_value_type)) return;
-                std::string case_name = resolve_enum_case_name(pattern.case_name);
-                auto case_found = enum_cases_.find(case_name);
-                if (case_found == enum_cases_.end()) return;
-                EnumCaseInfo case_info = enum_case_for_match_value(pattern.loc, case_found->second, enum_value_type);
+                auto resolved_case = try_enum_case_for_match_value(pattern.loc, pattern.case_name, enum_value_type);
+                if (!resolved_case) return;
+                EnumCaseInfo case_info = *resolved_case;
+                if (case_info.enum_name != enum_value_type.name) return;
                 if (case_info.payloads.empty() || !pattern.payload_pattern) return;
                 if (!has_aggregate_enum_layout(case_info.enum_type)) {
                     fail_compact_enum_payload_reference(pattern.loc, case_info);
@@ -13457,6 +13456,34 @@ private:
         return info;
     }
 
+    std::optional<EnumCaseInfo> try_enum_case_for_match_value(
+        SourceLocation loc,
+        const std::string& source_case_name,
+        const IrType& enum_value_type
+    ) {
+        if (is_value_enum_type(enum_value_type) &&
+            source_case_name.find("::") == std::string::npos) {
+            auto enum_found = enums_.find(enum_value_type.name);
+            if (enum_found != enums_.end()) {
+                for (const auto& item : enum_found->second.cases) {
+                    if (item.name != source_case_name) continue;
+                    auto case_found = enum_cases_.find(item.qualified_name);
+                    if (case_found == enum_cases_.end()) {
+                        fail(loc,
+                             "internal error: unknown enum case '" +
+                                 item.qualified_name + "'");
+                    }
+                    return enum_case_for_match_value(loc, case_found->second, enum_value_type);
+                }
+            }
+        }
+
+        std::string case_name = resolve_enum_case_name(source_case_name);
+        auto case_found = enum_cases_.find(case_name);
+        if (case_found == enum_cases_.end()) return std::nullopt;
+        return enum_case_for_match_value(loc, case_found->second, enum_value_type);
+    }
+
     IrMatchArm lower_enum_case_pattern(
         const Pattern& pattern,
         const EnumInfo& enum_info,
@@ -13479,12 +13506,11 @@ private:
             fail(pattern.loc, "control-flow let patterns require an enum case pattern");
         }
 
-        std::string case_name = resolve_enum_case_name(pattern.case_name);
-        auto case_found = enum_cases_.find(case_name);
-        if (case_found == enum_cases_.end()) {
+        auto resolved_case = try_enum_case_for_match_value(pattern.loc, pattern.case_name, enum_value_type);
+        if (!resolved_case) {
             fail_unknown_enum_match_case(pattern.loc, pattern.case_name, enum_info);
         }
-        EnumCaseInfo case_info = enum_case_for_match_value(pattern.loc, case_found->second, enum_value_type);
+        EnumCaseInfo case_info = *resolved_case;
         require_enum_case_access(pattern.loc, case_info);
         if (case_info.enum_name != enum_info.name) {
             fail_wrong_enum_match_case(pattern.loc, pattern.case_name, case_info, enum_info);
@@ -13550,12 +13576,11 @@ private:
             fail(pattern.loc, "enum match patterns must be enum cases or _");
         }
 
-        std::string case_name = resolve_enum_case_name(pattern.case_name);
-        auto case_found = enum_cases_.find(case_name);
-        if (case_found == enum_cases_.end()) {
+        auto resolved_case = try_enum_case_for_match_value(pattern.loc, pattern.case_name, enum_value_type);
+        if (!resolved_case) {
             fail_unknown_enum_match_case(pattern.loc, pattern.case_name, enum_info);
         }
-        EnumCaseInfo case_info = enum_case_for_match_value(pattern.loc, case_found->second, enum_value_type);
+        EnumCaseInfo case_info = *resolved_case;
         require_enum_case_access(pattern.loc, case_info);
         if (case_info.enum_name != enum_info.name) {
             fail_wrong_enum_match_case(pattern.loc, pattern.case_name, case_info, enum_info);
@@ -13771,10 +13796,9 @@ private:
         if (is_value_enum_type(type)) {
             auto enum_found = enums_.find(type.name);
             if (enum_found == enums_.end()) fail(pattern.loc, "unknown enum type '" + type.name + "'");
-            std::string case_name = resolve_enum_case_name(pattern.case_name);
-            auto case_found = enum_cases_.find(case_name);
-            if (case_found == enum_cases_.end()) fail(pattern.loc, "unknown enum case '" + pattern.case_name + "'");
-            EnumCaseInfo case_info = enum_case_for_match_value(pattern.loc, case_found->second, type);
+            auto resolved_case = try_enum_case_for_match_value(pattern.loc, pattern.case_name, type);
+            if (!resolved_case) fail(pattern.loc, "unknown enum case '" + pattern.case_name + "'");
+            EnumCaseInfo case_info = *resolved_case;
             require_enum_case_access(pattern.loc, case_info);
             if (case_info.enum_name != enum_found->second.name) {
                 fail(pattern.loc, "enum case '" + pattern.case_name + "' does not belong to " + enum_found->second.name);
@@ -14233,12 +14257,11 @@ private:
             lower_nested_enum_payload_pattern(effective_pattern, payload_type, lowered_arm, payload_index);
             return;
         }
-        std::string case_name = resolve_enum_case_name(pattern.case_name);
-        auto case_found = enum_cases_.find(case_name);
-        if (case_found == enum_cases_.end()) {
+        auto resolved_case = try_enum_case_for_match_value(pattern.loc, pattern.case_name, payload_type);
+        if (!resolved_case) {
             fail(pattern.loc, "unknown nested enum case '" + pattern.case_name + "'");
         }
-        EnumCaseInfo case_info = enum_case_for_match_value(pattern.loc, case_found->second, payload_type);
+        EnumCaseInfo case_info = *resolved_case;
         require_enum_case_access(pattern.loc, case_info);
         if (case_info.enum_name != payload_type.name) {
             fail(pattern.loc,
@@ -14311,10 +14334,9 @@ private:
                                             const IrType& payload_type,
                                             IrMatchArm& lowered_arm,
                                             std::uint32_t payload_index) {
-        std::string case_name = resolve_enum_case_name(name);
-        auto case_found = enum_cases_.find(case_name);
-        if (case_found == enum_cases_.end()) return false;
-        EnumCaseInfo case_info = enum_case_for_match_value(loc, case_found->second, payload_type);
+        auto resolved_case = try_enum_case_for_match_value(loc, name, payload_type);
+        if (!resolved_case) return false;
+        EnumCaseInfo case_info = *resolved_case;
         if (case_info.enum_name != payload_type.name || !case_info.payloads.empty()) return false;
         require_enum_case_access(loc, case_info);
 
@@ -17921,10 +17943,9 @@ private:
         const Pattern& effective_pattern = expanded_pattern(pattern);
         if (&effective_pattern != &pattern) return iterator_binding_names_enum_case(effective_pattern, value_type);
         if (pattern.kind != PatternKind::Binding || !is_value_enum_type(value_type)) return false;
-        std::string case_name = resolve_enum_case_name(pattern.payload_name);
-        auto case_found = enum_cases_.find(case_name);
-        if (case_found == enum_cases_.end()) return false;
-        EnumCaseInfo case_info = enum_case_for_match_value(pattern.loc, case_found->second, value_type);
+        auto resolved_case = try_enum_case_for_match_value(pattern.loc, pattern.payload_name, value_type);
+        if (!resolved_case) return false;
+        EnumCaseInfo case_info = *resolved_case;
         if (case_info.enum_name != value_type.name) return false;
         require_enum_case_access(pattern.loc, case_info);
         return true;

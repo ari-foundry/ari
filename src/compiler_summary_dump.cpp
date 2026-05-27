@@ -201,7 +201,7 @@ static const CapabilityRow kCapabilityRows[] = {
     {"structural-capability-parameters", "partial", "parser/type/trait-diagnostics", "targeted parser diagnostic fixture",
      "parameter-local single and grouped has-method capability syntax, static call-site method checks, and trait-quality diagnostics without an interface keyword"},
     {"union-by-fields", "partial", "parser/type/ownership/backend", "make check-structs",
-     "discriminant-linked union fields with stable selector validation, enum-selector construction via field: arm => payload, and same-literal selector checks"},
+     "discriminant-linked union fields with stable selector validation, enum-selector construction via field: arm => payload, same-literal selector checks, and direct field match reading"},
     {"function-parameter-patterns", "planned", "parser/sema", "future parser and sema fixtures",
      "patterns in function parameter positions"},
     {"runtime-strings-and-floats", "planned", "runtime/backend", "future std and backend fixtures",

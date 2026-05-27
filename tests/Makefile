@@ -5975,6 +5975,10 @@ check-structs: $(TARGET)
 	$(BUILD_DIR)/structs/union-by-constructor.elf; code=$$?; test $$code -eq 7
 	$(TARGET) tests/cases/structs/ok/union-by-constructor.ari --emit-llvm $(BUILD_DIR)/structs/union-by-constructor.ll
 	grep -q "insertvalue" $(BUILD_DIR)/structs/union-by-constructor.ll
+	$(TARGET) tests/cases/structs/ok/union-by-match.ari -o $(BUILD_DIR)/structs/union-by-match.elf
+	$(BUILD_DIR)/structs/union-by-match.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/cases/structs/ok/union-by-match.ari --emit-llvm $(BUILD_DIR)/structs/union-by-match.ll
+	grep -q "switch i64" $(BUILD_DIR)/structs/union-by-match.ll
 	$(TARGET) tests/cases/traits/ok/impl-associated-new.ari --emit-llvm $(BUILD_DIR)/structs/impl-associated-new.ll
 	grep -q "_ARNv4impl5Point8inherent3new" $(BUILD_DIR)/structs/impl-associated-new.ll
 	grep -q "call { i64, i64 }" $(BUILD_DIR)/structs/impl-associated-new.ll
