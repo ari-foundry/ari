@@ -6054,10 +6054,14 @@ check-structs: $(TARGET)
 	grep -q "duplicate field 'x' in struct literal" $(BUILD_DIR)/structs/struct-literal-duplicate-field.err
 	if $(TARGET) tests/cases/structs/errors/struct-literal-field-type.ari -o $(BUILD_DIR)/structs/struct-literal-field-type.elf >$(BUILD_DIR)/structs/struct-literal-field-type.err 2>&1; then exit 1; fi
 	grep -q "type mismatch: expected i64, got bool" $(BUILD_DIR)/structs/struct-literal-field-type.err
+	$(TARGET) tests/cases/structs/ok/union-by-selector-inferred.ari -o $(BUILD_DIR)/structs/union-by-selector-inferred.elf
+	$(BUILD_DIR)/structs/union-by-selector-inferred.elf; code=$$?; test $$code -eq 42
 	if $(TARGET) tests/cases/structs/errors/union-by-constructor-unknown-arm.ari -o $(BUILD_DIR)/structs/union-by-constructor-unknown-arm.elf >$(BUILD_DIR)/structs/union-by-constructor-unknown-arm.err 2>&1; then exit 1; fi
 	grep -q "union by constructor arm 'record' is not declared for field 'fragment'" $(BUILD_DIR)/structs/union-by-constructor-unknown-arm.err
 	if $(TARGET) tests/cases/structs/errors/union-by-constructor-selector-mismatch.ari -o $(BUILD_DIR)/structs/union-by-constructor-selector-mismatch.elf >$(BUILD_DIR)/structs/union-by-constructor-selector-mismatch.err 2>&1; then exit 1; fi
 	grep -q "union by constructor arm 'block' does not match selector 'security.cipher_type' value 'stream'" $(BUILD_DIR)/structs/union-by-constructor-selector-mismatch.err
+	if $(TARGET) tests/cases/structs/errors/union-by-selector-inference-conflict.ari -o $(BUILD_DIR)/structs/union-by-selector-inference-conflict.elf >$(BUILD_DIR)/structs/union-by-selector-inference-conflict.err 2>&1; then exit 1; fi
+	grep -q "union by constructors infer conflicting values for selector 'kind'" $(BUILD_DIR)/structs/union-by-selector-inference-conflict.err
 	if $(TARGET) tests/cases/structs/errors/union-by-selector-assignment.ari -o $(BUILD_DIR)/structs/union-by-selector-assignment.elf >$(BUILD_DIR)/structs/union-by-selector-assignment.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to union by selector path 'security.cipher_type' through 'packet.security.cipher_type'" $(BUILD_DIR)/structs/union-by-selector-assignment.err
 	if $(TARGET) tests/cases/structs/errors/union-by-selector-root-assignment.ari -o $(BUILD_DIR)/structs/union-by-selector-root-assignment.elf >$(BUILD_DIR)/structs/union-by-selector-root-assignment.err 2>&1; then exit 1; fi

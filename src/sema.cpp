@@ -20821,6 +20821,100 @@ private:
         throw error;
     }
 
+    struct InferredUnionBySelector {
+        std::string arm_name;
+        std::string union_field_name;
+        SourceLocation loc;
+    };
+
+    static std::optional<std::string> union_by_constructor_arm_name(const Expr& value_expr) {
+        if (value_expr.kind != ExprKind::Call ||
+            expr_operand(value_expr) ||
+            value_expr.args.size() != 1 ||
+            !expr_type_args(value_expr).empty()) {
+            return std::nullopt;
+        }
+        return value_expr.name;
+    }
+
+    [[noreturn]] void fail_union_by_inferred_selector_conflict(
+        SourceLocation loc,
+        const std::string& selector_name,
+        const InferredUnionBySelector& previous,
+        const InferredUnionBySelector& current
+    ) const {
+        CompileError error(
+            std::move(loc),
+            "union by constructors infer conflicting values for selector '" + selector_name + "'");
+        error.add_label(DiagnosticLabel{
+            previous.loc.span,
+            "field '" + previous.union_field_name + "' infers arm '" + previous.arm_name + "'",
+            false});
+        error.add_label(DiagnosticLabel{
+            current.loc.span,
+            "field '" + current.union_field_name + "' infers arm '" + current.arm_name + "'",
+            false});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "when the selector field is omitted, every union by field using that selector must choose the same arm",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "write the selector field explicitly or use matching constructor arms",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    std::map<std::string, InferredUnionBySelector> infer_direct_union_by_selectors(
+        const StructInfo& info,
+        const std::map<std::string, const Expr*>& struct_literal_values
+    ) const {
+        std::map<std::string, InferredUnionBySelector> inferred;
+        for (const StructInfo::Field& field : info.fields) {
+            if (!field.type.is_union_by || field.type.union_by_selector.size() != 1) continue;
+
+            auto value_found = struct_literal_values.find(field.name);
+            if (value_found == struct_literal_values.end()) continue;
+
+            auto arm_name = union_by_constructor_arm_name(*value_found->second);
+            if (!arm_name) continue;
+
+            const std::string& selector_name = field.type.union_by_selector.front();
+            InferredUnionBySelector current{*arm_name, field.name, value_found->second->loc};
+            auto inserted = inferred.emplace(selector_name, current);
+            if (!inserted.second && inserted.first->second.arm_name != current.arm_name) {
+                fail_union_by_inferred_selector_conflict(
+                    current.loc,
+                    selector_name,
+                    inserted.first->second,
+                    current);
+            }
+        }
+        return inferred;
+    }
+
+    IrExprPtr make_inferred_union_by_selector_value(SourceLocation loc,
+                                                    const StructInfo& info,
+                                                    const StructInfo::Field& selector_field,
+                                                    const IrType& selector_type,
+                                                    const InferredUnionBySelector& inferred) {
+        auto case_info = try_enum_case_for_match_value(loc, inferred.arm_name, selector_type);
+        if (!case_info || case_info->enum_name != selector_type.name) {
+            fail(loc,
+                 "union by constructor arm '" + inferred.arm_name +
+                     "' cannot infer selector field '" + selector_field.name +
+                     "' in struct '" + info.name + "'");
+        }
+        require_enum_case_access(loc, *case_info);
+        if (!case_info->payloads.empty()) {
+            fail(loc,
+                 "union by selector field '" + selector_field.name +
+                     "' cannot be inferred from payload-carrying enum case '" +
+                     inferred.arm_name + "'");
+        }
+        return make_enum_construct(loc, *case_info, {});
+    }
+
     IrExprPtr check_union_by_field_constructor(const Expr& value_expr,
                                                const StructInfo& info,
                                                const StructInfo::Field& field,
@@ -20912,12 +21006,33 @@ private:
             has_struct_type = true;
         }
 
+        std::map<std::string, InferredUnionBySelector> inferred_selectors;
+        if (has_struct_type) {
+            inferred_selectors = infer_direct_union_by_selectors(info, values);
+        }
+
         std::vector<IrExprPtr> lowered_values;
         lowered_values.reserve(info.fields.size());
         for (std::size_t i = 0; i < info.fields.size(); ++i) {
             const auto& field = info.fields[i];
             auto found = values.find(field.name);
             if (found == values.end()) {
+                if (has_struct_type) {
+                    auto inferred = inferred_selectors.find(field.name);
+                    if (inferred != inferred_selectors.end()) {
+                        const IrType& selector_type = struct_type.field_types[i];
+                        if (selector_type.primitive == IrPrimitiveKind::Enum) {
+                            lowered_values.push_back(
+                                make_inferred_union_by_selector_value(
+                                    inferred->second.loc,
+                                    info,
+                                    field,
+                                    selector_type,
+                                    inferred->second));
+                            continue;
+                        }
+                    }
+                }
                 fail_struct_literal_missing_field(expr.loc, info, field);
             }
             const IrType* field_expected = has_struct_type ? &struct_type.field_types[i] : nullptr;

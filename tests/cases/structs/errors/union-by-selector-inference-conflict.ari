@@ -1,0 +1,32 @@
+enum PacketKind {
+  stream,
+  block,
+}
+
+struct StreamPayload {
+  value: i64,
+}
+
+struct BlockPayload {
+  value: i64,
+}
+
+struct Packet {
+  kind: PacketKind,
+  header: union by kind {
+    stream => StreamPayload,
+    block => BlockPayload,
+  },
+  body: union by kind {
+    stream => StreamPayload,
+    block => BlockPayload,
+  },
+}
+
+fn main() -> i64 {
+  let packet = Packet {
+    header: stream => StreamPayload { value: 1 },
+    body: block => BlockPayload { value: 2 },
+  };
+  return 0;
+}

@@ -1,0 +1,34 @@
+enum PacketKind {
+  stream,
+  block,
+}
+
+struct StreamPayload {
+  value: i64,
+}
+
+struct BlockPayload {
+  value: i64,
+}
+
+struct Packet {
+  kind: PacketKind,
+  fragment: union by kind {
+    stream => StreamPayload,
+    block => BlockPayload,
+  },
+}
+
+fn score(packet: Packet) -> i64 {
+  return match packet.fragment {
+    stream(stream_payload) => stream_payload.value + 1,
+    block(block_payload) => block_payload.value + 2,
+  };
+}
+
+fn main() -> i64 {
+  let packet = Packet {
+    fragment: stream => StreamPayload { value: 41 },
+  };
+  return score(packet);
+}

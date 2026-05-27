@@ -97,6 +97,28 @@ laid out and emitted by the existing enum backend. When the selector value is
 statically visible in the same struct literal, the constructor arm must match
 that value.
 
+When the selector is a direct enum field in the same struct, the selector may
+be omitted and inferred from the `union by` constructor arm:
+
+```ari
+struct Packet {
+  kind: PacketKind,
+  fragment: union by kind {
+    stream => StreamPayload,
+    block => BlockPayload,
+  },
+}
+
+let packet = Packet {
+  fragment: stream => StreamPayload { value: 41 },
+};
+```
+
+The compiler fills `kind` with the enum case named by the arm. If more than one
+`union by` field uses the same omitted selector, all of their constructor arms
+must infer the same selector case. Nested selectors such as
+`security.cipher_type` are still written explicitly.
+
 Read the active arm by matching the field value. The pattern arm names are the
 same names declared in the `union by` field, and the payload binding has the
 payload type declared for that arm:
@@ -134,10 +156,10 @@ packet = TLSCiphertext {
 ```
 
 This is intentionally still an early executable slice: non-enum selector
-policies, active-arm mutation beyond direct reconstruction, active-arm drop
-diagnostics, and stable ABI naming remain compiler work. Use ordinary `enum`
-ADTs when the discriminant is not an existing product field or when the type
-must be part of a stable public ABI.
+policies, nested selector inference, active-arm mutation beyond direct
+reconstruction, active-arm drop diagnostics, and stable ABI naming remain
+compiler work. Use ordinary `enum` ADTs when the discriminant is not an
+existing product field or when the type must be part of a stable public ABI.
 
 The compiler capability inventory tracks this as `union-by-fields`.
 
