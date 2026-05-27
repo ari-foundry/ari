@@ -1,0 +1,7 @@
+struct Box[T: has serialize() -> i64] {
+  value: T,
+}
+
+fn main() -> i64 {
+  return 0;
+}

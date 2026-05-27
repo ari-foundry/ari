@@ -1,0 +1,38 @@
+struct Packet {
+  value: i64,
+}
+
+impl Packet {
+  fn serialize(self) -> i64 {
+    self.value + 1
+  }
+
+  fn add(self, amount: i64) -> i64 {
+    self.value + amount
+  }
+}
+
+struct Runner {
+  base: i64,
+}
+
+impl Runner {
+  fn run[T: has serialize() -> i64](self, value: T) -> i64 {
+    self.base + value.serialize()
+  }
+}
+
+fn save[T: has serialize() -> i64](value: T) -> i64 {
+  value.serialize()
+}
+
+fn mix[T: has { serialize() -> i64, add(i64) -> i64 }](value: T) -> i64 {
+  value.serialize() + value.add(2)
+}
+
+fn main() -> i64 {
+  let runner = Runner { base: 2 };
+  return save(Packet { value: 10 }) +
+      mix(Packet { value: 20 }) +
+      runner.run(Packet { value: 5 });
+}

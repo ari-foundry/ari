@@ -520,21 +520,21 @@ private:
 
     [[noreturn]] static void fail_structural_capability_type(SourceLocation loc) {
         CompileError error(std::move(loc),
-                           "structural capability syntax is only supported in function parameter types");
+                           "structural capability syntax is only supported in function parameter types and generic function bounds");
         error.add_note(DiagnosticNote{
             std::nullopt,
-            "`has method(...) -> Type` introduces a parameter-local structural requirement",
+            "`has method(...) -> Type` introduces a structural method requirement",
             DiagnosticNoteKind::Note});
         error.add_note(DiagnosticNote{
             std::nullopt,
-            "write it directly after a parameter colon, such as `fn save(x: has serialize() -> String)`",
+            "write it directly after a parameter colon, or as a function generic bound such as `fn save[T: has serialize() -> String](x: T)`",
             DiagnosticNoteKind::Help});
         throw error;
     }
 
     [[noreturn]] static void fail_structural_capability_parameter_context(SourceLocation loc) {
         CompileError error(std::move(loc),
-                           "structural capability parameters are only supported on free functions and inherent impl methods");
+                           "structural capability parameters and bounds are only supported on free functions and inherent impl methods");
         error.add_note(DiagnosticNote{
             std::nullopt,
             "the current implementation lowers `has method(...) -> Type` to a hidden generic parameter",
@@ -918,7 +918,7 @@ private:
         return attributes;
     }
 
-    std::vector<GenericParam> parse_generics() {
+    std::vector<GenericParam> parse_generics(bool allow_structural_capability_bounds = false) {
         std::vector<GenericParam> generics;
         if (!match(TokenKind::LBracket)) return generics;
         Token open = tokens_[pos_ - 1];
@@ -929,8 +929,18 @@ private:
                 param.name = name.text;
                 param.loc = name.loc;
                 if (match(TokenKind::Colon)) {
-                    param.constraint = parse_type();
-                    param.has_constraint = true;
+                    if (starts_structural_capability_type()) {
+                        if (!allow_structural_capability_bounds) {
+                            fail_structural_capability_parameter_context(peek().loc);
+                        }
+                        Token has = expect(TokenKind::Identifier, "expected has in structural capability bound");
+                        if (has.text != "has") fail_structural_capability_type(has.loc);
+                        param.has_structural_capability = true;
+                        param.structural_methods = parse_structural_capability_methods(has.loc);
+                    } else {
+                        param.constraint = parse_type();
+                        param.has_constraint = true;
+                    }
                 }
                 generics.push_back(std::move(param));
             } while (match(TokenKind::Comma));
@@ -1229,7 +1239,7 @@ private:
         fn.meta = meta;
         fn.is_public = public_decl;
         fn.attributes = std::move(attributes);
-        fn.generics = parse_generics();
+        fn.generics = parse_generics(allow_structural_capability_params);
         expect(TokenKind::LParen, "expected ( after function name");
         if (!check(TokenKind::RParen)) {
             do {
@@ -1276,31 +1286,7 @@ private:
     TypeRef parse_structural_capability_parameter_type(std::vector<GenericParam>& generics) {
         Token has = expect(TokenKind::Identifier, "expected has in structural capability parameter");
         if (has.text != "has") fail_structural_capability_type(has.loc);
-        std::vector<StructuralCapabilityMethod> methods;
-        if (check(TokenKind::LBrace)) {
-            Token open = expect(TokenKind::LBrace, "expected { after has in structural capability parameter");
-            if (check(TokenKind::RBrace)) {
-                fail(open.loc, "structural capability parameter requires at least one method requirement");
-            }
-            do {
-                fail_if_unterminated_delimited_at_recovery_boundary(
-                    open.loc,
-                    "unterminated structural capability method list",
-                    "structural capability method list starts here",
-                    "}");
-                methods.push_back(parse_structural_capability_method());
-            } while (match(TokenKind::Comma) && !check(TokenKind::RBrace));
-            if (!match(TokenKind::RBrace)) {
-                fail_expected_closing_delimiter(
-                    peek().loc,
-                    open.loc,
-                    "expected } after structural capability method list",
-                    "structural capability method list starts here",
-                    "}");
-            }
-        } else {
-            methods.push_back(parse_structural_capability_method());
-        }
+        std::vector<StructuralCapabilityMethod> methods = parse_structural_capability_methods(has.loc);
 
         std::string synthetic_name;
         for (std::size_t i = generics.size();; ++i) {
@@ -1327,6 +1313,36 @@ private:
         type.name = synthetic_name;
         type.loc = has.loc;
         return type;
+    }
+
+    std::vector<StructuralCapabilityMethod> parse_structural_capability_methods(SourceLocation has_loc) {
+        std::vector<StructuralCapabilityMethod> methods;
+        if (check(TokenKind::LBrace)) {
+            Token open = expect(TokenKind::LBrace, "expected { after has in structural capability parameter");
+            if (check(TokenKind::RBrace)) {
+                fail(open.loc, "structural capability parameter requires at least one method requirement");
+            }
+            do {
+                fail_if_unterminated_delimited_at_recovery_boundary(
+                    open.loc,
+                    "unterminated structural capability method list",
+                    "structural capability method list starts here",
+                    "}");
+                methods.push_back(parse_structural_capability_method());
+            } while (match(TokenKind::Comma) && !check(TokenKind::RBrace));
+            if (!match(TokenKind::RBrace)) {
+                fail_expected_closing_delimiter(
+                    peek().loc,
+                    open.loc,
+                    "expected } after structural capability method list",
+                    "structural capability method list starts here",
+                    "}");
+            }
+        } else {
+            methods.push_back(parse_structural_capability_method());
+        }
+        if (methods.empty()) fail(has_loc, "structural capability requires at least one method requirement");
+        return methods;
     }
 
     StructuralCapabilityMethod parse_structural_capability_method() {

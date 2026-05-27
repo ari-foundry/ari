@@ -17,7 +17,7 @@ compiler and stdlib boundary.
 | `std::thread` | `thread::spawn(fn() -> i64) -> Result[JoinHandle, Error]`, `thread::spawn_raw(fn(ptr u8) -> i64, ptr u8) -> Result[JoinHandle, Error]`, nonblocking `try_join`, `ThreadScope` fixed-capacity join owners, `JoinHandle`, `JoinError`, `ThreadResult`, `Builder`, explicit `ThreadLocal[T]`. | Generic `JoinHandle[T]`, captured thread entries, borrowed scoped threads, generic return payloads, and compiler-owned `thread_local` declarations require closure environment transfer, send/share rules, result storage ownership, drop paths, borrow-scoped lifetime proofs, and TLS codegen. | `lib/std/thread.arih`, `src/std_thread_semantics.cpp`, `src/sema.cpp`, `src/llvm_codegen.cpp`, `docs/stdlib/modules/thread.md`, `tests/cases/standard-library/ok/thread/`, `tests/cases/functions/` |
 | `std::fmt` | `format_in!`, `Display::format_in`, `Debug::debug_in`, fixed-arity runtime `format`/`format2`/`format3`/`format4`, matching writer helpers, direct scalar/text streaming writer helpers, `concat2`/`concat3`, and variable-count concat/template helpers. | Variadic/default-zone formatting needs compiler lowering or variadic generic support plus an allocation-zone policy. Generic per-value streaming display needs a writer-facing formatting trait plus compiler support for selecting generic trait impls whose type parameter is carried by a trait argument such as `WriteDisplay[W]`. | `lib/std/fmt.arih`, `src/prelude_macros.cpp`, `src/sema.cpp`, `docs/stdlib/modules/fmt.md`, `tests/cases/standard-library/ok/format/`, `tests/cases/standard-library/errors/format/` |
 | `union by` | Parser and AST preserve `union by <selector> { arm => Type, ... }`; syntax/declaration tooling can print it. Sema validates earlier-field selector roots, nested struct-field selector segments, unique arm names, arm payload type references, and exact enum-case arm coverage for enum selectors. Enum-selector fields lower to internal enum storage, struct literals construct them with `field: arm => payload`, statically visible selector values must match the constructor arm, direct field matches use the same arm names (`match packet.fragment { stream(stream_payload) => ... }`), and direct assignment to the selector path or an ancestor selector field is rejected. | Remaining compiler work covers non-enum discriminant policy, public active-arm narrowing outside direct field matches, active-arm mutation/drop diagnostics, and stable ABI naming. | `src/parser.cpp`, `src/ast.hpp`, `src/sema.cpp`, `src/llvm_codegen.cpp`, `docs/language/generic-aggregates.md`, `tests/cases/structs/ok/union-by-constructor.ari`, `tests/cases/structs/ok/union-by-match.ari`, `tests/cases/structs/errors/union-by-constructor-unknown-arm.ari`, `tests/cases/structs/errors/union-by-constructor-selector-mismatch.ari`, `tests/cases/structs/errors/union-by-selector-assignment.ari`, `tests/cases/structs/errors/union-by-selector-root-assignment.ari`, `tests/cases/compiler-development/artifact/ok/syntax-union-by-field.*`, `tests/cases/compiler-development/artifact/errors/diagnostic-union-by-*.{ari,diagnostic}` |
-| Structural capability parameters | Ordinary free functions and inherent `impl` methods can write `fn f(x: has method(...) -> Type)` for one method requirement or `fn f(x: has { a() -> T, b(i64) -> U })` for grouped method requirements on one parameter. The parser lowers the parameter to a hidden generic, sema checks the concrete call-site type for every matching static method, and the body monomorphizes through normal method dispatch. Hidden capability generics do not count as visible `<T>` method type arguments. Unsupported type positions still emit a targeted diagnostic. | Remaining compiler work covers reusable aliases, richer diagnostics that point users toward named traits, trait-method policy, and any future extension beyond method requirements. | `src/parser.cpp`, `src/ast.hpp`, `src/sema.cpp`, `docs/language/traits.md`, `docs/dev/roadmap.md`, `tests/cases/traits/ok/structural-capability-parameter.ari`, `tests/cases/traits/ok/structural-capability-multi-method.ari`, `tests/cases/traits/ok/structural-capability-impl-method.ari`, `tests/cases/traits/errors/structural-capability-*.ari` |
+| Structural capability parameters | Ordinary free functions and inherent `impl` methods can write `fn f(x: has method(...) -> Type)` for one method requirement, `fn f(x: has { a() -> T, b(i64) -> U })` for grouped method requirements on one parameter, or `fn f[T: has method(...) -> Type](x: T)` when the structural type must be named. The parser lowers anonymous parameters to hidden generics, sema checks concrete call-site types for every matching static method, and the body monomorphizes through normal method dispatch. Hidden capability generics do not count as visible `<T>` method type arguments. Unsupported type positions still emit a targeted diagnostic. | Remaining compiler work covers reusable aliases, richer diagnostics that point users toward named traits, trait-method policy, and any future extension beyond method requirements. | `src/parser.cpp`, `src/ast.hpp`, `src/sema.cpp`, `docs/language/traits.md`, `docs/dev/roadmap.md`, `tests/cases/traits/ok/structural-capability-parameter.ari`, `tests/cases/traits/ok/structural-capability-multi-method.ari`, `tests/cases/traits/ok/structural-capability-impl-method.ari`, `tests/cases/traits/ok/structural-capability-generic-bound.ari`, `tests/cases/traits/errors/structural-capability-*.ari` |
 
 ## Thread Implementation Path
 
@@ -167,6 +167,14 @@ fn save(x: has { serialize() -> i64, add(i64) -> i64 }, amount: i64) -> i64 {
 }
 ```
 
+Explicit generic bounds are executable when the structural type needs a name:
+
+```ari
+fn save[T: has serialize() -> i64](x: T) -> i64 {
+  x.serialize()
+}
+```
+
 The same syntax is executable on inherent associated functions and inherent
 methods. The compiler treats the `has` parameter as a hidden method generic,
 infers it from non-receiver arguments, and keeps visible method type arguments
@@ -205,8 +213,9 @@ fn main() -> i64 {
 ```
 
 The current implemented slice covers steps 1, 2, 4, grouped method
-requirements, inherent impl method/associated-function positions, and
-positive/negative fixtures for free functions and inherent impl functions:
+requirements, explicit generic structural bounds, inherent impl
+method/associated-function positions, and positive/negative fixtures for free
+functions and inherent impl functions:
 
 1. Parse `has` capability parameter syntax into a hidden generic parameter with
    one or more attached method requirements.
@@ -220,8 +229,9 @@ positive/negative fixtures for free functions and inherent impl functions:
 6. Decide whether capability aliases belong in the language.
 
 Unsupported positions such as type aliases, struct fields, extern functions,
-trait methods, trait impl methods, meta functions, and lambdas still use the
-targeted `has` diagnostic and should keep pointing users toward named traits.
+trait methods, trait impl methods, meta functions, lambdas, and struct/enum/trait
+generic bounds still use the targeted `has` diagnostic and should keep pointing
+users toward named traits.
 
 ## Checks
 

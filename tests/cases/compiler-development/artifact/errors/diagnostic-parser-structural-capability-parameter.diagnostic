@@ -1,6 +1,6 @@
-diagnostic error code=P0001 family=parser message="structural capability syntax is only supported in function parameter types" sources=1 labels=1 notes=1 helps=1
+diagnostic error code=P0001 family=parser message="structural capability syntax is only supported in function parameter types and generic function bounds" sources=1 labels=1 notes=1 helps=1
   Source source_id=0 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic-parser-structural-capability-parameter.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic-parser-structural-capability-parameter.ari" bytes=73
   Label index=0 role=primary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-parser-structural-capability-parameter.ari" line=1 column=13 end_line=1 end_column=16 byte_start=12 byte_end=15 message=""
   Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-parser-structural-capability-parameter.ari:1:13\n   |\n 1 | type Save = has serialize() -> String;\n   |             ^^^"
-  Note index=0 location=none message="`has method(...) -> Type` introduces a parameter-local structural requirement"
-  Help index=0 location=none message="write it directly after a parameter colon, such as `fn save(x: has serialize() -> String)`"
+  Note index=0 location=none message="`has method(...) -> Type` introduces a structural method requirement"
+  Help index=0 location=none message="write it directly after a parameter colon, or as a function generic bound such as `fn save[T: has serialize() -> String](x: T)`"

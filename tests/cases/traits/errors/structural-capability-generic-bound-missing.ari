@@ -1,0 +1,11 @@
+struct Packet {
+  value: i64,
+}
+
+fn save[T: has serialize() -> i64](value: T) -> i64 {
+  value.serialize()
+}
+
+fn main() -> i64 {
+  return save(Packet { value: 1 });
+}

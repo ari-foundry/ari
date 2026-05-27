@@ -708,9 +708,28 @@ Grouped requirements use comma separators and may have a trailing comma. A
 missing method or mismatched method signature is reported at the call site, with
 a secondary label on the exact requirement inside the grouped `has` list.
 
+When a function needs to name the same structural type more than once, return
+it, or use the type parameter in another generic position, put the capability
+on an explicit generic parameter:
+
+```ari
+fn save[T: has serialize() -> i64](x: T) -> i64 {
+  x.serialize()
+}
+
+fn save_twice[T: has { serialize() -> i64, add(i64) -> i64 }](x: T) -> i64 {
+  x.serialize() + x.add(1)
+}
+```
+
+This spelling uses the ordinary generic specialization path. At each call site,
+the concrete `T` must provide every listed method with the requested
+non-receiver parameter types and result type.
+
 Inherent `impl` methods and associated functions can use the same parameter
-syntax. The hidden capability generic does not count as a visible method type
-argument, so ordinary method generics keep their natural spelling:
+syntax and the same explicit generic-bound syntax. A hidden capability generic
+does not count as a visible method type argument, so ordinary method generics
+keep their natural spelling:
 
 ```ari
 struct Runner {
@@ -726,7 +745,7 @@ impl Runner {
     self.base + value.serialize() + value.add(amount)
   }
 
-  fn pick[Tag](self, tag: Tag, value: has serialize() -> i64) -> i64 {
+  fn pick[Value: has serialize() -> i64](self, value: Value) -> i64 {
     value.serialize()
   }
 }
@@ -735,21 +754,22 @@ fn main() -> i64 {
   let runner = Runner { base: 2 };
   return Runner::save(Packet { value: 20 }) +
       runner.boost(Packet { value: 10 }, 3) +
-      runner.pick<i64>(7, Packet { value: 5 });
+      runner.pick<Packet>(Packet { value: 5 });
 }
 ```
 
 The initial subset is intentionally narrow:
 
 - The syntax is accepted only in ordinary free-function and inherent `impl`
-  method parameter type position.
-- A `has` parameter currently describes method requirements only.
+  method parameter type position, plus their generic parameter bounds.
+- A `has` parameter or bound currently describes method requirements only.
 - Associated types, field requirements, operators, and capability aliases are
   not implemented yet.
 - Trait methods and trait impl methods still use named trait bounds.
 - `has method(...) -> Type` in aliases, struct fields, trait methods, trait
-  impl methods, extern declarations, meta functions, lambdas, or other type
-  positions is rejected with a targeted diagnostic.
+  impl methods, extern declarations, meta functions, lambdas, struct/enum/trait
+  generic bounds, or other type positions is rejected with a targeted
+  diagnostic.
 
 Use a named trait when the contract should be shared across APIs, documented as
 part of a stable interface, or implemented through trait-object dispatch:
