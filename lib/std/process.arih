@@ -45,6 +45,13 @@ pub type ChildStdin = std::io::PipeWriter;
 pub type ChildStdout = std::io::PipeReader;
 pub type ChildStderr = std::io::PipeReader;
 
+pub struct ChildPipes {
+  mut child_value: std::process::Child,
+  mut stdin_value: std::process::ChildStdin,
+  mut stdout_value: std::process::ChildStdout,
+  mut stderr_value: std::process::ChildStderr,
+}
+
 pub struct ExitCode {
   raw_value: i64,
 }
@@ -213,6 +220,10 @@ pub fn command_with_args(program: string, args: std::Slice[std::process::Arg]) -
 
 pub fn spawn(command: ref std::process::Command) -> std::Result[std::process::Child, std::error::Error] {
   return command.spawn();
+}
+
+pub fn spawn_piped(command: ref std::process::Command) -> std::Result[std::process::ChildPipes, std::error::Error] {
+  return command.spawn_piped();
 }
 
 pub fn status(command: ref std::process::Command) -> std::Result[std::process::ExitStatus, std::error::Error] {
@@ -615,6 +626,11 @@ fn wait_then_status_error(pid: i64, reason: std::error::Error) -> std::Result[st
 fn wait_then_output_error(pid: i64, reason: std::error::Error) -> std::Result[std::process::Output, std::error::Error] {
   std::process::wait_status(pid);
   return std::Err<std::process::Output, std::error::Error>(reason);
+}
+
+fn wait_then_pipes_error(pid: i64, reason: std::error::Error) -> std::Result[std::process::ChildPipes, std::error::Error] {
+  std::process::wait_status(pid);
+  return std::Err<std::process::ChildPipes, std::error::Error>(reason);
 }
 
 fn redirect_stdin_from_path(path: std::c::CStr) -> std::Result[(), std::error::Error] {
@@ -1059,6 +1075,91 @@ pub impl std::process::Child {
   fn terminate(self: ref Self) -> std::Result[(), std::error::Error] {
     return std::process::terminate(self.pid_value);
   }
+
+  fn detach(self) -> void {}
+}
+
+pub impl std::process::ChildPipes {
+  fn child(self: ref Self) -> ref std::process::Child {
+    return ref self.child_value;
+  }
+
+  fn child_mut(self: ref mut Self) -> ref mut std::process::Child {
+    return ref mut self.child_value;
+  }
+
+  fn pid(self: ref Self) -> i64 {
+    return self.child_value.pid();
+  }
+
+  fn stdin(self: ref mut Self) -> ref mut std::process::ChildStdin {
+    return ref mut self.stdin_value;
+  }
+
+  fn stdout(self: ref mut Self) -> ref mut std::process::ChildStdout {
+    return ref mut self.stdout_value;
+  }
+
+  fn stderr(self: ref mut Self) -> ref mut std::process::ChildStderr {
+    return ref mut self.stderr_value;
+  }
+
+  fn close_stdin(self: ref mut Self) -> std::Result[(), std::error::Error] {
+    return self.stdin_value.close();
+  }
+
+  fn close_stdout(self: ref mut Self) -> std::Result[(), std::error::Error] {
+    return self.stdout_value.close();
+  }
+
+  fn close_stderr(self: ref mut Self) -> std::Result[(), std::error::Error] {
+    return self.stderr_value.close();
+  }
+
+  fn close_streams(self: ref mut Self) -> std::Result[(), std::error::Error] {
+    match self.stdin_value.close() {
+      std::Err(stdin_reason) => {
+        self.stdout_value.close();
+        self.stderr_value.close();
+        return std::Err<(), std::error::Error>(stdin_reason);
+      }
+      std::Ok(_) => {}
+    }
+    match self.stdout_value.close() {
+      std::Err(stdout_reason) => {
+        self.stderr_value.close();
+        return std::Err<(), std::error::Error>(stdout_reason);
+      }
+      std::Ok(_) => {}
+    }
+    return self.stderr_value.close();
+  }
+
+  fn wait(self: ref Self) -> std::Result[i64, std::error::Error] {
+    return self.child_value.wait();
+  }
+
+  fn wait_status(self: ref Self) -> std::Result[std::process::ExitStatus, std::error::Error] {
+    return self.child_value.wait_status();
+  }
+
+  fn kill(self: ref Self, signal: i64) -> std::Result[(), std::error::Error] {
+    return self.child_value.kill(signal);
+  }
+
+  fn signal(self: ref Self, signal: std::process::Signal) -> std::Result[(), std::error::Error] {
+    return self.child_value.signal(signal);
+  }
+
+  fn terminate(self: ref Self) -> std::Result[(), std::error::Error] {
+    return self.child_value.terminate();
+  }
+
+  fn detach(self: ref mut Self) -> void {
+    self.stdin_value.close();
+    self.stdout_value.close();
+    self.stderr_value.close();
+  }
 }
 
 pub impl std::process::Command {
@@ -1248,6 +1349,157 @@ pub impl std::process::Command {
 
   fn spawn_with_stdin_null(self: ref Self) -> std::Result[std::process::Child, std::error::Error] {
     return self.spawn_with_stdin_file("/dev/null");
+  }
+
+  fn spawn_piped(self: ref Self) -> std::Result[std::process::ChildPipes, std::error::Error] {
+    let maybe_stdin_pipe = std::io::pipe();
+    if maybe_stdin_pipe.is_err() {
+      return std::Err<std::process::ChildPipes, std::error::Error>(maybe_stdin_pipe.unwrap_err());
+    }
+    var stdin_pipe = maybe_stdin_pipe.unwrap();
+
+    let maybe_stdout_pipe = std::io::pipe();
+    if maybe_stdout_pipe.is_err() {
+      stdin_pipe.close();
+      return std::Err<std::process::ChildPipes, std::error::Error>(maybe_stdout_pipe.unwrap_err());
+    }
+    var stdout_pipe = maybe_stdout_pipe.unwrap();
+
+    let maybe_stderr_pipe = std::io::pipe();
+    if maybe_stderr_pipe.is_err() {
+      stdin_pipe.close();
+      stdout_pipe.close();
+      return std::Err<std::process::ChildPipes, std::error::Error>(maybe_stderr_pipe.unwrap_err());
+    }
+    var stderr_pipe = maybe_stderr_pipe.unwrap();
+
+    let maybe_setup_pipe = std::io::pipe();
+    if maybe_setup_pipe.is_err() {
+      stdin_pipe.close();
+      stdout_pipe.close();
+      stderr_pipe.close();
+      return std::Err<std::process::ChildPipes, std::error::Error>(maybe_setup_pipe.unwrap_err());
+    }
+    var setup_pipe = maybe_setup_pipe.unwrap();
+
+    var stdin_reader = stdin_pipe.take_reader();
+    var stdin_writer = stdin_pipe.take_writer();
+    var stdout_reader = stdout_pipe.take_reader();
+    var stdout_writer = stdout_pipe.take_writer();
+    var stderr_reader = stderr_pipe.take_reader();
+    var stderr_writer = stderr_pipe.take_writer();
+    var setup_reader = setup_pipe.take_reader();
+    var setup_writer = setup_pipe.take_writer();
+
+    match setup_writer.set_close_on_exec(true) {
+      std::Err(close_on_exec_reason) => {
+        stdin_reader.close();
+        stdin_writer.close();
+        stdout_reader.close();
+        stdout_writer.close();
+        stderr_reader.close();
+        stderr_writer.close();
+        setup_reader.close();
+        setup_writer.close();
+        return std::Err<std::process::ChildPipes, std::error::Error>(close_on_exec_reason);
+      }
+      std::Ok(_) => {}
+    }
+
+    var scratch = zone::temp(std::process::argv_capacity(self));
+    let argv = std::process::build_argv(ref mut scratch, self);
+
+    match std::process::fork() {
+      std::Err(reason) => {
+        stdin_reader.close();
+        stdin_writer.close();
+        stdout_reader.close();
+        stdout_writer.close();
+        stderr_reader.close();
+        stderr_writer.close();
+        setup_reader.close();
+        setup_writer.close();
+        return std::Err<std::process::ChildPipes, std::error::Error>(reason);
+      }
+      std::Ok(pid) => {
+        if std::process::is_child(pid) {
+          stdin_writer.close();
+          stdout_reader.close();
+          stderr_reader.close();
+          setup_reader.close();
+
+          match std::process::redirect_descriptor_result(stdin_reader.as_fd().raw(), 0) {
+            std::Err(stdin_reason) => {
+              std::process::write_setup_error(ref mut setup_writer, stdin_reason);
+              setup_writer.close();
+              std::process::exit(127);
+            }
+            std::Ok(_) => {}
+          }
+          match std::process::redirect_descriptor_result(stdout_writer.as_fd().raw(), 1) {
+            std::Err(stdout_reason) => {
+              std::process::write_setup_error(ref mut setup_writer, stdout_reason);
+              setup_writer.close();
+              std::process::exit(127);
+            }
+            std::Ok(_) => {}
+          }
+          match std::process::redirect_descriptor_result(stderr_writer.as_fd().raw(), 2) {
+            std::Err(stderr_reason) => {
+              std::process::write_setup_error(ref mut setup_writer, stderr_reason);
+              setup_writer.close();
+              std::process::exit(127);
+            }
+            std::Ok(_) => {}
+          }
+
+          stdin_reader.close();
+          stdout_writer.close();
+          stderr_writer.close();
+          match std::process::exec_with_argv(self, argv) {
+            std::Err(exec_reason) => {
+              std::process::write_setup_error(ref mut setup_writer, exec_reason);
+            }
+            std::Ok(_) => {}
+          }
+          setup_writer.close();
+          std::process::exit(127);
+        }
+
+        stdin_reader.close();
+        stdout_writer.close();
+        stderr_writer.close();
+        setup_writer.close();
+        match std::process::read_setup_error(ref mut setup_reader) {
+          std::Err(read_reason) => {
+            setup_reader.close();
+            stdin_writer.close();
+            stdout_reader.close();
+            stderr_reader.close();
+            return std::process::wait_then_pipes_error(pid, read_reason);
+          }
+          std::Ok(maybe_reason) => {
+            setup_reader.close();
+            match maybe_reason {
+              std::Some(setup_reason) => {
+                stdin_writer.close();
+                stdout_reader.close();
+                stderr_reader.close();
+                return std::process::wait_then_pipes_error(pid, setup_reason);
+              }
+              std::None => {
+                return std::Ok<std::process::ChildPipes, std::error::Error>(std::process::ChildPipes {
+                  child_value: std::process::Child { pid_value: pid },
+                  stdin_value: stdin_writer,
+                  stdout_value: stdout_reader,
+                  stderr_value: stderr_reader,
+                });
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   fn status(self: ref Self) -> std::Result[std::process::ExitStatus, std::error::Error] {

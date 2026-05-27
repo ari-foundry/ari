@@ -1,0 +1,92 @@
+// Covers interactive child process pipes: stdin writer, stdout reader,
+// stderr reader, module-level spawn_piped, setup-error propagation, and
+// explicit detach vocabulary for intentionally un-waited children.
+fn status_is(value: Result[process::ExitStatus, error::Error], expected: i64) -> bool {
+  match value {
+    Ok(status) => { return status.exited() && status.code_or(-1) == expected; }
+    Err(_) => { return false; }
+  }
+}
+
+fn main() -> i64 {
+  var zone = zone::temp(2048);
+  var score = 0;
+
+  var cmd = process::Command::new("sh")
+    .with_arg(ref mut zone, "-c")
+    .with_arg(ref mut zone, "cat; printf err >&2");
+  match cmd.spawn_piped() {
+    Ok(first_child_value) => {
+      var first_child = first_child_value;
+      if first_child.pid() > 0 {
+        score = score + 11;
+      }
+      if std::io::write_all<process::ChildStdin>(first_child.stdin(), std::string::bytes("streamed\n")).is_ok() &&
+         first_child.close_stdin().is_ok() {
+        score = score + 13;
+      }
+      match first_child.stdout().read_to_string(ref mut zone) {
+        Ok(text) => {
+          if text.equals_text("streamed\n") {
+            score = score + 17;
+          }
+        }
+        Err(_) => {}
+      }
+      match first_child.stderr().read_to_string(ref mut zone) {
+        Ok(error_text) => {
+          if error_text.equals_text("err") {
+            score = score + 19;
+          }
+        }
+        Err(_) => {}
+      }
+      if first_child.close_stdout().is_ok() && first_child.close_stderr().is_ok() &&
+         status_is(first_child.wait_status(), 0) {
+        score = score + 23;
+      }
+    }
+    Err(_) => {}
+  }
+
+  var module_cmd = process::Command::new("sh")
+    .with_arg(ref mut zone, "-c")
+    .with_arg(ref mut zone, "read value; test \"$value\" = module");
+  match process::spawn_piped(ref module_cmd) {
+    Ok(second_child_value) => {
+      var second_child = second_child_value;
+      if std::io::write_all<process::ChildStdin>(second_child.stdin(), std::string::bytes("module\n")).is_ok() &&
+         second_child.close_stdin().is_ok() &&
+         status_is(second_child.wait_status(), 0) {
+        score = score + 29;
+      }
+      second_child.close_stdout();
+      second_child.close_stderr();
+    }
+    Err(_) => {}
+  }
+
+  var missing = process::Command::new("__ari_missing_command_for_spawn_piped__");
+  match missing.spawn_piped() {
+    Err(reason) => {
+      if reason.is_not_found() {
+        score = score + 31;
+      }
+    }
+    Ok(_) => {}
+  }
+
+  var detached = process::Command::new("sh")
+    .with_arg(ref mut zone, "-c")
+    .with_arg(ref mut zone, "exit 0");
+  match detached.spawn() {
+    Ok(detached_child) => {
+      detached_child.detach();
+      score = score + 37;
+    }
+    Err(_) => {}
+  }
+
+  assert_eq_i64(score, 180);
+  return score;
+}

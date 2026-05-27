@@ -24,24 +24,24 @@ platform notes.
 
 ## Summary
 
-- API entries: `3409`
+- API entries: `3486`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
-| `alloc` | 893 | usable |
+| `alloc` | 897 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 902 | stable candidate |
-| `hosted` | 1415 | platform-backed |
+| `hosted` | 1488 | platform-backed |
 | `platform` | 163 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1194 |
-| `method` | 1765 |
+| `fn` | 1198 |
+| `method` | 1836 |
 | `module` | 39 |
-| `struct` | 178 |
+| `struct` | 180 |
 | `trait` | 39 |
 | `trait-method` | 41 |
 | `type` | 22 |
@@ -59,7 +59,7 @@ platform notes.
 | `std::c` | `platform` | 49 |
 | `std::cell` | `alloc` | 44 |
 | `std::cmp` | `core` | 38 |
-| `std::collections` | `alloc` | 385 |
+| `std::collections` | `alloc` | 389 |
 | `std::context` | `hosted` | 20 |
 | `std::convert` | `core` | 14 |
 | `std::encoding` | `core` | 98 |
@@ -74,17 +74,17 @@ platform notes.
 | `std::log` | `hosted` | 12 |
 | `std::math` | `core` | 39 |
 | `std::mem` | `core` | 13 |
-| `std::net` | `hosted` | 315 |
+| `std::net` | `hosted` | 363 |
 | `std::option` | `core` | 12 |
 | `std::os` | `platform` | 62 |
 | `std::parse` | `core` | 101 |
 | `std::path` | `core` | 120 |
-| `std::process` | `hosted` | 153 |
+| `std::process` | `hosted` | 173 |
 | `std::random` | `alloc/hosted` | 36 |
 | `std::rc` | `alloc` | 32 |
 | `std::result` | `core` | 12 |
 | `std::string` | `alloc` | 171 |
-| `std::sync` | `hosted` | 209 |
+| `std::sync` | `hosted` | 214 |
 | `std::target` | `platform` | 52 |
 | `std::test` | `hosted` | 32 |
 | `std::thread` | `hosted` | 90 |
@@ -2519,6 +2519,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::net::udp_bind` | check-prelude std-net-udp-socket module-level UDP bind helper returning Error; docs/stdlib/modules/net.md |
 | `fn std::net::udp_bind_v6` | check-prelude std-net-ipv6-socket module-level IPv6 UDP bind helper returning Error; docs/stdlib/modules/net.md |
 | `fn std::net::unix_connect` | check-prelude std-net-unix-socket module-level Unix stream connect helper returning Error; docs/stdlib/modules/net.md |
+| `fn std::net::unix_datagram` | check-prelude std-net-unix-socket module-level Unix datagram bind helper returning Error; docs/stdlib/modules/net.md |
+| `fn std::net::unix_datagram_unbound` | check-prelude std-net-unix-socket module-level unbound Unix datagram socket helper returning Error; docs/stdlib/modules/net.md |
 | `fn std::net::unix_listen` | check-prelude std-net-unix-socket module-level Unix listener helper returning Error; docs/stdlib/modules/net.md |
 
 ### method
@@ -2679,12 +2681,20 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::UdpSocket::is_nonblocking` | check-prelude std-net-udp-socket UDP nonblocking descriptor query; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::is_nonblocking_optional` | check-prelude std-net-udp-socket Option-returning UDP nonblocking compatibility query; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::is_open` | check-prelude std-net-udp-socket UDP open predicate; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::join_multicast_v4` | check-prelude std-net-udp-socket UDP IPv4 multicast join helper using the default interface; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::join_multicast_v4_on` | check-prelude std-net-udp-socket UDP IPv4 multicast join helper using an explicit interface; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::leave_multicast_v4` | check-prelude std-net-udp-socket UDP IPv4 multicast leave helper using the default interface; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::leave_multicast_v4_on` | check-prelude std-net-udp-socket UDP IPv4 multicast leave helper using an explicit interface; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::local_addr` | check-prelude std-net-udp-socket UDP local socket-address lookup; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::local_addr_optional` | check-prelude std-net-udp-socket Option-returning UDP local address compatibility query; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::local_addr_v6` | check-prelude std-net-ipv6-socket UDP local IPv6 socket-address lookup; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::local_addr_v6_optional` | check-prelude std-net-ipv6-socket Option-returning UDP IPv6 local address compatibility query; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::local_port` | check-prelude std-net-udp-socket UDP bound-port lookup; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::local_port_optional` | check-prelude std-net-udp-socket Option-returning UDP local port compatibility query; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::multicast_loop_v4` | check-prelude std-net-udp-socket UDP IPv4 multicast loopback socket option query; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::multicast_loop_v4_optional` | check-prelude std-net-udp-socket Option-returning UDP IPv4 multicast loopback compatibility query; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::multicast_ttl_v4` | check-prelude std-net-udp-socket UDP IPv4 multicast TTL socket option query; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::multicast_ttl_v4_optional` | check-prelude std-net-udp-socket Option-returning UDP IPv4 multicast TTL compatibility query; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::peek_from` | check-prelude std-net-udp-socket UDP source-address peek helper; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::recv` | check-prelude std-net-udp-socket connected UDP buffer receive helper; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::recv_buffer_size` | check-prelude std-net-udp-socket UDP receive-buffer-size query; docs/stdlib/modules/net.md |
@@ -2710,6 +2720,10 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::UdpSocket::set_close_on_exec_unchecked` | check-prelude std-net-udp-socket unchecked UDP close-on-exec compatibility setter; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::set_hop_limit` | check-prelude std-net-ipv6-socket UDP IPv6 hop-limit socket option setter; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::set_hop_limit_unchecked` | check-prelude std-net-ipv6-socket unchecked UDP IPv6 hop-limit compatibility setter; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::set_multicast_loop_v4` | check-prelude std-net-udp-socket UDP IPv4 multicast loopback socket option setter; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::set_multicast_loop_v4_unchecked` | check-prelude std-net-udp-socket unchecked UDP IPv4 multicast loopback compatibility setter; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::set_multicast_ttl_v4` | check-prelude std-net-udp-socket UDP IPv4 multicast TTL socket option setter; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::set_multicast_ttl_v4_unchecked` | check-prelude std-net-udp-socket unchecked UDP IPv4 multicast TTL compatibility setter; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::set_nonblocking` | check-prelude std-net-udp-socket UDP nonblocking descriptor setter; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::set_nonblocking_unchecked` | check-prelude std-net-udp-socket unchecked UDP nonblocking compatibility setter; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::set_read_timeout` | check-prelude std-net-udp-socket Duration-based UDP read timeout setter; docs/stdlib/modules/net.md |
@@ -2730,6 +2744,39 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::UdpSocket::try_recv_byte` | check-prelude std-net-udp-socket Option-returning single-byte UDP datagram receive helper; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::ttl` | check-prelude std-net-udp-socket UDP IPv4 TTL socket option query; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::ttl_optional` | check-prelude std-net-udp-socket Option-returning UDP IPv4 TTL compatibility query; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::bind` | check-prelude std-net-unix-socket Result-returning Unix datagram bind helper with Error payload; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::bind_optional` | check-prelude std-net-unix-socket Option-returning Unix datagram bind compatibility helper; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::bind_raw` | check-prelude std-net-unix-socket raw Result-returning Unix datagram bind compatibility helper; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::close` | check-prelude std-net-unix-socket explicit Unix datagram close helper; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::close_on_exec` | check-prelude std-net-unix-socket Result-returning Unix datagram close-on-exec descriptor flag query; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::close_on_exec_optional` | check-prelude std-net-unix-socket Option-returning Unix datagram close-on-exec compatibility query; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::close_unchecked` | check-prelude std-net-unix-socket unchecked Unix datagram close compatibility method; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::connect` | check-prelude std-net-unix-socket Unix datagram default-peer connect helper; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::descriptor` | check-prelude std-net-unix-socket Unix datagram borrowed descriptor view; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::is_nonblocking` | check-prelude std-net-unix-socket Unix datagram nonblocking descriptor query; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::is_nonblocking_optional` | check-prelude std-net-unix-socket Option-returning Unix datagram nonblocking compatibility query; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::is_open` | check-prelude std-net-unix-socket Unix datagram open predicate; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::recv` | check-prelude std-net-unix-socket connected Unix datagram receive helper; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::recv_ready` | check-prelude std-os-poll Duration-based Unix datagram receive-readiness probe; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::recv_ready_millis` | check-prelude std-os-poll millisecond Unix datagram receive-readiness probe; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::send` | check-prelude std-net-unix-socket connected Unix datagram send helper; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::send_ready` | check-prelude std-os-poll Duration-based Unix datagram send-readiness probe; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::send_ready_millis` | check-prelude std-os-poll millisecond Unix datagram send-readiness probe; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::send_to` | check-prelude std-net-unix-socket pathname Unix datagram send helper; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::set_close_on_exec` | check-prelude std-net-unix-socket Unix datagram close-on-exec descriptor flag setter; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::set_close_on_exec_unchecked` | check-prelude std-net-unix-socket unchecked Unix datagram close-on-exec compatibility setter; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::set_nonblocking` | check-prelude std-net-unix-socket Unix datagram nonblocking descriptor setter; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::set_nonblocking_unchecked` | check-prelude std-net-unix-socket unchecked Unix datagram nonblocking compatibility setter; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::set_read_timeout` | check-prelude std-net-unix-socket Duration-based Unix datagram read timeout setter; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::set_read_timeout_millis` | check-prelude std-net-unix-socket Unix datagram read timeout setter; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::set_read_timeout_millis_unchecked` | check-prelude std-net-unix-socket unchecked Unix datagram read timeout compatibility setter; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::set_write_timeout` | check-prelude std-net-unix-socket Duration-based Unix datagram write timeout setter; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::set_write_timeout_millis` | check-prelude std-net-unix-socket Unix datagram write timeout setter; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::set_write_timeout_millis_unchecked` | check-prelude std-net-unix-socket unchecked Unix datagram write timeout compatibility setter; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::try_bind` | check-prelude std-net-unix-socket Option-returning Unix datagram bind compatibility alias; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::unbound` | check-prelude std-net-unix-socket Result-returning unbound Unix datagram constructor; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::unbound_optional` | check-prelude std-net-unix-socket Option-returning unbound Unix datagram constructor; docs/stdlib/modules/net.md |
+| `method std::net::UnixDatagram::unbound_raw` | check-prelude std-net-unix-socket raw Result-returning unbound Unix datagram constructor; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::accept` | check-prelude std-net-unix-socket Result-returning Unix stream accept helper with Error payload; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::accept_optional` | check-prelude std-net-unix-socket Option-returning Unix stream accept compatibility helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::accept_raw` | check-prelude std-net-unix-socket raw Result-returning Unix stream accept compatibility helper; docs/stdlib/modules/net.md |
@@ -2807,6 +2854,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `struct std::net::TcpStream` | check-prelude std-net-tcp-loopback owned TCP stream handle and IO traits; docs/stdlib/modules/net.md |
 | `struct std::net::UdpRecvFrom` | check-prelude std-net-udp-socket UDP receive metadata value; docs/stdlib/modules/net.md |
 | `struct std::net::UdpSocket` | check-prelude std-net-udp-socket owned UDP datagram socket handle; docs/stdlib/modules/net.md |
+| `struct std::net::UnixDatagram` | check-prelude std-net-unix-socket owned Unix domain datagram handle; docs/stdlib/modules/net.md |
 | `struct std::net::UnixListener` | check-prelude std-net-unix-socket owned Unix domain listener handle; docs/stdlib/modules/net.md |
 | `struct std::net::UnixStream` | check-prelude std-net-unix-socket owned Unix domain stream handle and IO traits; docs/stdlib/modules/net.md |
 
@@ -3295,6 +3343,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::process::sigquit` | check-prelude std-process-high-level POSIX SIGQUIT typed signal helper; docs/stdlib/modules/process.md |
 | `fn std::process::sigterm` | check-prelude std-process-high-level POSIX SIGTERM typed signal helper; docs/stdlib/modules/process.md |
 | `fn std::process::spawn` | check-prelude std-process-command module-level Command spawn wrapper returning Error; docs/stdlib/modules/process.md |
+| `fn std::process::spawn_piped` | check-prelude std-process-piped module-level interactive piped Command spawn wrapper returning Error; docs/stdlib/modules/process.md |
 | `fn std::process::status` | check-prelude std-process-command module-level Command typed status wrapper returning Error; docs/stdlib/modules/process.md |
 | `fn std::process::status_code` | check-prelude std-process-command explicit normal-exit-code compatibility wrapper returning Error; docs/stdlib/modules/process.md |
 | `fn std::process::status_with_stdin` | check-prelude std-process-stdin module-level bounded pipe-backed stdin status helper; docs/stdlib/modules/process.md |
@@ -3317,12 +3366,29 @@ Tier: `hosted`. Stability reading: platform-backed.
 
 | API | Coverage note |
 | --- | --- |
+| `method std::process::Child::detach` | check-prelude std-process-piped explicit child wait-ownership discard marker; docs/stdlib/modules/process.md |
 | `method std::process::Child::kill` | check-prelude std-process-command child signal helper; docs/stdlib/modules/process.md |
 | `method std::process::Child::pid` | check-prelude std-process-command child pid accessor; docs/stdlib/modules/process.md |
 | `method std::process::Child::signal` | check-prelude std-process-high-level typed child signal helper; docs/stdlib/modules/process.md |
 | `method std::process::Child::terminate` | check-prelude std-process-command child SIGTERM convenience helper; docs/stdlib/modules/process.md |
 | `method std::process::Child::wait` | check-prelude std-process-command child wait Result helper; docs/stdlib/modules/process.md |
 | `method std::process::Child::wait_status` | check-prelude std-process-exit-status child typed ExitStatus wait helper; docs/stdlib/modules/process.md |
+| `method std::process::ChildPipes::child` | check-prelude std-process-piped child handle accessor for interactive piped children; docs/stdlib/modules/process.md |
+| `method std::process::ChildPipes::child_mut` | check-prelude std-process-piped mutable child handle accessor for interactive piped children; docs/stdlib/modules/process.md |
+| `method std::process::ChildPipes::close_stderr` | check-prelude std-process-piped explicit piped child stderr close helper; docs/stdlib/modules/process.md |
+| `method std::process::ChildPipes::close_stdin` | check-prelude std-process-piped explicit piped child stdin close helper; docs/stdlib/modules/process.md |
+| `method std::process::ChildPipes::close_stdout` | check-prelude std-process-piped explicit piped child stdout close helper; docs/stdlib/modules/process.md |
+| `method std::process::ChildPipes::close_streams` | check-prelude std-process-piped explicit piped child stream cleanup helper; docs/stdlib/modules/process.md |
+| `method std::process::ChildPipes::detach` | check-prelude std-process-piped close piped streams and discard child wait ownership; docs/stdlib/modules/process.md |
+| `method std::process::ChildPipes::kill` | check-prelude std-process-piped piped child signal helper; docs/stdlib/modules/process.md |
+| `method std::process::ChildPipes::pid` | check-prelude std-process-piped piped child pid accessor; docs/stdlib/modules/process.md |
+| `method std::process::ChildPipes::signal` | check-prelude std-process-piped typed piped child signal helper; docs/stdlib/modules/process.md |
+| `method std::process::ChildPipes::stderr` | check-prelude std-process-piped mutable stderr pipe accessor; docs/stdlib/modules/process.md |
+| `method std::process::ChildPipes::stdin` | check-prelude std-process-piped mutable stdin pipe accessor; docs/stdlib/modules/process.md |
+| `method std::process::ChildPipes::stdout` | check-prelude std-process-piped mutable stdout pipe accessor; docs/stdlib/modules/process.md |
+| `method std::process::ChildPipes::terminate` | check-prelude std-process-piped piped child SIGTERM convenience helper; docs/stdlib/modules/process.md |
+| `method std::process::ChildPipes::wait` | check-prelude std-process-piped piped child wait Result helper; docs/stdlib/modules/process.md |
+| `method std::process::ChildPipes::wait_status` | check-prelude std-process-piped piped child typed ExitStatus wait helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::arg` | check-prelude std-process-high-level explicit-zone single argv append helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::arg_bytes` | check-prelude std-process-high-level Result-returning explicit-zone argv append helper for owned byte text; docs/stdlib/modules/process.md |
 | `method std::process::Command::arg_value` | check-prelude std-process-high-level explicit-zone Arg append helper; docs/stdlib/modules/process.md |
@@ -3343,6 +3409,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::process::Command::output` | check-prelude std-process-high-level natural output capture alias; docs/stdlib/modules/process.md |
 | `method std::process::Command::output_in` | check-prelude std-process-output zone-backed stdout/stderr capture helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::spawn` | check-prelude std-process-command spawn child process handle; docs/stdlib/modules/process.md |
+| `method std::process::Command::spawn_piped` | check-prelude std-process-piped spawn child with interactive stdin/stdout/stderr pipe handles; docs/stdlib/modules/process.md |
 | `method std::process::Command::spawn_with_stdin_file` | check-prelude std-process-stdin spawn child process with file-backed stdin; docs/stdlib/modules/process.md |
 | `method std::process::Command::spawn_with_stdin_null` | check-prelude std-process-stdin spawn child process with /dev/null stdin; docs/stdlib/modules/process.md |
 | `method std::process::Command::status` | check-prelude std-process-command spawn and wait for typed exit status; docs/stdlib/modules/process.md |
@@ -3408,6 +3475,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | --- | --- |
 | `struct std::process::Arg` | check-prelude std-process-command borrowed C argv argument wrapper; docs/stdlib/modules/process.md |
 | `struct std::process::Child` | check-prelude std-process-command child process handle; docs/stdlib/modules/process.md |
+| `struct std::process::ChildPipes` | check-prelude std-process-piped interactive child process plus stdin/stdout/stderr pipe handles; docs/stdlib/modules/process.md |
 | `struct std::process::Command` | check-prelude std-process-command process command builder; docs/stdlib/modules/process.md |
 | `struct std::process::EnvVar` | check-prelude std-process-command child environment assignment wrapper; docs/stdlib/modules/process.md |
 | `struct std::process::ExitCode` | check-prelude std-process-high-level typed process exit code value; docs/stdlib/modules/process.md |
@@ -3788,8 +3856,9 @@ Tier: `hosted`. Stability reading: platform-backed.
 
 | API | Coverage note |
 | --- | --- |
+| `fn std::sync::bounded_channel[T]` | check-prelude std-sync-concurrency-api bounded MPSC channel constructor with invalid-capacity Result error; docs/stdlib/modules/sync.md |
 | `fn std::sync::call_once` | check-prelude std-sync-mutex-once source once execution helper; docs/stdlib/modules/sync.md |
-| `fn std::sync::channel[T]` | check-prelude std-sync-concurrency-api single-slot MPSC channel constructor; docs/stdlib/modules/sync.md |
+| `fn std::sync::channel[T]` | check-prelude std-sync-concurrency-api capacity-1 MPSC channel constructor; docs/stdlib/modules/sync.md |
 | `fn std::sync::compare_exchange` | check-prelude std-sync-atomic-i64 atomic compare-and-exchange hook; docs/stdlib/modules/sync.md |
 | `fn std::sync::fetch_add` | check-prelude std-sync-atomic-i64 atomic fetch-add hook; docs/stdlib/modules/sync.md |
 | `fn std::sync::is_compare_exchange_order` | check-prelude std-sync-concurrency-api memory-order validation helper for compare-exchange success/failure pairs; docs/stdlib/modules/sync.md |
@@ -3872,6 +3941,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::sync::Barrier::new` | check-prelude std-sync-concurrency-api barrier constructor; docs/stdlib/modules/sync.md |
 | `method std::sync::Barrier::parties` | check-prelude std-sync-concurrency-api barrier party-count accessor; docs/stdlib/modules/sync.md |
 | `method std::sync::Barrier::wait` | check-prelude std-sync-concurrency-api barrier wait coordinator; docs/stdlib/modules/sync.md |
+| `method std::sync::Channel[T]::capacity` | check-prelude std-sync-concurrency-api bounded channel capacity accessor; docs/stdlib/modules/sync.md |
 | `method std::sync::Channel[T]::receiver` | check-prelude std-sync-concurrency-api channel receiver accessor; docs/stdlib/modules/sync.md |
 | `method std::sync::Channel[T]::sender` | check-prelude std-sync-concurrency-api channel sender accessor; docs/stdlib/modules/sync.md |
 | `method std::sync::Channel[T]::split` | check-prelude std-sync-concurrency-api channel split helper; docs/stdlib/modules/sync.md |
@@ -3936,9 +4006,11 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::sync::RawRwLockReadGuard::unlock` | check-prelude std-sync-rwlock raw rwlock read guard idempotent unlock helper; docs/stdlib/modules/sync.md |
 | `method std::sync::RawRwLockWriteGuard::is_active` | check-prelude std-sync-rwlock raw rwlock write guard active-state predicate; docs/stdlib/modules/sync.md |
 | `method std::sync::RawRwLockWriteGuard::unlock` | check-prelude std-sync-rwlock raw rwlock write guard idempotent unlock helper; docs/stdlib/modules/sync.md |
+| `method std::sync::Receiver[T]::capacity` | check-prelude std-sync-concurrency-api receiver bounded channel capacity accessor; docs/stdlib/modules/sync.md |
 | `method std::sync::Receiver[T]::close` | check-prelude std-sync-concurrency-api receiver-side channel close helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Receiver[T]::is_closed` | check-prelude std-sync-concurrency-api receiver closed predicate; docs/stdlib/modules/sync.md |
 | `method std::sync::Receiver[T]::is_empty` | check-prelude std-sync-concurrency-api receiver empty predicate; docs/stdlib/modules/sync.md |
+| `method std::sync::Receiver[T]::len` | check-prelude std-sync-concurrency-api receiver instantaneous queued item count; docs/stdlib/modules/sync.md |
 | `method std::sync::Receiver[T]::recv` | check-prelude std-sync-concurrency-api yielding channel Result receive helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Receiver[T]::recv_optional` | check-prelude std-sync-concurrency-api yielding channel optional receive compatibility helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Receiver[T]::recv_timeout` | check-prelude std-sync-concurrency-api timeout channel Result receive helper; docs/stdlib/modules/sync.md |
@@ -3966,12 +4038,13 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::sync::RwLock[T]::try_read` | check-prelude std-sync-value-locks value rwlock optional read guard helper; docs/stdlib/modules/sync.md |
 | `method std::sync::RwLock[T]::try_write` | check-prelude std-sync-value-locks value rwlock optional write guard helper; docs/stdlib/modules/sync.md |
 | `method std::sync::RwLock[T]::write` | check-prelude std-sync-value-locks value rwlock guard-returning write helper; docs/stdlib/modules/sync.md |
-| `method std::sync::Sender[T]::clone` | check-prelude std-sync-concurrency-api sender handle clone sharing the same single-slot channel state; docs/stdlib/modules/sync.md |
+| `method std::sync::Sender[T]::capacity` | check-prelude std-sync-concurrency-api sender bounded channel capacity accessor; docs/stdlib/modules/sync.md |
+| `method std::sync::Sender[T]::clone` | check-prelude std-sync-concurrency-api sender handle clone sharing the same bounded channel state; docs/stdlib/modules/sync.md |
 | `method std::sync::Sender[T]::close` | check-prelude std-sync-concurrency-api sender-side channel close helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Sender[T]::is_closed` | check-prelude std-sync-concurrency-api sender closed predicate; docs/stdlib/modules/sync.md |
-| `method std::sync::Sender[T]::send` | check-prelude std-sync-concurrency-api yielding single-slot Result send helper; docs/stdlib/modules/sync.md |
+| `method std::sync::Sender[T]::send` | check-prelude std-sync-concurrency-api yielding bounded-channel Result send helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Sender[T]::send_bool` | check-prelude std-sync-concurrency-api lossy nonblocking send compatibility helper; docs/stdlib/modules/sync.md |
-| `method std::sync::Sender[T]::try_send` | check-prelude std-sync-concurrency-api nonblocking single-slot Result send helper; docs/stdlib/modules/sync.md |
+| `method std::sync::Sender[T]::try_send` | check-prelude std-sync-concurrency-api nonblocking bounded-channel Result send helper; docs/stdlib/modules/sync.md |
 | `method std::sync::WaitTimeoutResult::timed_out` | check-prelude std-sync-concurrency-api condition-variable timeout predicate; docs/stdlib/modules/sync.md |
 
 ### module
@@ -3989,7 +4062,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `struct std::sync::AtomicPtr[T]` | check-prelude std-sync-concurrency-api pointer atomic wrapper; docs/stdlib/modules/sync.md |
 | `struct std::sync::AtomicUsize` | check-prelude std-sync-concurrency-api pointer-sized atomic wrapper; docs/stdlib/modules/sync.md |
 | `struct std::sync::Barrier` | check-prelude std-sync-concurrency-api source barrier primitive; docs/stdlib/modules/sync.md |
-| `struct std::sync::Channel[T]` | check-prelude std-sync-concurrency-api single-slot channel pair; docs/stdlib/modules/sync.md |
+| `struct std::sync::Channel[T]` | check-prelude std-sync-concurrency-api bounded channel pair; docs/stdlib/modules/sync.md |
 | `struct std::sync::Condvar` | check-prelude std-sync-concurrency-api source condition variable primitive; docs/stdlib/modules/sync.md |
 | `struct std::sync::MutexGuard[T]` | check-prelude std-sync-value-locks value mutex payload guard; docs/stdlib/modules/sync.md |
 | `struct std::sync::Mutex[T]` | check-prelude std-sync-value-locks value-protecting mutex payload handle; docs/stdlib/modules/sync.md |

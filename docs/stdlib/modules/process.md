@@ -56,6 +56,7 @@ process::env_var_bytes(zone, name, value) -> Result[process::EnvVar, process::Er
 process::command(program)
 process::command_with_args(program, args)
 process::spawn(command)
+process::spawn_piped(command)
 process::status(command) -> Result[process::ExitStatus, process::Error]
 process::status_code(command) -> Result[i64, process::Error]
 process::status_with_stdin(command, values) -> Result[process::ExitStatus, process::Error]
@@ -83,6 +84,7 @@ process::temp_dir_in(zone, prefix)
 process::ChildStdin
 process::ChildStdout
 process::ChildStderr
+process::ChildPipes
 
 process::Command::new(program)
 process::Command::with_args(program, args)
@@ -106,6 +108,7 @@ Command::with_env(zone, name, value)
 Command::with_inherit_env()
 Command::with_current_dir(path)
 Command::spawn()
+Command::spawn_piped() -> Result[process::ChildPipes, process::Error]
 Command::spawn_with_stdin_file(path) -> Result[process::Child, process::Error]
 Command::spawn_with_stdin_null() -> Result[process::Child, process::Error]
 Command::status() -> Result[process::ExitStatus, process::Error]
@@ -169,6 +172,24 @@ Child::wait_status()
 Child::kill(signal)
 Child::signal(signal)
 Child::terminate()
+Child::detach()
+
+ChildPipes::child()
+ChildPipes::child_mut()
+ChildPipes::pid()
+ChildPipes::stdin()
+ChildPipes::stdout()
+ChildPipes::stderr()
+ChildPipes::close_stdin()
+ChildPipes::close_stdout()
+ChildPipes::close_stderr()
+ChildPipes::close_streams()
+ChildPipes::wait()
+ChildPipes::wait_status()
+ChildPipes::kill(signal)
+ChildPipes::signal(signal)
+ChildPipes::terminate()
+ChildPipes::detach()
 ```
 
 `id()` returns the host process id as `i64`. `uid()` and `gid()` return the
@@ -257,6 +278,11 @@ callers that only want a normal exit code; it reports signal termination as
 `Error(Other)`. `exit_status()` is kept as a readable alias for code written
 before `status()` became typed. `spawn()` returns a `Child` handle with `pid`,
 `wait`, `wait_status`, raw `kill`, typed `signal`, and `terminate` methods.
+`Child::detach()` consumes the handle as an explicit statement that the caller
+will not wait through Ari. On the current POSIX backend that means Ari does not
+perform any extra wait or daemonization; prefer `wait`/`wait_status` for
+ordinary children, and reserve `detach` for intentionally independent child
+processes where the host lifecycle policy is acceptable.
 `exec()` applies the setup and replaces the current process with the program;
 if `execvp` returns, Ari reports the host error.
 
@@ -308,11 +334,26 @@ The module-level wrappers `process::spawn(ref command)`,
 `process::status(ref command)`, `process::status_code(ref command)`,
 `process::status_with_stdin(ref command, bytes)`,
 `process::status_with_stdin_string(ref command, text)`,
-`process::exit_status(ref command)`, `process::output_in(ref command, ref mut
-zone)`, `process::output(ref command, ref mut zone)`, and
+`process::spawn_piped(ref command)`, `process::exit_status(ref command)`,
+`process::output_in(ref command, ref mut zone)`,
+`process::output(ref command, ref mut zone)`, and
 `process::exec(ref command)` call the matching `Command` methods. They exist so
 code can use either builder method style or the direct `process::spawn(cmd)`
 shape common in other standard libraries without losing `Error` detail.
+
+`spawn_piped()` is the interactive child-process form. It redirects the child's
+stdin, stdout, and stderr to pipes and returns `ChildPipes`, which owns the
+`Child` handle plus `ChildStdin`, `ChildStdout`, and `ChildStderr` endpoints.
+Use `stdin()` with `std::io::write_all`, call `close_stdin()` when no more
+input will be sent, read stdout/stderr through the normal `PipeReader`/`Reader`
+helpers, and then call `wait_status()` or `wait()`. The same close-on-exec setup
+pipe used by `spawn` and `output` reports `chdir`, descriptor redirection, and
+`execvp` failures back to the parent as `Err(Error)`, so a missing executable
+does not look like a child exit code. `ChildPipes::detach()` closes the three
+pipe endpoints and explicitly gives up Ari-side wait ownership. For commands
+that may write large output, keep reading stdout and stderr while the child is
+running; waiting without draining can still block a child whose pipe buffer is
+full.
 
 `output_in(zone)` spawns the command with stdout and stderr redirected to
 temporary pipes, waits for the child, reads both streams into `Vec[u8]` values
@@ -340,9 +381,10 @@ and `sigterm` expose the common POSIX signal values. `terminate(pid)` sends
 `SIGTERM` as the conventional graceful termination request.
 
 `ChildStdin`, `ChildStdout`, and `ChildStderr` are aliases for the current pipe
-endpoint types used by process IO. Full streaming `spawn` redirection is still
-future work, but these names let API users and future stdlib code share the
-right handle vocabulary now.
+endpoint types used by process IO. `ChildPipes` is the owning bundle returned by
+`spawn_piped`; it forwards process control to the embedded `Child` and keeps
+stream ownership explicit so callers can decide when to close stdin and how to
+drain stdout/stderr.
 
 `current_dir` and `executable_path` delegate to `std::env` and return
 `Result[string, Error]` so process-oriented code can stay inside
@@ -542,6 +584,41 @@ fn main() -> i64 {
 }
 ```
 
+Interactive child pipes:
+
+```ari
+fn main() -> i64 {
+  var zone = zone::temp(512);
+  var cmd = process::Command::new("sh")
+    .with_arg(ref mut zone, "-c")
+    .with_arg(ref mut zone, "cat");
+
+  match cmd.spawn_piped() {
+    Err(_) => { return process::failure(); }
+    Ok(value) => {
+      var child = value;
+      if std::io::write_all<process::ChildStdin>(
+           child.stdin(),
+           std::string::bytes("hello\n")
+         ).is_err() {
+        child.terminate();
+        return process::failure();
+      }
+      child.close_stdin();
+      match child.stdout().read_to_string(ref mut zone) {
+        Err(_) => { return process::failure(); }
+        Ok(text) => {
+          if !text.equals_text("hello\n") {
+            return process::failure();
+          }
+        }
+      }
+      return child.wait().unwrap();
+    }
+  }
+}
+```
+
 Typed exit status:
 
 ```ari
@@ -574,12 +651,17 @@ fn main() -> i64 {
   `spawn`, `status`, `exit_status`, `output`, `output_in`, `exec`, inherited
   stdio by default, inherited or cleared environment plus selected assignments,
   working-directory setup, captured stdout and stderr, typed status inspection,
-  and `Child` wait/kill/signal helpers.
+  interactive `spawn_piped` stream handles, and `Child` wait/kill/signal
+  helpers.
   `output_in` captures both stdout and stderr into memory and drains the two
   pipes with descriptor readiness so one stream cannot fill its pipe while the
-  other is being read. It is still an all-in-memory capture API; interactive
-  streaming stdin/stdout/stderr handles and portable platform-specific status
-  detail are future work.
+  other is being read. It is still an all-in-memory capture API; use
+  `spawn_piped` when the parent needs to stream input or output while the child
+  is alive. Portable platform-specific status detail is future work.
+- `detach()` is explicit vocabulary, not a process supervisor. On POSIX Ari
+  does not yet provide daemon helpers, process groups, or a background reaper.
+  Prefer `wait` or `wait_status` unless the child is intentionally independent
+  and the host's un-waited-child behavior is acceptable for that program.
 - Exit runs through the host process immediately. Do not expect Ari destructors
   or zone cleanup to run after `process::exit`.
 - Abort also terminates immediately through the host runtime and should be
@@ -610,6 +692,7 @@ tests/cases/standard-library/ok/process/std-process-command.ari
 tests/cases/standard-library/ok/process/std-process-output.ari
 tests/cases/standard-library/ok/process/std-process-high-level.ari
 tests/cases/standard-library/ok/process/std-process-stdin.ari
+tests/cases/standard-library/ok/process/std-process-piped.ari
 ```
 
 `make check-prelude` emits LLVM, checks the runtime hook symbols, and executes
@@ -632,5 +715,9 @@ wrappers, and temp file/temp dir constructors.
 The stdin fixture covers pipe-backed byte and string stdin, file-backed stdin
 redirection, `/dev/null`, owned-byte path validation, `PathBytes` input, and
 current-directory-relative stdin paths.
+The piped fixture covers method and module-level `spawn_piped`, parent-writable
+stdin, parent-readable stdout/stderr, setup-error propagation for a missing
+program, explicit stream closing, typed wait status, and the `detach` lifecycle
+marker.
 Public declarations are tracked in
 `tests/std_api_manifest.txt` and checked by `make check-std-api`.

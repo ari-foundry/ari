@@ -1001,6 +1001,7 @@ fn std::process::signal|check-prelude std-process-high-level typed signal constr
 fn std::process::sigquit|check-prelude std-process-high-level POSIX SIGQUIT typed signal helper; docs/stdlib/modules/process.md
 fn std::process::sigterm|check-prelude std-process-high-level POSIX SIGTERM typed signal helper; docs/stdlib/modules/process.md
 fn std::process::spawn|check-prelude std-process-command module-level Command spawn wrapper returning Error; docs/stdlib/modules/process.md
+fn std::process::spawn_piped|check-prelude std-process-piped module-level interactive piped Command spawn wrapper returning Error; docs/stdlib/modules/process.md
 fn std::process::status|check-prelude std-process-command module-level Command typed status wrapper returning Error; docs/stdlib/modules/process.md
 fn std::process::status_code|check-prelude std-process-command explicit normal-exit-code compatibility wrapper returning Error; docs/stdlib/modules/process.md
 fn std::process::status_with_stdin|check-prelude std-process-stdin module-level bounded pipe-backed stdin status helper; docs/stdlib/modules/process.md
@@ -2423,12 +2424,29 @@ method std::path::PathBytes::windows_drive|check-prelude std-path-windows-lexica
 method std::path::PathBytes::windows_unc_prefix|check-prelude std-path-windows-lexical typed path borrowed Windows UNC-prefix wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::with_extension_in|check-prelude std-path-edit typed path extension replacement wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::with_file_name_in|check-prelude std-path-edit typed path final-component replacement wrapper; docs/stdlib/modules/path.md
+method std::process::Child::detach|check-prelude std-process-piped explicit child wait-ownership discard marker; docs/stdlib/modules/process.md
 method std::process::Child::kill|check-prelude std-process-command child signal helper; docs/stdlib/modules/process.md
 method std::process::Child::pid|check-prelude std-process-command child pid accessor; docs/stdlib/modules/process.md
 method std::process::Child::signal|check-prelude std-process-high-level typed child signal helper; docs/stdlib/modules/process.md
 method std::process::Child::terminate|check-prelude std-process-command child SIGTERM convenience helper; docs/stdlib/modules/process.md
 method std::process::Child::wait|check-prelude std-process-command child wait Result helper; docs/stdlib/modules/process.md
 method std::process::Child::wait_status|check-prelude std-process-exit-status child typed ExitStatus wait helper; docs/stdlib/modules/process.md
+method std::process::ChildPipes::child|check-prelude std-process-piped child handle accessor for interactive piped children; docs/stdlib/modules/process.md
+method std::process::ChildPipes::child_mut|check-prelude std-process-piped mutable child handle accessor for interactive piped children; docs/stdlib/modules/process.md
+method std::process::ChildPipes::close_stderr|check-prelude std-process-piped explicit piped child stderr close helper; docs/stdlib/modules/process.md
+method std::process::ChildPipes::close_stdin|check-prelude std-process-piped explicit piped child stdin close helper; docs/stdlib/modules/process.md
+method std::process::ChildPipes::close_stdout|check-prelude std-process-piped explicit piped child stdout close helper; docs/stdlib/modules/process.md
+method std::process::ChildPipes::close_streams|check-prelude std-process-piped explicit piped child stream cleanup helper; docs/stdlib/modules/process.md
+method std::process::ChildPipes::detach|check-prelude std-process-piped close piped streams and discard child wait ownership; docs/stdlib/modules/process.md
+method std::process::ChildPipes::kill|check-prelude std-process-piped piped child signal helper; docs/stdlib/modules/process.md
+method std::process::ChildPipes::pid|check-prelude std-process-piped piped child pid accessor; docs/stdlib/modules/process.md
+method std::process::ChildPipes::signal|check-prelude std-process-piped typed piped child signal helper; docs/stdlib/modules/process.md
+method std::process::ChildPipes::stderr|check-prelude std-process-piped mutable stderr pipe accessor; docs/stdlib/modules/process.md
+method std::process::ChildPipes::stdin|check-prelude std-process-piped mutable stdin pipe accessor; docs/stdlib/modules/process.md
+method std::process::ChildPipes::stdout|check-prelude std-process-piped mutable stdout pipe accessor; docs/stdlib/modules/process.md
+method std::process::ChildPipes::terminate|check-prelude std-process-piped piped child SIGTERM convenience helper; docs/stdlib/modules/process.md
+method std::process::ChildPipes::wait|check-prelude std-process-piped piped child wait Result helper; docs/stdlib/modules/process.md
+method std::process::ChildPipes::wait_status|check-prelude std-process-piped piped child typed ExitStatus wait helper; docs/stdlib/modules/process.md
 method std::process::Command::arg|check-prelude std-process-high-level explicit-zone single argv append helper; docs/stdlib/modules/process.md
 method std::process::Command::arg_bytes|check-prelude std-process-high-level Result-returning explicit-zone argv append helper for owned byte text; docs/stdlib/modules/process.md
 method std::process::Command::arg_value|check-prelude std-process-high-level explicit-zone Arg append helper; docs/stdlib/modules/process.md
@@ -2449,6 +2467,7 @@ method std::process::Command::new|check-prelude std-process-command associated C
 method std::process::Command::output|check-prelude std-process-high-level natural output capture alias; docs/stdlib/modules/process.md
 method std::process::Command::output_in|check-prelude std-process-output zone-backed stdout/stderr capture helper; docs/stdlib/modules/process.md
 method std::process::Command::spawn|check-prelude std-process-command spawn child process handle; docs/stdlib/modules/process.md
+method std::process::Command::spawn_piped|check-prelude std-process-piped spawn child with interactive stdin/stdout/stderr pipe handles; docs/stdlib/modules/process.md
 method std::process::Command::spawn_with_stdin_file|check-prelude std-process-stdin spawn child process with file-backed stdin; docs/stdlib/modules/process.md
 method std::process::Command::spawn_with_stdin_null|check-prelude std-process-stdin spawn child process with /dev/null stdin; docs/stdlib/modules/process.md
 method std::process::Command::status|check-prelude std-process-command spawn and wait for typed exit status; docs/stdlib/modules/process.md
@@ -3211,6 +3230,7 @@ struct std::path::PathBuf|check-prelude std-path-buf distinct owned POSIX path b
 struct std::path::PathBytes|check-prelude std-path-bytes typed borrowed path-byte view; docs/stdlib/modules/path.md
 struct std::process::Arg|check-prelude std-process-command borrowed C argv argument wrapper; docs/stdlib/modules/process.md
 struct std::process::Child|check-prelude std-process-command child process handle; docs/stdlib/modules/process.md
+struct std::process::ChildPipes|check-prelude std-process-piped interactive child process plus stdin/stdout/stderr pipe handles; docs/stdlib/modules/process.md
 struct std::process::Command|check-prelude std-process-command process command builder; docs/stdlib/modules/process.md
 struct std::process::EnvVar|check-prelude std-process-command child environment assignment wrapper; docs/stdlib/modules/process.md
 struct std::process::ExitCode|check-prelude std-process-high-level typed process exit code value; docs/stdlib/modules/process.md

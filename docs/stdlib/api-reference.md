@@ -590,6 +590,7 @@ process::env_var_bytes(zone, name, value)
 process::command(program)
 process::command_with_args(program, args)
 process::spawn(command)
+process::spawn_piped(command)
 process::status(command)
 process::status_code(command)
 process::status_with_stdin(command, values)
@@ -617,6 +618,7 @@ process::temp_dir_in(zone, prefix)
 process::ChildStdin
 process::ChildStdout
 process::ChildStderr
+process::ChildPipes
 
 process::Command::new(program)
 process::Command::with_args(program, args)
@@ -640,9 +642,16 @@ Command::with_env(zone, name, value)
 Command::with_inherit_env()
 Command::with_current_dir(path)
 Command::spawn()
+Command::spawn_piped()
+Command::spawn_with_stdin_file(path)
+Command::spawn_with_stdin_null()
 Command::status()
 Command::status_with_stdin(values)
 Command::status_with_stdin_string(text)
+Command::status_with_stdin_file(path)
+Command::status_with_stdin_file_bytes(zone, path)
+Command::status_with_stdin_file_path(zone, path)
+Command::status_with_stdin_null()
 Command::status_code()
 Command::exit_status()
 Command::output_in(zone)
@@ -697,6 +706,24 @@ Child::wait_status()
 Child::kill(signal)
 Child::signal(signal)
 Child::terminate()
+Child::detach()
+
+ChildPipes::child()
+ChildPipes::child_mut()
+ChildPipes::pid()
+ChildPipes::stdin()
+ChildPipes::stdout()
+ChildPipes::stderr()
+ChildPipes::close_stdin()
+ChildPipes::close_stdout()
+ChildPipes::close_stderr()
+ChildPipes::close_streams()
+ChildPipes::wait()
+ChildPipes::wait_status()
+ChildPipes::kill(signal)
+ChildPipes::signal(signal)
+ChildPipes::terminate()
+ChildPipes::detach()
 ```
 
 `id()` returns the host process id as `i64`. `uid()` and `gid()` return the
@@ -762,11 +789,14 @@ success and returns `Err(Error)` only if the host `execvp` path fails.
 `kill(pid, signal)` and
 `Child::kill(signal)` return `Result[(), Error]`; `kill_signal` and
 `Child::signal` use the typed `Signal` wrapper. `sig_check()` is signal `0`,
-and `terminate` sends `SIGTERM`.
+and `terminate` sends `SIGTERM`. `Child::detach()` consumes the child handle as
+an explicit marker that Ari will not wait through that handle; on the current
+POSIX backend it does not daemonize or install a reaper, so ordinary child
+processes should still use `wait` or `wait_status`.
 Module-level `process::spawn(ref cmd)`, `process::status(ref cmd)`,
-`process::status_code(ref cmd)`, `process::exit_status(ref cmd)`,
-`process::output_in(ref cmd, ref mut zone)`, `process::output(ref cmd, ref mut
-zone)`, and `process::exec(ref cmd)` are
+`process::spawn_piped(ref cmd)`, `process::status_code(ref cmd)`,
+`process::exit_status(ref cmd)`, `process::output_in(ref cmd, ref mut zone)`,
+`process::output(ref cmd, ref mut zone)`, and `process::exec(ref cmd)` are
 direct wrappers over the matching `Command` methods for call sites that prefer
 function-style process APIs.
 
@@ -809,12 +839,20 @@ redirection helpers plus bounded pipe-backed stdin status helpers exist on
 `Command`. Fork-based `spawn`, `status`, stdin-redirection, and `output`
 helpers use a close-on-exec setup-error pipe so `chdir`, stdin open/`dup2`,
 stdout/stderr `dup2`, or `execvp` failures return `Err(Error)` to the parent
-instead of being hidden as status `127`. Interactive streaming stdin/stdout/
-stderr handles, portable Windows mapping, and platform-specific status detail
-are still future process-library work.
+instead of being hidden as status `127`.
+
+Use `Command::spawn_piped()` or `process::spawn_piped(ref cmd)` when the parent
+needs interactive child IO. It returns `ChildPipes`, which owns a `Child` plus
+the child stdin writer, stdout reader, and stderr reader. Write through
+`std::io::write_all<process::ChildStdin>(child.stdin(), bytes)`, close stdin
+with `close_stdin()` to signal EOF, read stdout/stderr with the normal
+`PipeReader`/`Reader` helpers, and then call `wait_status()` or `wait()`.
+`ChildPipes::detach()` closes the pipe endpoints and explicitly discards
+Ari-side wait ownership. Portable Windows mapping and platform-specific status
+detail are still future process-library work.
 
 `ChildStdin`, `ChildStdout`, and `ChildStderr` name the current pipe endpoint
-types used by future streaming process IO. `current_dir`,
+types used by streaming process IO. `current_dir`,
 `try_current_dir`, `executable_path`, and `try_executable_path` are
 process-oriented wrappers around the `std::env` path helpers; the natural names
 return `Result`, and optional/default wrappers make discarded errors explicit.
