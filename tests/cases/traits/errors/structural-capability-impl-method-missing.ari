@@ -1,0 +1,16 @@
+struct Packet {
+  value: i64,
+}
+
+struct Runner {
+}
+
+impl Runner {
+  fn save(value: has serialize() -> i64) -> i64 {
+    value.serialize()
+  }
+}
+
+fn main() -> i64 {
+  return Runner::save(Packet { value: 1 });
+}

@@ -1,0 +1,39 @@
+struct Packet {
+  value: i64,
+}
+
+impl Packet {
+  fn serialize(self) -> i64 {
+    self.value + 1
+  }
+
+  fn add(self, amount: i64) -> i64 {
+    self.value + amount
+  }
+}
+
+struct Runner {
+  base: i64,
+}
+
+impl Runner {
+  fn save(value: has serialize() -> i64) -> i64 {
+    value.serialize()
+  }
+
+  fn boost(self, value: has { serialize() -> i64, add(i64) -> i64 }, amount: i64) -> i64 {
+    self.base + value.serialize() + value.add(amount)
+  }
+
+  fn pick[Tag](self, tag: Tag, value: has serialize() -> i64) -> i64 {
+    self.base + value.serialize()
+  }
+}
+
+fn main() -> i64 {
+  let runner = Runner { base: 2 };
+  let picker = Runner { base: 4 };
+  return Runner::save(Packet { value: 20 }) +
+      runner.boost(Packet { value: 10 }, 3) +
+      picker.pick<i64>(7, Packet { value: 5 });
+}

@@ -48,7 +48,7 @@ The few stdlib polish items that are blocked by compiler features are mapped in
 ## Language Ideas Parked For Later
 
 Structural capability parameters now have a narrow executable seed for ordinary
-free functions:
+free functions and inherent `impl` methods:
 
 ```ari
 fn save(x: has serialize() -> i64) -> i64 {
@@ -57,15 +57,16 @@ fn save(x: has serialize() -> i64) -> i64 {
 ```
 
 The parser accepts `has method(...) -> Type` and grouped
-`has { method(...) -> Type, other(...) -> Type }` only in ordinary free-function
-parameter type position. Semantic analysis lowers it to a hidden generic
-parameter, checks the concrete call-site type for every listed static method,
-and monomorphizes the body through the ordinary method-call path. It must
-continue to avoid an `interface` keyword, accidental dynamic dispatch, or a
-shortcut around named trait-bound diagnostics. Remaining roadmap work includes
-generic impl-method satisfaction, reusable capability aliases, richer
-diagnostics for when a named trait is better, and any future extension beyond
-method requirements.
+`has { method(...) -> Type, other(...) -> Type }` in ordinary free-function and
+inherent `impl` method parameter type positions. Semantic analysis lowers it to
+a hidden generic parameter, checks the concrete call-site type for every listed
+static method, and monomorphizes the body through the ordinary method-call
+path. Hidden capability generics do not count as visible method type arguments.
+It must continue to avoid an `interface` keyword, accidental dynamic dispatch,
+or a shortcut around named trait-bound diagnostics. Remaining roadmap work
+includes reusable capability aliases, trait-method policy, richer diagnostics
+for when a named trait is better, and any future extension beyond method
+requirements.
 
 Discriminant-linked union fields are also worth exploring for protocol and
 binary-format records whose payload shape is controlled by data already present

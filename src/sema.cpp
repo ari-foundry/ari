@@ -2683,6 +2683,13 @@ private:
         return nullptr;
     }
 
+    static std::vector<std::string> generic_param_names(const std::vector<GenericParam>& generics) {
+        std::vector<std::string> names;
+        names.reserve(generics.size());
+        for (const auto& generic : generics) names.push_back(generic.name);
+        return names;
+    }
+
     static bool generic_has_any_constraint(const GenericParam& generic) {
         return generic.has_constraint || generic.has_structural_capability;
     }
@@ -3177,6 +3184,14 @@ private:
         });
         for_each_impl_decl([&](const ImplDecl& impl) {
             validate_generic_constraints_for(impl.generics, impl.module_name);
+            std::map<std::string, IrType> impl_substitutions = generic_placeholder_substitutions(impl.generics);
+            for (const auto& method : impl.methods) {
+                std::map<std::string, IrType> method_substitutions = impl_substitutions;
+                for (const auto& item : generic_placeholder_substitutions(method.generics)) {
+                    method_substitutions.emplace(item.first, item.second);
+                }
+                validate_generic_constraints_for(method.generics, impl.module_name, std::move(method_substitutions));
+            }
         });
     }
 
@@ -23927,12 +23942,11 @@ private:
         const std::map<std::string, IrType>& substitutions
     ) {
         if (fn.generics.empty()) return;
-        std::vector<std::string> names;
-        names.reserve(fn.generics.size());
-        for (const auto& generic : fn.generics) names.push_back(generic.name);
         lowered.specialization.kind = "generic-function";
         lowered.specialization.origin = fn.name;
-        lowered.specialization.args = specialization_args_in_order(names, substitutions);
+        lowered.specialization.args = specialization_args_in_order(
+            generic_param_names(fn.generics),
+            substitutions);
     }
 
     static std::string impl_specialization_origin(const ImplMethodInfo& method) {
@@ -24220,6 +24234,7 @@ private:
                 if (first_bound_failure.empty()) first_bound_failure = bound_failure;
                 continue;
             }
+            require_structural_capability_generics(expr.loc, *candidate.fn, substitutions);
             std::vector<IrType> candidate_trait_args;
             candidate_trait_args.reserve(candidate.trait_args.size());
             for (const auto& arg : candidate.trait_args) {
@@ -24292,6 +24307,7 @@ private:
         if (!bind_or_infer_method_generic_type_args(expr, *matches.front(), arg_types, substitutions, nullptr)) {
             fail(expr.loc, "generic method '" + expr.name + "' could not be specialized");
         }
+        require_structural_capability_generics(expr.loc, *matches.front()->fn, substitutions);
         selected = specialize_generic_impl_method_with_substitutions(
             *matches.front(),
             receiver_type,
@@ -24328,16 +24344,24 @@ private:
         const std::vector<TypeRef>& type_args,
         std::map<std::string, IrType>& substitutions
     ) {
-        if (type_args.size() != method.method_generic_names.size()) {
+        const std::size_t visible_count = visible_generic_param_count(method.fn->generics);
+        if (type_args.size() != visible_count) {
             fail(loc,
                  "generic method '" + basename_of_qualified_name(method.fn->name) +
-                     "' expects " + std::to_string(method.method_generic_names.size()) +
-                     " type argument" + (method.method_generic_names.size() == 1 ? "" : "s"));
+                     "' expects " + std::to_string(visible_count) +
+                     " type argument" + (visible_count == 1 ? "" : "s"));
         }
         for (std::size_t i = 0; i < type_args.size(); ++i) {
+            const GenericParam* generic = visible_generic_param_at(method.fn->generics, i);
+            if (!generic) {
+                fail(loc,
+                     "generic method '" + basename_of_qualified_name(method.fn->name) +
+                         "' expects " + std::to_string(visible_count) +
+                         " type argument" + (visible_count == 1 ? "" : "s"));
+            }
             bind_generic_type(
                 type_args[i].loc,
-                method.method_generic_names[i],
+                generic->name,
                 resolve_executable_type(type_args[i]),
                 substitutions);
         }
@@ -24360,15 +24384,14 @@ private:
 
         if (!type_args.empty()) {
             bind_method_generic_type_args(expr.loc, method, type_args, substitutions);
-        } else {
-            for (std::size_t i = 0; i < arg_types.size(); ++i) {
-                infer_named_generic_type(
-                    expr.loc,
-                    method.fn->params[i + 1].type,
-                    arg_types[i],
-                    method.method_generic_names,
-                    substitutions);
-            }
+        }
+        for (std::size_t i = 0; i < arg_types.size(); ++i) {
+            infer_named_generic_type(
+                expr.loc,
+                method.fn->params[i + 1].type,
+                arg_types[i],
+                method.method_generic_names,
+                substitutions);
         }
 
         for (const auto& generic_name : method.method_generic_names) {
@@ -24392,7 +24415,7 @@ private:
     ) {
         substitutions.clear();
         const std::size_t impl_count = method.generic_names.size();
-        const std::size_t method_count = method.method_generic_names.size();
+        const std::size_t method_count = visible_generic_param_count(method.fn->generics);
         const std::size_t total_count = impl_count + method_count;
         const ExprTypeArgs& type_args = expr_type_args(expr);
         if (type_args.size() > total_count) {
@@ -24411,9 +24434,15 @@ private:
         }
         for (; type_arg_index < type_args.size(); ++type_arg_index) {
             std::size_t method_index = type_arg_index - impl_count;
+            const GenericParam* generic = visible_generic_param_at(method.fn->generics, method_index);
+            if (!generic) {
+                fail(expr.loc,
+                     "generic associated function expects " + std::to_string(total_count) +
+                         " type argument" + (total_count == 1 ? "" : "s"));
+            }
             bind_generic_type(
                 type_args[type_arg_index].loc,
-                method.method_generic_names[method_index],
+                generic->name,
                 resolve_executable_type(type_args[type_arg_index]),
                 substitutions);
         }
@@ -24487,6 +24516,7 @@ private:
                 if (first_bound_failure.empty()) first_bound_failure = bound_failure;
                 continue;
             }
+            require_structural_capability_generics(expr.loc, *candidate.fn, substitutions);
             matches.push_back(specialize_generic_impl_method_with_substitutions(
                 candidate,
                 receiver_type,
@@ -24660,6 +24690,40 @@ private:
         for (const auto& method : generic.structural_methods) {
             require_structural_capability_method(loc, self_type, method);
         }
+    }
+
+    void require_structural_capability_generics(
+        SourceLocation loc,
+        const FunctionDecl& fn,
+        const std::map<std::string, IrType>& substitutions
+    ) {
+        bool has_structural = false;
+        for (const auto& generic : fn.generics) {
+            if (generic.has_structural_capability) {
+                has_structural = true;
+                break;
+            }
+        }
+        if (!has_structural) return;
+
+        std::string previous_module = current_module_name_;
+        std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
+        current_module_name_ = fn.module_name;
+        current_type_substitutions_ = substitutions;
+        try {
+            for (const auto& generic : fn.generics) {
+                if (!generic.has_structural_capability) continue;
+                auto self_found = substitutions.find(generic.name);
+                if (self_found == substitutions.end()) continue;
+                require_structural_capabilities(loc, generic, self_found->second);
+            }
+        } catch (...) {
+            current_type_substitutions_ = std::move(previous_substitutions);
+            current_module_name_ = previous_module;
+            throw;
+        }
+        current_type_substitutions_ = std::move(previous_substitutions);
+        current_module_name_ = previous_module;
     }
 
     void require_generic_bounds(
@@ -26264,6 +26328,7 @@ private:
                 if (first_bound_failure.empty()) first_bound_failure = bound_failure;
                 continue;
             }
+            require_structural_capability_generics(expr.loc, *candidate.fn, substitutions);
 
             matches.push_back(specialize_generic_impl_method_with_substitutions(
                 candidate,
@@ -26342,29 +26407,37 @@ private:
         }
 
         if (!type_args.empty()) {
-            if (type_args.size() != method.method_generic_names.size()) {
+            const std::size_t visible_count = visible_generic_param_count(method.fn->generics);
+            if (type_args.size() != visible_count) {
                 fail(expr.loc,
                      "generic associated function '" + method_name + "' expects " +
-                         std::to_string(method.method_generic_names.size()) +
+                         std::to_string(visible_count) +
                          " method type argument" +
-                         (method.method_generic_names.size() == 1 ? "" : "s"));
+                         (visible_count == 1 ? "" : "s"));
             }
             for (std::size_t i = 0; i < type_args.size(); ++i) {
+                const GenericParam* generic = visible_generic_param_at(method.fn->generics, i);
+                if (!generic) {
+                    fail(expr.loc,
+                         "generic associated function '" + method_name + "' expects " +
+                             std::to_string(visible_count) +
+                             " method type argument" +
+                             (visible_count == 1 ? "" : "s"));
+                }
                 bind_generic_type(
                     type_args[i].loc,
-                    method.method_generic_names[i],
+                    generic->name,
                     resolve_executable_type(type_args[i]),
                     substitutions);
             }
-        } else {
-            for (std::size_t i = 0; i < arg_types.size(); ++i) {
-                infer_named_generic_type(
-                    expr.loc,
-                    method.fn->params[i].type,
-                    arg_types[i],
-                    method.method_generic_names,
-                    substitutions);
-            }
+        }
+        for (std::size_t i = 0; i < arg_types.size(); ++i) {
+            infer_named_generic_type(
+                expr.loc,
+                method.fn->params[i].type,
+                arg_types[i],
+                method.method_generic_names,
+                substitutions);
         }
 
         for (const auto& generic_name : method.method_generic_names) {
@@ -26471,6 +26544,7 @@ private:
                 if (first_bound_failure.empty()) first_bound_failure = bound_failure;
                 continue;
             }
+            require_structural_capability_generics(expr.loc, *candidate.fn, substitutions);
 
             matches.push_back(specialize_generic_impl_method_with_substitutions(
                 candidate,

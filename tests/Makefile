@@ -5731,6 +5731,8 @@ check-traits: $(TARGET)
 	$(BUILD_DIR)/traits/structural-capability-parameter.elf; code=$$?; test $$code -eq 43
 	$(TARGET) tests/cases/traits/ok/structural-capability-multi-method.ari -o $(BUILD_DIR)/traits/structural-capability-multi-method.elf
 	$(BUILD_DIR)/traits/structural-capability-multi-method.elf; code=$$?; test $$code -eq 43
+	$(TARGET) tests/cases/traits/ok/structural-capability-impl-method.ari -o $(BUILD_DIR)/traits/structural-capability-impl-method.elf
+	$(BUILD_DIR)/traits/structural-capability-impl-method.elf; code=$$?; test $$code -eq 57
 	$(TARGET) tests/cases/traits/ok/trait-minimum-compiler-shaped.ari -o $(BUILD_DIR)/traits/trait-minimum-compiler-shaped.elf
 	$(BUILD_DIR)/traits/trait-minimum-compiler-shaped.elf; code=$$?; test $$code -eq 74
 	$(TARGET) tests/cases/traits/ok/trait-minimum-compiler-shaped.ari --emit-llvm $(BUILD_DIR)/traits/trait-minimum-compiler-shaped.ll
@@ -5832,6 +5834,10 @@ check-traits: $(TARGET)
 	grep -q "does not satisfy structural capability 'has serialize() -> i64'" $(BUILD_DIR)/traits/structural-capability-missing.err
 	if $(TARGET) tests/cases/traits/errors/structural-capability-multi-missing.ari -o $(BUILD_DIR)/traits/structural-capability-multi-missing.elf >$(BUILD_DIR)/traits/structural-capability-multi-missing.err 2>&1; then exit 1; fi
 	grep -q "does not satisfy structural capability 'has add(i64) -> i64'" $(BUILD_DIR)/traits/structural-capability-multi-missing.err
+	if $(TARGET) tests/cases/traits/errors/structural-capability-impl-method-missing.ari -o $(BUILD_DIR)/traits/structural-capability-impl-method-missing.elf >$(BUILD_DIR)/traits/structural-capability-impl-method-missing.err 2>&1; then exit 1; fi
+	grep -q "does not satisfy structural capability 'has serialize() -> i64'" $(BUILD_DIR)/traits/structural-capability-impl-method-missing.err
+	if $(TARGET) tests/cases/traits/errors/structural-capability-trait-impl-method.ari -o $(BUILD_DIR)/traits/structural-capability-trait-impl-method.elf >$(BUILD_DIR)/traits/structural-capability-trait-impl-method.err 2>&1; then exit 1; fi
+	grep -q "structural capability parameters are only supported on free functions and inherent impl methods" $(BUILD_DIR)/traits/structural-capability-trait-impl-method.err
 	if $(TARGET) tests/cases/traits/errors/structural-capability-return-mismatch.ari -o $(BUILD_DIR)/traits/structural-capability-return-mismatch.elf >$(BUILD_DIR)/traits/structural-capability-return-mismatch.err 2>&1; then exit 1; fi
 	grep -q "return type expects i64, found bool" $(BUILD_DIR)/traits/structural-capability-return-mismatch.err
 	if $(TARGET) tests/cases/traits/errors/unknown-trait-impl.ari -o $(BUILD_DIR)/traits/unknown-trait-impl.elf >$(BUILD_DIR)/traits/unknown-trait-impl.err 2>&1; then exit 1; fi

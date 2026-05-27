@@ -1,0 +1,16 @@
+trait Save {
+  fn save(self) -> i64
+}
+
+struct Runner {
+}
+
+impl Save for Runner {
+  fn save(value: has serialize() -> i64) -> i64 {
+    value.serialize()
+  }
+}
+
+fn main() -> i64 {
+  return 0;
+}

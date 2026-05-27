@@ -656,8 +656,8 @@ and drop thunk.
 ## Structural Capability Parameters
 
 Ari has an initial, static-only form of anonymous structural parameter
-requirements for ordinary free functions. Use the single-method spelling when
-one method is enough:
+requirements for ordinary free functions and inherent `impl` methods. Use the
+single-method spelling when one method is enough:
 
 ```ari
 struct Packet {
@@ -708,17 +708,47 @@ Grouped requirements use comma separators and may have a trailing comma. A
 missing method or mismatched method signature is reported at the call site, with
 a secondary label on the exact requirement inside the grouped `has` list.
 
+Inherent `impl` methods and associated functions can use the same parameter
+syntax. The hidden capability generic does not count as a visible method type
+argument, so ordinary method generics keep their natural spelling:
+
+```ari
+struct Runner {
+  base: i64,
+}
+
+impl Runner {
+  fn save(value: has serialize() -> i64) -> i64 {
+    value.serialize()
+  }
+
+  fn boost(self, value: has { serialize() -> i64, add(i64) -> i64 }, amount: i64) -> i64 {
+    self.base + value.serialize() + value.add(amount)
+  }
+
+  fn pick[Tag](self, tag: Tag, value: has serialize() -> i64) -> i64 {
+    value.serialize()
+  }
+}
+
+fn main() -> i64 {
+  let runner = Runner { base: 2 };
+  return Runner::save(Packet { value: 20 }) +
+      runner.boost(Packet { value: 10 }, 3) +
+      runner.pick<i64>(7, Packet { value: 5 });
+}
+```
+
 The initial subset is intentionally narrow:
 
-- The syntax is accepted only in ordinary free-function parameter type
-  position.
+- The syntax is accepted only in ordinary free-function and inherent `impl`
+  method parameter type position.
 - A `has` parameter currently describes method requirements only.
 - Associated types, field requirements, operators, and capability aliases are
   not implemented yet.
-- Generic impl-method satisfaction is still a later compiler task; use a named
-  trait bound when the requirement is part of a reusable API boundary.
-- `has method(...) -> Type` in aliases, struct fields, trait methods, impl
-  methods, extern declarations, meta functions, lambdas, or other type
+- Trait methods and trait impl methods still use named trait bounds.
+- `has method(...) -> Type` in aliases, struct fields, trait methods, trait
+  impl methods, extern declarations, meta functions, lambdas, or other type
   positions is rejected with a targeted diagnostic.
 
 Use a named trait when the contract should be shared across APIs, documented as
@@ -756,7 +786,8 @@ separate hardening area.
 Dyn-to-dyn upcasts are executable when the target is the same trait or an
 inherited supertrait, including `own dyn` upcasts; unrelated dyn casts are
 rejected.
-Ordinary free functions can use initial structural capability parameters such
-as `fn save(x: has serialize() -> i64)` and grouped requirements such as
+Ordinary free functions and inherent `impl` methods can use initial structural
+capability parameters such as `fn save(x: has serialize() -> i64)` and grouped
+requirements such as
 `fn save(x: has { serialize() -> i64, add(i64) -> i64 })`, which are checked at
 call specialization time and then lowered through normal static dispatch.
