@@ -1,0 +1,71 @@
+enum CipherType {
+  stream,
+  block,
+  aead,
+}
+
+struct SecurityParameters {
+  cipher_type: CipherType,
+}
+
+struct GenericStreamCipher {
+  value: i64,
+}
+
+struct GenericBlockCipher {
+  value: i64,
+}
+
+struct GenericAeadCipher {
+  value: i64,
+}
+
+struct TLSCiphertext {
+  security: SecurityParameters,
+  fragment: union by security.cipher_type {
+    stream => GenericStreamCipher,
+    block => GenericBlockCipher,
+    aead => GenericAeadCipher,
+  },
+}
+
+struct DisabledPayload {
+  value: i64,
+}
+
+struct EnabledPayload {
+  value: i64,
+}
+
+struct Feature {
+  enabled: bool,
+  payload: union by enabled {
+    false => DisabledPayload,
+    true => EnabledPayload,
+  },
+}
+
+fn packet_score(packet: TLSCiphertext) -> i64 {
+  return match packet.fragment {
+    stream(stream_payload) => stream_payload.value + 1,
+    block(block_payload) => block_payload.value + 2,
+    aead(aead_payload) => aead_payload.value + 3,
+  };
+}
+
+fn feature_score(feature: Feature) -> i64 {
+  return match feature.payload {
+    false(disabled_payload) => disabled_payload.value + 4,
+    true(enabled_payload) => enabled_payload.value + 5,
+  };
+}
+
+fn main() -> i64 {
+  let packet = TLSCiphertext {
+    fragment: stream { value: 40 },
+  };
+  let feature = Feature {
+    payload: true { value: 1 },
+  };
+  return packet_score(packet) + feature_score(feature);
+}

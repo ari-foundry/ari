@@ -1,0 +1,17 @@
+enum PacketKind {
+  number,
+}
+
+struct Packet {
+  kind: PacketKind,
+  payload: union by kind {
+    number => i64,
+  },
+}
+
+fn main() -> i64 {
+  let packet = Packet {
+    payload: number { value: 41 },
+  };
+  return 0;
+}

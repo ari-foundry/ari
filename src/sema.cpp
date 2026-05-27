@@ -21072,8 +21072,36 @@ private:
                                "' must be constructed with an arm payload");
         error.add_note(DiagnosticNote{
             std::nullopt,
-            "write the field as `" + field.name + ": arm => payload`, for example `" +
-                field.name + ": stream => StreamPayload { ... }`",
+            "write the field as `" + field.name + ": arm => payload`, or as `" +
+                field.name + ": arm { ... }` when the arm payload is a struct",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] void fail_union_by_constructor_shorthand_payload(SourceLocation loc,
+                                                                  const StructInfo& info,
+                                                                  const StructInfo::Field& field,
+                                                                  const EnumCaseInfo& case_info,
+                                                                  const IrType& payload_type) const {
+        CompileError error(std::move(loc),
+                           "union by constructor arm '" + unqualified_name(case_info.name) +
+                               "' in field '" + field.name +
+                               "' of struct '" + info.name +
+                               "' cannot use struct payload shorthand");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "arm '" + unqualified_name(case_info.name) + "' payload type is " +
+                type_name(payload_type) + ", not a struct",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "write the explicit form `" + field.name + ": " +
+                unqualified_name(case_info.name) + " => value` for scalar, tuple, or enum payloads",
+            DiagnosticNoteKind::Help});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "struct shorthand is only for arms whose payload type has named fields, for example `" +
+                field.name + ": " + unqualified_name(case_info.name) + " { field: value }`",
             DiagnosticNoteKind::Help});
         throw error;
     }
@@ -21253,13 +21281,17 @@ private:
     }
 
     static std::optional<std::string> union_by_constructor_arm_name(const Expr& value_expr) {
-        if (value_expr.kind != ExprKind::Call ||
-            expr_operand(value_expr) ||
-            value_expr.args.size() != 1 ||
-            !expr_type_args(value_expr).empty()) {
-            return std::nullopt;
+        if (value_expr.kind == ExprKind::Call &&
+            !expr_operand(value_expr) &&
+            value_expr.args.size() == 1 &&
+            expr_type_args(value_expr).empty()) {
+            return value_expr.name;
         }
-        return value_expr.name;
+        if (value_expr.kind == ExprKind::StructLiteral &&
+            expr_type_args(value_expr).empty()) {
+            return value_expr.name;
+        }
+        return std::nullopt;
     }
 
     [[noreturn]] void fail_union_by_inferred_selector_conflict(
@@ -21420,10 +21452,8 @@ private:
                                                const IrType& field_type,
                                                const std::map<std::string, const Expr*>& struct_literal_values,
                                                const IrType& struct_type) {
-        if (value_expr.kind != ExprKind::Call ||
-            expr_operand(value_expr) ||
-            value_expr.args.size() != 1 ||
-            !expr_type_args(value_expr).empty()) {
+        std::optional<std::string> arm_name = union_by_constructor_arm_name(value_expr);
+        if (!arm_name) {
             fail_union_by_constructor_shape(value_expr.loc, info, field);
         }
 
@@ -21432,36 +21462,60 @@ private:
             info,
             field,
             field_type,
-            value_expr.name);
+            *arm_name);
         if (case_info.payloads.size() != 1) {
             fail_union_by_constructor_shape(value_expr.loc, info, field);
         }
         if (auto selector_arm =
                 static_union_by_selector_arm(field.type, struct_literal_values, struct_type)) {
-            if (*selector_arm != value_expr.name) {
+            if (*selector_arm != *arm_name) {
                 fail_union_by_constructor_selector_mismatch(
                     value_expr.loc,
                     info,
                     field,
                     *selector_arm,
-                    value_expr.name);
+                    *arm_name);
             }
         }
 
         std::vector<IrExprPtr> args;
-        args.push_back(check_expr_maybe_expected(*value_expr.args[0], &case_info.payloads[0]));
+        if (value_expr.kind == ExprKind::StructLiteral) {
+            const IrType& payload_type = case_info.payloads[0];
+            if (payload_type.qualifier != TypeQualifier::Value ||
+                payload_type.primitive != IrPrimitiveKind::Struct) {
+                fail_union_by_constructor_shorthand_payload(
+                    value_expr.loc,
+                    info,
+                    field,
+                    case_info,
+                    payload_type);
+            }
+            auto lowered_payload = std::make_unique<IrExpr>();
+            lowered_payload->loc = value_expr.loc;
+            args.push_back(
+                check_struct_literal(
+                    value_expr,
+                    std::move(lowered_payload),
+                    &payload_type,
+                    nullptr,
+                    &payload_type.name));
+        } else {
+            args.push_back(check_expr_maybe_expected(*value_expr.args[0], &case_info.payloads[0]));
+        }
         return make_enum_construct(value_expr.loc, case_info, std::move(args));
     }
 
     IrExprPtr check_struct_literal(const Expr& expr,
                                    IrExprPtr lowered,
                                    const IrType* expected = nullptr,
-                                   const UnionBySelectorInferenceMap* outer_inferred_selectors = nullptr) {
+                                   const UnionBySelectorInferenceMap* outer_inferred_selectors = nullptr,
+                                   const std::string* struct_name_override = nullptr) {
         (void)lowered;
-        std::string struct_name = resolve_struct_type_name(expr.name);
+        const std::string& source_struct_name = struct_name_override ? *struct_name_override : expr.name;
+        std::string struct_name = resolve_struct_type_name(source_struct_name);
         auto struct_found = structs_.find(struct_name);
         if (struct_found == structs_.end()) {
-            fail(expr.loc, "unknown struct '" + expr.name + "'");
+            fail(expr.loc, "unknown struct '" + source_struct_name + "'");
         }
         const StructInfo& info = struct_found->second;
         require_struct_access(expr.loc, info);
@@ -21498,7 +21552,7 @@ private:
         bool has_struct_type = !explicit_type_args.empty() || info.generic_arity == 0;
         IrType struct_type;
         if (has_struct_type) {
-            struct_type = resolve_struct_literal_type(expr.loc, expr.name, explicit_type_args);
+            struct_type = resolve_struct_literal_type(expr.loc, source_struct_name, explicit_type_args);
         } else if (expected_type_matches_struct_literal(
                        expected,
                        info.name,
@@ -21592,7 +21646,7 @@ private:
 
         if (!has_struct_type) {
             explicit_type_args = infer_struct_type_args_from_values(expr.loc, info, lowered_values);
-            struct_type = resolve_struct_literal_type(expr.loc, expr.name, explicit_type_args);
+            struct_type = resolve_struct_literal_type(expr.loc, source_struct_name, explicit_type_args);
         }
 
         std::vector<IrExprPtr> elements;

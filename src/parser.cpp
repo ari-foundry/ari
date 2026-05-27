@@ -3580,6 +3580,10 @@ private:
                     std::vector<ExprPtr> args;
                     args.push_back(parse_expression());
                     field_values.push_back(make_ast_call_expr(arm.loc, arm.text, nullptr, std::move(args)));
+                } else if ((check(TokenKind::KwFalse) || check(TokenKind::KwTrue)) &&
+                           peek(1).kind == TokenKind::LBrace) {
+                    Token arm = tokens_[pos_++];
+                    field_values.push_back(parse_struct_literal(make_ast_name_expr(arm.loc, arm.text)));
                 } else {
                     field_values.push_back(parse_expression());
                 }

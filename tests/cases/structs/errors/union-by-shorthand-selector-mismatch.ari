@@ -1,0 +1,32 @@
+enum CipherType {
+  stream,
+  block,
+}
+
+struct SecurityParameters {
+  cipher_type: CipherType,
+}
+
+struct GenericStreamCipher {
+  value: i64,
+}
+
+struct GenericBlockCipher {
+  value: i64,
+}
+
+struct Packet {
+  security: SecurityParameters,
+  fragment: union by security.cipher_type {
+    stream => GenericStreamCipher,
+    block => GenericBlockCipher,
+  },
+}
+
+fn main() -> i64 {
+  let packet = Packet {
+    security: SecurityParameters { cipher_type: block },
+    fragment: stream { value: 41 },
+  };
+  return 0;
+}

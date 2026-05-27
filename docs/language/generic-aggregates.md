@@ -98,6 +98,21 @@ laid out and emitted by the existing enum backend. When the selector value is
 statically visible in the same struct literal, the constructor arm must match
 that value.
 
+When the selected arm's payload type is a struct, the constructor can omit the
+payload type name and write the arm name directly before the payload fields:
+
+```ari
+let packet = TLSCiphertext {
+  security: SecurityParameters { cipher_type: stream },
+  fragment: stream { value: 41 },
+};
+```
+
+This shorthand is equivalent to `fragment: stream => GenericStreamCipher {
+value: 41 }`. It still checks the payload fields against the arm's declared
+payload type. Use the explicit `arm => value` form for scalar, tuple, enum, or
+already-built payload values.
+
 Bool selectors use literal arm names:
 
 ```ari
@@ -128,14 +143,16 @@ struct Packet {
 }
 
 let packet = Packet {
-  fragment: stream => StreamPayload { value: 41 },
+  fragment: stream { value: 41 },
 };
 ```
 
-The compiler fills `kind` with the enum case named by the arm. Bool selectors
-can also be inferred from `false` and `true` constructor arms. Nested selector
-paths can be inferred the same way when the omitted selector value can be built
-from the constructor arm:
+The compiler fills `kind` with the enum case named by the arm. The same
+inference works with either `arm => payload` or the struct-payload shorthand.
+Bool selectors can also be inferred from `false` and `true` constructor arms;
+for example `payload: true { value: 1 }` fills an omitted `enabled: bool`
+selector with `true`. Nested selector paths can be inferred the same way when
+the omitted selector value can be built from the constructor arm:
 
 ```ari
 struct SecurityParameters {
@@ -151,7 +168,7 @@ struct TLSCiphertext {
 }
 
 let packet = TLSCiphertext {
-  fragment: stream => StreamPayload { value: 41 },
+  fragment: stream { value: 41 },
 };
 ```
 

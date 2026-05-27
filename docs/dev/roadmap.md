@@ -109,14 +109,16 @@ through known struct fields, arm names are unique, arm payload types resolve,
 enum selectors use arms that exactly cover the enum cases, and bool selectors
 use exactly `false` and `true` arms. For enum and bool selectors, the compiler
 lowers the field to hidden enum storage and accepts struct literal construction
-with `fragment: stream => payload` or `payload: true => payload`. When the
+with `fragment: stream => payload` or `payload: true => payload`. Struct
+payload arms also accept the shorthand `fragment: stream { field: value }`,
+which uses the arm's declared payload type as the struct literal type. When the
 selector value is visible in the same struct literal, the constructor arm must
 match it. Direct enum selector fields such as `kind`, direct bool selector
 fields such as `enabled`, and nested selector paths such as
 `security.cipher_type` when their omitted intermediate struct value can be
-synthesized from the selector alone, may also be omitted and inferred from a
-`union by` constructor arm; if multiple union fields share that omitted
-selector, their constructor arms must agree.
+synthesized from the selector alone, may also be omitted and inferred from
+either explicit or shorthand `union by` constructor arms; if multiple union
+fields share that omitted selector, their constructor arms must agree.
 The field value can also be matched directly with the same arm names, for
 example `match packet.fragment { stream(stream_payload) => ... }`; pattern
 resolution prefers the subject enum type before global case names so `union by`
