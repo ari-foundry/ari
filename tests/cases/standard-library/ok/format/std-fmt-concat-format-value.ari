@@ -82,12 +82,6 @@ fn main() -> i64 {
     return 3;
   }
 
-  let command = fmt::concat4<string, string, string, i64>(ref mut zone, "arix ", "build ", "--jobs=", 4);
-  if !equals_text(command, "arix build --jobs=4") {
-    zone::destroy(zone);
-    return 27;
-  }
-
   var text_parts = ["arix", " ", "run", " ", "--release"];
   let text_joined = fmt::concat_all(ref mut zone, text_parts.as_slice());
   if !equals_text(text_joined, "arix run --release") {
@@ -288,44 +282,6 @@ fn main() -> i64 {
        buffer6[16] == 's' && buffer6[17] == '=' && buffer6[18] == '4' && writer6.position == 19) {
     zone::destroy(zone);
     return 32;
-  }
-
-  var buffer7 = [0u8, 0u8, 0u8, 0u8];
-  var writer7 = MemoryWriter { data: buffer7.as_slice(), position: 0 };
-  if !fmt::write_concat4<MemoryWriter, string, string, i64, string>(
-    ref mut writer7,
-    ref mut zone,
-    "a",
-    "b",
-    3,
-    "!"
-  ).is_ok() {
-    zone::destroy(zone);
-    return 33;
-  }
-  if !(buffer7[0] == 'a' && buffer7[1] == 'b' && buffer7[2] == '3' && buffer7[3] == '!' &&
-       writer7.position == 4) {
-    zone::destroy(zone);
-    return 34;
-  }
-
-  var buffer8 = [0u8, 0u8, 0u8, 0u8];
-  var writer8 = MemoryWriter { data: buffer8.as_slice(), position: 0 };
-  if !fmt::write_concat4_bool<MemoryWriter, string, string, i64, string>(
-    ref mut writer8,
-    ref mut zone,
-    "c",
-    "d",
-    5,
-    "?"
-  ) {
-    zone::destroy(zone);
-    return 35;
-  }
-  if !(buffer8[0] == 'c' && buffer8[1] == 'd' && buffer8[2] == '5' && buffer8[3] == '?' &&
-       writer8.position == 4) {
-    zone::destroy(zone);
-    return 36;
   }
 
   var buffer9 = [0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8];

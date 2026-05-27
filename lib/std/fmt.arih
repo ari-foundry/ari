@@ -1090,19 +1090,6 @@ pub fn concat3[A: std::fmt::Display, B: std::fmt::Display, C: std::fmt::Display]
   return output;
 }
 
-pub fn concat4[A: std::fmt::Display, B: std::fmt::Display, C: std::fmt::Display, D: std::fmt::Display](
-  zone: ref mut Zone,
-  first: A,
-  second: B,
-  third: C,
-  fourth: D
-) -> std::string::String {
-  var output = std::fmt::concat3<A, B, C>(zone, first, second, third);
-  let fourth_text = fourth.format_in(zone);
-  output.append_bytes(zone, fourth_text.as_slice());
-  return output;
-}
-
 pub fn write_concat2[
   W: std::io::Writer,
   A: std::fmt::Display,
@@ -1169,46 +1156,6 @@ pub fn write_concat3_bool[
   third: C
 ) -> bool {
   return std::fmt::write_concat3<W, A, B, C>(writer, zone, first, second, third).is_ok();
-}
-
-pub fn write_concat4[
-  W: std::io::Writer,
-  A: std::fmt::Display,
-  B: std::fmt::Display,
-  C: std::fmt::Display,
-  D: std::fmt::Display
-](
-  writer: ref mut W,
-  zone: ref mut Zone,
-  first: A,
-  second: B,
-  third: C,
-  fourth: D
-) -> std::Result[(), std::error::Error] {
-  match std::fmt::write_concat3<W, A, B, C>(writer, zone, first, second, third) {
-    std::Ok(_) => {}
-    std::Err(reason) => {
-      return std::Err<(), std::error::Error>(reason);
-    }
-  }
-  return std::fmt::write_value<W, D>(writer, zone, fourth);
-}
-
-pub fn write_concat4_bool[
-  W: std::io::Writer,
-  A: std::fmt::Display,
-  B: std::fmt::Display,
-  C: std::fmt::Display,
-  D: std::fmt::Display
-](
-  writer: ref mut W,
-  zone: ref mut Zone,
-  first: A,
-  second: B,
-  third: C,
-  fourth: D
-) -> bool {
-  return std::fmt::write_concat4<W, A, B, C, D>(writer, zone, first, second, third, fourth).is_ok();
 }
 
 pub fn write_concat_all[W: std::io::Writer](

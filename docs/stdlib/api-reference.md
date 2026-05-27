@@ -3795,13 +3795,10 @@ fmt::format3<A: Display, B: Display, C: Display>(ref mut zone, template, first, 
 fmt::format4<A: Display, B: Display, C: Display, D: Display>(ref mut zone, template, first, second, third, fourth)
 fmt::concat2<A: Display, B: Display>(ref mut zone, first, second)
 fmt::concat3<A: Display, B: Display, C: Display>(ref mut zone, first, second, third)
-fmt::concat4<A: Display, B: Display, C: Display, D: Display>(ref mut zone, first, second, third, fourth)
 fmt::write_concat2<W: io::Writer, A: Display, B: Display>(ref mut writer, ref mut zone, first, second)
 fmt::write_concat2_bool<W: io::Writer, A: Display, B: Display>(ref mut writer, ref mut zone, first, second)
 fmt::write_concat3<W: io::Writer, A: Display, B: Display, C: Display>(ref mut writer, ref mut zone, first, second, third)
 fmt::write_concat3_bool<W: io::Writer, A: Display, B: Display, C: Display>(ref mut writer, ref mut zone, first, second, third)
-fmt::write_concat4<W: io::Writer, A: Display, B: Display, C: Display, D: Display>(ref mut writer, ref mut zone, first, second, third, fourth)
-fmt::write_concat4_bool<W: io::Writer, A: Display, B: Display, C: Display, D: Display>(ref mut writer, ref mut zone, first, second, third, fourth)
 fmt::write_format<W: io::Writer, T: Display>(ref mut writer, ref mut zone, template, value)
 fmt::write_format2<W: io::Writer, A: Display, B: Display>(ref mut writer, ref mut zone, template, first, second)
 fmt::write_format3<W: io::Writer, A: Display, B: Display, C: Display>(ref mut writer, ref mut zone, template, first, second, third)
@@ -3854,13 +3851,14 @@ output should use that policy.
 `fmt::format4` are fixed-arity runtime-template helpers. They support `{}`
 placeholders, escaped braces with `{{` and `}}`, allocate into the explicit zone, and return
 `Err(InvalidInput)` when the template is malformed or the placeholder count
-does not match the chosen arity. `fmt::concat2`, `fmt::concat3`, and
-`fmt::concat4` build small explicit-zone strings from `Display` values, which
-is handy for CLI messages such as `"Compiling " + name` while Ari keeps general
-string interpolation and hidden allocation out of the language.
-`fmt::write_concat2`, `fmt::write_concat3`, and `fmt::write_concat4` write the
-same short `Display`-driven message shape directly into an `io::Writer`,
-returning the first writer error instead of allocating one combined output string. Their
+does not match the chosen arity. `fmt::concat2` and `fmt::concat3` build small
+explicit-zone strings from `Display` values, which is handy for CLI messages
+such as `"Compiling " + name` while Ari keeps general string interpolation and
+hidden allocation out of the language. Use `concat_all` or `concat_strings` for
+longer or dynamic piece counts instead of another fixed arity.
+`fmt::write_concat2` and `fmt::write_concat3` write the same short
+`Display`-driven message shape directly into an `io::Writer`, returning the
+first writer error instead of allocating one combined output string. Their
 `_bool` variants are compatibility wrappers for call sites that deliberately
 discard the failure reason.
 `fmt::write_format`, `fmt::write_format2`, `fmt::write_format3`, and

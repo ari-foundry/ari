@@ -55,15 +55,12 @@ format_texts(zone: ref mut Zone, template: string, values: Slice[string]) -> Res
 format_values(zone: ref mut Zone, template: string, values: Slice[String]) -> Result[String, Error]
 concat2[A: Display, B: Display](zone: ref mut Zone, first: A, second: B) -> String
 concat3[A: Display, B: Display, C: Display](zone: ref mut Zone, first: A, second: B, third: C) -> String
-concat4[A: Display, B: Display, C: Display, D: Display](zone: ref mut Zone, first: A, second: B, third: C, fourth: D) -> String
 concat_all(zone: ref mut Zone, parts: Slice[string]) -> String
 concat_strings(zone: ref mut Zone, parts: Slice[String]) -> String
 write_concat2[W: io::Writer, A: Display, B: Display](writer: ref mut W, zone: ref mut Zone, first: A, second: B) -> Result[(), Error]
 write_concat2_bool[W: io::Writer, A: Display, B: Display](writer: ref mut W, zone: ref mut Zone, first: A, second: B) -> bool
 write_concat3[W: io::Writer, A: Display, B: Display, C: Display](writer: ref mut W, zone: ref mut Zone, first: A, second: B, third: C) -> Result[(), Error]
 write_concat3_bool[W: io::Writer, A: Display, B: Display, C: Display](writer: ref mut W, zone: ref mut Zone, first: A, second: B, third: C) -> bool
-write_concat4[W: io::Writer, A: Display, B: Display, C: Display, D: Display](writer: ref mut W, zone: ref mut Zone, first: A, second: B, third: C, fourth: D) -> Result[(), Error]
-write_concat4_bool[W: io::Writer, A: Display, B: Display, C: Display, D: Display](writer: ref mut W, zone: ref mut Zone, first: A, second: B, third: C, fourth: D) -> bool
 write_concat_all[W: io::Writer](writer: ref mut W, parts: Slice[string]) -> Result[(), Error]
 write_concat_all_bool[W: io::Writer](writer: ref mut W, parts: Slice[string]) -> bool
 write_concat_strings[W: io::Writer](writer: ref mut W, parts: Slice[String]) -> Result[(), Error]
@@ -220,17 +217,15 @@ Use `float_in(ref mut zone, value, precision)` when source code wants an
 explicit float precision without going through a format string.
 
 Use `format_value` when a caller wants the ordinary `Display` string for one
-value without naming the trait method at the call site. `concat2`, `concat3`,
-and `concat4` are fixed-arity convenience helpers for short hosted-program
-messages assembled from mixed `Display` values without invoking a compiler
-format macro:
+value without naming the trait method at the call site. `concat2` and `concat3`
+are the only fixed-arity convenience helpers for short hosted-program messages
+assembled from mixed `Display` values without invoking a compiler format macro:
 
 ```ari
 var zone = zone::create(128);
 let name = std::string::from(ref mut zone, "hello");
 let line = fmt::concat2(ref mut zone, "Compiling ", name);
 let output = fmt::concat3(ref mut zone, "target/debug/", 7, ".ari");
-let command = fmt::concat4(ref mut zone, "arix ", "build ", "--jobs=", 4);
 zone::destroy(zone);
 ```
 
@@ -298,9 +293,9 @@ match fmt::format_texts(ref mut zone, "{} -> {} ({})", values.as_slice()) {
 zone::destroy(zone);
 ```
 
-Use `write_concat2`, `write_concat3`, and `write_concat4` when the destination
-is already an `io::Writer` and the caller wants to stream a short status
-message without constructing one combined `String` first:
+Use `write_concat2` and `write_concat3` when the destination is already an
+`io::Writer` and the caller wants to stream a short status message without
+constructing one combined `String` first:
 
 ```ari
 var stdout = io::stdout();
@@ -411,11 +406,11 @@ The source helpers complement the macros:
   one through four `{}` placeholders and recoverable invalid-template errors.
 - Use `format_texts` and `format_values` for runtime templates with an
   arbitrary number of borrowed or preformatted replacements.
-- Use `concat2`, `concat3`, and `concat4` for small CLI/status strings such as
+- Use `concat2` and `concat3` for small CLI/status strings such as
   `"Compiling " + name` while Ari does not have general string interpolation.
 - Use `concat_all` and `concat_strings` when the number of pieces is dynamic or
-  when adding another fixed-arity helper would be the wrong abstraction.
-- Use `write_concat2`, `write_concat3`, and `write_concat4` for the same short
+  larger than three.
+- Use `write_concat2` and `write_concat3` for the same short
   CLI/status message shape when the destination is already an `io::Writer`.
 - Use `write_concat_all`, `write_concat_strings`, `write_format_texts`, and
   `write_format_values` for variable-count writer output without constructing

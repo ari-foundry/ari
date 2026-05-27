@@ -24,21 +24,21 @@ platform notes.
 
 ## Summary
 
-- API entries: `3613`
+- API entries: `3610`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
 | `alloc` | 923 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 933 | stable candidate |
+| `core` | 930 | stable candidate |
 | `hosted` | 1558 | platform-backed |
 | `platform` | 163 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1239 |
+| `fn` | 1236 |
 | `method` | 1903 |
 | `module` | 39 |
 | `struct` | 197 |
@@ -65,7 +65,7 @@ platform notes.
 | `std::encoding` | `core` | 98 |
 | `std::env` | `hosted` | 68 |
 | `std::error` | `core` | 37 |
-| `std::fmt` | `core` | 89 |
+| `std::fmt` | `core` | 86 |
 | `std::fs` | `hosted` | 325 |
 | `std::hash` | `alloc` | 24 |
 | `std::input` | `hosted` | 6 |
@@ -1643,7 +1643,6 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::fmt::char_in` | check-prelude std-fmt-char-values allocator-backed byte character display helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::concat2[A: std::fmt::Display, B: std::fmt::Display]` | check-prelude std-fmt-concat-format-value two-value Display concatenation helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::concat3[A: std::fmt::Display, B: std::fmt::Display, C: std::fmt::Display]` | check-prelude std-fmt-concat-format-value three-value Display concatenation helper; docs/stdlib/modules/fmt.md |
-| `fn std::fmt::concat4[A: std::fmt::Display, B: std::fmt::Display, C: std::fmt::Display, D: std::fmt::Display]` | check-prelude std-fmt-concat-format-value four-value Display concatenation helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::concat_all` | check-prelude std-fmt-concat-format-value variable-count borrowed-string concatenation helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::concat_strings` | check-prelude std-fmt-concat-format-value variable-count owned String concatenation helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::debug_char_in` | check-prelude std-fmt-char-values allocator-backed byte character debug helper; docs/stdlib/modules/fmt.md |
@@ -1682,8 +1681,6 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::fmt::write_concat2_bool` | check-prelude std-fmt-format-spec bool compatibility two-value Writer-backed Display concatenation helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_concat3` | check-prelude std-fmt-format-spec Result-returning three-value Writer-backed Display concatenation helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_concat3_bool` | check-prelude std-fmt-format-spec bool compatibility three-value Writer-backed Display concatenation helper; docs/stdlib/modules/fmt.md |
-| `fn std::fmt::write_concat4` | check-prelude std-fmt-concat-format-value Result-returning four-value Writer-backed Display concatenation helper; docs/stdlib/modules/fmt.md |
-| `fn std::fmt::write_concat4_bool` | check-prelude std-fmt-concat-format-value bool compatibility four-value Writer-backed Display concatenation helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_concat_all[W: std::io::Writer]` | check-prelude std-fmt-concat-format-value variable-count borrowed-string Writer-backed concatenation helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_concat_all_bool[W: std::io::Writer]` | check-prelude std-fmt-concat-format-value bool compatibility variable-count borrowed-string Writer-backed concatenation helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::write_concat_strings[W: std::io::Writer]` | check-prelude std-fmt-concat-format-value variable-count owned String Writer-backed concatenation helper; docs/stdlib/modules/fmt.md |
