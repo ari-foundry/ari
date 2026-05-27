@@ -1,0 +1,6 @@
+diagnostic error code=T0001 family=type message="union by selector enum CipherType is missing arm 'aead'" sources=1 labels=1 notes=1 helps=1
+  Source source_id=0 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic-union-by-enum-missing-arm.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic-union-by-enum-missing-arm.ari" bytes=283
+  Label index=0 role=primary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-union-by-enum-missing-arm.ari" line=13 column=13 end_line=13 end_column=18 byte_start=173 byte_end=178 message=""
+  Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-union-by-enum-missing-arm.ari:13:13\n    |\n 13 |   fragment: union by security.cipher_type {\n    |             ^^^^^"
+  Note index=0 location=none message="selector path 'security.cipher_type' requires one arm for every enum case before lowering can be designed safely"
+  Help index=0 location=none message="add arm 'aead => Type' or use an ordinary enum payload today"

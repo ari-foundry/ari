@@ -324,6 +324,7 @@ std::string classify_diagnostic_code(const std::string& message) {
         contains(diagnostic, "union by field types are parsed") ||
         contains(diagnostic, "union by field types are semantically validated") ||
         contains(diagnostic, "union by selector") ||
+        contains(diagnostic, "union by arm") ||
         contains(diagnostic, "duplicate union by arm") ||
         contains(diagnostic, "generic type") ||
         contains(diagnostic, "generic function") ||

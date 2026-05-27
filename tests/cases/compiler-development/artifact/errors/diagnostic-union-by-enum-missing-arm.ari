@@ -1,0 +1,21 @@
+enum CipherType {
+  stream,
+  block,
+  aead,
+}
+
+struct SecurityParameters {
+  cipher_type: CipherType,
+}
+
+struct TLSCiphertext {
+  security: SecurityParameters,
+  fragment: union by security.cipher_type {
+    stream => i64,
+    block => i64,
+  },
+}
+
+fn main() -> i64 {
+  return 0;
+}

@@ -5151,6 +5151,46 @@ private:
         throw error;
     }
 
+    [[noreturn]] void fail_unknown_union_by_enum_arm(const TypeRef& ast_type,
+                                                     std::size_t arm_index,
+                                                     const IrType& selector_type) const {
+        SourceLocation loc = arm_index < ast_type.union_by_arm_locs.size()
+            ? ast_type.union_by_arm_locs[arm_index]
+            : ast_type.loc;
+        const std::string& name = ast_type.union_by_arm_names[arm_index];
+        CompileError error(std::move(loc),
+                           "union by arm '" + name + "' is not a case of enum " +
+                               type_name(selector_type));
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "selector path '" + union_by_selector_text(ast_type) +
+                "' has enum type " + type_name(selector_type),
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "rename the arm to an enum case or remove it from the union by field",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] void fail_missing_union_by_enum_arm(const TypeRef& ast_type,
+                                                     const IrType& selector_type,
+                                                     const std::string& case_name) const {
+        CompileError error(ast_type.loc,
+                           "union by selector enum " + type_name(selector_type) +
+                               " is missing arm '" + case_name + "'");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "selector path '" + union_by_selector_text(ast_type) +
+                "' requires one arm for every enum case before lowering can be designed safely",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "add arm '" + case_name + " => Type' or use an ordinary enum payload today",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     [[noreturn]] void fail_union_by_lowering_after_validation(const StructDecl& decl,
                                                              const StructField& field,
                                                              const TypeRef& ast_type,
@@ -5183,6 +5223,30 @@ private:
             }
             if (i < ast_type.union_by_arm_types.size()) {
                 (void)resolve_executable_type(ast_type.union_by_arm_types[i]);
+            }
+        }
+    }
+
+    void validate_union_by_enum_arms(const TypeRef& ast_type, const IrType& selector_type) const {
+        if (selector_type.primitive != IrPrimitiveKind::Enum) return;
+        auto enum_found = enums_.find(selector_type.name);
+        if (enum_found == enums_.end()) return;
+
+        std::set<std::string> enum_cases;
+        for (const auto& name : enum_found->second.case_names) enum_cases.insert(name);
+
+        std::set<std::string> arms;
+        for (std::size_t i = 0; i < ast_type.union_by_arm_names.size(); ++i) {
+            const std::string& name = ast_type.union_by_arm_names[i];
+            if (!enum_cases.count(name)) {
+                fail_unknown_union_by_enum_arm(ast_type, i, selector_type);
+            }
+            arms.insert(name);
+        }
+
+        for (const auto& name : enum_found->second.case_names) {
+            if (!arms.count(name)) {
+                fail_missing_union_by_enum_arm(ast_type, selector_type, name);
             }
         }
     }
@@ -5236,6 +5300,7 @@ private:
         const TypeRef& ast_type = field.type;
         validate_union_by_arms(ast_type);
         IrType selector_type = validate_union_by_selector(decl, field_index, field, ast_type);
+        validate_union_by_enum_arms(ast_type, selector_type);
         fail_union_by_lowering_after_validation(decl, field, ast_type, selector_type);
     }
 

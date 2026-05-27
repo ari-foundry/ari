@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=311
+CompilerArtifactFixtures version=1 group=all entries=327
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -159,8 +159,12 @@ CompilerArtifactFixtures version=1 group=all entries=311
   Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-missing-generic-close.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-parser-missing-type-arg-close.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-missing-type-arg-close.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-parser-structural-capability-parameter.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-structural-capability-parameter.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-parser-top-level.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-top-level.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-parser-union-by-field.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-union-by-field.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-private-access.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-private-access.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-private-enum-case.diagnostic
@@ -195,6 +199,16 @@ CompilerArtifactFixtures version=1 group=all entries=311
   Fixture group=errors kind=diagnostic path=errors/diagnostic-type-assignment.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-unexpected-character.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-unexpected-character.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-union-by-duplicate-arm.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-union-by-duplicate-arm.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-union-by-enum-missing-arm.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-union-by-enum-missing-arm.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-union-by-enum-unknown-arm.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-union-by-enum-unknown-arm.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-union-by-missing-segment.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-union-by-missing-segment.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-union-by-missing-selector.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-union-by-missing-selector.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-unknown-trait.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-unknown-trait.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-use-after-move.ari
@@ -299,6 +313,8 @@ CompilerArtifactFixtures version=1 group=all entries=311
   Fixture group=ok kind=source path=ok/syntax-declarations.ari
   Fixture group=ok kind=syntax path=ok/syntax-declarations.syntax
   Fixture group=ok kind=syntax path=ok/syntax-dump-basic.syntax
+  Fixture group=ok kind=source path=ok/syntax-union-by-field.ari
+  Fixture group=ok kind=syntax path=ok/syntax-union-by-field.syntax
   Fixture group=ok kind=text path=ok/text-equal.actual.txt
   Fixture group=ok kind=text path=ok/text-equal.expected.txt
   Fixture group=ok kind=source path=ok/token-dump-basic.ari

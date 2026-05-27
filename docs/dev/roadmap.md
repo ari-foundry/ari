@@ -97,12 +97,13 @@ builds a `TypeRef` for `union by` that records the selector path and each arm's
 payload type, so syntax/declaration tooling can inspect the shape. Sema now
 validates that the selector starts from an earlier struct field, nested
 selector segments resolve through known struct fields, arm names are unique,
-and arm payload types resolve. It still rejects the field with a targeted type
-diagnostic before executable type lowering.
+arm payload types resolve, and enum selectors use arms that exactly cover the
+enum cases. It still rejects the field with a targeted type diagnostic before
+executable type lowering.
 
 It should not replace ordinary `enum` ADTs, unchecked C unions, or `match`. A
 future design must specify construction rules, arm checking against concrete
-enum-like discriminant values, ownership/drop for the active arm only,
+non-enum discriminant values, ownership/drop for the active arm only,
 borrowing/narrowing after matching the discriminant, layout/ABI behavior, and
 positive execution diagnostics once the selector model becomes usable. The
 compiler capability inventory tracks this as `union-by-fields`.

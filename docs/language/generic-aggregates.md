@@ -75,14 +75,16 @@ path and arm type list in the AST. Syntax dumps and declaration metadata can
 show the field shape. During semantic validation, the selector must start from
 an earlier field in the same struct, each nested selector segment must resolve
 through a known struct field, arm names must be unique, and every arm payload
-type must resolve. After those checks pass, executable lowering still rejects
-the field with a targeted type diagnostic before layout or code generation.
+type must resolve. When the selector type is an enum, every arm name must be an
+enum case and every enum case must have exactly one arm. After those checks
+pass, executable lowering still rejects the field with a targeted type
+diagnostic before layout or code generation.
 Model this with an ordinary enum payload today, and keep any external
 discriminant relationship explicit in constructor and validation code.
 
 The compiler capability inventory tracks the reserved syntax as
-`union-by-fields`. Matching arm names against concrete discriminant values,
-exhaustive arm checking, construction, active-arm drop, narrowing, layout, and
+`union-by-fields`. Enum selector arm checking is implemented as a semantic
+diagnostic layer. Construction, active-arm drop, narrowing, layout, ABI, and
 positive execution support remain future compiler work.
 
 ## Substitution
