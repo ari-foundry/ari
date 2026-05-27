@@ -96,7 +96,7 @@ tests, or CI matrix work.
 | `std::parse` | Future taxonomy splits backed by real caller needs; the current basic slice already covers natural Result parsers, stable diagnostic names/messages, byte offsets, and finite/subnormal float boundary checks. |
 | `std::encoding` | Unicode normalization/transcoding and optional compression policy outside the core encoding module. |
 | `union by` language idea | Syntax is chosen, parser/AST tooling preserves selector and arm payload types, sema validates earlier-field selector roots, nested struct-field selector segments, unique arm names, arm payload type refs, and exact enum-case arm coverage, and enum-selector fields can now be constructed in struct literals with `field: arm => payload`. Same-literal selector mismatches are diagnosed, and direct `match` over the field reads active payloads with the declared arm names. Non-enum discriminant arm policy, broader active-arm narrowing, runtime selector consistency, active-arm drop diagnostics, and stable ABI naming remain compiler work. |
-| Structural capability parameters | Ordinary free functions and inherent `impl` methods now support single-method `fn save(x: has serialize() -> i64)`, grouped `fn save(x: has { serialize() -> i64, add(i64) -> i64 })`, explicit generic bounds, reusable aliases such as `type Serializable = has serialize() -> i64;` plus `fn save[T: Serializable](x: T)`, and generic aliases such as `type Mapper[Input, Output] = has map(Input) -> Output;` plus `fn f[T: Mapper[i64, bool]](x: T)`. These requirements lower through hidden or named generics, call-site method checking, alias type-argument substitution, and normal static method monomorphization. Hidden capability generics stay out of visible method type-argument counts. Remaining work is trait-method policy and stronger named-trait guidance. |
+| Structural capability parameters | Ordinary free functions, inherent `impl` methods, trait methods, and trait impl methods now support single-method `fn save(x: has serialize() -> i64)`, grouped `fn save(x: has { serialize() -> i64, add(i64) -> i64 })`, explicit generic bounds, reusable aliases such as `type Serializable = has serialize() -> i64;` plus `fn save[T: Serializable](x: T)`, and generic aliases such as `type Mapper[Input, Output] = has map(Input) -> Output;` plus `fn f[T: Mapper[i64, bool]](x: T)`. These requirements lower through hidden or named generics, call-site method checking, alias type-argument substitution, trait impl structural-bound matching, and normal static method monomorphization. Hidden capability generics stay out of visible method type-argument counts. Remaining work is stronger named-trait guidance and possible future requirement kinds beyond methods. |
 
 ## Language Roadmap Interaction
 
@@ -138,17 +138,17 @@ fn save(x: has { serialize() -> i64, add(i64) -> i64 }, amount: i64) -> i64 {
 }
 ```
 
-For ordinary free functions and inherent `impl` methods, the compiler desugars
-the parameter to a hidden generic, checks the concrete call-site type for
-matching static methods, and lowers the function body through the same
-monomorphized method-call path as other generic functions. Unsupported type
-positions still get a targeted diagnostic. Capability aliases make reusable
-capability sets available in supported function and inherent-method bounds;
-generic alias type arguments are substituted into the required method
-signatures before call-site checking. Using a capability alias as a runtime
-value type, storage field, struct bound,
-enum bound, trait bound, or trait-impl bound is rejected for now.
-The compiler must still define trait-method policy
-and stronger diagnostics that point users toward named traits when that
-boundary is clearer. The feature must continue to avoid an `interface` keyword
-or accidental dynamic dispatch.
+For ordinary free functions, inherent `impl` methods, trait methods, and trait
+impl methods, the compiler desugars the parameter to a hidden generic, checks
+the concrete call-site type for matching static methods, and lowers the
+function body through the same monomorphized method-call path as other generic
+functions. Trait impl conformance checks require the structural method
+requirements to match the trait declaration. Unsupported type positions still
+get a targeted diagnostic. Capability aliases make reusable capability sets
+available in supported function and method bounds; generic alias type arguments
+are substituted into the required method signatures before call-site checking.
+Using a capability alias as a runtime value type, storage field, struct bound,
+enum bound, or trait bound is rejected for now. The compiler must still improve
+diagnostics that point users toward named traits when that boundary is clearer.
+The feature must continue to avoid an `interface` keyword or accidental dynamic
+dispatch.

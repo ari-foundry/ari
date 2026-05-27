@@ -5739,6 +5739,8 @@ check-traits: $(TARGET)
 	$(BUILD_DIR)/traits/structural-capability-alias-bound.elf; code=$$?; test $$code -eq 42
 	$(TARGET) tests/cases/traits/ok/structural-capability-generic-alias-bound.ari -o $(BUILD_DIR)/traits/structural-capability-generic-alias-bound.elf
 	$(BUILD_DIR)/traits/structural-capability-generic-alias-bound.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/cases/traits/ok/structural-capability-trait-method.ari -o $(BUILD_DIR)/traits/structural-capability-trait-method.elf
+	$(BUILD_DIR)/traits/structural-capability-trait-method.elf; code=$$?; test $$code -eq 40
 	$(TARGET) tests/cases/traits/ok/trait-minimum-compiler-shaped.ari -o $(BUILD_DIR)/traits/trait-minimum-compiler-shaped.elf
 	$(BUILD_DIR)/traits/trait-minimum-compiler-shaped.elf; code=$$?; test $$code -eq 74
 	$(TARGET) tests/cases/traits/ok/trait-minimum-compiler-shaped.ari --emit-llvm $(BUILD_DIR)/traits/trait-minimum-compiler-shaped.ll
@@ -5842,8 +5844,8 @@ check-traits: $(TARGET)
 	grep -q "does not satisfy structural capability 'has add(i64) -> i64'" $(BUILD_DIR)/traits/structural-capability-multi-missing.err
 	if $(TARGET) tests/cases/traits/errors/structural-capability-impl-method-missing.ari -o $(BUILD_DIR)/traits/structural-capability-impl-method-missing.elf >$(BUILD_DIR)/traits/structural-capability-impl-method-missing.err 2>&1; then exit 1; fi
 	grep -q "does not satisfy structural capability 'has serialize() -> i64'" $(BUILD_DIR)/traits/structural-capability-impl-method-missing.err
-	if $(TARGET) tests/cases/traits/errors/structural-capability-trait-impl-method.ari -o $(BUILD_DIR)/traits/structural-capability-trait-impl-method.elf >$(BUILD_DIR)/traits/structural-capability-trait-impl-method.err 2>&1; then exit 1; fi
-	grep -q "structural capability parameters and bounds are only supported on free functions and inherent impl methods" $(BUILD_DIR)/traits/structural-capability-trait-impl-method.err
+	if $(TARGET) tests/cases/traits/errors/structural-capability-trait-method-mismatch.ari -o $(BUILD_DIR)/traits/structural-capability-trait-method-mismatch.elf >$(BUILD_DIR)/traits/structural-capability-trait-method-mismatch.err 2>&1; then exit 1; fi
+	grep -q "structural capability bound mismatch" $(BUILD_DIR)/traits/structural-capability-trait-method-mismatch.err
 	if $(TARGET) tests/cases/traits/errors/structural-capability-return-mismatch.ari -o $(BUILD_DIR)/traits/structural-capability-return-mismatch.elf >$(BUILD_DIR)/traits/structural-capability-return-mismatch.err 2>&1; then exit 1; fi
 	grep -q "return type expects i64, found bool" $(BUILD_DIR)/traits/structural-capability-return-mismatch.err
 	if $(TARGET) tests/cases/traits/errors/structural-capability-generic-bound-missing.ari -o $(BUILD_DIR)/traits/structural-capability-generic-bound-missing.elf >$(BUILD_DIR)/traits/structural-capability-generic-bound-missing.err 2>&1; then exit 1; fi
@@ -5857,7 +5859,7 @@ check-traits: $(TARGET)
 	if $(TARGET) tests/cases/traits/errors/structural-capability-generic-alias-arity.ari -o $(BUILD_DIR)/traits/structural-capability-generic-alias-arity.elf >$(BUILD_DIR)/traits/structural-capability-generic-alias-arity.err 2>&1; then exit 1; fi
 	grep -q "type alias 'Combiner' expects 1 type argument" $(BUILD_DIR)/traits/structural-capability-generic-alias-arity.err
 	if $(TARGET) tests/cases/traits/errors/structural-capability-struct-generic-bound.ari -o $(BUILD_DIR)/traits/structural-capability-struct-generic-bound.elf >$(BUILD_DIR)/traits/structural-capability-struct-generic-bound.err 2>&1; then exit 1; fi
-	grep -q "structural capability parameters and bounds are only supported on free functions and inherent impl methods" $(BUILD_DIR)/traits/structural-capability-struct-generic-bound.err
+	grep -q "structural capability parameters and bounds are only supported on callable function and method declarations" $(BUILD_DIR)/traits/structural-capability-struct-generic-bound.err
 	if $(TARGET) tests/cases/traits/errors/unknown-trait-impl.ari -o $(BUILD_DIR)/traits/unknown-trait-impl.elf >$(BUILD_DIR)/traits/unknown-trait-impl.err 2>&1; then exit 1; fi
 	grep -q "unknown trait 'MissingTrait'" $(BUILD_DIR)/traits/unknown-trait-impl.err
 	if $(TARGET) tests/cases/traits/errors/trait-object-unknown.ari -o $(BUILD_DIR)/traits/trait-object-unknown.elf >$(BUILD_DIR)/traits/trait-object-unknown.err 2>&1; then exit 1; fi

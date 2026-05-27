@@ -534,14 +534,14 @@ private:
 
     [[noreturn]] static void fail_structural_capability_parameter_context(SourceLocation loc) {
         CompileError error(std::move(loc),
-                           "structural capability parameters and bounds are only supported on free functions and inherent impl methods");
+                           "structural capability parameters and bounds are only supported on callable function and method declarations");
         error.add_note(DiagnosticNote{
             std::nullopt,
             "the current implementation lowers `has method(...) -> Type` to a hidden generic parameter",
             DiagnosticNoteKind::Note});
         error.add_note(DiagnosticNote{
             std::nullopt,
-            "use a named trait bound in extern declarations, trait methods, trait impl methods, meta functions, and lambdas",
+            "use a named trait bound in extern declarations, meta functions, lambdas, and aggregate type declarations",
             DiagnosticNoteKind::Help});
         throw error;
     }
@@ -1650,7 +1650,7 @@ private:
                 continue;
             }
             expect(TokenKind::KwFn, "expected trait method or associated type declaration");
-            decl.methods.push_back(parse_function(false, false, false));
+            decl.methods.push_back(parse_function(false, false, false, {}, true));
             optional_separator();
         }
         return decl;
@@ -1710,7 +1710,7 @@ private:
                 continue;
             }
             expect(TokenKind::KwFn, "expected function or associated type witness in impl block");
-            decl.methods.push_back(parse_function(false, true, method_public, {}, !decl.has_trait));
+            decl.methods.push_back(parse_function(false, true, method_public, {}, true));
             optional_separator();
         }
         return decl;

@@ -48,7 +48,7 @@ The few stdlib polish items that are blocked by compiler features are mapped in
 ## Language Ideas Parked For Later
 
 Structural capability parameters now have a narrow executable seed for ordinary
-free functions and inherent `impl` methods:
+free functions, inherent `impl` methods, trait methods, and trait impl methods:
 
 ```ari
 fn save(x: has serialize() -> i64) -> i64 {
@@ -57,21 +57,24 @@ fn save(x: has serialize() -> i64) -> i64 {
 ```
 
 The parser accepts `has method(...) -> Type` and grouped
-`has { method(...) -> Type, other(...) -> Type }` in ordinary free-function and
-inherent `impl` method parameter type positions, plus explicit generic bounds
-such as `fn save[T: has serialize() -> i64](x: T)`. Non-generic capability
-aliases such as `type Serializable = has serialize() -> i64;` and generic
-aliases such as `type Mapper[Input, Output] = has map(Input) -> Output;` can be
-reused as supported function and inherent-method generic bounds. Semantic
-analysis lowers anonymous parameters to hidden generics, substitutes alias type
-arguments into reusable capability requirements, checks concrete call-site
-types for every listed static method, and monomorphizes the body through the
-ordinary method-call path. Hidden capability generics do not count as visible
-method type arguments. It must continue to avoid an `interface` keyword,
-accidental dynamic dispatch, or a shortcut around named trait-bound diagnostics.
-Remaining roadmap work includes trait-method policy, richer diagnostics for
-when a named trait is better, and any future extension beyond method
-requirements.
+`has { method(...) -> Type, other(...) -> Type }` in ordinary free-function,
+inherent `impl` method, trait method, and trait impl method parameter type
+positions, plus explicit generic bounds such as
+`fn save[T: has serialize() -> i64](x: T)`. Non-generic capability aliases such
+as `type Serializable = has serialize() -> i64;` and generic aliases such as
+`type Mapper[Input, Output] = has map(Input) -> Output;` can be reused as
+supported function and method generic bounds. Semantic analysis lowers
+anonymous parameters to hidden generics, substitutes alias type arguments into
+reusable capability requirements, checks concrete call-site types for every
+listed static method, and monomorphizes the body through the ordinary
+method-call path. Trait impl conformance now compares structural capability
+method signatures exactly, so a trait method and its impl can use direct
+`has ...` spelling or an equivalent capability alias but cannot silently change
+the requirement. Hidden capability generics do not count as visible method type
+arguments. It must continue to avoid an `interface` keyword, accidental dynamic
+dispatch, or a shortcut around named trait-bound diagnostics. Remaining
+roadmap work includes richer diagnostics for when a named trait is better and
+any future extension beyond method requirements.
 
 Discriminant-linked union fields are also worth exploring for protocol and
 binary-format records whose payload shape is controlled by data already present

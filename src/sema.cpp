@@ -3280,7 +3280,7 @@ private:
                 for (const auto& item : generic_placeholder_substitutions(method.generics)) {
                     method_substitutions.emplace(item.first, item.second);
                 }
-                validate_generic_constraints_for(method.generics, decl.module_name, std::move(method_substitutions));
+                validate_generic_constraints_for(method.generics, decl.module_name, std::move(method_substitutions), true);
             }
         });
         for_each_function_decl([&](const FunctionDecl& fn) {
@@ -3298,7 +3298,7 @@ private:
                     method.generics,
                     impl.module_name,
                     std::move(method_substitutions),
-                    !impl.has_trait);
+                    true);
             }
         });
     }
@@ -3315,6 +3315,149 @@ private:
         return left.trait_name == right.trait_name && same_type_list(left.trait_args, right.trait_args);
     }
 
+    struct ResolvedStructuralCapabilityMethod {
+        std::string name;
+        std::vector<IrType> params;
+        IrType result;
+        bool has_result = false;
+    };
+
+    ResolvedStructuralCapabilityMethod resolve_structural_capability_method_signature(
+        const StructuralCapabilityMethod& method
+    ) {
+        ResolvedStructuralCapabilityMethod resolved;
+        resolved.name = method.name;
+        resolved.has_result = method.has_result;
+        resolved.params.reserve(method.params.size());
+        for (const auto& param : method.params) {
+            IrType source = resolve_executable_type(param);
+            bool vec_view = false;
+            resolved.params.push_back(vector_parameter_abi_type(
+                param.loc,
+                source,
+                "a structural capability method parameter",
+                vec_view));
+        }
+        resolved.result = method.has_result
+            ? resolve_executable_type(method.result)
+            : void_type(method.loc);
+        return resolved;
+    }
+
+    std::vector<ResolvedStructuralCapabilityMethod> resolve_structural_capability_method_signatures(
+        const std::vector<StructuralCapabilityMethod>& methods
+    ) {
+        std::vector<ResolvedStructuralCapabilityMethod> resolved;
+        resolved.reserve(methods.size());
+        for (const auto& method : methods) {
+            resolved.push_back(resolve_structural_capability_method_signature(method));
+        }
+        return resolved;
+    }
+
+    std::optional<std::vector<ResolvedStructuralCapabilityMethod>>
+    resolve_structural_capability_bound_signature(const GenericParam& generic) {
+        if (generic.has_structural_capability) {
+            return resolve_structural_capability_method_signatures(generic.structural_methods);
+        }
+        if (!generic.has_constraint) return std::nullopt;
+        const TypeAliasInfo* alias = find_structural_capability_alias_bound(generic.constraint);
+        if (!alias) return std::nullopt;
+
+        require_type_alias_access(generic.constraint.loc, *alias);
+        std::map<std::string, IrType> alias_substitutions =
+            structural_capability_alias_substitutions(generic.constraint, *alias);
+
+        std::string previous_module = current_module_name_;
+        std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
+        current_module_name_ = alias->module_name;
+        current_type_substitutions_ = std::move(alias_substitutions);
+        try {
+            auto resolved = resolve_structural_capability_method_signatures(alias->structural_methods);
+            current_type_substitutions_ = std::move(previous_substitutions);
+            current_module_name_ = previous_module;
+            return resolved;
+        } catch (...) {
+            current_type_substitutions_ = std::move(previous_substitutions);
+            current_module_name_ = previous_module;
+            throw;
+        }
+    }
+
+    std::optional<std::vector<ResolvedStructuralCapabilityMethod>>
+    resolve_structural_capability_bound_signature_with_context(
+        const GenericParam& generic,
+        const std::string& module_name,
+        std::map<std::string, IrType> substitutions
+    ) {
+        std::string previous_module = current_module_name_;
+        std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
+        current_module_name_ = module_name;
+        current_type_substitutions_ = std::move(substitutions);
+        try {
+            auto resolved = resolve_structural_capability_bound_signature(generic);
+            current_type_substitutions_ = std::move(previous_substitutions);
+            current_module_name_ = previous_module;
+            return resolved;
+        } catch (...) {
+            current_type_substitutions_ = std::move(previous_substitutions);
+            current_module_name_ = previous_module;
+            throw;
+        }
+    }
+
+    static std::string structural_capability_method_key(const ResolvedStructuralCapabilityMethod& method) {
+        std::string key = method.name + "(";
+        for (std::size_t i = 0; i < method.params.size(); ++i) {
+            if (i > 0) key += ",";
+            key += type_name(method.params[i]);
+        }
+        key += ")->" + type_name(method.result);
+        return key;
+    }
+
+    static std::vector<std::string> structural_capability_signature_keys(
+        const std::vector<ResolvedStructuralCapabilityMethod>& methods
+    ) {
+        std::vector<std::string> keys;
+        keys.reserve(methods.size());
+        for (const auto& method : methods) keys.push_back(structural_capability_method_key(method));
+        std::sort(keys.begin(), keys.end());
+        return keys;
+    }
+
+    static bool same_structural_capability_signature(
+        const std::vector<ResolvedStructuralCapabilityMethod>& left,
+        const std::vector<ResolvedStructuralCapabilityMethod>& right
+    ) {
+        return structural_capability_signature_keys(left) == structural_capability_signature_keys(right);
+    }
+
+    static std::string structural_capability_method_display(const ResolvedStructuralCapabilityMethod& method) {
+        std::string text = method.name + "(";
+        for (std::size_t i = 0; i < method.params.size(); ++i) {
+            if (i > 0) text += ", ";
+            text += type_name(method.params[i]);
+        }
+        text += ")";
+        if (method.has_result || method.result.primitive != IrPrimitiveKind::Void) {
+            text += " -> " + type_name(method.result);
+        }
+        return text;
+    }
+
+    static std::string structural_capability_signature_display(
+        const std::vector<ResolvedStructuralCapabilityMethod>& methods
+    ) {
+        if (methods.empty()) return "none";
+        std::string text;
+        for (std::size_t i = 0; i < methods.size(); ++i) {
+            if (i > 0) text += ", ";
+            text += "has " + structural_capability_method_display(methods[i]);
+        }
+        return text;
+    }
+
     void validate_trait_method_generic_bound(
         const std::string& method_name,
         std::size_t index,
@@ -3325,6 +3468,30 @@ private:
         const TraitInfo& trait,
         const ImplDecl& impl
     ) {
+        auto expected_structural = resolve_structural_capability_bound_signature_with_context(
+            expected,
+            trait.module_name,
+            expected_substitutions);
+        auto actual_structural = resolve_structural_capability_bound_signature_with_context(
+            actual,
+            impl.module_name,
+            actual_substitutions);
+        if (expected_structural || actual_structural) {
+            if (!expected_structural || !actual_structural ||
+                !same_structural_capability_signature(*expected_structural, *actual_structural)) {
+                const std::string expected_display = expected_structural
+                    ? structural_capability_signature_display(*expected_structural)
+                    : no_trait_bound_display();
+                const std::string actual_display = actual_structural
+                    ? structural_capability_signature_display(*actual_structural)
+                    : no_trait_bound_display();
+                fail(actual.loc,
+                     "method '" + method_name + "' generic parameter " + std::to_string(index + 1) +
+                         " structural capability bound mismatch: expected " + expected_display +
+                         ", got " + actual_display);
+            }
+            return;
+        }
         if (expected.has_constraint != actual.has_constraint) {
             std::string expected_display = expected.has_constraint
                 ? type_ref_key(expected.constraint)

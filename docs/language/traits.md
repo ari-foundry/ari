@@ -759,9 +759,12 @@ the declared number of type arguments, and those arguments are resolved in the
 same context as the function or method bound using the alias.
 
 Inherent `impl` methods and associated functions can use the same parameter
-syntax and the same explicit generic-bound syntax. A hidden capability generic
-does not count as a visible method type argument, so ordinary method generics
-keep their natural spelling:
+syntax and the same explicit generic-bound syntax. Trait methods and their
+trait impl methods can use the same syntax as part of a trait contract; the
+impl method must declare the same structural requirement set, whether it uses a
+direct `has ...` bound or an equivalent capability alias. A hidden capability
+generic does not count as a visible method type argument, so ordinary method
+generics keep their natural spelling:
 
 ```ari
 struct Runner {
@@ -790,19 +793,40 @@ fn main() -> i64 {
 }
 ```
 
+Trait contracts can use structural requirements for static-only method
+contracts:
+
+```ari
+type Serializable = has serialize() -> i64;
+
+trait Sink {
+  fn save(value: has serialize() -> i64) -> i64
+  fn alias_save[T: Serializable](value: T) -> i64
+}
+
+impl Sink for Runner {
+  fn save[T: has serialize() -> i64](value: T) -> i64 {
+    value.serialize()
+  }
+
+  fn alias_save[T: Serializable](value: T) -> i64 {
+    value.serialize()
+  }
+}
+```
+
 The initial subset is intentionally narrow:
 
-- The syntax is accepted only in ordinary free-function and inherent `impl`
-  method parameter type position, plus their generic parameter bounds.
+- The syntax is accepted in ordinary free-function, inherent `impl` method,
+  trait method, and trait impl method parameter type position, plus their
+  generic parameter bounds.
 - A `has` parameter or bound currently describes method requirements only.
-- Capability aliases, including generic aliases, can be used as free-function
-  and inherent `impl` method generic bounds.
+- Capability aliases, including generic aliases, can be used in supported
+  function and method generic bounds.
 - Associated types, field requirements, and operators are not implemented yet.
-- Trait methods and trait impl methods still use named trait bounds.
-- `has method(...) -> Type` in struct fields, trait methods, trait
-  impl methods, extern declarations, meta functions, lambdas, struct/enum/trait
-  generic bounds, or other type positions is rejected with a targeted
-  diagnostic.
+- `has method(...) -> Type` in struct fields, extern declarations, meta
+  functions, lambdas, struct/enum/trait generic bounds, or other type
+  positions is rejected with a targeted diagnostic.
 
 Use a named trait when the contract should be shared across APIs, documented as
 part of a stable interface, or implemented through trait-object dispatch:
@@ -839,11 +863,13 @@ separate hardening area.
 Dyn-to-dyn upcasts are executable when the target is the same trait or an
 inherited supertrait, including `own dyn` upcasts; unrelated dyn casts are
 rejected.
-Ordinary free functions and inherent `impl` methods can use initial structural
-capability parameters such as `fn save(x: has serialize() -> i64)` and grouped
-requirements such as
+Ordinary free functions, inherent `impl` methods, trait methods, and trait impl
+methods can use initial structural capability parameters such as
+`fn save(x: has serialize() -> i64)` and grouped requirements such as
 `fn save(x: has { serialize() -> i64, add(i64) -> i64 })`, which are checked at
-call specialization time and then lowered through normal static dispatch.
+call specialization time and then lowered through normal static dispatch. Trait
+impl conformance checks require structural method contracts to match the trait
+declaration exactly.
 Capability aliases such as `type Serializable = has serialize() -> i64;` and
 generic aliases such as `type Mapper[Input, Output] = has map(Input) -> Output;`
-can be reused as supported function or inherent method generic bounds.
+can be reused as supported function or method generic bounds.

@@ -1,0 +1,44 @@
+type Serializable = has serialize() -> i64;
+
+trait Sink {
+  fn save(value: has serialize() -> i64) -> i64
+  fn add[T: has add(i64) -> i64](value: T, amount: i64) -> i64
+  fn alias_save[T: Serializable](value: T) -> i64
+}
+
+struct Packet {
+  value: i64,
+}
+
+impl Packet {
+  fn serialize(self) -> i64 {
+    self.value + 1
+  }
+
+  fn add(self, amount: i64) -> i64 {
+    self.value + amount
+  }
+}
+
+struct Runner {
+}
+
+impl Sink for Runner {
+  fn save[T: has serialize() -> i64](value: T) -> i64 {
+    value.serialize()
+  }
+
+  fn add(value: has add(i64) -> i64, amount: i64) -> i64 {
+    value.add(amount)
+  }
+
+  fn alias_save[T: Serializable](value: T) -> i64 {
+    value.serialize()
+  }
+}
+
+fn main() -> i64 {
+  return Sink::save<Runner>(Packet { value: 10 }) +
+      Sink::add<Runner>(Packet { value: 20 }, 2) +
+      Sink::alias_save<Runner>(Packet { value: 6 });
+}

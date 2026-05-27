@@ -1,0 +1,26 @@
+trait Sink {
+  fn save[T: has serialize() -> i64](value: T) -> i64
+}
+
+struct Packet {
+  value: i64,
+}
+
+impl Packet {
+  fn add(self, amount: i64) -> i64 {
+    self.value + amount
+  }
+}
+
+struct Runner {
+}
+
+impl Sink for Runner {
+  fn save[T: has add(i64) -> i64](value: T) -> i64 {
+    value.add(1)
+  }
+}
+
+fn main() -> i64 {
+  return 0;
+}
