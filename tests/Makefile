@@ -872,9 +872,11 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/std-error-integration.elf; code=$$?; test $$code -eq 45
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-buffered.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-buffered.ll
 	grep -q '_ARNv3std2io29buf_reader__G_std__io__Cursor' $(BUILD_DIR)/prelude/std-io-buffered.ll
+	grep -q '_ARNv3std2io32buf_reader_in__G_std__io__Cursor' $(BUILD_DIR)/prelude/std-io-buffered.ll
 	grep -q '_ARNv3std2io29buf_writer__G_std__io__Stdout' $(BUILD_DIR)/prelude/std-io-buffered.ll
+	grep -q '_ARNv3std2io33buf_writer_in__G_DropMemoryWriter' $(BUILD_DIR)/prelude/std-io-buffered.ll
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-buffered.ari -o $(BUILD_DIR)/prelude/std-io-buffered.elf
-	$(BUILD_DIR)/prelude/std-io-buffered.elf >$(BUILD_DIR)/prelude/std-io-buffered.out; code=$$?; test $$code -eq 11
+	$(BUILD_DIR)/prelude/std-io-buffered.elf >$(BUILD_DIR)/prelude/std-io-buffered.out; code=$$?; test $$code -eq 15
 	grep -qx "ABC" $(BUILD_DIR)/prelude/std-io-buffered.out
 	$(TARGET) tests/cases/standard-library/ok/format/raw-string-literals.ari -o $(BUILD_DIR)/prelude/raw-string-literals.elf
 	$(BUILD_DIR)/prelude/raw-string-literals.elf >$(BUILD_DIR)/prelude/raw-string-literals.out; code=$$?; test $$code -eq 141

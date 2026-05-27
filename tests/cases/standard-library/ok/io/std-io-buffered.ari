@@ -117,5 +117,51 @@ fn main() -> i64 {
     score = score + 1;
   }
 
+  var zone = zone::create(256);
+  var zone_source = [90u8, 91u8, 92u8];
+  var zone_cursor = io::cursor(zone_source.as_slice());
+  var zone_reader = io::BufReader::with_capacity<io::Cursor>(ref mut zone, zone_cursor, 3).unwrap();
+  if zone_reader.capacity() == 3 && zone_reader.read_byte() == 90 {
+    score = score + 1;
+  }
+
+  var invalid_cursor = io::cursor(zone_source.as_slice());
+  if io::buf_reader_in<io::Cursor>(ref mut zone, invalid_cursor, 0).is_err() {
+    score = score + 1;
+  }
+
+  var zone_output = [0u8, 0u8, 0u8];
+  var zone_position = 0;
+  var zone_flushed = 0;
+  let zone_inner = DropMemoryWriter {
+    data: zone_output.as_slice(),
+    position: (ref mut zone_position) as ptr i64,
+    flushed: (ref mut zone_flushed) as ptr i64,
+  };
+  var zone_writer = io::buf_writer_in<DropMemoryWriter>(ref mut zone, zone_inner, 3).unwrap();
+  var zone_message = [76u8, 77u8];
+  if zone_writer.write_all(zone_message.as_slice()).is_ok() {
+    if zone_writer.flush().is_ok() &&
+       zone_output[0] == 76u8 &&
+       zone_output[1] == 77u8 &&
+       zone_position == 2 &&
+       zone_flushed == 1 {
+      score = score + 1;
+    }
+  }
+
+  let invalid_inner = DropMemoryWriter {
+    data: zone_output.as_slice(),
+    position: (ref mut zone_position) as ptr i64,
+    flushed: (ref mut zone_flushed) as ptr i64,
+  };
+  if io::buf_writer_in<DropMemoryWriter>(ref mut zone, invalid_inner, -1).is_err() {
+    score = score + 1;
+  }
+
+  drop zone_writer;
+  drop zone_reader;
+  zone::destroy(zone);
+
   return score;
 }

@@ -2366,9 +2366,13 @@ placeholders. The older `_text` spellings remain compatibility aliases. Root
 calls; the `io::` names are ordinary stdlib functions for direct byte output.
 `io::Stdout` and `io::Stderr` implement `Writer` over the current process
 stream hooks, with `flush` currently succeeding as a no-op. `io::BufReader`
-and `io::BufWriter` wrap any `Reader` or `Writer` with an explicit
-caller-provided `Slice[u8]` buffer, so allocation and buffer lifetime stay
-visible. `io::BufWriter` flushes when the buffer fills, on explicit `flush()`,
+and `io::BufWriter` wrap any `Reader` or `Writer` with either an explicit
+caller-provided `Slice[u8]` buffer or a zone-backed buffer allocated by
+`io::buf_reader_in`, `io::buf_writer_in`, `BufReader::with_capacity`, and
+`BufWriter::with_capacity`. Borrowed buffers must stay alive while the wrapper
+is used; zone-backed buffers stay valid until that zone is reset or destroyed.
+The zone-backed constructors return `Err(InvalidInput)` when `capacity <= 0`.
+`io::BufWriter` flushes when the buffer fills, on explicit `flush()`,
 and as a best-effort cleanup when a still-buffered writer is dropped. Drop
 cleanup cannot report errors, so callers that need to observe write failures
 should still call `flush()` explicitly before dropping the writer. `io::pipe()`
@@ -2380,9 +2384,7 @@ both expose explicit Result-returning close helpers plus `_bool`
 compatibility wrappers. `PipeWriter` also exposes close-on-exec query/set
 helpers over the underlying owned descriptor; process setup-error pipes use
 that flag so a successful `exec` closes the reporting channel automatically.
-`std::fs::File` implements `Reader`, `Writer`, and `Seek`; zone-owning buffered
-constructors remain a roadmap item until generic owned-buffer resource policy
-is specified.
+`std::fs::File` implements `Reader`, `Writer`, and `Seek`.
 
 ## Memory And Zones
 

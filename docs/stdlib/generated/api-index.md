@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `3513`
+- API entries: `3517`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,14 +32,14 @@ platform notes.
 | `alloc` | 897 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 905 | stable candidate |
-| `hosted` | 1512 | platform-backed |
+| `hosted` | 1516 | platform-backed |
 | `platform` | 163 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1204 |
-| `method` | 1855 |
+| `fn` | 1206 |
+| `method` | 1857 |
 | `module` | 39 |
 | `struct` | 182 |
 | `trait` | 39 |
@@ -69,7 +69,7 @@ platform notes.
 | `std::fs` | `hosted` | 325 |
 | `std::hash` | `alloc` | 24 |
 | `std::input` | `hosted` | 6 |
-| `std::io` | `hosted` | 111 |
+| `std::io` | `hosted` | 115 |
 | `std::iter` | `alloc` | 41 |
 | `std::log` | `hosted` | 12 |
 | `std::math` | `core` | 39 |
@@ -2144,7 +2144,9 @@ Tier: `hosted`. Stability reading: platform-backed.
 | API | Coverage note |
 | --- | --- |
 | `fn std::io::buf_reader[R: Reader]` | std io buffered tests; docs/stdlib/modules/io.md |
+| `fn std::io::buf_reader_in[R: Reader]` | std io zone-backed buffered tests; docs/stdlib/modules/io.md |
 | `fn std::io::buf_writer[W: Writer]` | std io buffered tests; docs/stdlib/modules/io.md |
+| `fn std::io::buf_writer_in[W: Writer]` | std io zone-backed buffered tests; docs/stdlib/modules/io.md |
 | `fn std::io::copy[R: Reader, W: Writer]` | check-prelude std-io-copy/std-io-result Result-returning Reader-to-Writer byte-count helper; docs/stdlib/modules/io.md |
 | `fn std::io::copy_unchecked[R: Reader, W: Writer]` | check-prelude std-io-copy/std-io-result bool compatibility Reader-to-Writer copy wrapper; docs/stdlib/modules/io.md |
 | `fn std::io::cursor` | std io trait/cursor tests; docs/stdlib/modules/io.md |
@@ -2197,10 +2199,12 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::io::BufReader[R]::read_line` | check-prelude std-io-read-to-string Result-returning buffered reader line helper; docs/stdlib/modules/io.md |
 | `method std::io::BufReader[R]::read_one` | check-prelude std-io-result buffered one-byte status method; docs/stdlib/modules/io.md |
 | `method std::io::BufReader[R]::read_to_string` | check-prelude std-io-read-to-string Result-returning buffered reader whole-stream helper; docs/stdlib/modules/io.md |
+| `method std::io::BufReader[R]::with_capacity` | std io zone-backed buffered tests; docs/stdlib/modules/io.md |
 | `method std::io::BufWriter[W]::buffered_len` | std io buffered tests; docs/stdlib/modules/io.md |
 | `method std::io::BufWriter[W]::capacity` | std io buffered tests; docs/stdlib/modules/io.md |
 | `method std::io::BufWriter[W]::is_empty` | std io buffered tests; docs/stdlib/modules/io.md |
 | `method std::io::BufWriter[W]::new` | std io buffered tests; docs/stdlib/modules/io.md |
+| `method std::io::BufWriter[W]::with_capacity` | std io zone-backed buffered tests; docs/stdlib/modules/io.md |
 | `method std::io::Cursor::read` | check-prelude std-io-result Result-returning cursor partial read method; docs/stdlib/modules/io.md |
 | `method std::io::Cursor::read_line` | check-prelude std-io-read-to-string Result-returning cursor line helper; docs/stdlib/modules/io.md |
 | `method std::io::Cursor::read_one` | check-prelude std-io-result cursor one-byte status method; docs/stdlib/modules/io.md |

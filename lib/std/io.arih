@@ -126,6 +126,36 @@ pub fn buf_writer[W: Writer](inner: W, buffer: std::Slice[u8]) -> std::io::BufWr
   };
 }
 
+fn allocate_buffer_in(zone: ref mut Zone, capacity: i64) -> std::Result[std::Slice[u8], std::error::Error] {
+  if capacity <= 0 {
+    return std::Err<std::Slice[u8], std::error::Error>(std::io::invalid_input_error());
+  }
+  let data = std::zone::alloc_array<u8>(zone, capacity);
+  return std::Ok<std::Slice[u8], std::error::Error>(std::Slice<u8> { data: data, len: capacity });
+}
+
+pub fn buf_reader_in[R: Reader](zone: ref mut Zone, inner: R, capacity: i64) -> std::Result[std::io::BufReader[R], std::error::Error] {
+  match std::io::allocate_buffer_in(zone, capacity) {
+    std::Err(reason) => {
+      return std::Err<std::io::BufReader[R], std::error::Error>(reason);
+    }
+    std::Ok(buffer) => {
+      return std::Ok<std::io::BufReader[R], std::error::Error>(std::io::buf_reader<R>(inner, buffer));
+    }
+  }
+}
+
+pub fn buf_writer_in[W: Writer](zone: ref mut Zone, inner: W, capacity: i64) -> std::Result[std::io::BufWriter[W], std::error::Error] {
+  match std::io::allocate_buffer_in(zone, capacity) {
+    std::Err(reason) => {
+      return std::Err<std::io::BufWriter[W], std::error::Error>(reason);
+    }
+    std::Ok(buffer) => {
+      return std::Ok<std::io::BufWriter[W], std::error::Error>(std::io::buf_writer<W>(inner, buffer));
+    }
+  }
+}
+
 pub fn write_bytes(values: std::Slice[u8]) -> i64 {
   var index = 0;
   while index < values.len {
@@ -484,6 +514,10 @@ pub impl[R: Reader] std::io::BufReader[R] {
     return std::io::buf_reader<R>(inner, buffer);
   }
 
+  fn with_capacity(zone: ref mut Zone, inner: R, capacity: i64) -> std::Result[std::io::BufReader[R], std::error::Error] {
+    return std::io::buf_reader_in<R>(zone, inner, capacity);
+  }
+
   fn buffered_len(self: ref Self) -> i64 {
     return self.end - self.start;
   }
@@ -516,6 +550,10 @@ pub impl[R: Reader] std::io::BufReader[R] {
 pub impl[W: Writer] std::io::BufWriter[W] {
   fn new(inner: W, buffer: std::Slice[u8]) -> std::io::BufWriter[W] {
     return std::io::buf_writer<W>(inner, buffer);
+  }
+
+  fn with_capacity(zone: ref mut Zone, inner: W, capacity: i64) -> std::Result[std::io::BufWriter[W], std::error::Error] {
+    return std::io::buf_writer_in<W>(zone, inner, capacity);
   }
 
   fn buffered_len(self: ref Self) -> i64 {

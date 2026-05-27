@@ -46,18 +46,14 @@ Implemented now:
 - filesystem adapters: `std::fs::File` implements `Reader`, `Writer`, and
   `Seek`
 - source constructors and adapters: `stdin`, `stdout`, `stderr`, `pipe`,
-  `pipe_optional`, `cursor`, `buf_reader`, `buf_writer`, `BufReader::new`,
-  `BufWriter::new`
+  `pipe_optional`, `cursor`, `buf_reader`, `buf_reader_in`, `buf_writer`,
+  `buf_writer_in`, `BufReader::new`, `BufReader::with_capacity`,
+  `BufWriter::new`, `BufWriter::with_capacity`
 - direct error helpers: `read_one`, `read`, `read_exact`, `read_line_from`,
   `read_to_string`, `copy`, `write`, `write_all`, `flush`
 - collection helper: `read_all`
 - compatibility helpers: `read_exact_unchecked`, `read_to_string_unchecked`,
   `try_copy`, `copy_unchecked`, `write_all_unchecked`, `flush_unchecked`
-
-Roadmap, not implemented yet:
-
-- zone-owning buffered constructors: need compiler support for new std types
-  that own zone-backed raw buffers.
 
 ## API
 
@@ -120,13 +116,17 @@ pipe_writer.close() -> Result[(), Error]
 pipe_writer.close_bool() -> bool
 io::cursor(values: Slice[u8]) -> io::Cursor
 io::buf_reader[R: Reader](inner: R, buffer: Slice[u8]) -> io::BufReader[R]
+io::buf_reader_in[R: Reader](zone: ref mut Zone, inner: R, capacity: i64) -> Result[io::BufReader[R], Error]
 io::buf_writer[W: Writer](inner: W, buffer: Slice[u8]) -> io::BufWriter[W]
+io::buf_writer_in[W: Writer](zone: ref mut Zone, inner: W, capacity: i64) -> Result[io::BufWriter[W], Error]
 io::BufReader::new<R>(inner: R, buffer: Slice[u8]) -> io::BufReader[R]
+io::BufReader::with_capacity<R>(zone: ref mut Zone, inner: R, capacity: i64) -> Result[io::BufReader[R], Error]
 reader.read_one() -> ReadByte
 reader.read(output) -> Result[i64, Error]
 reader.read_line(zone) -> Result[String, Error]
 reader.read_to_string(zone) -> Result[String, Error]
 io::BufWriter::new<W>(inner: W, buffer: Slice[u8]) -> io::BufWriter[W]
+io::BufWriter::with_capacity<W>(zone: ref mut Zone, inner: W, capacity: i64) -> Result[io::BufWriter[W], Error]
 writer.write(values) -> Result[i64, Error]
 writer.write_all(values) -> Result[(), Error]
 
@@ -279,10 +279,14 @@ call sites that intentionally discard the error detail. A pipe writer flush
 succeeds while its descriptor is open because writes go directly to the
 descriptor; use `BufWriter[PipeWriter]` for caller-managed buffering.
 
-`BufReader[R]` and `BufWriter[W]` wrap any `Reader` or `Writer` with an
-explicit caller-provided `Slice[u8]` buffer. This keeps allocation visible and
-lets the wrappers be implemented in Ari source today. The buffer slice must
-stay alive while the wrapper is used. `BufWriter` flushes when the buffer is
+`BufReader[R]` and `BufWriter[W]` wrap any `Reader` or `Writer` with a byte
+buffer. `buf_reader(inner, buffer)`, `buf_writer(inner, buffer)`, and the
+`new` associated constructors borrow a caller-provided `Slice[u8]`; that slice
+must stay alive while the wrapper is used. `buf_reader_in(zone, inner,
+capacity)`, `buf_writer_in(zone, inner, capacity)`, and the `with_capacity`
+associated constructors allocate the byte buffer in the supplied zone and
+return `Err(InvalidInput)` when `capacity <= 0`. Zone-backed buffers stay valid
+until that zone is reset or destroyed. `BufWriter` flushes when the buffer is
 full, when `flush()` is called, or as a best-effort cleanup when the writer is
 dropped while bytes remain buffered. Drop cleanup discards the `Result` because
 destructors cannot report recoverable errors, so code that must observe write
@@ -305,11 +309,14 @@ fn main() -> i64 {
   }
 
   var out = io::stdout();
-  var out_storage = [0u8, 0u8];
-  var writer = io::BufWriter::new<io::Stdout>(out, out_storage.as_slice());
+  var zone = zone::create(256);
+  var writer = io::BufWriter::with_capacity<io::Stdout>(ref mut zone, out, 2).unwrap();
   io::write_all<io::BufWriter[io::Stdout]>(ref mut writer, output.as_slice()).unwrap();
   io::flush<io::BufWriter[io::Stdout]>(ref mut writer).unwrap();
-  return reader.buffered_len();
+  let buffered = reader.buffered_len();
+  drop writer;
+  zone::destroy(zone);
+  return buffered;
 }
 ```
 
