@@ -1418,11 +1418,14 @@ active permit releases on explicit `release` or `drop permit`. Channels are
 bounded MPSC queues: `send`/`try_send`, `recv`/`try_recv`, and `recv_timeout`
 return Result errors, while `_bool` and `_optional` helpers intentionally
 discard detail. `Sender[T]::clone` creates another handle to the same bounded
-channel state; closing any sender closes the shared channel.
+channel state and increments the active-sender count. Closing one sender keeps
+the channel open for receivers while another cloned sender remains open; the
+receiver observes the channel as closed after the last sender is closed or the
+receiver closes the channel explicitly.
 
 Shared-ownership handles live in `std::rc` as `Rc`, `Arc`, and `Weak`.
 `LazyLock`, poison-aware lock variants, futex-backed blocking locks,
-sender-counted close semantics, send/share trait checks, compiler-owned
+unbounded channel policy, send/share trait checks, compiler-owned
 `thread_local` declarations, and target-native relaxed ordering remain future
 concurrency work.
 

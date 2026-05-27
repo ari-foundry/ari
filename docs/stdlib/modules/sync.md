@@ -423,13 +423,16 @@ allocated in the caller's `Zone`; `Sender`, `Receiver`, and `Channel` carry
 only the shared state pointer, not a redundant zone handle.
 
 `sender.clone()` creates another sender handle to the same bounded channel
-state. Cloned senders do not allocate and they do not carry separate ownership
-counts yet; closing any sender closes the shared channel for all sender and
-receiver handles.
+state and increments the active-sender count. `sender.close()` decrements that
+count; receivers keep observing the channel as open while at least one cloned
+sender remains open, and they observe `TryRecvClosed`/`RecvClosed` only after
+the last sender is closed or the receiver explicitly closes the channel. The
+current sender handles are explicit lifecycle values: close each sender once
+when using the counted-close policy.
 
 Future channel work should add unbounded-channel policy if desired,
-sender-counted close semantics, blocking wake integration, richer close
-semantics, and send/share trait checks.
+blocking wake integration, richer close ergonomics, and send/share trait
+checks.
 
 ## Example
 
@@ -506,8 +509,8 @@ fn main() -> i64 {
   consistency is caller-owned unless a future poison-aware type is introduced.
 - Guard drops release active locks when callers use explicit `drop guard`;
   automatic RAII cleanup at scope exit or early return is not promised yet.
-- There is no `LazyLock[T]`, sender-counted close policy, or unbounded channel
-  policy yet. Explicit `ThreadLocal[T]` handles live in `std::thread`; compiler-level
+- There is no `LazyLock[T]` or unbounded channel policy yet. Explicit
+  `ThreadLocal[T]` handles live in `std::thread`; compiler-level
   `thread_local` declarations remain future work.
 - Send/share trait checking is still roadmap work, so cross-thread value
   transfer APIs remain conservative.
@@ -523,7 +526,7 @@ fn main() -> i64 {
 | Once/OnceLock | Current source one-time execution, value slot, value-preserving `set`, and fallible initializer status; future ref-in-Result return ergonomics, panic policy, and optional `LazyLock`. |
 | Barrier | Current source reusable barrier; future parking implementation. |
 | Semaphore | Current source counting semaphore with optional/yielding acquire and permit guards; future parking/fairness policy. |
-| MPSC channel | Current configurable bounded MPSC queues with Result errors, timeout receives, unsent-value return, FIFO receive order, and clonable sender handles; future sender-counted close semantics, blocking wake, unbounded policy, and richer close semantics. |
+| MPSC channel | Current configurable bounded MPSC queues with Result errors, timeout receives, unsent-value return, FIFO receive order, clonable sender handles, and sender-counted close semantics; future blocking wake, unbounded policy, and richer close ergonomics. |
 | Thread local | Current explicit `std::thread::ThreadLocal[T]` handles; future compiler-level static TLS declarations and destructor policy. |
 
 ## Tests

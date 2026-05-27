@@ -136,6 +136,7 @@ pub enum TryRecvError {
 struct MpscState[T] {
   mut lock_value: std::sync::RawMutex,
   mut closed: AtomicI64,
+  mut sender_count: i64,
   capacity: i64,
   mut len: i64,
   mut head: i64,
@@ -336,6 +337,7 @@ fn new_mpsc_state[T](zone: ref mut Zone, capacity: i64) -> ptr std::sync::MpscSt
     std::sync::MpscState<T> {
       lock_value: std::sync::RawMutex::new(),
       closed: AtomicI64::new(0),
+      sender_count: 0,
       capacity: capacity,
       len: 0,
       head: 0,
@@ -1402,6 +1404,12 @@ pub impl[T] std::sync::OnceLock[T] {
 
 pub impl[T] std::sync::Sender[T] {
   fn clone(self) -> std::sync::Sender[T] {
+    let state: ref mut std::sync::MpscState[T] = ref mut *self.state;
+    std::sync::lock(ref mut state.lock_value);
+    if state.closed.load() == 0 {
+      state.sender_count = state.sender_count + 1;
+    }
+    std::sync::unlock(ref mut state.lock_value);
     return self;
   }
 
@@ -1470,7 +1478,15 @@ pub impl[T] std::sync::Sender[T] {
 
   fn close(self: ref mut Self) -> void {
     let state: ref mut std::sync::MpscState[T] = ref mut *self.state;
-    state.closed.store(1);
+    std::sync::lock(ref mut state.lock_value);
+    if state.sender_count > 0 {
+      state.sender_count = state.sender_count - 1;
+    }
+    if state.sender_count <= 0 {
+      state.sender_count = 0;
+      state.closed.store(1);
+    }
+    std::sync::unlock(ref mut state.lock_value);
   }
 
   fn is_closed(self: ref Self) -> bool {
@@ -1606,6 +1622,15 @@ pub impl[T] std::sync::Channel[T] {
   }
 
   fn sender(self: ref Self) -> std::sync::Sender[T] {
+    let raw_state = self.sender.state;
+    {
+      let state: ref mut std::sync::MpscState[T] = ref mut *raw_state;
+      std::sync::lock(ref mut state.lock_value);
+      if state.closed.load() == 0 {
+        state.sender_count = state.sender_count + 1;
+      }
+      std::sync::unlock(ref mut state.lock_value);
+    }
     return self.sender;
   }
 

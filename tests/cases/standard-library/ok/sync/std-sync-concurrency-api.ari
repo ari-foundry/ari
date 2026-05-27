@@ -150,8 +150,15 @@ fn main() -> i64 {
   }
   sender.close();
   match receiver.recv_timeout(std::time::Duration::zero()) {
-    std::Err(std::sync::RecvTimeoutClosed) => {
+    std::Err(std::sync::RecvTimedOut) => {
       score = score + 524288;
+    }
+    _ => {}
+  }
+  sender_clone.close();
+  match receiver.recv_timeout(std::time::Duration::zero()) {
+    std::Err(std::sync::RecvTimeoutClosed) => {
+      score = score + 16777216;
     }
     _ => {}
   }
@@ -189,6 +196,6 @@ fn main() -> i64 {
   }
   zone::destroy(zone);
 
-  assert_eq_i64(score, 16777215);
+  assert_eq_i64(score, 33554431);
   return score;
 }
