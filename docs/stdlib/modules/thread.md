@@ -110,7 +110,7 @@ group.all_joined() -> bool
 group.all_success() -> bool
 
 Builder::new() -> Builder
-builder.name(value: ref String) -> Builder
+builder.name(value: Slice[u8]) -> Builder
 builder.stack_size(bytes: i64) -> Builder
 builder.configured_name() -> String
 builder.configured_stack_size() -> i64

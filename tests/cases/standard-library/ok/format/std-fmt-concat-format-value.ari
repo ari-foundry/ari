@@ -134,21 +134,21 @@ fn main() -> i64 {
   let template_value = text(ref mut zone, "value={}");
   let template_value_extra = text(ref mut zone, "value={} {}");
   let template_value_open = text(ref mut zone, "value={");
-  match fmt::format<i64>(ref mut zone, ref template_value_ok, 9) {
+  match fmt::format<i64>(ref mut zone, template_value_ok, 9) {
     Ok(formatted) => {
       if !equals_text(formatted, "value=9 {ok}") {
         zone::destroy(zone);
         return 6;
       }
-      if !fmt::format<i64>(ref mut zone, ref template_value, 1).is_ok() {
+      if !fmt::format<i64>(ref mut zone, template_value, 1).is_ok() {
         zone::destroy(zone);
         return 7;
       }
-      if !fmt::format<i64>(ref mut zone, ref template_value_extra, 1).is_err() {
+      if !fmt::format<i64>(ref mut zone, template_value_extra, 1).is_err() {
         zone::destroy(zone);
         return 8;
       }
-      if !fmt::format<i64>(ref mut zone, ref template_value_open, 1).is_err() {
+      if !fmt::format<i64>(ref mut zone, template_value_open, 1).is_err() {
         zone::destroy(zone);
         return 9;
       }
@@ -165,7 +165,7 @@ fn main() -> i64 {
   let template_build = text(ref mut zone, "{} {} {}{}");
   let template_build_missing = text(ref mut zone, "{} {} {}");
   let value_n = text(ref mut zone, "n");
-  match fmt::format2<String, i64>(ref mut zone, ref template_eq, value_n, 2) {
+  match fmt::format2<String, i64>(ref mut zone, template_eq, value_n, 2) {
     Ok(formatted2) => {
       if !equals_text(formatted2, "n=2") {
         zone::destroy(zone);
@@ -173,14 +173,14 @@ fn main() -> i64 {
       }
       let value_v = text(ref mut zone, "v");
       let value_bang = text(ref mut zone, "!");
-      match fmt::format3<String, i64, String>(ref mut zone, ref template_colon, value_v, 7, value_bang) {
+      match fmt::format3<String, i64, String>(ref mut zone, template_colon, value_v, 7, value_bang) {
         Ok(formatted3) => {
           if !equals_text(formatted3, "v:7!") {
             zone::destroy(zone);
             return 12;
           }
           let value_n_again = text(ref mut zone, "n");
-          if !fmt::format2<String, i64>(ref mut zone, ref template_eq, value_n_again, 2).is_ok() {
+          if !fmt::format2<String, i64>(ref mut zone, template_eq, value_n_again, 2).is_ok() {
             zone::destroy(zone);
             return 13;
           }
@@ -188,7 +188,7 @@ fn main() -> i64 {
           let value_bang_missing = text(ref mut zone, "!");
           if !fmt::format3<String, i64, String>(
             ref mut zone,
-            ref template_colon_missing,
+            template_colon_missing,
             value_v_missing,
             7,
             value_bang_missing
@@ -201,7 +201,7 @@ fn main() -> i64 {
           let build_arg2 = text(ref mut zone, "--jobs=");
           match fmt::format4<String, String, String, i64>(
             ref mut zone,
-            ref template_build,
+            template_build,
             build_arg0,
             build_arg1,
             build_arg2,
@@ -217,7 +217,7 @@ fn main() -> i64 {
               let build_missing_arg2 = text(ref mut zone, "--jobs=");
               if !fmt::format4<String, String, String, i64>(
                 ref mut zone,
-                ref template_build_missing,
+                template_build_missing,
                 build_missing_arg0,
                 build_missing_arg1,
                 build_missing_arg2,
@@ -239,7 +239,7 @@ fn main() -> i64 {
           template_texts.push(text(ref mut zone, "4"));
           template_texts.push(text(ref mut zone, "done"));
           let template_texts_format = text(ref mut zone, "{} {} {}{} {}");
-          match fmt::format_texts(ref mut zone, ref template_texts_format, template_texts.as_slice()) {
+          match fmt::format_texts(ref mut zone, template_texts_format, template_texts.as_slice()) {
             Ok(formatted_texts) => {
               if !equals_text(formatted_texts, "arix build --jobs=4 done") {
                 zone::destroy(zone);
@@ -254,7 +254,7 @@ fn main() -> i64 {
           var missing_texts = std::vec::new<std::string::String>(ref mut zone, 1);
           missing_texts.push(text(ref mut zone, "one"));
           let missing_texts_format = text(ref mut zone, "{} {}");
-          if !fmt::format_texts(ref mut zone, ref missing_texts_format, missing_texts.as_slice()).is_err() {
+          if !fmt::format_texts(ref mut zone, missing_texts_format, missing_texts.as_slice()).is_err() {
             zone::destroy(zone);
             return 48;
           }
@@ -268,7 +268,7 @@ fn main() -> i64 {
           template_values.push(value_b);
           template_values.push(value_c);
           let template_values_format = text(ref mut zone, "{}{}{}");
-          match fmt::format_values(ref mut zone, ref template_values_format, template_values.as_slice()) {
+          match fmt::format_values(ref mut zone, template_values_format, template_values.as_slice()) {
             Ok(formatted_values) => {
               if !equals_text(formatted_values, "point=(8,13)!") {
                 zone::destroy(zone);
@@ -296,7 +296,7 @@ fn main() -> i64 {
   var buffer = [0u8, 0u8, 0u8, 0u8, 0u8];
   var writer = MemoryWriter { data: buffer.as_slice(), position: 0 };
   let write_template_n = text(ref mut zone, "n={}");
-  if !fmt::write_format<MemoryWriter, i64>(ref mut writer, ref mut zone, ref write_template_n, 4).is_ok() {
+  if !fmt::write_format<MemoryWriter, i64>(ref mut writer, ref mut zone, write_template_n, 4).is_ok() {
     zone::destroy(zone);
     return 17;
   }
@@ -311,7 +311,7 @@ fn main() -> i64 {
   if !fmt::write_format2<MemoryWriter, String, i64>(
     ref mut writer2,
     ref mut zone,
-    ref template_eq,
+    template_eq,
     write_x_arg,
     5
   ).is_ok() {
@@ -330,7 +330,7 @@ fn main() -> i64 {
   if !fmt::write_format3<MemoryWriter, String, i64, String>(
     ref mut writer3,
     ref mut zone,
-    ref template_colon,
+    template_colon,
     write_v_arg,
     8,
     write_bang_arg
@@ -352,7 +352,7 @@ fn main() -> i64 {
   if !fmt::write_format4<MemoryWriter, String, String, String, i64>(
     ref mut writer6,
     ref mut zone,
-    ref template_build,
+    template_build,
     write_build_arg0,
     write_build_arg1,
     write_build_arg2,
@@ -399,7 +399,7 @@ fn main() -> i64 {
   let write_format_parts_template = text(ref mut zone, "{}{}{}{}{}");
   if !fmt::write_format_texts<MemoryWriter>(
     ref mut writer10,
-    ref write_format_parts_template,
+    write_format_parts_template,
     write_format_parts.as_slice()
   ).is_ok() {
     zone::destroy(zone);
@@ -425,7 +425,7 @@ fn main() -> i64 {
   let write_value_template = text(ref mut zone, "{}-{}-{}");
   if !fmt::write_format_values<MemoryWriter>(
     ref mut writer11,
-    ref write_value_template,
+    write_value_template,
     write_value_parts.as_slice()
   ).is_ok() {
     zone::destroy(zone);
@@ -440,7 +440,7 @@ fn main() -> i64 {
   var buffer4 = [0u8, 0u8, 0u8, 0u8];
   var writer4 = MemoryWriter { data: buffer4.as_slice(), position: 0 };
   let write_bad_template = text(ref mut zone, "a{");
-  if !unit_error_is(fmt::write_format<MemoryWriter, i64>(ref mut writer4, ref mut zone, ref write_bad_template, 1), error::InvalidInput) {
+  if !unit_error_is(fmt::write_format<MemoryWriter, i64>(ref mut writer4, ref mut zone, write_bad_template, 1), error::InvalidInput) {
     zone::destroy(zone);
     return 23;
   }
@@ -452,7 +452,7 @@ fn main() -> i64 {
   var buffer5 = [0u8, 0u8];
   var writer5 = MemoryWriter { data: buffer5.as_slice(), position: 0 };
   let write_short_template = text(ref mut zone, "abc{}");
-  if !unit_error_is(fmt::write_format<MemoryWriter, i64>(ref mut writer5, ref mut zone, ref write_short_template, 1), error::BrokenPipe) {
+  if !unit_error_is(fmt::write_format<MemoryWriter, i64>(ref mut writer5, ref mut zone, write_short_template, 1), error::BrokenPipe) {
     zone::destroy(zone);
     return 25;
   }
@@ -481,7 +481,7 @@ fn main() -> i64 {
   if !fmt::write_format_stream4<MemoryWriter, String, i64, bool, String>(
     ref mut stream_writer2,
     ref mut zone,
-    ref stream_template,
+    stream_template,
     stream_b,
     -3,
     true,
@@ -506,7 +506,7 @@ fn main() -> i64 {
     fmt::write_format_stream2<MemoryWriter, String, i64>(
       ref mut stream_writer3,
       ref mut zone,
-      ref stream_short_template,
+      stream_short_template,
       stream_x,
       7
     ),

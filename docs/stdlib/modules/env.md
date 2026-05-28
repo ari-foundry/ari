@@ -8,11 +8,11 @@ top of `std::context`, which owns the low-level runtime hooks initialized by
 the generated host entry wrapper.
 
 Environment variable lookup treats absence as ordinary optional state:
-`var(ref mut zone, ref name)` and `var_os(ref name)` return `Option`, which is
+`var(ref mut zone, name)` and `var_os(name)` return `Option`, which is
 the most convenient shape for CLI configuration such as `ARI_COMPILER`. Public
 environment names and values are owned `std::string::String` values passed by
 reference; raw builtin `string` pointers stay inside the stdlib/runtime
-boundary. Use `get(ref mut zone, ref name)` and `get_os(ref name)` when the
+boundary. Use `get(ref mut zone, name)` and `get_os(name)` when the
 caller needs a `Result` and wants missing variables reported as
 `Error(NotFound)`. Mutating helpers still use the fallible shape: `set_var` and
 `remove_var` return `Result[(), env::Error]`. Compact compatibility helpers
@@ -52,25 +52,25 @@ env::program_name(ref mut zone) -> Result[std::string::String, env::Error]
 env::program_name_optional(ref mut zone) -> Option[std::string::String]
 env::program_name_os() -> Result[std::string::OsStr, env::Error]
 env::program_name_os_optional() -> Option[std::string::OsStr]
-env::var(ref mut zone, name: ref std::string::String) -> Option[std::string::String]
-env::var_optional(ref mut zone, name: ref std::string::String) -> Option[std::string::String]
-env::var_or_default(ref mut zone, name: ref std::string::String) -> std::string::String
-env::var_os(name: ref std::string::String) -> Option[std::string::OsStr]
-env::var_os_optional(name: ref std::string::String) -> Option[std::string::OsStr]
-env::var_os_or_default(name: ref std::string::String) -> std::string::OsStr
-env::get(ref mut zone, name: ref std::string::String) -> Result[std::string::String, env::Error]
-env::get_os(name: ref std::string::String) -> Result[std::string::OsStr, env::Error]
-env::get_or_default(ref mut zone, name: ref std::string::String) -> std::string::String
-env::get_os_or_default(name: ref std::string::String) -> std::string::OsStr
-env::has(name: ref std::string::String) -> bool
-env::try_get(ref mut zone, name: ref std::string::String) -> Option[std::string::String]
-env::try_get_os(name: ref std::string::String) -> Option[std::string::OsStr]
-env::set_var(name: ref std::string::String, value: ref std::string::String) -> Result[(), env::Error]
-env::set(name: ref std::string::String, value: ref std::string::String) -> Result[(), env::Error]
-env::set_unchecked(name: ref std::string::String, value: ref std::string::String) -> bool
-env::remove_var(name: ref std::string::String) -> Result[(), env::Error]
-env::remove(name: ref std::string::String) -> Result[(), env::Error]
-env::remove_unchecked(name: ref std::string::String) -> bool
+env::var(ref mut zone, name: std::Slice[u8]) -> Option[std::string::String]
+env::var_optional(ref mut zone, name: std::Slice[u8]) -> Option[std::string::String]
+env::var_or_default(ref mut zone, name: std::Slice[u8]) -> std::string::String
+env::var_os(name: std::Slice[u8]) -> Option[std::string::OsStr]
+env::var_os_optional(name: std::Slice[u8]) -> Option[std::string::OsStr]
+env::var_os_or_default(name: std::Slice[u8]) -> std::string::OsStr
+env::get(ref mut zone, name: std::Slice[u8]) -> Result[std::string::String, env::Error]
+env::get_os(name: std::Slice[u8]) -> Result[std::string::OsStr, env::Error]
+env::get_or_default(ref mut zone, name: std::Slice[u8]) -> std::string::String
+env::get_os_or_default(name: std::Slice[u8]) -> std::string::OsStr
+env::has(name: std::Slice[u8]) -> bool
+env::try_get(ref mut zone, name: std::Slice[u8]) -> Option[std::string::String]
+env::try_get_os(name: std::Slice[u8]) -> Option[std::string::OsStr]
+env::set_var(name: std::Slice[u8], value: std::Slice[u8]) -> Result[(), env::Error]
+env::set(name: std::Slice[u8], value: std::Slice[u8]) -> Result[(), env::Error]
+env::set_unchecked(name: std::Slice[u8], value: std::Slice[u8]) -> bool
+env::remove_var(name: std::Slice[u8]) -> Result[(), env::Error]
+env::remove(name: std::Slice[u8]) -> Result[(), env::Error]
+env::remove_unchecked(name: std::Slice[u8]) -> bool
 env::current_dir(ref mut zone) -> Result[std::string::String, env::Error]
 env::current_dir_or_default(ref mut zone) -> std::string::String
 env::current_dir_optional(ref mut zone) -> Option[std::string::String]
@@ -83,8 +83,8 @@ env::current_dir_path() -> Result[std::path::PathBytes, env::Error]
 env::current_dir_path_or_default() -> std::path::PathBytes
 env::current_dir_path_optional() -> Option[std::path::PathBytes]
 env::try_current_dir_path() -> Option[std::path::PathBytes]
-env::set_current_dir(path: ref std::string::String) -> Result[(), env::Error]
-env::set_current_dir_unchecked(path: ref std::string::String) -> bool
+env::set_current_dir(path: std::Slice[u8]) -> Result[(), env::Error]
+env::set_current_dir_unchecked(path: std::Slice[u8]) -> bool
 env::executable_path(ref mut zone) -> Result[std::string::String, env::Error]
 env::executable_path_or_default(ref mut zone) -> std::string::String
 env::executable_path_optional(ref mut zone) -> Option[std::string::String]
@@ -133,40 +133,46 @@ context has no argument 0. `program_name_optional(ref mut zone)` is the
 explicit optional form. `program_name_os()` and `program_name_os_optional()`
 mirror that policy for `OsStr`.
 
-`has(ref name)` returns whether an environment variable is visible to the
-current process. `var(ref mut zone, ref name)` returns `Some(value)` when the variable
+`has(name)` returns whether an environment variable is visible to the
+current process. `var(ref mut zone, name)` returns `Some(value)` when the variable
 exists and `None` when it is absent. Missing environment variables are ordinary
 optional state: an arix-style CLI can write
-`env::var(ref mut zone, ref compiler_name)` without constructing an error. The
+`env::var(ref mut zone, compiler_name)` without constructing an error. The
 success value is an owned `String` in the provided zone. `var_optional(ref mut
-zone, ref name)` and `try_get(ref mut zone, ref name)` are aliases for the same
+zone, name)` and `try_get(ref mut zone, name)` are aliases for the same
 optional lookup, while `var_or_default(ref mut zone, name)` /
 `get_or_default(ref mut zone, name)` copy the host fallback into a `String`.
 Because `var` is also Ari's mutable-binding keyword, call this helper as
 `env::var(...)` or `std::env::var(...)`; do not import it for bare `var(...)`
 calls.
 
-`get(ref mut zone, ref name)` is the Result-returning environment lookup. It
+`get(ref mut zone, name)` is the Result-returning environment lookup. It
 returns `Ok(value)` when the variable exists and `Err(Error(NotFound))` when it
 is absent. Use it when the missing-variable reason should compose with other
 fallible hosted helpers.
 
-`var_os(ref name)` applies the optional lookup policy to an
-`std::string::OsStr` view. `var_os_optional(ref name)` and
-`try_get_os(ref name)` keep the same optional shape, and
-`var_os_or_default(ref name)` / `get_os_or_default(ref name)` are the
+Environment variable names and values are `Slice[u8]` inputs. String literals
+can be passed directly, immutable literal bindings such as `let name = "HOME"`
+keep enough length information for these calls, and owned `String` locals are
+borrowed as byte slices automatically. That keeps raw `string` out of the public
+environment API while still making CLI code terse.
+
+`var_os(name)` applies the optional lookup policy to an
+`std::string::OsStr` view. `var_os_optional(name)` and
+`try_get_os(name)` keep the same optional shape, and
+`var_os_or_default(name)` / `get_os_or_default(name)` are the
 compatibility fallbacks. On the current POSIX target, OS-string environment
 values preserve the raw bytes from the runtime C string and let callers choose
-`try_utf8()` or a byte-level policy at the boundary. `get_os(ref name)` is the
+`try_utf8()` or a byte-level policy at the boundary. `get_os(name)` is the
 Result-returning OS-string lookup.
 
-`set_var(ref name, ref value)` overwrites the current process environment
+`set_var(name, value)` overwrites the current process environment
 variable and returns `Ok(())` when the host accepts the mutation.
-`remove_var(ref name)` unsets
+`remove_var(name)` unsets
 the variable and returns `Ok(())` on success. These mutations affect the current
 process and children spawned later by this process; they do not edit a user's
 shell profile or global system environment. `set(name, value)` and
-`remove(ref name)` are compatibility aliases with the same Result behavior.
+`remove(name)` are compatibility aliases with the same Result behavior.
 `set_unchecked` and `remove_unchecked` keep the older boolean compatibility
 shape. Today failed host mutations become `Error(Other)` because the runtime
 bool hook does not yet expose a platform errno payload.
@@ -191,15 +197,15 @@ because many hosted programs can run without a user profile. Package-manager
 style code can use it to derive paths such as `~/.ari` with
 `PathBytes::join_in`.
 
-`set_current_dir(ref path)` changes the current process working directory and
+`set_current_dir(path)` changes the current process working directory and
 returns `Ok(())` when the host accepts the request. This is process-local
 state: later relative paths in this process will observe the change, and child
-processes spawned later should inherit it. `set_current_dir_unchecked(ref path)`
+processes spawned later should inherit it. `set_current_dir_unchecked(path)`
 keeps the older boolean compatibility shape.
 
 `std::context::cwd(ref mut zone)` is different: it is the working-directory
 snapshot taken before source `main` runs, so it stays stable even if
-`set_current_dir(ref path)` later succeeds. `std::context::cwd_text()` is the
+`set_current_dir(path)` later succeeds. `std::context::cwd_text()` is the
 low-level startup snapshot and should stay at boundary sites.
 
 `executable_path(ref mut zone)` returns the host path to the running executable
@@ -269,14 +275,14 @@ fn main() -> i64 {
   var name = std::string::from(ref mut zone, "ARI_MODE");
   var value = std::string::from(ref mut zone, "dev");
 
-  if env::set_var(ref name, ref value).is_ok() {
-    match env::var(ref mut zone, ref name) {
+  if env::set_var(name, value).is_ok() {
+    match env::var(ref mut zone, name) {
       std::Some(value) => println("mode={}", value),
       std::None => {}
     }
   }
 
-  env::remove_var(ref name).unwrap();
+  env::remove_var(name).unwrap();
   zone::destroy(zone);
   return 0;
 }
@@ -294,7 +300,7 @@ fn main() -> i64 {
 
     var compiler = std::string::from(ref mut zone, "ari");
     var compiler_name = std::string::from(ref mut zone, "ARI_COMPILER");
-    match env::var(ref mut zone, ref compiler_name) {
+    match env::var(ref mut zone, compiler_name) {
       std::Some(value) => {
         compiler = value;
       }
@@ -335,7 +341,7 @@ fn main() -> i64 {
     Ok(cwd) => {
       println("cwd={}", cwd);
 
-      if env::set_current_dir(ref cwd).is_ok() {
+      if env::set_current_dir(cwd).is_ok() {
         println("cwd unchanged");
       }
     }

@@ -429,25 +429,25 @@ env::program_name(ref mut zone)
 env::program_name_optional(ref mut zone)
 env::program_name_os()
 env::program_name_os_optional()
-env::var(ref mut zone, ref name)
-env::var_optional(ref mut zone, ref name)
-env::var_or_default(ref mut zone, ref name)
-env::var_os(ref name)
-env::var_os_optional(ref name)
-env::var_os_or_default(ref name)
-env::get(ref mut zone, ref name)
-env::get_os(ref name)
-env::get_or_default(ref mut zone, ref name)
-env::get_os_or_default(ref name)
-env::has(ref name)
-env::try_get(ref mut zone, ref name)
-env::try_get_os(ref name)
-env::set_var(ref name, ref value)
-env::set(ref name, ref value)
-env::set_unchecked(ref name, ref value)
-env::remove_var(ref name)
-env::remove(ref name)
-env::remove_unchecked(ref name)
+env::var(ref mut zone, name)
+env::var_optional(ref mut zone, name)
+env::var_or_default(ref mut zone, name)
+env::var_os(name)
+env::var_os_optional(name)
+env::var_os_or_default(name)
+env::get(ref mut zone, name)
+env::get_os(name)
+env::get_or_default(ref mut zone, name)
+env::get_os_or_default(name)
+env::has(name)
+env::try_get(ref mut zone, name)
+env::try_get_os(name)
+env::set_var(name, value)
+env::set(name, value)
+env::set_unchecked(name, value)
+env::remove_var(name)
+env::remove(name)
+env::remove_unchecked(name)
 env::current_dir(ref mut zone)
 env::current_dir_optional(ref mut zone)
 env::current_dir_or_default(ref mut zone)
@@ -458,8 +458,8 @@ env::try_current_dir_os()
 env::current_dir_path()
 env::current_dir_path_optional()
 env::try_current_dir_path()
-env::set_current_dir(ref path)
-env::set_current_dir_unchecked(ref path)
+env::set_current_dir(path)
+env::set_current_dir_unchecked(path)
 env::executable_path(ref mut zone)
 env::executable_path_optional(ref mut zone)
 env::executable_path_or_default(ref mut zone)
@@ -491,32 +491,34 @@ OS-string views for CLI code that wants byte-preserving argument handling.
 values as `std::string::OsStr` when an argument should stay in OS-string form
 until the caller chooses bytes or UTF-8.
 
-`env::var(ref mut zone, ref name)` returns `Option[String]` for environment
+`env::var(ref mut zone, name)` returns `Option[String]` for environment
 variables because a missing variable is ordinary configuration absence.
-`env::var_optional(ref mut zone, ref name)` and
-`env::try_get(ref mut zone, ref name)`
-keep the same optional shape, while `env::var_or_default(ref mut zone, ref name)`
-and `env::get_or_default(ref mut zone, ref name)` copy the fallback into owned
-`String` values. `env::get(ref mut zone, ref name)` is the Result-returning
+`env::var_optional(ref mut zone, name)` and
+`env::try_get(ref mut zone, name)`
+keep the same optional shape, while `env::var_or_default(ref mut zone, name)`
+and `env::get_or_default(ref mut zone, name)` copy the fallback into owned
+`String` values. `env::get(ref mut zone, name)` is the Result-returning
 lookup and uses `NotFound` for missing names. Public environment variable names
-and values are owned `String` values passed by reference.
-`env::set_var(ref name, ref value)` overwrites a current-process variable and
-`env::remove_var(ref name)` unsets it; both return `Result[(), Error]`.
-`env::set(ref name, ref value)` and `env::remove(ref name)` are compatibility
+and values are borrowed byte text (`Slice[u8]`): string literals work directly,
+immutable literal bindings keep their byte length, and owned `String` locals are
+viewed as byte slices at the call site.
+`env::set_var(name, value)` overwrites a current-process variable and
+`env::remove_var(name)` unsets it; both return `Result[(), Error]`.
+`env::set(name, value)` and `env::remove(name)` are compatibility
 aliases with the same Result behavior. `set_unchecked` and `remove_unchecked`
 keep the older boolean compatibility shape. `env::current_dir(ref mut zone)`,
-`env::executable_path(ref mut zone)`, and `env::set_current_dir(ref path)` return
+`env::executable_path(ref mut zone)`, and `env::set_current_dir(path)` return
 `Result[..., Error]`; `_optional` and `try_*` wrappers keep only the success
 payload, `_or_default` wrappers copy fallback values into owned `String`
 handles, and `_unchecked` names are explicit information-discarding helpers.
 Portable child-process spawn handles remain roadmap work; thread helpers live
 in `std::thread`.
 
-`env::var_os(ref name)` returns an `Option[OsStr]` environment view.
-`env::var_os_optional(ref name)` and `env::try_get_os(ref name)` keep the same optional
-shape, and `env::var_os_or_default(ref name)` /
-`env::get_os_or_default(ref name)` are the compatibility fallbacks.
-`env::get_os(ref name)` is the Result-returning
+`env::var_os(name)` returns an `Option[OsStr]` environment view.
+`env::var_os_optional(name)` and `env::try_get_os(name)` keep the same optional
+shape, and `env::var_os_or_default(name)` /
+`env::get_os_or_default(name)` are the compatibility fallbacks.
+`env::get_os(name)` is the Result-returning
 OS-string lookup.
 `env::current_dir_os()` / `current_dir_os_optional()` and
 `env::executable_path_os()` / `executable_path_os_optional()` expose path-like
@@ -1335,7 +1337,7 @@ sync::is_load_order(ordering)
 sync::is_store_order(ordering)
 sync::is_rmw_order(ordering)
 sync::is_compare_exchange_order(success, failure)
-sync::load(ref value)
+sync::load(value)
 sync::store(ref mut value, replacement)
 sync::swap(ref mut value, replacement)
 sync::fetch_add(ref mut value, amount)
@@ -2530,7 +2532,7 @@ zone::promote<T>(ref mut target, source)
 zone::allocation_zone(data)
 zone::metadata(data)
 zone::from_zone(ref mut zone)
-zone::of<T: zone::ZoneBacked>(ref value)
+zone::of<T: zone::ZoneBacked>(value)
 value.zone()
 metadata.as_ptr()
 metadata.as_zone_ptr()
@@ -2549,7 +2551,7 @@ handles when ownership matters.
 `allocation_zone(data)` reads Ari's allocation header for a non-null zone
 allocation and returns the raw opaque handle. Prefer `metadata(data)`, which
 wraps that handle as `ZoneMetadata`. `from_zone(ref mut zone)` captures
-metadata directly from an explicit zone capability. `zone::of(ref value)` and
+metadata directly from an explicit zone capability. `zone::of(value)` and
 `value.zone()` use the `ZoneBacked` trait to expose `ZoneMetadata` from
 supported heap-backed stdlib values such as `Box[T]`, `String`, `Vec[T]`,
 zone-backed `std::collections` handles, and map update-entry handles.
@@ -3555,7 +3557,10 @@ keeps bytes accepted by `keep: fn(ref u8) -> bool` and preserves their order.
 
 String literals coerce to borrowed `Slice[u8]` values when a byte-slice API
 expects one, so calls such as `ascii::parse_decimal("123")` and
-`text.find("needle")` are valid. They can also act as read-only
+`text.find("needle")` are valid. Immutable bindings initialized from a string
+literal keep the same length information, and owned `std::string::String`
+locals can be passed to byte-slice APIs without spelling `ref`; the compiler
+borrows their byte view for the call. Literals can also act as read-only
 `Slice[u8]` receivers, so `"hello".starts_with("he")`,
 `"hello".find("ll")`, and `"hello".slice(1, 4).equals("ell")` use the same
 borrowed slice vocabulary as named views. They can also initialize local byte

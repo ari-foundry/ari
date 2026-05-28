@@ -67,7 +67,7 @@ fn main() -> i64 {
   }
 
   var ari_text = std::string::from(ref mut zone, "ari");
-  var quoted = fmt::debug_text_in(ref mut zone, ref ari_text);
+  var quoted = fmt::debug_text_in(ref mut zone, ari_text);
   if quoted.len() == 5 && quoted.get(0) == 34u8 && quoted.get(4) == 34u8 {
     score = score + 1;
   }
@@ -123,7 +123,7 @@ fn main() -> i64 {
   var text_buffer = [0u8, 0u8];
   var text_writer = MemoryWriter { data: text_buffer.as_slice(), position: 0 };
   var io_text = std::string::from(ref mut zone, "io");
-  if fmt::write_text<MemoryWriter>(ref mut text_writer, ref mut zone, ref io_text).is_ok() {
+  if fmt::write_text<MemoryWriter>(ref mut text_writer, ref mut zone, io_text).is_ok() {
     if text_buffer[0] == 'i' && text_buffer[1] == 'o' && text_writer.position == 2 {
       score = score + 1;
     }
@@ -131,7 +131,7 @@ fn main() -> i64 {
 
   var text_bool_buffer = [0u8, 0u8, 0u8];
   var text_bool_writer = MemoryWriter { data: text_bool_buffer.as_slice(), position: 0 };
-  if fmt::write_text_bool<MemoryWriter>(ref mut text_bool_writer, ref mut zone, ref ari_text) {
+  if fmt::write_text_bool<MemoryWriter>(ref mut text_bool_writer, ref mut zone, ari_text) {
     if text_bool_buffer[0] == 'a' && text_bool_buffer[2] == 'i' && text_bool_writer.position == 3 {
       score = score + 1;
     }
@@ -209,7 +209,7 @@ fn main() -> i64 {
   var line_text_buffer = [0u8, 0u8, 0u8];
   var line_text_writer = MemoryWriter { data: line_text_buffer.as_slice(), position: 0 };
   var ok_text = std::string::from(ref mut zone, "ok");
-  if fmt::write_line_text<MemoryWriter>(ref mut line_text_writer, ref mut zone, ref ok_text).is_ok() {
+  if fmt::write_line_text<MemoryWriter>(ref mut line_text_writer, ref mut zone, ok_text).is_ok() {
     if line_text_buffer[0] == 'o' && line_text_buffer[1] == 'k' && line_text_buffer[2] == 10u8 && line_text_writer.position == 3 {
       score = score + 1;
     }
@@ -218,7 +218,7 @@ fn main() -> i64 {
   var line_text_bool_buffer = [0u8, 0u8, 0u8, 0u8];
   var line_text_bool_writer = MemoryWriter { data: line_text_bool_buffer.as_slice(), position: 0 };
   var yes_text = std::string::from(ref mut zone, "yes");
-  if fmt::write_line_text_bool<MemoryWriter>(ref mut line_text_bool_writer, ref mut zone, ref yes_text) {
+  if fmt::write_line_text_bool<MemoryWriter>(ref mut line_text_bool_writer, ref mut zone, yes_text) {
     if line_text_bool_buffer[0] == 'y' && line_text_bool_buffer[2] == 's' && line_text_bool_buffer[3] == 10u8 && line_text_bool_writer.position == 4 {
       score = score + 1;
     }
@@ -226,7 +226,7 @@ fn main() -> i64 {
 
   var short_line_text_buffer = [0u8, 0u8];
   var short_line_text_writer = MemoryWriter { data: short_line_text_buffer.as_slice(), position: 0 };
-  if fmt::write_line_text<MemoryWriter>(ref mut short_line_text_writer, ref mut zone, ref ok_text).is_err() {
+  if fmt::write_line_text<MemoryWriter>(ref mut short_line_text_writer, ref mut zone, ok_text).is_err() {
     if short_line_text_writer.position == 2 && short_line_text_buffer[0] == 'o' && short_line_text_buffer[1] == 'k' {
       score = score + 1;
     }

@@ -8486,6 +8486,17 @@ private:
         set_local_integer_known_value(local, value.value, value.negative);
     }
 
+    void set_known_string_literal_from_expr(LocalInfo& local, const Expr& source) {
+        local.string_literal_known.reset();
+        if (local.mutable_binding ||
+            local.type.qualifier != TypeQualifier::Value ||
+            local.type.primitive != IrPrimitiveKind::String ||
+            source.kind != ExprKind::String) {
+            return;
+        }
+        local.string_literal_known = source.string_value;
+    }
+
     void require_nullable_pointer_initializer(SourceLocation loc,
                                               const Binding& binding,
                                               const IrType& declared,
@@ -8571,6 +8582,7 @@ private:
         initialize_owned_field_states_from_direct_enum_constructor(local, *local.ir_init_expr);
         set_union_by_alias_from_expr(local, *local.ir_init_expr);
         set_known_integer_value_from_expr(local, *stmt.binding.init, *local.ir_init_expr);
+        set_known_string_literal_from_expr(local, *stmt.binding.init);
         set_zone_pointer_source_from_expr(local, *local.ir_init_expr);
     }
 
@@ -25005,6 +25017,9 @@ private:
 
     std::optional<FormatInAppendTarget> format_in_append_target_from_type(SourceLocation loc, const IrType& type, const IrFormatSpec& spec) const {
         if (spec.debug) {
+            if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::String) {
+                return FormatInAppendTarget{FormatInAppendKind::DebugString, {}};
+            }
             if (auto debug_trait = format_in_debug_trait_for_type(type)) {
                 return format_in_debug_append_target(*debug_trait);
             }
@@ -27215,6 +27230,41 @@ private:
         return make_slice_view_expr(loc, std::move(data), std::move(length), slice_type);
     }
 
+    IrExprPtr make_u8_slice_view_from_std_string_local(SourceLocation loc,
+                                                       SourceLocation receiver_loc,
+                                                       const std::string& name,
+                                                       const LocalInfo& local,
+                                                       const IrType& slice_type) const {
+        if (!is_prelude_u8_slice_type(slice_type)) {
+            fail(loc, "type mismatch: expected " + type_name(slice_type) + ", got " + type_name(local.type));
+        }
+        if (!is_std_string_handle_type(local.type)) {
+            fail(loc, "implicit String-to-Slice argument requires a local std::string::String binding");
+        }
+
+        const std::size_t raw_index = struct_field_index(loc, local.type, "raw");
+        const IrType& raw_type = local.type.field_types[raw_index];
+        const std::size_t data_index = struct_field_index(loc, raw_type, "data");
+        const std::size_t len_index = struct_field_index(loc, raw_type, "len");
+
+        IrExprPtr data = make_tuple_index_expr(
+            loc,
+            make_tuple_index_expr(
+                loc,
+                make_local_lvalue_expr(receiver_loc, name, local.type),
+                raw_index),
+            data_index);
+        IrExprPtr length = make_tuple_index_expr(
+            loc,
+            make_tuple_index_expr(
+                loc,
+                make_local_lvalue_expr(receiver_loc, name, local.type),
+                raw_index),
+            len_index);
+
+        return make_slice_view_expr(loc, std::move(data), std::move(length), slice_type);
+    }
+
     bool can_materialize_implicit_slice_temporary(const Expr& expr) const {
         switch (expr.kind) {
             case ExprKind::Vector:
@@ -27258,6 +27308,32 @@ private:
                         arg_expr.loc,
                         arg_expr.name,
                         *local,
+                        expected);
+                }
+                if (is_std_string_handle_type(local->type) && is_prelude_u8_slice_type(expected)) {
+                    if (local_unavailable_binding_error(arg_expr.name, *local)) {
+                        fail_unavailable_binding(arg_expr.loc, arg_expr.name, *local);
+                    }
+                    require_can_read_borrow_path(arg_expr.loc, arg_expr.name, *local, "");
+                    require_zone_pointer_valid(arg_expr.loc, arg_expr.name, *local);
+                    copy_aggregate_borrow_sources_to_temporaries(arg_expr.loc, arg_expr.name, *local);
+                    return make_u8_slice_view_from_std_string_local(
+                        arg_expr.loc,
+                        arg_expr.loc,
+                        arg_expr.name,
+                        *local,
+                        expected);
+                }
+                if (local->type.qualifier == TypeQualifier::Value &&
+                    local->type.primitive == IrPrimitiveKind::String &&
+                    local->string_literal_known &&
+                    is_prelude_u8_slice_type(expected)) {
+                    if (local_unavailable_binding_error(arg_expr.name, *local)) {
+                        fail_unavailable_binding(arg_expr.loc, arg_expr.name, *local);
+                    }
+                    return make_string_literal_slice_expr(
+                        arg_expr.loc,
+                        *local->string_literal_known,
                         expected);
                 }
             }

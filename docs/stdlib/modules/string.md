@@ -93,6 +93,12 @@ libraries without forcing `std::string::bytes(...)` noise:
 "hello".slice(1, 4).equals("ell")
 ```
 
+When a function parameter expects `Slice[u8]`, a literal can be passed directly,
+an immutable binding initialized from a literal keeps the literal length, and an
+owned `String` local is borrowed as bytes at the call site. That is why APIs such
+as `io::print("prompt")`, `fs::read("Ari.toml")`, and `env::set_var(name,
+value)` do not require `ref String` just to read text.
+
 The view length stops before the first embedded NUL byte, matching the existing
 literal-to-`Slice[u8]` boundary. Use an owned `String`, `Vec[u8]`, or explicit
 byte storage when embedded NUL bytes are data rather than a C-string boundary.

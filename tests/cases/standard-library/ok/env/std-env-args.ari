@@ -1,5 +1,5 @@
 // Covers source std::env argument helpers built on the runtime context hooks.
-fn consume_arg(value: string) -> i64 {
+fn consume_arg(value: String) -> i64 {
   return 19;
 }
 
@@ -59,7 +59,7 @@ fn main() -> i64 {
   }
 
   if env::has_arg(0) {
-    score = score + consume_arg(env::arg_unchecked(0));
+    score = score + consume_arg(env::arg(ref mut zone, 0).unwrap());
   }
 
   let collected = env::args(ref mut zone);

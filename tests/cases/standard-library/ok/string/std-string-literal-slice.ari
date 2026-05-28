@@ -1,6 +1,10 @@
 // Covers natural string-literal coercion into borrowed Slice[u8] parameters,
 // receiver calls, and locals, so byte-oriented APIs do not require
 // std::string::bytes(...) at every call site.
+fn is_truth(value: Slice[u8]) -> bool {
+  return value.equals("truth");
+}
+
 fn main() -> i64 {
   let truth: Slice[u8] = "true";
   assert_eq_i64(truth.len(), 4);
@@ -28,6 +32,8 @@ fn main() -> i64 {
   assert_eq_i64(ascii::parse_hex("1Af").unwrap_or(0), 431);
   assert(std::ascii::starts_with_ignore_case("AriLang", "ari"));
   assert(ascii::ends_with_ignore_case("AriLang", "LANG"));
+  let literal_binding = "truth";
+  assert(is_truth(literal_binding));
 
   var zone = zone::create(16);
   var text = std::string::from(ref mut zone, "truth");
@@ -35,6 +41,7 @@ fn main() -> i64 {
   assert(text.starts_with("tr"));
   assert(text.ends_with("th"));
   assert(text.equals("truth"));
+  assert(is_truth(text));
   zone::destroy(zone);
 
   return 0;

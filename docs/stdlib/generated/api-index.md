@@ -24,22 +24,22 @@ platform notes.
 
 ## Summary
 
-- API entries: `3633`
+- API entries: `3623`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
-| `alloc` | 923 | usable |
+| `alloc` | 924 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 943 | stable candidate |
-| `hosted` | 1564 | platform-backed |
-| `platform` | 167 | platform-specific |
+| `core` | 941 | stable candidate |
+| `hosted` | 1559 | platform-backed |
+| `platform` | 163 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1248 |
-| `method` | 1911 |
+| `fn` | 1236 |
+| `method` | 1913 |
 | `module` | 39 |
 | `struct` | 197 |
 | `trait` | 39 |
@@ -60,18 +60,18 @@ platform notes.
 | `std::cell` | `alloc` | 44 |
 | `std::cmp` | `core` | 38 |
 | `std::collections` | `alloc` | 415 |
-| `std::context` | `hosted` | 27 |
+| `std::context` | `hosted` | 21 |
 | `std::convert` | `core` | 14 |
 | `std::encoding` | `core` | 102 |
 | `std::env` | `hosted` | 64 |
-| `std::error` | `core` | 41 |
+| `std::error` | `core` | 39 |
 | `std::fmt` | `core` | 86 |
 | `std::fs` | `hosted` | 325 |
 | `std::hash` | `alloc` | 24 |
-| `std::input` | `hosted` | 7 |
-| `std::io` | `hosted` | 116 |
+| `std::input` | `hosted` | 6 |
+| `std::io` | `hosted` | 119 |
 | `std::iter` | `alloc` | 41 |
-| `std::log` | `hosted` | 13 |
+| `std::log` | `hosted` | 12 |
 | `std::math` | `core` | 39 |
 | `std::mem` | `core` | 13 |
 | `std::net` | `hosted` | 375 |
@@ -83,9 +83,9 @@ platform notes.
 | `std::random` | `alloc/hosted` | 36 |
 | `std::rc` | `alloc` | 32 |
 | `std::result` | `core` | 12 |
-| `std::string` | `alloc` | 171 |
+| `std::string` | `alloc` | 172 |
 | `std::sync` | `hosted` | 224 |
-| `std::target` | `platform` | 56 |
+| `std::target` | `platform` | 52 |
 | `std::test` | `hosted` | 32 |
 | `std::thread` | `hosted` | 126 |
 | `std::time` | `hosted` | 74 |
@@ -639,13 +639,13 @@ Tier: `platform`. Stability reading: platform-specific.
 | `fn std::c::close_bool` | check-prelude std-c-interop boolean compatibility dynamic library close wrapper; docs/stdlib/modules/c.md |
 | `fn std::c::errno` | check-prelude std-c-interop POSIX errno accessor; docs/stdlib/modules/c.md |
 | `fn std::c::error` | check-prelude std-c-interop errno-to-Error bridge; docs/stdlib/modules/c.md |
+| `fn std::c::from` | check-prelude std-c-interop borrowed Ari string to CStr wrapper; docs/stdlib/modules/c.md |
 | `fn std::c::from_cstr_in` | check-prelude std-c-interop Result-returning CString copy from borrowed CStr; docs/stdlib/modules/c.md |
 | `fn std::c::from_cstr_unchecked_in` | check-prelude std-c-interop assert-on-invalid CString copy from borrowed CStr; docs/stdlib/modules/c.md |
 | `fn std::c::from_ptr` | check-prelude std-c-interop null-checked Result C string wrapper; docs/stdlib/modules/c.md |
 | `fn std::c::from_ptr_unchecked` | check-prelude std-c-interop assert-on-null borrowed C string wrapper; docs/stdlib/modules/c.md |
 | `fn std::c::from_slice_in` | check-prelude std-c-interop Result-returning CString constructor rejecting interior NUL bytes; docs/stdlib/modules/c.md |
 | `fn std::c::from_slice_unchecked_in` | check-prelude std-c-interop assert-on-invalid zone-backed NUL-terminated CString constructor; docs/stdlib/modules/c.md |
-| `fn std::c::from` | check-prelude std-c-interop borrowed Ari string to CStr wrapper; docs/stdlib/modules/c.md |
 | `fn std::c::function[T]` | check-prelude std-c-dynamic-function typed dynamic function pointer extraction; docs/stdlib/modules/c.md |
 | `fn std::c::global` | check-prelude std-c-interop dynamic loader flag helper; docs/stdlib/modules/c.md |
 | `fn std::c::is_null` | check-prelude std-c-interop raw pointer null predicate; docs/stdlib/modules/c.md |
@@ -1283,15 +1283,12 @@ Tier: `hosted`. Stability reading: platform-backed.
 | API | Coverage note |
 | --- | --- |
 | `fn std::context::arg` | check-prelude context tests; docs/stdlib/modules/context.md |
-| `fn std::context::arg_text` | check-prelude context args raw borrowed argument hook; docs/stdlib/modules/context.md |
 | `fn std::context::argc` | check-prelude context tests; docs/dev/test-matrix.md Context runtime row |
 | `fn std::context::cwd` | check-prelude std-context-args startup current-directory snapshot hook; docs/stdlib/modules/context.md |
 | `fn std::context::cwd_os` | check-prelude std-context-args startup current-directory OS-string view; docs/stdlib/modules/context.md |
 | `fn std::context::cwd_path` | check-prelude std-context-args startup current-directory path-byte view; docs/stdlib/modules/context.md |
-| `fn std::context::cwd_text` | check-prelude std-context-args raw startup current-directory text hook; docs/stdlib/modules/context.md |
 | `fn std::context::executable_path` | check-prelude std-context-args startup executable-path snapshot hook; docs/stdlib/modules/context.md |
 | `fn std::context::executable_path_os` | check-prelude std-context-args startup executable-path OS-string view; docs/stdlib/modules/context.md |
-| `fn std::context::executable_path_text` | check-prelude std-context-args raw startup executable-path text hook; docs/stdlib/modules/context.md |
 | `fn std::context::has_arg` | std context args tests; docs/stdlib/modules/context.md |
 | `fn std::context::has_args` | check-prelude std-context-args source context predicate; docs/stdlib/modules/context.md |
 | `fn std::context::has_cwd` | check-prelude std-context-args source startup cwd predicate; docs/stdlib/modules/context.md |
@@ -1300,13 +1297,10 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::context::is_main_thread` | check-prelude std-context-args source thread predicate; docs/stdlib/modules/context.md |
 | `fn std::context::thread_id` | check-prelude std-context-args context thread id hook; docs/stdlib/modules/context.md |
 | `fn std::context::try_arg` | check-prelude context args optional owned argument helper; docs/stdlib/modules/context.md |
-| `fn std::context::try_arg_text` | check-prelude context args optional raw borrowed argument helper; docs/stdlib/modules/context.md |
 | `fn std::context::try_cwd` | check-prelude std-context-args optional startup cwd helper; docs/stdlib/modules/context.md |
 | `fn std::context::try_cwd_os` | check-prelude std-context-args optional startup cwd OS-string helper; docs/stdlib/modules/context.md |
-| `fn std::context::try_cwd_text` | check-prelude std-context-args optional raw startup cwd text helper; docs/stdlib/modules/context.md |
 | `fn std::context::try_executable_path` | check-prelude std-context-args optional startup executable-path helper; docs/stdlib/modules/context.md |
 | `fn std::context::try_executable_path_os` | check-prelude std-context-args optional startup executable-path OS-string helper; docs/stdlib/modules/context.md |
-| `fn std::context::try_executable_path_text` | check-prelude std-context-args optional raw startup executable-path text helper; docs/stdlib/modules/context.md |
 | `fn std::context::user_arg_count` | check-prelude std-context-args source user argument count; docs/stdlib/modules/context.md |
 
 ### module
@@ -1595,9 +1589,7 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::error::map_os_code[T]` | check-prelude std-error-integration Result[T, OS code] to Result[T, Error] bridge; docs/stdlib/modules/error.md |
 | `fn std::error::map_raw[T]` | check-prelude std-error-basic Result[T, i64] to Result[T, Error] compatibility bridge; docs/stdlib/modules/error.md |
 | `fn std::error::message` | check-prelude std-error-basic stable owned generic message helper; docs/stdlib/modules/error.md |
-| `fn std::error::message_text` | check-prelude std-error-basic raw generic message compatibility helper; docs/stdlib/modules/error.md |
 | `fn std::error::name` | check-prelude std-error-basic owned error-kind name helper; docs/stdlib/modules/error.md |
-| `fn std::error::name_text` | check-prelude std-error-basic raw error-kind name compatibility helper; docs/stdlib/modules/error.md |
 | `fn std::error::new` | check-prelude std-error-basic error constructor without platform code; docs/stdlib/modules/error.md |
 | `fn std::error::raw` | check-prelude std-error-basic compact raw error representation helper; docs/stdlib/modules/error.md |
 | `fn std::error::to_raw[T]` | check-prelude std-error-basic Result[T, Error] to Result[T, i64] compatibility bridge; docs/stdlib/modules/error.md |
@@ -2178,7 +2170,6 @@ Tier: `hosted`. Stability reading: platform-backed.
 | API | Coverage note |
 | --- | --- |
 | `fn std::input::line` | prelude input/read_line tests; docs/dev/test-matrix.md Prelude row |
-| `fn std::input::line_text` | prelude input/read_line tests raw borrowed line hook; docs/stdlib/modules/input.md |
 | `fn std::input::owned_line` | prelude owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows |
 | `fn std::input::read_byte` | prelude byte input tests; docs/dev/test-matrix.md Prelude row |
 | `fn std::input::try_read_byte` | std input byte option tests; docs/stdlib/modules/input.md |
@@ -2241,7 +2232,6 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::io::read_line` | prelude read_line/input tests; docs/dev/test-matrix.md Prelude row |
 | `fn std::io::read_line_from[R: Reader]` | check-prelude std-io-read-to-string Result-returning generic line reader helper; docs/stdlib/modules/io.md |
 | `fn std::io::read_line_owned` | prelude owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows |
-| `fn std::io::read_line_text` | prelude read_line/input tests raw borrowed line hook; docs/stdlib/modules/io.md |
 | `fn std::io::read_one[R: Reader]` | check-prelude std-io-result generic one-byte read status helper; docs/stdlib/modules/io.md |
 | `fn std::io::read_to_string[R: Reader]` | check-prelude std-io-read-to-string Result-returning generic Reader whole-stream owned String collector; docs/stdlib/modules/io.md |
 | `fn std::io::read_to_string_unchecked[R: Reader]` | check-prelude std-io-read-to-string unchecked generic Reader whole-stream owned String collector; docs/stdlib/modules/io.md |
@@ -2454,7 +2444,6 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::log::info` | check-prelude std-log-basic info-level string message helper; docs/stdlib/modules/log.md |
 | `fn std::log::message` | check-prelude std-log-basic level-prefixed string stderr logging; docs/stdlib/modules/log.md |
 | `fn std::log::name` | check-prelude std-log-basic owned level label helper; docs/stdlib/modules/log.md |
-| `fn std::log::name_text` | check-prelude std-log-basic raw level label compatibility helper; docs/stdlib/modules/log.md |
 | `fn std::log::rank` | check-prelude std-log-basic level ordering helper; docs/stdlib/modules/log.md |
 | `fn std::log::trace` | check-prelude std-log-basic trace-level string message helper; docs/stdlib/modules/log.md |
 | `fn std::log::warn` | check-prelude std-log-basic warn-level string message helper; docs/stdlib/modules/log.md |
@@ -3253,9 +3242,9 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::path::extension` | check-prelude std-path-basic borrowed final-extension view; docs/stdlib/modules/path.md |
 | `fn std::path::file_name` | check-prelude std-path-basic borrowed final-component view; docs/stdlib/modules/path.md |
 | `fn std::path::file_stem` | check-prelude std-path-basic natural alias for borrowed file-stem view; docs/stdlib/modules/path.md |
+| `fn std::path::from` | check-prelude std-path-buf owned path buffer constructor from host string; docs/stdlib/modules/path.md |
 | `fn std::path::from_bytes` | check-prelude std-path-buf owned path buffer constructor from bytes; docs/stdlib/modules/path.md |
 | `fn std::path::from_os` | check-prelude std-path-bytes path-byte view from OS-string bytes; docs/stdlib/modules/path.md |
-| `fn std::path::from` | check-prelude std-path-buf owned path buffer constructor from host string; docs/stdlib/modules/path.md |
 | `fn std::path::has_extension` | check-prelude std-path-predicates final-extension predicate; docs/stdlib/modules/path.md |
 | `fn std::path::has_file_name` | check-prelude std-path-predicates final-component predicate; docs/stdlib/modules/path.md |
 | `fn std::path::has_file_stem` | check-prelude std-path-predicates natural alias for file-stem predicate; docs/stdlib/modules/path.md |
@@ -3811,6 +3800,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::string::String::append_bool_in` | check-prelude std-string-append and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones and Prelude rows |
 | `method std::string::String::append_byte` | check-prelude std-string-natural-api natural single-byte append helper; docs/stdlib/modules/string.md |
 | `method std::string::String::append_bytes` | check-prelude std-string-natural-api natural borrowed-byte append helper; docs/stdlib/modules/string.md |
+| `method std::string::String::append_debug_bytes_in` | compiler-only debug literal append bridge for format_in! primitive string captures; docs/stdlib/modules/string.md |
 | `method std::string::String::append_debug_in[T: std::fmt::Debug]` | check-prelude std-string-append-debug generic Debug append, implicit same-zone lowering, and std-string-append-debug-different-zone diagnostic; docs/stdlib/modules/string.md |
 | `method std::string::String::append_f32_in` | check-prelude std-string-append-f32 and std-string-append-f32-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows |
 | `method std::string::String::append_f64_in` | check-prelude prelude-format-in and std-string-append-f64-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows |
@@ -4213,11 +4203,9 @@ Tier: `platform`. Stability reading: platform-specific.
 | --- | --- |
 | `fn std::target::arch` | check-prelude std-target-basic compiler-known target architecture enum hook; docs/stdlib/modules/target.md |
 | `fn std::target::arch_name` | check-prelude std-target-basic owned compiler-known target architecture string helper; docs/stdlib/modules/target.md |
-| `fn std::target::arch_name_text` | check-prelude std-target-basic borrowed compiler-known target architecture string hook; docs/stdlib/modules/target.md |
 | `fn std::target::debug_format` | check-prelude std-target-basic compiler-known debug format hook; docs/stdlib/modules/target.md |
 | `fn std::target::env` | check-prelude std-target-basic compiler-known target environment enum hook; docs/stdlib/modules/target.md |
 | `fn std::target::env_name` | check-prelude std-target-basic owned compiler-known target environment string helper; docs/stdlib/modules/target.md |
-| `fn std::target::env_name_text` | check-prelude std-target-basic borrowed compiler-known target environment string hook; docs/stdlib/modules/target.md |
 | `fn std::target::errno_abi` | check-prelude std-target-basic compiler-known errno ABI hook; docs/stdlib/modules/target.md |
 | `fn std::target::has_capabilities_api` | check-prelude std-target-basic Linux target capability family predicate; docs/stdlib/platform/linux.md |
 | `fn std::target::has_cgroups_api` | check-prelude std-target-basic Linux target cgroups family predicate; docs/stdlib/platform/linux.md |
@@ -4249,11 +4237,9 @@ Tier: `platform`. Stability reading: platform-specific.
 | `fn std::target::object_format` | check-prelude std-target-basic compiler-known object format hook; docs/stdlib/modules/target.md |
 | `fn std::target::os` | check-prelude std-target-basic compiler-known operating-system enum hook; docs/stdlib/modules/target.md |
 | `fn std::target::os_name` | check-prelude std-target-basic owned compiler-known operating-system string helper; docs/stdlib/modules/target.md |
-| `fn std::target::os_name_text` | check-prelude std-target-basic borrowed compiler-known operating-system string hook; docs/stdlib/modules/target.md |
 | `fn std::target::pointer_bits` | check-prelude std-target-basic compiler-known pointer width hook; docs/stdlib/modules/target.md |
 | `fn std::target::syscall_abi` | check-prelude std-target-basic source Linux syscall ABI classifier; docs/stdlib/modules/target.md |
 | `fn std::target::triple` | check-prelude std-target-basic owned compiler-known target triple string helper; docs/stdlib/modules/target.md |
-| `fn std::target::triple_text` | check-prelude std-target-basic borrowed compiler-known target triple string hook; docs/stdlib/modules/target.md |
 | `fn std::target::uses_dwarf` | check-prelude std-target-basic source debug format predicate; docs/stdlib/modules/target.md |
 | `fn std::target::uses_elf` | check-prelude std-target-basic source object format predicate; docs/stdlib/modules/target.md |
 | `fn std::target::uses_glibc` | check-prelude std-target-basic source glibc target predicate; docs/stdlib/modules/target.md |

@@ -606,6 +606,16 @@ pub impl std::string::String {
     self.append_bytes(zone, std::string::bytes_raw(value));
   }
 
+  fn append_debug_bytes_in(self: ref mut Self, zone: ref mut Zone, value: super::Slice[u8]) -> void {
+    append_byte_in(self, zone, '"');
+    var index = 0;
+    while index < value.len {
+      append_byte_in(self, zone, value[index]);
+      index = index + 1;
+    }
+    append_byte_in(self, zone, '"');
+  }
+
   fn append_i64_in(self: ref mut Self, zone: ref mut Zone, value: i64) -> void {
     if value == 0 {
       append_byte_in(self, zone, '0');

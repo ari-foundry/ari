@@ -102,26 +102,26 @@ pub fn write(level: std::log::Level, values: std::Slice[u8]) -> bool {
   return std::io::flush<std::io::Stderr>(ref mut stderr).is_ok();
 }
 
-pub fn message(level: std::log::Level, text: ref std::string::String) -> bool {
-  return std::log::write(level, text.as_slice());
+pub fn message(level: std::log::Level, text: std::Slice[u8]) -> bool {
+  return std::log::write(level, text);
 }
 
-pub fn trace(text: ref std::string::String) -> bool {
+pub fn trace(text: std::Slice[u8]) -> bool {
   return std::log::message(Trace, text);
 }
 
-pub fn debug(text: ref std::string::String) -> bool {
+pub fn debug(text: std::Slice[u8]) -> bool {
   return std::log::message(Debug, text);
 }
 
-pub fn info(text: ref std::string::String) -> bool {
+pub fn info(text: std::Slice[u8]) -> bool {
   return std::log::message(Info, text);
 }
 
-pub fn warn(text: ref std::string::String) -> bool {
+pub fn warn(text: std::Slice[u8]) -> bool {
   return std::log::message(Warn, text);
 }
 
-pub fn error(text: ref std::string::String) -> bool {
+pub fn error(text: std::Slice[u8]) -> bool {
   return std::log::message(Error, text);
 }

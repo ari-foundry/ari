@@ -391,14 +391,14 @@ pub fn float_in(zone: ref mut Zone, value: f64, precision: i64) -> std::string::
   return output;
 }
 
-pub fn text_in(zone: ref mut Zone, value: ref std::string::String) -> std::string::String {
-  return value.copy_to(zone);
+pub fn text_in(zone: ref mut Zone, value: std::Slice[u8]) -> std::string::String {
+  return std::string::from_slice_in(zone, value);
 }
 
-pub fn debug_text_in(zone: ref mut Zone, value: ref std::string::String) -> std::string::String {
+pub fn debug_text_in(zone: ref mut Zone, value: std::Slice[u8]) -> std::string::String {
   var output = std::string::new(zone, 2);
   output.append_string_in(zone, "\"");
-  output.append_bytes(zone, value.as_slice());
+  output.append_bytes(zone, value);
   output.append_string_in(zone, "\"");
   return output;
 }
@@ -564,11 +564,11 @@ pub fn write_boolean_bool[W: std::io::Writer](writer: ref mut W, zone: ref mut Z
   return std::fmt::write_boolean<W>(writer, zone, value).is_ok();
 }
 
-pub fn write_text[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: ref std::string::String) -> std::Result[(), std::error::Error] {
-  return std::io::write_all<W>(writer, value.as_slice());
+pub fn write_text[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: std::Slice[u8]) -> std::Result[(), std::error::Error] {
+  return std::io::write_all<W>(writer, value);
 }
 
-pub fn write_text_bool[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: ref std::string::String) -> bool {
+pub fn write_text_bool[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: std::Slice[u8]) -> bool {
   return std::fmt::write_text<W>(writer, zone, value).is_ok();
 }
 
@@ -648,8 +648,8 @@ pub fn write_boolean_stream[W: std::io::Writer](writer: ref mut W, value: bool) 
   return std::io::write_all<W>(writer, std::string::bytes("false"));
 }
 
-pub fn write_text_stream[W: std::io::Writer](writer: ref mut W, value: ref std::string::String) -> std::Result[(), std::error::Error] {
-  return std::io::write_all<W>(writer, value.as_slice());
+pub fn write_text_stream[W: std::io::Writer](writer: ref mut W, value: std::Slice[u8]) -> std::Result[(), std::error::Error] {
+  return std::io::write_all<W>(writer, value);
 }
 
 pub fn write_char_stream[W: std::io::Writer](writer: ref mut W, value: char) -> std::Result[(), std::error::Error] {
@@ -660,7 +660,7 @@ fn write_newline[W: std::io::Writer](writer: ref mut W) -> std::Result[(), std::
   return std::io::write_all<W>(writer, std::string::bytes("\n"));
 }
 
-pub fn write_line_text[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: ref std::string::String) -> std::Result[(), std::error::Error] {
+pub fn write_line_text[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: std::Slice[u8]) -> std::Result[(), std::error::Error] {
   match std::fmt::write_text<W>(writer, zone, value) {
     std::Ok(_) => {}
     std::Err(reason) => {
@@ -670,7 +670,7 @@ pub fn write_line_text[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone
   return std::fmt::write_newline<W>(writer);
 }
 
-pub fn write_line_text_bool[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: ref std::string::String) -> bool {
+pub fn write_line_text_bool[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: std::Slice[u8]) -> bool {
   return std::fmt::write_line_text<W>(writer, zone, value).is_ok();
 }
 
@@ -725,10 +725,10 @@ fn write_template_byte[W: std::io::Writer](
 
 pub fn format[T: std::fmt::Display](
   zone: ref mut Zone,
-  template: ref std::string::String,
+  template: std::Slice[u8],
   value: T
 ) -> std::Result[std::string::String, std::error::Error] {
-  let bytes = template.as_slice();
+  let bytes = template;
   var output = std::string::new(zone, bytes.len);
   var index = 0;
   var used = false;
@@ -773,11 +773,11 @@ pub fn format[T: std::fmt::Display](
 
 pub fn format2[A: std::fmt::Display, B: std::fmt::Display](
   zone: ref mut Zone,
-  template: ref std::string::String,
+  template: std::Slice[u8],
   first: A,
   second: B
 ) -> std::Result[std::string::String, std::error::Error] {
-  let bytes = template.as_slice();
+  let bytes = template;
   var output = std::string::new(zone, bytes.len);
   var index = 0;
   var used = 0;
@@ -826,12 +826,12 @@ pub fn format2[A: std::fmt::Display, B: std::fmt::Display](
 
 pub fn format3[A: std::fmt::Display, B: std::fmt::Display, C: std::fmt::Display](
   zone: ref mut Zone,
-  template: ref std::string::String,
+  template: std::Slice[u8],
   first: A,
   second: B,
   third: C
 ) -> std::Result[std::string::String, std::error::Error] {
-  let bytes = template.as_slice();
+  let bytes = template;
   var output = std::string::new(zone, bytes.len);
   var index = 0;
   var used = 0;
@@ -883,13 +883,13 @@ pub fn format3[A: std::fmt::Display, B: std::fmt::Display, C: std::fmt::Display]
 
 pub fn format4[A: std::fmt::Display, B: std::fmt::Display, C: std::fmt::Display, D: std::fmt::Display](
   zone: ref mut Zone,
-  template: ref std::string::String,
+  template: std::Slice[u8],
   first: A,
   second: B,
   third: C,
   fourth: D
 ) -> std::Result[std::string::String, std::error::Error] {
-  let bytes = template.as_slice();
+  let bytes = template;
   var output = std::string::new(zone, bytes.len);
   var index = 0;
   var used = 0;
@@ -944,10 +944,10 @@ pub fn format4[A: std::fmt::Display, B: std::fmt::Display, C: std::fmt::Display,
 
 pub fn format_texts(
   zone: ref mut Zone,
-  template: ref std::string::String,
+  template: std::Slice[u8],
   values: std::Slice[std::string::String]
 ) -> std::Result[std::string::String, std::error::Error] {
-  let bytes = template.as_slice();
+  let bytes = template;
   var output = std::string::new(zone, bytes.len);
   var index = 0;
   var used = 0;
@@ -992,10 +992,10 @@ pub fn format_texts(
 
 pub fn format_values(
   zone: ref mut Zone,
-  template: ref std::string::String,
+  template: std::Slice[u8],
   values: std::Slice[std::string::String]
 ) -> std::Result[std::string::String, std::error::Error] {
-  let bytes = template.as_slice();
+  let bytes = template;
   var output = std::string::new(zone, bytes.len);
   var index = 0;
   var used = 0;
@@ -1209,10 +1209,10 @@ pub fn write_format[
 ](
   writer: ref mut W,
   zone: ref mut Zone,
-  template: ref std::string::String,
+  template: std::Slice[u8],
   value: T
 ) -> std::Result[(), std::error::Error] {
-  let bytes = template.as_slice();
+  let bytes = template;
   var index = 0;
   var used = false;
   while index < bytes.len {
@@ -1281,11 +1281,11 @@ pub fn write_format2[
 ](
   writer: ref mut W,
   zone: ref mut Zone,
-  template: ref std::string::String,
+  template: std::Slice[u8],
   first: A,
   second: B
 ) -> std::Result[(), std::error::Error] {
-  let bytes = template.as_slice();
+  let bytes = template;
   var index = 0;
   var used = 0;
   while index < bytes.len {
@@ -1364,12 +1364,12 @@ pub fn write_format3[
 ](
   writer: ref mut W,
   zone: ref mut Zone,
-  template: ref std::string::String,
+  template: std::Slice[u8],
   first: A,
   second: B,
   third: C
 ) -> std::Result[(), std::error::Error] {
-  let bytes = template.as_slice();
+  let bytes = template;
   var index = 0;
   var used = 0;
   while index < bytes.len {
@@ -1457,13 +1457,13 @@ pub fn write_format4[
 ](
   writer: ref mut W,
   zone: ref mut Zone,
-  template: ref std::string::String,
+  template: std::Slice[u8],
   first: A,
   second: B,
   third: C,
   fourth: D
 ) -> std::Result[(), std::error::Error] {
-  let bytes = template.as_slice();
+  let bytes = template;
   var index = 0;
   var used = 0;
   while index < bytes.len {
@@ -1552,10 +1552,10 @@ pub fn write_format4[
 
 pub fn write_format_texts[W: std::io::Writer](
   writer: ref mut W,
-  template: ref std::string::String,
+  template: std::Slice[u8],
   values: std::Slice[std::string::String]
 ) -> std::Result[(), std::error::Error] {
-  let bytes = template.as_slice();
+  let bytes = template;
   var index = 0;
   var used = 0;
   while index < bytes.len {
@@ -1619,7 +1619,7 @@ pub fn write_format_texts[W: std::io::Writer](
 
 pub fn write_format_texts_bool[W: std::io::Writer](
   writer: ref mut W,
-  template: ref std::string::String,
+  template: std::Slice[u8],
   values: std::Slice[std::string::String]
 ) -> bool {
   return std::fmt::write_format_texts<W>(writer, template, values).is_ok();
@@ -1627,10 +1627,10 @@ pub fn write_format_texts_bool[W: std::io::Writer](
 
 pub fn write_format_values[W: std::io::Writer](
   writer: ref mut W,
-  template: ref std::string::String,
+  template: std::Slice[u8],
   values: std::Slice[std::string::String]
 ) -> std::Result[(), std::error::Error] {
-  let bytes = template.as_slice();
+  let bytes = template;
   var index = 0;
   var used = 0;
   while index < bytes.len {
@@ -1694,7 +1694,7 @@ pub fn write_format_values[W: std::io::Writer](
 
 pub fn write_format_values_bool[W: std::io::Writer](
   writer: ref mut W,
-  template: ref std::string::String,
+  template: std::Slice[u8],
   values: std::Slice[std::string::String]
 ) -> bool {
   return std::fmt::write_format_values<W>(writer, template, values).is_ok();
@@ -1706,10 +1706,10 @@ pub fn write_format_stream[
 ](
   writer: ref mut W,
   zone: ref mut Zone,
-  template: ref std::string::String,
+  template: std::Slice[u8],
   value: T
 ) -> std::Result[(), std::error::Error] {
-  let bytes = template.as_slice();
+  let bytes = template;
   var index = 0;
   var used = false;
   while index < bytes.len {
@@ -1777,11 +1777,11 @@ pub fn write_format_stream2[
 ](
   writer: ref mut W,
   zone: ref mut Zone,
-  template: ref std::string::String,
+  template: std::Slice[u8],
   first: A,
   second: B
 ) -> std::Result[(), std::error::Error] {
-  let bytes = template.as_slice();
+  let bytes = template;
   var index = 0;
   var used = 0;
   while index < bytes.len {
@@ -1858,12 +1858,12 @@ pub fn write_format_stream3[
 ](
   writer: ref mut W,
   zone: ref mut Zone,
-  template: ref std::string::String,
+  template: std::Slice[u8],
   first: A,
   second: B,
   third: C
 ) -> std::Result[(), std::error::Error] {
-  let bytes = template.as_slice();
+  let bytes = template;
   var index = 0;
   var used = 0;
   while index < bytes.len {
@@ -1948,13 +1948,13 @@ pub fn write_format_stream4[
 ](
   writer: ref mut W,
   zone: ref mut Zone,
-  template: ref std::string::String,
+  template: std::Slice[u8],
   first: A,
   second: B,
   third: C,
   fourth: D
 ) -> std::Result[(), std::error::Error] {
-  let bytes = template.as_slice();
+  let bytes = template;
   var index = 0;
   var used = 0;
   while index < bytes.len {

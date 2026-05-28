@@ -1,7 +1,7 @@
 // Covers std::io::read_to_string over generic Reader values. The helper
 // returns Result[String, Error], preserves EOF behavior, exposes method
 // convenience on readers, and keeps an unchecked compatibility helper.
-fn string_ok(value: Result[String, error::Error], expected: string) -> bool {
+fn string_ok(value: Result[String, error::Error], expected: Slice[u8]) -> bool {
   match value {
     Ok(text) => { return text.equals_text(expected); }
     Err(_) => { return false; }

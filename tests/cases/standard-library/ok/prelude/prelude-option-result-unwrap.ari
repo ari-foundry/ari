@@ -11,11 +11,11 @@ fn main() -> i64 {
   var result_message = std::string::from(ref mut zone, "result");
   var error_message = std::string::from(ref mut zone, "error");
   let option_unwrap = Some(10).unwrap();
-  let option_expect = Some(11).expect(ref option_message);
+  let option_expect = Some(11).expect(option_message);
   let result_unwrap = Ok<i64, i32>(12).unwrap();
-  let result_expect = Ok<i64, i32>(13).expect(ref result_message);
+  let result_expect = Ok<i64, i32>(13).expect(result_message);
   let result_unwrap_err = Err<i64, i32>(14i32).unwrap_err() as i64;
-  let result_expect_err = Err<i64, i32>(15i32).expect_err(ref error_message) as i64;
+  let result_expect_err = Err<i64, i32>(15i32).expect_err(error_message) as i64;
 
   let total = option_unwrap + option_expect + result_unwrap + result_expect +
               result_unwrap_err + result_expect_err + stop_after_call(true);

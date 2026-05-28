@@ -29,7 +29,7 @@ fn main() -> i64 {
   }
   assert(env::current_dir_os().is_ok());
   assert(env::current_dir_path().is_ok());
-  assert(env::set_var(ref home_name, ref home_value).is_ok());
+  assert(env::set_var(home_name, home_value).is_ok());
   match env::home_dir() {
     std::Some(home) => {
       assert(home.is_absolute());
@@ -39,10 +39,10 @@ fn main() -> i64 {
       panic();
     }
   }
-  if env::set_current_dir(ref cwd).is_ok() {
+  if env::set_current_dir(cwd).is_ok() {
     score = score + 7;
   }
-  assert(env::set_current_dir_unchecked(ref cwd));
+  assert(env::set_current_dir_unchecked(cwd));
   if !exe.is_empty() {
     score = score + 11;
   }

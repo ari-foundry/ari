@@ -153,8 +153,8 @@ pub fn from_bytes(zone: ref mut Zone, path: std::Slice[u8]) -> std::path::PathBu
   return path_buf_from_owned(std::string::from_slice_in(zone, path));
 }
 
-pub fn from(zone: ref mut Zone, text: ref std::string::String) -> std::path::PathBuf {
-  return from_bytes(zone, text.as_slice());
+pub fn from(zone: ref mut Zone, text: std::Slice[u8]) -> std::path::PathBuf {
+  return from_bytes(zone, text);
 }
 
 pub fn to_string(zone: ref mut Zone, path: std::path::PathBytes) -> std::string::String {

@@ -216,18 +216,18 @@ fn spawn_configured_slice_unchecked(
 
 pub fn spawn_configured_unchecked(
   entry: fn() -> i64,
-  name: ref std::string::String,
+  name: std::Slice[u8],
   stack_size: i64
 ) -> std::thread::Thread {
-  return std::thread::spawn_configured_slice_unchecked(entry, name.as_slice(), stack_size);
+  return std::thread::spawn_configured_slice_unchecked(entry, name, stack_size);
 }
 
 pub fn spawn_configured(
   entry: fn() -> i64,
-  name: ref std::string::String,
+  name: std::Slice[u8],
   stack_size: i64
 ) -> std::Result[std::thread::JoinHandle, std::error::Error] {
-  let name_bytes = name.as_slice();
+  let name_bytes = name;
   let thread = std::thread::spawn_configured_bytes_unchecked_raw(
     entry,
     name_bytes.as_ptr(),
@@ -269,19 +269,19 @@ fn spawn_raw_configured_slice_unchecked(
 pub fn spawn_raw_configured_unchecked(
   entry: fn(ptr u8) -> i64,
   data: ptr u8,
-  name: ref std::string::String,
+  name: std::Slice[u8],
   stack_size: i64
 ) -> std::thread::Thread {
-  return std::thread::spawn_raw_configured_slice_unchecked(entry, data, name.as_slice(), stack_size);
+  return std::thread::spawn_raw_configured_slice_unchecked(entry, data, name, stack_size);
 }
 
 pub fn spawn_raw_configured(
   entry: fn(ptr u8) -> i64,
   data: ptr u8,
-  name: ref std::string::String,
+  name: std::Slice[u8],
   stack_size: i64
 ) -> std::Result[std::thread::JoinHandle, std::error::Error] {
-  let name_bytes = name.as_slice();
+  let name_bytes = name;
   let thread = std::thread::spawn_raw_configured_bytes_unchecked_raw(
     entry,
     data,
@@ -356,8 +356,8 @@ pub impl std::thread::Builder {
     return std::thread::Builder { name: "", stack_size_bytes: 0 };
   }
 
-  fn name(self, value: ref std::string::String) -> std::thread::Builder {
-    return std::thread::Builder { name: value.as_slice(), stack_size_bytes: self.stack_size_bytes };
+  fn name(self, value: std::Slice[u8]) -> std::thread::Builder {
+    return std::thread::Builder { name: value, stack_size_bytes: self.stack_size_bytes };
   }
 
   fn stack_size(self, bytes: i64) -> std::thread::Builder {
@@ -750,7 +750,7 @@ pub impl std::thread::ThreadScope {
   fn spawn_configured(
     self: ref mut Self,
     entry: fn() -> i64,
-    name: ref std::string::String,
+    name: std::Slice[u8],
     stack_size: i64
   ) -> std::Result[(), std::error::Error] {
     match std::thread::spawn_configured(entry, name, stack_size) {
@@ -782,7 +782,7 @@ pub impl std::thread::ThreadScope {
     self: ref mut Self,
     entry: fn(ptr u8) -> i64,
     data: ptr u8,
-    name: ref std::string::String,
+    name: std::Slice[u8],
     stack_size: i64
   ) -> std::Result[(), std::error::Error] {
     match std::thread::spawn_raw_configured(entry, data, name, stack_size) {

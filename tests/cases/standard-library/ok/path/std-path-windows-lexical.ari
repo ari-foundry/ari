@@ -65,13 +65,13 @@ fn main() -> i64 {
   assert(drive_view.windows_unc_prefix().is_none());
 
   let unc_text = std::string::from(ref mut zone, "//host/share/tool");
-  let unc_owned = std::path::from(ref mut zone, ref unc_text);
+  let unc_owned = std::path::from(ref mut zone, unc_text);
   assert(unc_owned.is_windows_unc());
   assert(unc_owned.is_windows_absolute());
   expect_slice(unc_owned.windows_unc_prefix().unwrap(), "//host/share");
 
   let drive_text = std::string::from(ref mut zone, "E:cache");
-  let drive_owned = std::path::from(ref mut zone, ref drive_text);
+  let drive_owned = std::path::from(ref mut zone, drive_text);
   assert(drive_owned.has_windows_drive_prefix());
   assert(drive_owned.is_windows_drive_relative());
   assert(!drive_owned.is_windows_absolute());

@@ -19,7 +19,7 @@ fn main() -> i64 {
   assert(copied.equals_text("src/main.ari"));
 
   let source_text = std::string::from(ref mut zone, "src/main.ari");
-  let from_text = std::path::from(ref mut zone, ref source_text);
+  let from_text = std::path::from(ref mut zone, source_text);
   expect_buf(ref from_text, "src/main.ari");
   assert(from_text.len() == 12);
   assert(!from_text.is_empty());

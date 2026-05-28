@@ -8,18 +8,18 @@ fn main() -> i64 {
   var third = std::string::from(ref mut zone, "third");
   var score = 0;
 
-  env::remove_unchecked(ref name);
-  if !env::has(ref name) {
+  env::remove_unchecked(name);
+  if !env::has(name) {
     score = score + 3;
   }
 
-  let missing = env::try_get(ref mut zone, ref name);
+  let missing = env::try_get(ref mut zone, name);
   if missing.is_none() {
     score = score + 5;
   }
-  assert(env::var(ref mut zone, ref name).is_none());
-  assert(env::var_os(ref name).is_none());
-  match env::get(ref mut zone, ref name) {
+  assert(env::var(ref mut zone, name).is_none());
+  assert(env::var_os(name).is_none());
+  match env::get(ref mut zone, name) {
     Ok(_) => {
       panic();
     }
@@ -28,20 +28,20 @@ fn main() -> i64 {
     }
   }
 
-  assert(env::set_var(ref name, ref first).is_ok());
-  assert(env::set(ref name, ref first).is_ok());
-  if env::set_unchecked(ref name, ref first) {
+  assert(env::set_var(name, first).is_ok());
+  assert(env::set(name, first).is_ok());
+  if env::set_unchecked(name, first) {
     score = score + 7;
   }
-  if env::has(ref name) {
+  if env::has(name) {
     score = score + 11;
   }
-  assert(env::var(ref mut zone, ref name).is_some());
-  assert(env::var_optional(ref mut zone, ref name).is_some());
-  assert(env::var_os(ref name).is_some());
-  assert(env::var_os_optional(ref name).is_some());
+  assert(env::var(ref mut zone, name).is_some());
+  assert(env::var_optional(ref mut zone, name).is_some());
+  assert(env::var_os(name).is_some());
+  assert(env::var_os_optional(name).is_some());
 
-  match env::var(ref mut zone, ref name) {
+  match env::var(ref mut zone, name) {
     std::Some(var_value) => {
       assert(var_value.equals_text("first"));
     }
@@ -50,7 +50,7 @@ fn main() -> i64 {
     }
   }
 
-  match env::try_get(ref mut zone, ref name) {
+  match env::try_get(ref mut zone, name) {
     std::Some(value) => {
       var expected = std::string::from(ref mut zone, "first");
       if value.equals(expected.as_slice()) {
@@ -60,10 +60,10 @@ fn main() -> i64 {
     std::None => {}
   }
 
-  if env::set_unchecked(ref name, ref second_text) {
+  if env::set_unchecked(name, second_text) {
     score = score + 17;
   }
-  match env::get(ref mut zone, ref name) {
+  match env::get(ref mut zone, name) {
     Ok(result_value) => {
       var expected_result = std::string::from(ref mut zone, "second");
       assert(result_value.equals(expected_result.as_slice()));
@@ -72,7 +72,7 @@ fn main() -> i64 {
       panic();
     }
   }
-  match env::get_os(ref name) {
+  match env::get_os(name) {
     Ok(raw_value) => {
       assert(raw_value.len() == 6);
     }
@@ -81,25 +81,25 @@ fn main() -> i64 {
     }
   }
 
-  var updated = env::get_or_default(ref mut zone, ref name);
+  var updated = env::get_or_default(ref mut zone, name);
   var second = std::string::from(ref mut zone, "second");
   if updated.equals(second.as_slice()) {
     score = score + 19;
   }
-  var var_default = env::var_or_default(ref mut zone, ref name);
+  var var_default = env::var_or_default(ref mut zone, name);
   assert(var_default.equals(second.as_slice()));
-  assert(env::var_os_or_default(ref name).len() == 6);
+  assert(env::var_os_or_default(name).len() == 6);
 
-  if env::remove(ref name).is_ok() {
+  if env::remove(name).is_ok() {
     score = score + 23;
   }
-  assert(env::set_var(ref name, ref third).is_ok());
-  assert(env::remove_var(ref name).is_ok());
-  if !env::has(ref name) {
+  assert(env::set_var(name, third).is_ok());
+  assert(env::remove_var(name).is_ok());
+  if !env::has(name) {
     score = score + 29;
   }
 
-  let removed = env::try_get(ref mut zone, ref name);
+  let removed = env::try_get(ref mut zone, name);
   if removed.is_none() {
     score = score + 31;
   }

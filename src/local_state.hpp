@@ -36,6 +36,7 @@ struct LocalInfo {
     bool integer_value_known = false;
     std::uint64_t integer_known_value = 0;
     bool integer_known_negative = false;
+    std::optional<std::string> string_literal_known;
     LocalState state = LocalState::Alive;
     std::map<std::string, LocalState> owned_field_states;
     bool owned_field_states_complete = false;

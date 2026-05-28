@@ -24,15 +24,15 @@ fn main() -> i64 {
     score = score + 1;
   }
   var careful = std::string::from(ref mut zone, "careful");
-  if log::message(log::Warn, ref careful) {
+  if log::message(log::Warn, careful) {
     score = score + 1;
   }
   var debugging = std::string::from(ref mut zone, "debugging");
-  if log::debug(ref debugging) {
+  if log::debug(debugging) {
     score = score + 1;
   }
   var broken = std::string::from(ref mut zone, "broken");
-  if log::error(ref broken) {
+  if log::error(broken) {
     score = score + 1;
   }
 
