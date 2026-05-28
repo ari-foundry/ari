@@ -1,10 +1,10 @@
 // Runtime context helpers. Primitive values come from backend hooks; small
 // policy helpers stay in Ari source so their behavior is easy to read and test.
 pub extern "ari" fn argc() -> i64 = "ari_builtin_context_argc";
-pub extern "ari" fn arg(index: i64) -> string = "ari_builtin_context_arg";
+pub extern "ari" fn arg_text(index: i64) -> string = "ari_builtin_context_arg";
 pub extern "ari" fn thread_id() -> i64 = "ari_builtin_context_thread_id";
-pub extern "ari" fn cwd() -> string = "ari_builtin_context_cwd";
-pub extern "ari" fn executable_path() -> string = "ari_builtin_context_executable_path";
+pub extern "ari" fn cwd_text() -> string = "ari_builtin_context_cwd";
+pub extern "ari" fn executable_path_text() -> string = "ari_builtin_context_executable_path";
 
 fn text_is_empty(value: string) -> bool {
   return std::mem::ptr_load(value as ptr u8) == 0;
@@ -46,23 +46,60 @@ pub fn is_main_thread() -> bool {
 }
 
 pub fn has_cwd() -> bool {
-  return !text_is_empty(cwd());
+  return !text_is_empty(cwd_text());
 }
 
-pub fn try_cwd() -> std::Option[string] {
-  let path = cwd();
+pub fn try_arg_text(index: i64) -> std::Option[string] {
+  if has_arg(index) {
+    return std::Some<string>(arg_text(index));
+  }
+  return std::None<string>();
+}
+
+pub fn arg(zone: ref mut Zone, index: i64) -> std::string::String {
+  return std::string::from(zone, arg_text(index));
+}
+
+pub fn try_arg(zone: ref mut Zone, index: i64) -> std::Option[std::string::String] {
+  match try_arg_text(index) {
+    std::Some(value) => {
+      return std::Some<std::string::String>(std::string::from(zone, value));
+    }
+    std::None => {
+      return std::None<std::string::String>();
+    }
+  }
+}
+
+pub fn try_cwd_text() -> std::Option[string] {
+  let path = cwd_text();
   if text_is_empty(path) {
     return std::None<string>();
   }
   return std::Some<string>(path);
 }
 
+pub fn cwd(zone: ref mut Zone) -> std::string::String {
+  return std::string::from(zone, cwd_text());
+}
+
+pub fn try_cwd(zone: ref mut Zone) -> std::Option[std::string::String] {
+  match try_cwd_text() {
+    std::Some(path) => {
+      return std::Some<std::string::String>(std::string::from(zone, path));
+    }
+    std::None => {
+      return std::None<std::string::String>();
+    }
+  }
+}
+
 pub fn cwd_os() -> std::string::OsStr {
-  return os_from_text(cwd());
+  return os_from_text(cwd_text());
 }
 
 pub fn try_cwd_os() -> std::Option[std::string::OsStr] {
-  let path = cwd();
+  let path = cwd_text();
   if text_is_empty(path) {
     return std::None<std::string::OsStr>();
   }
@@ -70,27 +107,42 @@ pub fn try_cwd_os() -> std::Option[std::string::OsStr] {
 }
 
 pub fn cwd_path() -> std::path::PathBytes {
-  return path_from_text(cwd());
+  return path_from_text(cwd_text());
 }
 
 pub fn has_executable_path() -> bool {
-  return !text_is_empty(executable_path());
+  return !text_is_empty(executable_path_text());
 }
 
-pub fn try_executable_path() -> std::Option[string] {
-  let path = executable_path();
+pub fn try_executable_path_text() -> std::Option[string] {
+  let path = executable_path_text();
   if text_is_empty(path) {
     return std::None<string>();
   }
   return std::Some<string>(path);
 }
 
+pub fn executable_path(zone: ref mut Zone) -> std::string::String {
+  return std::string::from(zone, executable_path_text());
+}
+
+pub fn try_executable_path(zone: ref mut Zone) -> std::Option[std::string::String] {
+  match try_executable_path_text() {
+    std::Some(path) => {
+      return std::Some<std::string::String>(std::string::from(zone, path));
+    }
+    std::None => {
+      return std::None<std::string::String>();
+    }
+  }
+}
+
 pub fn executable_path_os() -> std::string::OsStr {
-  return os_from_text(executable_path());
+  return os_from_text(executable_path_text());
 }
 
 pub fn try_executable_path_os() -> std::Option[std::string::OsStr] {
-  let path = executable_path();
+  let path = executable_path_text();
   if text_is_empty(path) {
     return std::None<std::string::OsStr>();
   }

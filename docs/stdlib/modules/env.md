@@ -229,9 +229,10 @@ state: later relative paths in this process will observe the change, and child
 processes spawned later should inherit it. `set_current_dir_unchecked(path)` and
 `set_current_dir_raw(path)` keep the older boolean compatibility shape.
 
-`std::context::cwd()` is different: it is the working-directory snapshot taken
-before source `main` runs, so it stays stable even if `set_current_dir(path)`
-later succeeds.
+`std::context::cwd(ref mut zone)` is different: it is the working-directory
+snapshot taken before source `main` runs, so it stays stable even if
+`set_current_dir(path)` later succeeds. `std::context::cwd_text()` is the
+borrowed raw snapshot.
 
 `executable_path(ref mut zone)` returns the host path to the running executable
 as `Result[String, Error]` when the platform can provide it. On the current

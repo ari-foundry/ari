@@ -358,32 +358,29 @@ It returns `Some(byte)` for a byte and `None` at end of input.
 Line-oriented input is available on the LLVM/glibc host backend:
 
 ```ari
-let first = read_line()
-let second = io::read_line()
-let third = input()
-let fourth = input::line()
+var zone = zone::create(4096)
+let first = read_line(ref mut zone)
+let second = io::read_line(ref mut zone)
+let third = input(ref mut zone)
+let fourth = input::line(ref mut zone)
 ```
 
-These helpers return a `string` with one trailing `\n` or `\r` removed. End of
-input returns an empty string. The current implementation uses one internal
-line buffer, so a later line read can overwrite the bytes seen through an
-earlier returned `string`.
+These helpers return a zone-backed `String` with one trailing `\n` or `\r`
+removed. End of input returns an empty `String`.
 
-Use the explicit-zone owned helpers when the line must survive later input:
+The borrowed runtime hooks are explicit:
 
 ```ari
-var zone = zone::create(4096)
-var first = read_line_owned(ref mut zone)
-var second = io::read_line_owned(ref mut zone)
-var third = input::owned_line(ref mut zone)
-var fourth = input_owned(ref mut zone)
+let first = read_line_text()
+let second = io::read_line_text()
+let third = input_text()
+let fourth = input::line_text()
 ```
 
-Those helpers copy the line into a tracked `String` handle owned by the
-provided zone. Use lowercase `string` for today's borrowed pointer-shaped text
-values. The LLVM backend supports static lowercase `string`
-literals, but still rejects line input until that backend has a native
-input-buffer and owned-line allocation policy.
+Those helpers return lowercase `string` views backed by one internal line
+buffer, so a later line read can overwrite the bytes. `read_line_owned`,
+`input_owned`, and `input::owned_line` remain compatibility aliases for the
+owned `String` behavior.
 
 ## Assertions And Stops
 
@@ -500,7 +497,8 @@ io::flush[W: io::Writer](writer: ref mut W) -> Result[(), io::Error]
 io::flush_unchecked[W: io::Writer](writer: ref mut W) -> bool
 io::newline() -> i64
 io::read_byte() -> i64
-io::read_line() -> string
+io::read_line(ref mut Zone) -> std::string::String
+io::read_line_text() -> string
 io::read_line_owned(ref mut Zone) -> std::string::String
 write_i64(value: i64) -> i64
 write_u64(value: u64) -> i64
@@ -509,13 +507,16 @@ write_byte(value: u8) -> i64
 write_bytes(values: Slice[u8]) -> i64
 newline() -> i64
 read_byte() -> i64
-read_line() -> string
+read_line(ref mut Zone) -> std::string::String
+read_line_text() -> string
 read_line_owned(ref mut Zone) -> std::string::String
-input() -> string
+input(ref mut Zone) -> std::string::String
+input_text() -> string
 input_owned(ref mut Zone) -> std::string::String
 input::read_byte() -> i64
 input::try_read_byte() -> Option[u8]
-input::line() -> string
+input::line(ref mut Zone) -> std::string::String
+input::line_text() -> string
 input::owned_line(ref mut Zone) -> std::string::String
 assert(condition: bool) -> i64
 debug_assert(condition: bool) -> i64
@@ -527,7 +528,8 @@ panic() -> void
 todo() -> void
 unreachable() -> void
 context::argc() -> i64
-context::arg(index: i64) -> string
+context::arg(ref mut Zone, index: i64) -> std::string::String
+context::arg_text(index: i64) -> string
 context::thread_id() -> i64
 context::has_args() -> bool
 context::has_arg(index: i64) -> bool
@@ -723,19 +725,24 @@ Available context builtins:
 
 ```ari
 context::argc() -> i64
-context::arg(index: i64) -> string
+context::arg(ref mut Zone, index: i64) -> std::string::String
+context::arg_text(index: i64) -> string
 context::thread_id() -> i64
-context::cwd() -> string
-context::executable_path() -> string
+context::cwd(ref mut Zone) -> std::string::String
+context::cwd_text() -> string
+context::executable_path(ref mut Zone) -> std::string::String
+context::executable_path_text() -> string
 context::has_args() -> bool
 context::has_arg(index: i64) -> bool
 context::user_arg_count() -> i64
 context::has_user_args() -> bool
 context::is_main_thread() -> bool
-context::try_cwd() -> Option[string]
+context::try_cwd(ref mut Zone) -> Option[std::string::String]
+context::try_cwd_text() -> Option[string]
 context::cwd_os() -> std::string::OsStr
 context::cwd_path() -> std::path::PathBytes
-context::try_executable_path() -> Option[string]
+context::try_executable_path(ref mut Zone) -> Option[std::string::String]
+context::try_executable_path_text() -> Option[string]
 context::executable_path_os() -> std::string::OsStr
 env::arg_count() -> i64
 env::arg(ref mut zone, index: i64) -> Result[std::string::String, std::error::Error]
@@ -764,21 +771,23 @@ env::executable_path_text_or_default() -> string
 env::executable_path_text_optional() -> Option[string]
 env::try_executable_path_text() -> Option[string]
 arg_count() -> i64
-arg(index: i64) -> string
+arg(ref mut Zone, index: i64) -> Result[std::string::String, std::error::Error]
+arg_text(index: i64) -> string
 has_arg(index: i64) -> bool
 ```
 
 `has_arg(index)` returns `true` only when `0 <= index < context::argc()`.
-Out-of-range root `arg(index)` currently returns an empty string. Application
-code should use `env::arg(ref mut zone, index)` or
-`env::try_arg(ref mut zone, index)` for owned `String` arguments, and reserve
-`env::arg_text(index)` for borrowed runtime-boundary text.
+Root `arg(ref mut zone, index)` is the same user-facing helper as
+`env::arg(ref mut zone, index)`: it returns owned `String` text and preserves
+missing arguments as `Err(Error)`. Use `arg_text(index)` or `env::arg_text`
+only at raw runtime boundaries.
 `context::user_arg_count()` excludes `argv[0]`, while
 `context::thread_id()` returns the Ari runtime thread id. The main thread is
 `0`; spawned `std::thread` workers receive positive ids.
-`context::cwd()` and `context::executable_path()` are startup snapshots; they
-do not change after `env::set_current_dir(path)`. `env::program_name(ref mut
-zone)` is the owned `argv[0]` value. `env::current_dir(ref mut zone)` and
+`context::cwd(ref mut zone)` and `context::executable_path(ref mut zone)` are
+owned startup snapshots; they do not change after `env::set_current_dir(path)`.
+`context::*_text` keeps the borrowed hook. `env::program_name(ref mut zone)` is
+the owned `argv[0]` value. `env::current_dir(ref mut zone)` and
 `env::executable_path(ref mut zone)` preserve current process path lookup
 failures as `Result[String, Error]`; `_optional`/`try_*` wrappers keep only the
 success value, `_or_default` wrappers copy the fallback into `String`, and

@@ -57,8 +57,10 @@ is_not_found(ref Error) -> bool
 is_interrupted(ref Error) -> bool
 is_connection_refused(ref Error) -> bool
 is_retryable(ref Error) -> bool
-name(kind: Kind) -> string
-message(ref Error) -> string
+name(ref mut Zone, kind: Kind) -> String
+message(ref mut Zone, ref Error) -> String
+name_text(kind: Kind) -> string
+message_text(ref Error) -> string
 ```
 
 `std` re-exports `Error` and `ErrorKind`:
@@ -139,10 +141,11 @@ POSIX/Linux `errno` values such as `ENOENT`, `EACCES`, `EEXIST`, `EINVAL`,
 Use `is_retryable` when an operation may be worth trying again. It currently
 returns true for `Interrupted`, `WouldBlock`, `TimedOut`, and `InProgress`.
 
-`name(kind)` and `message(ref error)` return stable lowercase messages for
-failure reports. They are intentionally plain borrowed `string` values today;
-localized text, structured error fields, and richer formatting policy are
-future work.
+`name(ref mut zone, kind)` and `message(ref mut zone, ref error)` return owned
+`String` values for failure reports. `name_text(kind)` and
+`message_text(ref error)` keep the allocation-free raw borrowed labels for
+runtime, FFI, and compatibility code. Localized text, structured error fields,
+and richer formatting policy are future work.
 `Error` and `Kind` implement the source `Display` and `Debug` traits. Display
 uses the stable lowercase message (`"not found"`). Debug uses stable
 diagnostic wrappers such as `Error(not found, code=2)` and

@@ -252,7 +252,7 @@ Use the codec diagnostic helpers when user-facing tools need a precise message:
 match encoding::base64_url_error(input) {
   std::Some(reason) => {
     if reason.is_invalid_byte() {
-      // report reason.index(), reason.byte(), reason.name(), and reason.message()
+      // report reason.index(), reason.byte(), reason.name(ref mut zone), and reason.message(ref mut zone)
     }
   }
   std::None => {
@@ -260,6 +260,10 @@ match encoding::base64_url_error(input) {
   }
 }
 ```
+
+`Utf8Error` and `CodecError` expose `name(ref mut zone)` and
+`message(ref mut zone)` for owned diagnostic strings. Their `_text` variants
+return raw borrowed labels for compatibility and allocation-free checks.
 
 ## Example
 

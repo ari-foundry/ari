@@ -854,7 +854,7 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std3log5write' $(BUILD_DIR)/prelude/std-log-basic.ll
 	grep -q "@ari_builtin_write_error_byte" $(BUILD_DIR)/prelude/std-log-basic.ll
 	$(TARGET) tests/cases/standard-library/ok/log/std-log-basic.ari -o $(BUILD_DIR)/prelude/std-log-basic.elf
-	$(BUILD_DIR)/prelude/std-log-basic.elf >$(BUILD_DIR)/prelude/std-log-basic.out 2>$(BUILD_DIR)/prelude/std-log-basic.err; code=$$?; test $$code -eq 8
+	$(BUILD_DIR)/prelude/std-log-basic.elf >$(BUILD_DIR)/prelude/std-log-basic.out 2>$(BUILD_DIR)/prelude/std-log-basic.err; code=$$?; test $$code -eq 9
 	test ! -s $(BUILD_DIR)/prelude/std-log-basic.out
 	grep -qx "\[info\] OK" $(BUILD_DIR)/prelude/std-log-basic.err
 	grep -qx "\[warn\] careful" $(BUILD_DIR)/prelude/std-log-basic.err
@@ -867,7 +867,7 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std5error13to_raw__G_i64' $(BUILD_DIR)/prelude/std-error-basic.ll
 	grep -q 'std__error__Error8inherent12is_retryable' $(BUILD_DIR)/prelude/std-error-basic.ll
 	$(TARGET) tests/cases/standard-library/ok/error/std-error-basic.ari -o $(BUILD_DIR)/prelude/std-error-basic.elf
-	$(BUILD_DIR)/prelude/std-error-basic.elf; code=$$?; test $$code -eq 10
+	$(BUILD_DIR)/prelude/std-error-basic.elf; code=$$?; test $$code -eq 11
 	$(TARGET) tests/cases/standard-library/ok/error/std-error-validation.ari --emit-llvm $(BUILD_DIR)/prelude/std-error-validation.ll
 	grep -q '_ARNv3std5error13try_with_code' $(BUILD_DIR)/prelude/std-error-validation.ll
 	grep -q '_ARNv3std5error12try_from_raw' $(BUILD_DIR)/prelude/std-error-validation.ll
@@ -1891,11 +1891,15 @@ check-prelude: $(TARGET)
 	grep -q 'ari_builtin_string_from_string' $(BUILD_DIR)/prelude/prelude-read-line-owned.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then \
 		$(TARGET) tests/cases/standard-library/ok/input/prelude-read-line.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-read-line.elf; \
-		printf 'alpha\nbeta\ngamma\ndelta\n' | $(BUILD_DIR)/prelude/prelude-read-line.elf >$(BUILD_DIR)/prelude/prelude-read-line.out; \
+		printf 'alpha\nbeta\ngamma\ndelta\nepsilon\nzeta\neta\ntheta\n' | $(BUILD_DIR)/prelude/prelude-read-line.elf >$(BUILD_DIR)/prelude/prelude-read-line.out; \
 		grep -qx "alpha" $(BUILD_DIR)/prelude/prelude-read-line.out; \
 		grep -qx "beta" $(BUILD_DIR)/prelude/prelude-read-line.out; \
 		grep -qx "gamma" $(BUILD_DIR)/prelude/prelude-read-line.out; \
 		grep -qx "delta" $(BUILD_DIR)/prelude/prelude-read-line.out; \
+		grep -qx "epsilon" $(BUILD_DIR)/prelude/prelude-read-line.out; \
+		grep -qx "zeta" $(BUILD_DIR)/prelude/prelude-read-line.out; \
+		grep -qx "eta" $(BUILD_DIR)/prelude/prelude-read-line.out; \
+		grep -qx "theta" $(BUILD_DIR)/prelude/prelude-read-line.out; \
 	fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/input/prelude-read-line-owned.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-read-line-owned.elf; printf 'alpha\nbeta\ngamma\ndelta\n' | $(BUILD_DIR)/prelude/prelude-read-line-owned.elf; code=$$?; test $$code -eq 161; fi
 	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-trait-surface.ari -o $(BUILD_DIR)/prelude/prelude-trait-surface.elf

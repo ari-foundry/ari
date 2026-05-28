@@ -25,6 +25,11 @@ input would parse successfully, and `Some(error)` carries a `ParseErrorKind`
 plus the byte offset in the ASCII-trimmed input where the diagnostic was
 detected.
 
+Like other public text APIs, `ParseError.name(ref mut zone)` and
+`ParseError.message(ref mut zone)` return owned `String` values. Use
+`name_text()` and `message_text()` only when raw borrowed labels are the desired
+compatibility form.
+
 ## API
 
 ```ari
@@ -33,8 +38,10 @@ parse::ParseError
 parse::ParseErrorKind
 parse_error.kind() -> ParseErrorKind
 parse_error.offset() -> i64
-parse_error.name() -> string
-parse_error.message() -> string
+parse_error.name(ref mut Zone) -> String
+parse_error.message(ref mut Zone) -> String
+parse_error.name_text() -> string
+parse_error.message_text() -> string
 parse_error.is_empty_input() -> bool
 parse_error.is_expected_digit() -> bool
 parse_error.is_invalid_radix() -> bool

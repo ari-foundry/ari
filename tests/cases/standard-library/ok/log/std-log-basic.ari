@@ -1,6 +1,7 @@
 // Covers source std::log level helpers and stderr-backed line output.
 fn main() -> i64 {
   var score = 0;
+  var zone = zone::create(1024);
 
   if log::rank(log::Trace) == 0 {
     score = score + 1;
@@ -12,6 +13,9 @@ fn main() -> i64 {
     score = score + 1;
   }
   if !log::enabled(log::Debug, log::Info) {
+    score = score + 1;
+  }
+  if log::name(ref mut zone, log::Error).equals_text("error") {
     score = score + 1;
   }
 
@@ -29,5 +33,6 @@ fn main() -> i64 {
     score = score + 1;
   }
 
+  zone::destroy(zone);
   return score;
 }

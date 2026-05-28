@@ -70,8 +70,8 @@ fn main() -> i64 {
     std::Some(integer_detail) => {
       assert(integer_detail.offset() == 2);
       assert(integer_detail.is_invalid_digit());
-      assert(std::string::bytes(integer_detail.name()).equals("invalid digit"));
-      assert(std::string::bytes(integer_detail.message()).equals("input contains a byte that is not valid here"));
+      assert(std::string::bytes(integer_detail.name_text()).equals("invalid digit"));
+      assert(std::string::bytes(integer_detail.message_text()).equals("input contains a byte that is not valid here"));
       match integer_detail.kind() {
         parse::InvalidDigit => {}
         _ => { panic(); }
@@ -83,7 +83,7 @@ fn main() -> i64 {
     std::Some(empty_detail) => {
       assert(empty_detail.offset() == 0);
       assert(empty_detail.is_empty_input());
-      assert(std::string::bytes(empty_detail.name()).equals("empty input"));
+      assert(std::string::bytes(empty_detail.name_text()).equals("empty input"));
     }
     std::None => { panic(); }
   }
@@ -97,7 +97,7 @@ fn main() -> i64 {
     std::Some(radix_detail) => {
       assert(radix_detail.offset() == 0);
       assert(radix_detail.is_invalid_radix());
-      assert(std::string::bytes(radix_detail.name()).equals("invalid radix"));
+      assert(std::string::bytes(radix_detail.name_text()).equals("invalid radix"));
       match radix_detail.kind() {
         parse::InvalidRadix => {}
         _ => { panic(); }
@@ -116,7 +116,7 @@ fn main() -> i64 {
     std::Some(sign_detail) => {
       assert(sign_detail.offset() == 0);
       assert(sign_detail.is_invalid_sign());
-      assert(std::string::bytes(sign_detail.name()).equals("invalid sign"));
+      assert(std::string::bytes(sign_detail.name_text()).equals("invalid sign"));
       match sign_detail.kind() {
         parse::InvalidSign => {}
         _ => { panic(); }
@@ -128,8 +128,8 @@ fn main() -> i64 {
     std::Some(overflow_detail) => {
       assert(overflow_detail.offset() == 18);
       assert(overflow_detail.is_overflow());
-      assert(std::string::bytes(overflow_detail.name()).equals("overflow"));
-      assert(std::string::bytes(overflow_detail.message()).equals("parsed value is above the accepted range"));
+      assert(std::string::bytes(overflow_detail.name_text()).equals("overflow"));
+      assert(std::string::bytes(overflow_detail.message_text()).equals("parsed value is above the accepted range"));
       match overflow_detail.kind() {
         parse::Overflow => {}
         _ => { panic(); }
@@ -141,7 +141,7 @@ fn main() -> i64 {
     std::Some(separator_detail) => {
       assert(separator_detail.offset() == 2);
       assert(separator_detail.is_invalid_separator());
-      assert(std::string::bytes(separator_detail.name()).equals("invalid separator"));
+      assert(std::string::bytes(separator_detail.name_text()).equals("invalid separator"));
       match separator_detail.kind() {
         parse::InvalidSeparator => {}
         _ => { panic(); }
@@ -237,7 +237,7 @@ fn main() -> i64 {
     std::Some(float_detail) => {
       assert(float_detail.offset() == 3);
       assert(float_detail.is_invalid_digit());
-      assert(std::string::bytes(float_detail.name()).equals("invalid digit"));
+      assert(std::string::bytes(float_detail.name_text()).equals("invalid digit"));
       match float_detail.kind() {
         parse::InvalidDigit => {}
         _ => { panic(); }
@@ -249,7 +249,7 @@ fn main() -> i64 {
     std::Some(dot_detail) => {
       assert(dot_detail.offset() == 1);
       assert(dot_detail.is_expected_digit());
-      assert(std::string::bytes(dot_detail.name()).equals("expected digit"));
+      assert(std::string::bytes(dot_detail.name_text()).equals("expected digit"));
       match dot_detail.kind() {
         parse::ExpectedDigit => {}
         _ => { panic(); }
@@ -332,7 +332,7 @@ fn main() -> i64 {
       if !float_overflow_detail.is_overflow() {
         return 33;
       }
-      if !std::string::bytes(float_overflow_detail.name()).equals("overflow") {
+      if !std::string::bytes(float_overflow_detail.name_text()).equals("overflow") {
         return 33;
       }
       match float_overflow_detail.kind() {
@@ -385,7 +385,7 @@ fn main() -> i64 {
       if !float_underflow_detail.is_underflow() {
         return 41;
       }
-      if !std::string::bytes(float_underflow_detail.name()).equals("underflow") {
+      if !std::string::bytes(float_underflow_detail.name_text()).equals("underflow") {
         return 41;
       }
       match float_underflow_detail.kind() {

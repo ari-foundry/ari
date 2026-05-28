@@ -64,20 +64,32 @@ produce the block or function value.
 
 ```ari
 fn main() -> i64 {
+  var zone = zone::create(1024);
   let count = arg_count();
   println("argc={}", count);
 
   if has_arg(0) {
-    println("arg0={}", arg(0));
+    match arg(ref mut zone, 0) {
+      Ok(value) => {
+        write_bytes("arg0=");
+        write_bytes(value.as_slice());
+        newline();
+      }
+
+      Err(_) => {
+      }
+    }
   }
 
+  zone::destroy(zone);
   return count;
 }
 ```
 
-`arg(index)` returns lowercase `string`, a borrowed pointer-shaped string value.
-Out-of-range argument access returns an empty string. Use `has_arg(index)` when
-missing arguments are an expected branch.
+`arg(ref mut zone, index)` returns `Result[String, Error]`, so normal code gets
+an owned argument copy and can keep it. `arg_text(index)` is the raw borrowed
+runtime hook for bridge code. Use `has_arg(index)` when missing arguments are an
+expected branch.
 
 ## Define Structs And Methods
 

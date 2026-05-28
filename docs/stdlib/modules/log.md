@@ -19,7 +19,8 @@ log::Warn
 log::Error
 
 log::rank(level)
-log::name(level)
+log::name(ref mut zone, level) -> String
+log::name_text(level) -> string
 log::enabled(level, minimum)
 log::write(level, bytes)
 log::message(level, text)
@@ -30,7 +31,9 @@ log::warn(text)
 log::error(text)
 ```
 
-`rank(level)` gives the severity order:
+`rank(level)` gives the severity order. `name(ref mut zone, level)` copies the
+lowercase label into the caller's zone as a `String`; `name_text(level)` is the
+raw borrowed compatibility label used by the logging writer itself.
 
 | Level | Rank |
 | --- | --- |

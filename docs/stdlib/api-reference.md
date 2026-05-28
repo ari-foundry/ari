@@ -65,12 +65,15 @@ write_byte(value)
 write_bytes(values)
 newline()
 read_byte()
-read_line()
+read_line(ref mut zone)
+read_line_text()
 read_line_owned(ref mut zone)
-input()
+input(ref mut zone)
+input_text()
 input_owned(ref mut zone)
 arg_count()
-arg(index)
+arg(ref mut zone, index)
+arg_text(index)
 has_arg(index)
 size_of<T>()
 align_of<T>()
@@ -211,8 +214,10 @@ error::is_not_found(ref error)
 error::is_interrupted(ref error)
 error::is_connection_refused(ref error)
 error::is_retryable(ref error)
-error::name(kind)
-error::message(ref error)
+error::name(ref mut zone, kind)
+error::message(ref mut zone, ref error)
+error::name_text(kind)
+error::message_text(ref error)
 
 reason.kind()
 reason.code()
@@ -222,8 +227,10 @@ reason.is_not_found()
 reason.is_interrupted()
 reason.is_connection_refused()
 reason.is_retryable()
-reason.name()
-reason.message()
+reason.name(ref mut zone)
+reason.message(ref mut zone)
+reason.name_text()
+reason.message_text()
 ```
 
 Use `Error` for OS/runtime/library failures, and use `ErrorKind` for the root
@@ -249,7 +256,8 @@ log::Warn
 log::Error
 
 log::rank(level)
-log::name(level)
+log::name(ref mut zone, level)
+log::name_text(level)
 log::enabled(level, minimum)
 log::write(level, bytes)
 log::message(level, text)
@@ -356,38 +364,52 @@ Runtime-backed context access lives in `std::context`:
 
 ```ari
 context::argc()
-context::arg(index)
+context::arg(ref mut zone, index)
+context::arg_text(index)
 context::thread_id()
-context::cwd()
-context::executable_path()
+context::cwd(ref mut zone)
+context::cwd_text()
+context::executable_path(ref mut zone)
+context::executable_path_text()
 context::has_args()
 context::has_arg(index)
+context::try_arg(ref mut zone, index)
+context::try_arg_text(index)
 context::user_arg_count()
 context::has_user_args()
 context::is_main_thread()
 context::has_cwd()
-context::try_cwd()
+context::try_cwd(ref mut zone)
+context::try_cwd_text()
 context::cwd_os()
 context::try_cwd_os()
 context::cwd_path()
 context::has_executable_path()
-context::try_executable_path()
+context::try_executable_path(ref mut zone)
+context::try_executable_path_text()
 context::executable_path_os()
 context::try_executable_path_os()
 arg_count()
-arg(index)
+arg(ref mut zone, index)
+arg_text(index)
 has_arg(index)
 ```
 
 `has_arg(index)` is true only for `0 <= index < context::argc()`. It is the
-preferred low-level guard before reading optional host arguments. `arg(index)`
-returns a lowercase `string`; out-of-range access returns an empty string.
+preferred guard before reading optional host arguments. Natural context APIs
+copy host text into a zone-backed `std::string::String` so callers can keep the
+value after later runtime calls. The `_text` variants expose the raw borrowed
+runtime `string` buffer for compatibility and low-level bridge code.
+Out-of-range raw argument access returns an empty string, while
+`try_arg(ref mut zone, index)` returns `None`.
+
 `user_arg_count()` excludes `argv[0]`, `has_user_args()` is its boolean form,
 and `thread_id()` returns the Ari runtime thread id. The main thread is `0`, so
 `is_main_thread()` is true for current executable builds.
-`context::cwd()` and `context::executable_path()` are startup snapshots captured
-by `@ari_entry`; use `std::env::current_dir(ref mut zone)` when code needs the
-current process directory after possible `chdir` calls.
+`context::cwd(ref mut zone)` and `context::executable_path(ref mut zone)` are
+startup snapshots captured by `@ari_entry`; use
+`std::env::current_dir(ref mut zone)` when code needs the current process
+directory after possible `chdir` calls.
 
 Application code should usually use the user-facing `std::env` wrappers:
 
@@ -2386,21 +2408,24 @@ io::write_byte(value)
 io::write_bytes(values)
 io::newline()
 io::read_byte()
-io::read_line()
+io::read_line(ref mut zone)
+io::read_line_text()
 io::read_line_owned(ref mut zone)
 
 input::read_byte()
 input::try_read_byte()
-input::line()
+input::line(ref mut zone)
+input::line_text()
 input::owned_line(ref mut zone)
 ```
 
 `read_byte` returns an `i64` byte value or `-1` at EOF; OS-backed adapters use
 values below `-1` for host read failures. `input::try_read_byte()` wraps the
-stdin shape as `Option[u8]`. `write_bytes`
-writes every byte in a `Slice[u8]` and returns the byte count attempted.
-Borrowed line input uses a reusable runtime buffer; use the owned forms when
-the line must survive later input reads.
+stdin shape as `Option[u8]`. `write_bytes` writes every byte in a `Slice[u8]`
+and returns the byte count attempted. Natural line input APIs require a zone
+and return `std::string::String`. `io::read_line_text()` and
+`input::line_text()` expose the reusable borrowed runtime buffer for raw
+compatibility code.
 
 `io::Cursor` implements `Reader` and `Seek` over a borrowed `Slice[u8]`.
 `io::read_one(ref mut reader)` converts one low-level byte read into
@@ -4416,8 +4441,10 @@ parse::ParseError
 parse::ParseErrorKind
 parse_error.kind()
 parse_error.offset()
-parse_error.name()
-parse_error.message()
+parse_error.name(ref mut zone)
+parse_error.message(ref mut zone)
+parse_error.name_text()
+parse_error.message_text()
 parse_error.is_empty_input()
 parse_error.is_expected_digit()
 parse_error.is_invalid_radix()

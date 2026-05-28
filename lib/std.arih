@@ -838,17 +838,19 @@ pub trait IntoIterator[T] {
 }
 
 pub trait ToString {
-  fn to_string(self) -> string;
+  fn to_string(self, zone: ref mut Zone) -> std::string::String;
 }
 
 pub trait ToOwned {
 }
 
-pub use io::{write_i64, write_u64, write_bool, write_byte, write_bytes, newline, read_byte, read_line, read_line_owned};
+pub use io::{write_i64, write_u64, write_bool, write_byte, write_bytes, newline, read_byte, read_line, read_line_text, read_line_owned};
 pub use input::line as input;
+pub use input::line_text as input_text;
 pub use input::owned_line as input_owned;
 pub use context::argc as arg_count;
-pub use context::arg as arg;
+pub use context::arg_text;
+pub use env::arg as arg;
 pub use context::has_arg;
 pub use mem::{size_of, align_of, ptr_offset, ptr_add, ptr_load, ptr_store, replace, swap};
 pub use cmp::{min, max, clamp, is_between, min_by, max_by, clamp_by, is_between_by};

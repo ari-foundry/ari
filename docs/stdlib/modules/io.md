@@ -162,7 +162,8 @@ io::write_byte(value: u8) -> i64
 io::write_bytes(values: Slice[u8]) -> i64
 io::newline() -> i64
 io::read_byte() -> i64
-io::read_line() -> string
+io::read_line(ref mut Zone) -> std::string::String
+io::read_line_text() -> string
 io::read_line_owned(ref mut Zone) -> std::string::String
 
 write_i64(value)
@@ -172,7 +173,8 @@ write_byte(value)
 write_bytes(values)
 newline()
 read_byte()
-read_line()
+read_line(ref mut zone)
+read_line_text()
 read_line_owned(ref mut zone)
 ```
 

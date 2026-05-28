@@ -201,13 +201,16 @@ fn std::collections::string_hash_map[V]|check-prelude std-collections-string-map
 fn std::collections::string_hash_set|check-prelude std-collections-string-map String HashSet constructor using content hashing; docs/stdlib/modules/collections.md
 fn std::collections::tree_map[K, V]|check-prelude std-collections-tree explicit-comparator tree map constructor; docs/stdlib/modules/collections.md
 fn std::collections::tree_set[T]|check-prelude std-collections-tree explicit-comparator tree set constructor; docs/stdlib/modules/collections.md
-fn std::context::arg|check-prelude context tests; docs/dev/test-matrix.md Context runtime row
+fn std::context::arg|check-prelude context tests; docs/stdlib/modules/context.md
+fn std::context::arg_text|check-prelude context args raw borrowed argument hook; docs/stdlib/modules/context.md
 fn std::context::argc|check-prelude context tests; docs/dev/test-matrix.md Context runtime row
 fn std::context::cwd|check-prelude std-context-args startup current-directory snapshot hook; docs/stdlib/modules/context.md
 fn std::context::cwd_os|check-prelude std-context-args startup current-directory OS-string view; docs/stdlib/modules/context.md
 fn std::context::cwd_path|check-prelude std-context-args startup current-directory path-byte view; docs/stdlib/modules/context.md
+fn std::context::cwd_text|check-prelude std-context-args raw startup current-directory text hook; docs/stdlib/modules/context.md
 fn std::context::executable_path|check-prelude std-context-args startup executable-path snapshot hook; docs/stdlib/modules/context.md
 fn std::context::executable_path_os|check-prelude std-context-args startup executable-path OS-string view; docs/stdlib/modules/context.md
+fn std::context::executable_path_text|check-prelude std-context-args raw startup executable-path text hook; docs/stdlib/modules/context.md
 fn std::context::has_arg|std context args tests; docs/stdlib/modules/context.md
 fn std::context::has_args|check-prelude std-context-args source context predicate; docs/stdlib/modules/context.md
 fn std::context::has_cwd|check-prelude std-context-args source startup cwd predicate; docs/stdlib/modules/context.md
@@ -215,10 +218,14 @@ fn std::context::has_executable_path|check-prelude std-context-args source start
 fn std::context::has_user_args|check-prelude std-context-args source user argument predicate; docs/stdlib/modules/context.md
 fn std::context::is_main_thread|check-prelude std-context-args source thread predicate; docs/stdlib/modules/context.md
 fn std::context::thread_id|check-prelude std-context-args context thread id hook; docs/stdlib/modules/context.md
+fn std::context::try_arg|check-prelude context args optional owned argument helper; docs/stdlib/modules/context.md
+fn std::context::try_arg_text|check-prelude context args optional raw borrowed argument helper; docs/stdlib/modules/context.md
 fn std::context::try_cwd|check-prelude std-context-args optional startup cwd helper; docs/stdlib/modules/context.md
 fn std::context::try_cwd_os|check-prelude std-context-args optional startup cwd OS-string helper; docs/stdlib/modules/context.md
+fn std::context::try_cwd_text|check-prelude std-context-args optional raw startup cwd text helper; docs/stdlib/modules/context.md
 fn std::context::try_executable_path|check-prelude std-context-args optional startup executable-path helper; docs/stdlib/modules/context.md
 fn std::context::try_executable_path_os|check-prelude std-context-args optional startup executable-path OS-string helper; docs/stdlib/modules/context.md
+fn std::context::try_executable_path_text|check-prelude std-context-args optional raw startup executable-path text helper; docs/stdlib/modules/context.md
 fn std::context::user_arg_count|check-prelude std-context-args source user argument count; docs/stdlib/modules/context.md
 fn std::convert::from[T, U: From[T]|std convert value helper tests; docs/stdlib/api-reference.md Conversion section
 fn std::convert::identity[T]|std convert value helper tests; docs/stdlib/api-reference.md Conversion section
@@ -393,8 +400,10 @@ fn std::error::kind|check-prelude std-error-basic error kind extractor; docs/std
 fn std::error::map_errno[T]|check-prelude std-error-integration Result[T, errno] to Result[T, Error] bridge; docs/stdlib/modules/error.md
 fn std::error::map_os_code[T]|check-prelude std-error-integration Result[T, OS code] to Result[T, Error] bridge; docs/stdlib/modules/error.md
 fn std::error::map_raw[T]|check-prelude std-error-basic Result[T, i64] to Result[T, Error] compatibility bridge; docs/stdlib/modules/error.md
-fn std::error::message|check-prelude std-error-basic stable generic message helper; docs/stdlib/modules/error.md
-fn std::error::name|check-prelude std-error-basic error-kind name helper; docs/stdlib/modules/error.md
+fn std::error::message|check-prelude std-error-basic stable owned generic message helper; docs/stdlib/modules/error.md
+fn std::error::message_text|check-prelude std-error-basic raw generic message compatibility helper; docs/stdlib/modules/error.md
+fn std::error::name|check-prelude std-error-basic owned error-kind name helper; docs/stdlib/modules/error.md
+fn std::error::name_text|check-prelude std-error-basic raw error-kind name compatibility helper; docs/stdlib/modules/error.md
 fn std::error::new|check-prelude std-error-basic error constructor without platform code; docs/stdlib/modules/error.md
 fn std::error::raw|check-prelude std-error-basic compact raw error representation helper; docs/stdlib/modules/error.md
 fn std::error::to_raw[T]|check-prelude std-error-basic Result[T, Error] to Result[T, i64] compatibility bridge; docs/stdlib/modules/error.md
@@ -701,6 +710,7 @@ fn std::hash::write_u32|check-prelude std-hash-integer-widths primitive unsigned
 fn std::hash::write_u64|check-prelude std-hash-basic primitive unsigned integer feed helper; docs/stdlib/modules/hash.md
 fn std::hash::write_u8|check-prelude std-hash-integer-widths primitive unsigned 8-bit feed helper; docs/stdlib/modules/hash.md
 fn std::input::line|prelude input/read_line tests; docs/dev/test-matrix.md Prelude row
+fn std::input::line_text|prelude input/read_line tests raw borrowed line hook; docs/stdlib/modules/input.md
 fn std::input::owned_line|prelude owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 fn std::input::read_byte|prelude byte input tests; docs/dev/test-matrix.md Prelude row
 fn std::input::try_read_byte|std input byte option tests; docs/stdlib/modules/input.md
@@ -732,6 +742,7 @@ fn std::io::read_exact_unchecked[R: Reader]|check-prelude std-io-result bool com
 fn std::io::read_line|prelude read_line/input tests; docs/dev/test-matrix.md Prelude row
 fn std::io::read_line_from[R: Reader]|check-prelude std-io-read-to-string Result-returning generic line reader helper; docs/stdlib/modules/io.md
 fn std::io::read_line_owned|prelude owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
+fn std::io::read_line_text|prelude read_line/input tests raw borrowed line hook; docs/stdlib/modules/io.md
 fn std::io::read_one[R: Reader]|check-prelude std-io-result generic one-byte read status helper; docs/stdlib/modules/io.md
 fn std::io::read_to_string[R: Reader]|check-prelude std-io-read-to-string Result-returning generic Reader whole-stream owned String collector; docs/stdlib/modules/io.md
 fn std::io::read_to_string_unchecked[R: Reader]|check-prelude std-io-read-to-string unchecked generic Reader whole-stream owned String collector; docs/stdlib/modules/io.md
@@ -773,7 +784,8 @@ fn std::log::enabled|check-prelude std-log-basic level threshold predicate; docs
 fn std::log::error|check-prelude std-log-basic error-level string message helper; docs/stdlib/modules/log.md
 fn std::log::info|check-prelude std-log-basic info-level string message helper; docs/stdlib/modules/log.md
 fn std::log::message|check-prelude std-log-basic level-prefixed string stderr logging; docs/stdlib/modules/log.md
-fn std::log::name|check-prelude std-log-basic level label helper; docs/stdlib/modules/log.md
+fn std::log::name|check-prelude std-log-basic owned level label helper; docs/stdlib/modules/log.md
+fn std::log::name_text|check-prelude std-log-basic raw level label compatibility helper; docs/stdlib/modules/log.md
 fn std::log::rank|check-prelude std-log-basic level ordering helper; docs/stdlib/modules/log.md
 fn std::log::trace|check-prelude std-log-basic trace-level string message helper; docs/stdlib/modules/log.md
 fn std::log::warn|check-prelude std-log-basic warn-level string message helper; docs/stdlib/modules/log.md
@@ -1878,8 +1890,10 @@ method std::encoding::CodecError::is_invalid_byte|check-prelude std-encoding-cod
 method std::encoding::CodecError::is_invalid_length|check-prelude std-encoding-codec invalid codec length predicate; docs/stdlib/modules/encoding.md
 method std::encoding::CodecError::is_invalid_padding|check-prelude std-encoding-codec invalid codec padding predicate; docs/stdlib/modules/encoding.md
 method std::encoding::CodecError::kind|check-prelude std-encoding-codec codec failure kind accessor; docs/stdlib/modules/encoding.md
-method std::encoding::CodecError::message|check-prelude std-encoding-codec stable codec diagnostic message; docs/stdlib/modules/encoding.md
-method std::encoding::CodecError::name|check-prelude std-encoding-codec stable codec diagnostic name; docs/stdlib/modules/encoding.md
+method std::encoding::CodecError::message|check-prelude std-encoding-codec owned codec diagnostic message; docs/stdlib/modules/encoding.md
+method std::encoding::CodecError::message_text|check-prelude std-encoding-codec raw codec diagnostic message; docs/stdlib/modules/encoding.md
+method std::encoding::CodecError::name|check-prelude std-encoding-codec owned codec diagnostic name; docs/stdlib/modules/encoding.md
+method std::encoding::CodecError::name_text|check-prelude std-encoding-codec raw codec diagnostic name; docs/stdlib/modules/encoding.md
 method std::encoding::Utf8Char::len|check-prelude std-encoding-utf8-codepoints decoded UTF-8 byte length accessor; docs/stdlib/modules/encoding.md
 method std::encoding::Utf8Char::next_index|check-prelude std-encoding-utf8-codepoints decoded UTF-8 next byte offset accessor; docs/stdlib/modules/encoding.md
 method std::encoding::Utf8Char::scalar|check-prelude std-encoding-utf8-codepoints decoded Unicode scalar accessor; docs/stdlib/modules/encoding.md
@@ -1892,8 +1906,10 @@ method std::encoding::Utf8Error::is_overlong|check-prelude std-encoding-text UTF
 method std::encoding::Utf8Error::is_surrogate|check-prelude std-encoding-text UTF-8 surrogate scalar predicate; docs/stdlib/modules/encoding.md
 method std::encoding::Utf8Error::is_unexpected_end|check-prelude std-encoding-text UTF-8 truncated-sequence predicate; docs/stdlib/modules/encoding.md
 method std::encoding::Utf8Error::kind|check-prelude std-encoding-text UTF-8 failure kind accessor; docs/stdlib/modules/encoding.md
-method std::encoding::Utf8Error::message|check-prelude std-encoding-text stable UTF-8 diagnostic message; docs/stdlib/modules/encoding.md
-method std::encoding::Utf8Error::name|check-prelude std-encoding-text stable UTF-8 diagnostic name; docs/stdlib/modules/encoding.md
+method std::encoding::Utf8Error::message|check-prelude std-encoding-text owned UTF-8 diagnostic message; docs/stdlib/modules/encoding.md
+method std::encoding::Utf8Error::message_text|check-prelude std-encoding-text raw UTF-8 diagnostic message; docs/stdlib/modules/encoding.md
+method std::encoding::Utf8Error::name|check-prelude std-encoding-text owned UTF-8 diagnostic name; docs/stdlib/modules/encoding.md
+method std::encoding::Utf8Error::name_text|check-prelude std-encoding-text raw UTF-8 diagnostic name; docs/stdlib/modules/encoding.md
 method std::error::Error::code|check-prelude std-error-basic error platform code method; docs/stdlib/modules/error.md
 method std::error::Error::is_connection_refused|check-prelude std-error-integration connection-refused predicate method; docs/stdlib/modules/error.md
 method std::error::Error::is_interrupted|check-prelude std-error-basic interrupted predicate method; docs/stdlib/modules/error.md
@@ -1901,8 +1917,10 @@ method std::error::Error::is_kind|check-prelude std-error-basic error-kind predi
 method std::error::Error::is_not_found|check-prelude std-error-basic not-found predicate method; docs/stdlib/modules/error.md
 method std::error::Error::is_retryable|check-prelude std-error-basic retryable predicate method; docs/stdlib/modules/error.md
 method std::error::Error::kind|check-prelude std-error-basic error kind method; docs/stdlib/modules/error.md
-method std::error::Error::message|check-prelude std-error-basic stable generic message method; docs/stdlib/modules/error.md
-method std::error::Error::name|check-prelude std-error-basic error-kind name method; docs/stdlib/modules/error.md
+method std::error::Error::message|check-prelude std-error-basic stable owned generic message method; docs/stdlib/modules/error.md
+method std::error::Error::message_text|check-prelude std-error-basic raw generic message compatibility method; docs/stdlib/modules/error.md
+method std::error::Error::name|check-prelude std-error-basic owned error-kind name method; docs/stdlib/modules/error.md
+method std::error::Error::name_text|check-prelude std-error-basic raw error-kind name compatibility method; docs/stdlib/modules/error.md
 method std::error::Error::raw|check-prelude std-error-basic compact raw error method; docs/stdlib/modules/error.md
 method std::fs::Dir::close|check-prelude std-fs-read-dir Result-returning directory close method; docs/stdlib/modules/fs.md
 method std::fs::Dir::close_unchecked|check-prelude std-fs-read-dir unchecked directory close compatibility method; docs/stdlib/modules/fs.md
@@ -2441,8 +2459,10 @@ method std::parse::ParseError::is_invalid_sign|check-prelude std-parse-basic par
 method std::parse::ParseError::is_overflow|check-prelude std-parse-basic parse diagnostic overflow predicate; docs/stdlib/modules/parse.md
 method std::parse::ParseError::is_underflow|check-prelude std-parse-basic parse diagnostic underflow predicate; docs/stdlib/modules/parse.md
 method std::parse::ParseError::kind|check-prelude std-parse-basic parse diagnostic kind accessor; docs/stdlib/modules/parse.md
-method std::parse::ParseError::message|check-prelude std-parse-basic parse diagnostic explanation text; docs/stdlib/modules/parse.md
-method std::parse::ParseError::name|check-prelude std-parse-basic parse diagnostic stable label; docs/stdlib/modules/parse.md
+method std::parse::ParseError::message|check-prelude std-parse-basic owned parse diagnostic explanation text; docs/stdlib/modules/parse.md
+method std::parse::ParseError::message_text|check-prelude std-parse-basic raw parse diagnostic explanation text; docs/stdlib/modules/parse.md
+method std::parse::ParseError::name|check-prelude std-parse-basic owned parse diagnostic stable label; docs/stdlib/modules/parse.md
+method std::parse::ParseError::name_text|check-prelude std-parse-basic raw parse diagnostic stable label; docs/stdlib/modules/parse.md
 method std::parse::ParseError::offset|check-prelude std-parse-basic parse diagnostic offset accessor; docs/stdlib/modules/parse.md
 method std::path::Component::as_slice|check-prelude std-path-components borrowed bytes for kinded path component; docs/stdlib/modules/path.md
 method std::path::Component::is_current|check-prelude std-path-components current-directory component predicate; docs/stdlib/modules/path.md
@@ -3607,6 +3627,7 @@ use std::alloc|std root re-export tests; docs/dev/test-matrix.md Prelude and Exp
 use std::alloc_array|std zone raw array allocation root re-export tests; docs/stdlib/modules/zone.md
 use std::arg|std root re-export tests; docs/dev/test-matrix.md Prelude and Context runtime rows
 use std::arg_count|std root re-export tests; docs/dev/test-matrix.md Prelude and Context runtime rows
+use std::arg_text|std root re-export raw argument hook tests; docs/stdlib/modules/context.md
 use std::clamp|std cmp value helper root re-export tests; docs/dev/test-matrix.md Front-end surfaces row
 use std::clamp_by|check-prelude std-cmp-by-helpers comparator-based clamp root re-export; docs/stdlib/modules/cmp.md
 use std::create|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
@@ -3615,6 +3636,7 @@ use std::from_zone|std zone backed handle metadata tests; docs/stdlib/modules/zo
 use std::has_arg|std context args root re-export tests; docs/stdlib/modules/context.md
 use std::input|std root re-export tests; docs/dev/test-matrix.md Prelude row
 use std::input_owned|std root re-export owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
+use std::input_text|std root re-export raw borrowed input hook tests; docs/stdlib/modules/input.md
 use std::is_between|std cmp value helper root re-export tests; docs/stdlib/api-reference.md Comparison section
 use std::is_between_by|check-prelude std-cmp-by-helpers comparator-based range root re-export; docs/stdlib/modules/cmp.md
 use std::iter::DoubleEndedIterator|check-prelude std-iter-double-ended module alias for root supertrait; docs/stdlib/modules/iter.md
@@ -3638,6 +3660,7 @@ use std::range_inclusive|std root re-export tests; docs/dev/test-matrix.md Prelu
 use std::read_byte|std root re-export tests; docs/dev/test-matrix.md Prelude row
 use std::read_line|std root re-export tests; docs/dev/test-matrix.md Prelude row
 use std::read_line_owned|std root re-export owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
+use std::read_line_text|std root re-export raw borrowed read_line hook tests; docs/stdlib/modules/input.md
 use std::replace|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows
 use std::reset|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::size_of|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows

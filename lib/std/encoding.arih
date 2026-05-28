@@ -49,7 +49,7 @@ pub impl std::encoding::CodecError {
     return codec_error_kind_from_id(self.kind_id);
   }
 
-  fn name(self: ref Self) -> string {
+  fn name_text(self: ref Self) -> string {
     match self.kind() {
       InvalidLength => { return "invalid length"; }
       InvalidByte => { return "invalid byte"; }
@@ -57,12 +57,20 @@ pub impl std::encoding::CodecError {
     }
   }
 
-  fn message(self: ref Self) -> string {
+  fn message_text(self: ref Self) -> string {
     match self.kind() {
       InvalidLength => { return "encoded input has an invalid length"; }
       InvalidByte => { return "encoded input contains a byte outside the active alphabet"; }
       InvalidPadding => { return "encoded input has invalid padding placement"; }
     }
+  }
+
+  fn name(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    return std::string::from(zone, self.name_text());
+  }
+
+  fn message(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    return std::string::from(zone, self.message_text());
   }
 
   fn is_invalid_length(self: ref Self) -> bool {
@@ -105,7 +113,7 @@ pub impl std::encoding::Utf8Error {
     return utf8_error_kind_from_id(self.kind_id);
   }
 
-  fn name(self: ref Self) -> string {
+  fn name_text(self: ref Self) -> string {
     match self.kind() {
       InvalidLead => { return "invalid lead byte"; }
       UnexpectedEnd => { return "unexpected end"; }
@@ -116,7 +124,7 @@ pub impl std::encoding::Utf8Error {
     }
   }
 
-  fn message(self: ref Self) -> string {
+  fn message_text(self: ref Self) -> string {
     match self.kind() {
       InvalidLead => { return "UTF-8 sequence starts with an invalid lead byte"; }
       UnexpectedEnd => { return "UTF-8 sequence ends before all continuation bytes are present"; }
@@ -125,6 +133,14 @@ pub impl std::encoding::Utf8Error {
       SurrogateCodePoint => { return "UTF-8 sequence encodes a surrogate code point"; }
       OutOfRangeCodePoint => { return "UTF-8 sequence encodes a value above U+10FFFF"; }
     }
+  }
+
+  fn name(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    return std::string::from(zone, self.name_text());
+  }
+
+  fn message(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    return std::string::from(zone, self.message_text());
   }
 
   fn is_invalid_lead(self: ref Self) -> bool {

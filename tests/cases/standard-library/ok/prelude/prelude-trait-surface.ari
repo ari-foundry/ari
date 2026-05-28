@@ -110,8 +110,8 @@ impl IntoIterator[i64] for Bag {
 }
 
 impl ToString for i64 {
-  fn to_string(self) -> string {
-    return "";
+  fn to_string(self, zone: ref mut Zone) -> std::string::String {
+    return std::string::from(zone, "");
   }
 }
 

@@ -13,6 +13,7 @@ fn maybe_error_value(flag: bool) -> Result[i64, error::Error] {
 
 fn main() -> i64 {
   var score = 0;
+  var zone = zone::create(1024);
 
   let missing = error::from_errno(2);
   if missing.is_not_found() && missing.code() == 2 {
@@ -53,8 +54,13 @@ fn main() -> i64 {
     }
   }
 
-  let name = missing.name() as ptr u8;
+  let name = missing.name_text() as ptr u8;
   if ptr_load(name) == 110u8 {
+    score = score + 1;
+  }
+
+  let owned_name = missing.name(ref mut zone);
+  if owned_name.equals_text("not found") {
     score = score + 1;
   }
 
@@ -92,5 +98,6 @@ fn main() -> i64 {
     }
   }
 
+  zone::destroy(zone);
   return score;
 }

@@ -24,34 +24,34 @@ platform notes.
 
 ## Summary
 
-- API entries: `3641`
+- API entries: `3664`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
 | `alloc` | 923 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 930 | stable candidate |
-| `hosted` | 1585 | platform-backed |
+| `core` | 943 | stable candidate |
+| `hosted` | 1595 | platform-backed |
 | `platform` | 167 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1267 |
-| `method` | 1903 |
+| `fn` | 1279 |
+| `method` | 1911 |
 | `module` | 39 |
 | `struct` | 197 |
 | `trait` | 39 |
 | `trait-method` | 41 |
 | `type` | 22 |
-| `use` | 101 |
+| `use` | 104 |
 
 ## Modules
 
 | Module | Tier | Entries |
 | --- | --- | ---: |
-| `std` | `core` | 298 |
+| `std` | `core` | 301 |
 | `std::algo` | `alloc` | 41 |
 | `std::ascii` | `core` | 33 |
 | `std::bits` | `core` | 26 |
@@ -60,24 +60,24 @@ platform notes.
 | `std::cell` | `alloc` | 44 |
 | `std::cmp` | `core` | 38 |
 | `std::collections` | `alloc` | 415 |
-| `std::context` | `hosted` | 20 |
+| `std::context` | `hosted` | 27 |
 | `std::convert` | `core` | 14 |
-| `std::encoding` | `core` | 98 |
+| `std::encoding` | `core` | 102 |
 | `std::env` | `hosted` | 87 |
-| `std::error` | `core` | 37 |
+| `std::error` | `core` | 41 |
 | `std::fmt` | `core` | 86 |
 | `std::fs` | `hosted` | 325 |
 | `std::hash` | `alloc` | 24 |
-| `std::input` | `hosted` | 6 |
-| `std::io` | `hosted` | 115 |
+| `std::input` | `hosted` | 7 |
+| `std::io` | `hosted` | 116 |
 | `std::iter` | `alloc` | 41 |
-| `std::log` | `hosted` | 12 |
+| `std::log` | `hosted` | 13 |
 | `std::math` | `core` | 39 |
 | `std::mem` | `core` | 13 |
 | `std::net` | `hosted` | 375 |
 | `std::option` | `core` | 12 |
 | `std::os` | `platform` | 62 |
-| `std::parse` | `core` | 101 |
+| `std::parse` | `core` | 103 |
 | `std::path` | `core` | 123 |
 | `std::process` | `hosted` | 189 |
 | `std::random` | `alloc/hosted` | 36 |
@@ -397,6 +397,7 @@ Tier: `core`. Stability reading: stable candidate.
 | `use std::alloc_array` | std zone raw array allocation root re-export tests; docs/stdlib/modules/zone.md |
 | `use std::arg` | std root re-export tests; docs/dev/test-matrix.md Prelude and Context runtime rows |
 | `use std::arg_count` | std root re-export tests; docs/dev/test-matrix.md Prelude and Context runtime rows |
+| `use std::arg_text` | std root re-export raw argument hook tests; docs/stdlib/modules/context.md |
 | `use std::clamp` | std cmp value helper root re-export tests; docs/dev/test-matrix.md Front-end surfaces row |
 | `use std::clamp_by` | check-prelude std-cmp-by-helpers comparator-based clamp root re-export; docs/stdlib/modules/cmp.md |
 | `use std::create` | std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows |
@@ -404,6 +405,7 @@ Tier: `core`. Stability reading: stable candidate.
 | `use std::from_zone` | std zone backed handle metadata tests; docs/stdlib/modules/zone.md |
 | `use std::has_arg` | std context args root re-export tests; docs/stdlib/modules/context.md |
 | `use std::input_owned` | std root re-export owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows |
+| `use std::input_text` | std root re-export raw borrowed input hook tests; docs/stdlib/modules/input.md |
 | `use std::is_between` | std cmp value helper root re-export tests; docs/stdlib/api-reference.md Comparison section |
 | `use std::is_between_by` | check-prelude std-cmp-by-helpers comparator-based range root re-export; docs/stdlib/modules/cmp.md |
 | `use std::max` | std cmp value helper root re-export tests; docs/dev/test-matrix.md Front-end surfaces row |
@@ -424,6 +426,7 @@ Tier: `core`. Stability reading: stable candidate.
 | `use std::read_byte` | std root re-export tests; docs/dev/test-matrix.md Prelude row |
 | `use std::read_line` | std root re-export tests; docs/dev/test-matrix.md Prelude row |
 | `use std::read_line_owned` | std root re-export owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows |
+| `use std::read_line_text` | std root re-export raw borrowed read_line hook tests; docs/stdlib/modules/input.md |
 | `use std::replace` | std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows |
 | `use std::reset` | std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows |
 | `use std::size_of` | std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows |
@@ -1279,13 +1282,16 @@ Tier: `hosted`. Stability reading: platform-backed.
 
 | API | Coverage note |
 | --- | --- |
-| `fn std::context::arg` | check-prelude context tests; docs/dev/test-matrix.md Context runtime row |
+| `fn std::context::arg` | check-prelude context tests; docs/stdlib/modules/context.md |
+| `fn std::context::arg_text` | check-prelude context args raw borrowed argument hook; docs/stdlib/modules/context.md |
 | `fn std::context::argc` | check-prelude context tests; docs/dev/test-matrix.md Context runtime row |
 | `fn std::context::cwd` | check-prelude std-context-args startup current-directory snapshot hook; docs/stdlib/modules/context.md |
 | `fn std::context::cwd_os` | check-prelude std-context-args startup current-directory OS-string view; docs/stdlib/modules/context.md |
 | `fn std::context::cwd_path` | check-prelude std-context-args startup current-directory path-byte view; docs/stdlib/modules/context.md |
+| `fn std::context::cwd_text` | check-prelude std-context-args raw startup current-directory text hook; docs/stdlib/modules/context.md |
 | `fn std::context::executable_path` | check-prelude std-context-args startup executable-path snapshot hook; docs/stdlib/modules/context.md |
 | `fn std::context::executable_path_os` | check-prelude std-context-args startup executable-path OS-string view; docs/stdlib/modules/context.md |
+| `fn std::context::executable_path_text` | check-prelude std-context-args raw startup executable-path text hook; docs/stdlib/modules/context.md |
 | `fn std::context::has_arg` | std context args tests; docs/stdlib/modules/context.md |
 | `fn std::context::has_args` | check-prelude std-context-args source context predicate; docs/stdlib/modules/context.md |
 | `fn std::context::has_cwd` | check-prelude std-context-args source startup cwd predicate; docs/stdlib/modules/context.md |
@@ -1293,10 +1299,14 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::context::has_user_args` | check-prelude std-context-args source user argument predicate; docs/stdlib/modules/context.md |
 | `fn std::context::is_main_thread` | check-prelude std-context-args source thread predicate; docs/stdlib/modules/context.md |
 | `fn std::context::thread_id` | check-prelude std-context-args context thread id hook; docs/stdlib/modules/context.md |
+| `fn std::context::try_arg` | check-prelude context args optional owned argument helper; docs/stdlib/modules/context.md |
+| `fn std::context::try_arg_text` | check-prelude context args optional raw borrowed argument helper; docs/stdlib/modules/context.md |
 | `fn std::context::try_cwd` | check-prelude std-context-args optional startup cwd helper; docs/stdlib/modules/context.md |
 | `fn std::context::try_cwd_os` | check-prelude std-context-args optional startup cwd OS-string helper; docs/stdlib/modules/context.md |
+| `fn std::context::try_cwd_text` | check-prelude std-context-args optional raw startup cwd text helper; docs/stdlib/modules/context.md |
 | `fn std::context::try_executable_path` | check-prelude std-context-args optional startup executable-path helper; docs/stdlib/modules/context.md |
 | `fn std::context::try_executable_path_os` | check-prelude std-context-args optional startup executable-path OS-string helper; docs/stdlib/modules/context.md |
+| `fn std::context::try_executable_path_text` | check-prelude std-context-args optional raw startup executable-path text helper; docs/stdlib/modules/context.md |
 | `fn std::context::user_arg_count` | check-prelude std-context-args source user argument count; docs/stdlib/modules/context.md |
 
 ### module
@@ -1439,8 +1449,10 @@ Tier: `core`. Stability reading: stable candidate.
 | `method std::encoding::CodecError::is_invalid_length` | check-prelude std-encoding-codec invalid codec length predicate; docs/stdlib/modules/encoding.md |
 | `method std::encoding::CodecError::is_invalid_padding` | check-prelude std-encoding-codec invalid codec padding predicate; docs/stdlib/modules/encoding.md |
 | `method std::encoding::CodecError::kind` | check-prelude std-encoding-codec codec failure kind accessor; docs/stdlib/modules/encoding.md |
-| `method std::encoding::CodecError::message` | check-prelude std-encoding-codec stable codec diagnostic message; docs/stdlib/modules/encoding.md |
-| `method std::encoding::CodecError::name` | check-prelude std-encoding-codec stable codec diagnostic name; docs/stdlib/modules/encoding.md |
+| `method std::encoding::CodecError::message` | check-prelude std-encoding-codec owned codec diagnostic message; docs/stdlib/modules/encoding.md |
+| `method std::encoding::CodecError::message_text` | check-prelude std-encoding-codec raw codec diagnostic message; docs/stdlib/modules/encoding.md |
+| `method std::encoding::CodecError::name` | check-prelude std-encoding-codec owned codec diagnostic name; docs/stdlib/modules/encoding.md |
+| `method std::encoding::CodecError::name_text` | check-prelude std-encoding-codec raw codec diagnostic name; docs/stdlib/modules/encoding.md |
 | `method std::encoding::Utf8Char::len` | check-prelude std-encoding-utf8-codepoints decoded UTF-8 byte length accessor; docs/stdlib/modules/encoding.md |
 | `method std::encoding::Utf8Char::next_index` | check-prelude std-encoding-utf8-codepoints decoded UTF-8 next byte offset accessor; docs/stdlib/modules/encoding.md |
 | `method std::encoding::Utf8Char::scalar` | check-prelude std-encoding-utf8-codepoints decoded Unicode scalar accessor; docs/stdlib/modules/encoding.md |
@@ -1453,8 +1465,10 @@ Tier: `core`. Stability reading: stable candidate.
 | `method std::encoding::Utf8Error::is_surrogate` | check-prelude std-encoding-text UTF-8 surrogate scalar predicate; docs/stdlib/modules/encoding.md |
 | `method std::encoding::Utf8Error::is_unexpected_end` | check-prelude std-encoding-text UTF-8 truncated-sequence predicate; docs/stdlib/modules/encoding.md |
 | `method std::encoding::Utf8Error::kind` | check-prelude std-encoding-text UTF-8 failure kind accessor; docs/stdlib/modules/encoding.md |
-| `method std::encoding::Utf8Error::message` | check-prelude std-encoding-text stable UTF-8 diagnostic message; docs/stdlib/modules/encoding.md |
-| `method std::encoding::Utf8Error::name` | check-prelude std-encoding-text stable UTF-8 diagnostic name; docs/stdlib/modules/encoding.md |
+| `method std::encoding::Utf8Error::message` | check-prelude std-encoding-text owned UTF-8 diagnostic message; docs/stdlib/modules/encoding.md |
+| `method std::encoding::Utf8Error::message_text` | check-prelude std-encoding-text raw UTF-8 diagnostic message; docs/stdlib/modules/encoding.md |
+| `method std::encoding::Utf8Error::name` | check-prelude std-encoding-text owned UTF-8 diagnostic name; docs/stdlib/modules/encoding.md |
+| `method std::encoding::Utf8Error::name_text` | check-prelude std-encoding-text raw UTF-8 diagnostic name; docs/stdlib/modules/encoding.md |
 
 ### module
 
@@ -1603,8 +1617,10 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::error::map_errno[T]` | check-prelude std-error-integration Result[T, errno] to Result[T, Error] bridge; docs/stdlib/modules/error.md |
 | `fn std::error::map_os_code[T]` | check-prelude std-error-integration Result[T, OS code] to Result[T, Error] bridge; docs/stdlib/modules/error.md |
 | `fn std::error::map_raw[T]` | check-prelude std-error-basic Result[T, i64] to Result[T, Error] compatibility bridge; docs/stdlib/modules/error.md |
-| `fn std::error::message` | check-prelude std-error-basic stable generic message helper; docs/stdlib/modules/error.md |
-| `fn std::error::name` | check-prelude std-error-basic error-kind name helper; docs/stdlib/modules/error.md |
+| `fn std::error::message` | check-prelude std-error-basic stable owned generic message helper; docs/stdlib/modules/error.md |
+| `fn std::error::message_text` | check-prelude std-error-basic raw generic message compatibility helper; docs/stdlib/modules/error.md |
+| `fn std::error::name` | check-prelude std-error-basic owned error-kind name helper; docs/stdlib/modules/error.md |
+| `fn std::error::name_text` | check-prelude std-error-basic raw error-kind name compatibility helper; docs/stdlib/modules/error.md |
 | `fn std::error::new` | check-prelude std-error-basic error constructor without platform code; docs/stdlib/modules/error.md |
 | `fn std::error::raw` | check-prelude std-error-basic compact raw error representation helper; docs/stdlib/modules/error.md |
 | `fn std::error::to_raw[T]` | check-prelude std-error-basic Result[T, Error] to Result[T, i64] compatibility bridge; docs/stdlib/modules/error.md |
@@ -1625,8 +1641,10 @@ Tier: `core`. Stability reading: stable candidate.
 | `method std::error::Error::is_not_found` | check-prelude std-error-basic not-found predicate method; docs/stdlib/modules/error.md |
 | `method std::error::Error::is_retryable` | check-prelude std-error-basic retryable predicate method; docs/stdlib/modules/error.md |
 | `method std::error::Error::kind` | check-prelude std-error-basic error kind method; docs/stdlib/modules/error.md |
-| `method std::error::Error::message` | check-prelude std-error-basic stable generic message method; docs/stdlib/modules/error.md |
-| `method std::error::Error::name` | check-prelude std-error-basic error-kind name method; docs/stdlib/modules/error.md |
+| `method std::error::Error::message` | check-prelude std-error-basic stable owned generic message method; docs/stdlib/modules/error.md |
+| `method std::error::Error::message_text` | check-prelude std-error-basic raw generic message compatibility method; docs/stdlib/modules/error.md |
+| `method std::error::Error::name` | check-prelude std-error-basic owned error-kind name method; docs/stdlib/modules/error.md |
+| `method std::error::Error::name_text` | check-prelude std-error-basic raw error-kind name compatibility method; docs/stdlib/modules/error.md |
 | `method std::error::Error::raw` | check-prelude std-error-basic compact raw error method; docs/stdlib/modules/error.md |
 
 ### module
@@ -2183,6 +2201,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | API | Coverage note |
 | --- | --- |
 | `fn std::input::line` | prelude input/read_line tests; docs/dev/test-matrix.md Prelude row |
+| `fn std::input::line_text` | prelude input/read_line tests raw borrowed line hook; docs/stdlib/modules/input.md |
 | `fn std::input::owned_line` | prelude owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows |
 | `fn std::input::read_byte` | prelude byte input tests; docs/dev/test-matrix.md Prelude row |
 | `fn std::input::try_read_byte` | std input byte option tests; docs/stdlib/modules/input.md |
@@ -2241,6 +2260,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::io::read_line` | prelude read_line/input tests; docs/dev/test-matrix.md Prelude row |
 | `fn std::io::read_line_from[R: Reader]` | check-prelude std-io-read-to-string Result-returning generic line reader helper; docs/stdlib/modules/io.md |
 | `fn std::io::read_line_owned` | prelude owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows |
+| `fn std::io::read_line_text` | prelude read_line/input tests raw borrowed line hook; docs/stdlib/modules/io.md |
 | `fn std::io::read_one[R: Reader]` | check-prelude std-io-result generic one-byte read status helper; docs/stdlib/modules/io.md |
 | `fn std::io::read_to_string[R: Reader]` | check-prelude std-io-read-to-string Result-returning generic Reader whole-stream owned String collector; docs/stdlib/modules/io.md |
 | `fn std::io::read_to_string_unchecked[R: Reader]` | check-prelude std-io-read-to-string unchecked generic Reader whole-stream owned String collector; docs/stdlib/modules/io.md |
@@ -2452,7 +2472,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::log::error` | check-prelude std-log-basic error-level string message helper; docs/stdlib/modules/log.md |
 | `fn std::log::info` | check-prelude std-log-basic info-level string message helper; docs/stdlib/modules/log.md |
 | `fn std::log::message` | check-prelude std-log-basic level-prefixed string stderr logging; docs/stdlib/modules/log.md |
-| `fn std::log::name` | check-prelude std-log-basic level label helper; docs/stdlib/modules/log.md |
+| `fn std::log::name` | check-prelude std-log-basic owned level label helper; docs/stdlib/modules/log.md |
+| `fn std::log::name_text` | check-prelude std-log-basic raw level label compatibility helper; docs/stdlib/modules/log.md |
 | `fn std::log::rank` | check-prelude std-log-basic level ordering helper; docs/stdlib/modules/log.md |
 | `fn std::log::trace` | check-prelude std-log-basic trace-level string message helper; docs/stdlib/modules/log.md |
 | `fn std::log::warn` | check-prelude std-log-basic warn-level string message helper; docs/stdlib/modules/log.md |
@@ -3195,8 +3216,10 @@ Tier: `core`. Stability reading: stable candidate.
 | `method std::parse::ParseError::is_overflow` | check-prelude std-parse-basic parse diagnostic overflow predicate; docs/stdlib/modules/parse.md |
 | `method std::parse::ParseError::is_underflow` | check-prelude std-parse-basic parse diagnostic underflow predicate; docs/stdlib/modules/parse.md |
 | `method std::parse::ParseError::kind` | check-prelude std-parse-basic parse diagnostic kind accessor; docs/stdlib/modules/parse.md |
-| `method std::parse::ParseError::message` | check-prelude std-parse-basic parse diagnostic explanation text; docs/stdlib/modules/parse.md |
-| `method std::parse::ParseError::name` | check-prelude std-parse-basic parse diagnostic stable label; docs/stdlib/modules/parse.md |
+| `method std::parse::ParseError::message` | check-prelude std-parse-basic owned parse diagnostic explanation text; docs/stdlib/modules/parse.md |
+| `method std::parse::ParseError::message_text` | check-prelude std-parse-basic raw parse diagnostic explanation text; docs/stdlib/modules/parse.md |
+| `method std::parse::ParseError::name` | check-prelude std-parse-basic owned parse diagnostic stable label; docs/stdlib/modules/parse.md |
+| `method std::parse::ParseError::name_text` | check-prelude std-parse-basic raw parse diagnostic stable label; docs/stdlib/modules/parse.md |
 | `method std::parse::ParseError::offset` | check-prelude std-parse-basic parse diagnostic offset accessor; docs/stdlib/modules/parse.md |
 
 ### module

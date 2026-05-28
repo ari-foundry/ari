@@ -42,10 +42,10 @@ fn check_utf8() -> bool {
         if !overlong_reason.is_overlong() || overlong_reason.index() != 0 || overlong_reason.byte() != 192u8 {
           return false;
         }
-        if !std::string::bytes(overlong_reason.name()).equals("overlong encoding") {
+        if !std::string::bytes(overlong_reason.name_text()).equals("overlong encoding") {
           return false;
         }
-        if !std::string::bytes(overlong_reason.message()).equals("UTF-8 sequence uses a longer form than required") {
+        if !std::string::bytes(overlong_reason.message_text()).equals("UTF-8 sequence uses a longer form than required") {
           return false;
         }
         match encoding::validate_utf8(overlong.as_slice()) {
@@ -97,7 +97,7 @@ fn check_utf8() -> bool {
         if !continuation_reason.is_invalid_continuation() || continuation_reason.index() != 1 || continuation_reason.byte() != 40u8 {
           return false;
         }
-        if !std::string::bytes(continuation_reason.name()).equals("invalid continuation byte") {
+        if !std::string::bytes(continuation_reason.name_text()).equals("invalid continuation byte") {
           return false;
         }
       }

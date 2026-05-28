@@ -2,8 +2,9 @@
 
 `std::input` is the friendly stdin-facing layer. It sits beside lower-level
 `std::io` hooks and gives programs names that read like input operations:
-`input::line()` for borrowed line input, `input::owned_line(...)` for an owned
-copy, and `input::try_read_byte()` when EOF should be handled with `Option`.
+`input::line(ref mut zone)` for owned line input, `input::line_text()` for the
+borrowed runtime hook, and `input::try_read_byte()` when EOF should be handled
+with `Option`.
 
 The module is intentionally narrow. It does not manage files, terminals,
 environment variables, or process handles. `std::env` owns process argument
@@ -15,13 +16,16 @@ helpers today, and future OS-facing modules such as `std::fs` and
 ```ari
 input::read_byte() -> i64
 input::try_read_byte() -> Option[u8]
-input::line() -> string
+input::line(ref mut Zone) -> std::string::String
+input::line_text() -> string
 input::owned_line(ref mut Zone) -> std::string::String
 
 read_byte() -> i64
-read_line() -> string
+read_line(ref mut Zone) -> std::string::String
+read_line_text() -> string
 read_line_owned(ref mut Zone) -> std::string::String
-input() -> string
+input(ref mut Zone) -> std::string::String
+input_text() -> string
 input_owned(ref mut Zone) -> std::string::String
 ```
 
@@ -31,12 +35,15 @@ input_owned(ref mut Zone) -> std::string::String
 `input::try_read_byte()` is the source helper to prefer in ordinary Ari code.
 It returns `Some(byte)` for a byte and `None` at EOF.
 
-`input::line()` returns a borrowed lowercase `string` backed by an internal
-runtime line buffer. A later line read can overwrite that buffer.
+`input::line(ref mut zone)` copies the line into a zone-backed
+`std::string::String`, so the text survives later input reads as long as the
+zone remains valid. `input(ref mut zone)` is the root alias.
 
-`input::owned_line(ref mut zone)` copies the line into a zone-backed
-`std::string::String`, so the text can survive later input reads as long as the
-zone remains valid.
+`input::line_text()` and `read_line_text()` return a borrowed lowercase
+`string` backed by an internal runtime line buffer. A later line read can
+overwrite that buffer. Keep those names for raw/runtime-boundary code.
+`input::owned_line(ref mut zone)` and `input_owned(ref mut zone)` remain
+compatibility aliases for the owned behavior.
 
 ## Example
 
@@ -57,7 +64,8 @@ fn main() -> i64 {
 
 ```ari
 io::read_byte()
-io::read_line()
+io::read_line(ref mut zone)
+io::read_line_text()
 io::read_line_owned(ref mut zone)
 io::write_i64(value)
 io::write_u64(value)
@@ -85,8 +93,8 @@ generic byte code should accept a `Reader`, `Writer`, or `Seek` implementation.
   names and runtime hook lowering.
 - `tests/cases/standard-library/ok/input/std-input-byte-option.ari` checks
   `input::try_read_byte()` and EOF conversion to `Option[u8]`.
-- `tests/cases/standard-library/ok/input/prelude-read-line.ari` checks borrowed line
-  input aliases.
+- `tests/cases/standard-library/ok/input/prelude-read-line.ari` checks owned line
+  input aliases and the raw borrowed hook.
 - `tests/cases/standard-library/ok/input/prelude-read-line-owned.ari` checks owned
   line input with explicit zones.
 

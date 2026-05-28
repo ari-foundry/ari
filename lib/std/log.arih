@@ -32,7 +32,7 @@ pub fn rank(level: std::log::Level) -> i64 {
   }
 }
 
-pub fn name(level: std::log::Level) -> string {
+pub fn name_text(level: std::log::Level) -> string {
   match level {
     Trace => {
       return "trace";
@@ -50,6 +50,10 @@ pub fn name(level: std::log::Level) -> string {
       return "error";
     }
   }
+}
+
+pub fn name(zone: ref mut Zone, level: std::log::Level) -> std::string::String {
+  return std::string::from(zone, std::log::name_text(level));
 }
 
 pub fn enabled(level: std::log::Level, minimum: std::log::Level) -> bool {
@@ -74,7 +78,7 @@ fn write_prefix(writer: ref mut std::io::Stderr, level: std::log::Level) -> bool
   if !writer.write_byte('[') {
     return false;
   }
-  if !std::log::write_text(writer, std::log::name(level)) {
+  if !std::log::write_text(writer, std::log::name_text(level)) {
     return false;
   }
   if !writer.write_byte(']') {

@@ -99,7 +99,7 @@ pub impl std::parse::ParseError {
     return self.offset_value;
   }
 
-  fn name(self: ref Self) -> string {
+  fn name_text(self: ref Self) -> string {
     match self.kind_value {
       EmptyInput => { return "empty input"; }
       ExpectedDigit => { return "expected digit"; }
@@ -112,7 +112,7 @@ pub impl std::parse::ParseError {
     }
   }
 
-  fn message(self: ref Self) -> string {
+  fn message_text(self: ref Self) -> string {
     match self.kind_value {
       EmptyInput => { return "input is empty after ASCII trim"; }
       ExpectedDigit => { return "expected a digit at this offset"; }
@@ -123,6 +123,14 @@ pub impl std::parse::ParseError {
       Overflow => { return "parsed value is above the accepted range"; }
       Underflow => { return "parsed value is below the accepted nonzero range"; }
     }
+  }
+
+  fn name(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    return std::string::from(zone, self.name_text());
+  }
+
+  fn message(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    return std::string::from(zone, self.message_text());
   }
 
   fn is_empty_input(self: ref Self) -> bool {

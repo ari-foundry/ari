@@ -1,12 +1,15 @@
 fn main() -> i64 {
+  var zone = zone::create(128);
   let count = arg_count();
-  let first = arg(0);
+  let first = arg(ref mut zone, 0);
   let byte = read_byte();
   let qualified = io::read_byte();
   let input_qualified = input::read_byte();
   if count >= 0 {
+    zone::destroy(zone);
     return byte + qualified + input_qualified - byte - qualified - input_qualified;
   }
-  let ignored = first;
+  let ignored = first.is_ok();
+  zone::destroy(zone);
   return 0;
 }

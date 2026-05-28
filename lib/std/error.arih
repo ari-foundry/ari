@@ -280,7 +280,7 @@ pub fn is_retryable(value: ref std::error::Error) -> bool {
   return std::error::is_kind(value, InProgress);
 }
 
-pub fn name(kind: std::error::Kind) -> string {
+pub fn name_text(kind: std::error::Kind) -> string {
   match kind {
     NotFound => { return "not found"; }
     PermissionDenied => { return "permission denied"; }
@@ -306,8 +306,16 @@ pub fn name(kind: std::error::Kind) -> string {
   }
 }
 
-pub fn message(value: ref std::error::Error) -> string {
-  return std::error::name(std::error::kind(value));
+pub fn message_text(value: ref std::error::Error) -> string {
+  return std::error::name_text(std::error::kind(value));
+}
+
+pub fn name(zone: ref mut Zone, kind: std::error::Kind) -> std::string::String {
+  return std::string::from(zone, std::error::name_text(kind));
+}
+
+pub fn message(zone: ref mut Zone, value: ref std::error::Error) -> std::string::String {
+  return std::string::from(zone, std::error::message_text(value));
 }
 
 pub impl std::error::Error {
@@ -343,12 +351,20 @@ pub impl std::error::Error {
     return std::error::is_retryable(self);
   }
 
-  fn name(self: ref Self) -> string {
-    return std::error::name(std::error::kind(self));
+  fn name_text(self: ref Self) -> string {
+    return std::error::name_text(std::error::kind(self));
   }
 
-  fn message(self: ref Self) -> string {
-    return std::error::message(self);
+  fn message_text(self: ref Self) -> string {
+    return std::error::message_text(self);
+  }
+
+  fn name(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    return std::error::name(zone, std::error::kind(self));
+  }
+
+  fn message(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    return std::error::message(zone, self);
   }
 }
 
@@ -373,7 +389,7 @@ impl std::convert::Into[i64] for std::error::Error {
 impl std::fmt::Display for std::error::Kind {
   pub fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
     let raw: ptr Self = self as ptr Self;
-    return std::string::from(zone, std::error::name(*raw));
+    return std::string::from(zone, std::error::name_text(*raw));
   }
 }
 
@@ -381,7 +397,7 @@ impl std::fmt::Debug for std::error::Kind {
   pub fn debug_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
     let raw: ptr Self = self as ptr Self;
     var output = std::string::from(zone, "ErrorKind(");
-    output.append_string_in(zone, std::error::name(*raw));
+    output.append_string_in(zone, std::error::name_text(*raw));
     output.append_string_in(zone, ")");
     return output;
   }
@@ -389,14 +405,14 @@ impl std::fmt::Debug for std::error::Kind {
 
 impl std::fmt::Display for std::error::Error {
   pub fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
-    return std::string::from(zone, self.message());
+    return std::string::from(zone, self.message_text());
   }
 }
 
 impl std::fmt::Debug for std::error::Error {
   pub fn debug_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
     var output = std::string::from(zone, "Error(");
-    output.append_string_in(zone, self.name());
+    output.append_string_in(zone, self.name_text());
     output.append_string_in(zone, ", code=");
     output.append_i64_in(zone, self.code());
     output.append_string_in(zone, ")");
