@@ -20,8 +20,8 @@ non-cryptographic PRNG helpers, `mem` layout,
 pointer, value, byte memory, and hosted page-size helpers, `region` as the
 preferred public bulk allocation lifetime facade, `allocator` as the public
 growth capability, and `zone` as the low-level runtime compatibility layer for
-raw allocation, source typed array allocation, and `ZoneMetadata`/`ZoneBacked`
-handle zone metadata access,
+raw allocation, source typed array allocation, and module-scoped
+`ZoneMetadata`/`ZoneBacked` compatibility access,
 `boxed`, `string` byte access/search/split/chunk/window/join/ASCII helpers
 including case search, prefix parsers, owned trim copies, typed borrowed
 `Utf8`/`OsStr` views, and `std::c::CStr` convenience construction, `ascii`

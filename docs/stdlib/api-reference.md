@@ -2550,10 +2550,12 @@ region-backed handle.
 need to grow from existing region-backed storage:
 
 ```ari
+allocator::from_region(ref mut region)
 allocator::from_zone(ref mut zone)
 allocator::from_data(data)
 allocator::from_zone_metadata(metadata)
 allocator::of(ref value)
+allocator::of_mut(ref mut value)
 allocator::alloc(ref allocator, bytes, align)
 allocator::alloc_array<T>(ref allocator, count)
 allocator::capacity(ref allocator)
@@ -2574,9 +2576,11 @@ allocator.equals(ref other)
 
 Use `Region` for region creation and lifecycle. Use `Allocator` when a value
 already owns region-backed storage and follow-up work needs the same allocation
-capability. `from_zone_metadata` and `allocator.metadata()` are compatibility
-bridges for existing low-level code; new public APIs should prefer
-`from_zone`, `from_data`, or `of`.
+capability. `from_region(ref mut region)` is the preferred handoff from an
+owned lifetime into helper code that should be able to allocate but should not
+reset or destroy the region. `from_zone_metadata` and `allocator.metadata()`
+are compatibility bridges for existing low-level code; new public APIs should
+prefer `from_region`, `from_data`, or `of`.
 
 `std::zone` exposes the low-level region runtime and compatibility capability:
 
@@ -2642,23 +2646,16 @@ current-zone block the zone argument can be omitted, so `zone::can_alloc(512)`
 checks the block's hidden scratch zone.
 
 `allocation_zone(data)` reads Ari's allocation header for a non-null zone
-allocation and returns the raw opaque handle. Prefer `metadata(data)`, which
-wraps that handle as `ZoneMetadata`. `from_zone(ref mut zone)` captures
-metadata directly from an explicit zone capability. `zone::of(value)` and
-`value.zone()` use the `ZoneBacked` trait to expose `ZoneMetadata` from
-supported heap-backed stdlib values such as `Box[T]`, `String`, `Vec[T]`,
-zone-backed `std::collections` handles, and map update-entry handles.
-`metadata.as_ptr()` is the raw escape hatch, `metadata.as_zone_ptr()` exposes
-the same address as `ptr Zone`, and `metadata.equals(ref other)` checks handle
-identity. `metadata.alloc(bytes, align)` and `metadata.alloc_array<T>(count)`
-allocate through the recovered runtime zone handle. Zero-capacity handles may
-carry metadata from construction even when they have no backing data pointer;
-raw `metadata(data)` still requires a non-null allocation pointer.
-`metadata.capacity()`, `metadata.used()`, and `metadata.remaining()` expose the
-same counters through the recovered handle. `metadata.can_alloc(bytes)` and
-`metadata.can_alloc_array<T>(count)` expose the same preflight checks for
-zone-backed handles that grow from recovered metadata instead of an explicit
-`ref mut Zone` field. The metadata handle follows normal zone provenance rules
+allocation and returns the raw opaque handle. `metadata(data)`,
+`from_zone(ref mut zone)`, `zone::of(value)`, and `value.zone()` are
+module-scoped compatibility hooks for code that still needs typed
+`ZoneMetadata`. Ordinary library APIs should prefer `Region` and `Allocator`,
+especially `allocator::from_region(ref mut region)` and
+`allocator::of(ref value)`. `metadata.as_ptr()` is the raw escape hatch,
+`metadata.as_zone_ptr()` exposes the same address as `ptr Zone`, and
+`metadata.equals(ref other)` checks handle identity. Metadata-backed
+allocation and counter helpers remain for compiler/runtime tests and old
+zone-backed internals. The metadata handle follows normal zone provenance rules
 and cannot be used after the source zone is reset or destroyed.
 
 ## Option And Result

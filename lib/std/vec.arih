@@ -69,7 +69,7 @@ fn grow_to_capacity[T](value: ref mut std::vec::Vec[T], capacity: i64) -> void {
   if capacity <= value.raw.capacity {
     return;
   }
-  let allocator = std::allocator::from_zone_metadata(value.zone());
+  let allocator = std::allocator::of_mut(value);
   let data = allocator.alloc_array<T>(capacity);
   var index = 0;
   while index < value.raw.len {
@@ -85,7 +85,7 @@ fn grow_to_own_capacity[T](value: ref mut std::vec::Vec[T], capacity: i64) -> vo
   if capacity <= value.raw.capacity {
     return;
   }
-  let allocator = std::allocator::from_zone_metadata(value.zone());
+  let allocator = std::allocator::of_mut(value);
   let data = allocator.alloc_array<T>(capacity);
   var index = 0;
   while index < value.raw.len {
@@ -105,7 +105,7 @@ fn rebuild_to_own_capacity[T](value: ref mut std::vec::Vec[T], capacity: i64) ->
   if allocation_capacity == 0 {
     allocation_capacity = 1;
   }
-  let allocator = std::allocator::from_zone_metadata(value.zone());
+  let allocator = std::allocator::of_mut(value);
   let data = allocator.alloc_array<T>(allocation_capacity);
   var index = 0;
   while index < value.raw.len {
@@ -195,7 +195,7 @@ fn drain_range_in_place[T](
     return std::vec::Drain<T> { data: value.raw.data, len: 0, index: 0 };
   }
 
-  let allocator = std::allocator::from_zone_metadata(value.zone());
+  let allocator = std::allocator::of_mut(value);
   let removed = allocator.alloc_array<T>(count);
   var index = 0;
   while index < count {

@@ -27,6 +27,11 @@ fn main() -> i64 {
     score = score + 5;
   }
 
+  let from_mut_value = std::allocator::of_mut(ref mut values);
+  if from_mut_value.equals(ref direct) {
+    score = score + 6;
+  }
+
   let extra = std::allocator::alloc_array<i64>(ref from_value, 1);
   ptr_store(extra, 21);
   if std::allocator::used(ref direct) == direct.used() {

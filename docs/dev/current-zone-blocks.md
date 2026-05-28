@@ -125,7 +125,9 @@ When adding a public zone-backed API:
    `docs/stdlib/generated/api-index.md` if the public API changed.
 4. Update the hand-written module guide with lifetime and current-zone notes.
 
-For stdlib implementation work, prefer `std::allocator::of(ref handle)` or
+For stdlib implementation work, prefer `std::allocator::of(ref handle)`,
+`std::allocator::of_mut(ref mut handle)`,
+`std::allocator::from_region(ref mut region)`, or
 `std::region::allocator(ref mut region)` when heap-backed code needs to grow
 later. The handle should recover an allocator from backing allocation metadata
 instead of storing an extra zone field. Use `region::capacity`,

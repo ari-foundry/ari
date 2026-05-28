@@ -21,6 +21,13 @@ fn main() -> i64 {
     score = score + ptr_load(extra);
   }
 
+  let direct_allocator = std::allocator::from_region(ref mut region);
+  let direct_extra = direct_allocator.alloc_array<i64>(1);
+  ptr_store(direct_extra, 5);
+  if direct_allocator.used() == std::region::used(ref mut region) {
+    score = score + ptr_load(direct_extra);
+  }
+
   std::region::reset(ref mut region);
   if std::region::used(ref mut region) == 0 {
     score = score + 4;

@@ -72,8 +72,10 @@ depends on it.
 - Use `_in` when a function needs an explicit allocation region/zone.
 - In new user-facing docs and APIs, prefer `Region` for choosing a bulk
   lifetime and `Allocator` for follow-up growth from existing region-backed
-  handles. Use `Zone` and `ZoneMetadata` when touching compatibility,
-  compiler/runtime hooks, or low-level implementation details.
+  handles. Use `std::allocator::from_region(ref mut region)` to pass an
+  allocation capability without passing reset/destroy authority. Use `Zone`
+  and `ZoneMetadata` only when touching compatibility, compiler/runtime hooks,
+  or low-level implementation details.
 - Prefer `Option` or `Result` for ordinary absence or recoverable failure.
 - Prefer `std::error::Error`/`ErrorKind` for shared OS, runtime, IO,
   filesystem, network, or parser failures. Public library APIs should return

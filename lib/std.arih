@@ -860,5 +860,5 @@ pub use env::arg as arg;
 pub use context::has_arg;
 pub use mem::{size_of, align_of, ptr_offset, ptr_add, ptr_load, ptr_store, replace, swap};
 pub use cmp::{min, max, clamp, is_between, min_by, max_by, clamp_by, is_between_by};
-pub use zone::{ZoneBacked, ZoneMetadata, create, alloc, alloc_array, new, promote, reset, destroy, metadata, from_zone, of};
+pub use zone::{create, alloc, alloc_array, new, promote, reset, destroy};
 pub use iter::{range, range_inclusive};

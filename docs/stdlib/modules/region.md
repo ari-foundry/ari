@@ -56,6 +56,19 @@ let scratch = allocator.alloc_array<i64>(4);
 region::destroy(region);
 ```
 
+Use `std::allocator::from_region(ref mut region)` when helper code should be
+able to allocate but should not control the region's lifecycle:
+
+```ari
+fn write_scratch(allocator: std::allocator::Allocator) -> ptr u8 {
+  return allocator.alloc(32, 1);
+}
+
+var region = region::create(4096);
+let bytes = write_scratch(std::allocator::from_region(ref mut region));
+region::destroy(region);
+```
+
 Use `std::zone` only when interacting with older APIs, low-level runtime
 tests, or implementation details such as `ZoneMetadata`. New docs should not
 require ordinary users to understand allocation-header recovery.

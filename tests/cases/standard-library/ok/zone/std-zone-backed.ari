@@ -3,7 +3,7 @@ fn main() -> i64 {
   var arena = zone::create(8192);
   var score = 0;
 
-  let direct_meta = from_zone(ref mut arena);
+  let direct_meta = zone::from_zone(ref mut arena);
   let direct_values = direct_meta.alloc_array<i64>(1);
   ptr_store(direct_values, 31);
   let direct_values_zone = zone::metadata(direct_values as ptr u8);

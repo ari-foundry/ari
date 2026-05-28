@@ -84,9 +84,11 @@ fn std::allocator::can_alloc|std allocator capability tests; docs/stdlib/modules
 fn std::allocator::can_alloc_array[T]|std allocator capability tests; docs/stdlib/modules/allocator.md
 fn std::allocator::capacity|std allocator capability tests; docs/stdlib/modules/allocator.md
 fn std::allocator::from_data|std allocator capability tests; docs/stdlib/modules/allocator.md
+fn std::allocator::from_region|std region capability tests; docs/stdlib/modules/allocator.md
 fn std::allocator::from_zone|std allocator capability tests; docs/stdlib/modules/allocator.md
 fn std::allocator::from_zone_metadata|std allocator capability tests; docs/stdlib/modules/allocator.md
 fn std::allocator::of[T: std::zone::ZoneBacked]|std allocator capability tests; docs/stdlib/modules/allocator.md
+fn std::allocator::of_mut[T: std::zone::ZoneBacked]|std allocator capability tests; docs/stdlib/modules/allocator.md
 fn std::allocator::remaining|std allocator capability tests; docs/stdlib/modules/allocator.md
 fn std::allocator::used|std allocator capability tests; docs/stdlib/modules/allocator.md
 fn std::ascii::contains_ignore_case|std ascii case search tests; docs/stdlib/api-reference.md ASCII section
@@ -3631,8 +3633,6 @@ use std::TreeMap|check-prelude std-collections-tree root alias for std::collecti
 use std::TreeSet|check-prelude std-collections-tree root alias for std::collections::TreeSet[T]; docs/stdlib/modules/collections.md
 use std::Vec|check-prelude std-vec-root-alias explicit-zone alias for std::vec::Vec[T]; docs/dev/test-matrix.md Explicit memory zones row
 use std::Weak|check-prelude std-rc-arc-weak root alias for std::rc::Weak[T]; docs/stdlib/modules/rc.md
-use std::ZoneBacked|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
-use std::ZoneMetadata|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 use std::align_of|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows
 use std::alloc|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::alloc_array|std zone raw array allocation root re-export tests; docs/stdlib/modules/zone.md
@@ -3643,7 +3643,6 @@ use std::clamp|std cmp value helper root re-export tests; docs/dev/test-matrix.m
 use std::clamp_by|check-prelude std-cmp-by-helpers comparator-based clamp root re-export; docs/stdlib/modules/cmp.md
 use std::create|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::destroy|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
-use std::from_zone|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 use std::has_arg|std context args root re-export tests; docs/stdlib/modules/context.md
 use std::input|std root re-export tests; docs/dev/test-matrix.md Prelude row
 use std::input_owned|std root re-export owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
@@ -3655,12 +3654,10 @@ use std::iter::ExactSizeIterator|check-prelude std-iter-exact-size module alias 
 use std::iter::collect|check-prelude std-iter-adapters natural iter::collect alias backed by std::vec; docs/stdlib/modules/iter.md
 use std::max|std cmp value helper root re-export tests; docs/dev/test-matrix.md Front-end surfaces row
 use std::max_by|check-prelude std-cmp-by-helpers comparator-based max root re-export; docs/stdlib/modules/cmp.md
-use std::metadata|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 use std::min|std cmp value helper root re-export tests; docs/dev/test-matrix.md Front-end surfaces row
 use std::min_by|check-prelude std-cmp-by-helpers comparator-based min root re-export; docs/stdlib/modules/cmp.md
 use std::new|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::newline|std root re-export tests; docs/dev/test-matrix.md Prelude row
-use std::of|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 use std::promote|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::ptr_add|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows
 use std::ptr_load|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows

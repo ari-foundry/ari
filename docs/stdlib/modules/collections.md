@@ -36,10 +36,11 @@ remain owned by the zone and are reclaimed when the zone resets or destroys.
 Every zone-backed collection handle implements `std::zone::ZoneBacked` once it
 has backing storage, so `std::allocator::of(ref handle)` exposes the public
 allocation capability for that backing storage. `zone::of(ref handle)` and
-`handle.zone()` remain compatibility spellings for the lower-level metadata.
-Map update-entry handles also implement `ZoneBacked`; `HashMapEntry` and
-`TreeMapEntry` store the map pointer and key only, then recover the growth
-allocator from the backing map when insertion has to allocate.
+`handle.zone()` remain module-scoped compatibility spellings for lower-level
+metadata tests and runtime work. Map update-entry handles also implement
+`ZoneBacked`; `HashMapEntry` and `TreeMapEntry` store the map pointer and key
+only, then recover the growth allocator from the backing map when insertion
+has to allocate.
 
 ## Iteration And Mutation
 
@@ -409,7 +410,8 @@ boundaries, and `remove_entry`, while `HashMapEntry[K, V]` is a short-lived
 handle used to update a stored value in place. The explicit spelling is
 `map.entry(ref mut zone, key)`, but tracked local maps infer the same zone that
 created the map. The returned entry does not store that zone separately; it
-uses the map's allocation-header metadata through `map.zone()`.
+uses the map's recovered `Allocator` rather than storing a duplicate zone
+pointer.
 
 ```ari
 map.entry(word).or_insert(0) += 1
@@ -646,8 +648,9 @@ compacts storage without allocating or rebuilding the whole tree.
 strict less-than comparator. `TreeMapEntry[K, V]` supports the same
 `or_insert`, `or_insert_with`, `or_default`, `and_modify`, `insert`,
 `insert_entry`, `remove`, `key`, `value`, and `value_mut` methods, and
-recovers allocation metadata from the backing tree map instead of carrying a
-separate zone pointer. `TreeMapEntry.zone()` exposes that same metadata.
+recovers the allocation capability from the backing tree map instead of
+carrying a separate zone pointer. `TreeMapEntry.zone()` remains available for
+low-level compatibility.
 `remove_entry(key)` returns
 `Option[MapEntry[K, V]]` after the same direct red-black deletion and storage
 compaction path.

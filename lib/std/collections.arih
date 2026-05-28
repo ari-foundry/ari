@@ -538,8 +538,8 @@ fn grow_to_capacity[T](set: ref mut std::collections::Set[T], capacity: i64) -> 
     return;
   }
   // Zones own backing storage; growth copies live values into a larger buffer.
-  let metadata = set.zone();
-  let data = metadata.alloc_array<T>(capacity);
+  let allocator = std::allocator::of_mut(set);
+  let data = allocator.alloc_array<T>(capacity);
   var index = 0;
   while index < set.len {
     ptr_store(ptr_add(data, index), ptr_load(ptr_add(set.data, index)));
@@ -1256,10 +1256,10 @@ fn hash_map_grow_to_capacity[K, V](
   let old_values = map.values;
   let old_states = map.states;
   let old_capacity = map.capacity;
-  let metadata = map.zone();
-  let new_keys = metadata.alloc_array<K>(actual);
-  let new_values = metadata.alloc_array<V>(actual);
-  let new_states = metadata.alloc_array<i64>(actual);
+  let allocator = std::allocator::of_mut(map);
+  let new_keys = allocator.alloc_array<K>(actual);
+  let new_values = allocator.alloc_array<V>(actual);
+  let new_states = allocator.alloc_array<i64>(actual);
   init_states(new_states, actual);
   map.keys = new_keys;
   map.values = new_values;
@@ -2035,9 +2035,9 @@ fn hash_set_grow_to_capacity[T](
   let old_data = set.data;
   let old_states = set.states;
   let old_capacity = set.capacity;
-  let metadata = set.zone();
-  let new_data = metadata.alloc_array<T>(actual);
-  let new_states = metadata.alloc_array<i64>(actual);
+  let allocator = std::allocator::of_mut(set);
+  let new_data = allocator.alloc_array<T>(actual);
+  let new_states = allocator.alloc_array<i64>(actual);
   init_states(new_states, actual);
   set.data = new_data;
   set.states = new_states;
@@ -3066,13 +3066,13 @@ fn tree_map_grow_to_capacity[K, V](
   let old_right = map.right;
   let old_parent = map.parent;
   let old_colors = map.colors;
-  let metadata = map.zone();
-  let new_keys = metadata.alloc_array<K>(actual);
-  let new_values = metadata.alloc_array<V>(actual);
-  let new_left = metadata.alloc_array<i64>(actual);
-  let new_right = metadata.alloc_array<i64>(actual);
-  let new_parent = metadata.alloc_array<i64>(actual);
-  let new_colors = metadata.alloc_array<i64>(actual);
+  let allocator = std::allocator::of_mut(map);
+  let new_keys = allocator.alloc_array<K>(actual);
+  let new_values = allocator.alloc_array<V>(actual);
+  let new_left = allocator.alloc_array<i64>(actual);
+  let new_right = allocator.alloc_array<i64>(actual);
+  let new_parent = allocator.alloc_array<i64>(actual);
+  let new_colors = allocator.alloc_array<i64>(actual);
   var index = 0;
   while index < map.len {
     ptr_store(ptr_add(new_keys, index), ptr_load(ptr_add(old_keys, index)));
@@ -4432,12 +4432,12 @@ fn tree_set_grow_to_capacity[T](
   let old_right = set.right;
   let old_parent = set.parent;
   let old_colors = set.colors;
-  let metadata = set.zone();
-  let new_data = metadata.alloc_array<T>(actual);
-  let new_left = metadata.alloc_array<i64>(actual);
-  let new_right = metadata.alloc_array<i64>(actual);
-  let new_parent = metadata.alloc_array<i64>(actual);
-  let new_colors = metadata.alloc_array<i64>(actual);
+  let allocator = std::allocator::of_mut(set);
+  let new_data = allocator.alloc_array<T>(actual);
+  let new_left = allocator.alloc_array<i64>(actual);
+  let new_right = allocator.alloc_array<i64>(actual);
+  let new_parent = allocator.alloc_array<i64>(actual);
+  let new_colors = allocator.alloc_array<i64>(actual);
   var index = 0;
   while index < set.len {
     ptr_store(ptr_add(new_data, index), ptr_load(ptr_add(old_data, index)));
@@ -5069,8 +5069,8 @@ fn deque_grow_to_capacity[T](
   let old_data = deque.data;
   let old_capacity = deque.capacity;
   let old_head = deque.head;
-  let metadata = deque.zone();
-  let new_data = metadata.alloc_array<T>(actual);
+  let allocator = std::allocator::of_mut(deque);
+  let new_data = allocator.alloc_array<T>(actual);
   var index = 0;
   while index < deque.len {
     let old_slot = circular_slot(old_head, index, old_capacity);
@@ -5529,10 +5529,10 @@ fn linked_list_grow_to_capacity[T](
   let old_data = list.data;
   let old_next = list.next_node;
   let old_prev = list.prev;
-  let metadata = list.zone();
-  let new_data = metadata.alloc_array<T>(actual);
-  let new_next = metadata.alloc_array<i64>(actual);
-  let new_prev = metadata.alloc_array<i64>(actual);
+  let allocator = std::allocator::of_mut(list);
+  let new_data = allocator.alloc_array<T>(actual);
+  let new_next = allocator.alloc_array<i64>(actual);
+  let new_prev = allocator.alloc_array<i64>(actual);
   var node = list.head;
   while node >= 0 {
     ptr_store(ptr_add(new_data, node), ptr_load(ptr_add(old_data, node)));
@@ -5881,8 +5881,8 @@ fn binary_heap_grow_to_capacity[T](
     return;
   }
   let old_data = heap.data;
-  let metadata = heap.zone();
-  let new_data = metadata.alloc_array<T>(actual);
+  let allocator = std::allocator::of_mut(heap);
+  let new_data = allocator.alloc_array<T>(actual);
   var index = 0;
   while index < heap.len {
     ptr_store(ptr_add(new_data, index), ptr_load(ptr_add(old_data, index)));
@@ -6153,8 +6153,8 @@ fn priority_queue_grow_to_capacity[T](
     return;
   }
   let old_data = queue.data;
-  let metadata = queue.zone();
-  let new_data = metadata.alloc_array<T>(actual);
+  let allocator = std::allocator::of_mut(queue);
+  let new_data = allocator.alloc_array<T>(actual);
   var index = 0;
   while index < queue.len {
     ptr_store(ptr_add(new_data, index), ptr_load(ptr_add(old_data, index)));

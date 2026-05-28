@@ -53,6 +53,42 @@ growth capability, and `Zone` is the first concrete runtime implementation.
 `ZoneMetadata` exists as a compatibility bridge over today's allocation
 header; ordinary library users should not need to name it.
 
+## Memory Model Review
+
+The current zone implementation solved an important early problem: it gave the
+compiler one concrete lifetime shape to track. The rough part is the public
+surface. When docs and library code talk directly about `ZoneMetadata`, the
+model starts to feel like "recover magic allocator state from a pointer header"
+instead of "pass an allocation capability to code that allocates."
+
+Rejected shapes:
+
+- A magical process-global heap would make examples short, but it would hide
+  memory policy, weaken reset/destroy diagnostics, and make embedded or
+  freestanding profiles harder.
+- A runtime-global `region::current()` function would look convenient, but it
+  would make allocation depend on dynamic ambient state. Lexical current-zone
+  insertion is easier to read, easier to diagnose, and easier for the checker
+  to constrain.
+- Pure `ZoneMetadata` everywhere avoids storing duplicate zone pointers, but it
+  leaks allocation-header layout into normal API design. It is useful as a
+  compatibility mechanism, not as the model users should learn first.
+- Reference counting or garbage collection would reduce explicit region
+  plumbing, but it would also change Ari's deterministic ownership story and
+  require a much bigger runtime policy decision.
+
+Chosen shape:
+
+- `Region` names the owned bulk lifetime in user docs and new APIs.
+- `Allocator` names the smaller capability that can allocate from a region or
+  an existing region-backed handle.
+- `Zone` remains the compiler/runtime primitive and compatibility spelling.
+- `ZoneMetadata` remains available under `std::zone` for low-level tests and
+  migration, but new user-facing examples should not require it.
+
+This keeps the useful parts of zones, avoids a hidden global heap, and gives
+the stdlib a more natural vocabulary for APIs that only need to allocate.
+
 ## Regions
 
 Regions are a good fit for short-lived allocation groups:

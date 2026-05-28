@@ -1,27 +1,35 @@
 pub struct Allocator {
-  metadata_value: std::zone::ZoneMetadata,
+  handle: std::zone::ZoneMetadata,
 }
 
 pub fn from_zone(zone: ref mut Zone) -> std::allocator::Allocator {
   let metadata = std::zone::from_zone(zone);
   return std::allocator::Allocator {
-    metadata_value: metadata,
+    handle: metadata,
   };
+}
+
+pub fn from_region(region: ref mut std::region::Region) -> std::allocator::Allocator {
+  return std::allocator::from_zone(region);
 }
 
 pub fn from_data(data: ptr u8) -> std::allocator::Allocator {
   let metadata = std::zone::metadata(data);
   return std::allocator::Allocator {
-    metadata_value: metadata,
+    handle: metadata,
   };
 }
 
 pub fn from_zone_metadata(metadata: std::zone::ZoneMetadata) -> std::allocator::Allocator {
-  return std::allocator::Allocator { metadata_value: metadata };
+  return std::allocator::Allocator { handle: metadata };
 }
 
 pub fn of[T: std::zone::ZoneBacked](value: ref T) -> std::allocator::Allocator {
-  return std::allocator::from_zone_metadata(value.zone());
+  return std::allocator::Allocator { handle: value.zone() };
+}
+
+pub fn of_mut[T: std::zone::ZoneBacked](value: ref mut T) -> std::allocator::Allocator {
+  return std::allocator::Allocator { handle: value.zone() };
 }
 
 pub fn alloc(allocator: ref std::allocator::Allocator, bytes: i64, align: i64) -> ptr u8 {
@@ -54,42 +62,42 @@ pub fn can_alloc_array[T](allocator: ref std::allocator::Allocator, count: i64) 
 
 pub impl std::allocator::Allocator {
   fn metadata(self: ref Self) -> std::zone::ZoneMetadata {
-    return self.metadata_value;
+    return self.handle;
   }
 
   fn as_ptr(self: ref Self) -> ptr c_void {
-    return self.metadata_value.as_ptr();
+    return self.handle.as_ptr();
   }
 
   fn alloc(self: ref Self, bytes: i64, align: i64) -> ptr u8 {
-    return self.metadata_value.alloc(bytes, align);
+    return self.handle.alloc(bytes, align);
   }
 
   fn alloc_array[T](self: ref Self, count: i64) -> ptr T {
-    return self.metadata_value.alloc_array<T>(count);
+    return self.handle.alloc_array<T>(count);
   }
 
   fn capacity(self: ref Self) -> i64 {
-    return self.metadata_value.capacity();
+    return self.handle.capacity();
   }
 
   fn used(self: ref Self) -> i64 {
-    return self.metadata_value.used();
+    return self.handle.used();
   }
 
   fn remaining(self: ref Self) -> i64 {
-    return self.metadata_value.remaining();
+    return self.handle.remaining();
   }
 
   fn can_alloc(self: ref Self, bytes: i64) -> bool {
-    return self.metadata_value.can_alloc(bytes);
+    return self.handle.can_alloc(bytes);
   }
 
   fn can_alloc_array[T](self: ref Self, count: i64) -> bool {
-    return self.metadata_value.can_alloc_array<T>(count);
+    return self.handle.can_alloc_array<T>(count);
   }
 
   fn equals(self: ref Self, other: ref Self) -> bool {
-    return self.metadata_value.equals(ref other.metadata_value);
+    return self.handle.equals(ref other.handle);
   }
 }

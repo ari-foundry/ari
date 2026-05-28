@@ -58,8 +58,8 @@ API evolution.
 | `std::net` | Network address values, DNS lookup, and explicit socket handles. | `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, `SocketAddr`, `TcpListener`, `TcpStream`, `UdpSocket`, `UnixListener`, `UnixStream`, `Shutdown`, `ToSocketAddrs`, address constructors/accessors, family/loopback/unspecified predicates, IPv4/IPv6 DNS lookup plus `"host:port"` and `"[host]:port"` endpoint resolution with direct `Error` and raw compatibility bridges, host-port TCP connect helpers, IPv4/IPv6 TCP bind/connect/accept/local-port/local-address/peer-address helpers, IPv4/IPv6 UDP bind/local-address/send-byte/receive-byte helpers, Unix stream bind/connect/accept helpers, direct `Error` and raw compatibility socket construction/accept/connect bridges, descriptor views, nonblocking flags, TCP listener/UDP reuse-address helpers, TCP nodelay helpers, `std::time::Duration` timeouts with raw millisecond compatibility helpers, stream shutdown, explicit close, TCP/Unix `std::io` byte adapters, and TCP/Unix `read_exact`/`write_all` stream buffer helpers. |
 | `std::mem` | Layout, raw pointer, byte memory, and hosted page-size operations. | `size_of`, `align_of`, `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store`, `copy_bytes`, `move_bytes`, `set_bytes`, `page_size`, `replace`, `swap`. |
 | `std::region` | Preferred public bulk allocation lifetime facade. | `Region`, `create`, `default_capacity`, `allocator`, raw and typed allocation, placement `new`, `promote`, logical counter helpers, preflight helpers, `reset`, `destroy`. |
-| `std::allocator` | Public allocation-capability view over zone-backed storage. | `Allocator`, `from_zone`, `from_data`, `of`, raw and typed allocation helpers, logical counter helpers, preflight helpers. |
-| `std::zone` | Low-level region runtime and compatibility layer. | `create`, `alloc`, `capacity`, `used`, `remaining`, `alloc<T>`, `alloc_array<T>`, `new<T>`, `promote<T>`, `allocation_zone`, `metadata`, `from_zone`, `ZoneMetadata`, metadata handle allocation/introspection, `ZoneBacked`, `of`, `reset`, `destroy`. |
+| `std::allocator` | Public allocation-capability view over region-backed storage. | `Allocator`, `from_region`, `from_zone`, `from_data`, `of`, `of_mut`, raw and typed allocation helpers, logical counter helpers, preflight helpers. |
+| `std::zone` | Low-level region runtime and compatibility layer. | `create`, `alloc`, `capacity`, `used`, `remaining`, `alloc<T>`, `alloc_array<T>`, `new<T>`, `promote<T>`, `allocation_zone`, module-scoped metadata compatibility helpers, `reset`, `destroy`. |
 | `std::boxed` | Zone-backed single-value owner. | `Box[T]`, `new`, `get`, `try_get`, `set`, `take`, `try_take`, `copy_to`. |
 | `std::string` | Zone-backed owned byte string plus typed borrowed and owned text-boundary views. | `String`, borrowed `Utf8`, owned `Utf8String`, `Codepoints`, borrowed `OsStr`, owned `OsString`, `SplitOnce`, direct string-literal coercion to `Slice[u8]` / `Vec[u8]` / `[u8, N]` / `Utf8` / `OsStr` / `PathBytes` / `CStr`, `utf8`, `utf8_string`, `utf8_string_optional`, `utf8_string_unchecked`, `codepoints`, `os_str`, `os_string`, `os_string_from_slice`, `c_str`, `c_len`, `c_bytes`, `bytes`, `new`, `empty`, `from`, `copy`, `from`, `from_slice_in`, `join_in`, borrowed parser helpers `lines`, `trim`, `split_once`, `starts_with`, `ends_with`, `contains`, `find`, `strip_prefix`, `strip_suffix`, `substring`, allocating `replace`, `push`, `push_str`, `try_get`, `try_pop`, `remove`, `try_remove`, `retain`, `append`, `append_byte`, `append_bytes`, `find_text`, `contains_text`, `split`, `chunks`, `windows`, `push_codepoint_in`, `try_utf8`, `is_utf8`, `codepoint_count`, `codepoint_at`, `codepoint_next_index`, `codepoints`, `equals_text`, `equals_text_ignore_case`, `trimmed`, `parse_decimal`, `parse_signed_decimal`, `parse_decimal_prefix`, `parse_signed_decimal_prefix`, `as_slice`. `c_str` returns the shared `std::c::CStr` type. |
 | `std::ascii` | Source-only ASCII byte and slice helpers. | `is_digit`, `is_printable`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `parse_decimal`, `parse_decimal_prefix`, signed decimal parsers, and overflow-checked `i64` parser policy. |
@@ -474,18 +474,20 @@ zone reset/destroy invalidation and same-zone growth diagnostics stay as
 strong as `std::vec::Vec[T]`.
 
 `std::allocator` is the preferred public vocabulary for recovered allocation
-capabilities. `allocator::from_zone(ref mut zone)` captures a capability from a
-region, `allocator::of(ref value)` captures it from a zone-backed handle, and
-`Allocator` can allocate, report counters, and preflight capacity. It is
-currently implemented over the older `ZoneMetadata` bridge so existing
+capabilities. `allocator::from_region(ref mut region)` captures a capability
+from a region, `allocator::of(ref value)` and `allocator::of_mut(ref mut
+value)` capture it from a region-backed handle, and `Allocator` can allocate,
+report counters, and preflight capacity.
+It is currently implemented over the older `ZoneMetadata` bridge so existing
 provenance checks keep working.
 
-`std::zone` keeps region lifecycle visible. Raw byte allocation and lifecycle
-hooks are runtime-backed, while `alloc_array<T>` is source Ari that packages
-the common "count times `size_of<T>()` at `align_of<T>()`" pattern for library
-authors. `allocation_zone(data)`, `metadata(data)`, `from_zone(ref mut zone)`,
-`ZoneMetadata`, and `ZoneBacked` remain compatibility and implementation
-building blocks for current zone-backed handles.
+`std::zone` keeps the current low-level runtime visible. Raw byte allocation
+and lifecycle hooks are runtime-backed, while `alloc_array<T>` is source Ari
+that packages the common "count times `size_of<T>()` at `align_of<T>()`"
+pattern for library authors. `allocation_zone(data)`, `metadata(data)`,
+`from_zone(ref mut zone)`, `ZoneMetadata`, and `ZoneBacked` remain
+module-scoped compatibility and implementation building blocks for current
+region-backed handles; they are no longer root prelude aliases.
 
 `std::input` follows that pattern for stdin. `read_byte`, `line`, and
 `owned_line` are runtime hooks, while `try_read_byte` is source Ari that turns

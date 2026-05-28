@@ -98,9 +98,9 @@ The source handle currently exposes element methods: `len`, `capacity`,
 `reserve_in(ref mut zone, capacity)`,
 `reserve_extra_in(ref mut zone, additional)`, `copy_to(ref mut zone)`,
 top-level `std::vec::from_slice_in<T>(ref mut zone, values)`, `as_ptr()`,
-`as_mut_ptr()`, `iter()`, and `as_slice`. The natural growth methods use
-metadata recovered from the backing allocation header; the `_in` forms remain
-available when code needs to spell the capability directly. Metadata, checked reads, search, Slice comparison,
+`as_mut_ptr()`, `iter()`, and `as_slice`. The natural growth methods recover a
+public `Allocator` from the backing handle; the `_in` forms remain available
+when code needs to spell the region capability directly. Metadata, checked reads, search, Slice comparison,
 `copy_to(ref mut zone)`, `get_ref(index)`, `as_ptr()`, and `iter()` borrow the
 handle receiver instead of copying it. `get_ref(index)` returns a shared borrow
 of the indexed element, while `get_mut(index)` returns a mutable element borrow
@@ -117,8 +117,8 @@ bytes. `try_pop()` returns `Option[T]`, using `None` for an empty handle instead
 of asserting.
 `vec.push(value)`, `vec.insert(index, value)`, `vec.reserve(capacity)`,
 `vec.reserve_extra(additional)`, `vec.extend_from_slice(values)`, and
-`vec.resize(length, value)` work from the handle's `ZoneMetadata` instead of a
-compiler-synthesized hidden argument.
+`vec.resize(length, value)` work from the handle's recovered `Allocator`
+instead of a compiler-synthesized hidden argument.
 
 The `std::boxed` module exposes `std::boxed::new<T>(ref mut zone, value)` for a
 tracked source `std::boxed::Box<T>` handle over one value placed in a zone. Its
@@ -835,6 +835,13 @@ region::promote<T>(target: ref mut Region, source: ptr T) -> ptr T
 region::reset(region: ref mut Region) -> void
 region::destroy(region: own Region) -> void
 
+Allocator
+allocator::from_region(region: ref mut Region) -> std::allocator::Allocator
+allocator::from_zone(zone: ref mut Zone) -> std::allocator::Allocator
+allocator::from_data(data: ptr u8) -> std::allocator::Allocator
+allocator::of<T: std::zone::ZoneBacked>(value: ref T) -> std::allocator::Allocator
+allocator::of_mut<T: std::zone::ZoneBacked>(value: ref mut T) -> std::allocator::Allocator
+
 Zone
 zone::create(capacity: i64) -> own Zone
 zone::temp(capacity: i64) -> own Zone
@@ -912,15 +919,19 @@ The same insertion rule applies to `zone::capacity()`, `zone::remaining()`, and
 `zone::can_alloc(...)` calls, so code can inspect or preflight the hidden
 scratch zone without naming it.
 
+Use `std::allocator::from_region(ref mut region)` when helper code should be
+able to allocate without owning the region lifecycle. Use
+`std::allocator::of(ref value)` when a `String`, `Vec`, collection, or another
+region-backed handle needs follow-up allocation from its original region.
+
 Host zone allocations carry a compiler-defined 8-byte header immediately
 before the returned user pointer. That header stores only the owning raw zone
 handle at `ptr - 8`; allocation size and requested alignment are not pointer
-metadata. `zone::allocation_zone` is the raw header reader, while
-`zone::metadata(data)` and `zone::from_zone(ref mut zone)` wrap a runtime zone
-handle as `ZoneMetadata`. `ZoneMetadata` exposes raw identity helpers,
-logical counter helpers, preflight helpers, and metadata-backed allocation
-helpers for stdlib runtime growth code that needs to infer the allocation
-capability from a stored buffer pointer.
+metadata. `zone::allocation_zone`, `zone::metadata(data)`,
+`zone::from_zone(ref mut zone)`, `zone::of(ref value)`, and `value.zone()` are
+compatibility and implementation hooks behind `Allocator`. Ordinary code
+should prefer `Region` and `Allocator` so it does not depend on allocation
+header layout or the `ZoneMetadata` name.
 Pointers allocated from a temporary zone are lexical too: returning them,
 storing them into longer-lived bindings or aggregates, or sending them through
 escape-prone calls is rejected with a diagnostic that names the pointer and the
@@ -930,7 +941,10 @@ The source header `lib/std.arih` exposes both layers:
 `std::region::create`, raw and typed region allocation, allocator handoff,
 logical counter/preflight helpers, `new`, `promote`, `reset`, and `destroy`;
 and compatibility `std::zone::create`, raw and typed `alloc`, allocation-header
-metadata helpers, `new`, `promote`, `reset`, and `destroy`.
+metadata helpers under `std::zone`, `new`, `promote`, `reset`, and `destroy`.
+The root `std` prelude no longer re-exports `ZoneMetadata`, `ZoneBacked`,
+`metadata`, `from_zone`, or `of`; import them through `std::zone` only for
+low-level compatibility work.
 `zone::temp` and `zone::scratch` remain compiler-known lexical
 helpers until source declarations can express their hidden lifetime cleanup.
 `std::vec::alloc_buffer<T>(ref mut Zone, capacity)` is the raw

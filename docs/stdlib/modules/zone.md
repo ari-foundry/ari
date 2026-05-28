@@ -11,9 +11,10 @@ handle only needs to grow from existing region-backed storage. Keep
 `std::zone` for compatibility, raw allocation tests, and implementation details
 such as metadata recovery.
 
-`ZoneMetadata` and `ZoneBacked` remain available as compatibility and
-implementation bridges while the stdlib migrates away from metadata-shaped
-user APIs.
+`ZoneMetadata` and `ZoneBacked` remain available under `std::zone` as
+compatibility and implementation bridges while the stdlib migrates away from
+metadata-shaped user APIs. They are intentionally not root `std` prelude
+aliases; ordinary code should reach for `Region` and `Allocator` first.
 
 The module is deliberately low-level. Raw allocations return pointers; they do
 not initialize values, run destructors, or make a buffer safe by themselves.
@@ -178,9 +179,11 @@ into a longer-lived zone.
 
 `allocation_zone(data)` is the raw allocation-header primitive. It reads the
 header immediately before a non-null zone allocation and returns the opaque raw
-zone handle. Prefer `metadata(data)`, which wraps that handle in
-`ZoneMetadata`. `from_zone(ref mut zone)` creates the same typed metadata from
-an existing zone capability without requiring a prior payload allocation.
+zone handle. `metadata(data)` wraps that handle in `ZoneMetadata`.
+`from_zone(ref mut zone)` creates the same typed metadata from an existing zone
+capability without requiring a prior payload allocation. New public library
+code should normally use `std::allocator::from_region`,
+`std::allocator::from_data`, or `std::allocator::of` instead.
 
 `ZoneBacked` is the high-level wrapper for library handles that own
 zone-backed storage. `zone::of(ref value)` and `value.zone()` expose
@@ -190,18 +193,19 @@ the zone-backed `std::collections` handles, including map update-entry handles.
 gives the same address typed as `ptr Zone`, and `metadata.equals(ref other)`
 checks handle identity.
 `metadata.alloc(bytes, align)` and `metadata.alloc_array<T>(count)` allocate
-through that recovered runtime zone handle; this is the preferred internal
-building block for heap handles that need to grow without carrying an explicit
-`ref mut Zone` argument.
+through that recovered runtime zone handle; these methods are kept for
+compatibility and low-level tests. Normal heap-handle growth should use an
+`Allocator` recovered by `std::allocator::of(ref handle)` instead of exposing
+metadata in the surrounding API.
 `metadata.capacity()`, `metadata.used()`, and `metadata.remaining()` read the
 same logical counters through the recovered handle, which is useful when a
 zone-backed stdlib container wants to report or plan follow-up allocation
 without storing an extra zone field. Like other zone-backed handles,
 `ZoneMetadata` is invalid after the source zone is reset or destroyed.
 `metadata.can_alloc(bytes)` and `metadata.can_alloc_array<T>(count)` provide
-the same preflight checks through the recovered handle. This is the preferred
-shape for stdlib containers and helper handles that need capacity-aware growth
-without adding a redundant `Zone` field.
+the same preflight checks through the recovered handle. They remain useful for
+runtime-oriented compatibility code, while public collection and formatter
+helpers should prefer the `Allocator` vocabulary.
 
 Raw header recovery requires an actual backing allocation. Heap-backed stdlib
 handles therefore create a small backing allocation even when their logical

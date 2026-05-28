@@ -24,36 +24,36 @@ platform notes.
 
 ## Summary
 
-- API entries: `3675`
+- API entries: `3672`
 - Modules: `42`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
-| `alloc` | 974 | usable |
+| `alloc` | 976 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 943 | stable candidate |
+| `core` | 938 | stable candidate |
 | `hosted` | 1559 | platform-backed |
 | `platform` | 163 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1267 |
+| `fn` | 1269 |
 | `method` | 1928 |
 | `module` | 41 |
 | `struct` | 198 |
 | `trait` | 39 |
 | `trait-method` | 41 |
 | `type` | 23 |
-| `use` | 106 |
+| `use` | 101 |
 
 ## Modules
 
 | Module | Tier | Entries |
 | --- | --- | ---: |
-| `std` | `core` | 303 |
+| `std` | `core` | 298 |
 | `std::algo` | `alloc` | 41 |
-| `std::allocator` | `alloc` | 23 |
+| `std::allocator` | `alloc` | 25 |
 | `std::ascii` | `core` | 33 |
 | `std::bits` | `core` | 26 |
 | `std::boxed` | `alloc` | 19 |
@@ -394,8 +394,6 @@ Tier: `core`. Stability reading: stable candidate.
 | `use std::TreeSet` | check-prelude std-collections-tree root alias for std::collections::TreeSet[T]; docs/stdlib/modules/collections.md |
 | `use std::Vec` | check-prelude std-vec-root-alias explicit-zone alias for std::vec::Vec[T]; docs/dev/test-matrix.md Explicit memory zones row |
 | `use std::Weak` | check-prelude std-rc-arc-weak root alias for std::rc::Weak[T]; docs/stdlib/modules/rc.md |
-| `use std::ZoneBacked` | std zone backed handle metadata tests; docs/stdlib/modules/zone.md |
-| `use std::ZoneMetadata` | std zone backed handle metadata tests; docs/stdlib/modules/zone.md |
 | `use std::align_of` | std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows |
 | `use std::alloc` | std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows |
 | `use std::alloc_array` | std zone raw array allocation root re-export tests; docs/stdlib/modules/zone.md |
@@ -406,7 +404,6 @@ Tier: `core`. Stability reading: stable candidate.
 | `use std::clamp_by` | check-prelude std-cmp-by-helpers comparator-based clamp root re-export; docs/stdlib/modules/cmp.md |
 | `use std::create` | std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows |
 | `use std::destroy` | std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows |
-| `use std::from_zone` | std zone backed handle metadata tests; docs/stdlib/modules/zone.md |
 | `use std::has_arg` | std context args root re-export tests; docs/stdlib/modules/context.md |
 | `use std::input_owned` | std root re-export owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows |
 | `use std::input_text` | std root re-export raw borrowed input hook tests; docs/stdlib/modules/input.md |
@@ -414,12 +411,10 @@ Tier: `core`. Stability reading: stable candidate.
 | `use std::is_between_by` | check-prelude std-cmp-by-helpers comparator-based range root re-export; docs/stdlib/modules/cmp.md |
 | `use std::max` | std cmp value helper root re-export tests; docs/dev/test-matrix.md Front-end surfaces row |
 | `use std::max_by` | check-prelude std-cmp-by-helpers comparator-based max root re-export; docs/stdlib/modules/cmp.md |
-| `use std::metadata` | std zone backed handle metadata tests; docs/stdlib/modules/zone.md |
 | `use std::min` | std cmp value helper root re-export tests; docs/dev/test-matrix.md Front-end surfaces row |
 | `use std::min_by` | check-prelude std-cmp-by-helpers comparator-based min root re-export; docs/stdlib/modules/cmp.md |
 | `use std::new` | std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows |
 | `use std::newline` | std root re-export tests; docs/dev/test-matrix.md Prelude row |
-| `use std::of` | std zone backed handle metadata tests; docs/stdlib/modules/zone.md |
 | `use std::promote` | std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows |
 | `use std::ptr_add` | std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows |
 | `use std::ptr_load` | std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows |
@@ -510,9 +505,11 @@ Tier: `alloc`. Stability reading: usable.
 | `fn std::allocator::can_alloc_array[T]` | std allocator capability tests; docs/stdlib/modules/allocator.md |
 | `fn std::allocator::capacity` | std allocator capability tests; docs/stdlib/modules/allocator.md |
 | `fn std::allocator::from_data` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+| `fn std::allocator::from_region` | std region capability tests; docs/stdlib/modules/allocator.md |
 | `fn std::allocator::from_zone` | std allocator capability tests; docs/stdlib/modules/allocator.md |
 | `fn std::allocator::from_zone_metadata` | std allocator capability tests; docs/stdlib/modules/allocator.md |
 | `fn std::allocator::of[T: std::zone::ZoneBacked]` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+| `fn std::allocator::of_mut[T: std::zone::ZoneBacked]` | std allocator capability tests; docs/stdlib/modules/allocator.md |
 | `fn std::allocator::remaining` | std allocator capability tests; docs/stdlib/modules/allocator.md |
 | `fn std::allocator::used` | std allocator capability tests; docs/stdlib/modules/allocator.md |
 

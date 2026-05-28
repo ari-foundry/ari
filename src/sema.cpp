@@ -22686,7 +22686,8 @@ private:
             }
             if (std_allocator_literal &&
                 index < struct_type.field_names.size() &&
-                struct_type.field_names[index] == "metadata_value") {
+                (struct_type.field_names[index] == "handle" ||
+                 struct_type.field_names[index] == "metadata_value")) {
                 return true;
             }
             if (std_zone_handle_source_field && index == *std_zone_handle_source_field) return true;
