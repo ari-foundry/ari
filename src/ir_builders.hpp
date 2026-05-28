@@ -21,6 +21,10 @@ IrExprPtr make_tuple_index_expr(SourceLocation loc,
                                 const IrType& source_type,
                                 std::size_t index);
 IrExprPtr make_tuple_index_expr(SourceLocation loc, IrExprPtr source, std::size_t index);
+IrExprPtr make_enum_payload_slot_expr(SourceLocation loc,
+                                      IrExprPtr source,
+                                      std::size_t payload_index,
+                                      IrType payload_type);
 IrExprPtr make_vector_index_expr(SourceLocation loc,
                                  const std::string& source_name,
                                  const IrType& source_type,

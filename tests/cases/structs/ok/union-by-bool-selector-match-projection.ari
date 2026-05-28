@@ -1,0 +1,33 @@
+struct DisabledPayload {
+  value: i64,
+}
+
+struct EnabledPayload {
+  value: i64,
+}
+
+struct Feature {
+  enabled: bool,
+  payload: union by enabled {
+    false => DisabledPayload,
+    true => EnabledPayload,
+  },
+}
+
+fn score(feature: Feature) -> i64 {
+  return match feature.enabled {
+    false => feature.payload.0.value + 1,
+    true => feature.payload.0.value + 2,
+  };
+}
+
+fn main() -> i64 {
+  let enabled = Feature {
+    enabled: true,
+    payload: true => EnabledPayload { value: 40 },
+  };
+  let disabled = Feature {
+    payload: false => DisabledPayload { value: 3 },
+  };
+  return score(enabled) + score(disabled);
+}

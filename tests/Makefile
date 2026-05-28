@@ -6024,6 +6024,10 @@ check-structs: $(TARGET)
 	grep -q "switch i64" $(BUILD_DIR)/structs/union-by-match.ll
 	$(TARGET) tests/cases/structs/ok/union-by-bool-selector.ari -o $(BUILD_DIR)/structs/union-by-bool-selector.elf
 	$(BUILD_DIR)/structs/union-by-bool-selector.elf; code=$$?; test $$code -eq 46
+	$(TARGET) tests/cases/structs/ok/union-by-selector-match-projection.ari -o $(BUILD_DIR)/structs/union-by-selector-match-projection.elf
+	$(BUILD_DIR)/structs/union-by-selector-match-projection.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/cases/structs/ok/union-by-bool-selector-match-projection.ari -o $(BUILD_DIR)/structs/union-by-bool-selector-match-projection.elf
+	$(BUILD_DIR)/structs/union-by-bool-selector-match-projection.elf; code=$$?; test $$code -eq 46
 	$(TARGET) tests/cases/structs/ok/union-by-bool-call-constructor.ari -o $(BUILD_DIR)/structs/union-by-bool-call-constructor.elf
 	$(BUILD_DIR)/structs/union-by-bool-call-constructor.elf; code=$$?; test $$code -eq 44
 	$(TARGET) tests/cases/structs/ok/union-by-shorthand-constructor.ari -o $(BUILD_DIR)/structs/union-by-shorthand-constructor.elf

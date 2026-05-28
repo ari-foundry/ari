@@ -127,7 +127,10 @@ fields share that omitted selector, their constructor arms must agree.
 The field value can also be matched directly with the same arm names, for
 example `match packet.fragment { stream(stream_payload) => ... }`; pattern
 resolution prefers the subject enum type before global case names so `union by`
-arms can share names with the selector enum cases. After construction, direct
+arms can share names with the selector enum cases. Matching the selector path
+itself also narrows the linked payload field inside each arm, so
+`match packet.security.cipher_type { stream => packet.fragment.0.value, ... }`
+is accepted with the arm's declared payload type. After construction, direct
 assignment to the selector path, an ancestor field, or the `union by` field
 itself is rejected; rebuild the whole struct when the discriminant and active
 payload must change together.
@@ -135,8 +138,8 @@ payload must change together.
 It should not replace ordinary `enum` ADTs, unchecked C unions, or `match`.
 Non-enum and non-bool selectors are rejected so the active-arm set stays closed
 and exhaustively checkable. Remaining design work covers public active-arm
-borrowing/narrowing outside direct field matches, wrapper-struct provenance,
-richer active-arm mutation/drop diagnostics, and stable ABI naming.
+borrowing/narrowing outside direct field/selector matches, wrapper-struct
+provenance, richer active-arm mutation/drop diagnostics, and stable ABI naming.
 The compiler capability inventory tracks this as `union-by-fields`.
 
 ## What Not To Track Here

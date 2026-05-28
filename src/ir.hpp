@@ -298,6 +298,7 @@ enum class IrExprKind {
     NullCoalesce,
     EnumTag,
     EnumConstruct,
+    EnumPayloadSlot,
     Tuple,
     TupleIndex,
     Index,

@@ -253,6 +253,18 @@ struct TrackedEnumOwnerSubject {
     IrType enum_type;
 };
 
+struct UnionByMatchSubject {
+    std::string base_name;
+    IrType base_type;
+    std::vector<std::string> union_field_paths;
+};
+
+struct ActiveUnionByArmProof {
+    std::string base_name;
+    std::string union_field_path;
+    std::string arm_name;
+};
+
 struct ReferenceBindingSubject {
     std::string base_name;
     IrType base_type;
@@ -564,6 +576,7 @@ private:
     std::set<std::string> resolving_type_aliases_;
     std::vector<std::string> resolving_aggregate_types_;
     std::vector<GenericTraitBound> current_generic_bounds_;
+    std::vector<ActiveUnionByArmProof> active_union_by_arm_proofs_;
     std::vector<IrFunction> specialized_functions_;
     std::vector<PendingSpecialization> pending_specializations_;
     std::set<std::string> queued_specializations_;
@@ -11961,6 +11974,139 @@ private:
         return nullptr;
     }
 
+    std::optional<std::string> union_by_selector_storage_path(
+        const IrType& root_type,
+        const TypeRef& ast_type
+    ) const {
+        if (ast_type.union_by_selector.empty()) return std::nullopt;
+        IrType current = value_qualified_type(root_type);
+        std::string path;
+        for (std::size_t selector_index = 0;
+             selector_index < ast_type.union_by_selector.size();
+             ++selector_index) {
+            if (current.primitive != IrPrimitiveKind::Struct) return std::nullopt;
+            const std::string& segment = ast_type.union_by_selector[selector_index];
+            std::size_t field_index = current.field_names.size();
+            for (std::size_t i = 0; i < current.field_names.size(); ++i) {
+                if (current.field_names[i] == segment) {
+                    field_index = i;
+                    break;
+                }
+            }
+            if (field_index >= current.field_names.size() ||
+                field_index >= current.field_types.size()) {
+                return std::nullopt;
+            }
+            path = local_owned_field_path(path, field_index);
+            current = value_qualified_type(current.field_types[field_index]);
+        }
+        return path;
+    }
+
+    std::optional<UnionByMatchSubject> union_by_match_subject(const IrExpr& expr) {
+        std::string base_name;
+        std::string path;
+        if (!tracked_ir_access_path(expr, base_name, path)) return std::nullopt;
+
+        LocalInfo* local = find_local_slot(base_name);
+        if (!local) return std::nullopt;
+        IrType base_type = value_qualified_type(local->type);
+        if (base_type.primitive != IrPrimitiveKind::Struct) return std::nullopt;
+
+        UnionByMatchSubject subject;
+        subject.base_name = base_name;
+        subject.base_type = base_type;
+
+        if (const StructInfo::Field* field = union_by_field_for_storage_path(base_type, path)) {
+            (void)field;
+            subject.union_field_paths.push_back(path);
+            return subject;
+        }
+
+        auto struct_found = structs_.find(base_type.name);
+        if (struct_found == structs_.end()) return std::nullopt;
+        const StructInfo& info = struct_found->second;
+        for (std::size_t i = 0; i < info.fields.size(); ++i) {
+            const StructInfo::Field& field = info.fields[i];
+            if (!field.type.is_union_by) continue;
+            std::optional<std::string> selector_path =
+                union_by_selector_storage_path(base_type, field.type);
+            if (!selector_path || *selector_path != path) continue;
+            subject.union_field_paths.push_back(local_owned_field_path("", i));
+        }
+
+        if (subject.union_field_paths.empty()) return std::nullopt;
+        return subject;
+    }
+
+    template <typename Arm>
+    std::optional<std::string> active_union_by_arm_name_from_match_arm(
+        const Arm& arm,
+        const IrType& match_type
+    ) const {
+        if (!arm.case_name.empty()) return arm.case_name;
+        if (match_type.qualifier == TypeQualifier::Value &&
+            match_type.primitive == IrPrimitiveKind::Bool &&
+            arm.has_literal &&
+            arm.literal_is_bool) {
+            return arm.literal_bool ? std::optional<std::string>{"true"}
+                                    : std::optional<std::string>{"false"};
+        }
+        return std::nullopt;
+    }
+
+    template <typename Arm>
+    std::size_t push_active_union_by_arm_proofs(
+        const std::optional<UnionByMatchSubject>& subject,
+        const Arm& arm,
+        const IrType& match_type
+    ) {
+        std::size_t mark = active_union_by_arm_proofs_.size();
+        if (!subject) return mark;
+        std::optional<std::string> arm_name =
+            active_union_by_arm_name_from_match_arm(arm, match_type);
+        if (!arm_name) return mark;
+
+        for (const std::string& union_field_path : subject->union_field_paths) {
+            active_union_by_arm_proofs_.push_back(ActiveUnionByArmProof{
+                subject->base_name,
+                union_field_path,
+                *arm_name
+            });
+        }
+        return mark;
+    }
+
+    void restore_active_union_by_arm_proofs(std::size_t mark) {
+        if (mark > active_union_by_arm_proofs_.size()) {
+            throw CompileError("internal error: invalid union by arm proof mark");
+        }
+        active_union_by_arm_proofs_.resize(mark);
+    }
+
+    std::optional<IrType> active_union_by_payload_projection_type(
+        SourceLocation loc,
+        const std::string& base_name,
+        const std::string& union_field_path,
+        const IrType& enum_storage_type,
+        std::uint64_t payload_index
+    ) {
+        for (auto it = active_union_by_arm_proofs_.rbegin();
+             it != active_union_by_arm_proofs_.rend();
+             ++it) {
+            if (it->base_name != base_name ||
+                it->union_field_path != union_field_path) {
+                continue;
+            }
+            std::optional<EnumCaseInfo> case_info =
+                try_enum_case_for_match_value(loc, it->arm_name, enum_storage_type);
+            if (!case_info) return std::nullopt;
+            if (payload_index >= case_info->payloads.size()) return std::nullopt;
+            return case_info->payloads[static_cast<std::size_t>(payload_index)];
+        }
+        return std::nullopt;
+    }
+
     [[noreturn]] void fail_union_by_payload_projection(
         SourceLocation loc,
         const std::string& field_name,
@@ -12774,7 +12920,39 @@ private:
                 }
                 if (const StructInfo::Field* union_by_field =
                         union_by_field_for_storage_path(base.base_type, base.path)) {
-                    fail_union_by_payload_projection(expr.loc, *union_by_field, expr.tuple_index);
+                    std::optional<IrType> active_payload_type =
+                        active_union_by_payload_projection_type(
+                            expr.loc,
+                            base.base_name,
+                            base.path,
+                            base.type,
+                            expr.tuple_index);
+                    if (!active_payload_type) {
+                        fail_union_by_payload_projection(expr.loc, *union_by_field, expr.tuple_index);
+                    }
+                    std::size_t payload_count = base.type.field_types.size() - 1;
+                    if (expr.tuple_index >= payload_count) {
+                        fail(expr.loc,
+                             "enum payload field index " + std::to_string(expr.tuple_index) +
+                             " is out of range for " + type_name(base.type));
+                    }
+                    std::size_t payload_index = static_cast<std::size_t>(expr.tuple_index);
+                    std::size_t storage_field_index = payload_index + 1;
+
+                    out.base_name = std::move(base.base_name);
+                    out.base_type = std::move(base.base_type);
+                    out.type = *active_payload_type;
+                    out.path = local_owned_field_path(base.path, storage_field_index);
+                    out.expr = make_enum_payload_slot_expr(
+                        expr.loc,
+                        std::move(base.expr),
+                        payload_index,
+                        *active_payload_type);
+                    out.has_final_field_mutability = false;
+                    out.final_field_mutable = true;
+                    out.final_field_label.clear();
+                    out.final_container_name = base.type.name;
+                    return true;
                 }
                 std::size_t payload_count = base.type.field_types.size() - 1;
                 if (expr.tuple_index >= payload_count) {
@@ -17696,6 +17874,8 @@ private:
                 "match");
         }
 
+        std::optional<UnionByMatchSubject> union_by_subject =
+            union_by_match_subject(*lowered.match_value);
         std::string subject_name;
         ReferenceBindingSubject reference_subject;
         std::unique_ptr<IrStmt> materialized_match;
@@ -17769,7 +17949,10 @@ private:
                 }
                 local_scopes_.clear_reusable_pattern_bindings();
 
+                std::size_t union_by_proof_mark =
+                    push_active_union_by_arm_proofs(union_by_subject, lowered_arm, enum_value_type);
                 CheckedStatements checked = check_statements(arm.body, false);
+                restore_active_union_by_arm_proofs(union_by_proof_mark);
                 for (auto& statement : checked.statements) {
                     lowered_arm.body.push_back(std::move(statement));
                 }
@@ -17834,6 +18017,8 @@ private:
                 "match");
         }
 
+        std::optional<UnionByMatchSubject> union_by_subject =
+            union_by_match_subject(*lowered.match_value);
         std::string subject_name;
         ReferenceBindingSubject reference_subject;
         std::unique_ptr<IrStmt> materialized_match;
@@ -17896,7 +18081,10 @@ private:
                         lowered_arm.body);
                 }
                 local_scopes_.clear_reusable_pattern_bindings();
+                std::size_t union_by_proof_mark =
+                    push_active_union_by_arm_proofs(union_by_subject, lowered_arm, match_type);
                 CheckedStatements checked = check_statements(arm.body, false);
+                restore_active_union_by_arm_proofs(union_by_proof_mark);
                 for (auto& statement : checked.statements) {
                     lowered_arm.body.push_back(std::move(statement));
                 }
@@ -22481,6 +22669,8 @@ private:
                 "match");
         }
 
+        std::optional<UnionByMatchSubject> union_by_subject =
+            union_by_match_subject(*match_value);
         std::string subject_name;
         ReferenceBindingSubject reference_subject;
         IrExprPtr materialized_match;
@@ -22560,6 +22750,8 @@ private:
                 }
                 local_scopes_.clear_reusable_pattern_bindings();
 
+                std::size_t union_by_proof_mark =
+                    push_active_union_by_arm_proofs(union_by_subject, lowered_arm, enum_value_type);
                 const IrType* arm_expected = result_expected ? result_expected : (has_result ? &result_type : nullptr);
                 std::size_t borrow_mark = temporary_borrow_mark();
                 IrExprPtr value = check_expr_maybe_expected(*arm.value, arm_expected);
@@ -22572,6 +22764,7 @@ private:
                         lowered_arm.body,
                         local_scopes_.size() - 1,
                         borrow_mark);
+                restore_active_union_by_arm_proofs(union_by_proof_mark);
                 if (!diverges && !arm_borrow_source && is_borrow_type(value->type)) {
                     fail(arm.loc, "match expression arms cannot produce borrow values yet");
                 }
@@ -22664,6 +22857,8 @@ private:
 
     IrExprPtr check_scalar_match_expr(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
         IrType match_type = ir_expr_match_value(*lowered)->type;
+        std::optional<UnionByMatchSubject> union_by_subject =
+            union_by_match_subject(*ir_expr_match_value(*lowered));
         bool needs_reference_pattern_bindings = false;
         for (const auto& arm : expr_match_arms(expr)) {
             if (expanded_pattern_has_reference_binding_mode(arm.pattern)) {
@@ -22751,6 +22946,8 @@ private:
                         lowered_arm.body);
                 }
                 local_scopes_.clear_reusable_pattern_bindings();
+                std::size_t union_by_proof_mark =
+                    push_active_union_by_arm_proofs(union_by_subject, lowered_arm, match_type);
                 const IrType* arm_expected = result_expected ? result_expected : (has_result ? &result_type : nullptr);
                 std::size_t borrow_mark = temporary_borrow_mark();
                 IrExprPtr value = check_expr_maybe_expected(*arm.value, arm_expected);
@@ -22763,6 +22960,7 @@ private:
                         lowered_arm.body,
                         local_scopes_.size() - 1,
                         borrow_mark);
+                restore_active_union_by_arm_proofs(union_by_proof_mark);
                 if (!diverges && !arm_borrow_source && is_borrow_type(value->type)) {
                     fail(arm.loc, "match expression arms cannot produce borrow values yet");
                 }

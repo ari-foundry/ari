@@ -91,6 +91,28 @@ IrExprPtr make_tuple_index_expr(SourceLocation loc, IrExprPtr source, std::size_
     return expr;
 }
 
+IrExprPtr make_enum_payload_slot_expr(SourceLocation loc,
+                                      IrExprPtr source,
+                                      std::size_t payload_index,
+                                      IrType payload_type) {
+    if (!source) {
+        throw CompileError(where(loc) + ": internal error: enum payload slot expression requires a source");
+    }
+    if (!ari_has_aggregate_enum_layout(source->type)) {
+        throw CompileError(where(loc) + ": internal error: enum payload slot expression requires aggregate enum storage");
+    }
+    if (payload_index + 1 >= source->type.field_types.size()) {
+        throw CompileError(where(loc) + ": internal error: enum payload slot expression out of range");
+    }
+    auto expr = std::make_unique<IrExpr>();
+    expr->kind = IrExprKind::EnumPayloadSlot;
+    expr->loc = loc;
+    expr->tuple_index = payload_index;
+    expr->type = std::move(payload_type);
+    set_ir_expr_operand(*expr, std::move(source));
+    return expr;
+}
+
 IrExprPtr make_vector_index_expr(SourceLocation loc,
                                  const std::string& source_name,
                                  const IrType& source_type,

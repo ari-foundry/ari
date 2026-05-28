@@ -5706,6 +5706,11 @@ private:
                 return emit_enum_tag_expr(expr);
             case IrExprKind::EnumConstruct:
                 return emit_enum_construct(expr);
+            case IrExprKind::EnumPayloadSlot: {
+                Value enum_value = emit_expr(*ir_expr_operand(expr));
+                Value payload = emit_enum_payload_slot(expr.loc, enum_value, static_cast<std::uint32_t>(expr.tuple_index));
+                return cast_enum_payload_slot_to_type(expr.loc, std::move(payload), expr.type);
+            }
             case IrExprKind::Tuple:
                 return emit_tuple(expr);
             case IrExprKind::TupleIndex:

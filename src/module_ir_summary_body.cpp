@@ -84,6 +84,7 @@ std::string expr_kind_name(IrExprKind kind) {
         case IrExprKind::NullCoalesce: return "null-coalesce";
         case IrExprKind::EnumTag: return "enum-tag";
         case IrExprKind::EnumConstruct: return "enum-construct";
+        case IrExprKind::EnumPayloadSlot: return "enum-payload-slot";
         case IrExprKind::Tuple: return "tuple";
         case IrExprKind::TupleIndex: return "tuple-index";
         case IrExprKind::Index: return "index";
