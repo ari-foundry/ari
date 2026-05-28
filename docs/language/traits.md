@@ -706,12 +706,13 @@ fn save(x: has { serialize() -> i64, add(i64) -> i64 }, amount: i64) -> i64 {
 
 Grouped requirements use comma separators and may have a trailing comma. A
 missing method or mismatched method signature is reported at the call site, with
-a secondary label on the exact requirement inside the grouped `has` list.
-Each method name may appear only once in the same structural capability; use a
-named trait when a contract needs overloaded or more elaborate method
-relationships. Structural capabilities are method-only today, so field or
-property requirements such as `has { serial: i64 }` are rejected with a targeted
-diagnostic.
+a secondary label on the exact requirement inside the grouped `has` list. The
+diagnostic also prints the full grouped set so the failing requirement can be
+read in context. Each method name may appear only once in the same structural
+capability; use a named trait when a contract needs overloaded or more
+elaborate method relationships. Structural capabilities are method-only today,
+so field or property requirements such as `has { serial: i64 }` are rejected
+with a targeted diagnostic.
 
 When a function needs to name the same structural type more than once, return
 it, or use the type parameter in another generic position, put the capability
@@ -761,7 +762,9 @@ Capability aliases are bound-only names. They do not describe storage or a
 runtime value type, so use them as generic bounds (`T: Serializable`) rather
 than parameter types (`x: Serializable`). A generic alias must receive exactly
 the declared number of type arguments, and those arguments are resolved in the
-same context as the function or method bound using the alias.
+same context as the function or method bound using the alias. If an aliased
+requirement fails, the diagnostic names the alias and shows the expanded
+method requirement after type-argument substitution.
 
 Inherent `impl` methods and associated functions can use the same parameter
 syntax and the same explicit generic-bound syntax. Trait methods and their

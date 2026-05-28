@@ -5842,6 +5842,7 @@ check-traits: $(TARGET)
 	grep -q "does not satisfy structural capability 'has serialize() -> i64'" $(BUILD_DIR)/traits/structural-capability-missing.err
 	if $(TARGET) tests/cases/traits/errors/structural-capability-multi-missing.ari -o $(BUILD_DIR)/traits/structural-capability-multi-missing.elf >$(BUILD_DIR)/traits/structural-capability-multi-missing.err 2>&1; then exit 1; fi
 	grep -q "does not satisfy structural capability 'has add(i64) -> i64'" $(BUILD_DIR)/traits/structural-capability-multi-missing.err
+	grep -q "full structural capability set: has { serialize() -> i64, add(i64) -> i64 }" $(BUILD_DIR)/traits/structural-capability-multi-missing.err
 	if $(TARGET) tests/cases/traits/errors/structural-capability-duplicate-method.ari -o $(BUILD_DIR)/traits/structural-capability-duplicate-method.elf >$(BUILD_DIR)/traits/structural-capability-duplicate-method.err 2>&1; then exit 1; fi
 	grep -q "duplicate structural capability method requirement 'serialize'" $(BUILD_DIR)/traits/structural-capability-duplicate-method.err
 	if $(TARGET) tests/cases/traits/errors/structural-capability-field-requirement.ari -o $(BUILD_DIR)/traits/structural-capability-field-requirement.elf >$(BUILD_DIR)/traits/structural-capability-field-requirement.err 2>&1; then exit 1; fi
@@ -5860,6 +5861,7 @@ check-traits: $(TARGET)
 	grep -q "structural capability alias 'Serializable' is only supported on free functions and inherent impl methods" $(BUILD_DIR)/traits/structural-capability-alias-struct-bound.err
 	if $(TARGET) tests/cases/traits/errors/structural-capability-generic-alias-missing.ari -o $(BUILD_DIR)/traits/structural-capability-generic-alias-missing.elf >$(BUILD_DIR)/traits/structural-capability-generic-alias-missing.err 2>&1; then exit 1; fi
 	grep -q "does not satisfy structural capability 'has add(i64) -> i64'" $(BUILD_DIR)/traits/structural-capability-generic-alias-missing.err
+	grep -q "while checking structural capability alias 'Combiner' as has add(i64) -> i64" $(BUILD_DIR)/traits/structural-capability-generic-alias-missing.err
 	if $(TARGET) tests/cases/traits/errors/structural-capability-generic-alias-arity.ari -o $(BUILD_DIR)/traits/structural-capability-generic-alias-arity.elf >$(BUILD_DIR)/traits/structural-capability-generic-alias-arity.err 2>&1; then exit 1; fi
 	grep -q "type alias 'Combiner' expects 1 type argument" $(BUILD_DIR)/traits/structural-capability-generic-alias-arity.err
 	if $(TARGET) tests/cases/traits/errors/structural-capability-struct-generic-bound.ari -o $(BUILD_DIR)/traits/structural-capability-struct-generic-bound.elf >$(BUILD_DIR)/traits/structural-capability-struct-generic-bound.err 2>&1; then exit 1; fi

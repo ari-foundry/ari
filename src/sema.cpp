@@ -25398,6 +25398,41 @@ private:
         return text;
     }
 
+    std::string structural_capability_method_display(const StructuralCapabilityMethod& method) {
+        std::vector<IrType> params;
+        params.reserve(method.params.size());
+        for (const auto& param : method.params) {
+            IrType source = resolve_executable_type(param);
+            bool vec_view = false;
+            params.push_back(vector_parameter_abi_type(
+                param.loc,
+                source,
+                "a structural capability method parameter",
+                vec_view));
+        }
+        IrType result = method.has_result
+            ? resolve_executable_type(method.result)
+            : void_type(method.loc);
+        return structural_capability_display(method, params, result);
+    }
+
+    std::string structural_capability_group_display(
+        const std::vector<StructuralCapabilityMethod>& methods
+    ) {
+        if (methods.size() == 1) return structural_capability_method_display(methods.front());
+
+        std::string text = "has { ";
+        for (std::size_t i = 0; i < methods.size(); ++i) {
+            if (i != 0) text += ", ";
+            std::string item = structural_capability_method_display(methods[i]);
+            const std::string prefix = "has ";
+            if (item.compare(0, prefix.size(), prefix) == 0) item = item.substr(prefix.size());
+            text += item;
+        }
+        text += " }";
+        return text;
+    }
+
     bool structural_method_signature_matches(
         const FunctionSig& sig,
         const std::vector<IrType>& expected_params,
@@ -25524,7 +25559,22 @@ private:
         const IrType& self_type
     ) {
         for (const auto& method : generic.structural_methods) {
-            require_structural_capability_method(loc, self_type, method);
+            try {
+                require_structural_capability_method(loc, self_type, method);
+            } catch (CompileError& error) {
+                if (generic.structural_methods.size() > 1) {
+                    error.add_note(DiagnosticNote{
+                        std::nullopt,
+                        "full structural capability set: " +
+                            structural_capability_group_display(generic.structural_methods),
+                        DiagnosticNoteKind::Note});
+                    error.add_note(DiagnosticNote{
+                        std::nullopt,
+                        "promote this set to a named trait when the grouped contract is part of a public API",
+                        DiagnosticNoteKind::Help});
+                }
+                throw;
+            }
         }
     }
 
@@ -25544,6 +25594,15 @@ private:
             for (const auto& method : alias.structural_methods) {
                 require_structural_capability_method(loc, self_type, method);
             }
+        } catch (CompileError& error) {
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "while checking structural capability alias '" + alias.name +
+                    "' as " + structural_capability_group_display(alias.structural_methods),
+                DiagnosticNoteKind::Note});
+            current_type_substitutions_ = std::move(previous_substitutions);
+            current_module_name_ = previous_module;
+            throw;
         } catch (...) {
             current_type_substitutions_ = std::move(previous_substitutions);
             current_module_name_ = previous_module;
