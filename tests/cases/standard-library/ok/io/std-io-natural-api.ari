@@ -35,20 +35,18 @@ fn main() -> i64 {
   if unit_ok(out.write_all(std::string::bytes("M"))) {
     score = score + 3;
   }
-  var print_upper = std::string::from(ref mut zone, "P");
-  if unit_ok(io::print(ref print_upper)) {
+  if unit_ok(io::print("P")) {
     score = score + 4;
   }
-  var println_upper = std::string::from(ref mut zone, "L");
-  if unit_ok(io::println(ref println_upper)) {
+  if unit_ok(io::println("L")) {
     score = score + 5;
   }
   var print_lower = std::string::from(ref mut zone, "p");
-  if unit_ok(io::print(ref print_lower)) {
+  if unit_ok(io::print_string(ref print_lower)) {
     score = score + 14;
   }
   var println_lower = std::string::from(ref mut zone, "l");
-  if unit_ok(io::println(ref println_lower)) {
+  if unit_ok(io::println_string(ref println_lower)) {
     score = score + 15;
   }
   if trait_write_ok<io::Stdout>(ref mut out, std::string::bytes("T"), 1) {
@@ -65,20 +63,18 @@ fn main() -> i64 {
   if unit_ok(err.write_all(std::string::bytes("A"))) {
     score = score + 7;
   }
-  var eprint_upper = std::string::from(ref mut zone, "R");
-  if unit_ok(io::eprint(ref eprint_upper)) {
+  if unit_ok(io::eprint("R")) {
     score = score + 8;
   }
-  var eprintln_upper = std::string::from(ref mut zone, "S");
-  if unit_ok(io::eprintln(ref eprintln_upper)) {
+  if unit_ok(io::eprintln("S")) {
     score = score + 9;
   }
   var eprint_lower = std::string::from(ref mut zone, "r");
-  if unit_ok(io::eprint(ref eprint_lower)) {
+  if unit_ok(io::eprint_string(ref eprint_lower)) {
     score = score + 16;
   }
   var eprintln_lower = std::string::from(ref mut zone, "s");
-  if unit_ok(io::eprintln(ref eprintln_lower)) {
+  if unit_ok(io::eprintln_string(ref eprintln_lower)) {
     score = score + 17;
   }
   if trait_write_ok<io::Stderr>(ref mut err, std::string::bytes("V"), 1) {

@@ -5,7 +5,7 @@ fn main() -> i64 {
   std::println("std root {}", 1);
   std::print("std print {}\n", 2);
   var plain = std::string::from(ref mut zone, "std io plain");
-  std::io::println(ref plain).unwrap();
+  std::io::println_string(ref plain).unwrap();
   core::println("std alias {}", 3);
   zone::destroy(zone);
   return 6;

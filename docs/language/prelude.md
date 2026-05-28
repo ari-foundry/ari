@@ -297,8 +297,10 @@ If `std` is imported under an alias, the same builtin formatting lowering is
 available through that alias, such as `use std as core; core::println("x={}", 1)`.
 `std::io::print`, `std::io::println`, `std::io::eprint`, and
 `std::io::eprintln` are ordinary source stdlib functions that write plain text
-and return `Result[(), std::error::Error]`; use the root `print`/`println` or
-`std::print`/`std::println` spellings for compiler-lowered format strings.
+from borrowed bytes and return `Result[(), std::error::Error]`; string literals
+work directly, and owned `String` values can use the `_string` variants. Use the
+root `print`/`println` or `std::print`/`std::println` spellings for
+compiler-lowered format strings.
 
 ## Lower-Level IO
 

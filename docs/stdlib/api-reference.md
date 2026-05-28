@@ -2367,14 +2367,18 @@ io::write_all[W: Writer](writer: ref mut W, values)
 io::write_all_unchecked[W: Writer](writer: ref mut W, values)
 io::flush[W: Writer](writer: ref mut W)
 io::flush_unchecked[W: Writer](writer: ref mut W)
-io::print(text)
-io::print_text(text)
-io::println(text)
-io::println_text(text)
-io::eprint(text)
-io::eprint_text(text)
-io::eprintln(text)
-io::eprintln_text(text)
+io::print(text: Slice[u8])
+io::print_text(text: Slice[u8])
+io::print_string(text: ref String)
+io::println(text: Slice[u8])
+io::println_text(text: Slice[u8])
+io::println_string(text: ref String)
+io::eprint(text: Slice[u8])
+io::eprint_text(text: Slice[u8])
+io::eprint_string(text: ref String)
+io::eprintln(text: Slice[u8])
+io::eprintln_text(text: Slice[u8])
+io::eprintln_string(text: ref String)
 io::write_i64(value)
 io::write_u64(value)
 io::write_bool(value)
@@ -2444,10 +2448,12 @@ write. `Stdout`, `Stderr`, `PipeWriter`, `BufWriter`, `std::fs::File`,
 the writer's `Error` for a failed flush; `io::flush_unchecked` is the bool
 wrapper.
 `io::print`, `io::println`, `io::eprint`, and `io::eprintln` are
-Result-returning plain-text helpers for CLI messages. They do not parse format
-placeholders. The older `_text` spellings remain compatibility aliases. Root
-`print`/`println` and `std::print`/`std::println` are still compiler formatting
-calls; the `io::` names are ordinary stdlib functions for direct byte output.
+Result-returning plain-text helpers for CLI messages. They accept borrowed
+bytes, so string literals work directly. They do not parse format placeholders.
+Use the `_string` variants for owned `String` values. The older `_text`
+spellings remain compatibility aliases for borrowed bytes. Root `print`/
+`println` and `std::print`/`std::println` are still compiler formatting calls;
+the `io::` names are ordinary stdlib functions for direct byte output.
 `io::Stdout` and `io::Stderr` implement `Writer` over the current process
 stream hooks, with `flush` currently succeeding as a no-op. `io::BufReader`
 and `io::BufWriter` wrap any `Reader` or `Writer` with either an explicit

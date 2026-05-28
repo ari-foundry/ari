@@ -146,14 +146,18 @@ io::write_all[W: Writer](writer: ref mut W, values: Slice[u8]) -> Result[(), Err
 io::write_all_unchecked[W: Writer](writer: ref mut W, values: Slice[u8]) -> bool
 io::flush[W: Writer](writer: ref mut W) -> Result[(), Error]
 io::flush_unchecked[W: Writer](writer: ref mut W) -> bool
-io::print(text) -> Result[(), Error]
-io::print_text(text) -> Result[(), Error]
-io::println(text) -> Result[(), Error]
-io::println_text(text) -> Result[(), Error]
-io::eprint(text) -> Result[(), Error]
-io::eprint_text(text) -> Result[(), Error]
-io::eprintln(text) -> Result[(), Error]
-io::eprintln_text(text) -> Result[(), Error]
+io::print(text: Slice[u8]) -> Result[(), Error]
+io::print_text(text: Slice[u8]) -> Result[(), Error]
+io::print_string(text: ref String) -> Result[(), Error]
+io::println(text: Slice[u8]) -> Result[(), Error]
+io::println_text(text: Slice[u8]) -> Result[(), Error]
+io::println_string(text: ref String) -> Result[(), Error]
+io::eprint(text: Slice[u8]) -> Result[(), Error]
+io::eprint_text(text: Slice[u8]) -> Result[(), Error]
+io::eprint_string(text: ref String) -> Result[(), Error]
+io::eprintln(text: Slice[u8]) -> Result[(), Error]
+io::eprintln_text(text: Slice[u8]) -> Result[(), Error]
+io::eprintln_string(text: ref String) -> Result[(), Error]
 
 io::write_i64(value: i64) -> i64
 io::write_u64(value: u64) -> i64
@@ -253,10 +257,13 @@ streams, can call that host path directly while preserving the same `Result`
 semantics.
 
 `print`, `println`, `eprint`, and `eprintln` are the Result-returning
-plain-text helpers for hosted CLI messages. They do not interpret formatting
-placeholders; build text first with `std::fmt` or string helpers when a message
-needs interpolation. `print_text`, `println_text`, `eprint_text`, and
-`eprintln_text` remain compatibility aliases for older call sites. Root
+plain-text helpers for hosted CLI messages. They accept borrowed bytes, so
+string literals work directly, for example `io::print("arish> ")`. They do not
+interpret formatting placeholders; build text first with `std::fmt` or string
+helpers when a message needs interpolation. Use `print_string`,
+`println_string`, `eprint_string`, and `eprintln_string` for owned `String`
+handles. `print_text`, `println_text`, `eprint_text`, and `eprintln_text`
+remain compatibility aliases for older borrowed-byte call sites. Root
 `print`/`println` and `std::print`/`std::println` are still compiler-lowered
 formatting calls, but the `io::` names belong to this source module.
 
