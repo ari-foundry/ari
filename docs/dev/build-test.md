@@ -25,6 +25,68 @@ build/ari-lsp
 
 `make` is the same as `make release`.
 
+## Temporary Install
+
+The repository has a deliberately small install target for local use before a
+real Ari package manager owns distribution:
+
+```sh
+make release
+make install PREFIX=$HOME/.local
+```
+
+`make install` installs only the release compiler and source standard library:
+
+```text
+$(PREFIX)/bin/ari
+$(PREFIX)/share/ari/lib/std.arih
+$(PREFIX)/share/ari/lib/std/*.arih
+```
+
+The target honors `DESTDIR` for packaging-style staging:
+
+```sh
+make install DESTDIR=/tmp/ari-stage PREFIX=/usr/local
+```
+
+The installed compiler loads the implicit `std` module in this order:
+
+1. `ARI_STDLIB_PATH`, which may point directly at `std.arih` or at a directory
+   containing `std.arih` or `lib/std.arih`.
+2. `lib/std.arih` from the current working tree, which keeps source-tree
+   development unchanged.
+3. `../share/ari/lib/std.arih` relative to the running `ari` executable, which
+   lets an installed compiler work outside this checkout.
+
+For a staged smoke test that avoids the source-tree stdlib, run from another
+directory and use the staged binary directly:
+
+```sh
+make -j8 release
+make install DESTDIR=/tmp/ari-stage PREFIX=/usr/local
+cp examples/count.ari /tmp/ari-install-smoke.ari
+cd /tmp
+unset ARI_STDLIB_PATH
+/tmp/ari-stage/usr/local/bin/ari /tmp/ari-install-smoke.ari -o /tmp/ari-install-smoke
+/tmp/ari-install-smoke
+echo $?
+```
+
+For a real local install, use a writable prefix and make sure the LLVM driver is
+still available through `PATH` or `ARI_LLVM_CC`:
+
+```sh
+make -j8 release
+make install PREFIX=$HOME/.local
+PATH=$HOME/.local/bin:$PATH ari --help
+```
+
+Remove this temporary layout with:
+
+```sh
+make uninstall PREFIX=$HOME/.local
+```
+
 `make build-lib` delegates to `lib/Makefile` after building `build/ari`. It
 checks the source standard library through the smoke program, writes
 `build/lib/std-smoke.arimeta`, `build/lib/std-smoke.aricache`, and

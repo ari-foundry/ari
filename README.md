@@ -37,6 +37,19 @@ make examples
 make run-example EXAMPLE=hello
 ```
 
+Install the release compiler and source stdlib:
+
+```sh
+make release
+make install PREFIX=$HOME/.local
+```
+
+The temporary install layout is `bin/ari` plus `share/ari/lib/std.arih` and
+`share/ari/lib/std/*.arih`. The installed compiler finds that stdlib relative
+to its own executable, so it can run outside this checkout. Set
+`ARI_STDLIB_PATH=/path/to/lib/std.arih` or `ARI_STDLIB_PATH=/path/to/share/ari`
+to override the lookup while packaging experiments are still in flux.
+
 Build the source-library smoke artifacts and a shared-library sample:
 
 ```sh

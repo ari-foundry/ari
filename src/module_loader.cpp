@@ -11,8 +11,10 @@
 #include "type_semantics.hpp"
 
 #include <cctype>
+#include <cstdlib>
 #include <fstream>
 #include <iterator>
+#include <limits.h>
 #include <map>
 #include <optional>
 #include <set>
@@ -20,6 +22,10 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+#if defined(__unix__) || defined(__APPLE__)
+#include <unistd.h>
+#endif
 
 namespace ari {
 
@@ -72,6 +78,28 @@ std::string path_join(const std::string& left, const std::string& right) {
     char back = left[left.size() - 1];
     if (back == '/' || back == '\\') return left + right;
     return left + "/" + right;
+}
+
+void add_standard_header_candidates(std::vector<std::string>& candidates,
+                                    const std::string& path) {
+    if (path.empty()) return;
+    candidates.push_back(path);
+    candidates.push_back(path_join(path, "std.arih"));
+    candidates.push_back(path_join(path_join(path, "lib"), "std.arih"));
+}
+
+std::optional<std::string> current_executable_path() {
+#if defined(__linux__)
+    std::vector<char> buffer(PATH_MAX + 1, '\0');
+    ssize_t len = readlink("/proc/self/exe", buffer.data(), buffer.size() - 1);
+    if (len <= 0) return std::nullopt;
+    buffer[static_cast<std::size_t>(len)] = '\0';
+    return std::string(buffer.data());
+#elif defined(__APPLE__)
+    return std::nullopt;
+#else
+    return std::nullopt;
+#endif
 }
 
 void add_module_candidates(const std::string& dir,
@@ -331,8 +359,18 @@ ModuleFileSearch find_module_file(const ModuleImport& import,
 }
 
 std::optional<std::string> find_standard_header_file() {
-    const std::string path = "lib/std.arih";
-    if (file_exists(path)) return path;
+    std::vector<std::string> candidates;
+    if (const char* env = std::getenv("ARI_STDLIB_PATH")) {
+        add_standard_header_candidates(candidates, env);
+    }
+    candidates.push_back("lib/std.arih");
+    if (std::optional<std::string> exe = current_executable_path()) {
+        const std::string exe_dir = dirname(*exe);
+        candidates.push_back(path_join(path_join(exe_dir, ".."), "share/ari/lib/std.arih"));
+    }
+    for (const auto& path : candidates) {
+        if (file_exists(path)) return path;
+    }
     return std::nullopt;
 }
 

@@ -12,6 +12,14 @@ DEPFLAGS ?= -MMD -MP
 LDFLAGS ?=
 LDLIBS ?=
 EXEEXT ?=
+PREFIX ?= /usr/local
+BINDIR ?= $(PREFIX)/bin
+DATADIR ?= $(PREFIX)/share
+ARI_SHAREDIR ?= $(DATADIR)/ari
+INSTALL ?= install
+INSTALL_PROGRAM ?= $(INSTALL) -m 755
+INSTALL_DATA ?= $(INSTALL) -m 644
+INSTALL_DIR ?= $(INSTALL) -d
 
 BUILD_DIR := build
 OBJ_DIR := $(BUILD_DIR)/obj
@@ -29,6 +37,7 @@ TOOLING_SRC := $(wildcard tools/ari_tooling/*.cpp)
 LINT_SRC := $(wildcard tools/lint/*.cpp)
 LINT_LIB_SRC := $(filter-out tools/lint/main.cpp,$(LINT_SRC))
 LSP_SRC := $(wildcard tools/lsp/*.cpp)
+STD_MODULE_SRCS := $(sort $(wildcard lib/std/*.arih))
 RELEASE_OBJS := $(patsubst %.cpp,$(RELEASE_OBJ_DIR)/%.o,$(SRC))
 DEBUG_OBJS := $(patsubst %.cpp,$(DEBUG_OBJ_DIR)/%.o,$(SRC))
 SANITIZE_OBJS := $(patsubst %.cpp,$(SANITIZE_OBJ_DIR)/%.o,$(SRC))
@@ -38,7 +47,7 @@ LINT_LIB_OBJS := $(patsubst tools/%.cpp,$(TOOLS_OBJ_DIR)/%.o,$(LINT_LIB_SRC))
 LSP_OBJS := $(patsubst tools/%.cpp,$(TOOLS_OBJ_DIR)/%.o,$(LSP_SRC))
 DEP_FILES := $(RELEASE_OBJS:.o=.d) $(DEBUG_OBJS:.o=.d) $(SANITIZE_OBJS:.o=.d) $(TOOLING_OBJS:.o=.d) $(LINT_OBJS:.o=.d) $(LSP_OBJS:.o=.d)
 
-.PHONY: all release debug sanitize tools lint lsp clean examples check-examples example run-example libraries build-lib check-lib
+.PHONY: all release debug sanitize tools lint lsp install uninstall clean examples check-examples example run-example libraries build-lib check-lib
 
 all: $(TARGET)
 release: $(TARGET)
@@ -48,6 +57,17 @@ tools: lint lsp
 lint: $(LINT_TARGET)
 lsp: $(LSP_TARGET)
 libraries: build-lib
+
+install: release
+	$(INSTALL_DIR) $(DESTDIR)$(BINDIR)
+	$(INSTALL_DIR) $(DESTDIR)$(ARI_SHAREDIR)/lib/std
+	$(INSTALL_PROGRAM) $(TARGET) $(DESTDIR)$(BINDIR)/ari$(EXEEXT)
+	$(INSTALL_DATA) lib/std.arih $(DESTDIR)$(ARI_SHAREDIR)/lib/std.arih
+	$(INSTALL_DATA) $(STD_MODULE_SRCS) $(DESTDIR)$(ARI_SHAREDIR)/lib/std/
+
+uninstall:
+	rm -f $(DESTDIR)$(BINDIR)/ari$(EXEEXT)
+	rm -rf $(DESTDIR)$(ARI_SHAREDIR)
 
 EXAMPLE ?= count
 EXAMPLE_SRCS := $(sort $(wildcard examples/*.ari))
