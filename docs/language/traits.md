@@ -156,9 +156,12 @@ enum Envelope[T: Serializable] {
 
 The bound is checked when a concrete type application or constructor fixes the
 type argument, so `DirectBox[Packet]` and `Item[Packet](...)` both require
-`Packet::serialize() -> i64`. If a generic type merely forwards another
-generic placeholder, restate the same bound on the forwarding declaration until
-richer bound propagation is added.
+`Packet::serialize() -> i64`. This also applies through aggregate forwarding:
+if `Outer[T]` stores `DirectBox[T]`, then `Outer[Packet]` checks the forwarded
+`DirectBox[Packet]` bound before storage is lowered, and `Outer[Missing]`
+reports the missing `serialize` method. Generic method bodies that call
+`T::serialize` directly should still restate the bound on the method or impl
+generic until broader implicit bound import for method bodies is designed.
 
 ## Supertraits
 

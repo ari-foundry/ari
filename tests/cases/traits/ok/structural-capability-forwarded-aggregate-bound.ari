@@ -1,0 +1,56 @@
+struct Packet {
+  value: i64,
+}
+
+impl Packet {
+  fn serialize(self) -> i64 {
+    self.value + 1
+  }
+}
+
+type Serializable = has serialize() -> i64;
+
+struct DirectBox[T: has serialize() -> i64] {
+  value: T,
+}
+
+struct AliasBox[T: Serializable] {
+  value: T,
+}
+
+struct DirectOuter[T] {
+  inner: DirectBox[T],
+}
+
+struct AliasOuter[T] {
+  inner: AliasBox[T],
+}
+
+enum DirectEnvelope[T] {
+  DirectItem(DirectBox[T]),
+}
+
+enum AliasEnvelope[T] {
+  AliasItem(AliasBox[T]),
+}
+
+fn main() -> i64 {
+  let direct_outer = DirectOuter<Packet> {
+    inner: DirectBox<Packet> { value: Packet { value: 10 } },
+  };
+  let alias_outer = AliasOuter<Packet> {
+    inner: AliasBox<Packet> { value: Packet { value: 20 } },
+  };
+  let direct_envelope = DirectItem<Packet>(DirectBox<Packet> { value: Packet { value: 3 } });
+  let alias_envelope = AliasItem<Packet>(AliasBox<Packet> { value: Packet { value: 4 } });
+  let direct_score = match direct_envelope {
+    DirectItem(direct_boxed) => direct_boxed.value.serialize(),
+  };
+  let alias_score = match alias_envelope {
+    AliasItem(alias_boxed) => alias_boxed.value.serialize(),
+  };
+  return direct_outer.inner.value.serialize() +
+      alias_outer.inner.value.serialize() +
+      direct_score +
+      alias_score;
+}

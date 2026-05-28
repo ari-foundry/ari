@@ -5743,6 +5743,8 @@ check-traits: $(TARGET)
 	$(BUILD_DIR)/traits/structural-capability-struct-bound.elf; code=$$?; test $$code -eq 42
 	$(TARGET) tests/cases/traits/ok/structural-capability-enum-bound.ari -o $(BUILD_DIR)/traits/structural-capability-enum-bound.elf
 	$(BUILD_DIR)/traits/structural-capability-enum-bound.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/cases/traits/ok/structural-capability-forwarded-aggregate-bound.ari -o $(BUILD_DIR)/traits/structural-capability-forwarded-aggregate-bound.elf
+	$(BUILD_DIR)/traits/structural-capability-forwarded-aggregate-bound.elf; code=$$?; test $$code -eq 41
 	$(TARGET) tests/cases/traits/ok/structural-capability-trait-method.ari -o $(BUILD_DIR)/traits/structural-capability-trait-method.elf
 	$(BUILD_DIR)/traits/structural-capability-trait-method.elf; code=$$?; test $$code -eq 40
 	$(TARGET) tests/cases/traits/ok/trait-minimum-compiler-shaped.ari -o $(BUILD_DIR)/traits/trait-minimum-compiler-shaped.elf
@@ -5873,6 +5875,8 @@ check-traits: $(TARGET)
 	grep -q "does not satisfy structural capability 'has serialize() -> i64'" $(BUILD_DIR)/traits/structural-capability-struct-generic-bound.err
 	if $(TARGET) tests/cases/traits/errors/structural-capability-enum-generic-bound.ari -o $(BUILD_DIR)/traits/structural-capability-enum-generic-bound.elf >$(BUILD_DIR)/traits/structural-capability-enum-generic-bound.err 2>&1; then exit 1; fi
 	grep -q "does not satisfy structural capability 'has serialize() -> i64'" $(BUILD_DIR)/traits/structural-capability-enum-generic-bound.err
+	if $(TARGET) tests/cases/traits/errors/structural-capability-forwarded-aggregate-bound-missing.ari -o $(BUILD_DIR)/traits/structural-capability-forwarded-aggregate-bound-missing.elf >$(BUILD_DIR)/traits/structural-capability-forwarded-aggregate-bound-missing.err 2>&1; then exit 1; fi
+	grep -q "does not satisfy structural capability 'has serialize() -> i64'" $(BUILD_DIR)/traits/structural-capability-forwarded-aggregate-bound-missing.err
 	if $(TARGET) tests/cases/traits/errors/unknown-trait-impl.ari -o $(BUILD_DIR)/traits/unknown-trait-impl.elf >$(BUILD_DIR)/traits/unknown-trait-impl.err 2>&1; then exit 1; fi
 	grep -q "unknown trait 'MissingTrait'" $(BUILD_DIR)/traits/unknown-trait-impl.err
 	if $(TARGET) tests/cases/traits/errors/trait-object-unknown.ari -o $(BUILD_DIR)/traits/trait-object-unknown.elf >$(BUILD_DIR)/traits/trait-object-unknown.err 2>&1; then exit 1; fi

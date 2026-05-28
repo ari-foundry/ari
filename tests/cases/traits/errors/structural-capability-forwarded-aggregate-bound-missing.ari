@@ -1,0 +1,18 @@
+struct Missing {
+  value: i64,
+}
+
+struct Boxed[T: has serialize() -> i64] {
+  value: T,
+}
+
+struct Outer[T] {
+  boxed: Boxed[T],
+}
+
+fn main() -> i64 {
+  let outer = Outer<Missing> {
+    boxed: Boxed<Missing> { value: Missing { value: 1 } },
+  };
+  return outer.boxed.value.value;
+}
