@@ -8522,6 +8522,7 @@ private:
         source_local.ir_storage_type = &source_decl_ptr->binding.type;
         source_local.ir_init_expr = source_decl_ptr->binding.init.get();
         set_local_vector_known_length(source_local, init_vector_length);
+        set_union_by_alias_from_expr(source_local, *source_local.ir_init_expr);
         lower_binding_pattern_from_local(
             binding_pattern,
             source_name,
@@ -10892,12 +10893,13 @@ private:
             case PatternKind::Binding:
                 lower_binding_pattern_from_local(pattern, source_name, source_type, mutable_binding, statements);
                 return;
-            case PatternKind::Alias:
+            case PatternKind::Alias: {
                 if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+                PatternValueSource alias_source{source_name, ""};
                 mark_pattern_value_moved_from_source(
                     pattern.loc,
                     source_type,
-                    PatternValueSource{source_name, ""});
+                    alias_source);
                 declare_local(pattern.loc, pattern.alias_name, source_type, mutable_binding);
                 statements.push_back(make_ir_var_decl(
                     pattern.loc,
@@ -10906,6 +10908,8 @@ private:
                     make_local_lvalue_expr(pattern.loc, source_name, source_type),
                     mutable_binding
                 ));
+                LocalInfo& alias_local = local_slot_by_name(pattern.alias_name);
+                set_union_by_alias_from_pattern_source(alias_local, &alias_source);
                 lower_product_match_pattern_bindings_from_local(
                     *pattern.alias_pattern,
                     pattern.alias_name,
@@ -10915,6 +10919,7 @@ private:
                     skip_reference_bindings
                 );
                 return;
+            }
             case PatternKind::Or:
                 if (pattern_has_binding(pattern)) {
                     fail(pattern.loc, "or-pattern bindings are planned but are not supported yet");
@@ -11716,6 +11721,8 @@ private:
         }
         declare_local(pattern.loc, pattern.payload_name, value_type, mutable_binding);
         statements.push_back(make_ir_var_decl(pattern.loc, pattern.payload_name, value_type, std::move(value), mutable_binding));
+        LocalInfo& local = local_slot_by_name(pattern.payload_name);
+        set_union_by_alias_from_pattern_source(local, owner_source);
     }
 
     void require_owned_field_alive(SourceLocation loc, const std::string& base_name, LocalInfo& local, const std::string& path) {
@@ -12057,6 +12064,26 @@ private:
         }
 
         if (const StructInfo::Field* field = union_by_field_for_storage_path(source->type, path)) {
+            local.union_by_alias = LocalInfo::UnionByAlias{
+                field->name,
+                union_by_selector_text(field->type)
+            };
+        }
+    }
+
+    void set_union_by_alias_from_pattern_source(LocalInfo& local, const PatternValueSource* source) {
+        local.union_by_alias.reset();
+        if (!source || !has_aggregate_enum_layout(local.type)) return;
+
+        LocalInfo* source_local = find_local_slot(source->name);
+        if (!source_local) return;
+
+        if (source->path.empty() && source_local->union_by_alias) {
+            local.union_by_alias = source_local->union_by_alias;
+            return;
+        }
+
+        if (const StructInfo::Field* field = union_by_field_for_storage_path(source_local->type, source->path)) {
             local.union_by_alias = LocalInfo::UnionByAlias{
                 field->name,
                 union_by_selector_text(field->type)
@@ -16530,6 +16557,8 @@ private:
                 }
                 declare_local(pattern.loc, pattern.alias_name, value_type, mutable_binding);
                 statements.push_back(make_ir_var_decl(pattern.loc, pattern.alias_name, value_type, std::move(value), mutable_binding));
+                LocalInfo& alias_local = local_slot_by_name(pattern.alias_name);
+                set_union_by_alias_from_pattern_source(alias_local, owner_source);
                 lower_product_match_pattern_bindings_from_local(
                     *pattern.alias_pattern,
                     pattern.alias_name,
@@ -16653,12 +16682,13 @@ private:
             case PatternKind::Binding:
                 lower_binding_pattern_from_local(pattern, source_name, source_type, mutable_binding, statements);
                 return;
-            case PatternKind::Alias:
+            case PatternKind::Alias: {
                 if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+                PatternValueSource alias_source{source_name, ""};
                 mark_pattern_value_moved_from_source(
                     pattern.loc,
                     source_type,
-                    PatternValueSource{source_name, ""});
+                    alias_source);
                 declare_local(pattern.loc, pattern.alias_name, source_type, mutable_binding);
                 statements.push_back(make_ir_var_decl(
                     pattern.loc,
@@ -16667,6 +16697,8 @@ private:
                     make_local_lvalue_expr(pattern.loc, source_name, source_type),
                     mutable_binding
                 ));
+                LocalInfo& alias_local = local_slot_by_name(pattern.alias_name);
+                set_union_by_alias_from_pattern_source(alias_local, &alias_source);
                 lower_product_match_pattern_bindings_from_local(
                     *pattern.alias_pattern,
                     pattern.alias_name,
@@ -16676,6 +16708,7 @@ private:
                     skip_reference_bindings
                 );
                 return;
+            }
             case PatternKind::Or:
                 if (pattern_has_binding(pattern)) {
                     fail(pattern.loc, "or-pattern bindings are planned but are not supported yet");
@@ -16754,12 +16787,13 @@ private:
             case PatternKind::Binding:
                 lower_binding_pattern_from_local(pattern, source_name, source_type, mutable_binding, statements);
                 return;
-            case PatternKind::Alias:
+            case PatternKind::Alias: {
                 if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+                PatternValueSource alias_source{source_name, ""};
                 mark_pattern_value_moved_from_source(
                     pattern.loc,
                     source_type,
-                    PatternValueSource{source_name, ""});
+                    alias_source);
                 declare_local(pattern.loc, pattern.alias_name, source_type, mutable_binding);
                 statements.push_back(make_ir_var_decl(
                     pattern.loc,
@@ -16768,6 +16802,8 @@ private:
                     make_local_lvalue_expr(pattern.loc, source_name, source_type),
                     mutable_binding
                 ));
+                LocalInfo& alias_local = local_slot_by_name(pattern.alias_name);
+                set_union_by_alias_from_pattern_source(alias_local, &alias_source);
                 lower_product_match_pattern_bindings_from_local(
                     *pattern.alias_pattern,
                     pattern.alias_name,
@@ -16777,6 +16813,7 @@ private:
                     skip_reference_bindings
                 );
                 return;
+            }
             case PatternKind::Or:
                 if (pattern_has_binding(pattern)) {
                     fail(pattern.loc, "or-pattern bindings are planned but are not supported yet");
@@ -16880,12 +16917,13 @@ private:
             case PatternKind::Binding:
                 lower_binding_pattern_from_local(pattern, source_name, source_type, mutable_binding, statements);
                 return;
-            case PatternKind::Alias:
+            case PatternKind::Alias: {
                 if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+                PatternValueSource alias_source{source_name, ""};
                 mark_pattern_value_moved_from_source(
                     pattern.loc,
                     source_type,
-                    PatternValueSource{source_name, ""});
+                    alias_source);
                 declare_local(pattern.loc, pattern.alias_name, source_type, mutable_binding);
                 statements.push_back(make_ir_var_decl(
                     pattern.loc,
@@ -16894,6 +16932,8 @@ private:
                     make_local_lvalue_expr(pattern.loc, source_name, source_type),
                     mutable_binding
                 ));
+                LocalInfo& alias_local = local_slot_by_name(pattern.alias_name);
+                set_union_by_alias_from_pattern_source(alias_local, &alias_source);
                 lower_struct_match_pattern_bindings_from_local(
                     *pattern.alias_pattern,
                     pattern.alias_name,
@@ -16903,6 +16943,7 @@ private:
                     skip_reference_bindings
                 );
                 return;
+            }
             case PatternKind::Or:
                 if (pattern_has_binding(pattern)) {
                     fail(pattern.loc, "or-pattern bindings are planned but are not supported yet");

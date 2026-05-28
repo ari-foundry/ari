@@ -6123,8 +6123,12 @@ check-structs: $(TARGET)
 	grep -q "cannot project union by payload slot 'fragment.0' without matching the active arm" $(BUILD_DIR)/structs/union-by-direct-payload-access.err
 	if $(TARGET) tests/cases/structs/errors/union-by-local-payload-access.ari -o $(BUILD_DIR)/structs/union-by-local-payload-access.elf >$(BUILD_DIR)/structs/union-by-local-payload-access.err 2>&1; then exit 1; fi
 	grep -q "cannot project union by payload slot 'fragment.0' without matching the active arm" $(BUILD_DIR)/structs/union-by-local-payload-access.err
+	if $(TARGET) tests/cases/structs/errors/union-by-pattern-alias-payload-access.ari -o $(BUILD_DIR)/structs/union-by-pattern-alias-payload-access.elf >$(BUILD_DIR)/structs/union-by-pattern-alias-payload-access.err 2>&1; then exit 1; fi
+	grep -q "cannot project union by payload slot 'fragment.0' without matching the active arm" $(BUILD_DIR)/structs/union-by-pattern-alias-payload-access.err
 	if $(TARGET) tests/cases/structs/errors/union-by-local-alias-assignment.ari -o $(BUILD_DIR)/structs/union-by-local-alias-assignment.elf >$(BUILD_DIR)/structs/union-by-local-alias-assignment.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to union by alias 'fragment'" $(BUILD_DIR)/structs/union-by-local-alias-assignment.err
+	if $(TARGET) tests/cases/structs/errors/union-by-pattern-alias-assignment.ari -o $(BUILD_DIR)/structs/union-by-pattern-alias-assignment.elf >$(BUILD_DIR)/structs/union-by-pattern-alias-assignment.err 2>&1; then exit 1; fi
+	grep -q "cannot assign to union by alias 'fragment'" $(BUILD_DIR)/structs/union-by-pattern-alias-assignment.err
 	if $(TARGET) tests/cases/structs/errors/struct-field-access-non-struct.ari -o $(BUILD_DIR)/structs/struct-field-access-non-struct.elf >$(BUILD_DIR)/structs/struct-field-access-non-struct.err 2>&1; then exit 1; fi
 	grep -q "field access requires a struct value, got i64" $(BUILD_DIR)/structs/struct-field-access-non-struct.err
 	if $(TARGET) tests/cases/traits/errors/impl-associated-private.ari -o $(BUILD_DIR)/structs/impl-associated-private.elf >$(BUILD_DIR)/structs/impl-associated-private.err 2>&1; then exit 1; fi

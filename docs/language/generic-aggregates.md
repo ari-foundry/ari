@@ -216,12 +216,17 @@ Bool selector payloads are matched with `false(payload)` and `true(payload)`.
 Do not read payload storage slots directly with tuple-index syntax such as
 `packet.fragment.0`: that bypasses the selector proof. The compiler rejects
 direct payload-slot projection for `union by` fields, and it keeps that
-restriction when the field is first bound to a local alias:
+restriction when the field is first bound to a local alias, including a
+destructuring pattern alias:
 
 ```ari
 let fragment = packet.fragment;
 // rejected: use match fragment { stream(payload) => ... }
 let raw = fragment.0;
+
+let TLSCiphertext { fragment: destructured, .. } = packet;
+// rejected for the same reason
+let raw_again = destructured.0;
 ```
 
 Match the field or alias and use the payload binding from the matching arm
