@@ -31,8 +31,7 @@ The repository has a deliberately small install target for local use before a
 real Ari package manager owns distribution:
 
 ```sh
-make release
-make install PREFIX=$HOME/.local
+make install
 ```
 
 `make install` installs only the release compiler and source standard library:
@@ -42,6 +41,10 @@ $(PREFIX)/bin/ari
 $(PREFIX)/share/ari/lib/std.arih
 $(PREFIX)/share/ari/lib/std/*.arih
 ```
+
+The default `PREFIX` is `$(HOME)/.local`, so a normal developer install does
+not need root privileges. Override `PREFIX` only when staging a package or
+installing into a system prefix.
 
 The target honors `DESTDIR` for packaging-style staging:
 
@@ -76,15 +79,14 @@ For a real local install, use a writable prefix and make sure the LLVM driver is
 still available through `PATH` or `ARI_LLVM_CC`:
 
 ```sh
-make -j8 release
-make install PREFIX=$HOME/.local
+make -j8 install
 PATH=$HOME/.local/bin:$PATH ari --help
 ```
 
 Remove this temporary layout with:
 
 ```sh
-make uninstall PREFIX=$HOME/.local
+make uninstall
 ```
 
 `make build-lib` delegates to `lib/Makefile` after building `build/ari`. It

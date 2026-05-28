@@ -47,8 +47,7 @@ The current install target is intentionally small and easy to replace later
 with a package manager:
 
 ```sh
-make release
-make install PREFIX=$HOME/.local
+make install
 ```
 
 It installs:
@@ -64,7 +63,7 @@ source-tree `lib/std.arih`, then to `../share/ari/lib/std.arih` relative to the
 `ari` executable. Remove the temporary install layout with:
 
 ```sh
-make uninstall PREFIX=$HOME/.local
+make uninstall
 ```
 
 For staged packaging-style tests:
