@@ -316,8 +316,8 @@ fn grow_to_capacity(value: ref mut std::string::String, capacity: i64) -> void {
   if capacity <= value.raw.capacity {
     return;
   }
-  let metadata = value.zone();
-  let data = metadata.alloc(capacity, 1);
+  let allocator = std::allocator::from_zone_metadata(value.zone());
+  let data = allocator.alloc(capacity, 1);
   var index = 0;
   while index < value.raw.len {
     ptr_store(ptr_add(data, index), ptr_load(ptr_add(value.raw.data, index)));

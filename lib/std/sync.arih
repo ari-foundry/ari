@@ -325,8 +325,8 @@ pub fn is_completed(once: ref std::sync::Once) -> bool {
 
 fn new_mpsc_state[T](zone: ref mut Zone, capacity: i64) -> ptr std::sync::MpscState[T] {
   std::assert(capacity > 0);
-  let metadata = std::zone::from_zone(zone);
-  let buffer = metadata.alloc_array<std::Option[T]>(capacity);
+  let allocator = std::allocator::from_zone(zone);
+  let buffer = allocator.alloc_array<std::Option[T]>(capacity);
   var index = 0;
   while index < capacity {
     ptr_store(ptr_add(buffer, index), std::None<T>());

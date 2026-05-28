@@ -120,15 +120,15 @@ When adding a public zone-backed API:
    `docs/stdlib/generated/api-index.md` if the public API changed.
 4. Update the hand-written module guide with lifetime and current-zone notes.
 
-For stdlib implementation work, prefer `zone::of(ref handle)` or
-`ZoneMetadata` when a heap-backed handle needs to grow later. The handle should
-recover its zone from backing allocation metadata instead of storing an extra
-zone field. Use `zone::capacity`, `zone::used`, `zone::remaining`,
-`zone::can_alloc`, and `zone::can_alloc_array` for planning, diagnostics, and
-tests; allocation still goes through a real zone capability or recovered
-metadata. For handle methods, prefer `metadata.can_alloc(...)` and
-`metadata.can_alloc_array<T>(...)` so the public handle does not need to carry
-a duplicate zone pointer.
+For stdlib implementation work, prefer `std::allocator::of(ref handle)` or
+`std::allocator::from_zone(ref mut zone)` when heap-backed code needs to grow
+later. The handle should recover an allocator from backing allocation metadata
+instead of storing an extra zone field. Use `zone::capacity`,
+`zone::used`, `zone::remaining`, `zone::can_alloc`, and
+`zone::can_alloc_array` for direct region planning, diagnostics, and tests.
+For handle methods, prefer `allocator.can_alloc(...)` and
+`allocator.can_alloc_array<T>(...)` so the public handle does not need to carry
+a duplicate zone pointer and user docs do not have to expose `ZoneMetadata`.
 
 ## Remaining Work
 

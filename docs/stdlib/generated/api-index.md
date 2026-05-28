@@ -24,35 +24,36 @@ platform notes.
 
 ## Summary
 
-- API entries: `3634`
-- Modules: `40`
+- API entries: `3658`
+- Modules: `41`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
-| `alloc` | 935 | usable |
+| `alloc` | 958 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 941 | stable candidate |
+| `core` | 942 | stable candidate |
 | `hosted` | 1559 | platform-backed |
 | `platform` | 163 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1242 |
-| `method` | 1918 |
-| `module` | 39 |
-| `struct` | 197 |
+| `fn` | 1253 |
+| `method` | 1928 |
+| `module` | 40 |
+| `struct` | 198 |
 | `trait` | 39 |
 | `trait-method` | 41 |
 | `type` | 22 |
-| `use` | 104 |
+| `use` | 105 |
 
 ## Modules
 
 | Module | Tier | Entries |
 | --- | --- | ---: |
-| `std` | `core` | 301 |
+| `std` | `core` | 302 |
 | `std::algo` | `alloc` | 41 |
+| `std::allocator` | `alloc` | 23 |
 | `std::ascii` | `core` | 33 |
 | `std::bits` | `core` | 26 |
 | `std::boxed` | `alloc` | 19 |
@@ -390,6 +391,7 @@ Tier: `core`. Stability reading: stable candidate.
 | `use std::TreeSet` | check-prelude std-collections-tree root alias for std::collections::TreeSet[T]; docs/stdlib/modules/collections.md |
 | `use std::Vec` | check-prelude std-vec-root-alias explicit-zone alias for std::vec::Vec[T]; docs/dev/test-matrix.md Explicit memory zones row |
 | `use std::Weak` | check-prelude std-rc-arc-weak root alias for std::rc::Weak[T]; docs/stdlib/modules/rc.md |
+| `use std::Allocator` | std allocator capability tests; docs/stdlib/modules/allocator.md |
 | `use std::ZoneBacked` | std zone backed handle metadata tests; docs/stdlib/modules/zone.md |
 | `use std::ZoneMetadata` | std zone backed handle metadata tests; docs/stdlib/modules/zone.md |
 | `use std::align_of` | std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows |
@@ -491,6 +493,53 @@ Tier: `alloc`. Stability reading: usable.
 | API | Coverage note |
 | --- | --- |
 | `module std::algo` | check-prelude std-algo-slice-helpers source algorithm module; docs/stdlib/modules/algo.md |
+
+## `std::allocator`
+
+Tier: `alloc`. Stability reading: usable.
+
+### fn
+
+| API | Coverage note |
+| --- | --- |
+| `fn std::allocator::alloc` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+| `fn std::allocator::alloc_array[T]` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+| `fn std::allocator::can_alloc` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+| `fn std::allocator::can_alloc_array[T]` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+| `fn std::allocator::capacity` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+| `fn std::allocator::from_data` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+| `fn std::allocator::from_zone` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+| `fn std::allocator::from_zone_metadata` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+| `fn std::allocator::of[T: std::zone::ZoneBacked]` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+| `fn std::allocator::remaining` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+| `fn std::allocator::used` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+
+### method
+
+| API | Coverage note |
+| --- | --- |
+| `method std::allocator::Allocator::alloc` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+| `method std::allocator::Allocator::alloc_array[T]` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+| `method std::allocator::Allocator::as_ptr` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+| `method std::allocator::Allocator::can_alloc` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+| `method std::allocator::Allocator::can_alloc_array[T]` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+| `method std::allocator::Allocator::capacity` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+| `method std::allocator::Allocator::equals` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+| `method std::allocator::Allocator::metadata` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+| `method std::allocator::Allocator::remaining` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+| `method std::allocator::Allocator::used` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+
+### module
+
+| API | Coverage note |
+| --- | --- |
+| `module std::allocator` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+
+### struct
+
+| API | Coverage note |
+| --- | --- |
+| `struct std::allocator::Allocator` | std allocator capability tests; docs/stdlib/modules/allocator.md |
 
 ## `std::ascii`
 

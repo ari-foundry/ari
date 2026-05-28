@@ -48,6 +48,11 @@ That keeps memory policy testable and local. Programs can choose arena, bump,
 debug, fixed-buffer, or OS-backed allocation without the language requiring one
 ambient heap.
 
+Current direction: `Zone` is the first concrete region implementation, but the
+public growth vocabulary should move toward `std::allocator::Allocator`.
+`ZoneMetadata` exists as a compatibility bridge over today's allocation header;
+ordinary library users should not need to name it.
+
 ## Regions
 
 Regions are a good fit for short-lived allocation groups:
@@ -59,9 +64,10 @@ with region temp using allocator {
 ```
 
 The spelling is not settled. The important rule is that a zone owns the large
-area of storage and can release it all at once. Borrow and ownership analysis
-can still warn about obvious escapes or use-after-release cases, but Ari does
-not try to make raw memory fully safe.
+area of storage and can release it all at once, while an `Allocator` capability
+is what containers and strings use when they need more storage from the same
+region. Borrow and ownership analysis can still warn about obvious escapes or
+use-after-release cases, but Ari does not try to make raw memory fully safe.
 
 Likely explicit memory operations:
 

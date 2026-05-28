@@ -34,11 +34,12 @@ that provenance and rejects:
 Growth copies live elements into newly allocated zone storage. Old raw buffers
 remain owned by the zone and are reclaimed when the zone resets or destroys.
 Every zone-backed collection handle implements `std::zone::ZoneBacked` once it
-has backing storage, so `zone::of(ref handle)` and `handle.zone()` expose the
-same allocation-header metadata as the raw buffer. Map update-entry handles
-also implement `ZoneBacked`; `HashMapEntry` and `TreeMapEntry` store the map
-pointer and key only, then recover the growth zone from the backing map with
-`map.zone()` when insertion has to allocate.
+has backing storage, so `std::allocator::of(ref handle)` exposes the public
+allocation capability for that backing storage. `zone::of(ref handle)` and
+`handle.zone()` remain compatibility spellings for the lower-level metadata.
+Map update-entry handles also implement `ZoneBacked`; `HashMapEntry` and
+`TreeMapEntry` store the map pointer and key only, then recover the growth
+allocator from the backing map when insertion has to allocate.
 
 ## Iteration And Mutation
 

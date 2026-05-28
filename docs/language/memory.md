@@ -250,9 +250,14 @@ out of temporary aggregate expressions is rejected, so bind the aggregate first.
 ## Allocation Direction
 
 Allocation should be capability based. Code should receive an allocator or
-region value explicitly instead of calling a global heap primitive.
+region value explicitly instead of calling a global heap primitive. Ari now
+uses two names for the two jobs:
 
-Possible future shape:
+- `Zone` owns a bounded region and controls lifecycle.
+- `std::allocator::Allocator` is the public capability view used by growing
+  handles and helper code.
+
+Longer-term allocator traits can still grow from that split:
 
 ```ari
 trait Allocator {
@@ -261,11 +266,13 @@ trait Allocator {
 }
 ```
 
-Regions and zones are the preferred model for allocation-heavy code. A zone is
-a large allocation area: values can be placed inside it freely, and destroying
-the zone releases the whole contained area at once. Ari's memory model is not
-intended to prove full memory safety; it is meant to make common C/C++-style
-memory work more explicit and easier to audit.
+Regions and zones remain the preferred model for allocation-heavy code. A zone
+is a large allocation area: values can be placed inside it freely, and
+destroying the zone releases the whole contained area at once. `Allocator`
+keeps code that only needs growth from depending on zone metadata or raw
+allocation-header recovery. Ari's memory model is not intended to prove full
+memory safety; it is meant to make common C/C++-style memory work more
+explicit and easier to audit.
 
 Borrowing and ownership checks are useful diagnostics, not a promise that raw
 memory operations cannot go wrong. The language should still allow explicit
@@ -475,7 +482,8 @@ call-site layout facts rather than pointer metadata. The user pointer remains
 the real payload pointer, so normal loads, stores, and casts use it directly.
 `zone::allocation_zone` exposes the raw handle without requiring source code to
 do pointer-adjacent arithmetic. `zone::metadata(data)` wraps that raw handle in
-`ZoneMetadata`, which is the preferred public shape. `zone::from_zone(ref mut
+`ZoneMetadata`, which is the current typed compatibility shape.
+`zone::from_zone(ref mut
 zone)` captures the same metadata from an explicit zone capability before any
 payload allocation exists. `ZoneMetadata` exposes `as_ptr()`,
 `as_zone_ptr()`, `alloc(bytes, align)`, `alloc_array<T>(count)`,
@@ -485,6 +493,10 @@ backing zone from heap metadata. Empty source String and Vec handles establish
 a small backing allocation even when logical capacity is zero so `value.zone()`
 remains recoverable. Raw zero-count buffer helpers may still return a null data
 pointer, so raw `metadata(data)` queries require a non-null allocation pointer.
+New library code should prefer `std::allocator::Allocator` over naming
+`ZoneMetadata` directly. `allocator::from_zone(ref mut zone)` and
+`allocator::of(ref value)` expose the same allocation capability without making
+allocation-header metadata part of the ordinary user model.
 For stdlib heap handles, prefer `zone::of(ref value)` or `value.zone()` through
 `std::zone::ZoneBacked`; they expose the same typed metadata for supported
 handles, including map update-entry handles that recover through their backing
@@ -568,8 +580,8 @@ through a mutable receiver. A `std::boxed::Box<T>`, `std::string::String`, or
 the target zone, not the original source zone. When a
 source `std::string::String` grows through an explicit zone argument, that
 argument must be the same source zone that created the handle. Source
-`std::vec::Vec<T>` recovers `ZoneMetadata` from its backing allocation header,
-so `push(value)`, `insert(index, value)`, `reserve(capacity)`,
+`std::vec::Vec<T>` recovers an `std::allocator::Allocator` from its backing
+allocation, so `push(value)`, `insert(index, value)`, `reserve(capacity)`,
 `reserve_extra(additional)`, `extend_from_slice(values)`, and
 `resize(length, value)` grow through that recovered runtime zone. A tracked local
 `std::string::String` receiver can infer the same zone for its byte growth

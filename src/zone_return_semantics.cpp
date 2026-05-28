@@ -37,7 +37,8 @@ bool is_zone_metadata_type(const IrType& type) {
     }
     return value_type.qualifier == TypeQualifier::Value &&
            value_type.primitive == IrPrimitiveKind::Struct &&
-           value_type.name == "std::zone::ZoneMetadata";
+           (value_type.name == "std::zone::ZoneMetadata" ||
+            value_type.name == "std::allocator::Allocator");
 }
 
 std::optional<std::size_t> zone_pointer_return_param_index(const std::vector<IrType>& params,

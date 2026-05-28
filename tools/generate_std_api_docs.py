@@ -20,6 +20,7 @@ PUBLIC_STD_MODULES = {path.stem for path in STD_MODULE_DIR.glob("*.arih")}
 MODULE_TIERS = {
     "std": "core",
     "std::algo": "alloc",
+    "std::allocator": "alloc",
     "std::ascii": "core",
     "std::bits": "core",
     "std::boxed": "alloc",

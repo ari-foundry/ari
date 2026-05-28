@@ -38,6 +38,17 @@ enum std::target::Os|check-prelude std-target-basic compiler-known operating-sys
 enum std::target::SyscallAbi|check-prelude std-target-basic source syscall ABI classifier; docs/stdlib/modules/target.md
 enum std::thread::JoinError|check-prelude std-thread-basic join handle lifecycle failure reason; docs/stdlib/modules/thread.md
 enum std::thread::ThreadLocalSetError[T]|check-prelude std-thread-local recoverable ThreadLocal set capacity failure preserving value; docs/stdlib/modules/thread.md
+fn std::allocator::alloc|std allocator capability tests; docs/stdlib/modules/allocator.md
+fn std::allocator::alloc_array[T]|std allocator capability tests; docs/stdlib/modules/allocator.md
+fn std::allocator::can_alloc|std allocator capability tests; docs/stdlib/modules/allocator.md
+fn std::allocator::can_alloc_array[T]|std allocator capability tests; docs/stdlib/modules/allocator.md
+fn std::allocator::capacity|std allocator capability tests; docs/stdlib/modules/allocator.md
+fn std::allocator::from_data|std allocator capability tests; docs/stdlib/modules/allocator.md
+fn std::allocator::from_zone|std allocator capability tests; docs/stdlib/modules/allocator.md
+fn std::allocator::from_zone_metadata|std allocator capability tests; docs/stdlib/modules/allocator.md
+fn std::allocator::of[T: std::zone::ZoneBacked]|std allocator capability tests; docs/stdlib/modules/allocator.md
+fn std::allocator::remaining|std allocator capability tests; docs/stdlib/modules/allocator.md
+fn std::allocator::used|std allocator capability tests; docs/stdlib/modules/allocator.md
 fn std::algo::binary_search[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers binary search over ordered slices; docs/stdlib/modules/algo.md
 fn std::algo::binary_search_by[T]|check-prelude std-algo-by-helpers comparator binary search over sorted slices; docs/stdlib/modules/algo.md
 fn std::algo::clamp[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers clamp wrapper over cmp; docs/stdlib/modules/algo.md
@@ -3188,6 +3199,16 @@ method std::vec::Vec[T]::upper_bound|check-prelude std-vec-sequence ordered sequ
 method std::vec::Vec[T]::upper_bound_by|check-prelude std-algo-by-helpers comparator sequence upper-bound wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::windows|check-prelude std-vec-sequence borrowed window iterator wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::with_capacity|check-prelude std-vec-convenience-api associated explicit-capacity constructor; docs/stdlib/modules/vec.md
+method std::allocator::Allocator::alloc|std allocator capability tests; docs/stdlib/modules/allocator.md
+method std::allocator::Allocator::alloc_array[T]|std allocator capability tests; docs/stdlib/modules/allocator.md
+method std::allocator::Allocator::as_ptr|std allocator capability tests; docs/stdlib/modules/allocator.md
+method std::allocator::Allocator::can_alloc|std allocator capability tests; docs/stdlib/modules/allocator.md
+method std::allocator::Allocator::can_alloc_array[T]|std allocator capability tests; docs/stdlib/modules/allocator.md
+method std::allocator::Allocator::capacity|std allocator capability tests; docs/stdlib/modules/allocator.md
+method std::allocator::Allocator::equals|std allocator capability tests; docs/stdlib/modules/allocator.md
+method std::allocator::Allocator::metadata|std allocator capability tests; docs/stdlib/modules/allocator.md
+method std::allocator::Allocator::remaining|std allocator capability tests; docs/stdlib/modules/allocator.md
+method std::allocator::Allocator::used|std allocator capability tests; docs/stdlib/modules/allocator.md
 method std::zone::ZoneMetadata::alloc|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 method std::zone::ZoneMetadata::alloc_array[T]|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 method std::zone::ZoneMetadata::as_ptr|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
@@ -3199,6 +3220,7 @@ method std::zone::ZoneMetadata::equals|std zone backed handle metadata tests; do
 method std::zone::ZoneMetadata::remaining|std zone introspection tests; docs/stdlib/modules/zone.md
 method std::zone::ZoneMetadata::used|std zone introspection tests; docs/stdlib/modules/zone.md
 module std::algo|check-prelude std-algo-slice-helpers source algorithm module; docs/stdlib/modules/algo.md
+module std::allocator|std allocator capability tests; docs/stdlib/modules/allocator.md
 module std::ascii|module load and std ascii byte helper tests; docs/stdlib/overview.md module map
 module std::bits|module load and std bits mask helper tests; docs/stdlib/overview.md module map
 module std::boxed|module load and boxed handle tests; docs/dev/test-matrix.md Modules and Explicit memory zones rows
@@ -3433,6 +3455,7 @@ struct std::vec::Drain[T]|check-prelude std-vec-convenience-api draining cursor 
 struct std::vec::Iter[T]|std vec iterator tests; docs/dev/test-matrix.md Explicit memory zones and Control flow rows
 struct std::vec::RawVec[T]|std RawVec allocation tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::vec::Vec[T]|std vec handle tests; docs/dev/test-matrix.md Explicit memory zones row
+struct std::allocator::Allocator|std allocator capability tests; docs/stdlib/modules/allocator.md
 struct std::zone::ZoneMetadata|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 trait std::Clone|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 trait std::Copy|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
@@ -3590,6 +3613,7 @@ use std::TreeMap|check-prelude std-collections-tree root alias for std::collecti
 use std::TreeSet|check-prelude std-collections-tree root alias for std::collections::TreeSet[T]; docs/stdlib/modules/collections.md
 use std::Vec|check-prelude std-vec-root-alias explicit-zone alias for std::vec::Vec[T]; docs/dev/test-matrix.md Explicit memory zones row
 use std::Weak|check-prelude std-rc-arc-weak root alias for std::rc::Weak[T]; docs/stdlib/modules/rc.md
+use std::Allocator|std allocator capability tests; docs/stdlib/modules/allocator.md
 use std::ZoneBacked|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 use std::ZoneMetadata|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 use std::align_of|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows

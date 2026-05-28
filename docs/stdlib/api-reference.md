@@ -2521,7 +2521,39 @@ memory intrinsics and trap on negative lengths.
 alignment or prepare for future mapping APIs; it does not allocate or map
 memory.
 
-`std::zone` exposes the explicit allocation capability:
+`std::allocator` is the public allocation-capability view used by handles that
+need to grow from existing zone-backed storage:
+
+```ari
+allocator::from_zone(ref mut zone)
+allocator::from_data(data)
+allocator::from_zone_metadata(metadata)
+allocator::of(ref value)
+allocator::alloc(ref allocator, bytes, align)
+allocator::alloc_array<T>(ref allocator, count)
+allocator::capacity(ref allocator)
+allocator::used(ref allocator)
+allocator::remaining(ref allocator)
+allocator::can_alloc(ref allocator, bytes)
+allocator::can_alloc_array<T>(ref allocator, count)
+
+allocator.alloc(bytes, align)
+allocator.alloc_array<T>(count)
+allocator.capacity()
+allocator.used()
+allocator.remaining()
+allocator.can_alloc(bytes)
+allocator.can_alloc_array<T>(count)
+allocator.equals(ref other)
+```
+
+Use `Zone` for region creation and lifecycle. Use `Allocator` when a value
+already owns zone-backed storage and follow-up work needs the same allocation
+capability. `from_zone_metadata` and `allocator.metadata()` are compatibility
+bridges for existing low-level code; new public APIs should prefer
+`from_zone`, `from_data`, or `of`.
+
+`std::zone` exposes the explicit region/zone lifecycle capability:
 
 ```ari
 zone::create(capacity)

@@ -1,10 +1,16 @@
 # std::zone
 
-`std::zone` is Ari's explicit allocation capability module. It exists so code
-can allocate memory without hiding ownership behind a process-wide heap.
-Programs create a `Zone`, pass it as `ref mut Zone` to allocation APIs, and
-release it with `zone::destroy(zone)` when all derived pointers and handles are
-done.
+`std::zone` is Ari's explicit region-lifecycle module. It exists so code can
+allocate memory without hiding ownership behind a process-wide heap. Programs
+create a `Zone`, pass it as `ref mut Zone` to constructors or explicit-region
+APIs, and release it with `zone::destroy(zone)` when all derived pointers and
+handles are done.
+
+For new code that only needs "allocate more storage from the same backing
+place", prefer `std::allocator::Allocator`. It is the public capability view
+over zone-backed storage. `ZoneMetadata` and `ZoneBacked` remain available as
+compatibility and implementation bridges while the stdlib migrates away from
+metadata-shaped user APIs.
 
 The module is deliberately low-level. Raw allocations return pointers; they do
 not initialize values, run destructors, or make a buffer safe by themselves.

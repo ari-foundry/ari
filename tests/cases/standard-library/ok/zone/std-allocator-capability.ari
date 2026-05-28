@@ -1,0 +1,38 @@
+// Covers the public allocator capability layer over zone-backed storage.
+fn main() -> i64 {
+  var arena = zone::create(512);
+  var score = 0;
+
+  let direct = std::allocator::from_zone(ref mut arena);
+  if direct.capacity() == 512 && direct.used() == 0 && direct.can_alloc_array<i64>(4) {
+    score = score + 1;
+  }
+
+  let data = direct.alloc_array<i64>(2);
+  ptr_store(data, 40);
+  ptr_store(ptr_add(data, 1), 2);
+  if direct.used() == 16 && direct.remaining() == 496 {
+    score = score + ptr_load(data) + ptr_load(ptr_add(data, 1));
+  }
+
+  let from_data = std::allocator::from_data(data as ptr u8);
+  if from_data.equals(ref direct) {
+    score = score + 3;
+  }
+
+  var values = std::vec::new<i64>(ref mut arena, 2);
+  values.push(9);
+  let from_value = std::allocator::of(ref values);
+  if from_value.equals(ref direct) {
+    score = score + 5;
+  }
+
+  let extra = std::allocator::alloc_array<i64>(ref from_value, 1);
+  ptr_store(extra, 21);
+  if std::allocator::used(ref direct) == direct.used() {
+    score = score + ptr_load(extra);
+  }
+
+  zone::destroy(arena);
+  return score;
+}

@@ -69,8 +69,8 @@ fn grow_to_capacity[T](value: ref mut std::vec::Vec[T], capacity: i64) -> void {
   if capacity <= value.raw.capacity {
     return;
   }
-  let metadata = value.zone();
-  let data = metadata.alloc_array<T>(capacity);
+  let allocator = std::allocator::from_zone_metadata(value.zone());
+  let data = allocator.alloc_array<T>(capacity);
   var index = 0;
   while index < value.raw.len {
     ptr_store(ptr_add(data, index), ptr_load(ptr_add(value.raw.data, index)));
@@ -85,8 +85,8 @@ fn grow_to_own_capacity[T](value: ref mut std::vec::Vec[T], capacity: i64) -> vo
   if capacity <= value.raw.capacity {
     return;
   }
-  let metadata = value.zone();
-  let data = metadata.alloc_array<T>(capacity);
+  let allocator = std::allocator::from_zone_metadata(value.zone());
+  let data = allocator.alloc_array<T>(capacity);
   var index = 0;
   while index < value.raw.len {
     ptr_store(ptr_add(data, index), ptr_load(ptr_add(value.raw.data, index)));
@@ -105,8 +105,8 @@ fn rebuild_to_own_capacity[T](value: ref mut std::vec::Vec[T], capacity: i64) ->
   if allocation_capacity == 0 {
     allocation_capacity = 1;
   }
-  let metadata = value.zone();
-  let data = metadata.alloc_array<T>(allocation_capacity);
+  let allocator = std::allocator::from_zone_metadata(value.zone());
+  let data = allocator.alloc_array<T>(allocation_capacity);
   var index = 0;
   while index < value.raw.len {
     ptr_store(ptr_add(data, index), ptr_load(ptr_add(value.raw.data, index)));
@@ -195,8 +195,8 @@ fn drain_range_in_place[T](
     return std::vec::Drain<T> { data: value.raw.data, len: 0, index: 0 };
   }
 
-  let metadata = value.zone();
-  let removed = metadata.alloc_array<T>(count);
+  let allocator = std::allocator::from_zone_metadata(value.zone());
+  let removed = allocator.alloc_array<T>(count);
   var index = 0;
   while index < count {
     ptr_store(ptr_add(removed, index), ptr_load(ptr_add(value.raw.data, start + index)));

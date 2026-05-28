@@ -22674,10 +22674,19 @@ private:
             struct_type.qualifier == TypeQualifier::Value &&
             struct_type.primitive == IrPrimitiveKind::Struct &&
             struct_type.name == "std::zone::ZoneMetadata";
+        const bool std_allocator_literal =
+            struct_type.qualifier == TypeQualifier::Value &&
+            struct_type.primitive == IrPrimitiveKind::Struct &&
+            struct_type.name == "std::allocator::Allocator";
         auto std_zone_handle_field_allows_zone_pointer = [&](std::size_t index) {
             if (std_zone_metadata_literal &&
                 index < struct_type.field_names.size() &&
                 struct_type.field_names[index] == "handle") {
+                return true;
+            }
+            if (std_allocator_literal &&
+                index < struct_type.field_names.size() &&
+                struct_type.field_names[index] == "metadata_value") {
                 return true;
             }
             if (std_zone_handle_source_field && index == *std_zone_handle_source_field) return true;

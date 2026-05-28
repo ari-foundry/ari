@@ -124,6 +124,9 @@ pub mod mem;
 
 pub mod zone;
 
+pub mod allocator;
+pub use allocator::Allocator;
+
 pub mod boxed;
 pub use boxed::Box;
 
