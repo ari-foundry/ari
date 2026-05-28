@@ -1,17 +1,17 @@
 fn main() -> i64 {
   var zone = zone::create(128);
-  var text = std::string::from_string(ref mut zone, "compiler");
-  var same = std::string::from_string(ref mut zone, "compiler");
-  var shorter = std::string::from_string(ref mut zone, "compile");
-  var different = std::string::from_string(ref mut zone, "compiles");
+  var text = std::string::from(ref mut zone, "compiler");
+  var same = std::string::from(ref mut zone, "compiler");
+  var shorter = std::string::from(ref mut zone, "compile");
+  var different = std::string::from(ref mut zone, "compiles");
   var empty = std::string::new(ref mut zone, 0);
 
   let same_view = same.as_slice();
   let shorter_view = shorter.as_slice();
   let different_view = different.as_slice();
   let empty_view = empty.as_slice();
-  let equal_owned = std::string::from_string(ref mut zone, "compiler");
-  let different_owned = std::string::from_string(ref mut zone, "compilers");
+  let equal_owned = std::string::from(ref mut zone, "compiler");
+  let different_owned = std::string::from(ref mut zone, "compilers");
 
   let a = if text.equals(same_view) { 11 } else { 0 };
   let b = if text.equals(shorter_view) { 0 } else { 13 };

@@ -492,7 +492,7 @@ arix-style compiler invocation with owned output text:
 ```ari
 fn compile_main(
   zone: ref mut Zone,
-  compiler: string,
+  compiler: String,
   output: std::string::String
 ) -> std::Result[(), std::error::Error] {
   var cmd = process::Command::new(compiler)

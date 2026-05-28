@@ -171,12 +171,12 @@ C string.
 The source prelude already has the allocator-backed seed under `std::string`.
 `std::string::new(ref mut zone, capacity)` creates a tracked
 `std::string::String` handle with separate `len` and `capacity` metadata over
-zone-backed bytes, and `std::string::from_string(ref mut zone, text)` copies a
-borrowed raw boundary text value into that handle.
+zone-backed bytes, and `std::string::from(ref mut zone, bytes)` copies a
+borrowed byte slice into that handle.
 String literals coerce to byte-oriented containers when such a type is
 expected. A borrowed parser can take `"true"` as `Slice[u8]`, and local byte
 storage can be initialized as `var bytes: Vec[u8] = "true";` or
-`let fixed: [u8, 4] = "true";`. `std::string::bytes(text)` is still available
+`let fixed: [u8, 4] = "true";`. `std::string::bytes(bytes)` is still available
 when code wants to name that boundary explicitly. A literal can also be used as
 a read-only `Slice[u8]` receiver, so byte-slice helpers can be written in the
 natural form:

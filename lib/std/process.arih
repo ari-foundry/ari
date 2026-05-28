@@ -169,8 +169,8 @@ pub fn sigterm() -> std::process::Signal {
   return std::process::signal(15);
 }
 
-pub fn arg(value: string) -> std::process::Arg {
-  return std::process::Arg { value: std::c::from_string(value) };
+pub fn arg(value: std::c::CStr) -> std::process::Arg {
+  return std::process::Arg { value: value };
 }
 
 pub fn arg_bytes(zone: ref mut Zone, value: std::Slice[u8]) -> std::Result[std::process::Arg, std::error::Error] {
@@ -184,10 +184,10 @@ pub fn arg_bytes(zone: ref mut Zone, value: std::Slice[u8]) -> std::Result[std::
   }
 }
 
-pub fn env_var(name: string, value: string) -> std::process::EnvVar {
+pub fn env_var(name: std::c::CStr, value: std::c::CStr) -> std::process::EnvVar {
   return std::process::EnvVar {
-    name: std::c::from_string(name),
-    value: std::c::from_string(value),
+    name: name,
+    value: value,
   };
 }
 
@@ -210,11 +210,11 @@ pub fn env_var_bytes(
   });
 }
 
-pub fn command(program: string) -> std::process::Command {
+pub fn command(program: std::c::CStr) -> std::process::Command {
   return std::process::Command::new(program);
 }
 
-pub fn command_with_args(program: string, args: std::Slice[std::process::Arg]) -> std::process::Command {
+pub fn command_with_args(program: std::c::CStr, args: std::Slice[std::process::Arg]) -> std::process::Command {
   return std::process::Command::with_args(program, args);
 }
 
@@ -243,7 +243,7 @@ pub fn status_with_stdin(
 
 pub fn status_with_stdin_string(
   command: ref std::process::Command,
-  text: string
+  text: ref std::string::String
 ) -> std::Result[std::process::ExitStatus, std::error::Error] {
   return command.status_with_stdin_string(text);
 }
@@ -473,7 +473,7 @@ fn apply_setup_with_stdin(
 }
 
 fn apply_setup(command: ref std::process::Command) -> std::Result[(), std::error::Error] {
-  return std::process::apply_setup_with_stdin(command, false, std::c::from_string(""));
+  return std::process::apply_setup_with_stdin(command, false, std::c::from(""));
 }
 
 fn exec_with_argv(command: ref std::process::Command, argv: ptr c_void) -> std::Result[(), std::error::Error] {
@@ -783,9 +783,9 @@ fn status_with_stdin_pipe(
   }
 }
 
-fn temp_template_in(zone: ref mut Zone, prefix: string) -> std::process::TempPath {
+fn temp_template_in(zone: ref mut Zone, prefix: ref std::string::String) -> std::process::TempPath {
   var path = std::string::new(zone, 64);
-  path.append_string_in(zone, prefix);
+  path.append_bytes(zone, prefix.as_slice());
   path.append_i64_in(zone, std::process::id());
   path.append_string_in(zone, "-");
   path.append_i64_in(zone, std::time::unix_nanos());
@@ -806,7 +806,7 @@ fn temp_template_in(zone: ref mut Zone, prefix: string) -> std::process::TempPat
 
 pub fn temp_file_in(
   zone: ref mut Zone,
-  prefix: string
+  prefix: ref std::string::String
 ) -> std::Result[std::process::TempFile, std::error::Error] {
   let path = std::process::temp_template_in(zone, prefix);
   if std::c::is_null(path.data as ptr c_void) {
@@ -826,12 +826,13 @@ pub fn temp_file_in(
 }
 
 pub fn temp_file(zone: ref mut Zone) -> std::Result[std::process::TempFile, std::error::Error] {
-  return std::process::temp_file_in(zone, "/tmp/ari-file-");
+  var prefix = std::string::from(zone, "/tmp/ari-file-");
+  return std::process::temp_file_in(zone, ref prefix);
 }
 
 pub fn temp_dir_in(
   zone: ref mut Zone,
-  prefix: string
+  prefix: ref std::string::String
 ) -> std::Result[std::process::TempDir, std::error::Error] {
   let path = std::process::temp_template_in(zone, prefix);
   if std::c::is_null(path.data as ptr c_void) {
@@ -850,7 +851,8 @@ pub fn temp_dir_in(
 }
 
 pub fn temp_dir(zone: ref mut Zone) -> std::Result[std::process::TempDir, std::error::Error] {
-  return std::process::temp_dir_in(zone, "/tmp/ari-dir-");
+  var prefix = std::string::from(zone, "/tmp/ari-dir-");
+  return std::process::temp_dir_in(zone, ref prefix);
 }
 
 pub fn kill_signal(pid: i64, signal: std::process::Signal) -> std::Result[(), std::error::Error] {
@@ -1221,18 +1223,18 @@ pub impl std::process::ChildPipes {
 }
 
 pub impl std::process::Command {
-  fn new(program: string) -> std::process::Command {
+  fn new(program: std::c::CStr) -> std::process::Command {
     return std::process::Command {
-      program: std::c::from_string(program),
+      program: program,
       arg_values: std::process::empty_args(),
       env_values: std::process::empty_env(),
       cwd_path: std::None<std::c::CStr>(),
     };
   }
 
-  fn with_args(program: string, args: std::Slice[std::process::Arg]) -> std::process::Command {
+  fn with_args(program: std::c::CStr, args: std::Slice[std::process::Arg]) -> std::process::Command {
     return std::process::Command {
-      program: std::c::from_string(program),
+      program: program,
       arg_values: args,
       env_values: std::process::empty_env(),
       cwd_path: std::None<std::c::CStr>(),
@@ -1243,7 +1245,7 @@ pub impl std::process::Command {
     self.arg_values = values;
   }
 
-  fn arg(self: ref mut Self, zone: ref mut Zone, value: string) -> void {
+  fn arg(self: ref mut Self, zone: ref mut Zone, value: std::c::CStr) -> void {
     self.arg_value(zone, std::process::arg(value));
   }
 
@@ -1301,11 +1303,11 @@ pub impl std::process::Command {
     };
   }
 
-  fn env(self: ref mut Self, zone: ref mut Zone, name: string, value: string) -> void {
+  fn env(self: ref mut Self, zone: ref mut Zone, name: std::c::CStr, value: std::c::CStr) -> void {
     self.env_value(zone, std::process::env_var(name, value));
   }
 
-  fn env_var(self: ref mut Self, zone: ref mut Zone, name: string, value: string) -> void {
+  fn env_var(self: ref mut Self, zone: ref mut Zone, name: std::c::CStr, value: std::c::CStr) -> void {
     self.env(zone, name, value);
   }
 
@@ -1347,8 +1349,8 @@ pub impl std::process::Command {
     }
   }
 
-  fn current_dir(self: ref mut Self, path: string) -> void {
-    self.cwd_path = std::Some<std::c::CStr>(std::c::from_string(path));
+  fn current_dir(self: ref mut Self, path: std::c::CStr) -> void {
+    self.cwd_path = std::Some<std::c::CStr>(path);
   }
 
   fn current_dir_bytes(self: ref mut Self, zone: ref mut Zone, path: std::Slice[u8]) -> std::Result[(), std::error::Error] {
@@ -1367,13 +1369,13 @@ pub impl std::process::Command {
     return self.current_dir_bytes(zone, path.as_slice());
   }
 
-  fn with_arg(self, zone: ref mut Zone, value: string) -> std::process::Command {
+  fn with_arg(self, zone: ref mut Zone, value: std::c::CStr) -> std::process::Command {
     var command = self;
     command.arg(zone, value);
     return command;
   }
 
-  fn with_env(self, zone: ref mut Zone, name: string, value: string) -> std::process::Command {
+  fn with_env(self, zone: ref mut Zone, name: std::c::CStr, value: std::c::CStr) -> std::process::Command {
     var command = self;
     command.env(zone, name, value);
     return command;
@@ -1391,22 +1393,22 @@ pub impl std::process::Command {
     return command;
   }
 
-  fn with_current_dir(self, path: string) -> std::process::Command {
+  fn with_current_dir(self, path: std::c::CStr) -> std::process::Command {
     var command = self;
     command.current_dir(path);
     return command;
   }
 
   fn spawn(self: ref Self) -> std::Result[std::process::Child, std::error::Error] {
-    return std::process::spawn_checked(self, false, std::c::from_string(""));
+    return std::process::spawn_checked(self, false, std::c::from(""));
   }
 
-  fn spawn_with_stdin_file(self: ref Self, path: string) -> std::Result[std::process::Child, std::error::Error] {
-    return std::process::spawn_with_stdin_cstr(self, std::c::from_string(path));
+  fn spawn_with_stdin_file(self: ref Self, path: std::c::CStr) -> std::Result[std::process::Child, std::error::Error] {
+    return std::process::spawn_with_stdin_cstr(self, path);
   }
 
   fn spawn_with_stdin_null(self: ref Self) -> std::Result[std::process::Child, std::error::Error] {
-    return self.spawn_with_stdin_file("/dev/null");
+    return self.spawn_with_stdin_file(std::c::from("/dev/null"));
   }
 
   fn spawn_piped(self: ref Self) -> std::Result[std::process::ChildPipes, std::error::Error] {
@@ -1568,12 +1570,12 @@ pub impl std::process::Command {
     return std::process::status_with_stdin_pipe(self, values);
   }
 
-  fn status_with_stdin_string(self: ref Self, text: string) -> std::Result[std::process::ExitStatus, std::error::Error] {
-    return self.status_with_stdin(std::string::bytes(text));
+  fn status_with_stdin_string(self: ref Self, text: ref std::string::String) -> std::Result[std::process::ExitStatus, std::error::Error] {
+    return self.status_with_stdin(text.as_slice());
   }
 
-  fn status_with_stdin_file(self: ref Self, path: string) -> std::Result[std::process::ExitStatus, std::error::Error] {
-    return std::process::status_with_stdin_cstr(self, std::c::from_string(path));
+  fn status_with_stdin_file(self: ref Self, path: std::c::CStr) -> std::Result[std::process::ExitStatus, std::error::Error] {
+    return std::process::status_with_stdin_cstr(self, path);
   }
 
   fn status_with_stdin_file_bytes(
@@ -1600,7 +1602,7 @@ pub impl std::process::Command {
   }
 
   fn status_with_stdin_null(self: ref Self) -> std::Result[std::process::ExitStatus, std::error::Error] {
-    return self.status_with_stdin_file("/dev/null");
+    return self.status_with_stdin_file(std::c::from("/dev/null"));
   }
 
   fn status_code(self: ref Self) -> std::Result[i64, std::error::Error] {

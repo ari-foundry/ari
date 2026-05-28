@@ -47,7 +47,7 @@ std::c::CString
 std::c::Library
 std::c::Symbol
 
-c::from_string(text: string) -> CStr
+c::from(text: Slice[u8]) -> CStr
 c::from_ptr(data: ptr c_char) -> Result[CStr, std::error::Error]
 c::from_ptr_unchecked(data: ptr c_char) -> CStr
 c::from_slice_in(zone: ref mut Zone, bytes: Slice[u8]) -> Result[CString, std::error::Error]
@@ -93,7 +93,7 @@ It can wrap an Ari `string` literal or a non-null `ptr c_char` from C.
 extern "C" fn strlen(text: ptr c_char) -> size_t;
 
 fn main() -> i64 {
-  let name = c::from_string("ari");
+  let name = c::from("ari");
   let direct: CStr = "ari";
   assert_eq_i64(name.len(), 3);
   assert_eq_i64(direct.len(), 3);
@@ -104,7 +104,7 @@ fn main() -> i64 {
 `CStr.as_slice()` returns the bytes before the trailing NUL. The terminator is
 not included because normal Ari `Slice[u8]` APIs expect a length, not a
 sentinel. When a `CStr` is the expected type, a string literal can coerce
-directly to that borrowed C string view; use `c::from_string(text)` when the
+directly to that borrowed C string view; use `c::from(text)` when the
 conversion should be visually explicit.
 `from_ptr(data)` returns `Result[CStr, Error]` and yields
 `Error(InvalidInput)` for null. Use `from_ptr_unchecked(data)` only when the C
@@ -150,7 +150,7 @@ extern "C" fn abs(value: c_int) -> c_int;
 extern "C" fn strlen(text: ptr c_char) -> size_t;
 
 fn main() -> i64 {
-  let text = c::from_string("hello");
+  let text = c::from("hello");
   let count = strlen(text.as_ptr());
   return (abs(-7i32) as i64) + (count as i64);
 }
@@ -172,7 +172,7 @@ so library code can use stable Ari error categories:
 extern "C" fn posix_open(path: ptr c_char, flags: c_int) -> c_int = "open";
 
 fn missing_file_error() -> std::error::Error {
-  let fd = posix_open(c::from_string("/tmp/missing").as_ptr(), 0);
+  let fd = posix_open(c::from("/tmp/missing").as_ptr(), 0);
   if fd < 0 {
     return c::error();
   }
@@ -190,9 +190,9 @@ reports failure through sentinel values and `errno`.
 
 ```ari
 fn load_strlen() -> i64 {
-  var library = c::open(c::from_string("libc.so.6"), c::lazy()).unwrap();
+  var library = c::open(c::from("libc.so.6"), c::lazy()).unwrap();
 
-  let symbol = library.symbol(c::from_string("strlen")).unwrap();
+  let symbol = library.symbol(c::from("strlen")).unwrap();
 
   library.close().unwrap();
   return 0;
@@ -203,10 +203,10 @@ To call a loaded function, ask the `Symbol` for a function-pointer type:
 
 ```ari
 fn loaded_strlen() -> i64 {
-  var library = c::open(c::from_string("libc.so.6"), c::lazy()).unwrap();
-  let symbol = library.symbol(c::from_string("strlen")).unwrap();
+  var library = c::open(c::from("libc.so.6"), c::lazy()).unwrap();
+  let symbol = library.symbol(c::from("strlen")).unwrap();
   let strlen = symbol.function<fn(ptr c_char) -> size_t>();
-  let text = c::from_string("ari");
+  let text = c::from("ari");
   let result = strlen(text.as_ptr()) as i64;
   library.close().unwrap();
   return result;

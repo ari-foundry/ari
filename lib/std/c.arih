@@ -63,8 +63,8 @@ pub fn is_null(value: ptr c_void) -> bool {
   return is_null_ptr(value);
 }
 
-pub fn from_string(text: string) -> std::c::CStr {
-  return std::c::CStr { data: text as ptr c_char };
+pub fn from(text: std::Slice[u8]) -> std::c::CStr {
+  return std::c::CStr { data: text.as_ptr() as ptr c_char };
 }
 
 pub fn from_ptr_unchecked(data: ptr c_char) -> std::c::CStr {
@@ -192,7 +192,7 @@ pub fn close_bool(library: ref mut std::c::Library) -> bool {
 pub fn last_error() -> std::c::CStr {
   let data = raw_dlerror();
   if is_null_ptr(data as ptr c_void) {
-    return std::c::from_string("");
+    return std::c::from("");
   }
   return std::c::from_ptr_unchecked(data);
 }

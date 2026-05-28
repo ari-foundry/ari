@@ -280,7 +280,7 @@ pub fn is_retryable(value: ref std::error::Error) -> bool {
   return std::error::is_kind(value, InProgress);
 }
 
-pub fn name_text(kind: std::error::Kind) -> string {
+fn name_text(kind: std::error::Kind) -> std::Slice[u8] {
   match kind {
     NotFound => { return "not found"; }
     PermissionDenied => { return "permission denied"; }
@@ -306,7 +306,7 @@ pub fn name_text(kind: std::error::Kind) -> string {
   }
 }
 
-pub fn message_text(value: ref std::error::Error) -> string {
+fn message_text(value: ref std::error::Error) -> std::Slice[u8] {
   return std::error::name_text(std::error::kind(value));
 }
 
@@ -351,11 +351,11 @@ pub impl std::error::Error {
     return std::error::is_retryable(self);
   }
 
-  fn name_text(self: ref Self) -> string {
+  fn name_text(self: ref Self) -> std::Slice[u8] {
     return std::error::name_text(std::error::kind(self));
   }
 
-  fn message_text(self: ref Self) -> string {
+  fn message_text(self: ref Self) -> std::Slice[u8] {
     return std::error::message_text(self);
   }
 

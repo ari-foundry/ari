@@ -15,15 +15,19 @@ fn bytes_equal(values: Slice[u8], expected: Slice[u8]) -> bool {
   return true;
 }
 
+fn c(value: Slice[u8]) -> std::c::CStr {
+  return std::c::from(value);
+}
+
 fn main() -> i64 {
   var zone = zone::temp(512);
   var score = 0;
 
   var args = [
-    process::arg("-c"),
-    process::arg("printf 'out'; printf 'err' >&2; exit 7")
+    process::arg(c("-c")),
+    process::arg(c("printf 'out'; printf 'err' >&2; exit 7"))
   ];
-  var cmd = process::command_with_args("sh", args.as_slice());
+  var cmd = process::command_with_args(c("sh"), args.as_slice());
 
   match process::output_in(ref cmd, ref mut zone) {
     Err(_) => {}
@@ -64,7 +68,7 @@ fn main() -> i64 {
     }
   }
 
-  var missing = process::command("__ari_missing_command_for_output__");
+  var missing = process::command(c("__ari_missing_command_for_output__"));
   match missing.output_in(ref mut zone) {
     Err(reason) => {
       if reason.is_not_found() && reason.code() == 2 {
@@ -78,10 +82,10 @@ fn main() -> i64 {
   }
 
   var invalid_args = [
-    process::arg("-c"),
-    process::arg("printf '\\303\\050'")
+    process::arg(c("-c")),
+    process::arg(c("printf '\\303\\050'"))
   ];
-  var invalid_cmd = process::command_with_args("sh", invalid_args.as_slice());
+  var invalid_cmd = process::command_with_args(c("sh"), invalid_args.as_slice());
   match invalid_cmd.output(ref mut zone) {
     Err(_) => {}
     Ok(invalid_value) => {

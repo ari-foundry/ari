@@ -3,7 +3,7 @@
 fn main() -> i64 {
   var zone = zone::create(192);
 
-  var text = std::string::from_string(ref mut zone, "Ari-Std-Lib-Ari!");
+  var text = std::string::from(ref mut zone, "Ari-Std-Lib-Ari!");
   var same: Vec[u8] = [
     97u8, 114u8, 105u8, 45u8, 115u8, 116u8, 100u8, 45u8,
     108u8, 105u8, 98u8, 45u8, 97u8, 114u8, 105u8, 33u8

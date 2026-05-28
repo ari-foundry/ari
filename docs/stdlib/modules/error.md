@@ -59,8 +59,8 @@ is_connection_refused(ref Error) -> bool
 is_retryable(ref Error) -> bool
 name(ref mut Zone, kind: Kind) -> String
 message(ref mut Zone, ref Error) -> String
-name_text(kind: Kind) -> string
-message_text(ref Error) -> string
+name_text(kind: Kind) -> String
+message_text(ref Error) -> String
 ```
 
 `std` re-exports `Error` and `ErrorKind`:

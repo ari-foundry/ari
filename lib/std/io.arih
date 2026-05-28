@@ -10,7 +10,7 @@ pub extern "ari" fn write_byte(value: u8) -> i64 = "ari_builtin_write_byte";
 extern "ari" fn write_error_byte(value: u8) -> i64 = "ari_builtin_write_error_byte";
 pub extern "ari" fn newline() -> i64 = "ari_builtin_newline";
 pub extern "ari" fn read_byte() -> i64 = "ari_builtin_read_byte";
-pub extern "ari" fn read_line_text() -> string = "ari_builtin_read_line";
+extern "ari" fn read_line_text() -> string = "ari_builtin_read_line";
 pub extern "ari" fn read_line_owned(zone: ref mut Zone) -> std::string::String = "ari_builtin_read_line_owned";
 extern "ari" fn read_fd_byte(raw: i64) -> i64 = "ari_builtin_os_read_byte";
 extern "ari" fn write_fd_byte(raw: i64, value: u8) -> bool = "ari_builtin_os_write_byte";
@@ -169,18 +169,19 @@ pub fn write_bytes(values: std::Slice[u8]) -> i64 {
   return index;
 }
 
-pub fn print_text(text: string) -> std::Result[(), std::error::Error] {
+fn print_text(text: std::Slice[u8]) -> std::Result[(), std::error::Error] {
   var output = std::io::stdout();
-  return std::io::write_all<std::io::Stdout>(ref mut output, std::string::bytes(text));
+  return std::io::write_all<std::io::Stdout>(ref mut output, text);
 }
 
-pub fn print(text: string) -> std::Result[(), std::error::Error] {
-  return std::io::print_text(text);
+pub fn print(text: ref std::string::String) -> std::Result[(), std::error::Error] {
+  var output = std::io::stdout();
+  return std::io::write_all<std::io::Stdout>(ref mut output, text.as_slice());
 }
 
-pub fn println_text(text: string) -> std::Result[(), std::error::Error] {
+fn println_text(text: std::Slice[u8]) -> std::Result[(), std::error::Error] {
   var output = std::io::stdout();
-  match std::io::write_all<std::io::Stdout>(ref mut output, std::string::bytes(text)) {
+  match std::io::write_all<std::io::Stdout>(ref mut output, text) {
     std::Err(reason) => {
       return std::Err<(), std::error::Error>(reason);
     }
@@ -189,22 +190,30 @@ pub fn println_text(text: string) -> std::Result[(), std::error::Error] {
   return std::io::write_all<std::io::Stdout>(ref mut output, std::string::bytes("\n"));
 }
 
-pub fn println(text: string) -> std::Result[(), std::error::Error] {
-  return std::io::println_text(text);
+pub fn println(text: ref std::string::String) -> std::Result[(), std::error::Error] {
+  var output = std::io::stdout();
+  match std::io::write_all<std::io::Stdout>(ref mut output, text.as_slice()) {
+    std::Err(reason) => {
+      return std::Err<(), std::error::Error>(reason);
+    }
+    std::Ok(_) => {}
+  }
+  return std::io::write_all<std::io::Stdout>(ref mut output, std::string::bytes("\n"));
 }
 
-pub fn eprint_text(text: string) -> std::Result[(), std::error::Error] {
+fn eprint_text(text: std::Slice[u8]) -> std::Result[(), std::error::Error] {
   var output = std::io::stderr();
-  return std::io::write_all<std::io::Stderr>(ref mut output, std::string::bytes(text));
+  return std::io::write_all<std::io::Stderr>(ref mut output, text);
 }
 
-pub fn eprint(text: string) -> std::Result[(), std::error::Error] {
-  return std::io::eprint_text(text);
-}
-
-pub fn eprintln_text(text: string) -> std::Result[(), std::error::Error] {
+pub fn eprint(text: ref std::string::String) -> std::Result[(), std::error::Error] {
   var output = std::io::stderr();
-  match std::io::write_all<std::io::Stderr>(ref mut output, std::string::bytes(text)) {
+  return std::io::write_all<std::io::Stderr>(ref mut output, text.as_slice());
+}
+
+fn eprintln_text(text: std::Slice[u8]) -> std::Result[(), std::error::Error] {
+  var output = std::io::stderr();
+  match std::io::write_all<std::io::Stderr>(ref mut output, text) {
     std::Err(reason) => {
       return std::Err<(), std::error::Error>(reason);
     }
@@ -213,8 +222,15 @@ pub fn eprintln_text(text: string) -> std::Result[(), std::error::Error] {
   return std::io::write_all<std::io::Stderr>(ref mut output, std::string::bytes("\n"));
 }
 
-pub fn eprintln(text: string) -> std::Result[(), std::error::Error] {
-  return std::io::eprintln_text(text);
+pub fn eprintln(text: ref std::string::String) -> std::Result[(), std::error::Error] {
+  var output = std::io::stderr();
+  match std::io::write_all<std::io::Stderr>(ref mut output, text.as_slice()) {
+    std::Err(reason) => {
+      return std::Err<(), std::error::Error>(reason);
+    }
+    std::Ok(_) => {}
+  }
+  return std::io::write_all<std::io::Stderr>(ref mut output, std::string::bytes("\n"));
 }
 
 fn unexpected_eof_error() -> std::error::Error {

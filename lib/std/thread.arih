@@ -42,7 +42,7 @@ pub struct ThreadGroupResult {
 }
 
 pub struct Builder {
-  name: string,
+  name: std::Slice[u8],
   stack_size_bytes: i64,
 }
 
@@ -69,9 +69,20 @@ pub struct ThreadLocal[T] {
 }
 
 pub extern "ari" fn spawn_unchecked(entry: fn() -> i64) -> Thread = "ari_builtin_thread_spawn";
-pub extern "ari" fn spawn_configured_unchecked(entry: fn() -> i64, name: string, stack_size: i64) -> Thread = "ari_builtin_thread_spawn_configured";
+extern "ari" fn spawn_configured_bytes_unchecked_raw(
+  entry: fn() -> i64,
+  name: ptr u8,
+  name_len: i64,
+  stack_size: i64
+) -> Thread = "ari_builtin_thread_spawn_configured_bytes";
 pub extern "ari" fn spawn_raw_unchecked(entry: fn(ptr u8) -> i64, data: ptr u8) -> Thread = "ari_builtin_thread_spawn_raw";
-pub extern "ari" fn spawn_raw_configured_unchecked(entry: fn(ptr u8) -> i64, data: ptr u8, name: string, stack_size: i64) -> Thread = "ari_builtin_thread_spawn_raw_configured";
+extern "ari" fn spawn_raw_configured_bytes_unchecked_raw(
+  entry: fn(ptr u8) -> i64,
+  data: ptr u8,
+  name: ptr u8,
+  name_len: i64,
+  stack_size: i64
+) -> Thread = "ari_builtin_thread_spawn_raw_configured_bytes";
 pub extern "ari" fn join_unchecked(thread: Thread) -> i64 = "ari_builtin_thread_join";
 pub extern "ari" fn is_finished(thread: Thread) -> bool = "ari_builtin_thread_is_finished";
 pub extern "ari" fn yield_now() -> void = "ari_builtin_thread_yield";
@@ -195,12 +206,34 @@ pub fn spawn(entry: fn() -> i64) -> std::Result[std::thread::JoinHandle, std::er
   return std::Err<std::thread::JoinHandle, std::error::Error>(std::thread::other_error());
 }
 
+fn spawn_configured_slice_unchecked(
+  entry: fn() -> i64,
+  name: std::Slice[u8],
+  stack_size: i64
+) -> std::thread::Thread {
+  return std::thread::spawn_configured_bytes_unchecked_raw(entry, name.as_ptr(), name.len, stack_size);
+}
+
+pub fn spawn_configured_unchecked(
+  entry: fn() -> i64,
+  name: ref std::string::String,
+  stack_size: i64
+) -> std::thread::Thread {
+  return std::thread::spawn_configured_slice_unchecked(entry, name.as_slice(), stack_size);
+}
+
 pub fn spawn_configured(
   entry: fn() -> i64,
-  name: string,
+  name: ref std::string::String,
   stack_size: i64
 ) -> std::Result[std::thread::JoinHandle, std::error::Error] {
-  let thread = std::thread::spawn_configured_unchecked(entry, name, stack_size);
+  let name_bytes = name.as_slice();
+  let thread = std::thread::spawn_configured_bytes_unchecked_raw(
+    entry,
+    name_bytes.as_ptr(),
+    name_bytes.len,
+    stack_size
+  );
   if thread.is_joinable() {
     return std::Ok<std::thread::JoinHandle, std::error::Error>(std::thread::JoinHandle::from_thread(thread));
   }
@@ -218,13 +251,44 @@ pub fn spawn_raw(
   return std::Err<std::thread::JoinHandle, std::error::Error>(std::thread::other_error());
 }
 
+fn spawn_raw_configured_slice_unchecked(
+  entry: fn(ptr u8) -> i64,
+  data: ptr u8,
+  name: std::Slice[u8],
+  stack_size: i64
+) -> std::thread::Thread {
+  return std::thread::spawn_raw_configured_bytes_unchecked_raw(
+    entry,
+    data,
+    name.as_ptr(),
+    name.len,
+    stack_size
+  );
+}
+
+pub fn spawn_raw_configured_unchecked(
+  entry: fn(ptr u8) -> i64,
+  data: ptr u8,
+  name: ref std::string::String,
+  stack_size: i64
+) -> std::thread::Thread {
+  return std::thread::spawn_raw_configured_slice_unchecked(entry, data, name.as_slice(), stack_size);
+}
+
 pub fn spawn_raw_configured(
   entry: fn(ptr u8) -> i64,
   data: ptr u8,
-  name: string,
+  name: ref std::string::String,
   stack_size: i64
 ) -> std::Result[std::thread::JoinHandle, std::error::Error] {
-  let thread = std::thread::spawn_raw_configured_unchecked(entry, data, name, stack_size);
+  let name_bytes = name.as_slice();
+  let thread = std::thread::spawn_raw_configured_bytes_unchecked_raw(
+    entry,
+    data,
+    name_bytes.as_ptr(),
+    name_bytes.len,
+    stack_size
+  );
   if thread.is_joinable() {
     return std::Ok<std::thread::JoinHandle, std::error::Error>(std::thread::JoinHandle::from_thread(thread));
   }
@@ -292,8 +356,8 @@ pub impl std::thread::Builder {
     return std::thread::Builder { name: "", stack_size_bytes: 0 };
   }
 
-  fn name(self, value: string) -> std::thread::Builder {
-    return std::thread::Builder { name: value, stack_size_bytes: self.stack_size_bytes };
+  fn name(self, value: ref std::string::String) -> std::thread::Builder {
+    return std::thread::Builder { name: value.as_slice(), stack_size_bytes: self.stack_size_bytes };
   }
 
   fn stack_size(self, bytes: i64) -> std::thread::Builder {
@@ -301,7 +365,7 @@ pub impl std::thread::Builder {
     return std::thread::Builder { name: self.name, stack_size_bytes: bytes };
   }
 
-  fn configured_name(self: ref Self) -> string {
+  fn configured_name(self: ref Self) -> std::Slice[u8] {
     return self.name;
   }
 
@@ -310,15 +374,19 @@ pub impl std::thread::Builder {
   }
 
   fn spawn_unchecked(self: ref Self, entry: fn() -> i64) -> std::thread::Thread {
-    return std::thread::spawn_configured_unchecked(entry, self.name, self.stack_size_bytes);
+    return std::thread::spawn_configured_slice_unchecked(entry, self.name, self.stack_size_bytes);
   }
 
   fn spawn(self: ref Self, entry: fn() -> i64) -> std::Result[std::thread::JoinHandle, std::error::Error] {
-    return std::thread::spawn_configured(entry, self.name, self.stack_size_bytes);
+    let thread = std::thread::spawn_configured_slice_unchecked(entry, self.name, self.stack_size_bytes);
+    if thread.is_joinable() {
+      return std::Ok<std::thread::JoinHandle, std::error::Error>(std::thread::JoinHandle::from_thread(thread));
+    }
+    return std::Err<std::thread::JoinHandle, std::error::Error>(std::thread::other_error());
   }
 
   fn spawn_raw_unchecked(self: ref Self, entry: fn(ptr u8) -> i64, data: ptr u8) -> std::thread::Thread {
-    return std::thread::spawn_raw_configured_unchecked(entry, data, self.name, self.stack_size_bytes);
+    return std::thread::spawn_raw_configured_slice_unchecked(entry, data, self.name, self.stack_size_bytes);
   }
 
   fn spawn_raw(
@@ -326,7 +394,11 @@ pub impl std::thread::Builder {
     entry: fn(ptr u8) -> i64,
     data: ptr u8
   ) -> std::Result[std::thread::JoinHandle, std::error::Error] {
-    return std::thread::spawn_raw_configured(entry, data, self.name, self.stack_size_bytes);
+    let thread = std::thread::spawn_raw_configured_slice_unchecked(entry, data, self.name, self.stack_size_bytes);
+    if thread.is_joinable() {
+      return std::Ok<std::thread::JoinHandle, std::error::Error>(std::thread::JoinHandle::from_thread(thread));
+    }
+    return std::Err<std::thread::JoinHandle, std::error::Error>(std::thread::other_error());
   }
 }
 
@@ -678,7 +750,7 @@ pub impl std::thread::ThreadScope {
   fn spawn_configured(
     self: ref mut Self,
     entry: fn() -> i64,
-    name: string,
+    name: ref std::string::String,
     stack_size: i64
   ) -> std::Result[(), std::error::Error] {
     match std::thread::spawn_configured(entry, name, stack_size) {
@@ -710,7 +782,7 @@ pub impl std::thread::ThreadScope {
     self: ref mut Self,
     entry: fn(ptr u8) -> i64,
     data: ptr u8,
-    name: string,
+    name: ref std::string::String,
     stack_size: i64
   ) -> std::Result[(), std::error::Error] {
     match std::thread::spawn_raw_configured(entry, data, name, stack_size) {

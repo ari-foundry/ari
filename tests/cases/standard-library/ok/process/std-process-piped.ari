@@ -8,13 +8,17 @@ fn status_is(value: Result[process::ExitStatus, error::Error], expected: i64) ->
   }
 }
 
+fn c(value: Slice[u8]) -> std::c::CStr {
+  return std::c::from(value);
+}
+
 fn main() -> i64 {
   var zone = zone::temp(2048);
   var score = 0;
 
-  var cmd = process::Command::new("sh")
-    .with_arg(ref mut zone, "-c")
-    .with_arg(ref mut zone, "cat; printf err >&2");
+  var cmd = process::Command::new(c("sh"))
+    .with_arg(ref mut zone, c("-c"))
+    .with_arg(ref mut zone, c("cat; printf err >&2"));
   match cmd.spawn_piped() {
     Ok(first_child_value) => {
       var first_child = first_child_value;
@@ -49,9 +53,9 @@ fn main() -> i64 {
     Err(_) => {}
   }
 
-  var module_cmd = process::Command::new("sh")
-    .with_arg(ref mut zone, "-c")
-    .with_arg(ref mut zone, "read value; test \"$value\" = module");
+  var module_cmd = process::Command::new(c("sh"))
+    .with_arg(ref mut zone, c("-c"))
+    .with_arg(ref mut zone, c("read value; test \"$value\" = module"));
   match process::spawn_piped(ref module_cmd) {
     Ok(second_child_value) => {
       var second_child = second_child_value;
@@ -66,7 +70,7 @@ fn main() -> i64 {
     Err(_) => {}
   }
 
-  var missing = process::Command::new("__ari_missing_command_for_spawn_piped__");
+  var missing = process::Command::new(c("__ari_missing_command_for_spawn_piped__"));
   match missing.spawn_piped() {
     Err(reason) => {
       if reason.is_not_found() {
@@ -76,9 +80,9 @@ fn main() -> i64 {
     Ok(_) => {}
   }
 
-  var detached = process::Command::new("sh")
-    .with_arg(ref mut zone, "-c")
-    .with_arg(ref mut zone, "exit 0");
+  var detached = process::Command::new(c("sh"))
+    .with_arg(ref mut zone, c("-c"))
+    .with_arg(ref mut zone, c("exit 0"));
   match detached.spawn() {
     Ok(detached_child) => {
       detached_child.detach();

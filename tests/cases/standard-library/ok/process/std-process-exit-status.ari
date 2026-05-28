@@ -61,23 +61,27 @@ fn signal_ok(value: Result[process::ExitStatus, error::Error], expected: i64) ->
   }
 }
 
+fn c(value: Slice[u8]) -> std::c::CStr {
+  return std::c::from(value);
+}
+
 fn main() -> i64 {
   var score = 0;
 
-  var zero_args = [process::arg("-c"), process::arg("exit 0")];
-  var zero_cmd = process::command_with_args("sh", zero_args.as_slice());
+  var zero_args = [process::arg(c("-c")), process::arg(c("exit 0"))];
+  var zero_cmd = process::command_with_args(c("sh"), zero_args.as_slice());
   if status_ok(zero_cmd.exit_status(), 0) {
     score = score + 11;
   }
 
-  var exit_args = [process::arg("-c"), process::arg("exit 33")];
-  var exit_cmd = process::command_with_args("sh", exit_args.as_slice());
+  var exit_args = [process::arg(c("-c")), process::arg(c("exit 33"))];
+  var exit_cmd = process::command_with_args(c("sh"), exit_args.as_slice());
   if status_ok(exit_cmd.exit_status(), 33) {
     score = score + 13;
   }
 
-  var spawn_args = [process::arg("-c"), process::arg("exit 9")];
-  var spawn_cmd = process::command_with_args("sh", spawn_args.as_slice());
+  var spawn_args = [process::arg(c("-c")), process::arg(c("exit 9"))];
+  var spawn_cmd = process::command_with_args(c("sh"), spawn_args.as_slice());
   match spawn_cmd.spawn() {
     Err(_) => {}
     Ok(child) => {
@@ -87,14 +91,14 @@ fn main() -> i64 {
     }
   }
 
-  var signal_args = [process::arg("-c"), process::arg("kill -TERM $$")];
-  var signal_cmd = process::command_with_args("sh", signal_args.as_slice());
+  var signal_args = [process::arg(c("-c")), process::arg(c("kill -TERM $$"))];
+  var signal_cmd = process::command_with_args(c("sh"), signal_args.as_slice());
   if signal_ok(signal_cmd.exit_status(), 15) {
     score = score + 19;
   }
 
-  var old_args = [process::arg("-c"), process::arg("exit 7")];
-  var old_cmd = process::command_with_args("sh", old_args.as_slice());
+  var old_args = [process::arg(c("-c")), process::arg(c("exit 7"))];
+  var old_cmd = process::command_with_args(c("sh"), old_args.as_slice());
   match old_cmd.status_code() {
     Ok(code) => {
       if code == 7 {

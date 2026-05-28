@@ -83,7 +83,7 @@ fn main() -> i64 {
   let raw_string_ref = owned_raw_os.as_string();
   assert_eq_i64(raw_string_ref.len(), 4);
 
-  let owned_text_os = std::string::os_string_from_text(ref mut zone, "hello");
+  let owned_text_os = std::string::os_string_from_slice(ref mut zone, "hello");
   assert(owned_text_os.is_utf8());
   assert_eq_i64(owned_text_os.try_utf8().unwrap().codepoint_count(), 5);
   assert_eq_i64(owned_text_os.try_utf8_string(ref mut zone).unwrap().codepoint_count(), 5);

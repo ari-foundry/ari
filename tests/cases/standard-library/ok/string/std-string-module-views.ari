@@ -5,9 +5,9 @@ fn expect_bytes(values: Slice[u8], expected: Slice[u8]) -> void {
 
 fn main() -> i64 {
   var zone = zone::create(512);
-  let manifest = "# Ari package\n[package]\nname = \"hello\"\nversion = \"0.1.0\"\n";
+  let manifest: Slice[u8] = "# Ari package\n[package]\nname = \"hello\"\nversion = \"0.1.0\"\n";
 
-  var lines = std::string::lines(std::string::bytes(manifest));
+  var lines = std::string::lines(manifest);
   assert(std::string::trim(lines.next().unwrap()).starts_with("#"));
 
   let section_line = std::string::trim(lines.next().unwrap());

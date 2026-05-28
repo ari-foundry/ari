@@ -56,7 +56,7 @@ can fail before the lexical join happens.
 | --- | --- | --- |
 | Treat bytes as a path | `path::bytes(bytes)` or direct literal coercion to `PathBytes` | No allocation; keeps the original bytes borrowed. |
 | Convert from OS boundary data | `path::from_os(os)` | Keeps bytes borrowed from `OsStr`; no UTF-8 validation. |
-| Own a path | `path::from_bytes(ref mut zone, bytes)` or `path::from_string(ref mut zone, text)` | Copies bytes into the zone and returns `PathBuf`. |
+| Own a path | `path::from_bytes(ref mut zone, bytes)` or `path::from(ref mut zone, text)` | Copies bytes into the zone and returns `PathBuf`. |
 | Copy a borrowed path to owned text | `path::to_string(ref mut zone, path)` or `path_buf.to_string(ref mut zone)` | Still byte-oriented text, not validated UTF-8. |
 | Inspect components | `components`, `components_with_kinds`, `file_name`, `parent`, `extension`, `stem`, `file_stem` | Borrowed slices point into the original path; kinded components preserve root, `.`, `..`, and Windows drive/UNC prefixes. |
 | Compare path prefixes/suffixes | `starts_with`, `strip_prefix`, `ends_with`, `strip_suffix` | Component-aware: `src` matches `src/main.ari` but not `src2/main.ari`. |
@@ -77,7 +77,7 @@ path::ComponentKind
 path::bytes(path) -> PathBytes
 path::from_os(os) -> PathBytes
 path::from_bytes(ref mut zone, path) -> PathBuf
-path::from_string(ref mut zone, text) -> PathBuf
+path::from(ref mut zone, text) -> PathBuf
 path::to_string(ref mut zone, path) -> String
 path::is_separator(value: char) -> bool
 path::is_empty(path) -> bool
@@ -206,7 +206,7 @@ caller explicitly needs the internal byte string view, `as_bytes` for a
 borrowed slice, and `as_path` for a borrowed path-policy view:
 
 ```ari
-let owned = path::from_string(ref mut zone, "src/main.ari");
+let owned = path::from(ref mut zone, "src/main.ari");
 owned.as_string()
 owned.as_bytes()
 owned.as_path()

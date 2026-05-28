@@ -55,7 +55,7 @@ pub impl[T] std::option::OptionRef[T] {
     return ref *((*(self as ptr Self)).0 as ptr T);
   }
 
-  fn expect(self: ref Self, message: string) -> ref T {
+  fn expect(self: ref Self, message: ref std::string::String) -> ref T {
     return self.unwrap();
   }
 }
@@ -78,7 +78,7 @@ pub impl[T] std::option::OptionMut[T] {
     return ref mut *((*(self as ptr Self)).0 as ptr T);
   }
 
-  fn expect(self: ref mut Self, message: string) -> ref mut T {
+  fn expect(self: ref mut Self, message: ref std::string::String) -> ref mut T {
     return self.unwrap();
   }
 
@@ -201,7 +201,7 @@ pub impl[T] std::Option[T] {
     }
   }
 
-  fn expect(self, message: string) -> T {
+  fn expect(self, message: ref std::string::String) -> T {
     match self {
       std::Some(value) => {
         return value;

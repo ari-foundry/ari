@@ -1,6 +1,6 @@
 fn main() -> i64 {
   var zone = zone::create(32);
-  var text = std::string::from_string(ref mut zone, "ari");
+  var text = std::string::from(ref mut zone, "ari");
 
   let start = text.first();
   let end = text.last();

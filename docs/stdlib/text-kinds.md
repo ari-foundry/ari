@@ -5,7 +5,7 @@ together. Use this page when deciding which API a library should accept.
 
 | Kind | Current Type | Meaning | Use It For |
 | --- | --- | --- | --- |
-| C string | `string`, `std::c::CStr`, `std::c::CString` | NUL-terminated bytes. Borrowed views exclude the terminator when viewed as a slice; owned `CString` stores one trailing NUL in a zone. | String literals, C ABI calls, dynamic loader names, and C-shaped owned buffers. |
+| C string | `std::c::CStr`, `std::c::CString` | NUL-terminated bytes. Borrowed views exclude the terminator when viewed as a slice; owned `CString` stores one trailing NUL in a zone. | String literals, C ABI calls, dynamic loader names, and C-shaped owned buffers. |
 | Owned byte string | `std::string::String` | Zone-backed mutable bytes with no UTF-8 promise. | Output buffers, parser buffers, byte-oriented file reads, formatting results. |
 | UTF-8 string view | `std::string::Utf8` | Borrowed bytes that have already passed UTF-8 validation. | Unicode scalar counting and byte-offset scalar lookup. |
 | Owned UTF-8 string | `std::string::Utf8String` | Zone-backed owned bytes that have already passed UTF-8 validation. | Long-lived text after decoding or validating file/env/process bytes. |
@@ -34,8 +34,8 @@ together. Use this page when deciding which API a library should accept.
 - Lexical path helpers preserve interior NUL bytes. Reject them with
   `std::path::contains_nul` before passing untrusted path bytes to C-string or
   hosted filesystem APIs.
-- Use `std::string::c_str(text)` or `std::c::from_string(text)` to create the
-  same borrowed `std::c::CStr` view. Use
+- Use `std::string::c_str(cstr)` to pass through an existing borrowed C string,
+  or `std::c::from(bytes)` to create the same view from borrowed bytes. Use
   `std::c::from_slice_in(ref mut zone, bytes)` when owned NUL-terminated
   storage is required.
 - When the expected type is clear, string literals can flow directly into
@@ -43,8 +43,9 @@ together. Use this page when deciding which API a library should accept.
   `let os: std::string::OsStr = "ok";`,
   `let path: std::path::PathBytes = "/tmp";`, and `let c: CStr = "ok";`.
   Direct `Utf8` literals are validated at compile time.
-- Use `cstr.as_slice()`, `std::string::c_bytes(text)`, or the natural alias
-  `std::string::bytes(text)` when byte helpers should ignore the trailing NUL.
+- Use `cstr.as_slice()` or `std::string::c_bytes(cstr)` when byte helpers should
+  ignore the trailing NUL. Use `std::string::bytes(bytes)` for ordinary borrowed
+  byte slices.
 
 ## Current Limits
 

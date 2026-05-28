@@ -52,10 +52,10 @@ thread::available_parallelism_or(default: u64) -> u64
 thread::available_parallelism_raw() -> i64
 thread::is_join_error(status: i64) -> bool
 thread::builder() -> Builder
-thread::spawn_configured(entry: fn() -> i64, name: string, stack_size: i64) -> Result[JoinHandle, thread::Error]
-thread::spawn_configured_unchecked(entry: fn() -> i64, name: string, stack_size: i64) -> Thread
-thread::spawn_raw_configured(entry: fn(ptr u8) -> i64, data: ptr u8, name: string, stack_size: i64) -> Result[JoinHandle, thread::Error]
-thread::spawn_raw_configured_unchecked(entry: fn(ptr u8) -> i64, data: ptr u8, name: string, stack_size: i64) -> Thread
+thread::spawn_configured(entry: fn() -> i64, name: Slice[u8], stack_size: i64) -> Result[JoinHandle, thread::Error]
+thread::spawn_configured_unchecked(entry: fn() -> i64, name: Slice[u8], stack_size: i64) -> Thread
+thread::spawn_raw_configured(entry: fn(ptr u8) -> i64, data: ptr u8, name: Slice[u8], stack_size: i64) -> Result[JoinHandle, thread::Error]
+thread::spawn_raw_configured_unchecked(entry: fn(ptr u8) -> i64, data: ptr u8, name: Slice[u8], stack_size: i64) -> Thread
 thread::scope(ref mut Zone, capacity: i64) -> ThreadScope
 thread::thread_local<T>(ref mut Zone) -> ThreadLocal[T]
 thread::thread_local_with_capacity<T>(ref mut Zone, capacity: i64) -> ThreadLocal[T]
@@ -110,9 +110,9 @@ group.all_joined() -> bool
 group.all_success() -> bool
 
 Builder::new() -> Builder
-builder.name(value: string) -> Builder
+builder.name(value: ref String) -> Builder
 builder.stack_size(bytes: i64) -> Builder
-builder.configured_name() -> string
+builder.configured_name() -> String
 builder.configured_stack_size() -> i64
 builder.spawn(entry: fn() -> i64) -> Result[JoinHandle, thread::Error]
 builder.spawn_unchecked(entry: fn() -> i64) -> Thread
@@ -128,9 +128,9 @@ scope.is_full() -> bool
 scope.is_closed() -> bool
 scope.push_handle(handle: JoinHandle) -> Result[(), thread::Error]
 scope.spawn(entry: fn() -> i64) -> Result[(), thread::Error]
-scope.spawn_configured(entry: fn() -> i64, name: string, stack_size: i64) -> Result[(), thread::Error]
+scope.spawn_configured(entry: fn() -> i64, name: Slice[u8], stack_size: i64) -> Result[(), thread::Error]
 scope.spawn_raw(entry: fn(ptr u8) -> i64, data: ptr u8) -> Result[(), thread::Error]
-scope.spawn_raw_configured(entry: fn(ptr u8) -> i64, data: ptr u8, name: string, stack_size: i64) -> Result[(), thread::Error]
+scope.spawn_raw_configured(entry: fn(ptr u8) -> i64, data: ptr u8, name: Slice[u8], stack_size: i64) -> Result[(), thread::Error]
 scope.join_all() -> Result[ThreadGroupResult, JoinError]
 scope.close() -> Result[ThreadGroupResult, JoinError]
 

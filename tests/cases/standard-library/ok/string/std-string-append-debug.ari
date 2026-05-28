@@ -23,7 +23,8 @@ fn build(zone: ref mut Zone) -> String {
   let pair = Pair { left: 4, right: false };
   text.append_debug(pair);
   text.push('|');
-  text.append_debug("ari");
+  let word = std::string::from(zone, "ari");
+  text.append_debug(word);
   return text;
 }
 

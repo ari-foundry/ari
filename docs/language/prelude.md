@@ -175,7 +175,7 @@ helpers for text literals or raw boundary text, signed/unsigned integer, bool, `
 `truncate`, `clear`, byte search with `contains`, `index_of`, and `count`,
 `equals(Slice[u8])`, `starts_with(Slice[u8])`, `ends_with(Slice[u8])`,
 `copy_to(ref mut zone)`, `as_ptr`, and `as_slice`.
-`std::string::from_string(ref mut zone, text)` copies a borrowed raw text
+`std::string::from(ref mut zone, text)` copies a borrowed raw text
 boundary value into independent zone-backed bytes,
 `std::string::from_slice_in(ref mut zone, values)` copies a borrowed byte slice
 into independent zone-backed bytes, and `std::string::copy_to(ref value, ref
@@ -476,12 +476,12 @@ Reserved `extern "ari"` declarations must keep these builtin signatures exact;
 wrong arity, parameter types, or return types are rejected before lowering.
 
 ```ari
-print(format: string, ...) -> i64
-println(format: string, ...) -> i64
-eprintln(format: string, ...) -> i64
-std::print(format: string, ...) -> i64
-std::println(format: string, ...) -> i64
-std::eprintln(format: string, ...) -> i64
+print(format: String, ...) -> i64
+println(format: String, ...) -> i64
+eprintln(format: String, ...) -> i64
+std::print(format: String, ...) -> i64
+std::println(format: String, ...) -> i64
+std::eprintln(format: String, ...) -> i64
 io::write_i64(value: i64) -> i64
 io::write_u64(value: u64) -> i64
 io::write_bool(value: bool) -> i64
@@ -502,7 +502,7 @@ io::flush_unchecked[W: io::Writer](writer: ref mut W) -> bool
 io::newline() -> i64
 io::read_byte() -> i64
 io::read_line(ref mut Zone) -> std::string::String
-io::read_line_text() -> string
+io::read_line_text() -> String
 io::read_line_owned(ref mut Zone) -> std::string::String
 write_i64(value: i64) -> i64
 write_u64(value: u64) -> i64
@@ -512,15 +512,15 @@ write_bytes(values: Slice[u8]) -> i64
 newline() -> i64
 read_byte() -> i64
 read_line(ref mut Zone) -> std::string::String
-read_line_text() -> string
+read_line_text() -> String
 read_line_owned(ref mut Zone) -> std::string::String
 input(ref mut Zone) -> std::string::String
-input_text() -> string
+input_text() -> String
 input_owned(ref mut Zone) -> std::string::String
 input::read_byte() -> i64
 input::try_read_byte() -> Option[u8]
 input::line(ref mut Zone) -> std::string::String
-input::line_text() -> string
+input::line_text() -> String
 input::owned_line(ref mut Zone) -> std::string::String
 assert(condition: bool) -> i64
 debug_assert(condition: bool) -> i64
@@ -533,7 +533,7 @@ todo() -> void
 unreachable() -> void
 context::argc() -> i64
 context::arg(ref mut Zone, index: i64) -> std::string::String
-context::arg_text(index: i64) -> string
+context::arg_text(index: i64) -> String
 context::thread_id() -> i64
 context::has_args() -> bool
 context::has_arg(index: i64) -> bool
@@ -557,7 +557,7 @@ env::executable_path_or_default(ref mut zone) -> std::string::String
 env::executable_path_optional(ref mut zone) -> Option[std::string::String]
 env::try_executable_path(ref mut zone) -> Option[std::string::String]
 arg_count() -> i64
-arg(index: i64) -> string
+arg(index: i64) -> String
 has_arg(index: i64) -> bool
 slice<T>(data: ptr T, len: i64) -> Slice[T]
 std::slice<T>(data: ptr T, len: i64) -> std::Slice[T]
@@ -720,23 +720,23 @@ Available context builtins:
 ```ari
 context::argc() -> i64
 context::arg(ref mut Zone, index: i64) -> std::string::String
-context::arg_text(index: i64) -> string
+context::arg_text(index: i64) -> String
 context::thread_id() -> i64
 context::cwd(ref mut Zone) -> std::string::String
-context::cwd_text() -> string
+context::cwd_text() -> String
 context::executable_path(ref mut Zone) -> std::string::String
-context::executable_path_text() -> string
+context::executable_path_text() -> String
 context::has_args() -> bool
 context::has_arg(index: i64) -> bool
 context::user_arg_count() -> i64
 context::has_user_args() -> bool
 context::is_main_thread() -> bool
 context::try_cwd(ref mut Zone) -> Option[std::string::String]
-context::try_cwd_text() -> Option[string]
+context::try_cwd_text() -> Option[String]
 context::cwd_os() -> std::string::OsStr
 context::cwd_path() -> std::path::PathBytes
 context::try_executable_path(ref mut Zone) -> Option[std::string::String]
-context::try_executable_path_text() -> Option[string]
+context::try_executable_path_text() -> Option[String]
 context::executable_path_os() -> std::string::OsStr
 env::arg_count() -> i64
 env::arg(ref mut zone, index: i64) -> Result[std::string::String, std::error::Error]
@@ -756,7 +756,7 @@ env::executable_path_optional(ref mut zone) -> Option[std::string::String]
 env::try_executable_path(ref mut zone) -> Option[std::string::String]
 arg_count() -> i64
 arg(ref mut Zone, index: i64) -> Result[std::string::String, std::error::Error]
-arg_text(index: i64) -> string
+arg_text(index: i64) -> String
 has_arg(index: i64) -> bool
 ```
 
@@ -1055,10 +1055,10 @@ ptr_store(ptr_add(bytes, 2), '\x00')
 The raw returned pointer is still a `ptr u8`, so callers must manage length,
 terminators, and element writes explicitly at that level. For the source handle
 seed, use `std::string::new(ref mut Zone, capacity)` or
-`std::string::from_string(ref mut Zone, text)`:
+`std::string::from(ref mut Zone, text)`:
 
 ```ari
-var text = std::string::from_string(ref mut zone, "ari")
+var text = std::string::from(ref mut zone, "ari")
 text.append_string("=")
 text.append_i64(42)
 text.append_u64(42u64)

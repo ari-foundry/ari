@@ -28,6 +28,10 @@ impl io::Writer for MemoryWriter {
   }
 }
 
+fn text(zone: ref mut Zone, value: Slice[u8]) -> String {
+  return std::string::from(zone, value);
+}
+
 fn main() -> i64 {
   var zone = zone::create(256);
   var score = 0;
@@ -62,7 +66,8 @@ fn main() -> i64 {
     score = score + 1;
   }
 
-  var quoted = fmt::debug_text_in(ref mut zone, "ari");
+  var ari_text = std::string::from(ref mut zone, "ari");
+  var quoted = fmt::debug_text_in(ref mut zone, ref ari_text);
   if quoted.len() == 5 && quoted.get(0) == 34u8 && quoted.get(4) == 34u8 {
     score = score + 1;
   }
@@ -117,7 +122,8 @@ fn main() -> i64 {
 
   var text_buffer = [0u8, 0u8];
   var text_writer = MemoryWriter { data: text_buffer.as_slice(), position: 0 };
-  if fmt::write_text<MemoryWriter>(ref mut text_writer, ref mut zone, "io").is_ok() {
+  var io_text = std::string::from(ref mut zone, "io");
+  if fmt::write_text<MemoryWriter>(ref mut text_writer, ref mut zone, ref io_text).is_ok() {
     if text_buffer[0] == 'i' && text_buffer[1] == 'o' && text_writer.position == 2 {
       score = score + 1;
     }
@@ -125,7 +131,7 @@ fn main() -> i64 {
 
   var text_bool_buffer = [0u8, 0u8, 0u8];
   var text_bool_writer = MemoryWriter { data: text_bool_buffer.as_slice(), position: 0 };
-  if fmt::write_text_bool<MemoryWriter>(ref mut text_bool_writer, ref mut zone, "ari") {
+  if fmt::write_text_bool<MemoryWriter>(ref mut text_bool_writer, ref mut zone, ref ari_text) {
     if text_bool_buffer[0] == 'a' && text_bool_buffer[2] == 'i' && text_bool_writer.position == 3 {
       score = score + 1;
     }
@@ -141,20 +147,23 @@ fn main() -> i64 {
 
   var short_buffer = [0u8, 0u8];
   var short_writer = MemoryWriter { data: short_buffer.as_slice(), position: 0 };
-  if fmt::write_value<MemoryWriter, string>(ref mut short_writer, ref mut zone, "tool").is_err() {
+  let short_text = text(ref mut zone, "tool");
+  if fmt::write_value<MemoryWriter, String>(ref mut short_writer, ref mut zone, short_text).is_err() {
     score = score + 1;
   }
 
   var short_bool_buffer = [0u8];
   var short_bool_writer = MemoryWriter { data: short_bool_buffer.as_slice(), position: 0 };
-  if !fmt::write_value_bool<MemoryWriter, string>(ref mut short_bool_writer, ref mut zone, "io") {
+  let short_bool_text = text(ref mut zone, "io");
+  if !fmt::write_value_bool<MemoryWriter, String>(ref mut short_bool_writer, ref mut zone, short_bool_text) {
     score = score + 1;
   }
 
   var concat2_buffer = [0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8];
   var concat2_writer = MemoryWriter { data: concat2_buffer.as_slice(), position: 0 };
   let concat_name = std::string::from(ref mut zone, "ari");
-  if fmt::write_concat2<MemoryWriter, string, String>(ref mut concat2_writer, ref mut zone, "name=", concat_name).is_ok() {
+  let concat_prefix = text(ref mut zone, "name=");
+  if fmt::write_concat2<MemoryWriter, String, String>(ref mut concat2_writer, ref mut zone, concat_prefix, concat_name).is_ok() {
     if concat2_buffer[0] == 'n' && concat2_buffer[4] == '=' && concat2_buffer[7] == 'i' && concat2_writer.position == 8 {
       score = score + 1;
     }
@@ -162,7 +171,9 @@ fn main() -> i64 {
 
   var concat2_bool_buffer = [0u8, 0u8, 0u8, 0u8];
   var concat2_bool_writer = MemoryWriter { data: concat2_bool_buffer.as_slice(), position: 0 };
-  if fmt::write_concat2_bool<MemoryWriter, string, string>(ref mut concat2_bool_writer, ref mut zone, "A", "B") {
+  let concat_a = text(ref mut zone, "A");
+  let concat_b = text(ref mut zone, "B");
+  if fmt::write_concat2_bool<MemoryWriter, String, String>(ref mut concat2_bool_writer, ref mut zone, concat_a, concat_b) {
     if concat2_bool_buffer[0] == 'A' && concat2_bool_buffer[1] == 'B' && concat2_bool_writer.position == 2 {
       score = score + 1;
     }
@@ -170,7 +181,9 @@ fn main() -> i64 {
 
   var concat3_buffer = [0u8, 0u8, 0u8];
   var concat3_writer = MemoryWriter { data: concat3_buffer.as_slice(), position: 0 };
-  if fmt::write_concat3_bool<MemoryWriter, string, i64, string>(ref mut concat3_writer, ref mut zone, "v", 7, "!") {
+  let concat_v = text(ref mut zone, "v");
+  let concat_bang = text(ref mut zone, "!");
+  if fmt::write_concat3_bool<MemoryWriter, String, i64, String>(ref mut concat3_writer, ref mut zone, concat_v, 7, concat_bang) {
     if concat3_buffer[0] == 'v' && concat3_buffer[1] == '7' && concat3_buffer[2] == '!' && concat3_writer.position == 3 {
       score = score + 1;
     }
@@ -178,7 +191,16 @@ fn main() -> i64 {
 
   var short_concat_buffer = [0u8, 0u8];
   var short_concat_writer = MemoryWriter { data: short_concat_buffer.as_slice(), position: 0 };
-  if fmt::write_concat3<MemoryWriter, string, string, string>(ref mut short_concat_writer, ref mut zone, "ab", "c", "d").is_err() {
+  let short_concat_a = text(ref mut zone, "ab");
+  let short_concat_b = text(ref mut zone, "c");
+  let short_concat_c = text(ref mut zone, "d");
+  if fmt::write_concat3<MemoryWriter, String, String, String>(
+    ref mut short_concat_writer,
+    ref mut zone,
+    short_concat_a,
+    short_concat_b,
+    short_concat_c
+  ).is_err() {
     if short_concat_writer.position == 2 && short_concat_buffer[0] == 'a' && short_concat_buffer[1] == 'b' {
       score = score + 1;
     }
@@ -186,7 +208,8 @@ fn main() -> i64 {
 
   var line_text_buffer = [0u8, 0u8, 0u8];
   var line_text_writer = MemoryWriter { data: line_text_buffer.as_slice(), position: 0 };
-  if fmt::write_line_text<MemoryWriter>(ref mut line_text_writer, ref mut zone, "ok").is_ok() {
+  var ok_text = std::string::from(ref mut zone, "ok");
+  if fmt::write_line_text<MemoryWriter>(ref mut line_text_writer, ref mut zone, ref ok_text).is_ok() {
     if line_text_buffer[0] == 'o' && line_text_buffer[1] == 'k' && line_text_buffer[2] == 10u8 && line_text_writer.position == 3 {
       score = score + 1;
     }
@@ -194,7 +217,8 @@ fn main() -> i64 {
 
   var line_text_bool_buffer = [0u8, 0u8, 0u8, 0u8];
   var line_text_bool_writer = MemoryWriter { data: line_text_bool_buffer.as_slice(), position: 0 };
-  if fmt::write_line_text_bool<MemoryWriter>(ref mut line_text_bool_writer, ref mut zone, "yes") {
+  var yes_text = std::string::from(ref mut zone, "yes");
+  if fmt::write_line_text_bool<MemoryWriter>(ref mut line_text_bool_writer, ref mut zone, ref yes_text) {
     if line_text_bool_buffer[0] == 'y' && line_text_bool_buffer[2] == 's' && line_text_bool_buffer[3] == 10u8 && line_text_bool_writer.position == 4 {
       score = score + 1;
     }
@@ -202,7 +226,7 @@ fn main() -> i64 {
 
   var short_line_text_buffer = [0u8, 0u8];
   var short_line_text_writer = MemoryWriter { data: short_line_text_buffer.as_slice(), position: 0 };
-  if fmt::write_line_text<MemoryWriter>(ref mut short_line_text_writer, ref mut zone, "ok").is_err() {
+  if fmt::write_line_text<MemoryWriter>(ref mut short_line_text_writer, ref mut zone, ref ok_text).is_err() {
     if short_line_text_writer.position == 2 && short_line_text_buffer[0] == 'o' && short_line_text_buffer[1] == 'k' {
       score = score + 1;
     }
@@ -218,7 +242,8 @@ fn main() -> i64 {
 
   var line_value_bool_buffer = [0u8, 0u8, 0u8];
   var line_value_bool_writer = MemoryWriter { data: line_value_bool_buffer.as_slice(), position: 0 };
-  if fmt::write_line_value_bool<MemoryWriter, string>(ref mut line_value_bool_writer, ref mut zone, "hi") {
+  let line_value_text = text(ref mut zone, "hi");
+  if fmt::write_line_value_bool<MemoryWriter, String>(ref mut line_value_bool_writer, ref mut zone, line_value_text) {
     if line_value_bool_buffer[0] == 'h' && line_value_bool_buffer[1] == 'i' && line_value_bool_buffer[2] == 10u8 && line_value_bool_writer.position == 3 {
       score = score + 1;
     }
@@ -226,7 +251,8 @@ fn main() -> i64 {
 
   var line_debug_buffer = [0u8, 0u8, 0u8, 0u8];
   var line_debug_writer = MemoryWriter { data: line_debug_buffer.as_slice(), position: 0 };
-  if fmt::write_line_debug<MemoryWriter, string>(ref mut line_debug_writer, ref mut zone, "x").is_ok() {
+  let line_debug_text = text(ref mut zone, "x");
+  if fmt::write_line_debug<MemoryWriter, String>(ref mut line_debug_writer, ref mut zone, line_debug_text).is_ok() {
     if line_debug_buffer[0] == 34u8 && line_debug_buffer[1] == 'x' && line_debug_buffer[2] == 34u8 && line_debug_buffer[3] == 10u8 && line_debug_writer.position == 4 {
       score = score + 1;
     }
@@ -234,7 +260,8 @@ fn main() -> i64 {
 
   var short_line_debug_buffer = [0u8, 0u8, 0u8];
   var short_line_debug_writer = MemoryWriter { data: short_line_debug_buffer.as_slice(), position: 0 };
-  if !fmt::write_line_debug_bool<MemoryWriter, string>(ref mut short_line_debug_writer, ref mut zone, "x") {
+  let short_line_debug_text = text(ref mut zone, "x");
+  if !fmt::write_line_debug_bool<MemoryWriter, String>(ref mut short_line_debug_writer, ref mut zone, short_line_debug_text) {
     if short_line_debug_writer.position == 3 && short_line_debug_buffer[0] == 34u8 && short_line_debug_buffer[2] == 34u8 {
       score = score + 1;
     }

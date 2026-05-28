@@ -5,13 +5,13 @@
 fn main() -> i64 {
   var zone = zone::create(256);
 
-  var negative = std::string::from_string(ref mut zone, "-123");
-  var positive = std::string::from_string(ref mut zone, "+42");
-  var plain = std::string::from_string(ref mut zone, "77");
-  var prefix = std::string::from_string(ref mut zone, "-56x");
-  var plus_prefix = std::string::from_string(ref mut zone, "+9q");
-  var bare_minus = std::string::from_string(ref mut zone, "-");
-  var bad_sign = std::string::from_string(ref mut zone, "+x");
+  var negative = std::string::from(ref mut zone, "-123");
+  var positive = std::string::from(ref mut zone, "+42");
+  var plain = std::string::from(ref mut zone, "77");
+  var prefix = std::string::from(ref mut zone, "-56x");
+  var plus_prefix = std::string::from(ref mut zone, "+9q");
+  var bare_minus = std::string::from(ref mut zone, "-");
+  var bad_sign = std::string::from(ref mut zone, "+x");
 
   var score = 0;
 

@@ -557,7 +557,9 @@ private:
             symbol == "ari_builtin_env_current_dir" ||
             symbol == "ari_builtin_env_executable_path" ||
             symbol == "ari_builtin_fs_canonicalize" ||
+            symbol == "ari_builtin_fs_canonicalize_bytes" ||
             symbol == "ari_builtin_fs_read_link" ||
+            symbol == "ari_builtin_fs_read_link_bytes" ||
             symbol == "ari_builtin_fs_read_dir_next" ||
             symbol == "ari_builtin_read_line") {
             return IrType{TypeQualifier::Value, IrPrimitiveKind::String, "string", {}, {}, {}, {}, loc};
@@ -571,15 +573,22 @@ private:
             symbol == "ari_builtin_env_set_current_dir" ||
             symbol == "ari_builtin_env_set_current_dir_bytes" ||
             symbol == "ari_builtin_fs_exists" ||
+            symbol == "ari_builtin_fs_exists_bytes" ||
             symbol == "ari_builtin_fs_can_read" ||
             symbol == "ari_builtin_fs_can_write" ||
             symbol == "ari_builtin_fs_can_execute" ||
             symbol == "ari_builtin_fs_remove" ||
             symbol == "ari_builtin_fs_rename" ||
+            symbol == "ari_builtin_fs_rename_bytes" ||
+            symbol == "ari_builtin_fs_hard_link_bytes" ||
+            symbol == "ari_builtin_fs_symbolic_link_bytes" ||
             symbol == "ari_builtin_fs_create_dir" ||
+            symbol == "ari_builtin_fs_create_dir_bytes" ||
             symbol == "ari_builtin_fs_create_dir_all" ||
+            symbol == "ari_builtin_fs_create_dir_all_bytes" ||
             symbol == "ari_builtin_fs_remove_dir" ||
             symbol == "ari_builtin_fs_set_mode" ||
+            symbol == "ari_builtin_fs_set_mode_bytes" ||
             symbol == "ari_builtin_fs_close_dir" ||
             symbol == "ari_builtin_fs_close" ||
             symbol == "ari_builtin_fs_write_byte" ||
@@ -599,6 +608,7 @@ private:
             symbol == "ari_builtin_net_set_nodelay" ||
             symbol == "ari_builtin_net_udp_connect_v4" ||
             symbol == "ari_builtin_net_udp_connect_v6" ||
+            symbol == "ari_builtin_net_unix_datagram_connect_bytes" ||
             symbol == "ari_builtin_os_write_byte" ||
             symbol == "ari_builtin_sync_atomic_i64_compare_exchange" ||
             symbol == "ari_builtin_sync_atomic_i64_compare_exchange_order") {
@@ -1106,6 +1116,21 @@ private:
         line("}");
         line();
 
+        line("define " + runtime_visibility + "i1 @ari_builtin_fs_exists_bytes(ptr %data, i64 %len) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %path = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %path, null");
+        line("  br i1 %missing, label %fail, label %check");
+        line("check:");
+        line("  %ok = call i1 @ari_builtin_fs_exists(ptr %path)");
+        line("  ret i1 %ok");
+        line("fail:");
+        line("  ret i1 false");
+        line("}");
+        line();
+
         // POSIX access constants: R_OK=4, W_OK=2, X_OK=1.
         line("define " + runtime_visibility + "i1 @ari_builtin_fs_can_read(ptr %path) {");
         line("entry:");
@@ -1453,6 +1478,21 @@ private:
         line("}");
         line();
 
+        line("define " + runtime_visibility + "i64 @ari_builtin_fs_metadata_mode_bytes(ptr %data, i64 %len) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %path = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %path, null");
+        line("  br i1 %missing, label %fail, label %check");
+        line("check:");
+        line("  %mode = call i64 @ari_builtin_fs_metadata_mode(ptr %path)");
+        line("  ret i64 %mode");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
         line("define " + runtime_visibility + "i64 @ari_builtin_fs_metadata_uid_bytes(ptr %data, i64 %len) {");
         line("entry:");
         line("  %storage = alloca [4096 x i8], align 16");
@@ -1669,6 +1709,21 @@ private:
         line("}");
         line();
 
+        line("define " + runtime_visibility + "ptr @ari_builtin_fs_canonicalize_bytes(ptr %data, i64 %len) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %path = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %path, null");
+        line("  br i1 %missing, label %empty, label %check");
+        line("check:");
+        line("  %resolved = call ptr @ari_builtin_fs_canonicalize(ptr %path)");
+        line("  ret ptr %resolved");
+        line("empty:");
+        line("  ret ptr " + empty);
+        line("}");
+        line();
+
         line("define " + runtime_visibility + "ptr @ari_builtin_fs_read_link(ptr %path) {");
         line("entry:");
         line("  %len = call i64 @readlink(ptr %path, ptr " + readlink_buffer + ", i64 4095)");
@@ -1682,6 +1737,21 @@ private:
         line("  ret ptr " + readlink_buffer);
         line("empty:");
         line("  store i8 0, ptr " + readlink_buffer);
+        line("  ret ptr " + empty);
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "ptr @ari_builtin_fs_read_link_bytes(ptr %data, i64 %len) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %path = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %path, null");
+        line("  br i1 %missing, label %empty, label %check");
+        line("check:");
+        line("  %target = call ptr @ari_builtin_fs_read_link(ptr %path)");
+        line("  ret ptr %target");
+        line("empty:");
         line("  ret ptr " + empty);
         line("}");
         line();
@@ -1717,10 +1787,51 @@ private:
         line("}");
         line();
 
+        line("define private i1 @ari_runtime_fs_two_paths_from_bytes(ptr %left_data, i64 %left_len, ptr %right_data, i64 %right_len, ptr %left_buffer, ptr %right_buffer, ptr %operation) {");
+        line("entry:");
+        line("  %left = call ptr @ari_runtime_fs_path_from_bytes(ptr %left_data, i64 %left_len, ptr %left_buffer)");
+        line("  %left.missing = icmp eq ptr %left, null");
+        line("  br i1 %left.missing, label %fail, label %right.check");
+        line("right.check:");
+        line("  %right = call ptr @ari_runtime_fs_path_from_bytes(ptr %right_data, i64 %right_len, ptr %right_buffer)");
+        line("  %right.missing = icmp eq ptr %right, null");
+        line("  br i1 %right.missing, label %fail, label %call");
+        line("call:");
+        line("  %operation.fn = bitcast ptr %operation to ptr");
+        line("  %code = call i32 %operation.fn(ptr %left, ptr %right)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  ret i1 %ok");
+        line("fail:");
+        line("  ret i1 false");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_fs_rename_bytes(ptr %source_data, i64 %source_len, ptr %target_data, i64 %target_len) {");
+        line("entry:");
+        line("  %source.storage = alloca [4096 x i8], align 16");
+        line("  %source.buffer = getelementptr inbounds [4096 x i8], ptr %source.storage, i64 0, i64 0");
+        line("  %target.storage = alloca [4096 x i8], align 16");
+        line("  %target.buffer = getelementptr inbounds [4096 x i8], ptr %target.storage, i64 0, i64 0");
+        line("  %ok = call i1 @ari_runtime_fs_two_paths_from_bytes(ptr %source_data, i64 %source_len, ptr %target_data, i64 %target_len, ptr %source.buffer, ptr %target.buffer, ptr @rename)");
+        line("  ret i1 %ok");
+        line("}");
+        line();
+
         line("define " + runtime_visibility + "i1 @ari_builtin_fs_hard_link(ptr %existing, ptr %link_path) {");
         line("entry:");
         line("  %code = call i32 @link(ptr %existing, ptr %link_path)");
         line("  %ok = icmp eq i32 %code, 0");
+        line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_fs_hard_link_bytes(ptr %existing_data, i64 %existing_len, ptr %link_data, i64 %link_len) {");
+        line("entry:");
+        line("  %existing.storage = alloca [4096 x i8], align 16");
+        line("  %existing.buffer = getelementptr inbounds [4096 x i8], ptr %existing.storage, i64 0, i64 0");
+        line("  %link.storage = alloca [4096 x i8], align 16");
+        line("  %link.buffer = getelementptr inbounds [4096 x i8], ptr %link.storage, i64 0, i64 0");
+        line("  %ok = call i1 @ari_runtime_fs_two_paths_from_bytes(ptr %existing_data, i64 %existing_len, ptr %link_data, i64 %link_len, ptr %existing.buffer, ptr %link.buffer, ptr @link)");
         line("  ret i1 %ok");
         line("}");
         line();
@@ -1733,12 +1844,38 @@ private:
         line("}");
         line();
 
+        line("define " + runtime_visibility + "i1 @ari_builtin_fs_symbolic_link_bytes(ptr %target_data, i64 %target_len, ptr %link_data, i64 %link_len) {");
+        line("entry:");
+        line("  %target.storage = alloca [4096 x i8], align 16");
+        line("  %target.buffer = getelementptr inbounds [4096 x i8], ptr %target.storage, i64 0, i64 0");
+        line("  %link.storage = alloca [4096 x i8], align 16");
+        line("  %link.buffer = getelementptr inbounds [4096 x i8], ptr %link.storage, i64 0, i64 0");
+        line("  %ok = call i1 @ari_runtime_fs_two_paths_from_bytes(ptr %target_data, i64 %target_len, ptr %link_data, i64 %link_len, ptr %target.buffer, ptr %link.buffer, ptr @symlink)");
+        line("  ret i1 %ok");
+        line("}");
+        line();
+
         line("define " + runtime_visibility + "i1 @ari_builtin_fs_create_dir(ptr %path) {");
         line("entry:");
         // 0755 in decimal; the process umask still applies on POSIX hosts.
         line("  %code = call i32 @mkdir(ptr %path, i32 493)");
         line("  %ok = icmp eq i32 %code, 0");
         line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_fs_create_dir_bytes(ptr %data, i64 %len) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %path = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %path, null");
+        line("  br i1 %missing, label %fail, label %check");
+        line("check:");
+        line("  %ok = call i1 @ari_builtin_fs_create_dir(ptr %path)");
+        line("  ret i1 %ok");
+        line("fail:");
+        line("  ret i1 false");
         line("}");
         line();
 
@@ -1798,6 +1935,21 @@ private:
         line("  br i1 %final.ok, label %success, label %fail");
         line("success:");
         line("  ret i1 true");
+        line("fail:");
+        line("  ret i1 false");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_fs_create_dir_all_bytes(ptr %data, i64 %len) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %path = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %path, null");
+        line("  br i1 %missing, label %fail, label %check");
+        line("check:");
+        line("  %ok = call i1 @ari_builtin_fs_create_dir_all(ptr %path)");
+        line("  ret i1 %ok");
         line("fail:");
         line("  ret i1 false");
         line("}");
@@ -1913,6 +2065,21 @@ private:
         line("}");
         line();
 
+        line("define " + runtime_visibility + "i1 @ari_builtin_fs_set_mode_bytes(ptr %data, i64 %len, i64 %mode) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %path = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %path, null");
+        line("  br i1 %missing, label %fail, label %check");
+        line("check:");
+        line("  %ok = call i1 @ari_builtin_fs_set_mode(ptr %path, i64 %mode)");
+        line("  ret i1 %ok");
+        line("fail:");
+        line("  ret i1 false");
+        line("}");
+        line();
+
         line("define " + runtime_visibility + "{ i64 } @ari_builtin_fs_open(ptr %path, ptr %mode) {");
         line("entry:");
         line("  %m0 = load i8, ptr %mode, align 1");
@@ -2006,6 +2173,22 @@ private:
         line("  %fd32 = call i32 @open(ptr %path, i32 %flags, i32 420)");
         line("  %fd = sext i32 %fd32 to i64");
         line("  %file = insertvalue { i64 } undef, i64 %fd, 0");
+        line("  ret { i64 } %file");
+        line("invalid:");
+        line("  %invalid.file = insertvalue { i64 } undef, i64 -1, 0");
+        line("  ret { i64 } %invalid.file");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "{ i64 } @ari_builtin_fs_open_options_bytes(ptr %data, i64 %len, i1 %read, i1 %write, i1 %append, i1 %truncate, i1 %create, i1 %create_new) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %path = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %path, null");
+        line("  br i1 %missing, label %invalid, label %open");
+        line("open:");
+        line("  %file = call { i64 } @ari_builtin_fs_open_options(ptr %path, i1 %read, i1 %write, i1 %append, i1 %truncate, i1 %create, i1 %create_new)");
         line("  ret { i64 } %file");
         line("invalid:");
         line("  %invalid.file = insertvalue { i64 } undef, i64 -1, 0");
@@ -3627,6 +3810,81 @@ private:
         line("}");
         line();
 
+        line("define " + runtime_visibility + "i64 @ari_builtin_net_unix_listen_bytes(ptr %data, i64 %len) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %path = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %path, null");
+        line("  br i1 %missing, label %fail, label %call");
+        line("call:");
+        line("  %fd = call i64 @ari_builtin_net_unix_listen(ptr %path)");
+        line("  ret i64 %fd");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_net_unix_connect_bytes(ptr %data, i64 %len) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %path = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %path, null");
+        line("  br i1 %missing, label %fail, label %call");
+        line("call:");
+        line("  %fd = call i64 @ari_builtin_net_unix_connect(ptr %path)");
+        line("  ret i64 %fd");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_net_unix_datagram_bind_bytes(ptr %data, i64 %len) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %path = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %path, null");
+        line("  br i1 %missing, label %fail, label %call");
+        line("call:");
+        line("  %fd = call i64 @ari_builtin_net_unix_datagram_bind(ptr %path)");
+        line("  ret i64 %fd");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_net_unix_datagram_connect_bytes(i64 %fd, ptr %data, i64 %len) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %path = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %path, null");
+        line("  br i1 %missing, label %fail, label %call");
+        line("call:");
+        line("  %ok = call i1 @ari_builtin_net_unix_datagram_connect(i64 %fd, ptr %path)");
+        line("  ret i1 %ok");
+        line("fail:");
+        line("  ret i1 false");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_net_unix_datagram_send_to_bytes(i64 %fd, ptr %values, i64 %values_len, ptr %path_data, i64 %path_len) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %path = call ptr @ari_runtime_fs_path_from_bytes(ptr %path_data, i64 %path_len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %path, null");
+        line("  br i1 %missing, label %fail, label %call");
+        line("call:");
+        line("  %count = call i64 @ari_builtin_net_unix_datagram_send_to(i64 %fd, ptr %values, i64 %values_len, ptr %path)");
+        line("  ret i64 %count");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
         line("define " + runtime_visibility + "i64 @ari_builtin_net_lookup_v4(ptr %host, i64 %port) {");
         line("entry:");
         line("  %hints.storage = alloca [48 x i8], align 8");
@@ -3889,6 +4147,66 @@ private:
         line("  %resolved.port = call i64 @ari_builtin_net_lookup_v6(ptr %host.copy, i64 %port.value, ptr %out)");
         line("  call void @free(ptr %host.copy)");
         line("  ret i64 %resolved.port");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_net_lookup_v4_bytes(ptr %data, i64 %len, i64 %port) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %host = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %host, null");
+        line("  br i1 %missing, label %fail, label %call");
+        line("call:");
+        line("  %packed = call i64 @ari_builtin_net_lookup_v4(ptr %host, i64 %port)");
+        line("  ret i64 %packed");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_net_lookup_v6_bytes(ptr %data, i64 %len, i64 %port, ptr %out) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %host = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %host, null");
+        line("  br i1 %missing, label %fail, label %call");
+        line("call:");
+        line("  %resolved = call i64 @ari_builtin_net_lookup_v6(ptr %host, i64 %port, ptr %out)");
+        line("  ret i64 %resolved");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_net_lookup_v4_endpoint_bytes(ptr %data, i64 %len) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %endpoint = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %endpoint, null");
+        line("  br i1 %missing, label %fail, label %call");
+        line("call:");
+        line("  %packed = call i64 @ari_builtin_net_lookup_v4_endpoint(ptr %endpoint)");
+        line("  ret i64 %packed");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_net_lookup_v6_endpoint_bytes(ptr %data, i64 %len, ptr %out) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %endpoint = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %endpoint, null");
+        line("  br i1 %missing, label %fail, label %call");
+        line("call:");
+        line("  %resolved = call i64 @ari_builtin_net_lookup_v6_endpoint(ptr %endpoint, ptr %out)");
+        line("  ret i64 %resolved");
         line("fail:");
         line("  ret i64 -1");
         line("}");
@@ -4284,6 +4602,26 @@ private:
         line("  %fail.native = insertvalue { i64, i64 } undef, i64 -1, 0");
         line("  %fail.thread = insertvalue { i64, i64 } %fail.native, i64 -1, 1");
         line("  ret { i64, i64 } %fail.thread");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "{ i64, i64 } @ari_builtin_thread_spawn_configured_bytes(ptr %start, ptr %name_data, i64 %name_len, i64 %stack_size) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %name = call ptr @ari_runtime_fs_path_from_bytes(ptr %name_data, i64 %name_len, ptr %buffer)");
+        line("  %thread = call { i64, i64 } @ari_builtin_thread_spawn_configured(ptr %start, ptr %name, i64 %stack_size)");
+        line("  ret { i64, i64 } %thread");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "{ i64, i64 } @ari_builtin_thread_spawn_raw_configured_bytes(ptr %start, ptr %data, ptr %name_data, i64 %name_len, i64 %stack_size) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %name = call ptr @ari_runtime_fs_path_from_bytes(ptr %name_data, i64 %name_len, ptr %buffer)");
+        line("  %thread = call { i64, i64 } @ari_builtin_thread_spawn_raw_configured(ptr %start, ptr %data, ptr %name, i64 %stack_size)");
+        line("  ret { i64, i64 } %thread");
         line("}");
         line();
 

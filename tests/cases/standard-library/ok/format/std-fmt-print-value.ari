@@ -3,7 +3,8 @@
 fn main() -> i64 {
   var zone = zone::create(128);
 
-  let first = fmt::print_value(ref mut zone, "pv=");
+  let label = std::string::from(ref mut zone, "pv=");
+  let first = fmt::print_value(ref mut zone, label);
   let second = fmt::print_value(ref mut zone, -12);
   let third = fmt::println_value(ref mut zone, true);
 

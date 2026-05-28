@@ -19,7 +19,7 @@ fn same_bytes(left: Slice[u8], right: Slice[u8]) -> bool {
 fn main() -> i64 {
   var score = 0;
 
-  let borrowed = c::from_string("hello");
+  let borrowed = c::from("hello");
   let alias_borrowed: CStr = borrowed;
   var hello = [104u8, 101u8, 108u8, 108u8, 111u8];
   assert_eq_i64(borrowed.len(), 5);
@@ -80,7 +80,7 @@ fn main() -> i64 {
   assert_eq_i64(abs(-7i32) as i64, 7);
   score = score + 1;
 
-  let missing = c::from_string("/tmp/ari-c-interop-definitely-missing");
+  let missing = c::from("/tmp/ari-c-interop-definitely-missing");
   let fd = posix_open(missing.as_ptr(), 0);
   assert(fd < 0);
   let os_error = c::error();
@@ -95,11 +95,11 @@ fn main() -> i64 {
   assert_eq_i64(c::local() + c::global(), 256);
   score = score + 1;
 
-  var library = c::open(c::from_string("libc.so.6"), c::lazy()).unwrap();
+  var library = c::open(c::from("libc.so.6"), c::lazy()).unwrap();
   assert(library.is_open());
-  let strlen_symbol = library.symbol(c::from_string("strlen")).unwrap();
+  let strlen_symbol = library.symbol(c::from("strlen")).unwrap();
   assert(strlen_symbol.is_valid());
-  match library.symbol(c::from_string("strlen")) {
+  match library.symbol(c::from("strlen")) {
     Ok(result_symbol) => {
       assert(result_symbol.is_valid());
     }
@@ -107,18 +107,18 @@ fn main() -> i64 {
       panic();
     }
   }
-  assert(c::symbol(ref library, c::from_string("strlen")).is_ok());
+  assert(c::symbol(ref library, c::from("strlen")).is_ok());
   assert(!c::is_null(strlen_symbol.as_ptr()));
-  let absent_symbol = c::symbol_raw(ref library, c::from_string("__ari_missing_symbol_for_test__"));
+  let absent_symbol = c::symbol_raw(ref library, c::from("__ari_missing_symbol_for_test__"));
   assert(!absent_symbol.is_valid());
-  assert(library.symbol(c::from_string("__ari_missing_symbol_for_test__")).is_err());
+  assert(library.symbol(c::from("__ari_missing_symbol_for_test__")).is_err());
   let loader_error = c::last_error();
   assert(!loader_error.is_empty());
   assert(library.close().is_ok());
   assert(!library.is_open());
   score = score + 1;
 
-  match c::open(c::from_string("libc.so.6"), c::lazy()) {
+  match c::open(c::from("libc.so.6"), c::lazy()) {
     Ok(result_library) => {
       var closable = result_library;
       assert(closable.close().is_ok());
@@ -128,7 +128,7 @@ fn main() -> i64 {
       panic();
     }
   }
-  assert(c::open(c::from_string("/tmp/ari-missing-library-for-result.so"), c::lazy()).is_err());
+  assert(c::open(c::from("/tmp/ari-missing-library-for-result.so"), c::lazy()).is_err());
 
   let main_library = c::main_program(c::now()).unwrap();
   assert(main_library.is_open());

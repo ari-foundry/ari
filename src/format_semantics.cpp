@@ -141,7 +141,7 @@ bool format_in_append_target_is_debug(const FormatInAppendTarget& target) {
 
 const char* format_in_builtin_append_method_name(const FormatInAppendTarget& target) {
     switch (target.kind) {
-        case FormatInAppendKind::String: return "append_string_in";
+        case FormatInAppendKind::String: return "append_raw_in";
         case FormatInAppendKind::Char: return "append_byte";
         case FormatInAppendKind::I64: return "append_i64_in";
         case FormatInAppendKind::U64: return "append_u64_in";

@@ -318,7 +318,7 @@ byte access is needed. Use `ptr c_void` for C `void*`; a by-value `c_void`
 parameter is rejected.
 
 The standard `std::c` module gives these raw pieces names that read naturally
-at the boundary. Use `c::from_string("name")` for borrowed literal-backed
+at the boundary. Use `c::from("name")` for borrowed literal-backed
 `CStr` values, `c::from_slice_in(ref mut zone, bytes)` for owned
 NUL-terminated `CString` storage, `c::errno()`/`c::error()` for
 sentinel-plus-errno APIs, and `c::open`/`c::symbol` for hosted dynamic loading.
@@ -329,10 +329,10 @@ Dynamic function symbols become callable by choosing an explicit function
 pointer type:
 
 ```ari
-var library = c::open(c::from_string("libc.so.6"), c::lazy());
-let symbol = library.symbol(c::from_string("strlen"));
+var library = c::open(c::from("libc.so.6"), c::lazy());
+let symbol = library.symbol(c::from("strlen"));
 let strlen = symbol.function<fn(ptr c_char) -> size_t>();
-let text = c::from_string("ari");
+let text = c::from("ari");
 let len = strlen(text.as_ptr());
 library.close();
 ```

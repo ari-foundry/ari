@@ -5,10 +5,6 @@ fn main() -> i64 {
   var second = io::read_line(ref mut zone);
   var third = input(ref mut zone);
   var fourth = input::line(ref mut zone);
-  var raw_first = read_line_text();
-  var raw_second = io::read_line_text();
-  var raw_third = input_text();
-  var raw_fourth = input::line_text();
 
   write_bytes(first.as_slice());
   newline();
@@ -17,14 +13,6 @@ fn main() -> i64 {
   write_bytes(third.as_slice());
   newline();
   write_bytes(fourth.as_slice());
-  newline();
-  write_bytes(std::string::bytes(raw_first));
-  newline();
-  write_bytes(std::string::bytes(raw_second));
-  newline();
-  write_bytes(std::string::bytes(raw_third));
-  newline();
-  write_bytes(std::string::bytes(raw_fourth));
   newline();
 
   zone::destroy(zone);

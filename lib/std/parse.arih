@@ -99,7 +99,7 @@ pub impl std::parse::ParseError {
     return self.offset_value;
   }
 
-  fn name_text(self: ref Self) -> string {
+  fn name_text(self: ref Self) -> std::Slice[u8] {
     match self.kind_value {
       EmptyInput => { return "empty input"; }
       ExpectedDigit => { return "expected digit"; }
@@ -112,7 +112,7 @@ pub impl std::parse::ParseError {
     }
   }
 
-  fn message_text(self: ref Self) -> string {
+  fn message_text(self: ref Self) -> std::Slice[u8] {
     match self.kind_value {
       EmptyInput => { return "input is empty after ASCII trim"; }
       ExpectedDigit => { return "expected a digit at this offset"; }

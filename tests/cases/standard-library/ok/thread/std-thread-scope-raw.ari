@@ -44,7 +44,8 @@ fn main() -> i64 {
   }
 
   let builder_slot = std::zone::new<i64>(ref mut zone, 7);
-  let builder = thread::builder().name("ari-raw").stack_size(1048576);
+  var raw_name = std::string::from(ref mut zone, "ari-raw");
+  let builder = thread::builder().name(ref raw_name).stack_size(1048576);
   var builder_handle = builder.spawn_raw(raw_slow_worker, builder_slot as ptr u8).unwrap_or(JoinHandle::invalid());
   match builder_handle.try_join_value() {
     Ok(maybe_value) => {

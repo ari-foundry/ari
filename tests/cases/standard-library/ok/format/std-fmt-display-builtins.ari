@@ -2,18 +2,18 @@ fn main() -> i64 {
   var zone = zone::create(1024);
   var text = std::string::empty(ref mut zone);
 
-  text.append_value("n=");
+  text.append_string_in(ref mut zone, "n=");
   text.append_value(-12);
-  text.append_value(" ok=");
+  text.append_string_in(ref mut zone, " ok=");
   text.append_value(true);
-  text.append_value(" max=");
+  text.append_string_in(ref mut zone, " max=");
   text.append_value(18446744073709551615u64);
 
   let suffix = std::string::from(ref mut zone, "!");
   text.append_value(suffix);
-  text.append_value(" f=");
+  text.append_string_in(ref mut zone, " f=");
   text.append_value(1.5f32);
-  text.append_value(" d=");
+  text.append_string_in(ref mut zone, " d=");
   text.append_value(-2.25f64);
 
   let direct = fmt::float_in(ref mut zone, 2.125f64, 2);

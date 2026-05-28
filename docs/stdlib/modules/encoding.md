@@ -28,8 +28,8 @@ encoding::is_ascii(bytes) -> bool
 encoding::is_unicode_scalar(value) -> bool
 encoding::Utf8ErrorKind
 encoding::Utf8Error
-Utf8Error::name() -> string
-Utf8Error::message() -> string
+Utf8Error::name() -> String
+Utf8Error::message() -> String
 encoding::utf8_error(bytes) -> Option[Utf8Error]
 encoding::validate_utf8(bytes) -> Result[(), Utf8Error]
 encoding::validate_utf8_optional(bytes) -> Option[Utf8Error]
@@ -110,8 +110,8 @@ Hex helpers:
 ```ari
 encoding::CodecErrorKind
 encoding::CodecError
-CodecError::name() -> string
-CodecError::message() -> string
+CodecError::name() -> String
+CodecError::message() -> String
 encoding::hex_encoded_len(bytes) -> i64
 encoding::encode_hex_in(ref mut zone, bytes) -> String
 encoding::hex_error(bytes) -> Option[CodecError]

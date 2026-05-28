@@ -23,6 +23,7 @@ fn trait_write_all_ok[W: io::Writer](writer: ref mut W, values: Slice[u8]) -> bo
 
 fn main() -> i64 {
   var score = 0;
+  var zone = zone::create(256);
 
   var out = io::stdout();
   if count_ok(io::write<io::Stdout>(ref mut out, std::string::bytes("G")), 1) {
@@ -34,16 +35,20 @@ fn main() -> i64 {
   if unit_ok(out.write_all(std::string::bytes("M"))) {
     score = score + 3;
   }
-  if unit_ok(io::print_text("P")) {
+  var print_upper = std::string::from(ref mut zone, "P");
+  if unit_ok(io::print(ref print_upper)) {
     score = score + 4;
   }
-  if unit_ok(io::println_text("L")) {
+  var println_upper = std::string::from(ref mut zone, "L");
+  if unit_ok(io::println(ref println_upper)) {
     score = score + 5;
   }
-  if unit_ok(io::print("p")) {
+  var print_lower = std::string::from(ref mut zone, "p");
+  if unit_ok(io::print(ref print_lower)) {
     score = score + 14;
   }
-  if unit_ok(io::println("l")) {
+  var println_lower = std::string::from(ref mut zone, "l");
+  if unit_ok(io::println(ref println_lower)) {
     score = score + 15;
   }
   if trait_write_ok<io::Stdout>(ref mut out, std::string::bytes("T"), 1) {
@@ -60,16 +65,20 @@ fn main() -> i64 {
   if unit_ok(err.write_all(std::string::bytes("A"))) {
     score = score + 7;
   }
-  if unit_ok(io::eprint_text("R")) {
+  var eprint_upper = std::string::from(ref mut zone, "R");
+  if unit_ok(io::eprint(ref eprint_upper)) {
     score = score + 8;
   }
-  if unit_ok(io::eprintln_text("S")) {
+  var eprintln_upper = std::string::from(ref mut zone, "S");
+  if unit_ok(io::eprintln(ref eprintln_upper)) {
     score = score + 9;
   }
-  if unit_ok(io::eprint("r")) {
+  var eprint_lower = std::string::from(ref mut zone, "r");
+  if unit_ok(io::eprint(ref eprint_lower)) {
     score = score + 16;
   }
-  if unit_ok(io::eprintln("s")) {
+  var eprintln_lower = std::string::from(ref mut zone, "s");
+  if unit_ok(io::eprintln(ref eprintln_lower)) {
     score = score + 17;
   }
   if trait_write_ok<io::Stderr>(ref mut err, std::string::bytes("V"), 1) {
@@ -80,5 +89,6 @@ fn main() -> i64 {
   }
 
   assert_eq_i64(score, 153);
+  zone::destroy(zone);
   return score;
 }

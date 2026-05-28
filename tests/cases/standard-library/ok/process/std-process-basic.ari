@@ -21,11 +21,9 @@ fn main() -> i64 {
   assert(process::current_dir(ref mut zone).is_ok());
   assert(process::current_dir_optional(ref mut zone).is_some());
   assert(!process::current_dir_or_default(ref mut zone).is_empty());
-  assert(process::current_dir_text().is_ok());
   assert(process::executable_path(ref mut zone).is_ok());
   assert(process::executable_path_optional(ref mut zone).is_some());
   assert(!process::executable_path_or_default(ref mut zone).is_empty());
-  assert(process::executable_path_text().is_ok());
 
   return score;
 }

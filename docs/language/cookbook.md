@@ -396,7 +396,7 @@ fn main() -> i64 {
 fn main() -> i64 {
   var zone = zone::create(128);
 
-  var text = std::string::from_string(ref mut zone, "ari");
+  var text = std::string::from(ref mut zone, "ari");
   text.push(33u8);
 
   let first = text.first() as i64;
@@ -441,7 +441,7 @@ fn main() -> i64 {
   var source = zone::create(128);
   var target = zone::create(128);
 
-  var text = std::string::from_string(ref mut source, "copy");
+  var text = std::string::from(ref mut source, "copy");
   let copied = text.copy_to(ref mut target);
   let result = copied.len();
 

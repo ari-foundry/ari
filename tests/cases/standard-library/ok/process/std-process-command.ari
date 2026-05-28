@@ -42,12 +42,16 @@ fn child_err_not_found(value: Result[process::Child, error::Error]) -> bool {
   }
 }
 
+fn c(value: Slice[u8]) -> std::c::CStr {
+  return std::c::from(value);
+}
+
 fn main() -> i64 {
   var zone = zone::temp(512);
   var score = 0;
 
-  var status_args = [process::arg("-c"), process::arg("exit 17")];
-  var status_cmd = process::Command::with_args("sh", status_args.as_slice());
+  var status_args = [process::arg(c("-c")), process::arg(c("exit 17"))];
+  var status_cmd = process::Command::with_args(c("sh"), status_args.as_slice());
   if status_is(status_cmd.status(), 17) {
     score = score + 11;
   }
@@ -55,26 +59,26 @@ fn main() -> i64 {
     score = score + 2;
   }
 
-  var setter_args = [process::arg("-c"), process::arg("exit 19")];
-  var setter_cmd = process::Command::new("sh");
+  var setter_args = [process::arg(c("-c")), process::arg(c("exit 19"))];
+  var setter_cmd = process::Command::new(c("sh"));
   setter_cmd.args(setter_args.as_slice());
   if status_is(setter_cmd.status(), 19) {
     score = score + 13;
   }
 
-  var module_status_args = [process::arg("-c"), process::arg("exit 7")];
-  var module_status_cmd = process::command_with_args("sh", module_status_args.as_slice());
+  var module_status_args = [process::arg(c("-c")), process::arg(c("exit 7"))];
+  var module_status_cmd = process::command_with_args(c("sh"), module_status_args.as_slice());
   if status_is(process::status(ref module_status_cmd), 7) {
     score = score + 41;
   }
-  var module_status_code_args = [process::arg("-c"), process::arg("exit 8")];
-  var module_status_code_cmd = process::command_with_args("sh", module_status_code_args.as_slice());
+  var module_status_code_args = [process::arg(c("-c")), process::arg(c("exit 8"))];
+  var module_status_code_cmd = process::command_with_args(c("sh"), module_status_code_args.as_slice());
   if status_code_is(process::status_code(ref module_status_code_cmd), 8) {
     score = score + 3;
   }
 
-  var module_exit_status_args = [process::arg("-c"), process::arg("exit 3")];
-  var module_exit_status_cmd = process::command_with_args("sh", module_exit_status_args.as_slice());
+  var module_exit_status_args = [process::arg(c("-c")), process::arg(c("exit 3"))];
+  var module_exit_status_cmd = process::command_with_args(c("sh"), module_exit_status_args.as_slice());
   match process::exit_status(ref module_exit_status_cmd) {
     Err(_) => {}
     Ok(status) => {
@@ -84,16 +88,16 @@ fn main() -> i64 {
     }
   }
 
-  var env_args = [process::arg("-c"), process::arg("test \"$ARI_COMMAND_TEST\" = yes && pwd | grep -q '/build/prelude$'")];
-  var env_cmd = process::command_with_args("sh", env_args.as_slice());
-  env_cmd.env(ref mut zone, "ARI_COMMAND_TEST", "yes");
-  env_cmd.current_dir("build/prelude");
+  var env_args = [process::arg(c("-c")), process::arg(c("test \"$ARI_COMMAND_TEST\" = yes && pwd | grep -q '/build/prelude$'"))];
+  var env_cmd = process::command_with_args(c("sh"), env_args.as_slice());
+  env_cmd.env(ref mut zone, c("ARI_COMMAND_TEST"), c("yes"));
+  env_cmd.current_dir(c("build/prelude"));
   if status_is(env_cmd.status(), 0) {
     score = score + 17;
   }
 
-  var spawn_args = [process::arg("-c"), process::arg("exit 23")];
-  var spawn_cmd = process::command_with_args("sh", spawn_args.as_slice());
+  var spawn_args = [process::arg(c("-c")), process::arg(c("exit 23"))];
+  var spawn_cmd = process::command_with_args(c("sh"), spawn_args.as_slice());
   match spawn_cmd.spawn() {
     Err(_) => {}
     Ok(child) => {
@@ -103,8 +107,8 @@ fn main() -> i64 {
     }
   }
 
-  var module_spawn_args = [process::arg("-c"), process::arg("exit 5")];
-  var module_spawn_cmd = process::command_with_args("sh", module_spawn_args.as_slice());
+  var module_spawn_args = [process::arg(c("-c")), process::arg(c("exit 5"))];
+  var module_spawn_cmd = process::command_with_args(c("sh"), module_spawn_args.as_slice());
   match process::spawn(ref module_spawn_cmd) {
     Err(_) => {}
     Ok(module_child) => {
@@ -121,12 +125,12 @@ fn main() -> i64 {
     score = score + 37;
   }
 
-  var missing_status = process::Command::new("__ari_missing_command_for_status__");
+  var missing_status = process::Command::new(c("__ari_missing_command_for_status__"));
   if status_err_not_found(missing_status.status()) {
     score = score + 2;
   }
 
-  var missing_spawn = process::Command::new("__ari_missing_command_for_spawn__");
+  var missing_spawn = process::Command::new(c("__ari_missing_command_for_spawn__"));
   if child_err_not_found(missing_spawn.spawn()) {
     score = score + 3;
   }

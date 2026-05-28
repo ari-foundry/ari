@@ -1,6 +1,6 @@
 fn main() -> i64 {
   var zone = zone::create(64);
-  var text = std::string::from_string(ref mut zone, "banana");
+  var text = std::string::from(ref mut zone, "banana");
 
   let has_a = if text.contains(97u8) { 7 } else { 0 };
   let misses_z = if text.contains(122u8) { 0 } else { 11 };

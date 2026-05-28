@@ -1,7 +1,7 @@
 fn main() -> i64 {
   var source = zone::create(16);
   var target = zone::create(16);
-  let text = std::string::from_string(ref mut source, "ari");
+  let text = std::string::from(ref mut source, "ari");
   let copied = text.copy_to(ref mut target);
 
   zone::reset(ref mut target);

@@ -14,8 +14,8 @@ fn main() -> i64 {
   let third = third_bytes.as_slice();
   let separator = separator_bytes.as_slice();
 
-  var expected = std::string::from_string(ref mut zone, "ari/stdlib/docs");
-  var stdlib = std::string::from_string(ref mut zone, "stdlib");
+  var expected = std::string::from(ref mut zone, "ari/stdlib/docs");
+  var stdlib = std::string::from(ref mut zone, "stdlib");
 
   var parts = [first, second, third];
   var joined = std::string::join_in(ref mut zone, parts.as_slice(), separator);

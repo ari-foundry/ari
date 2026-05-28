@@ -5,8 +5,10 @@ fn worker() -> i64 {
 }
 
 fn main() -> i64 {
-  let builder = thread::builder().name("ari-worker").stack_size(1048576);
-  if !std::string::bytes(builder.configured_name()).equals("ari-worker") {
+  var zone = zone::temp(64);
+  var worker_name = std::string::from(ref mut zone, "ari-worker");
+  let builder = thread::builder().name(ref worker_name).stack_size(1048576);
+  if !builder.configured_name().equals("ari-worker") {
     return 1;
   }
   if builder.configured_stack_size() != 1048576 {

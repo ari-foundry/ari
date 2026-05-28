@@ -288,7 +288,7 @@ c::CString
 c::Library
 c::Symbol
 
-c::from_string(text)
+c::from(bytes)
 c::from_ptr(data)
 c::from_slice_in(ref mut zone, bytes)
 c::from_cstr_in(ref mut zone, value)
@@ -336,7 +336,7 @@ and `c_ulong` are compiler-owned and follow the selected target ABI. Use
 `ptr c_void` for `void*`; by-value `c_void` parameters are rejected.
 
 `CStr` is a borrowed non-owning NUL-terminated string view. Construct it from a
-string literal with `c::from_string("name")`, assign a literal directly when
+string literal with `c::from("name")`, assign a literal directly when
 `CStr` is expected, or wrap a non-null `ptr c_char` with `c::from_ptr(ptr)`.
 `CStr.as_slice()` excludes the trailing NUL.
 
@@ -999,7 +999,7 @@ path::ComponentKind
 path::bytes(path)
 path::from_os(os)
 path::from_bytes(ref mut zone, path)
-path::from_string(ref mut zone, text)
+path::from(ref mut zone, text)
 path::to_string(ref mut zone, path)
 path::is_separator(value: char)
 path::is_empty(path)
@@ -3372,15 +3372,14 @@ std::string::utf8_string_unchecked(ref mut zone, bytes)
 std::string::codepoints(bytes)
 std::string::os_str(bytes)
 std::string::os_string(ref mut zone, bytes)
-std::string::os_string_from_text(ref mut zone, "text")
-std::string::c_str(text)
-std::string::c_len(text)
-std::string::c_bytes(text)
-std::string::bytes(text)
+std::string::os_string_from_slice(ref mut zone, bytes)
+std::string::c_str(cstr)
+std::string::c_len(cstr)
+std::string::c_bytes(cstr)
+std::string::bytes(bytes)
 std::string::new(ref mut zone, capacity)
 std::string::empty(ref mut zone)
 std::string::from(ref mut zone, "text")
-std::string::from_string(ref mut zone, "text")
 std::string::copy(ref mut zone, bytes)
 std::string::from_slice_in(ref mut zone, bytes)
 std::string::join_in(ref mut zone, parts, separator)
@@ -3548,15 +3547,15 @@ expects one, so calls such as `ascii::parse_decimal("123")` and
 borrowed slice vocabulary as named views. They can also initialize local byte
 storage: `var bytes: Vec[u8] = "true";` and
 `let fixed: [u8, 4] = "true";`.
-`std::string::bytes(text)` returns the same kind of view without the trailing
-NUL when code wants to name the boundary explicitly. Single-quoted byte
+`std::string::bytes(bytes)` returns the same borrowed byte view when code wants
+to name the boundary explicitly. Single-quoted byte
 character literals such as `'t'`, `'\n'`, and `'\x74'` are `u8`, so local byte
 vectors can still be written as `['t', 'r', 'u', 'e']` when per-byte spelling
 is clearer.
 
 `std::string::from(ref mut zone, "text")`, `std::string::copy(ref mut zone,
 bytes)`, and `std::string::empty(ref mut zone)` are the natural constructors
-for everyday code. The older `from_string` and `from_slice_in` names remain
+for everyday code. The older `from` and `from_slice_in` names remain
 available when the source kind should be explicit. `text.append`, `append_byte`,
 `append_bytes`, and `push_str` grow with the owning zone while hiding the
 lower-level `append_string_in`, `append_value_in`, `append_debug_in`, and
@@ -3624,9 +3623,8 @@ does not expose mutable byte access because mutation could break the invariant.
 Use `OsStr` for borrowed operating-system bytes that may not be UTF-8 and
 `OsString` for the owned POSIX-byte counterpart. `OsString::try_utf8` and
 `try_utf8_string` validate before crossing into UTF-8 APIs. Use `PathBytes` for
-path interpretation, and `std::c::CStr` or the builtin `string` type for
-NUL-terminated C ABI text.
-`std::string::c_str(text)` returns that same `std::c::CStr` borrowed view.
+path interpretation, and `std::c::CStr` for NUL-terminated C ABI text.
+`std::string::c_str(cstr)` returns that same `std::c::CStr` borrowed view.
 String literals can flow
 directly into expected `Utf8`, `OsStr`, `PathBytes`, and `CStr` boundary views;
 direct `Utf8` literals are validated at compile time. Non-overlapping boundary

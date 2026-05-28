@@ -193,21 +193,42 @@ extern "ari" fn set_nodelay_raw(raw: i64, enabled: bool) -> bool =
   "ari_builtin_net_set_nodelay";
 extern "ari" fn shutdown_socket_raw(raw: i64, mode: i64) -> bool = "ari_builtin_net_shutdown";
 extern "ari" fn unix_listen_host_raw(path: string) -> i64 = "ari_builtin_net_unix_listen";
+extern "ari" fn unix_listen_bytes_host_raw(path: ptr u8, len: i64) -> i64 = "ari_builtin_net_unix_listen_bytes";
 extern "ari" fn unix_connect_host_raw(path: string) -> i64 = "ari_builtin_net_unix_connect";
+extern "ari" fn unix_connect_bytes_host_raw(path: ptr u8, len: i64) -> i64 = "ari_builtin_net_unix_connect_bytes";
 extern "ari" fn unix_datagram_unbound_host_raw() -> i64 = "ari_builtin_net_unix_datagram_unbound";
 extern "ari" fn unix_datagram_bind_host_raw(path: string) -> i64 = "ari_builtin_net_unix_datagram_bind";
+extern "ari" fn unix_datagram_bind_bytes_host_raw(path: ptr u8, len: i64) -> i64 =
+  "ari_builtin_net_unix_datagram_bind_bytes";
 extern "ari" fn unix_datagram_connect_host_raw(raw: i64, path: string) -> bool =
   "ari_builtin_net_unix_datagram_connect";
+extern "ari" fn unix_datagram_connect_bytes_host_raw(raw: i64, path: ptr u8, len: i64) -> bool =
+  "ari_builtin_net_unix_datagram_connect_bytes";
 extern "ari" fn unix_datagram_send_to_host_raw(raw: i64, values: ptr u8, len: i64, path: string) -> i64 =
   "ari_builtin_net_unix_datagram_send_to";
+extern "ari" fn unix_datagram_send_to_bytes_host_raw(
+  raw: i64,
+  values: ptr u8,
+  values_len: i64,
+  path: ptr u8,
+  path_len: i64
+) -> i64 = "ari_builtin_net_unix_datagram_send_to_bytes";
 extern "ari" fn unix_peer_pid_raw(raw: i64) -> i64 = "ari_builtin_net_unix_peer_pid";
 extern "ari" fn unix_peer_uid_raw(raw: i64) -> i64 = "ari_builtin_net_unix_peer_uid";
 extern "ari" fn unix_peer_gid_raw(raw: i64) -> i64 = "ari_builtin_net_unix_peer_gid";
 extern "ari" fn lookup_v4_host_raw(host: string, port: i64) -> i64 = "ari_builtin_net_lookup_v4";
+extern "ari" fn lookup_v4_bytes_host_raw(host: ptr u8, len: i64, port: i64) -> i64 =
+  "ari_builtin_net_lookup_v4_bytes";
 extern "ari" fn lookup_v4_endpoint_host_raw(endpoint: string) -> i64 = "ari_builtin_net_lookup_v4_endpoint";
+extern "ari" fn lookup_v4_endpoint_bytes_host_raw(endpoint: ptr u8, len: i64) -> i64 =
+  "ari_builtin_net_lookup_v4_endpoint_bytes";
 extern "ari" fn lookup_v6_host_raw(host: string, port: i64, output: ptr u16) -> i64 = "ari_builtin_net_lookup_v6";
+extern "ari" fn lookup_v6_bytes_host_raw(host: ptr u8, len: i64, port: i64, output: ptr u16) -> i64 =
+  "ari_builtin_net_lookup_v6_bytes";
 extern "ari" fn lookup_v6_endpoint_host_raw(endpoint: string, output: ptr u16) -> i64 =
   "ari_builtin_net_lookup_v6_endpoint";
+extern "ari" fn lookup_v6_endpoint_bytes_host_raw(endpoint: ptr u8, len: i64, output: ptr u16) -> i64 =
+  "ari_builtin_net_lookup_v6_endpoint_bytes";
 extern "ari" fn read_socket_byte_host_raw(raw: i64) -> i64 = "ari_builtin_os_read_byte";
 extern "ari" fn write_socket_byte_raw(raw: i64, value: u8) -> bool = "ari_builtin_os_write_byte";
 
@@ -228,19 +249,23 @@ pub fn localhost(port: u16) -> SocketAddr {
   return socket_addr(host.as_ip(), port);
 }
 
-pub fn lookup_v4_raw(host: string, port: u16) -> std::Result[SocketAddr, i64] {
-  let packed = lookup_v4_host_raw(host, port as i64);
+fn lookup_v4_bytes_raw(host: std::Slice[u8], port: u16) -> std::Result[SocketAddr, i64] {
+  let packed = lookup_v4_bytes_host_raw(host.as_ptr(), host.len, port as i64);
   if packed < 0 {
     return std::Err<SocketAddr, i64>(std::error::new(std::error::Other).raw());
   }
   return std::Ok<SocketAddr, i64>(socket_addr_from_packed_v4(packed));
 }
 
-pub fn lookup_v4(host: string, port: u16) -> std::Result[SocketAddr, std::error::Error] {
+pub fn lookup_v4_raw(host: ref std::string::String, port: u16) -> std::Result[SocketAddr, i64] {
+  return lookup_v4_bytes_raw(host.as_slice(), port);
+}
+
+pub fn lookup_v4(host: ref std::string::String, port: u16) -> std::Result[SocketAddr, std::error::Error] {
   return std::error::map_raw<SocketAddr>(lookup_v4_raw(host, port));
 }
 
-pub fn lookup_v6_raw(host: string, port: u16) -> std::Result[SocketAddr, i64] {
+fn lookup_v6_bytes_raw(host: std::Slice[u8], port: u16) -> std::Result[SocketAddr, i64] {
   var segments = [
     0 as u16,
     0 as u16,
@@ -251,7 +276,7 @@ pub fn lookup_v6_raw(host: string, port: u16) -> std::Result[SocketAddr, i64] {
     0 as u16,
     0 as u16
   ];
-  let resolved_port = lookup_v6_host_raw(host, port as i64, segments.as_slice().as_ptr());
+  let resolved_port = lookup_v6_bytes_host_raw(host.as_ptr(), host.len, port as i64, segments.as_slice().as_ptr());
   if resolved_port < 0 || resolved_port > 65535 {
     return std::Err<SocketAddr, i64>(std::error::new(std::error::Other).raw());
   }
@@ -260,23 +285,27 @@ pub fn lookup_v6_raw(host: string, port: u16) -> std::Result[SocketAddr, i64] {
   );
 }
 
-pub fn lookup_v6(host: string, port: u16) -> std::Result[SocketAddr, std::error::Error] {
+pub fn lookup_v6_raw(host: ref std::string::String, port: u16) -> std::Result[SocketAddr, i64] {
+  return lookup_v6_bytes_raw(host.as_slice(), port);
+}
+
+pub fn lookup_v6(host: ref std::string::String, port: u16) -> std::Result[SocketAddr, std::error::Error] {
   return std::error::map_raw<SocketAddr>(lookup_v6_raw(host, port));
 }
 
-pub fn lookup_v4_optional(host: string, port: u16) -> std::Option[SocketAddr] {
+pub fn lookup_v4_optional(host: ref std::string::String, port: u16) -> std::Option[SocketAddr] {
   return lookup_v4(host, port).ok();
 }
 
-pub fn lookup_v6_optional(host: string, port: u16) -> std::Option[SocketAddr] {
+pub fn lookup_v6_optional(host: ref std::string::String, port: u16) -> std::Option[SocketAddr] {
   return lookup_v6(host, port).ok();
 }
 
-pub fn try_lookup_v4(host: string, port: u16) -> std::Option[SocketAddr] {
+pub fn try_lookup_v4(host: ref std::string::String, port: u16) -> std::Option[SocketAddr] {
   return lookup_v4_optional(host, port);
 }
 
-pub fn try_lookup_v6(host: string, port: u16) -> std::Option[SocketAddr] {
+pub fn try_lookup_v6(host: ref std::string::String, port: u16) -> std::Option[SocketAddr] {
   return lookup_v6_optional(host, port);
 }
 
@@ -335,12 +364,12 @@ pub fn service_port_bytes_optional(name: std::Slice[u8]) -> std::Option[u16] {
   return known_service_port(name);
 }
 
-pub fn service_port(name: string) -> std::Result[u16, std::error::Error] {
-  return service_port_bytes(std::string::bytes(name));
+pub fn service_port(name: ref std::string::String) -> std::Result[u16, std::error::Error] {
+  return service_port_bytes(name.as_slice());
 }
 
-pub fn service_port_optional(name: string) -> std::Option[u16] {
-  return service_port_bytes_optional(std::string::bytes(name));
+pub fn service_port_optional(name: ref std::string::String) -> std::Option[u16] {
+  return service_port_bytes_optional(name.as_slice());
 }
 
 pub fn is_timeout(reason: ref std::error::Error) -> bool {
@@ -367,8 +396,8 @@ pub fn is_retryable(reason: ref std::error::Error) -> bool {
   return std::error::is_retryable(reason);
 }
 
-fn endpoint_port(endpoint: string) -> std::Option[u16] {
-  let bytes = std::string::bytes(endpoint);
+fn endpoint_port(endpoint: std::Slice[u8]) -> std::Option[u16] {
+  let bytes = endpoint;
   if bytes.len > 0 && bytes[0] == '[' {
     var close = -1;
     var close_index = 1;
@@ -443,8 +472,8 @@ fn endpoint_port(endpoint: string) -> std::Option[u16] {
 
 pub fn resolve_service(
   zone: ref mut Zone,
-  host: string,
-  service: string
+  host: ref std::string::String,
+  service: ref std::string::String
 ) -> std::Result[std::vec::Vec[SocketAddr], std::error::Error] {
   match service_port(service) {
     std::Ok(port) => {
@@ -458,18 +487,17 @@ pub fn resolve_service(
 
 pub fn to_socket_addrs_service(
   zone: ref mut Zone,
-  host: string,
-  service: string
+  host: ref std::string::String,
+  service: ref std::string::String
 ) -> std::Result[std::vec::Vec[SocketAddr], std::error::Error] {
   return resolve_service(zone, host, service);
 }
 
-fn endpoint_is_bracketed_v6(endpoint: string) -> bool {
-  let bytes = std::string::bytes(endpoint);
-  return bytes.len > 0 && bytes[0] == '[';
+fn endpoint_is_bracketed_v6(endpoint: std::Slice[u8]) -> bool {
+  return endpoint.len > 0 && endpoint[0] == '[';
 }
 
-pub fn resolve_raw(endpoint: string) -> std::Result[SocketAddr, i64] {
+fn resolve_bytes_raw(endpoint: std::Slice[u8]) -> std::Result[SocketAddr, i64] {
   if endpoint_port(endpoint).is_none() {
     return std::Err<SocketAddr, i64>(invalid_input_error_raw());
   }
@@ -485,7 +513,11 @@ pub fn resolve_raw(endpoint: string) -> std::Result[SocketAddr, i64] {
       0 as u16,
       0 as u16
     ];
-    let resolved_port = lookup_v6_endpoint_host_raw(endpoint, segments.as_slice().as_ptr());
+    let resolved_port = lookup_v6_endpoint_bytes_host_raw(
+      endpoint.as_ptr(),
+      endpoint.len,
+      segments.as_slice().as_ptr()
+    );
     if resolved_port < 0 || resolved_port > 65535 {
       return std::Err<SocketAddr, i64>(std::error::new(std::error::Other).raw());
     }
@@ -494,28 +526,32 @@ pub fn resolve_raw(endpoint: string) -> std::Result[SocketAddr, i64] {
     );
   }
 
-  let packed = lookup_v4_endpoint_host_raw(endpoint);
+  let packed = lookup_v4_endpoint_bytes_host_raw(endpoint.as_ptr(), endpoint.len);
   if packed < 0 {
     return std::Err<SocketAddr, i64>(std::error::new(std::error::Other).raw());
   }
   return std::Ok<SocketAddr, i64>(socket_addr_from_packed_v4(packed));
 }
 
-pub fn resolve(endpoint: string) -> std::Result[SocketAddr, std::error::Error] {
+pub fn resolve_raw(endpoint: ref std::string::String) -> std::Result[SocketAddr, i64] {
+  return resolve_bytes_raw(endpoint.as_slice());
+}
+
+pub fn resolve(endpoint: ref std::string::String) -> std::Result[SocketAddr, std::error::Error] {
   return std::error::map_raw<SocketAddr>(resolve_raw(endpoint));
 }
 
-pub fn resolve_optional(endpoint: string) -> std::Option[SocketAddr] {
+pub fn resolve_optional(endpoint: ref std::string::String) -> std::Option[SocketAddr] {
   return resolve(endpoint).ok();
 }
 
-pub fn try_resolve(endpoint: string) -> std::Option[SocketAddr] {
+pub fn try_resolve(endpoint: ref std::string::String) -> std::Option[SocketAddr] {
   return resolve_optional(endpoint);
 }
 
 pub fn resolve_all(
   zone: ref mut Zone,
-  host: string,
+  host: ref std::string::String,
   port: u16
 ) -> std::Result[std::vec::Vec[SocketAddr], std::error::Error] {
   var output = std::vec::new<SocketAddr>(zone, 2);
@@ -549,7 +585,7 @@ pub fn resolve_all(
 
 pub fn to_socket_addrs(
   zone: ref mut Zone,
-  endpoint: string
+  endpoint: ref std::string::String
 ) -> std::Result[std::vec::Vec[SocketAddr], std::error::Error] {
   var output = std::vec::new<SocketAddr>(zone, 1);
   match resolve(endpoint) {
@@ -593,7 +629,7 @@ pub fn tcp_connect_v6(addr: SocketAddr) -> std::Result[TcpStream, std::error::Er
   return TcpStream::connect(addr);
 }
 
-pub fn connect_host(endpoint: string) -> std::Result[TcpStream, std::error::Error] {
+pub fn connect_host(endpoint: ref std::string::String) -> std::Result[TcpStream, std::error::Error] {
   match resolve(endpoint) {
     std::Ok(addr) => {
       return TcpStream::connect(addr);
@@ -604,7 +640,7 @@ pub fn connect_host(endpoint: string) -> std::Result[TcpStream, std::error::Erro
   }
 }
 
-pub fn tcp_connect_host(endpoint: string) -> std::Result[TcpStream, std::error::Error] {
+pub fn tcp_connect_host(endpoint: ref std::string::String) -> std::Result[TcpStream, std::error::Error] {
   return connect_host(endpoint);
 }
 
@@ -619,15 +655,15 @@ pub fn udp_bind_v6(addr: SocketAddr) -> std::Result[UdpSocket, std::error::Error
   return UdpSocket::bind(addr);
 }
 
-pub fn unix_listen(path: string) -> std::Result[UnixListener, std::error::Error] {
+pub fn unix_listen(path: ref std::string::String) -> std::Result[UnixListener, std::error::Error] {
   return UnixListener::bind(path);
 }
 
-pub fn unix_connect(path: string) -> std::Result[UnixStream, std::error::Error] {
+pub fn unix_connect(path: ref std::string::String) -> std::Result[UnixStream, std::error::Error] {
   return UnixStream::connect(path);
 }
 
-pub fn unix_datagram(path: string) -> std::Result[UnixDatagram, std::error::Error] {
+pub fn unix_datagram(path: ref std::string::String) -> std::Result[UnixDatagram, std::error::Error] {
   return UnixDatagram::bind(path);
 }
 
@@ -1038,12 +1074,12 @@ fn shutdown_mode(mode: Shutdown) -> i64 {
   }
 }
 
-impl std::net::ToSocketAddrs for string {
+impl std::net::ToSocketAddrs for std::string::String {
   pub fn to_socket_addrs(
     self,
     zone: ref mut Zone
   ) -> std::Result[std::vec::Vec[std::net::SocketAddr], std::error::Error] {
-    return std::net::to_socket_addrs(zone, self);
+    return std::net::to_socket_addrs(zone, ref self);
   }
 }
 
@@ -1292,16 +1328,16 @@ fn udp_recv_from_raw(raw: i64, output: std::Slice[u8], flags: i64) -> std::Resul
   }
 }
 
-fn unix_listen_raw(path: string) -> std::Result[i64, i64] {
-  let raw = unix_listen_host_raw(path);
+fn unix_listen_raw(path: std::Slice[u8]) -> std::Result[i64, i64] {
+  let raw = unix_listen_bytes_host_raw(path.as_ptr(), path.len);
   if raw >= 0 {
     return std::Ok<i64, i64>(raw);
   }
   return std::Err<i64, i64>(last_errno_error_raw());
 }
 
-fn unix_connect_raw(path: string) -> std::Result[i64, i64] {
-  let raw = unix_connect_host_raw(path);
+fn unix_connect_raw(path: std::Slice[u8]) -> std::Result[i64, i64] {
+  let raw = unix_connect_bytes_host_raw(path.as_ptr(), path.len);
   if raw >= 0 {
     return std::Ok<i64, i64>(raw);
   }
@@ -1316,22 +1352,22 @@ fn unix_datagram_unbound_raw() -> std::Result[i64, i64] {
   return std::Err<i64, i64>(last_errno_error_raw());
 }
 
-fn unix_datagram_bind_raw(path: string) -> std::Result[i64, i64] {
-  let raw = unix_datagram_bind_host_raw(path);
+fn unix_datagram_bind_raw(path: std::Slice[u8]) -> std::Result[i64, i64] {
+  let raw = unix_datagram_bind_bytes_host_raw(path.as_ptr(), path.len);
   if raw >= 0 {
     return std::Ok<i64, i64>(raw);
   }
   return std::Err<i64, i64>(last_errno_error_raw());
 }
 
-fn unix_datagram_connect_raw(raw: i64, path: string) -> std::Result[(), i64] {
-  return socket_unit_raw(raw, unix_datagram_connect_host_raw(raw, path));
+fn unix_datagram_connect_raw(raw: i64, path: std::Slice[u8]) -> std::Result[(), i64] {
+  return socket_unit_raw(raw, unix_datagram_connect_bytes_host_raw(raw, path.as_ptr(), path.len));
 }
 
-fn unix_datagram_send_to_raw(raw: i64, values: std::Slice[u8], path: string) -> std::Result[i64, i64] {
+fn unix_datagram_send_to_raw(raw: i64, values: std::Slice[u8], path: std::Slice[u8]) -> std::Result[i64, i64] {
   return udp_count_raw(
     raw,
-    unix_datagram_send_to_host_raw(raw, values.as_ptr(), values.len, path)
+    unix_datagram_send_to_bytes_host_raw(raw, values.as_ptr(), values.len, path.as_ptr(), path.len)
   );
 }
 
@@ -2634,20 +2670,20 @@ pub impl std::net::UdpSocket {
 }
 
 pub impl std::net::UnixDatagram {
-  fn bind(path: string) -> std::Result[UnixDatagram, std::error::Error] {
+  fn bind(path: ref std::string::String) -> std::Result[UnixDatagram, std::error::Error] {
     return std::error::map_raw<UnixDatagram>(UnixDatagram::bind_raw(path));
   }
 
-  fn bind_optional(path: string) -> std::Option[UnixDatagram] {
+  fn bind_optional(path: ref std::string::String) -> std::Option[UnixDatagram] {
     return UnixDatagram::bind(path).ok();
   }
 
-  fn try_bind(path: string) -> std::Option[UnixDatagram] {
+  fn try_bind(path: ref std::string::String) -> std::Option[UnixDatagram] {
     return UnixDatagram::bind_optional(path);
   }
 
-  fn bind_raw(path: string) -> std::Result[UnixDatagram, i64] {
-    match unix_datagram_bind_raw(path) {
+  fn bind_raw(path: ref std::string::String) -> std::Result[UnixDatagram, i64] {
+    match unix_datagram_bind_raw(path.as_slice()) {
       std::Ok(raw) => {
         return std::Ok<UnixDatagram, i64>(unix_datagram_from_raw(raw));
       }
@@ -2774,12 +2810,12 @@ pub impl std::net::UnixDatagram {
     return self.send_ready_millis(timeout.as_millis());
   }
 
-  fn connect(self: ref Self, path: string) -> std::Result[(), std::error::Error] {
-    return std::error::map_raw<()>(unix_datagram_connect_raw(self.handle.raw(), path));
+  fn connect(self: ref Self, path: ref std::string::String) -> std::Result[(), std::error::Error] {
+    return std::error::map_raw<()>(unix_datagram_connect_raw(self.handle.raw(), path.as_slice()));
   }
 
-  fn send_to(self: ref Self, values: std::Slice[u8], path: string) -> std::Result[i64, std::error::Error] {
-    return std::error::map_raw<i64>(unix_datagram_send_to_raw(self.handle.raw(), values, path));
+  fn send_to(self: ref Self, values: std::Slice[u8], path: ref std::string::String) -> std::Result[i64, std::error::Error] {
+    return std::error::map_raw<i64>(unix_datagram_send_to_raw(self.handle.raw(), values, path.as_slice()));
   }
 
   fn send(self: ref Self, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
@@ -2796,20 +2832,20 @@ pub impl std::net::UnixDatagram {
 }
 
 pub impl std::net::UnixListener {
-  fn bind(path: string) -> std::Result[UnixListener, std::error::Error] {
+  fn bind(path: ref std::string::String) -> std::Result[UnixListener, std::error::Error] {
     return std::error::map_raw<UnixListener>(UnixListener::bind_raw(path));
   }
 
-  fn bind_optional(path: string) -> std::Option[UnixListener] {
+  fn bind_optional(path: ref std::string::String) -> std::Option[UnixListener] {
     return UnixListener::bind(path).ok();
   }
 
-  fn try_bind(path: string) -> std::Option[UnixListener] {
+  fn try_bind(path: ref std::string::String) -> std::Option[UnixListener] {
     return UnixListener::bind_optional(path);
   }
 
-  fn bind_raw(path: string) -> std::Result[UnixListener, i64] {
-    match unix_listen_raw(path) {
+  fn bind_raw(path: ref std::string::String) -> std::Result[UnixListener, i64] {
+    match unix_listen_raw(path.as_slice()) {
       std::Ok(raw) => {
         return std::Ok<UnixListener, i64>(unix_listener_from_raw(raw));
       }
@@ -2901,20 +2937,20 @@ pub impl std::net::UnixListener {
 }
 
 pub impl std::net::UnixStream {
-  fn connect(path: string) -> std::Result[UnixStream, std::error::Error] {
+  fn connect(path: ref std::string::String) -> std::Result[UnixStream, std::error::Error] {
     return std::error::map_raw<UnixStream>(UnixStream::connect_raw(path));
   }
 
-  fn connect_optional(path: string) -> std::Option[UnixStream] {
+  fn connect_optional(path: ref std::string::String) -> std::Option[UnixStream] {
     return UnixStream::connect(path).ok();
   }
 
-  fn try_connect(path: string) -> std::Option[UnixStream] {
+  fn try_connect(path: ref std::string::String) -> std::Option[UnixStream] {
     return UnixStream::connect_optional(path);
   }
 
-  fn connect_raw(path: string) -> std::Result[UnixStream, i64] {
-    match unix_connect_raw(path) {
+  fn connect_raw(path: ref std::string::String) -> std::Result[UnixStream, i64] {
+    match unix_connect_raw(path.as_slice()) {
       std::Ok(raw) => {
         return std::Ok<UnixStream, i64>(unix_stream_from_raw(raw));
       }

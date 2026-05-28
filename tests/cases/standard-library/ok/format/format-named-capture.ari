@@ -6,7 +6,7 @@ struct Point {
 
 fn main() -> i64 {
   var zone = zone::create(192);
-  let str = "asdf";
+  let str = std::string::from(ref mut zone, "asdf");
   let value = 42;
   let ok = true;
   let letter = 'Z';

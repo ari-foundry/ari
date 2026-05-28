@@ -110,7 +110,7 @@ pub struct PathBuf {
 
 pub type Path = std::path::PathBytes;
 
-fn path_buf_from_string(value: std::string::String) -> std::path::PathBuf {
+fn path_buf_from_owned(value: std::string::String) -> std::path::PathBuf {
   return std::path::PathBuf { bytes_value: value };
 }
 
@@ -150,11 +150,11 @@ pub fn as_bytes(path: std::path::PathBytes) -> std::Slice[u8] {
 }
 
 pub fn from_bytes(zone: ref mut Zone, path: std::Slice[u8]) -> std::path::PathBuf {
-  return path_buf_from_string(std::string::from_slice_in(zone, path));
+  return path_buf_from_owned(std::string::from_slice_in(zone, path));
 }
 
-pub fn from_string(zone: ref mut Zone, text: string) -> std::path::PathBuf {
-  return from_bytes(zone, std::string::bytes(text));
+pub fn from(zone: ref mut Zone, text: ref std::string::String) -> std::path::PathBuf {
+  return from_bytes(zone, text.as_slice());
 }
 
 pub fn to_string(zone: ref mut Zone, path: std::path::PathBytes) -> std::string::String {
@@ -568,7 +568,7 @@ pub fn join_in(zone: ref mut Zone, base: std::Slice[u8], child: std::Slice[u8]) 
 }
 
 pub fn join(zone: ref mut Zone, base: std::path::PathBytes, child: std::path::PathBytes) -> std::path::PathBuf {
-  return path_buf_from_string(join_in(zone, base.as_slice(), child.as_slice()));
+  return path_buf_from_owned(join_in(zone, base.as_slice(), child.as_slice()));
 }
 
 pub fn join_many(zone: ref mut Zone, parts: std::Slice[std::path::PathBytes]) -> std::path::PathBuf {
@@ -591,7 +591,7 @@ pub fn join_many(zone: ref mut Zone, parts: std::Slice[std::path::PathBytes]) ->
     }
     index = index + 1;
   }
-  return path_buf_from_string(output);
+  return path_buf_from_owned(output);
 }
 
 pub fn current_dir_join(zone: ref mut Zone, child: std::path::PathBytes) -> std::Result[std::path::PathBuf, std::error::Error] {
@@ -1000,7 +1000,7 @@ pub impl std::path::PathBytes {
   }
 
   fn normalize(self: ref Self, zone: ref mut Zone) -> std::path::PathBuf {
-    return std::path::path_buf_from_string(std::path::normalize_in(zone, self.bytes));
+    return std::path::path_buf_from_owned(std::path::normalize_in(zone, self.bytes));
   }
 }
 
@@ -1102,15 +1102,15 @@ pub impl std::path::PathBuf {
   }
 
   fn normalize(self: ref Self, zone: ref mut Zone) -> std::path::PathBuf {
-    return std::path::path_buf_from_string(std::path::normalize_in(zone, self.as_bytes()));
+    return std::path::path_buf_from_owned(std::path::normalize_in(zone, self.as_bytes()));
   }
 
   fn with_file_name(self: ref Self, zone: ref mut Zone, new_file_name: std::Slice[u8]) -> std::path::PathBuf {
-    return std::path::path_buf_from_string(std::path::with_file_name_in(zone, self.as_bytes(), new_file_name));
+    return std::path::path_buf_from_owned(std::path::with_file_name_in(zone, self.as_bytes(), new_file_name));
   }
 
   fn with_extension(self: ref Self, zone: ref mut Zone, new_extension: std::Slice[u8]) -> std::path::PathBuf {
-    return std::path::path_buf_from_string(std::path::with_extension_in(zone, self.as_bytes(), new_extension));
+    return std::path::path_buf_from_owned(std::path::with_extension_in(zone, self.as_bytes(), new_extension));
   }
 }
 

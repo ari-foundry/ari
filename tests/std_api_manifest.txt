@@ -152,7 +152,7 @@ fn std::c::from_ptr|check-prelude std-c-interop null-checked Result C string wra
 fn std::c::from_ptr_unchecked|check-prelude std-c-interop assert-on-null borrowed C string wrapper; docs/stdlib/modules/c.md
 fn std::c::from_slice_in|check-prelude std-c-interop Result-returning CString constructor rejecting interior NUL bytes; docs/stdlib/modules/c.md
 fn std::c::from_slice_unchecked_in|check-prelude std-c-interop assert-on-invalid zone-backed NUL-terminated CString constructor; docs/stdlib/modules/c.md
-fn std::c::from_string|check-prelude std-c-interop borrowed Ari string to CStr wrapper; docs/stdlib/modules/c.md
+fn std::c::from|check-prelude std-c-interop borrowed Ari string to CStr wrapper; docs/stdlib/modules/c.md
 fn std::c::function[T]|check-prelude std-c-dynamic-function typed dynamic function pointer extraction; docs/stdlib/modules/c.md
 fn std::c::global|check-prelude std-c-interop dynamic loader flag helper; docs/stdlib/modules/c.md
 fn std::c::is_null|check-prelude std-c-interop raw pointer null predicate; docs/stdlib/modules/c.md
@@ -968,7 +968,7 @@ fn std::path::file_name|check-prelude std-path-basic borrowed final-component vi
 fn std::path::file_stem|check-prelude std-path-basic natural alias for borrowed file-stem view; docs/stdlib/modules/path.md
 fn std::path::from_bytes|check-prelude std-path-buf owned path buffer constructor from bytes; docs/stdlib/modules/path.md
 fn std::path::from_os|check-prelude std-path-bytes path-byte view from OS-string bytes; docs/stdlib/modules/path.md
-fn std::path::from_string|check-prelude std-path-buf owned path buffer constructor from host string; docs/stdlib/modules/path.md
+fn std::path::from|check-prelude std-path-buf owned path buffer constructor from host string; docs/stdlib/modules/path.md
 fn std::path::has_extension|check-prelude std-path-predicates final-extension predicate; docs/stdlib/modules/path.md
 fn std::path::has_file_name|check-prelude std-path-predicates final-component predicate; docs/stdlib/modules/path.md
 fn std::path::has_file_stem|check-prelude std-path-predicates natural alias for file-stem predicate; docs/stdlib/modules/path.md
@@ -1095,13 +1095,12 @@ fn std::string::ends_with|check-prelude std-string-module-views borrowed byte-sl
 fn std::string::find|check-prelude std-string-module-views borrowed byte-slice search helper; docs/stdlib/modules/string.md
 fn std::string::from|check-prelude std-string-natural-api natural Ari string copy constructor; docs/stdlib/modules/string.md
 fn std::string::from_slice_in|std string from-slice target-zone copy tests; docs/dev/test-matrix.md Explicit memory zones row
-fn std::string::from_string|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::string::join_in|check-prelude std-string-split-join allocator-backed byte-slice join helper; docs/stdlib/modules/string.md
 fn std::string::lines|check-prelude std-string-module-views borrowed newline split helper for parser-style code; docs/stdlib/modules/string.md
 fn std::string::new|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::string::os_str|check-prelude std-string-text-kinds typed borrowed OS-string byte view constructor; docs/stdlib/modules/string.md
 fn std::string::os_string|check-prelude std-string-text-kinds owned OS-string byte constructor; docs/stdlib/modules/string.md
-fn std::string::os_string_from_text|check-prelude std-string-text-kinds owned OS-string text constructor; docs/stdlib/modules/string.md
+fn std::string::os_string_from_slice|check-prelude std-string-text-kinds owned OS-string text constructor; docs/stdlib/modules/string.md
 fn std::string::replace|check-prelude std-string-module-views allocator-backed byte-slice replacement helper; docs/stdlib/modules/string.md
 fn std::string::split|check-prelude std-string-module-views borrowed delimiter split helper; docs/stdlib/modules/string.md
 fn std::string::split_once|check-prelude std-string-module-views borrowed first-delimiter split helper; docs/stdlib/modules/string.md
@@ -2683,6 +2682,7 @@ method std::string::String::append_debug_in[T: std::fmt::Debug]|check-prelude st
 method std::string::String::append_f32_in|check-prelude std-string-append-f32 and std-string-append-f32-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_f64_in|check-prelude prelude-format-in and std-string-append-f64-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_i64_in|check-prelude std-string-append and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
+method std::string::String::append_raw_in|compiler-only raw literal append bridge for format_in! primitive string captures; docs/stdlib/modules/string.md
 method std::string::String::append_string_in|check-prelude std-string-append and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_u64_in|check-prelude std-string-append-u64, prelude-format-in-u64, and std-string-append-u64-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_value_in[T: std::fmt::Display]|check-prelude std-string-append-value generic Display append, implicit same-zone lowering, and std-string-append-value-different-zone diagnostic; docs/stdlib/modules/string.md

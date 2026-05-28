@@ -49,7 +49,7 @@ pub impl std::encoding::CodecError {
     return codec_error_kind_from_id(self.kind_id);
   }
 
-  fn name_text(self: ref Self) -> string {
+  fn name_text(self: ref Self) -> std::Slice[u8] {
     match self.kind() {
       InvalidLength => { return "invalid length"; }
       InvalidByte => { return "invalid byte"; }
@@ -57,7 +57,7 @@ pub impl std::encoding::CodecError {
     }
   }
 
-  fn message_text(self: ref Self) -> string {
+  fn message_text(self: ref Self) -> std::Slice[u8] {
     match self.kind() {
       InvalidLength => { return "encoded input has an invalid length"; }
       InvalidByte => { return "encoded input contains a byte outside the active alphabet"; }
@@ -113,7 +113,7 @@ pub impl std::encoding::Utf8Error {
     return utf8_error_kind_from_id(self.kind_id);
   }
 
-  fn name_text(self: ref Self) -> string {
+  fn name_text(self: ref Self) -> std::Slice[u8] {
     match self.kind() {
       InvalidLead => { return "invalid lead byte"; }
       UnexpectedEnd => { return "unexpected end"; }
@@ -124,7 +124,7 @@ pub impl std::encoding::Utf8Error {
     }
   }
 
-  fn message_text(self: ref Self) -> string {
+  fn message_text(self: ref Self) -> std::Slice[u8] {
     match self.kind() {
       InvalidLead => { return "UTF-8 sequence starts with an invalid lead byte"; }
       UnexpectedEnd => { return "UTF-8 sequence ends before all continuation bytes are present"; }

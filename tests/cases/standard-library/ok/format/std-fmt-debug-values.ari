@@ -49,7 +49,8 @@ fn main() -> i64 {
   var zone = zone::create(256);
   var score = 0;
 
-  var quoted = fmt::debug_value(ref mut zone, "ari");
+  let ari = std::string::from(ref mut zone, "ari");
+  var quoted = fmt::debug_value(ref mut zone, ari);
   if quoted.len() == 5 && quoted.get(0) == '"' && quoted.get(4) == '"' {
     score = score + 1;
   }
@@ -67,7 +68,8 @@ fn main() -> i64 {
 
   var buffer = [0u8, 0u8, 0u8, 0u8, 0u8, 0u8];
   var writer = MemoryWriter { data: buffer.as_slice(), position: 0 };
-  if fmt::write_debug<MemoryWriter, string>(ref mut writer, ref mut zone, "io").is_ok() {
+  let io_text = std::string::from(ref mut zone, "io");
+  if fmt::write_debug<MemoryWriter, String>(ref mut writer, ref mut zone, io_text).is_ok() {
     if buffer[0] == '"' && buffer[1] == 'i' && buffer[2] == 'o' && buffer[3] == '"' && writer.position == 4 {
       score = score + 1;
     }
@@ -75,13 +77,15 @@ fn main() -> i64 {
 
   var bool_buffer = [0u8, 0u8, 0u8, 0u8];
   var bool_writer = MemoryWriter { data: bool_buffer.as_slice(), position: 0 };
-  if fmt::write_debug_bool<MemoryWriter, string>(ref mut bool_writer, ref mut zone, "io") {
+  let io_text_bool = std::string::from(ref mut zone, "io");
+  if fmt::write_debug_bool<MemoryWriter, String>(ref mut bool_writer, ref mut zone, io_text_bool) {
     if bool_buffer[0] == '"' && bool_buffer[1] == 'i' && bool_buffer[2] == 'o' && bool_buffer[3] == '"' && bool_writer.position == 4 {
       score = score + 1;
     }
   }
 
-  let printed = fmt::print_debug(ref mut zone, "out");
+  let out = std::string::from(ref mut zone, "out");
+  let printed = fmt::print_debug(ref mut zone, out);
   let printed_line = fmt::println_debug(ref mut zone, false);
   if printed == 5 && printed_line == 6 {
     score = score + 1;

@@ -32,7 +32,7 @@ pub fn rank(level: std::log::Level) -> i64 {
   }
 }
 
-pub fn name_text(level: std::log::Level) -> string {
+fn name_text(level: std::log::Level) -> std::Slice[u8] {
   match level {
     Trace => {
       return "trace";
@@ -60,16 +60,13 @@ pub fn enabled(level: std::log::Level, minimum: std::log::Level) -> bool {
   return std::log::rank(level) >= std::log::rank(minimum);
 }
 
-fn write_text(writer: ref mut std::io::Stderr, text: string) -> bool {
-  let data = text as ptr u8;
+fn write_text(writer: ref mut std::io::Stderr, text: std::Slice[u8]) -> bool {
   var index = 0;
-  var byte = std::mem::ptr_load(std::mem::ptr_add(data, index));
-  while byte != '\x00' {
-    if !writer.write_byte(byte) {
+  while index < text.len {
+    if !writer.write_byte(text[index]) {
       return false;
     }
     index = index + 1;
-    byte = std::mem::ptr_load(std::mem::ptr_add(data, index));
   }
   return true;
 }
@@ -105,36 +102,26 @@ pub fn write(level: std::log::Level, values: std::Slice[u8]) -> bool {
   return std::io::flush<std::io::Stderr>(ref mut stderr).is_ok();
 }
 
-pub fn message(level: std::log::Level, text: string) -> bool {
-  var stderr = std::io::stderr();
-  if !std::log::write_prefix(ref mut stderr, level) {
-    return false;
-  }
-  if !std::log::write_text(ref mut stderr, text) {
-    return false;
-  }
-  if !std::log::write_newline(ref mut stderr) {
-    return false;
-  }
-  return std::io::flush<std::io::Stderr>(ref mut stderr).is_ok();
+pub fn message(level: std::log::Level, text: ref std::string::String) -> bool {
+  return std::log::write(level, text.as_slice());
 }
 
-pub fn trace(text: string) -> bool {
+pub fn trace(text: ref std::string::String) -> bool {
   return std::log::message(Trace, text);
 }
 
-pub fn debug(text: string) -> bool {
+pub fn debug(text: ref std::string::String) -> bool {
   return std::log::message(Debug, text);
 }
 
-pub fn info(text: string) -> bool {
+pub fn info(text: ref std::string::String) -> bool {
   return std::log::message(Info, text);
 }
 
-pub fn warn(text: string) -> bool {
+pub fn warn(text: ref std::string::String) -> bool {
   return std::log::message(Warn, text);
 }
 
-pub fn error(text: string) -> bool {
+pub fn error(text: ref std::string::String) -> bool {
   return std::log::message(Error, text);
 }

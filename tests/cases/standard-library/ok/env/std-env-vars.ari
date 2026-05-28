@@ -2,10 +2,10 @@
 // to this test executable, so later tests do not inherit the mutation.
 fn main() -> i64 {
   var zone = zone::create(256);
-  var name = std::string::from_string(ref mut zone, "ARI_STD_ENV_TEST_VALUE");
-  var first = std::string::from_string(ref mut zone, "first");
-  var second_text = std::string::from_string(ref mut zone, "second");
-  var third = std::string::from_string(ref mut zone, "third");
+  var name = std::string::from(ref mut zone, "ARI_STD_ENV_TEST_VALUE");
+  var first = std::string::from(ref mut zone, "first");
+  var second_text = std::string::from(ref mut zone, "second");
+  var third = std::string::from(ref mut zone, "third");
   var score = 0;
 
   env::remove_unchecked(ref name);
@@ -52,7 +52,7 @@ fn main() -> i64 {
 
   match env::try_get(ref mut zone, ref name) {
     std::Some(value) => {
-      var expected = std::string::from_string(ref mut zone, "first");
+      var expected = std::string::from(ref mut zone, "first");
       if value.equals(expected.as_slice()) {
         score = score + 13;
       }
@@ -65,7 +65,7 @@ fn main() -> i64 {
   }
   match env::get(ref mut zone, ref name) {
     Ok(result_value) => {
-      var expected_result = std::string::from_string(ref mut zone, "second");
+      var expected_result = std::string::from(ref mut zone, "second");
       assert(result_value.equals(expected_result.as_slice()));
     }
     Err(_) => {
@@ -82,7 +82,7 @@ fn main() -> i64 {
   }
 
   var updated = env::get_or_default(ref mut zone, ref name);
-  var second = std::string::from_string(ref mut zone, "second");
+  var second = std::string::from(ref mut zone, "second");
   if updated.equals(second.as_slice()) {
     score = score + 19;
   }

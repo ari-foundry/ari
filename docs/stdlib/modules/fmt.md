@@ -41,42 +41,42 @@ unsigned_in(zone: ref mut Zone, value: u64, spec: FormatSpec) -> String
 integer_in(zone: ref mut Zone, value: i64) -> String
 boolean_in(zone: ref mut Zone, value: bool) -> String
 float_in(zone: ref mut Zone, value: f64, precision: i64) -> String
-text_in(zone: ref mut Zone, value: string) -> String
+text_in(zone: ref mut Zone, value: ref String) -> String
 char_in(zone: ref mut Zone, value: char) -> String
-debug_text_in(zone: ref mut Zone, value: string) -> String
+debug_text_in(zone: ref mut Zone, value: ref String) -> String
 debug_char_in(zone: ref mut Zone, value: char) -> String
 format_value[T: Display](zone: ref mut Zone, value: T) -> String
 debug_value[T: Debug](zone: ref mut Zone, value: T) -> String
-format[T: Display](zone: ref mut Zone, template: string, value: T) -> Result[String, Error]
-format2[A: Display, B: Display](zone: ref mut Zone, template: string, first: A, second: B) -> Result[String, Error]
-format3[A: Display, B: Display, C: Display](zone: ref mut Zone, template: string, first: A, second: B, third: C) -> Result[String, Error]
-format4[A: Display, B: Display, C: Display, D: Display](zone: ref mut Zone, template: string, first: A, second: B, third: C, fourth: D) -> Result[String, Error]
-format_texts(zone: ref mut Zone, template: string, values: Slice[string]) -> Result[String, Error]
-format_values(zone: ref mut Zone, template: string, values: Slice[String]) -> Result[String, Error]
+format[T: Display](zone: ref mut Zone, template: ref String, value: T) -> Result[String, Error]
+format2[A: Display, B: Display](zone: ref mut Zone, template: ref String, first: A, second: B) -> Result[String, Error]
+format3[A: Display, B: Display, C: Display](zone: ref mut Zone, template: ref String, first: A, second: B, third: C) -> Result[String, Error]
+format4[A: Display, B: Display, C: Display, D: Display](zone: ref mut Zone, template: ref String, first: A, second: B, third: C, fourth: D) -> Result[String, Error]
+format_texts(zone: ref mut Zone, template: ref String, values: Slice[String]) -> Result[String, Error]
+format_values(zone: ref mut Zone, template: ref String, values: Slice[String]) -> Result[String, Error]
 concat2[A: Display, B: Display](zone: ref mut Zone, first: A, second: B) -> String
 concat3[A: Display, B: Display, C: Display](zone: ref mut Zone, first: A, second: B, third: C) -> String
-concat_all(zone: ref mut Zone, parts: Slice[string]) -> String
+concat_all(zone: ref mut Zone, parts: Slice[String]) -> String
 concat_strings(zone: ref mut Zone, parts: Slice[String]) -> String
 write_concat2[W: io::Writer, A: Display, B: Display](writer: ref mut W, zone: ref mut Zone, first: A, second: B) -> Result[(), Error]
 write_concat2_bool[W: io::Writer, A: Display, B: Display](writer: ref mut W, zone: ref mut Zone, first: A, second: B) -> bool
 write_concat3[W: io::Writer, A: Display, B: Display, C: Display](writer: ref mut W, zone: ref mut Zone, first: A, second: B, third: C) -> Result[(), Error]
 write_concat3_bool[W: io::Writer, A: Display, B: Display, C: Display](writer: ref mut W, zone: ref mut Zone, first: A, second: B, third: C) -> bool
-write_concat_all[W: io::Writer](writer: ref mut W, parts: Slice[string]) -> Result[(), Error]
-write_concat_all_bool[W: io::Writer](writer: ref mut W, parts: Slice[string]) -> bool
+write_concat_all[W: io::Writer](writer: ref mut W, parts: Slice[String]) -> Result[(), Error]
+write_concat_all_bool[W: io::Writer](writer: ref mut W, parts: Slice[String]) -> bool
 write_concat_strings[W: io::Writer](writer: ref mut W, parts: Slice[String]) -> Result[(), Error]
 write_concat_strings_bool[W: io::Writer](writer: ref mut W, parts: Slice[String]) -> bool
-write_format[W: io::Writer, T: Display](writer: ref mut W, zone: ref mut Zone, template: string, value: T) -> Result[(), Error]
-write_format2[W: io::Writer, A: Display, B: Display](writer: ref mut W, zone: ref mut Zone, template: string, first: A, second: B) -> Result[(), Error]
-write_format3[W: io::Writer, A: Display, B: Display, C: Display](writer: ref mut W, zone: ref mut Zone, template: string, first: A, second: B, third: C) -> Result[(), Error]
-write_format4[W: io::Writer, A: Display, B: Display, C: Display, D: Display](writer: ref mut W, zone: ref mut Zone, template: string, first: A, second: B, third: C, fourth: D) -> Result[(), Error]
-write_format_texts[W: io::Writer](writer: ref mut W, template: string, values: Slice[string]) -> Result[(), Error]
-write_format_texts_bool[W: io::Writer](writer: ref mut W, template: string, values: Slice[string]) -> bool
-write_format_values[W: io::Writer](writer: ref mut W, template: string, values: Slice[String]) -> Result[(), Error]
-write_format_values_bool[W: io::Writer](writer: ref mut W, template: string, values: Slice[String]) -> bool
-write_format_stream[W: io::Writer, T: Display](writer: ref mut W, zone: ref mut Zone, template: string, value: T) -> Result[(), Error]
-write_format_stream2[W: io::Writer, A: Display, B: Display](writer: ref mut W, zone: ref mut Zone, template: string, first: A, second: B) -> Result[(), Error]
-write_format_stream3[W: io::Writer, A: Display, B: Display, C: Display](writer: ref mut W, zone: ref mut Zone, template: string, first: A, second: B, third: C) -> Result[(), Error]
-write_format_stream4[W: io::Writer, A: Display, B: Display, C: Display, D: Display](writer: ref mut W, zone: ref mut Zone, template: string, first: A, second: B, third: C, fourth: D) -> Result[(), Error]
+write_format[W: io::Writer, T: Display](writer: ref mut W, zone: ref mut Zone, template: ref String, value: T) -> Result[(), Error]
+write_format2[W: io::Writer, A: Display, B: Display](writer: ref mut W, zone: ref mut Zone, template: ref String, first: A, second: B) -> Result[(), Error]
+write_format3[W: io::Writer, A: Display, B: Display, C: Display](writer: ref mut W, zone: ref mut Zone, template: ref String, first: A, second: B, third: C) -> Result[(), Error]
+write_format4[W: io::Writer, A: Display, B: Display, C: Display, D: Display](writer: ref mut W, zone: ref mut Zone, template: ref String, first: A, second: B, third: C, fourth: D) -> Result[(), Error]
+write_format_texts[W: io::Writer](writer: ref mut W, template: ref String, values: Slice[String]) -> Result[(), Error]
+write_format_texts_bool[W: io::Writer](writer: ref mut W, template: ref String, values: Slice[String]) -> bool
+write_format_values[W: io::Writer](writer: ref mut W, template: ref String, values: Slice[String]) -> Result[(), Error]
+write_format_values_bool[W: io::Writer](writer: ref mut W, template: ref String, values: Slice[String]) -> bool
+write_format_stream[W: io::Writer, T: Display](writer: ref mut W, zone: ref mut Zone, template: ref String, value: T) -> Result[(), Error]
+write_format_stream2[W: io::Writer, A: Display, B: Display](writer: ref mut W, zone: ref mut Zone, template: ref String, first: A, second: B) -> Result[(), Error]
+write_format_stream3[W: io::Writer, A: Display, B: Display, C: Display](writer: ref mut W, zone: ref mut Zone, template: ref String, first: A, second: B, third: C) -> Result[(), Error]
+write_format_stream4[W: io::Writer, A: Display, B: Display, C: Display, D: Display](writer: ref mut W, zone: ref mut Zone, template: ref String, first: A, second: B, third: C, fourth: D) -> Result[(), Error]
 
 write_unsigned[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: u64, spec: FormatSpec) -> Result[(), Error]
 write_unsigned_bool[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: u64, spec: FormatSpec) -> bool
@@ -84,19 +84,19 @@ write_integer[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: i64) 
 write_integer_bool[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: i64) -> bool
 write_boolean[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: bool) -> Result[(), Error]
 write_boolean_bool[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: bool) -> bool
-write_text[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: string) -> Result[(), Error]
-write_text_bool[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: string) -> bool
+write_text[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: ref String) -> Result[(), Error]
+write_text_bool[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: ref String) -> bool
 write_unsigned_stream[W: io::Writer](writer: ref mut W, value: u64, spec: FormatSpec) -> Result[(), Error]
 write_integer_stream[W: io::Writer](writer: ref mut W, value: i64) -> Result[(), Error]
 write_boolean_stream[W: io::Writer](writer: ref mut W, value: bool) -> Result[(), Error]
-write_text_stream[W: io::Writer](writer: ref mut W, value: string) -> Result[(), Error]
+write_text_stream[W: io::Writer](writer: ref mut W, value: ref String) -> Result[(), Error]
 write_char_stream[W: io::Writer](writer: ref mut W, value: char) -> Result[(), Error]
 write_value[W: io::Writer, T: Display](writer: ref mut W, zone: ref mut Zone, value: T) -> Result[(), Error]
 write_value_bool[W: io::Writer, T: Display](writer: ref mut W, zone: ref mut Zone, value: T) -> bool
 write_debug[W: io::Writer, T: Debug](writer: ref mut W, zone: ref mut Zone, value: T) -> Result[(), Error]
 write_debug_bool[W: io::Writer, T: Debug](writer: ref mut W, zone: ref mut Zone, value: T) -> bool
-write_line_text[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: string) -> Result[(), Error]
-write_line_text_bool[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: string) -> bool
+write_line_text[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: ref String) -> Result[(), Error]
+write_line_text_bool[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: ref String) -> bool
 write_line_value[W: io::Writer, T: Display](writer: ref mut W, zone: ref mut Zone, value: T) -> Result[(), Error]
 write_line_value_bool[W: io::Writer, T: Display](writer: ref mut W, zone: ref mut Zone, value: T) -> bool
 write_line_debug[W: io::Writer, T: Debug](writer: ref mut W, zone: ref mut Zone, value: T) -> Result[(), Error]
@@ -234,12 +234,18 @@ they follow the same text policy as `format_in!`, `print_value`, and
 `String.append_value`.
 
 For variable-length text, prefer the slice-based helpers instead of adding more
-fixed arities. `concat_all` joins any number of borrowed raw text-boundary values, and
-`concat_strings` joins any number of preformatted owned `String` values:
+fixed arities. `concat_all` and `concat_strings` join any number of preformatted
+owned `String` values:
 
 ```ari
 var zone = zone::create(128);
-var parts = ["arix", " ", "run", " ", "--release"];
+var parts = [
+  std::string::from(ref mut zone, "arix"),
+  std::string::from(ref mut zone, " "),
+  std::string::from(ref mut zone, "run"),
+  std::string::from(ref mut zone, " "),
+  std::string::from(ref mut zone, "--release")
+];
 let command = fmt::concat_all(ref mut zone, parts.as_slice());
 zone::destroy(zone);
 ```
@@ -260,7 +266,9 @@ configuration errors:
 
 ```ari
 var zone = zone::create(128);
-match fmt::format2(ref mut zone, "{}={}", "name", 7) {
+let template = std::string::from(ref mut zone, "{}={}");
+let field = std::string::from(ref mut zone, "name");
+match fmt::format2(ref mut zone, ref template, field, 7) {
   std::Ok(text) => {
     // text == "name=7"
   }
@@ -272,7 +280,7 @@ zone::destroy(zone);
 ```
 
 Use `format_texts` or `format_values` when the number of replacements is not
-known at API design time. `format_texts` consumes `Slice[string]`; it is the
+known at API design time. `format_texts` consumes `Slice[String]`; it is the
 best fit for config/runtime strings that are already text. `format_values`
 consumes `Slice[String]`; it is the bridge for mixed `Display` values that were
 preformatted with `format_value`, `integer_in`, `debug_value`, or custom code.
@@ -281,8 +289,13 @@ placeholder count to exactly match the slice length:
 
 ```ari
 var zone = zone::create(256);
-var values = ["hello", "target/debug/hello", "ok"];
-match fmt::format_texts(ref mut zone, "{} -> {} ({})", values.as_slice()) {
+let template = std::string::from(ref mut zone, "{} -> {} ({})");
+var values = [
+  std::string::from(ref mut zone, "hello"),
+  std::string::from(ref mut zone, "target/debug/hello"),
+  std::string::from(ref mut zone, "ok")
+];
+match fmt::format_texts(ref mut zone, ref template, values.as_slice()) {
   std::Ok(text) => {
     // text == "hello -> target/debug/hello (ok)"
   }
@@ -299,12 +312,14 @@ constructing one combined `String` first:
 
 ```ari
 var stdout = io::stdout();
-fmt::write_concat3<io::Stdout, string, String, string>(
+let prefix = std::string::from(ref mut zone, "Compiling ");
+let newline = std::string::from(ref mut zone, "\n");
+fmt::write_concat3<io::Stdout, String, String, String>(
   ref mut stdout,
   ref mut zone,
-  "Compiling ",
+  prefix,
   name,
-  "\n",
+  newline,
 ).unwrap();
 ```
 
@@ -328,11 +343,13 @@ back:
 
 ```ari
 var stdout = io::stdout();
-fmt::write_format2<io::Stdout, string, i64>(
+let template = std::string::from(ref mut zone, "Compiling {} ({})");
+let name = std::string::from(ref mut zone, "hello");
+fmt::write_format2<io::Stdout, String, i64>(
   ref mut stdout,
   ref mut zone,
-  "Compiling {} ({})",
-  "hello",
+  ref template,
+  name,
   1,
 ).unwrap();
 ```
@@ -346,13 +363,22 @@ back:
 
 ```ari
 var stdout = io::stdout();
-var parts = ["Compiling ", "hello", "\n"];
+var parts = [
+  std::string::from(ref mut zone, "Compiling "),
+  std::string::from(ref mut zone, "hello"),
+  std::string::from(ref mut zone, "\n")
+];
 fmt::write_concat_all<io::Stdout>(ref mut stdout, parts.as_slice()).unwrap();
 
-var fields = ["hello", "release", "ok"];
+let template = std::string::from(ref mut zone, "{} [{}] {}\n");
+var fields = [
+  std::string::from(ref mut zone, "hello"),
+  std::string::from(ref mut zone, "release"),
+  std::string::from(ref mut zone, "ok")
+];
 fmt::write_format_texts<io::Stdout>(
   ref mut stdout,
-  "{} [{}] {}\n",
+  ref template,
   fields.as_slice(),
 ).unwrap();
 ```

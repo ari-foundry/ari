@@ -1,10 +1,10 @@
 fn main() -> i64 {
   var zone = zone::create(128);
-  var text = std::string::from_string(ref mut zone, "compiler");
-  var prefix = std::string::from_string(ref mut zone, "com");
-  var suffix = std::string::from_string(ref mut zone, "ler");
-  var wrong_prefix = std::string::from_string(ref mut zone, "omp");
-  var too_long = std::string::from_string(ref mut zone, "compiler!");
+  var text = std::string::from(ref mut zone, "compiler");
+  var prefix = std::string::from(ref mut zone, "com");
+  var suffix = std::string::from(ref mut zone, "ler");
+  var wrong_prefix = std::string::from(ref mut zone, "omp");
+  var too_long = std::string::from(ref mut zone, "compiler!");
   var empty = std::string::new(ref mut zone, 0);
 
   let prefix_view = prefix.as_slice();

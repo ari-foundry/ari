@@ -10,19 +10,24 @@ fn allowed_socket_error(value: error::Error) -> bool {
 
 fn main() -> i64 {
   var score = 255;
+  var zone = zone::temp(128);
+  var host_v6 = std::string::from(ref mut zone, "::1");
+  var endpoint_8081 = std::string::from(ref mut zone, "[::1]:8081");
+  var endpoint_8082 = std::string::from(ref mut zone, "[::1]:8082");
+  var endpoint_8083 = std::string::from(ref mut zone, "[::1]:8083");
 
-  let looked_up = net::lookup_v6("::1", 8080 as u16).unwrap();
+  let looked_up = net::lookup_v6(ref host_v6, 8080 as u16).unwrap();
   assert(looked_up.ip().is_v6());
   assert(looked_up.is_loopback());
   assert(looked_up.port() == 8080 as u16);
   score = score + 256;
 
-  let endpoint = net::resolve("[::1]:8081").unwrap();
+  let endpoint = net::resolve(ref endpoint_8081).unwrap();
   assert(endpoint.ip().is_v6());
   assert(endpoint.is_loopback());
   assert(endpoint.port() == 8081 as u16);
-  assert(net::resolve_optional("[::1]:8082").is_some());
-  assert(net::try_resolve("[::1]:8083").is_some());
+  assert(net::resolve_optional(ref endpoint_8082).is_some());
+  assert(net::try_resolve(ref endpoint_8083).is_some());
   score = score + 512;
 
   let bind_addr = net::socket_addr(net::Ipv6Addr::localhost().as_ip(), 0 as u16);

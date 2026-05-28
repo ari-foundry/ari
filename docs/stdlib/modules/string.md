@@ -50,11 +50,11 @@ std::string::utf8_string_unchecked(ref mut zone, bytes)
 std::string::codepoints(bytes)
 std::string::os_str(bytes)
 std::string::os_string(ref mut zone, bytes)
-std::string::os_string_from_text(ref mut zone, "literal")
-std::string::c_str("literal")
-std::string::c_len("literal")
-std::string::c_bytes("literal")
-std::string::bytes("literal")
+std::string::os_string_from_slice(ref mut zone, bytes)
+std::string::c_str(cstr)
+std::string::c_len(cstr)
+std::string::c_bytes(cstr)
+std::string::bytes(bytes)
 ```
 
 `utf8(bytes)` validates a borrowed `Slice[u8]` and returns
@@ -67,12 +67,12 @@ it validates the bytes, copies them into the target zone, and returns
 without allocating. `os_str(bytes)` keeps operating-system bytes distinct from
 normal text; the current POSIX slice stores raw bytes and may not be valid
 UTF-8. `os_string(ref mut zone, bytes)` is the owned raw OS-byte counterpart;
-`os_string_from_text` copies a text literal or raw boundary value into that shape.
-`c_str(text)` is a convenience wrapper for
-`std::c::from_string(text)` and returns the shared `std::c::CStr` type, while
-`c_len` and `c_bytes` expose bytes before the trailing NUL. `bytes(text)` is
-the named helper for code that wants to make the boundary explicit. In normal
-calls and local initializers, a string literal can also flow directly into
+`os_string_from_slice` is the same policy with a name that highlights the
+borrowed byte source. `c_str(cstr)` returns the shared `std::c::CStr` view,
+while `c_len` and `c_bytes` expose bytes before the trailing NUL. `bytes(bytes)`
+is the named identity helper for code that wants to make the byte boundary
+explicit. In normal calls and local initializers, a string literal can also flow
+directly into
 borrowed or local byte-storage expectations:
 
 ```ari
@@ -110,7 +110,6 @@ Constructors allocate in an explicit zone:
 std::string::new(ref mut zone, capacity)
 std::string::empty(ref mut zone)
 std::string::from(ref mut zone, "text")
-std::string::from_string(ref mut zone, "text")
 std::string::copy(ref mut zone, bytes)
 std::string::from_slice_in(ref mut zone, bytes)
 std::string::join_in(ref mut zone, parts, separator)
@@ -119,10 +118,11 @@ std::string::replace(ref mut zone, bytes, needle, replacement)
 
 `new` creates an empty buffer with fixed starting capacity.
 `empty` is the zero-capacity spelling for a string you plan to grow.
-`from` is the natural constructor for text literals or raw boundary values and
-forwards to `from_string`. `copy` is the natural constructor for borrowed byte slices and
-forwards to `from_slice_in`. The older names stay documented because they make
-the backing source explicit in low-level library code.
+`from` is the natural constructor for any borrowed `Slice[u8]`, including
+string literals at call sites. `copy` is the same byte-copy policy with a name
+that reads better in some parser and container code; both copy into the target
+zone. `from_slice_in` remains the explicit low-level spelling used by library
+internals.
 `join_in` joins a `Slice[Slice[u8]]` with a byte separator and returns an owned
 `String` in the provided zone.
 `replace` copies `bytes` into the provided zone while replacing non-overlapping
@@ -223,7 +223,7 @@ text.extend_from_slice_in(ref mut zone, bytes)
 text.resize_in(ref mut zone, length, char)
 ```
 
-Use `append` for Ari `string` values, `append_byte` for one ASCII byte
+Use `append` for borrowed `Slice[u8]` values, `append_byte` for one ASCII byte
 character such as `'!'`, and `append_bytes` or `push_str` for a borrowed
 `Slice[u8]`. `push_str` is the CLI/parser-friendly growth spelling:
 
@@ -246,6 +246,7 @@ Appending formatted primitive values also grows through the explicit zone:
 
 ```ari
 text.append_string_in(ref mut zone, "text")
+text.append_raw_in(ref mut zone, raw_text)
 text.append_i64_in(ref mut zone, value)
 text.append_u64_in(ref mut zone, value)
 text.append_bool_in(ref mut zone, value)
@@ -257,7 +258,9 @@ text.push_codepoint_in(ref mut zone, scalar)
 ```
 
 These helpers are the current source-side building blocks used by owned
-formatting paths. `append_value_in[T: std::fmt::Display]` calls
+formatting paths. `append_string_in` takes borrowed bytes; `append_raw_in` is a
+raw compatibility bridge reserved for compiler-generated `format_in!` primitive
+string captures. `append_value_in[T: std::fmt::Display]` calls
 `value.format_in(ref mut zone)` and appends the rendered bytes, so standard
 display values and user-defined types can participate without adding names such
 as `append_point_in`. `append_debug_in[T: std::fmt::Debug]` mirrors that shape
@@ -529,7 +532,7 @@ the validation invariant.
 ```ari
 let os = std::string::os_str(bytes);
 let owned_os = std::string::os_string(ref mut zone, bytes);
-let owned_text_os = std::string::os_string_from_text(ref mut zone, "literal");
+let owned_text_os = std::string::os_string_from_slice(ref mut zone, "literal");
 let literal_os: std::string::OsStr = "literal";
 os.as_slice()
 os.len()
@@ -572,7 +575,7 @@ receivers too: `"name".is_utf8()` and `"name".try_utf8()`.
 ```ari
 fn main() -> i64 {
   var zone = zone::create(128);
-  var text = std::string::from_string(ref mut zone, " 123 ");
+  var text = std::string::from(ref mut zone, " 123 ");
 
   let trimmed = text.trim();
   let value = std::ascii::parse_decimal(trimmed).unwrap_or(0);

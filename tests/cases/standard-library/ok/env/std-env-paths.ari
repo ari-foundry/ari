@@ -8,8 +8,8 @@ fn main() -> i64 {
   let exe = env::executable_path_or_default(ref mut zone);
   let maybe_cwd = env::current_dir_optional(ref mut zone);
   let maybe_exe = env::executable_path_optional(ref mut zone);
-  var home_name = std::string::from_string(ref mut zone, "HOME");
-  var home_value = std::string::from_string(ref mut zone, "/tmp/ari-home-test");
+  var home_name = std::string::from(ref mut zone, "HOME");
+  var home_value = std::string::from(ref mut zone, "/tmp/ari-home-test");
   var score = 0;
 
   if !cwd.is_empty() {

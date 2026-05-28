@@ -17,15 +17,15 @@ helpers today, and future OS-facing modules such as `std::fs` and
 input::read_byte() -> i64
 input::try_read_byte() -> Option[u8]
 input::line(ref mut Zone) -> std::string::String
-input::line_text() -> string
+input::line_text() -> String
 input::owned_line(ref mut Zone) -> std::string::String
 
 read_byte() -> i64
 read_line(ref mut Zone) -> std::string::String
-read_line_text() -> string
+read_line_text() -> String
 read_line_owned(ref mut Zone) -> std::string::String
 input(ref mut Zone) -> std::string::String
-input_text() -> string
+input_text() -> String
 input_owned(ref mut Zone) -> std::string::String
 ```
 

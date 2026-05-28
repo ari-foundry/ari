@@ -13,16 +13,16 @@ and handle ownership belong in future `std::os` wrappers.
 
 ```ari
 target::triple(ref mut zone) -> String
-target::triple_text() -> string
+target::triple_text() -> String
 target::arch() -> target::Arch
 target::arch_name(ref mut zone) -> String
-target::arch_name_text() -> string
+target::arch_name_text() -> String
 target::os() -> target::Os
 target::os_name(ref mut zone) -> String
-target::os_name_text() -> string
+target::os_name_text() -> String
 target::env() -> target::Env
 target::env_name(ref mut zone) -> String
-target::env_name_text() -> string
+target::env_name_text() -> String
 target::object_format() -> target::ObjectFormat
 target::debug_format() -> target::DebugFormat
 target::errno_abi() -> target::ErrnoAbi

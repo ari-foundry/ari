@@ -1,7 +1,7 @@
 // Covers explicit Windows drive and UNC lexical helpers. These helpers do not
 // change Ari's POSIX default path policy; they are opt-in byte classifiers.
-fn expect_slice(value: Slice[u8], expected: string) -> void {
-  assert(value.equals(std::string::bytes(expected)));
+fn expect_slice(value: Slice[u8], expected: Slice[u8]) -> void {
+  assert(value.equals(expected));
 }
 
 fn expect_bytes(value: Slice[u8], expected: Slice[u8]) -> void {
@@ -64,12 +64,14 @@ fn main() -> i64 {
   expect_slice(drive_view.windows_drive().unwrap(), "D:");
   assert(drive_view.windows_unc_prefix().is_none());
 
-  let unc_owned = std::path::from_string(ref mut zone, "//host/share/tool");
+  let unc_text = std::string::from(ref mut zone, "//host/share/tool");
+  let unc_owned = std::path::from(ref mut zone, ref unc_text);
   assert(unc_owned.is_windows_unc());
   assert(unc_owned.is_windows_absolute());
   expect_slice(unc_owned.windows_unc_prefix().unwrap(), "//host/share");
 
-  let drive_owned = std::path::from_string(ref mut zone, "E:cache");
+  let drive_text = std::string::from(ref mut zone, "E:cache");
+  let drive_owned = std::path::from(ref mut zone, ref drive_text);
   assert(drive_owned.has_windows_drive_prefix());
   assert(drive_owned.is_windows_drive_relative());
   assert(!drive_owned.is_windows_absolute());

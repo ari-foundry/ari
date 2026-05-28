@@ -1,9 +1,9 @@
 // Covers owned path buffers and ergonomic wrappers over borrowed PathBytes.
-fn expect_slice(value: Slice[u8], expected: string) -> void {
-  assert(value.equals(std::string::bytes(expected)));
+fn expect_slice(value: Slice[u8], expected: Slice[u8]) -> void {
+  assert(value.equals(expected));
 }
 
-fn expect_buf(value: ref std::path::PathBuf, expected: string) -> void {
+fn expect_buf(value: ref std::path::PathBuf, expected: Slice[u8]) -> void {
   expect_slice(value.as_bytes(), expected);
 }
 
@@ -18,7 +18,8 @@ fn main() -> i64 {
   let copied = std::path::to_string(ref mut zone, view);
   assert(copied.equals_text("src/main.ari"));
 
-  let from_text = std::path::from_string(ref mut zone, "src/main.ari");
+  let source_text = std::string::from(ref mut zone, "src/main.ari");
+  let from_text = std::path::from(ref mut zone, ref source_text);
   expect_buf(ref from_text, "src/main.ari");
   assert(from_text.len() == 12);
   assert(!from_text.is_empty());

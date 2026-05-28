@@ -7,33 +7,39 @@ fn status_is(value: Result[process::ExitStatus, error::Error], expected: i64) ->
   }
 }
 
+fn c(value: Slice[u8]) -> std::c::CStr {
+  return std::c::from(value);
+}
+
 fn main() -> i64 {
   var zone = zone::temp(1024);
   var score = 0;
 
-  let path = "build/prelude/std-process-stdin-input.txt";
-  if fs::write_string(path, "ari\n").is_err() {
+  let path: Slice[u8] = "build/prelude/std-process-stdin-input.txt";
+  var path_text = std::string::from(ref mut zone, path);
+  var ari_line = std::string::from(ref mut zone, "ari\n");
+  if fs::write_string(ref path_text, ref ari_line).is_err() {
     return 1;
   }
 
-  var file_cmd = process::Command::new("sh")
-    .with_arg(ref mut zone, "-c")
-    .with_arg(ref mut zone, "read value; test \"$value\" = ari");
-  if status_is(file_cmd.status_with_stdin_file(path), 0) {
+  var file_cmd = process::Command::new(c("sh"))
+    .with_arg(ref mut zone, c("-c"))
+    .with_arg(ref mut zone, c("read value; test \"$value\" = ari"));
+  if status_is(file_cmd.status_with_stdin_file(c(path)), 0) {
     score = score + 11;
   }
 
-  var null_cmd = process::Command::new("sh")
-    .with_arg(ref mut zone, "-c")
-    .with_arg(ref mut zone, "if read value; then exit 9; else exit 17; fi");
+  var null_cmd = process::Command::new(c("sh"))
+    .with_arg(ref mut zone, c("-c"))
+    .with_arg(ref mut zone, c("if read value; then exit 9; else exit 17; fi"));
   if status_is(null_cmd.status_with_stdin_null(), 17) {
     score = score + 13;
   }
 
-  var owned_path = std::string::from_string(ref mut zone, path);
-  var bytes_cmd = process::Command::new("sh")
-    .with_arg(ref mut zone, "-c")
-    .with_arg(ref mut zone, "read value; test \"$value\" = ari");
+  var owned_path = std::string::from(ref mut zone, path);
+  var bytes_cmd = process::Command::new(c("sh"))
+    .with_arg(ref mut zone, c("-c"))
+    .with_arg(ref mut zone, c("read value; test \"$value\" = ari"));
   if status_is(bytes_cmd.status_with_stdin_file_bytes(ref mut zone, owned_path.as_slice()), 0) {
     score = score + 17;
   }
@@ -43,43 +49,46 @@ fn main() -> i64 {
     score = score + 19;
   }
 
-  let cwd_path = "build/prelude/std-process-stdin-cwd.txt";
-  if fs::write_string(cwd_path, "cwd\n").is_err() {
+  let cwd_path: Slice[u8] = "build/prelude/std-process-stdin-cwd.txt";
+  var cwd_path_text = std::string::from(ref mut zone, cwd_path);
+  var cwd_line = std::string::from(ref mut zone, "cwd\n");
+  if fs::write_string(ref cwd_path_text, ref cwd_line).is_err() {
     return 2;
   }
-  var cwd_cmd = process::Command::new("sh")
-    .with_arg(ref mut zone, "-c")
-    .with_arg(ref mut zone, "read value; test \"$value\" = cwd")
-    .with_current_dir("build/prelude");
-  if status_is(cwd_cmd.status_with_stdin_file("std-process-stdin-cwd.txt"), 0) {
+  var cwd_cmd = process::Command::new(c("sh"))
+    .with_arg(ref mut zone, c("-c"))
+    .with_arg(ref mut zone, c("read value; test \"$value\" = cwd"))
+    .with_current_dir(c("build/prelude"));
+  if status_is(cwd_cmd.status_with_stdin_file(c("std-process-stdin-cwd.txt")), 0) {
     score = score + 23;
   }
 
-  var path_cmd = process::Command::new("sh")
-    .with_arg(ref mut zone, "-c")
-    .with_arg(ref mut zone, "read value; test \"$value\" = ari");
-  if status_is(path_cmd.status_with_stdin_file_path(ref mut zone, std::path::bytes(std::string::bytes(path))), 0) {
+  var path_cmd = process::Command::new(c("sh"))
+    .with_arg(ref mut zone, c("-c"))
+    .with_arg(ref mut zone, c("read value; test \"$value\" = ari"));
+  if status_is(path_cmd.status_with_stdin_file_path(ref mut zone, std::path::bytes(path)), 0) {
     score = score + 29;
   }
 
-  var pipe_cmd = process::Command::new("sh")
-    .with_arg(ref mut zone, "-c")
-    .with_arg(ref mut zone, "read value; test \"$value\" = pipe");
-  if status_is(pipe_cmd.status_with_stdin_string("pipe\n"), 0) {
+  var pipe_cmd = process::Command::new(c("sh"))
+    .with_arg(ref mut zone, c("-c"))
+    .with_arg(ref mut zone, c("read value; test \"$value\" = pipe"));
+  var pipe_input = std::string::from(ref mut zone, "pipe\n");
+  if status_is(pipe_cmd.status_with_stdin_string(ref pipe_input), 0) {
     score = score + 31;
   }
 
-  var module_pipe_cmd = process::Command::new("sh")
-    .with_arg(ref mut zone, "-c")
-    .with_arg(ref mut zone, "read value; test \"$value\" = module");
+  var module_pipe_cmd = process::Command::new(c("sh"))
+    .with_arg(ref mut zone, c("-c"))
+    .with_arg(ref mut zone, c("read value; test \"$value\" = module"));
   if status_is(process::status_with_stdin(ref module_pipe_cmd, std::string::bytes("module\n")), 0) {
     score = score + 37;
   }
 
-  var missing_stdin_cmd = process::Command::new("sh")
-    .with_arg(ref mut zone, "-c")
-    .with_arg(ref mut zone, "cat >/dev/null");
-  match missing_stdin_cmd.status_with_stdin_file("__ari_missing_stdin_file__") {
+  var missing_stdin_cmd = process::Command::new(c("sh"))
+    .with_arg(ref mut zone, c("-c"))
+    .with_arg(ref mut zone, c("cat >/dev/null"));
+  match missing_stdin_cmd.status_with_stdin_file(c("__ari_missing_stdin_file__")) {
     Err(reason) => {
       if reason.is_not_found() && reason.code() == 2 {
         score = score + 13;

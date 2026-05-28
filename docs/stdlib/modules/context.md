@@ -15,14 +15,14 @@ source so their behavior is readable and testable like ordinary library code.
 ```ari
 context::argc() -> i64
 context::arg(ref mut Zone, index: i64) -> std::string::String
-context::arg_text(index: i64) -> string
+context::arg_text(index: i64) -> String
 context::try_arg(ref mut Zone, index: i64) -> Option[std::string::String]
-context::try_arg_text(index: i64) -> Option[string]
+context::try_arg_text(index: i64) -> Option[String]
 context::thread_id() -> i64
 context::cwd(ref mut Zone) -> std::string::String
-context::cwd_text() -> string
+context::cwd_text() -> String
 context::executable_path(ref mut Zone) -> std::string::String
-context::executable_path_text() -> string
+context::executable_path_text() -> String
 context::has_args() -> bool
 context::has_arg(index: i64) -> bool
 context::user_arg_count() -> i64
@@ -30,19 +30,19 @@ context::has_user_args() -> bool
 context::is_main_thread() -> bool
 context::has_cwd() -> bool
 context::try_cwd(ref mut Zone) -> Option[std::string::String]
-context::try_cwd_text() -> Option[string]
+context::try_cwd_text() -> Option[String]
 context::cwd_os() -> std::string::OsStr
 context::try_cwd_os() -> Option[std::string::OsStr]
 context::cwd_path() -> std::path::PathBytes
 context::has_executable_path() -> bool
 context::try_executable_path(ref mut Zone) -> Option[std::string::String]
-context::try_executable_path_text() -> Option[string]
+context::try_executable_path_text() -> Option[String]
 context::executable_path_os() -> std::string::OsStr
 context::try_executable_path_os() -> Option[std::string::OsStr]
 
 arg_count() -> i64
 arg(ref mut Zone, index: i64) -> Result[std::string::String, std::error::Error]
-arg_text(index: i64) -> string
+arg_text(index: i64) -> String
 has_arg(index: i64) -> bool
 ```
 

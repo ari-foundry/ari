@@ -2,8 +2,8 @@
 // the explicit OsStr and PathBytes boundary views.
 fn main() -> i64 {
   var zone = zone::create(128);
-  var name = std::string::from_string(ref mut zone, "ARI_STD_ENV_OS_VIEW_VALUE");
-  var alpha = std::string::from_string(ref mut zone, "alpha");
+  var name = std::string::from(ref mut zone, "ARI_STD_ENV_OS_VIEW_VALUE");
+  var alpha = std::string::from(ref mut zone, "alpha");
   var expected = [97u8, 108u8, 112u8, 104u8, 97u8];
 
   env::remove_unchecked(ref name);

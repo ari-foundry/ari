@@ -37,7 +37,7 @@ pub struct SplitOnce {
 pub extern "ari" fn alloc_buffer(zone: ref mut Zone, capacity: i64) -> ptr u8 = "ari_builtin_string_alloc_buffer";
 pub extern "ari" fn with_capacity(zone: ref mut Zone, capacity: i64) -> RawString = "ari_builtin_string_with_capacity";
 pub extern "ari" fn new(zone: ref mut Zone, capacity: i64) -> std::string::String = "ari_builtin_string_new";
-pub extern "ari" fn from_string(zone: ref mut Zone, text: string) -> std::string::String = "ari_builtin_string_from_string";
+extern "ari" fn from_literal_raw(zone: ref mut Zone, text: string) -> std::string::String = "ari_builtin_string_from_string";
 pub extern "ari" fn copy_to(value: ref std::string::String, target: ref mut Zone) -> std::string::String = "ari_builtin_string_copy_to";
 
 fn utf8_string_from_owned(value: std::string::String) -> std::string::Utf8String {
@@ -119,25 +119,37 @@ pub fn os_string(zone: ref mut Zone, bytes: std::Slice[u8]) -> std::string::OsSt
   return std::string::os_string_from_owned(text);
 }
 
-pub fn os_string_from_text(zone: ref mut Zone, text: string) -> std::string::OsString {
-  let value = std::string::from_string(zone, text);
+pub fn os_string_from_slice(zone: ref mut Zone, text: std::Slice[u8]) -> std::string::OsString {
+  let value = std::string::from_slice_in(zone, text);
   return std::string::os_string_from_owned(value);
 }
 
-pub fn c_str(text: string) -> std::c::CStr {
-  return std::c::from_string(text);
+pub fn c_str(text: std::c::CStr) -> std::c::CStr {
+  return text;
 }
 
-pub fn c_len(text: string) -> i64 {
+pub fn c_len(text: std::c::CStr) -> i64 {
+  return text.len();
+}
+
+pub fn c_bytes(text: std::c::CStr) -> std::Slice[u8] {
+  return text.as_slice();
+}
+
+fn c_len_literal(text: string) -> i64 {
   return c_string_len(text);
 }
 
-pub fn c_bytes(text: string) -> std::Slice[u8] {
+fn c_bytes_literal(text: string) -> std::Slice[u8] {
   return std::Slice<u8> { data: text as ptr u8, len: c_string_len(text) };
 }
 
-pub fn bytes(text: string) -> std::Slice[u8] {
-  return std::string::c_bytes(text);
+pub fn bytes(text: std::Slice[u8]) -> std::Slice[u8] {
+  return text;
+}
+
+fn bytes_raw(text: string) -> std::Slice[u8] {
+  return std::string::c_bytes_literal(text);
 }
 
 pub fn from_slice_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::string::String {
@@ -146,8 +158,12 @@ pub fn from_slice_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::string:
   return output;
 }
 
-pub fn from(zone: ref mut Zone, text: string) -> std::string::String {
-  return std::string::from_string(zone, text);
+pub fn from(zone: ref mut Zone, text: std::Slice[u8]) -> std::string::String {
+  return std::string::from_slice_in(zone, text);
+}
+
+fn from_raw(zone: ref mut Zone, text: string) -> std::string::String {
+  return std::string::from_literal_raw(zone, text);
 }
 
 pub fn copy(zone: ref mut Zone, values: std::Slice[u8]) -> std::string::String {
@@ -578,26 +594,16 @@ pub impl std::string::String {
     self.append_bytes(zone, values);
   }
 
-  fn append(self: ref mut Self, zone: ref mut Zone, value: string) -> void {
-    let data = value as ptr u8;
-    var index = 0;
-    var byte = ptr_load(ptr_add(data, index));
-    while byte != '\x00' {
-      append_byte_in(self, zone, byte);
-      index = index + 1;
-      byte = ptr_load(ptr_add(data, index));
-    }
+  fn append(self: ref mut Self, zone: ref mut Zone, value: super::Slice[u8]) -> void {
+    self.append_bytes(zone, value);
   }
 
-  fn append_string_in(self: ref mut Self, zone: ref mut Zone, value: string) -> void {
-    let data = value as ptr u8;
-    var index = 0;
-    var byte = ptr_load(ptr_add(data, index));
-    while byte != '\x00' {
-      append_byte_in(self, zone, byte);
-      index = index + 1;
-      byte = ptr_load(ptr_add(data, index));
-    }
+  fn append_string_in(self: ref mut Self, zone: ref mut Zone, value: super::Slice[u8]) -> void {
+    self.append_bytes(zone, value);
+  }
+
+  fn append_raw_in(self: ref mut Self, zone: ref mut Zone, value: string) -> void {
+    self.append_bytes(zone, std::string::bytes_raw(value));
   }
 
   fn append_i64_in(self: ref mut Self, zone: ref mut Zone, value: i64) -> void {
@@ -938,12 +944,12 @@ pub impl std::string::String {
     return view.contains_slice(values);
   }
 
-  fn find_text(self: ref Self, value: string) -> i64 {
-    return self.find(std::string::bytes(value));
+  fn find_text(self: ref Self, value: super::Slice[u8]) -> i64 {
+    return self.find(value);
   }
 
-  fn contains_text(self: ref Self, value: string) -> bool {
-    return self.contains_slice(std::string::bytes(value));
+  fn contains_text(self: ref Self, value: super::Slice[u8]) -> bool {
+    return self.contains_slice(value);
   }
 
   fn starts_with(self: ref Self, values: super::Slice[u8]) -> bool {
@@ -960,8 +966,8 @@ pub impl std::string::String {
     return true;
   }
 
-  fn starts_with_text(self: ref Self, value: string) -> bool {
-    return self.starts_with(std::string::bytes(value));
+  fn starts_with_text(self: ref Self, value: super::Slice[u8]) -> bool {
+    return self.starts_with(value);
   }
 
   fn ends_with(self: ref Self, values: super::Slice[u8]) -> bool {
@@ -979,8 +985,8 @@ pub impl std::string::String {
     return true;
   }
 
-  fn ends_with_text(self: ref Self, value: string) -> bool {
-    return self.ends_with(std::string::bytes(value));
+  fn ends_with_text(self: ref Self, value: super::Slice[u8]) -> bool {
+    return self.ends_with(value);
   }
 
   fn equals(self: ref Self, values: super::Slice[u8]) -> bool {
@@ -997,8 +1003,8 @@ pub impl std::string::String {
     return true;
   }
 
-  fn equals_text(self: ref Self, value: string) -> bool {
-    return self.equals(std::string::bytes(value));
+  fn equals_text(self: ref Self, value: super::Slice[u8]) -> bool {
+    return self.equals(value);
   }
 
   pub fn eq(self: ref Self, other: std::string::String) -> bool {
@@ -1010,8 +1016,8 @@ pub impl std::string::String {
     return std::ascii::equals_ignore_case(view, values);
   }
 
-  fn equals_text_ignore_case(self: ref Self, value: string) -> bool {
-    return self.equals_ignore_case(std::string::bytes(value));
+  fn equals_text_ignore_case(self: ref Self, value: super::Slice[u8]) -> bool {
+    return self.equals_ignore_case(value);
   }
 
   fn starts_with_ignore_case(self: ref Self, values: super::Slice[u8]) -> bool {
@@ -1019,8 +1025,8 @@ pub impl std::string::String {
     return std::ascii::starts_with_ignore_case(view, values);
   }
 
-  fn starts_with_text_ignore_case(self: ref Self, value: string) -> bool {
-    return self.starts_with_ignore_case(std::string::bytes(value));
+  fn starts_with_text_ignore_case(self: ref Self, value: super::Slice[u8]) -> bool {
+    return self.starts_with_ignore_case(value);
   }
 
   fn ends_with_ignore_case(self: ref Self, values: super::Slice[u8]) -> bool {
@@ -1028,8 +1034,8 @@ pub impl std::string::String {
     return std::ascii::ends_with_ignore_case(view, values);
   }
 
-  fn ends_with_text_ignore_case(self: ref Self, value: string) -> bool {
-    return self.ends_with_ignore_case(std::string::bytes(value));
+  fn ends_with_text_ignore_case(self: ref Self, value: super::Slice[u8]) -> bool {
+    return self.ends_with_ignore_case(value);
   }
 
   fn index_of_ignore_case(self: ref Self, values: super::Slice[u8]) -> i64 {
@@ -1037,8 +1043,8 @@ pub impl std::string::String {
     return std::ascii::index_of_ignore_case(view, values);
   }
 
-  fn index_of_text_ignore_case(self: ref Self, value: string) -> i64 {
-    return self.index_of_ignore_case(std::string::bytes(value));
+  fn index_of_text_ignore_case(self: ref Self, value: super::Slice[u8]) -> i64 {
+    return self.index_of_ignore_case(value);
   }
 
   fn contains_ignore_case(self: ref Self, values: super::Slice[u8]) -> bool {
@@ -1046,8 +1052,8 @@ pub impl std::string::String {
     return std::ascii::contains_ignore_case(view, values);
   }
 
-  fn contains_text_ignore_case(self: ref Self, value: string) -> bool {
-    return self.contains_ignore_case(std::string::bytes(value));
+  fn contains_text_ignore_case(self: ref Self, value: super::Slice[u8]) -> bool {
+    return self.contains_ignore_case(value);
   }
 
   fn is_utf8(self: ref Self) -> bool {

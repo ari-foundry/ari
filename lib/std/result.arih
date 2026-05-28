@@ -179,7 +179,7 @@ pub impl[T, E] std::Result[T, E] {
     }
   }
 
-  fn expect(self, message: string) -> T {
+  fn expect(self, message: ref std::string::String) -> T {
     match self {
       std::Ok(value) => {
         return value;
@@ -201,7 +201,7 @@ pub impl[T, E] std::Result[T, E] {
     }
   }
 
-  fn expect_err(self, message: string) -> E {
+  fn expect_err(self, message: ref std::string::String) -> E {
     match self {
       std::Ok(_) => {
         std::panic();

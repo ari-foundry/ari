@@ -7,9 +7,24 @@ fn raw_error_is(raw: i64, kind: error::Kind) -> bool {
 
 fn main() -> i64 {
   var score = 0;
-  var arena = zone::create(2048);
+  var arena = zone::create(4096);
+  var host_v4 = std::string::from(ref mut arena, "127.0.0.1");
+  var host_v6 = std::string::from(ref mut arena, "::1");
+  var host_any = std::string::from(ref mut arena, "0.0.0.0");
+  var host_broadcast = std::string::from(ref mut arena, "255.255.255.255");
+  var endpoint_8082 = std::string::from(ref mut arena, "127.0.0.1:8082");
+  var endpoint_8083 = std::string::from(ref mut arena, "127.0.0.1:8083");
+  var endpoint_8084 = std::string::from(ref mut arena, "127.0.0.1:8084");
+  var endpoint_8085 = std::string::from(ref mut arena, "127.0.0.1:8085");
+  var endpoint_bad = std::string::from(ref mut arena, "127.0.0.1:bad");
+  var endpoint_v6_8088 = std::string::from(ref mut arena, "[::1]:8088");
+  var endpoint_v6_8089 = std::string::from(ref mut arena, "[::1]:8089");
+  var service_http = std::string::from(ref mut arena, "http");
+  var service_https = std::string::from(ref mut arena, "HTTPS");
+  var service_https_lower = std::string::from(ref mut arena, "https");
+  var service_missing = std::string::from(ref mut arena, "not-a-service");
 
-  let loopback = net::lookup_v4_optional("127.0.0.1", 8080 as u16);
+  let loopback = net::lookup_v4_optional(ref host_v4, 8080 as u16);
   assert(loopback.is_some());
   let addr = loopback.unwrap();
   if addr.is_loopback() {
@@ -26,8 +41,8 @@ fn main() -> i64 {
     score = score + 8;
   }
 
-  assert(net::try_lookup_v4("127.0.0.1", 80 as u16).is_some());
-  match net::lookup_v4("127.0.0.1", 80 as u16) {
+  assert(net::try_lookup_v4(ref host_v4, 80 as u16).is_some());
+  match net::lookup_v4(ref host_v4, 80 as u16) {
     Ok(result_addr) => {
       if result_addr.port() == 80 as u16 && result_addr.is_loopback() {
         score = score + 16;
@@ -36,7 +51,7 @@ fn main() -> i64 {
     Err(_reason) => {}
   }
 
-  match net::lookup_v4_raw("127.0.0.1", 80 as u16) {
+  match net::lookup_v4_raw(ref host_v4, 80 as u16) {
     Ok(raw_addr) => {
       if !(raw_addr.port() == 80 as u16 && raw_addr.is_loopback()) {
         panic();
@@ -47,19 +62,19 @@ fn main() -> i64 {
     }
   }
 
-  if net::lookup_v4_optional("::1", 80 as u16).is_none() {
+  if net::lookup_v4_optional(ref host_v6, 80 as u16).is_none() {
     score = score + 32;
   }
 
-  let loopback6 = net::lookup_v6_optional("::1", 8086 as u16);
+  let loopback6 = net::lookup_v6_optional(ref host_v6, 8086 as u16);
   assert(loopback6.is_some());
   let addr6 = loopback6.unwrap();
   if addr6.is_loopback() && addr6.port() == 8086 as u16 && addr6.ip().is_v6() {
     score = score + 32768;
   }
 
-  assert(net::try_lookup_v6("::1", 80 as u16).is_some());
-  match net::lookup_v6_raw("::1", 8087 as u16) {
+  assert(net::try_lookup_v6(ref host_v6, 80 as u16).is_some());
+  match net::lookup_v6_raw(ref host_v6, 8087 as u16) {
     Ok(raw_addr6) => {
       if raw_addr6.port() == 8087 as u16 && raw_addr6.is_loopback() && raw_addr6.ip().is_v6() {
         score = score + 65536;
@@ -70,12 +85,12 @@ fn main() -> i64 {
     }
   }
 
-  let any = net::lookup_v4_optional("0.0.0.0", 0 as u16);
+  let any = net::lookup_v4_optional(ref host_any, 0 as u16);
   if any.is_some() && any.unwrap().is_unspecified() {
     score = score + 64;
   }
 
-  let broadcast = net::lookup_v4_optional("255.255.255.255", 65535 as u16);
+  let broadcast = net::lookup_v4_optional(ref host_broadcast, 65535 as u16);
   if broadcast.is_some() {
     let full = broadcast.unwrap();
     if full.port() == 65535 as u16 && !full.is_loopback() && !full.is_unspecified() {
@@ -83,7 +98,7 @@ fn main() -> i64 {
     }
   }
 
-  let endpoint = net::resolve_optional("127.0.0.1:8082");
+  let endpoint = net::resolve_optional(ref endpoint_8082);
   if endpoint.is_some() {
     let resolved = endpoint.unwrap();
     if resolved.is_loopback() && resolved.port() == 8082 as u16 {
@@ -91,8 +106,8 @@ fn main() -> i64 {
     }
   }
 
-  assert(net::try_resolve("127.0.0.1:8083").is_some());
-  match net::resolve("127.0.0.1:8083") {
+  assert(net::try_resolve(ref endpoint_8083).is_some());
+  match net::resolve(ref endpoint_8083) {
     Ok(resolved_result) => {
       if resolved_result.is_loopback() && resolved_result.port() == 8083 as u16 {
         score = score + 512;
@@ -101,7 +116,7 @@ fn main() -> i64 {
     Err(_endpoint_reason) => {}
   }
 
-  match net::ToSocketAddrs::to_socket_addrs("127.0.0.1:8084", ref mut arena) {
+  match net::ToSocketAddrs::to_socket_addrs(endpoint_8084, ref mut arena) {
     Ok(trait_addrs) => {
       if trait_addrs.len() > 0 && trait_addrs.get(0).is_loopback() &&
         trait_addrs.get(0).port() == 8084 as u16 {
@@ -111,7 +126,7 @@ fn main() -> i64 {
     Err(_trait_reason) => {}
   }
 
-  match net::to_socket_addrs(ref mut arena, "127.0.0.1:8085") {
+  match net::to_socket_addrs(ref mut arena, ref endpoint_8085) {
     Ok(module_addrs) => {
       if module_addrs.len() > 0 && module_addrs.get(0).is_loopback() &&
         module_addrs.get(0).port() == 8085 as u16 {
@@ -121,7 +136,7 @@ fn main() -> i64 {
     Err(_module_reason) => {}
   }
 
-  match net::resolve_all(ref mut arena, "127.0.0.1", 8086 as u16) {
+  match net::resolve_all(ref mut arena, ref host_v4, 8086 as u16) {
     Ok(all_addrs) => {
       if all_addrs.len() > 0 && all_addrs.get(0).is_loopback() {
         score = score + 1048576;
@@ -132,7 +147,7 @@ fn main() -> i64 {
     }
   }
 
-  match net::service_port("http") {
+  match net::service_port(ref service_http) {
     Ok(http_port) => {
       if http_port == 80 as u16 {
         score = score + 2097152;
@@ -143,7 +158,7 @@ fn main() -> i64 {
     }
   }
 
-  match net::service_port_optional("HTTPS") {
+  match net::service_port_optional(ref service_https) {
     Some(https_port) => {
       if https_port == 443 as u16 {
         score = score + 4194304;
@@ -154,11 +169,11 @@ fn main() -> i64 {
     }
   }
 
-  if net::service_port("not-a-service").is_err() {
+  if net::service_port(ref service_missing).is_err() {
     score = score + 8388608;
   }
 
-  match net::resolve_service(ref mut arena, "127.0.0.1", "http") {
+  match net::resolve_service(ref mut arena, ref host_v4, ref service_http) {
     Ok(service_addrs) => {
       if service_addrs.len() > 0 && service_addrs.get(0).is_loopback() &&
         service_addrs.get(0).port() == 80 as u16 {
@@ -170,7 +185,7 @@ fn main() -> i64 {
     }
   }
 
-  match net::to_socket_addrs_service(ref mut arena, "127.0.0.1", "https") {
+  match net::to_socket_addrs_service(ref mut arena, ref host_v4, ref service_https_lower) {
     Ok(service_module_addrs) => {
       if service_module_addrs.len() > 0 && service_module_addrs.get(0).is_loopback() &&
         service_module_addrs.get(0).port() == 443 as u16 {
@@ -182,7 +197,7 @@ fn main() -> i64 {
     }
   }
 
-  match net::resolve("[::1]:8088") {
+  match net::resolve(ref endpoint_v6_8088) {
     Ok(resolved_v6) => {
       if resolved_v6.is_loopback() && resolved_v6.port() == 8088 as u16 && resolved_v6.ip().is_v6() {
         score = score + 131072;
@@ -193,7 +208,7 @@ fn main() -> i64 {
     }
   }
 
-  match net::to_socket_addrs(ref mut arena, "[::1]:8089") {
+  match net::to_socket_addrs(ref mut arena, ref endpoint_v6_8089) {
     Ok(module_v6_addrs) => {
       if module_v6_addrs.len() > 0 &&
         module_v6_addrs.get(0).is_loopback() &&
@@ -207,7 +222,7 @@ fn main() -> i64 {
     }
   }
 
-  match net::connect_host("127.0.0.1") {
+  match net::connect_host(ref host_v4) {
     Ok(_unexpected_stream) => {
       panic();
     }
@@ -218,7 +233,7 @@ fn main() -> i64 {
     }
   }
 
-  match net::resolve_raw("127.0.0.1:bad") {
+  match net::resolve_raw(ref endpoint_bad) {
     Ok(_bad_addr) => {
       panic();
     }
@@ -229,7 +244,7 @@ fn main() -> i64 {
     }
   }
 
-  match net::tcp_connect_host("127.0.0.1") {
+  match net::tcp_connect_host(ref host_v4) {
     Ok(_unexpected_explicit_stream) => {
       panic();
     }

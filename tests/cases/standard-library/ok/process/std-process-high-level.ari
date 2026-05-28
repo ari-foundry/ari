@@ -24,24 +24,28 @@ fn unit_ok(value: Result[(), error::Error]) -> bool {
   }
 }
 
+fn c(value: Slice[u8]) -> std::c::CStr {
+  return std::c::from(value);
+}
+
 fn main() -> i64 {
   var zone = zone::temp(2048);
   var score = 0;
 
-  var cmd = process::Command::new("sh")
-    .with_arg(ref mut zone, "-c")
-    .with_arg(ref mut zone, "test \"$ARI_HIGH_LEVEL\" = yes && pwd | grep -q '/build/prelude$' && exit 12")
-    .with_env(ref mut zone, "ARI_HIGH_LEVEL", "yes")
-    .with_current_dir("build/prelude");
+  var cmd = process::Command::new(c("sh"))
+    .with_arg(ref mut zone, c("-c"))
+    .with_arg(ref mut zone, c("test \"$ARI_HIGH_LEVEL\" = yes && pwd | grep -q '/build/prelude$' && exit 12"))
+    .with_env(ref mut zone, c("ARI_HIGH_LEVEL"), c("yes"))
+    .with_current_dir(c("build/prelude"));
   if status_is(cmd.status(), 12) {
     score = score + 11;
   }
 
-  var clear_env_cmd = process::Command::new("/usr/bin/env")
+  var clear_env_cmd = process::Command::new(c("/usr/bin/env"))
     .with_clear_env()
     .with_inherit_env()
     .with_clear_env()
-    .with_env(ref mut zone, "ARI_ONLY", "yes");
+    .with_env(ref mut zone, c("ARI_ONLY"), c("yes"));
   match clear_env_cmd.output(ref mut zone) {
     Ok(clear_output_value) => {
       var clear_output = clear_output_value;
@@ -60,9 +64,9 @@ fn main() -> i64 {
     Err(_) => {}
   }
 
-  var out_cmd = process::Command::new("sh");
-  out_cmd.arg(ref mut zone, "-c");
-  out_cmd.arg(ref mut zone, "printf 'x'");
+  var out_cmd = process::Command::new(c("sh"));
+  out_cmd.arg(ref mut zone, c("-c"));
+  out_cmd.arg(ref mut zone, c("printf 'x'"));
   match out_cmd.output(ref mut zone) {
     Ok(output_value) => {
       var output = output_value;
@@ -73,12 +77,12 @@ fn main() -> i64 {
     Err(_) => {}
   }
 
-  var owned_flag = std::string::from_string(ref mut zone, "-c");
-  var owned_script = std::string::from_string(
+  var owned_flag = std::string::from(ref mut zone, "-c");
+  var owned_script = std::string::from(
     ref mut zone,
     "test \"$ARI_BYTES\" = ok && pwd | grep -q '/build/prelude$' && exit 14"
   );
-  var bytes_cmd = process::Command::new("sh");
+  var bytes_cmd = process::Command::new(c("sh"));
   if bytes_cmd.arg_bytes(ref mut zone, owned_flag.as_slice()).is_ok() &&
      bytes_cmd.arg_bytes(ref mut zone, owned_script.as_slice()).is_ok() &&
      bytes_cmd.env_bytes(ref mut zone, "ARI_BYTES", "ok").is_ok() &&
@@ -104,8 +108,8 @@ fn main() -> i64 {
     score = score + 17;
   }
 
-  var status_args = [process::arg("-c"), process::arg("exit 6")];
-  var status_cmd = process::command_with_args("sh", status_args.as_slice());
+  var status_args = [process::arg(c("-c")), process::arg(c("exit 6"))];
+  var status_cmd = process::command_with_args(c("sh"), status_args.as_slice());
   match status_cmd.exit_status() {
     Ok(status) => {
       match status.exit_code() {
@@ -124,8 +128,8 @@ fn main() -> i64 {
     score = score + 23;
   }
 
-  var child_args = [process::arg("-c"), process::arg("exit 4")];
-  var child_cmd = process::command_with_args("sh", child_args.as_slice());
+  var child_args = [process::arg(c("-c")), process::arg(c("exit 4"))];
+  var child_cmd = process::command_with_args(c("sh"), child_args.as_slice());
   match child_cmd.spawn() {
     Ok(child) => {
       if unit_ok(child.signal(process::sig_check())) && status_code_is(child.wait(), 4) {

@@ -20,7 +20,7 @@ log::Error
 
 log::rank(level)
 log::name(ref mut zone, level) -> String
-log::name_text(level) -> string
+log::name_text(level) -> String
 log::enabled(level, minimum)
 log::write(level, bytes)
 log::message(level, text)

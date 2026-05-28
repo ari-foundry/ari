@@ -3,11 +3,11 @@
 fn main() -> i64 {
   var zone = zone::create(256);
 
-  var decimal = std::string::from_string(ref mut zone, "123x");
-  var hex = std::string::from_string(ref mut zone, "1AfG");
-  var all_decimal = std::string::from_string(ref mut zone, "42");
-  var leading_zero = std::string::from_string(ref mut zone, "009");
-  var invalid = std::string::from_string(ref mut zone, "x123");
+  var decimal = std::string::from(ref mut zone, "123x");
+  var hex = std::string::from(ref mut zone, "1AfG");
+  var all_decimal = std::string::from(ref mut zone, "42");
+  var leading_zero = std::string::from(ref mut zone, "009");
+  var invalid = std::string::from(ref mut zone, "x123");
   var empty = std::string::new(ref mut zone, 0);
 
   var score = 0;

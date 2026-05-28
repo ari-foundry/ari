@@ -40,8 +40,8 @@ parse_error.kind() -> ParseErrorKind
 parse_error.offset() -> i64
 parse_error.name(ref mut Zone) -> String
 parse_error.message(ref mut Zone) -> String
-parse_error.name_text() -> string
-parse_error.message_text() -> string
+parse_error.name_text() -> String
+parse_error.message_text() -> String
 parse_error.is_empty_input() -> bool
 parse_error.is_expected_digit() -> bool
 parse_error.is_invalid_radix() -> bool
