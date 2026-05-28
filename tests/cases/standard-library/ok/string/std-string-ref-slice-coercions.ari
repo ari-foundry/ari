@@ -1,0 +1,28 @@
+fn ok(value: bool) -> i64 {
+  if value {
+    return 1;
+  }
+  return 0;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(512);
+  var text = std::string::from(ref mut zone, "ari");
+  var path = std::string::from(ref mut zone, ".");
+  var home = std::string::from(ref mut zone, "HOME");
+  var score = 0;
+
+  score = score + ok(std::string::starts_with(ref text, "a"));
+  score = score + ok(std::string::ends_with(ref text, "i"));
+  score = score + ok(std::string::contains(ref text, "r"));
+  score = score + ok(std::parse::is_integer(ref text) == false);
+  score = score + ok(std::path::is_relative(ref path));
+  score = score + ok(std::env::has(ref home) || !std::env::has(ref home));
+  score = score + ok(std::io::print(ref text).is_ok());
+  score = score + ok(std::io::println(ref text).is_ok());
+  score = score + ok(std::fmt::format_value(ref mut zone, 12).equals("12"));
+
+  zone::destroy(zone);
+  assert_eq_i64(score, 9);
+  return score;
+}
