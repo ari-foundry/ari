@@ -435,6 +435,11 @@ Available functions:
 zone::create(capacity: i64) -> own Zone
 zone::temp(capacity: i64) -> own Zone
 zone::alloc(zone: ref mut Zone, bytes: i64, align: i64) -> ptr u8
+zone::capacity(zone: ref mut Zone) -> i64
+zone::used(zone: ref mut Zone) -> i64
+zone::remaining(zone: ref mut Zone) -> i64
+zone::can_alloc(zone: ref mut Zone, bytes: i64) -> bool
+zone::can_alloc_array<T>(zone: ref mut Zone, count: i64) -> bool
 zone::allocation_zone(data: ptr u8) -> ptr c_void
 zone::metadata(data: ptr u8) -> std::zone::ZoneMetadata
 zone::from_zone(zone: ref mut Zone) -> std::zone::ZoneMetadata
@@ -457,6 +462,12 @@ pointer; it is still allocation only. `zone::new<T>` allocates enough space for
 placement construction only: it does not register a destructor or track that the
 zone contains a live `T`.
 
+`zone::capacity`, `zone::used`, and `zone::remaining` read logical payload
+counters. `zone::can_alloc` and `zone::can_alloc_array<T>` are preflight
+helpers over those counters. They are useful for choosing a larger
+`zone(capacity) { ... }` block or producing a nicer library diagnostic before a
+raw allocation would trap. They do not reserve memory.
+
 On the LLVM host backend, every non-empty `zone::alloc` result has a fixed
 8-byte allocation header immediately before the returned user pointer. The
 header stores only the raw zone handle at `ptr - 8`; size and alignment stay
@@ -467,12 +478,13 @@ do pointer-adjacent arithmetic. `zone::metadata(data)` wraps that raw handle in
 `ZoneMetadata`, which is the preferred public shape. `zone::from_zone(ref mut
 zone)` captures the same metadata from an explicit zone capability before any
 payload allocation exists. `ZoneMetadata` exposes `as_ptr()`,
-`as_zone_ptr()`, `alloc(bytes, align)`, and `alloc_array<T>(count)` for runtime
-helpers that need to recover the backing zone from heap metadata. Empty source
-String and Vec handles establish a small backing allocation even when logical
-capacity is zero so `value.zone()` remains recoverable. Raw zero-count buffer
-helpers may still return a null data pointer, so raw `metadata(data)` queries
-require a non-null allocation pointer.
+`as_zone_ptr()`, `alloc(bytes, align)`, `alloc_array<T>(count)`,
+`capacity()`, `used()`, `remaining()`, `can_alloc(bytes)`, and
+`can_alloc_array<T>(count)` for runtime helpers that need to recover the
+backing zone from heap metadata. Empty source String and Vec handles establish
+a small backing allocation even when logical capacity is zero so `value.zone()`
+remains recoverable. Raw zero-count buffer helpers may still return a null data
+pointer, so raw `metadata(data)` queries require a non-null allocation pointer.
 For stdlib heap handles, prefer `zone::of(ref value)` or `value.zone()` through
 `std::zone::ZoneBacked`; they expose the same typed metadata for supported
 handles, including map update-entry handles that recover through their backing

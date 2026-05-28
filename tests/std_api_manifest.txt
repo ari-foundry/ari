@@ -1266,6 +1266,8 @@ fn std::zone::alloc|zone allocation tests; docs/dev/test-matrix.md Explicit memo
 fn std::zone::alloc[T]|typed zone allocation tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::zone::alloc_array[T]|std zone raw array allocation tests; docs/stdlib/modules/zone.md
 fn std::zone::allocation_zone|zone allocation header metadata tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::zone::can_alloc|std zone introspection/preflight tests; docs/stdlib/modules/zone.md
+fn std::zone::can_alloc_array[T]|std zone introspection/preflight tests; docs/stdlib/modules/zone.md
 fn std::zone::capacity|std zone introspection tests; docs/stdlib/modules/zone.md
 fn std::zone::create|zone lifecycle tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::zone::default_capacity|current-zone block tests; docs/stdlib/modules/zone.md
@@ -3190,6 +3192,8 @@ method std::zone::ZoneMetadata::alloc|std zone backed handle metadata tests; doc
 method std::zone::ZoneMetadata::alloc_array[T]|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 method std::zone::ZoneMetadata::as_ptr|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 method std::zone::ZoneMetadata::as_zone_ptr|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
+method std::zone::ZoneMetadata::can_alloc|std zone introspection/preflight tests; docs/stdlib/modules/zone.md
+method std::zone::ZoneMetadata::can_alloc_array[T]|std zone introspection/preflight tests; docs/stdlib/modules/zone.md
 method std::zone::ZoneMetadata::capacity|std zone introspection tests; docs/stdlib/modules/zone.md
 method std::zone::ZoneMetadata::equals|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 method std::zone::ZoneMetadata::remaining|std zone introspection tests; docs/stdlib/modules/zone.md

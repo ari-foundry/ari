@@ -10,6 +10,12 @@ fn main() -> i64 {
     if std::zone::remaining() != 8192 {
       return 3;
     }
+    if !std::zone::can_alloc(8192) {
+      return 9;
+    }
+    if std::zone::can_alloc(8193) {
+      return 10;
+    }
 
     let text = std::string::new(6000);
     if text.capacity() != 6000 {
@@ -20,6 +26,12 @@ fn main() -> i64 {
     }
     if std::zone::remaining() != 2192 {
       return 6;
+    }
+    if !std::zone::can_alloc_array<u8>(2192) {
+      return 11;
+    }
+    if std::zone::can_alloc_array<u8>(2193) {
+      return 12;
     }
 
     var values = std::vec::new<i64>(256);

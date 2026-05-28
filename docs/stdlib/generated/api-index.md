@@ -24,12 +24,12 @@ platform notes.
 
 ## Summary
 
-- API entries: `3630`
+- API entries: `3634`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
-| `alloc` | 931 | usable |
+| `alloc` | 935 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 941 | stable candidate |
 | `hosted` | 1559 | platform-backed |
@@ -38,8 +38,8 @@ platform notes.
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1240 |
-| `method` | 1916 |
+| `fn` | 1242 |
+| `method` | 1918 |
 | `module` | 39 |
 | `struct` | 197 |
 | `trait` | 39 |
@@ -90,7 +90,7 @@ platform notes.
 | `std::thread` | `hosted` | 126 |
 | `std::time` | `hosted` | 74 |
 | `std::vec` | `alloc` | 115 |
-| `std::zone` | `alloc` | 28 |
+| `std::zone` | `alloc` | 32 |
 
 ## `std`
 
@@ -4717,6 +4717,8 @@ Tier: `alloc`. Stability reading: usable.
 | `fn std::zone::alloc[T]` | typed zone allocation tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `fn std::zone::alloc_array[T]` | std zone raw array allocation tests; docs/stdlib/modules/zone.md |
 | `fn std::zone::allocation_zone` | zone allocation header metadata tests; docs/dev/test-matrix.md Explicit memory zones row |
+| `fn std::zone::can_alloc` | std zone introspection/preflight tests; docs/stdlib/modules/zone.md |
+| `fn std::zone::can_alloc_array[T]` | std zone introspection/preflight tests; docs/stdlib/modules/zone.md |
 | `fn std::zone::capacity` | std zone introspection tests; docs/stdlib/modules/zone.md |
 | `fn std::zone::create` | zone lifecycle tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `fn std::zone::default_capacity` | current-zone block tests; docs/stdlib/modules/zone.md |
@@ -4738,6 +4740,8 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::zone::ZoneMetadata::alloc_array[T]` | std zone backed handle metadata tests; docs/stdlib/modules/zone.md |
 | `method std::zone::ZoneMetadata::as_ptr` | std zone backed handle metadata tests; docs/stdlib/modules/zone.md |
 | `method std::zone::ZoneMetadata::as_zone_ptr` | std zone backed handle metadata tests; docs/stdlib/modules/zone.md |
+| `method std::zone::ZoneMetadata::can_alloc` | std zone introspection/preflight tests; docs/stdlib/modules/zone.md |
+| `method std::zone::ZoneMetadata::can_alloc_array[T]` | std zone introspection/preflight tests; docs/stdlib/modules/zone.md |
 | `method std::zone::ZoneMetadata::capacity` | std zone introspection tests; docs/stdlib/modules/zone.md |
 | `method std::zone::ZoneMetadata::equals` | std zone backed handle metadata tests; docs/stdlib/modules/zone.md |
 | `method std::zone::ZoneMetadata::remaining` | std zone introspection tests; docs/stdlib/modules/zone.md |

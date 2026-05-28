@@ -20,6 +20,8 @@ zone::alloc(ref mut Zone, bytes: i64, align: i64) -> ptr u8
 zone::capacity(ref mut Zone) -> i64
 zone::used(ref mut Zone) -> i64
 zone::remaining(ref mut Zone) -> i64
+zone::can_alloc(ref mut Zone, bytes: i64) -> bool
+zone::can_alloc_array<T>(ref mut Zone, count: i64) -> bool
 zone::alloc<T>(ref mut Zone) -> ptr T
 zone::alloc_array<T>(ref mut Zone, count: i64) -> ptr T
 zone::new<T>(ref mut Zone, value: T) -> ptr T
@@ -42,6 +44,8 @@ metadata.alloc_array<T>(count: i64) -> ptr T
 metadata.capacity() -> i64
 metadata.used() -> i64
 metadata.remaining() -> i64
+metadata.can_alloc(bytes: i64) -> bool
+metadata.can_alloc_array<T>(count: i64) -> bool
 metadata.equals(ref other) -> bool
 ZoneBacked
 
@@ -51,6 +55,8 @@ alloc(ref mut zone, bytes, align)
 capacity(ref mut zone)
 used(ref mut zone)
 remaining(ref mut zone)
+can_alloc(ref mut zone, bytes)
+can_alloc_array<T>(ref mut zone, count)
 alloc<T>(ref mut zone)
 alloc_array<T>(ref mut zone, count)
 new<T>(ref mut zone, value)
@@ -139,6 +145,16 @@ so far. `remaining(ref mut zone)` returns `capacity - used`. These helpers are
 for planning and diagnostics; they do not include runtime header padding or
 alignment slack, and they do not make allocation recoverable.
 
+`can_alloc(ref mut zone, bytes)` returns whether `bytes` additional logical
+payload bytes fit in the zone right now. `can_alloc_array<T>(ref mut zone,
+count)` does the same check for `count` values of `T` and avoids multiplication
+overflow by comparing against the remaining capacity first. Both helpers return
+`false` for negative inputs. A zero array count returns `true`, matching
+`alloc_array<T>`, while raw `alloc(ref mut zone, 0, align)` is still an invalid
+raw allocation request. These are preflight helpers for choosing capacities and
+reporting nicer errors; another allocation can still consume the zone before a
+later raw allocation if code interleaves work.
+
 `alloc<T>(ref mut zone)` allocates uninitialized storage for one `T`.
 `alloc_array<T>(ref mut zone, count)` allocates uninitialized storage for
 `count` consecutive `T` values. A count of `0` returns a null pointer, and a
@@ -173,6 +189,10 @@ same logical counters through the recovered handle, which is useful when a
 zone-backed stdlib container wants to report or plan follow-up allocation
 without storing an extra zone field. Like other zone-backed handles,
 `ZoneMetadata` is invalid after the source zone is reset or destroyed.
+`metadata.can_alloc(bytes)` and `metadata.can_alloc_array<T>(count)` provide
+the same preflight checks through the recovered handle. This is the preferred
+shape for stdlib containers and helper handles that need capacity-aware growth
+without adding a redundant `Zone` field.
 
 Raw header recovery requires an actual backing allocation. Heap-backed stdlib
 handles therefore create a small backing allocation even when their logical

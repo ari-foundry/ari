@@ -6,11 +6,21 @@ fn main() -> i64 {
   assert(zone::capacity(ref mut arena) == 128);
   assert(zone::used(ref mut arena) == 0);
   assert(zone::remaining(ref mut arena) == 128);
+  assert(zone::can_alloc(ref mut arena, 128));
+  assert(!zone::can_alloc(ref mut arena, 129));
+  assert(!zone::can_alloc(ref mut arena, -1));
+  assert(zone::can_alloc_array<i64>(ref mut arena, 16));
+  assert(!zone::can_alloc_array<i64>(ref mut arena, 17));
+  assert(!zone::can_alloc_array<i64>(ref mut arena, -1));
 
   let metadata = zone::from_zone(ref mut arena);
   assert(metadata.capacity() == 128);
   assert(metadata.used() == 0);
   assert(metadata.remaining() == 128);
+  assert(metadata.can_alloc(128));
+  assert(!metadata.can_alloc(129));
+  assert(metadata.can_alloc_array<i64>(16));
+  assert(!metadata.can_alloc_array<i64>(17));
 
   let values = zone::alloc_array<i64>(ref mut arena, 2);
   ptr_store(values, 21);
@@ -18,18 +28,29 @@ fn main() -> i64 {
 
   assert(zone::used(ref mut arena) == 16);
   assert(zone::remaining(ref mut arena) == 112);
+  assert(zone::can_alloc(ref mut arena, 112));
+  assert(!zone::can_alloc(ref mut arena, 113));
+  assert(zone::can_alloc_array<i64>(ref mut arena, 14));
+  assert(!zone::can_alloc_array<i64>(ref mut arena, 15));
   assert(metadata.used() == 16);
   assert(metadata.remaining() == 112);
+  assert(metadata.can_alloc(112));
+  assert(!metadata.can_alloc(113));
 
   let more = metadata.alloc_array<i64>(1);
   ptr_store(more, ptr_load(values) + ptr_load(ptr_add(values, 1)));
   assert(zone::used(ref mut arena) == 24);
   assert(metadata.remaining() == 104);
+  assert(metadata.can_alloc(104));
+  assert(!metadata.can_alloc(105));
+  assert(metadata.can_alloc_array<i64>(13));
+  assert(!metadata.can_alloc_array<i64>(14));
 
   let score = ptr_load(more);
   zone::reset(ref mut arena);
   assert(zone::used(ref mut arena) == 0);
   assert(zone::remaining(ref mut arena) == 128);
+  assert(zone::can_alloc_array<i64>(ref mut arena, 16));
 
   zone::destroy(arena);
   return score;

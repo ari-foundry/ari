@@ -818,6 +818,11 @@ Zone
 zone::create(capacity: i64) -> own Zone
 zone::temp(capacity: i64) -> own Zone
 zone::alloc(zone: ref mut Zone, bytes: i64, align: i64) -> ptr u8
+zone::capacity(zone: ref mut Zone) -> i64
+zone::used(zone: ref mut Zone) -> i64
+zone::remaining(zone: ref mut Zone) -> i64
+zone::can_alloc(zone: ref mut Zone, bytes: i64) -> bool
+zone::can_alloc_array<T>(zone: ref mut Zone, count: i64) -> bool
 zone::allocation_zone(data: ptr u8) -> ptr c_void
 zone::metadata(data: ptr u8) -> std::zone::ZoneMetadata
 zone::from_zone(zone: ref mut Zone) -> std::zone::ZoneMetadata
@@ -845,6 +850,9 @@ creating a hidden lexical temporary zone and placing `value` into it. The
 resulting pointer cannot escape that local scratch lifetime.
 `zone::promote<T>(target, source)` copies a pointed-to scratch value into an
 explicit target zone and returns a pointer tied to the target zone.
+`zone::capacity`, `zone::used`, and `zone::remaining` report logical payload
+counters. `zone::can_alloc` and `zone::can_alloc_array<T>` check those counters
+before a potential allocation; they are planning helpers, not reservations.
 `zone::temp(capacity)` creates a lexical scratch zone that is destroyed
 automatically when its declaring scope falls through, before returns, and before
 `break`, `continue`, or labeled-block exits that leave that scope. Other
@@ -874,23 +882,28 @@ trait-object method call is missing exactly one `ref mut Zone` parameter, the
 current zone is inserted there. Callable values with a `fn(...)` or closure
 signature follow the same rule. The explicit spelling remains valid for APIs
 that must allocate into an outer or caller-provided zone.
+The same insertion rule applies to `zone::capacity()`, `zone::remaining()`, and
+`zone::can_alloc(...)` calls, so code can inspect or preflight the hidden
+scratch zone without naming it.
 
 Host zone allocations carry a compiler-defined 8-byte header immediately
 before the returned user pointer. That header stores only the owning raw zone
 handle at `ptr - 8`; allocation size and requested alignment are not pointer
 metadata. `zone::allocation_zone` is the raw header reader, while
 `zone::metadata(data)` and `zone::from_zone(ref mut zone)` wrap a runtime zone
-handle as `ZoneMetadata`. `ZoneMetadata` exposes raw identity helpers and
-metadata-backed allocation helpers for stdlib runtime growth code that needs
-to infer the allocation capability from a stored buffer pointer.
+handle as `ZoneMetadata`. `ZoneMetadata` exposes raw identity helpers,
+logical counter helpers, preflight helpers, and metadata-backed allocation
+helpers for stdlib runtime growth code that needs to infer the allocation
+capability from a stored buffer pointer.
 Pointers allocated from a temporary zone are lexical too: returning them,
 storing them into longer-lived bindings or aggregates, or sending them through
 escape-prone calls is rejected with a diagnostic that names the pointer and the
 temporary zone.
 
 The source header `lib/std.arih` exposes the declaration-shaped zone API:
-`std::zone::create`, raw and typed `alloc`, allocation-header metadata helpers,
-`new`, `promote`, `reset`, and `destroy`. `zone::temp` and `zone::scratch` remain compiler-known lexical
+`std::zone::create`, raw and typed `alloc`, logical counter/preflight helpers,
+allocation-header metadata helpers, `new`, `promote`, `reset`, and `destroy`.
+`zone::temp` and `zone::scratch` remain compiler-known lexical
 helpers until source declarations can express their hidden lifetime cleanup.
 `std::vec::alloc_buffer<T>(ref mut Zone, capacity)` is the raw
 vector-allocation seed. `std::vec::with_capacity<T>(ref mut Zone, capacity)`

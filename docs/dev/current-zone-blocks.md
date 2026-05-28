@@ -123,9 +123,12 @@ When adding a public zone-backed API:
 For stdlib implementation work, prefer `zone::of(ref handle)` or
 `ZoneMetadata` when a heap-backed handle needs to grow later. The handle should
 recover its zone from backing allocation metadata instead of storing an extra
-zone field. Use `zone::capacity`, `zone::used`, and `zone::remaining` only for
-planning, diagnostics, and tests; allocation still goes through a real zone
-capability or recovered metadata.
+zone field. Use `zone::capacity`, `zone::used`, `zone::remaining`,
+`zone::can_alloc`, and `zone::can_alloc_array` for planning, diagnostics, and
+tests; allocation still goes through a real zone capability or recovered
+metadata. For handle methods, prefer `metadata.can_alloc(...)` and
+`metadata.can_alloc_array<T>(...)` so the public handle does not need to carry
+a duplicate zone pointer.
 
 ## Remaining Work
 
@@ -134,3 +137,5 @@ capability or recovered metadata.
 - optional compile-time or library-side sizing helpers for common scratch
   workloads, so large parser/formatter operations can choose a capacity before
   entering the block
+- a cleaner source-level spelling for temporary zones that keeps allocation
+  lexical while making "use the current zone" feel like ordinary construction

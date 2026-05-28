@@ -702,6 +702,9 @@ Checklist:
       `zone::from_zone(ref mut zone)`, `metadata.alloc_array<T>(count)`,
       `metadata.as_zone_ptr()`, `zone::of(ref value)`, and `value.zone()` for
       backed std handles, including map update-entry handles
+- [x] source `std::zone` exposes logical capacity preflight helpers through
+      `zone::can_alloc`, `zone::can_alloc_array<T>`,
+      `metadata.can_alloc`, and `metadata.can_alloc_array<T>`
 - [x] control-flow expressions that select source `std::vec::Vec<T>` handles
       from the same zone keep reset/destroy provenance on the selected handle
 - [x] source `std::vec::Vec<T>` exposes tracked read-only metadata methods

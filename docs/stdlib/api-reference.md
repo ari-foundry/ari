@@ -2530,6 +2530,8 @@ zone::alloc(ref mut zone, bytes, align)
 zone::capacity(ref mut zone)
 zone::used(ref mut zone)
 zone::remaining(ref mut zone)
+zone::can_alloc(ref mut zone, bytes)
+zone::can_alloc_array<T>(ref mut zone, count)
 zone::alloc<T>(ref mut zone)
 zone::alloc_array<T>(ref mut zone, count)
 zone::new<T>(ref mut zone, value)
@@ -2546,6 +2548,8 @@ metadata.alloc_array<T>(count)
 metadata.capacity()
 metadata.used()
 metadata.remaining()
+metadata.can_alloc(bytes)
+metadata.can_alloc_array<T>(count)
 metadata.equals(ref other)
 zone::reset(ref mut zone)
 zone::destroy(zone)
@@ -2573,6 +2577,13 @@ omit the argument, so `zone::remaining()` reports the current block's scratch
 space. The counters are planning/debugging helpers; they do not include
 allocation headers or alignment padding.
 
+`can_alloc(ref mut zone, bytes)` and `can_alloc_array<T>(ref mut zone, count)`
+are preflight helpers over those logical counters. They return `false` for
+negative inputs, `true` for zero array counts, and otherwise report whether the
+requested payload bytes fit in the zone's current remaining capacity. Inside a
+current-zone block the zone argument can be omitted, so `zone::can_alloc(512)`
+checks the block's hidden scratch zone.
+
 `allocation_zone(data)` reads Ari's allocation header for a non-null zone
 allocation and returns the raw opaque handle. Prefer `metadata(data)`, which
 wraps that handle as `ZoneMetadata`. `from_zone(ref mut zone)` captures
@@ -2587,9 +2598,11 @@ allocate through the recovered runtime zone handle. Zero-capacity handles may
 carry metadata from construction even when they have no backing data pointer;
 raw `metadata(data)` still requires a non-null allocation pointer.
 `metadata.capacity()`, `metadata.used()`, and `metadata.remaining()` expose the
-same counters through the recovered handle. The metadata handle follows normal
-zone provenance rules and cannot be used after the source zone is reset or
-destroyed.
+same counters through the recovered handle. `metadata.can_alloc(bytes)` and
+`metadata.can_alloc_array<T>(count)` expose the same preflight checks for
+zone-backed handles that grow from recovered metadata instead of an explicit
+`ref mut Zone` field. The metadata handle follows normal zone provenance rules
+and cannot be used after the source zone is reset or destroyed.
 
 ## Option And Result
 

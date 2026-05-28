@@ -11,6 +11,34 @@ pub extern "ari" fn capacity(zone: ref mut Zone) -> i64 = "ari_builtin_zone_capa
 pub extern "ari" fn used(zone: ref mut Zone) -> i64 = "ari_builtin_zone_used";
 pub extern "ari" fn remaining(zone: ref mut Zone) -> i64 = "ari_builtin_zone_remaining";
 
+pub fn can_alloc(zone: ref mut Zone, bytes: i64) -> bool {
+  if bytes < 0 {
+    return false;
+  }
+  return bytes <= remaining(zone);
+}
+
+pub fn can_alloc_array[T](zone: ref mut Zone, count: i64) -> bool {
+  if count < 0 {
+    return false;
+  }
+  if count == 0 {
+    return true;
+  }
+
+  let element_size = std::mem::size_of<T>();
+  if element_size <= 0 {
+    return false;
+  }
+
+  let spare = remaining(zone);
+  if spare < 0 {
+    return false;
+  }
+
+  return count <= spare / element_size;
+}
+
 pub fn default_capacity() -> i64 {
   return 4096;
 }
@@ -66,6 +94,34 @@ pub impl std::zone::ZoneMetadata {
 
   fn remaining(self: ref Self) -> i64 {
     return remaining_handle(self.handle);
+  }
+
+  fn can_alloc(self: ref Self, bytes: i64) -> bool {
+    if bytes < 0 {
+      return false;
+    }
+    return bytes <= self.remaining();
+  }
+
+  fn can_alloc_array[T](self: ref Self, count: i64) -> bool {
+    if count < 0 {
+      return false;
+    }
+    if count == 0 {
+      return true;
+    }
+
+    let element_size = std::mem::size_of<T>();
+    if element_size <= 0 {
+      return false;
+    }
+
+    let spare = self.remaining();
+    if spare < 0 {
+      return false;
+    }
+
+    return count <= spare / element_size;
   }
 
   fn equals(self: ref Self, other: ref Self) -> bool {
