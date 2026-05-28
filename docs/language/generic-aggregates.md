@@ -209,6 +209,10 @@ fn payload_value(packet: TLSCiphertext) -> i64 {
 ```
 
 Bool selector payloads are matched with `false(payload)` and `true(payload)`.
+Do not read payload storage slots directly with tuple-index syntax such as
+`packet.fragment.0`: that bypasses the selector proof. The compiler rejects
+direct payload-slot projection for `union by` fields; match the field and use
+the payload binding from the matching arm instead.
 
 Selector fields and their linked payload fields are stable after a value has
 been built. Direct assignment to the selector path, to an ancestor of that
@@ -236,10 +240,10 @@ packet = TLSCiphertext {
 
 This is intentionally still an early executable slice: non-enum selector
 policies, selector inference through intermediate structs that need unrelated
-required fields, active-arm mutation beyond direct reconstruction, active-arm
-drop diagnostics, and stable ABI naming remain compiler work. Use ordinary
-`enum` ADTs when the discriminant is not an existing product field or when the
-type must be part of a stable public ABI.
+required fields, active-arm narrowing outside `match`, active-arm mutation
+beyond direct reconstruction, active-arm drop diagnostics, and stable ABI naming
+remain compiler work. Use ordinary `enum` ADTs when the discriminant is not an
+existing product field or when the type must be part of a stable public ABI.
 
 The compiler capability inventory tracks this as `union-by-fields`.
 

@@ -11908,6 +11908,59 @@ private:
         return indices;
     }
 
+    const StructInfo::Field* union_by_field_for_storage_path(
+        const IrType& root_type,
+        const std::string& storage_path
+    ) const {
+        std::optional<std::vector<std::size_t>> indices =
+            local_owned_field_path_indices(storage_path);
+        if (!indices || indices->empty()) return nullptr;
+
+        IrType current = value_qualified_type(root_type);
+        for (std::size_t depth = 0; depth < indices->size(); ++depth) {
+            if (current.primitive != IrPrimitiveKind::Struct) return nullptr;
+            auto struct_found = structs_.find(current.name);
+            if (struct_found == structs_.end()) return nullptr;
+            const StructInfo& info = struct_found->second;
+            std::size_t field_index = (*indices)[depth];
+            if (field_index >= info.fields.size()) return nullptr;
+            const StructInfo::Field& field = info.fields[field_index];
+            if (depth + 1 == indices->size()) {
+                return field.type.is_union_by ? &field : nullptr;
+            }
+            if (field_index >= current.field_types.size()) return nullptr;
+            current = value_qualified_type(current.field_types[field_index]);
+        }
+
+        return nullptr;
+    }
+
+    [[noreturn]] void fail_union_by_payload_projection(
+        SourceLocation loc,
+        const StructInfo::Field& field,
+        std::uint64_t payload_index
+    ) const {
+        CompileError error(
+            std::move(loc),
+            "cannot project union by payload slot '" + field.name + "." +
+                std::to_string(payload_index) + "' without matching the active arm");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "union by field '" + field.name + "' follows selector path '" +
+                union_by_selector_text(field.type) + "'",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "direct payload-slot access cannot prove which arm is active at runtime",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "read the payload with `match " + field.name +
+                " { arm(payload) => ... }` or replace the whole struct with a matching selector and constructor",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     static std::string enum_payload_move_display(const std::string& base_name, const std::string& storage_path) {
         std::optional<std::vector<std::size_t>> indices = local_owned_field_path_indices(storage_path);
         if (!indices || indices->empty() || indices->front() == 0) {
@@ -12574,6 +12627,10 @@ private:
             TrackedAggregateAccess base;
             if (!try_build_tracked_aggregate_access(*expr_operand(expr), base)) return false;
             if (has_aggregate_enum_layout(base.type)) {
+                if (const StructInfo::Field* union_by_field =
+                        union_by_field_for_storage_path(base.base_type, base.path)) {
+                    fail_union_by_payload_projection(expr.loc, *union_by_field, expr.tuple_index);
+                }
                 std::size_t payload_count = base.type.field_types.size() - 1;
                 if (expr.tuple_index >= payload_count) {
                     fail(expr.loc,
