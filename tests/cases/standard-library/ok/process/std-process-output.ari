@@ -31,8 +31,7 @@ fn main() -> i64 {
 
   match process::output_in(ref cmd, ref mut zone) {
     Err(_) => {}
-    Ok(value) => {
-      var output = value;
+    Ok(output) => {
       if output.status() == 7 {
         score = score + 11;
       }

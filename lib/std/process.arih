@@ -1076,12 +1076,12 @@ pub impl std::process::Output {
     return std::process::exit_status_from_raw(self.raw_status_value);
   }
 
-  fn stdout(self: ref mut Self) -> std::Slice[u8] {
-    return self.stdout_bytes.as_slice();
+  fn stdout(self: ref Self) -> std::Slice[u8] {
+    return self.stdout_bytes.slice(0, self.stdout_bytes.len());
   }
 
-  fn stdout_string(self: ref mut Self, zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
-    let bytes = self.stdout_bytes.as_slice();
+  fn stdout_string(self: ref Self, zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
+    let bytes = self.stdout();
     match std::encoding::decode_utf8(zone, bytes) {
       std::Err(_) => {
         return std::Err<std::string::String, std::error::Error>(std::process::invalid_data_error());
@@ -1092,12 +1092,12 @@ pub impl std::process::Output {
     }
   }
 
-  fn stderr(self: ref mut Self) -> std::Slice[u8] {
-    return self.stderr_bytes.as_slice();
+  fn stderr(self: ref Self) -> std::Slice[u8] {
+    return self.stderr_bytes.slice(0, self.stderr_bytes.len());
   }
 
-  fn stderr_string(self: ref mut Self, zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
-    let bytes = self.stderr_bytes.as_slice();
+  fn stderr_string(self: ref Self, zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
+    let bytes = self.stderr();
     match std::encoding::decode_utf8(zone, bytes) {
       std::Err(_) => {
         return std::Err<std::string::String, std::error::Error>(std::process::invalid_data_error());
