@@ -1,16 +1,27 @@
 # Ari
 
-Ari is a small systems-language compiler prototype written in C++17.
+Ari is a prototype systems-language compiler written in C++17. It explores a
+C/C++ replacement shape with value types, explicit ownership, traits, modules,
+ADT-style enums, pattern matching, C FFI, and a source standard library.
 
-It explores a C/C++ replacement shape with value types, explicit ownership,
-traits, modules, ADT enums, pattern matching, local inference, C FFI, and a
-compiler-known prelude. The compiler implementation is C++17, but Ari programs
-are no longer generated as C++: output goes through LLVM IR and an LLVM driver
-such as `clang`.
+The compiler emits LLVM IR and invokes an LLVM driver such as `clang` for
+linked executable, object, and shared-library output. Ari is still experimental;
+language and standard-library APIs may change while the compiler and package
+story settle.
+
+## Requirements
+
+- A C++17 compiler
+- `make`
+- `python3` for repository checks
+- `clang` or another LLVM driver for linked executable/object output
+
+Set `ARI_LLVM_CC=/path/to/clang` or pass `--llvm-cc /path/to/clang` when the
+LLVM driver is not discoverable on `PATH`.
 
 ## Quick Start
 
-Build the compiler:
+Build the release compiler:
 
 ```sh
 make
@@ -24,45 +35,46 @@ Compile and run an Ari program:
 echo $?
 ```
 
-Run the full test suite:
+Check a source file without linking:
 
 ```sh
-make check
+./build/ari examples/count.ari --check
 ```
 
-Build the bundled examples:
+## Install
 
-```sh
-make examples
-make run-example EXAMPLE=hello
-```
-
-Install the release compiler and source stdlib:
+The current install target is intentionally small and easy to replace later
+with a package manager:
 
 ```sh
 make release
 make install PREFIX=$HOME/.local
 ```
 
-The temporary install layout is `bin/ari` plus `share/ari/lib/std.arih` and
-`share/ari/lib/std/*.arih`. The installed compiler finds that stdlib relative
-to its own executable, so it can run outside this checkout. Set
-`ARI_STDLIB_PATH=/path/to/lib/std.arih` or `ARI_STDLIB_PATH=/path/to/share/ari`
-to override the lookup while packaging experiments are still in flux.
+It installs:
 
-Build the source-library smoke artifacts and a shared-library sample:
-
-```sh
-make build-lib
+```text
+$(PREFIX)/bin/ari
+$(PREFIX)/share/ari/lib/std.arih
+$(PREFIX)/share/ari/lib/std/*.arih
 ```
 
-Build the lint and LSP tools:
+The installed compiler first honors `ARI_STDLIB_PATH`, then falls back to a
+source-tree `lib/std.arih`, then to `../share/ari/lib/std.arih` relative to the
+`ari` executable. Remove the temporary install layout with:
 
 ```sh
-make tools
+make uninstall PREFIX=$HOME/.local
 ```
 
-## Build Modes
+For staged packaging-style tests:
+
+```sh
+make install DESTDIR=/tmp/ari-stage PREFIX=/usr/local
+/tmp/ari-stage/usr/local/bin/ari --help
+```
+
+## Common Commands
 
 ```sh
 make release
@@ -79,7 +91,17 @@ make check-debug
 make check-sanitize
 ```
 
-## Tiny Example
+Useful compiler invocations:
+
+```sh
+./build/ari app.ari -o app
+./build/ari app.ari --emit-llvm app.ll
+./build/ari app.ari --emit-obj app.o
+./build/ari lib.ari --shared -o libari_app.so
+./build/ari app.ari -L ./lib -l mylib
+```
+
+## Examples
 
 ```ari
 fn main() -> i64 {
@@ -88,55 +110,38 @@ fn main() -> i64 {
 }
 ```
 
-## What Works Now
-
-- glibc-backed executable output through LLVM IR
-- LLVM IR output with `--emit-llvm`
-- LLVM object output with `--emit-obj`
-- functions, locals, assignment, `if`, `while`, `break`, `continue`
-- `for value in range(start, end)` loops
-- integer and bool scalar codegen
-- `i8/i16/i32/i64` and `u8/u16/u32/u64`
-- explicit integer casts with `as`
-- modulo, bit operations, and short-circuit boolean logic
-- `own`, `ref`, `ref mut`, `drop`, move/drop checks, and temporary borrow checks
-- ADT enums as one-word tagged unions
-- exhaustive `match` statements over enums
-- inline and file-backed `mod`, `pub`, `use`, and `A::B` paths
-- compiler-known prelude IO and formatting `print` / `println`
-- compiler-known prelude trait names for `Iterable` and `Iterator`
-- `extern "C"` FFI declarations
-- explicit external C link names with `= "symbol"`
-- `--shared` library output
-- tuple and `Vec[T]` syntax in typed IR, with runtime lowering still blocked
-
-## Docs
-
-- [docs/README.md](docs/README.md): documentation index
-- [docs/language/README.md](docs/language/README.md): how to write Ari
-- [docs/dev/README.md](docs/dev/README.md): how the compiler is built
-- [docs/notes/README.md](docs/notes/README.md): design notes and handoff notes
-- [AGENTS.md](AGENTS.md): root project orientation for coding agents
-
-Legacy entry points still exist:
-
-- [docs/SYNTAX.md](docs/SYNTAX.md)
-- [docs/PROJECT.md](docs/PROJECT.md)
-- [docs/MEMORY.md](docs/MEMORY.md)
-
-## Runtime Notes
-
-Generated Ari executables use the glibc-backed LLVM path. The compiler writes
-temporary LLVM IR, invokes `clang` or the driver selected with `--llvm-cc`, and
-links a normal dynamic Linux executable.
-
-Useful host options:
+Build bundled examples:
 
 ```sh
-./build/ari app.ari --check
-./build/ari app.ari -o app
-./build/ari app.ari --emit-llvm app.ll
-./build/ari app.ari --emit-obj app.o
-./build/ari lib.ari --shared -o libari_app.so
-./build/ari app.ari -L ./lib -l mylib
+make examples
+make run-example EXAMPLE=hello
 ```
+
+## Project Status
+
+Ari currently has a broad executable compiler prototype: core control flow,
+integer/float/bool values, ownership checks, structs, enums, pattern matching,
+modules, generics, a minimum trait system, source stdlib modules, C FFI, LLVM
+IR/object/shared-library output, lint tooling, and LSP tooling.
+
+The project is not production-stable yet. The most useful status documents are:
+
+- [Language Feature Status](docs/language/feature-status.md)
+- [Compiler Readiness Inventory](docs/dev/compiler-readiness-inventory.md)
+- [Standard Library Completion Status](docs/stdlib/completion-status.md)
+- [Standard Library Roadmap](docs/stdlib/roadmap.md)
+
+## Documentation
+
+- [Documentation Index](docs/README.md)
+- [Language Overview](docs/language/README.md)
+- [Developer Overview](docs/dev/README.md)
+- [Standard Library Overview](docs/stdlib/README.md)
+- [Editor Tooling](editors/README.md)
+- [Project Notes](docs/notes/README.md)
+
+Agent-oriented project notes live in [AGENTS.md](AGENTS.md).
+
+## License
+
+Ari is licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE).

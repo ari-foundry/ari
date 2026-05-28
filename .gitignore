@@ -2,6 +2,17 @@ build/
 *.elf
 *.out
 
+# Local agent and assistant workspace state.
+.agents/
+.codex/
+.claude/
+
+# Local environment/editor noise.
+.DS_Store
+.env
+.env.*
+!.env.example
+
 # Native build byproducts that may be emitted outside build/.
 *.a
 *.d
