@@ -1,0 +1,40 @@
+enum CipherType {
+  stream,
+  block,
+}
+
+struct SecurityParameters {
+  cipher_type: CipherType,
+}
+
+struct StreamPayload {
+  value: i64,
+}
+
+struct BlockPayload {
+  value: i64,
+}
+
+struct Packet {
+  security: SecurityParameters,
+  fragment: union by security.cipher_type {
+    stream => StreamPayload,
+    block => BlockPayload,
+  },
+}
+
+fn score(packet: Packet) -> i64 {
+  let fragment = packet.fragment;
+  return match fragment {
+    stream(_) => fragment.0.value + 1,
+    block(_) => fragment.0.value + 2,
+  };
+}
+
+fn main() -> i64 {
+  let packet = Packet {
+    security: SecurityParameters { cipher_type: block },
+    fragment: block => BlockPayload { value: 40 },
+  };
+  return score(packet);
+}

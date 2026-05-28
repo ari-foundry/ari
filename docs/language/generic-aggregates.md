@@ -228,6 +228,23 @@ fn payload_value(packet: TLSCiphertext) -> i64 {
 }
 ```
 
+The selector match can pass through wrapper structs as long as the selector
+path still reaches the same stored `union by` field:
+
+```ari
+struct Envelope {
+  packet: TLSCiphertext,
+}
+
+fn payload_value(envelope: Envelope) -> i64 {
+  return match envelope.packet.security.cipher_type {
+    stream => envelope.packet.fragment.0.value,
+    block => envelope.packet.fragment.0.value,
+    aead => envelope.packet.fragment.0.value,
+  };
+}
+```
+
 Outside a matching arm, do not read payload storage slots directly with
 tuple-index syntax such as `packet.fragment.0`: that bypasses the selector
 proof. The compiler rejects unproven direct payload-slot projection for
@@ -244,8 +261,19 @@ let TLSCiphertext { fragment: destructured, .. } = packet;
 let raw_again = destructured.0;
 ```
 
-Match the field or alias and use the payload binding from the matching arm
-instead. A local alias of a `union by` field also cannot be reassigned: it is a
+Match the field or alias and use the payload binding from the matching arm, or
+project the alias inside the arm after the alias itself has been matched:
+
+```ari
+let fragment = packet.fragment;
+let value = match fragment {
+  stream(_) => fragment.0.value,
+  block(_) => fragment.0.value,
+  aead(_) => fragment.0.value,
+};
+```
+
+A local alias of a `union by` field also cannot be reassigned: it is a
 proof-carrying view of the original field, not an independent enum variable.
 Rebuild the whole source struct when the selector and payload should change.
 
@@ -275,14 +303,12 @@ packet = TLSCiphertext {
 
 This is intentionally still an early executable slice: non-enum selector
 policies, selector inference through intermediate structs that need unrelated
-required fields, active-arm narrowing outside direct field/selector matches,
-aggregate-field provenance through arbitrary wrapper structs, active-arm
-mutation beyond direct reconstruction, active-arm drop diagnostics, and stable
-ABI naming remain compiler work. The supported constructor forms either infer
-the selector or check a statically visible selector, so they do not create a
-value whose payload arm disagrees with the discriminant. Use ordinary `enum`
-ADTs when the discriminant is not an existing product field or when the type
-must be part of a stable public ABI.
+required fields, active-arm mutation beyond direct reconstruction, active-arm
+drop diagnostics, and stable ABI naming remain compiler work. The supported
+constructor forms either infer the selector or check a statically visible
+selector, so they do not create a value whose payload arm disagrees with the
+discriminant. Use ordinary `enum` ADTs when the discriminant is not an existing
+product field or when the type must be part of a stable public ABI.
 
 The compiler capability inventory tracks this as `union-by-fields`.
 

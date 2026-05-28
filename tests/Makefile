@@ -6030,6 +6030,10 @@ check-structs: $(TARGET)
 	$(BUILD_DIR)/structs/union-by-bool-selector.elf; code=$$?; test $$code -eq 46
 	$(TARGET) tests/cases/structs/ok/union-by-selector-match-projection.ari -o $(BUILD_DIR)/structs/union-by-selector-match-projection.elf
 	$(BUILD_DIR)/structs/union-by-selector-match-projection.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/cases/structs/ok/union-by-wrapper-selector-match-projection.ari -o $(BUILD_DIR)/structs/union-by-wrapper-selector-match-projection.elf
+	$(BUILD_DIR)/structs/union-by-wrapper-selector-match-projection.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/cases/structs/ok/union-by-alias-match-projection.ari -o $(BUILD_DIR)/structs/union-by-alias-match-projection.elf
+	$(BUILD_DIR)/structs/union-by-alias-match-projection.elf; code=$$?; test $$code -eq 42
 	$(TARGET) tests/cases/structs/ok/union-by-bool-selector-match-projection.ari -o $(BUILD_DIR)/structs/union-by-bool-selector-match-projection.elf
 	$(BUILD_DIR)/structs/union-by-bool-selector-match-projection.elf; code=$$?; test $$code -eq 46
 	$(TARGET) tests/cases/structs/ok/union-by-bool-call-constructor.ari -o $(BUILD_DIR)/structs/union-by-bool-call-constructor.elf

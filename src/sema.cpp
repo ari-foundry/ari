@@ -12003,6 +12003,48 @@ private:
         return path;
     }
 
+    static std::string join_storage_path(const std::string& prefix,
+                                         const std::string& suffix) {
+        if (prefix.empty()) return suffix;
+        if (suffix.empty()) return prefix;
+        return prefix + "." + suffix;
+    }
+
+    void collect_union_by_fields_for_selector_path(
+        const IrType& current_type,
+        const std::string& current_path,
+        const std::string& selector_path,
+        std::vector<std::string>& union_field_paths
+    ) const {
+        IrType value_type = value_qualified_type(current_type);
+        if (value_type.primitive != IrPrimitiveKind::Struct) return;
+        auto struct_found = structs_.find(value_type.name);
+        if (struct_found == structs_.end()) return;
+
+        const StructInfo& info = struct_found->second;
+        for (std::size_t i = 0; i < info.fields.size(); ++i) {
+            const StructInfo::Field& field = info.fields[i];
+            const std::string field_path = local_owned_field_path(current_path, i);
+
+            if (field.type.is_union_by) {
+                std::optional<std::string> relative_selector =
+                    union_by_selector_storage_path(value_type, field.type);
+                if (relative_selector &&
+                    join_storage_path(current_path, *relative_selector) == selector_path) {
+                    union_field_paths.push_back(field_path);
+                }
+            }
+
+            if (i < value_type.field_types.size()) {
+                collect_union_by_fields_for_selector_path(
+                    value_type.field_types[i],
+                    field_path,
+                    selector_path,
+                    union_field_paths);
+            }
+        }
+    }
+
     std::optional<UnionByMatchSubject> union_by_match_subject(const IrExpr& expr) {
         std::string base_name;
         std::string path;
@@ -12011,11 +12053,17 @@ private:
         LocalInfo* local = find_local_slot(base_name);
         if (!local) return std::nullopt;
         IrType base_type = value_qualified_type(local->type);
-        if (base_type.primitive != IrPrimitiveKind::Struct) return std::nullopt;
 
         UnionByMatchSubject subject;
         subject.base_name = base_name;
         subject.base_type = base_type;
+
+        if (path.empty() && local->union_by_alias && has_aggregate_enum_layout(base_type)) {
+            subject.union_field_paths.push_back("");
+            return subject;
+        }
+
+        if (base_type.primitive != IrPrimitiveKind::Struct) return std::nullopt;
 
         if (const StructInfo::Field* field = union_by_field_for_storage_path(base_type, path)) {
             (void)field;
@@ -12023,17 +12071,11 @@ private:
             return subject;
         }
 
-        auto struct_found = structs_.find(base_type.name);
-        if (struct_found == structs_.end()) return std::nullopt;
-        const StructInfo& info = struct_found->second;
-        for (std::size_t i = 0; i < info.fields.size(); ++i) {
-            const StructInfo::Field& field = info.fields[i];
-            if (!field.type.is_union_by) continue;
-            std::optional<std::string> selector_path =
-                union_by_selector_storage_path(base_type, field.type);
-            if (!selector_path || *selector_path != path) continue;
-            subject.union_field_paths.push_back(local_owned_field_path("", i));
-        }
+        collect_union_by_fields_for_selector_path(
+            base_type,
+            "",
+            path,
+            subject.union_field_paths);
 
         if (subject.union_field_paths.empty()) return std::nullopt;
         return subject;
@@ -12910,6 +12952,38 @@ private:
                 if (base.path.empty()) {
                     if (const LocalInfo* local = find_local_slot(base.base_name)) {
                         if (local->union_by_alias) {
+                            std::optional<IrType> active_payload_type =
+                                active_union_by_payload_projection_type(
+                                    expr.loc,
+                                    base.base_name,
+                                    "",
+                                    base.type,
+                                    expr.tuple_index);
+                            if (active_payload_type) {
+                                std::size_t payload_count = base.type.field_types.size() - 1;
+                                if (expr.tuple_index >= payload_count) {
+                                    fail(expr.loc,
+                                         "enum payload field index " + std::to_string(expr.tuple_index) +
+                                         " is out of range for " + type_name(base.type));
+                                }
+                                std::size_t payload_index = static_cast<std::size_t>(expr.tuple_index);
+                                std::size_t storage_field_index = payload_index + 1;
+
+                                out.base_name = std::move(base.base_name);
+                                out.base_type = std::move(base.base_type);
+                                out.type = *active_payload_type;
+                                out.path = local_owned_field_path("", storage_field_index);
+                                out.expr = make_enum_payload_slot_expr(
+                                    expr.loc,
+                                    std::move(base.expr),
+                                    payload_index,
+                                    *active_payload_type);
+                                out.has_final_field_mutability = false;
+                                out.final_field_mutable = true;
+                                out.final_field_label.clear();
+                                out.final_container_name = base.type.name;
+                                return true;
+                            }
                             fail_union_by_alias_payload_projection(
                                 expr.loc,
                                 base.base_name,

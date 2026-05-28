@@ -132,16 +132,19 @@ resolution prefers the subject enum type before global case names so `union by`
 arms can share names with the selector enum cases. Matching the selector path
 itself also narrows the linked payload field inside each arm, so
 `match packet.security.cipher_type { stream => packet.fragment.0.value, ... }`
-is accepted with the arm's declared payload type. After construction, direct
-assignment to the selector path, an ancestor field, or the `union by` field
-itself is rejected; rebuild the whole struct when the discriminant and active
-payload must change together.
+is accepted with the arm's declared payload type. Selector-path narrowing also
+works through wrapper structs such as
+`match envelope.packet.security.cipher_type { stream => envelope.packet.fragment.0.value, ... }`.
+Local aliases of a `union by` field can be matched and projected inside the
+matching arm, while aliases outside a matching arm still require a proof. After
+construction, direct assignment to the selector path, an ancestor field, or the
+`union by` field itself is rejected; rebuild the whole struct when the
+discriminant and active payload must change together.
 
 It should not replace ordinary `enum` ADTs, unchecked C unions, or `match`.
 Non-enum and non-bool selectors are rejected so the active-arm set stays closed
-and exhaustively checkable. Remaining design work covers public active-arm
-borrowing/narrowing outside direct field/selector matches, wrapper-struct
-provenance, richer active-arm mutation/drop diagnostics, and stable ABI naming.
+and exhaustively checkable. Remaining design work covers richer active-arm
+mutation/drop diagnostics beyond direct reconstruction and stable ABI naming.
 The compiler capability inventory tracks this as `union-by-fields`.
 
 ## What Not To Track Here
