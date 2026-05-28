@@ -255,16 +255,19 @@ Formatting rules:
 - `{{` writes a literal `{`
 - `}}` writes a literal `}`
 - the positional placeholder count is checked at compile time
-- formatted print values currently support lowercase `string`, `char`/byte
-  characters, integers, bool, `f32`, and `f64`
+- formatted print values currently support lowercase `string`, owned
+  `String` / `std::string::String`, `char`/byte characters, integers, bool,
+  `f32`, and `f64`
 - `println` and `eprintln` append one newline
 - `print` does not append a newline
 - `eprintln` writes to stderr
 
 `bool` prints as lowercase `true` or `false`. `{}` prints lowercase `string`
-values as raw text, while `{:?}` quotes them for diagnostics. `char` is the
-standard ASCII-byte alias, so byte-character literals such as `'A'` display as
-characters in text-shaped formatting paths.
+values and owned `String` handles as raw text, while `{:?}` quotes them for
+diagnostics. Owned `String` values are written by byte length, so they do not
+need to be NUL-terminated C strings. `char` is the standard ASCII-byte alias,
+so byte-character literals such as `'A'` display as characters in text-shaped
+formatting paths.
 For user-defined `Debug` values, use `format_in!(ref mut zone, "{:?}", value)`
 or `std::fmt::println_debug(ref mut zone, value)` so the temporary string's
 allocation zone is explicit.

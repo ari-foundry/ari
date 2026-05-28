@@ -390,9 +390,11 @@ ordinary `{}` arguments for module paths, indexing, method calls, and computed
 expressions. `eprintln!` follows the same placeholder rules as `println!` but
 writes to stderr. `{:?}` is the debug placeholder: `format_in!` dispatches it
 through `Debug::debug_in`, while direct stdout/stderr `print!`, `println!`,
-and `eprintln!` support it for built-in printable values and lowercase
-`string` without requiring a temporary zone at the call site. For custom debug
-output to stdout, use `fmt::print_debug` or `fmt::println_debug` with an
+and `eprintln!` support it for built-in printable values, lowercase `string`,
+and owned `String` handles without requiring a temporary zone at the call site.
+Owned `String` output writes the stored byte span, so `env::current_dir(ref mut
+zone)` and other Result-returning text APIs can be printed directly. For custom
+debug output to stdout, use `fmt::print_debug` or `fmt::println_debug` with an
 explicit zone.
 `format!` without an explicit zone is intentionally not executable yet; use
 `format_in!` so the allocation zone is clear.

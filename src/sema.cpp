@@ -24933,7 +24933,9 @@ private:
                 fail(source_arg->loc, "format arguments cannot move owning values yet");
             }
             bool is_bool = arg->type.qualifier == TypeQualifier::Value && arg->type.primitive == IrPrimitiveKind::Bool;
-            bool is_string = arg->type.qualifier == TypeQualifier::Value && arg->type.primitive == IrPrimitiveKind::String;
+            bool is_string = (arg->type.qualifier == TypeQualifier::Value &&
+                              arg->type.primitive == IrPrimitiveKind::String) ||
+                             is_std_string_handle_type(arg->type);
             bool is_supported_float =
                 arg->type.qualifier == TypeQualifier::Value &&
                 (arg->type.primitive == IrPrimitiveKind::F32 || arg->type.primitive == IrPrimitiveKind::F64);
@@ -24945,9 +24947,9 @@ private:
             }
             if (!is_value_integer_type(arg->type) && !is_bool && !is_string && !is_supported_float) {
                 if (spec.debug) {
-                    fail(source_arg->loc, "print debug placeholders currently support string, char, integer, bool, f32, and f64 values; use fmt::println_debug(ref mut zone, value) for Debug types");
+                    fail(source_arg->loc, "print debug placeholders currently support string, String, char, integer, bool, f32, and f64 values; use fmt::println_debug(ref mut zone, value) for Debug types");
                 }
-                fail(source_arg->loc, "format arguments currently support string, char, integer, bool, f32, and f64 values, got " + type_name(arg->type));
+                fail(source_arg->loc, "format arguments currently support string, String, char, integer, bool, f32, and f64 values, got " + type_name(arg->type));
             }
             args.push_back(std::move(arg));
         }

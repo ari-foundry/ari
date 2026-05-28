@@ -6,6 +6,7 @@
 #include "enum_payload_layout.hpp"
 #include "layout.hpp"
 #include "slice_semantics.hpp"
+#include "std_string_semantics.hpp"
 #include "symbol_mangle.hpp"
 #include "target.hpp"
 #include "zone_runtime_layout.hpp"
@@ -254,6 +255,7 @@ public:
         out << "@ari_realpath_buffer = internal global [4096 x i8] zeroinitializer, align 16\n\n";
         out << "@ari_readlink_buffer = internal global [4096 x i8] zeroinitializer, align 16\n\n";
         out << "@ari_line_buffer = internal global [4096 x i8] zeroinitializer, align 16\n\n";
+        out << "@stdout = external global ptr\n";
         out << "@stderr = external global ptr\n\n";
         for (const auto& item : strings_) {
             out << item.name << " = private unnamed_addr constant [" << item.size << " x i8] c\"" << item.bytes << "\", align 1\n";
@@ -631,6 +633,7 @@ private:
     void emit_extern_decls() {
         declarations_ << "declare i32 @printf(ptr, ...)\n";
         declarations_ << "declare i32 @fprintf(ptr, ptr, ...)\n";
+        declarations_ << "declare i64 @fwrite(ptr, i64, i64, ptr)\n";
         declarations_ << "declare i32 @putchar(i32)\n";
         declarations_ << "declare i32 @getchar()\n";
         declarations_ << "declare ptr @fgets(ptr, i32, ptr)\n";
@@ -7449,7 +7452,15 @@ private:
         std::string fmt_char = string_ptr("%c");
         std::string fmt_i64 = string_ptr("%lld");
         std::string fmt_u64 = string_ptr("%llu");
+        std::string stdout_stream;
         std::string stderr_stream;
+        auto ensure_stdout_stream = [&]() -> const std::string& {
+            if (stdout_stream.empty()) {
+                stdout_stream = temp();
+                line("  " + stdout_stream + " = load ptr, ptr @stdout");
+            }
+            return stdout_stream;
+        };
         auto ensure_stderr_stream = [&]() -> const std::string& {
             if (stderr_stream.empty()) {
                 stderr_stream = temp();
@@ -7481,6 +7492,19 @@ private:
                 line("  call i64 @ari_builtin_write_u64(i64 " + value + ")");
             }
         };
+        auto emit_byte_span = [&](const std::string& data, const std::string& len) {
+            line("  call i64 @fwrite(ptr " + data + ", i64 1, i64 " + len +
+                 ", ptr " + (use_stderr ? ensure_stderr_stream() : ensure_stdout_stream()) + ")");
+        };
+        auto emit_std_string = [&](const Value& value) {
+            std::string raw = temp();
+            line("  " + raw + " = extractvalue " + value.type + " " + value.name + ", 0");
+            std::string data = temp();
+            line("  " + data + " = extractvalue { ptr, i64, i64 } " + raw + ", 0");
+            std::string len = temp();
+            line("  " + len + " = extractvalue { ptr, i64, i64 } " + raw + ", 1");
+            emit_byte_span(data, len);
+        };
         for (std::size_t i = 0; i < format_parts.size(); ++i) {
             if (!format_parts[i].empty()) {
                 emit_c_string(string_ptr(format_parts[i]));
@@ -7493,6 +7517,14 @@ private:
                         emit_c_string(string_ptr("\""));
                     }
                     emit_c_string(arg.name);
+                    if (spec.debug) {
+                        emit_c_string(string_ptr("\""));
+                    }
+                } else if (is_std_string_handle_type(arg.ir_type)) {
+                    if (spec.debug) {
+                        emit_c_string(string_ptr("\""));
+                    }
+                    emit_std_string(arg);
                     if (spec.debug) {
                         emit_c_string(string_ptr("\""));
                     }

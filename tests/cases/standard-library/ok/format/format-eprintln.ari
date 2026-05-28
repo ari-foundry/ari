@@ -3,6 +3,10 @@ fn main() -> i64 {
   let label = "err";
   eprintln!("macro={label} n={} ok={} byte={} pi={:.1} dbg={:?}", -9, true, 33u8, 2.5f64, "ari");
   std::eprintln!("std={}", 7u64);
+  var zone = zone::create(64);
+  let owned = std::string::from(ref mut zone, "err-owned");
+  eprintln("owned={:?}", owned);
   eprintln("call={}", 3);
+  zone::destroy(zone);
   return 0;
 }

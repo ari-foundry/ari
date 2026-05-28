@@ -3,6 +3,12 @@ fn main() -> i64 {
   print("{{literal}} {}\n", 12);
   std::println("qualified={}", 2);
   println("text={} quoted={:?}", "ari", "ari");
+  var zone = zone::create(64);
+  let owned = std::string::from(ref mut zone, "owned");
+  let owned_debug = std::string::from(ref mut zone, "debug-owned");
+  println("owned={}", owned);
+  println("owned-debug={:?}", owned_debug);
   println("debug={:?}", false);
+  zone::destroy(zone);
   return 0;
 }

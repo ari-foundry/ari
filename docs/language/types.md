@@ -162,6 +162,10 @@ return ordinary text should prefer owned `String` results and take
 borrowed/literal boundary type for C strings, runtime snapshots, static names,
 and compatibility helpers with names such as `_text`, `_raw`, and
 `_unchecked`.
+Compiler-assisted `print`, `println`, and `eprintln` accept both lowercase
+`string` and owned `String` text. Owned `String` output uses the handle's byte
+length, so ordinary stdlib results such as `env::current_dir(ref mut zone)` can
+be printed without converting to a C string.
 
 The source prelude already has the allocator-backed seed under `std::string`.
 `std::string::new(ref mut zone, capacity)` creates a tracked
