@@ -5871,7 +5871,8 @@ private:
             bool found = false;
             for (std::size_t field_i = 0; field_i < current.field_names.size(); ++field_i) {
                 if (current.field_names[field_i] != ast_type.union_by_selector[i]) continue;
-                current = current.field_types[field_i];
+                IrType next = current.field_types[field_i];
+                current = std::move(next);
                 found = true;
                 break;
             }
@@ -8898,7 +8899,7 @@ private:
                                                       std::vector<IrStmtPtr>& statements) {
         if (pattern.rest_alias_name.empty()) return;
 
-        const IrType& element_type = runtime_sequence_element_type(pattern.rest_alias_loc, source_type);
+        IrType element_type = runtime_sequence_element_type(pattern.rest_alias_loc, source_type);
         IrType slice_type = make_prelude_slice_type(pattern.rest_alias_loc, element_type);
         declare_local(pattern.rest_alias_loc, pattern.rest_alias_name, slice_type, false);
         statements.push_back(make_ir_var_decl(
@@ -9324,7 +9325,7 @@ private:
         const std::optional<std::uint64_t>& known_owner_vec_length =
             reference_plan.known_owner_vec_length;
 
-        const IrType& element_type = runtime_sequence_element_type(pattern.loc, shape_type);
+        IrType element_type = runtime_sequence_element_type(pattern.loc, shape_type);
         const std::size_t prefix_count = pattern.has_rest ? pattern.rest_index : pattern.elements.size();
         for (std::size_t i = 0; i < prefix_count; ++i) {
             const Pattern& item = pattern.elements[i];
@@ -10243,7 +10244,7 @@ private:
                                                const IrType& source_type,
                                                IrExprPtr index,
                                                const std::string& operation) const {
-        const IrType& element_type = runtime_sequence_element_type(loc, source_type);
+        IrType element_type = runtime_sequence_element_type(loc, source_type);
         require_runtime_sequence_element_materializable(loc, source_type, element_type, operation);
         return make_ir_index_expr(
             loc,
@@ -10271,7 +10272,7 @@ private:
                                                     const Pattern& pattern,
                                                     const std::string& source_name,
                                                     const IrType& source_type) const {
-        const IrType& element_type = runtime_sequence_element_type(loc, source_type);
+        IrType element_type = runtime_sequence_element_type(loc, source_type);
 
         const std::size_t prefix_count = pattern.rest_index;
         const std::size_t suffix_count = pattern.elements.size() - pattern.rest_index;
@@ -10367,7 +10368,7 @@ private:
                                               const std::string& local_name,
                                               std::vector<IrStmtPtr>& statements,
                                               const std::string& operation) {
-        const IrType& element_type = runtime_sequence_element_type(loc, source_type);
+        IrType element_type = runtime_sequence_element_type(loc, source_type);
         declare_local(loc, local_name, element_type, false);
         statements.push_back(make_ir_var_decl(
             loc,
@@ -10396,7 +10397,7 @@ private:
             return lower_runtime_sequence_element_match_condition(
                 effective_pattern, sequence_pattern, pattern_index, source_name, source_type, prelude);
         }
-        const IrType& element_type = runtime_sequence_element_type(pattern.loc, source_type);
+        IrType element_type = runtime_sequence_element_type(pattern.loc, source_type);
         switch (pattern.kind) {
             case PatternKind::Wildcard:
             case PatternKind::Binding:
@@ -11018,7 +11019,7 @@ private:
                 break;
         }
 
-        const IrType& element_type = runtime_sequence_element_type(pattern.loc, source_type);
+        IrType element_type = runtime_sequence_element_type(pattern.loc, source_type);
         const bool owner_element_slice = is_owner_element_slice_type(source_type);
         RuntimeSequenceValuePatternPlan value_plan = plan_runtime_sequence_value_pattern(
             pattern,
@@ -11361,7 +11362,7 @@ private:
             case PatternKind::Tuple:
             case PatternKind::Array: {
                 if (pattern.kind == PatternKind::Array && is_runtime_sequence_pattern_subject(source_type)) {
-                    const IrType& element_type = runtime_sequence_element_type(pattern.loc, source_type);
+                    IrType element_type = runtime_sequence_element_type(pattern.loc, source_type);
                     for (const auto& element : pattern.elements) {
                         validate_product_binding_pattern_shape(element, element_type);
                     }
@@ -14857,7 +14858,7 @@ private:
             case PatternKind::Tuple:
             case PatternKind::Array: {
                 if (pattern.kind == PatternKind::Array && is_runtime_sequence_pattern_subject(type)) {
-                    const IrType& element_type = runtime_sequence_element_type(pattern.loc, type);
+                    IrType element_type = runtime_sequence_element_type(pattern.loc, type);
                     if (!pattern.rest_alias_name.empty()) {
                         add_pattern_binding(
                             pattern.rest_alias_loc,
@@ -20414,7 +20415,7 @@ private:
     }
 
     IrExprPtr make_typed_empty_vector_expr(SourceLocation loc, const IrType& expected) const {
-        const IrType& element = require_typed_empty_vector_element_type(loc, expected);
+        IrType element = require_typed_empty_vector_element_type(loc, expected);
         require_plain_prelude_aggregate_element(loc, element, "vector");
         return make_empty_vector_literal_expr(loc, element);
     }
@@ -21931,7 +21932,8 @@ private:
                 return {UnionBySelectorValueKind::Dynamic, ""};
             }
             current_expr = struct_literal_field_value(*current_expr, segment);
-            current_type = current_type.field_types[field_index];
+            IrType next_type = current_type.field_types[field_index];
+            current_type = std::move(next_type);
         }
         if (!current_expr) return {};
         if (auto enum_arm = static_enum_case_arm_name(*current_expr, current_type)) {

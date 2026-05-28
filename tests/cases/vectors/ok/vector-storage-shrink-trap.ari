@@ -1,5 +1,9 @@
+fn hidden_index(value: i64) -> i64 {
+  return value;
+}
+
 fn main() -> i64 {
   var values: Vec[i64] = [1, 2, 3];
   values = [4];
-  return values[1];
+  return values[hidden_index(1)];
 }

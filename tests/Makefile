@@ -6526,7 +6526,7 @@ check-variables: $(TARGET)
 	if $(TARGET) tests/cases/ownership/errors/aggregate-owner-undropped.ari -o $(BUILD_DIR)/variables/aggregate-owner-undropped.elf >$(BUILD_DIR)/variables/aggregate-owner-undropped.err 2>&1; then exit 1; fi
 	grep -q "owning binding 'pair' must be moved or dropped before return" $(BUILD_DIR)/variables/aggregate-owner-undropped.err
 	if $(TARGET) tests/cases/ownership/errors/ownership-aggregate-field-use-after-move.ari -o $(BUILD_DIR)/variables/ownership-aggregate-field-use-after-move.elf >$(BUILD_DIR)/variables/ownership-aggregate-field-use-after-move.err 2>&1; then exit 1; fi
-	grep -q "cannot use moved owned field 'holder.0'" $(BUILD_DIR)/variables/ownership-aggregate-field-use-after-move.err
+	grep -q "cannot use moved owned field 'holder.token'" $(BUILD_DIR)/variables/ownership-aggregate-field-use-after-move.err
 	if $(TARGET) tests/cases/ownership/errors/ownership-aggregate-partial-move.ari -o $(BUILD_DIR)/variables/ownership-aggregate-partial-move.elf >$(BUILD_DIR)/variables/ownership-aggregate-partial-move.err 2>&1; then exit 1; fi
 	grep -q "cannot move partially moved owning binding 'holder'" $(BUILD_DIR)/variables/ownership-aggregate-partial-move.err
 	if $(TARGET) tests/cases/ownership/errors/ownership-temporary-field-move.ari -o $(BUILD_DIR)/variables/ownership-temporary-field-move.elf >$(BUILD_DIR)/variables/ownership-temporary-field-move.err 2>&1; then exit 1; fi
@@ -7213,7 +7213,7 @@ check-errors: $(TARGET) check-function-errors
 	if $(TARGET) tests/cases/patterns/errors/pattern-ref-mut-immutable.ari -o $(BUILD_DIR)/errors/pattern-ref-mut-immutable.elf >$(BUILD_DIR)/errors/pattern-ref-mut-immutable.err 2>&1; then exit 1; fi
 	grep -q "cannot mutably borrow immutable binding 'value'" $(BUILD_DIR)/errors/pattern-ref-mut-immutable.err
 	if $(TARGET) tests/cases/patterns/errors/pattern-ref-ownership-moved-field.ari -o $(BUILD_DIR)/errors/pattern-ref-ownership-moved-field.elf >$(BUILD_DIR)/errors/pattern-ref-ownership-moved-field.err 2>&1; then exit 1; fi
-	grep -q "cannot use moved owned field 'holder.0'" $(BUILD_DIR)/errors/pattern-ref-ownership-moved-field.err
+	grep -q "cannot use moved owned field 'holder.token'" $(BUILD_DIR)/errors/pattern-ref-ownership-moved-field.err
 	if $(TARGET) tests/cases/patterns/errors/pattern-ref-ownership-vector-moved-field.ari -o $(BUILD_DIR)/errors/pattern-ref-ownership-vector-moved-field.elf >$(BUILD_DIR)/errors/pattern-ref-ownership-vector-moved-field.err 2>&1; then exit 1; fi
 	grep -q "cannot use moved owned field 'values.0'" $(BUILD_DIR)/errors/pattern-ref-ownership-vector-moved-field.err
 	if $(TARGET) tests/cases/patterns/errors/pattern-ref-ownership-vector-aggregate-moved-field.ari -o $(BUILD_DIR)/errors/pattern-ref-ownership-vector-aggregate-moved-field.elf >$(BUILD_DIR)/errors/pattern-ref-ownership-vector-aggregate-moved-field.err 2>&1; then exit 1; fi
@@ -7308,7 +7308,7 @@ check-errors: $(TARGET) check-function-errors
 	if $(TARGET) tests/cases/operators/errors/invalid-cast.ari -o $(BUILD_DIR)/errors/invalid-cast.elf >$(BUILD_DIR)/errors/invalid-cast.err 2>&1; then exit 1; fi
 	grep -q "explicit casts currently require integer types, float types, integer/float casts, or raw pointer casts, got bool as i64" $(BUILD_DIR)/errors/invalid-cast.err
 	if $(TARGET) tests/cases/match/errors/enum-payload-unsupported-vector.ari -o $(BUILD_DIR)/errors/enum-payload-unsupported-vector.elf >$(BUILD_DIR)/errors/enum-payload-unsupported-vector.err 2>&1; then exit 1; fi
-	grep -q "enum aggregate payloads currently support integer, bool, pointer-shaped, one-word enum, owned i64/u64, plain tuple/array/struct aggregate, fixed-capacity vector, or nested aggregate enum values" $(BUILD_DIR)/errors/enum-payload-unsupported-vector.err
+	grep -q "enum aggregate payloads currently support integer, float, bool, pointer-shaped, one-word enum, owned i64/u64, plain tuple/array/struct aggregate, fixed-capacity vector, or nested aggregate enum values" $(BUILD_DIR)/errors/enum-payload-unsupported-vector.err
 	if $(TARGET) tests/cases/match/errors/enum-payload-count.ari -o $(BUILD_DIR)/errors/enum-payload-count.elf >$(BUILD_DIR)/errors/enum-payload-count.err 2>&1; then exit 1; fi
 	grep -q "wrong payload count for enum case 'Some'" $(BUILD_DIR)/errors/enum-payload-count.err
 	if $(TARGET) tests/cases/match/errors/match-nonexhaustive.ari -o $(BUILD_DIR)/errors/match-nonexhaustive.elf >$(BUILD_DIR)/errors/match-nonexhaustive.err 2>&1; then exit 1; fi
