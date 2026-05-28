@@ -40,11 +40,14 @@ child modules become visible in ordinary code. Write `Vec[T]`, `Option[T]`,
 `replace(ref mut value, next)`, `swap(ref mut left, ref mut right)`,
 `write_i64(...)`, `create(...)`, `new<T>(...)`, and pointer helpers directly.
 Nested forms such as `fmt::Display`, `iter::Iterator[T]`, `mem::size_of<T>()`,
-`input::read_byte()`, `input::try_read_byte()`, and `zone::new<T>(...)`
+`input::read_byte()`, `input::try_read_byte()`, `region::new<T>(...)`, and `zone::new<T>(...)`
 resolve through implicit aliases to the source `std` module, even when a root
 re-export such as `input()` shares the prefix.
 The explicit paths still exist as `std::Vec`, `std::iter::range`,
-`std::mem::size_of`, and `std::zone::new`. `std::vec::Vec` names the
+`std::mem::size_of`, `std::region::new`, and `std::zone::new`.
+`std::region::Region` is the preferred public alias for the current
+region/zone owner, and root `Region` is re-exported for ordinary code.
+`std::vec::Vec` names the
 source-backed allocator seed handle, and `std::Vec[T]` is a public alias for
 that same explicit-zone handle. Bare root `Vec[T]` remains the current
 compiler-known local vector type. `std::boxed::Box` names the
@@ -809,11 +812,29 @@ contract for those cases.
 `move_bytes` when regions may overlap. They lower through LLVM memory
 intrinsics and keep the byte count explicit in the name and argument list.
 
-## Zone Allocation
+## Region And Zone Allocation
 
-The prelude exposes the host-backed allocation zone capability:
+The prelude exposes the host-backed allocation lifetime capability. New
+user-facing code should prefer `Region` and `region::*`; `Zone` and `zone::*`
+remain the low-level runtime and compatibility spellings.
 
 ```ari
+Region
+region::create(capacity: i64) -> own Region
+region::default_capacity() -> i64
+region::allocator(region: ref mut Region) -> std::allocator::Allocator
+region::alloc(region: ref mut Region, bytes: i64, align: i64) -> ptr u8
+region::capacity(region: ref mut Region) -> i64
+region::used(region: ref mut Region) -> i64
+region::remaining(region: ref mut Region) -> i64
+region::can_alloc(region: ref mut Region, bytes: i64) -> bool
+region::can_alloc_array<T>(region: ref mut Region, count: i64) -> bool
+region::alloc_array<T>(region: ref mut Region, count: i64) -> ptr T
+region::new<T>(region: ref mut Region, value: T) -> ptr T
+region::promote<T>(target: ref mut Region, source: ptr T) -> ptr T
+region::reset(region: ref mut Region) -> void
+region::destroy(region: own Region) -> void
+
 Zone
 zone::create(capacity: i64) -> own Zone
 zone::temp(capacity: i64) -> own Zone
@@ -836,6 +857,11 @@ zone::promote<T>(target: ref mut Zone, source: ptr T) -> ptr T
 zone::reset(zone: ref mut Zone) -> void
 zone::destroy(zone: own Zone) -> void
 ```
+
+`Region` is currently a public alias for `Zone`, so old and new spellings use
+the same runtime representation. A region owns a bounded bulk lifetime;
+`Allocator` is the smaller capability used when strings, vectors,
+collections, or formatters need more storage from an existing backing region.
 
 Zones are explicit allocation regions. Allocation returns raw `ptr u8` memory,
 so callers cast or offset pointers deliberately and use `ptr_load`,
@@ -900,9 +926,11 @@ storing them into longer-lived bindings or aggregates, or sending them through
 escape-prone calls is rejected with a diagnostic that names the pointer and the
 temporary zone.
 
-The source header `lib/std.arih` exposes the declaration-shaped zone API:
-`std::zone::create`, raw and typed `alloc`, logical counter/preflight helpers,
-allocation-header metadata helpers, `new`, `promote`, `reset`, and `destroy`.
+The source header `lib/std.arih` exposes both layers:
+`std::region::create`, raw and typed region allocation, allocator handoff,
+logical counter/preflight helpers, `new`, `promote`, `reset`, and `destroy`;
+and compatibility `std::zone::create`, raw and typed `alloc`, allocation-header
+metadata helpers, `new`, `promote`, `reset`, and `destroy`.
 `zone::temp` and `zone::scratch` remain compiler-known lexical
 helpers until source declarations can express their hidden lifetime cleanup.
 `std::vec::alloc_buffer<T>(ref mut Zone, capacity)` is the raw

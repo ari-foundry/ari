@@ -62,6 +62,7 @@ library evolves.
 | `std::path` | Path byte views, components, join, lexical normalization. | `std-path-basic.ari`, `std-path-components.ari` |
 | `std::process` | `Command`, `Child`, status, output capture, fork/wait, temp paths. | `std-process-command.ari`, `std-process-output.ari` |
 | `std::random` | OS entropy and deterministic `Prng`. | `std-random-basic.ari`, `std-random-result.ari` |
+| `std::region` | Preferred public allocation lifetime, allocator handoff, reset, destroy. | `std-region-capability.ari` |
 | `std::rc` | `Rc`, `Arc`, `Weak`, counts, downgrade, upgrade. | `std-rc-arc-weak.ari` |
 | `std::string` | Owned byte strings, UTF-8/OS/C string views, splitting, joining, parsing. | `std-string-natural-api.ari`, `std-string-text-kinds.ari` |
 | `std::sync` | Atomics, mutexes, rwlocks, once, once-lock, condvar, barrier, channels. | `std-sync-concurrency-api.ari` |
@@ -70,7 +71,7 @@ library evolves.
 | `std::thread` | Spawn, join, raw-data entries, scoped join groups, builder, sleep, yield, thread-local values. | `std-thread-basic.ari`, `std-thread-builder.ari`, `std-thread-scope-raw.ari` |
 | `std::time` | Durations, instants, deadlines, UTC calendar conversion. | `std-time-basic.ari`, `std-time-timeout.ari` |
 | `std::vec` | Capacity, reserve, append, extend, drain, splice, split, dedup. | `std-vec-complete-convenience-api.ari` |
-| `std::zone` | Explicit allocation capability, placement, promotion, reset, destroy. | `std-zone-alloc-array.ari` |
+| `std::zone` | Low-level allocation compatibility, placement, promotion, metadata, reset, destroy. | `std-zone-alloc-array.ari`, `std-zone-backed.ari` |
 
 If a module guide does not include a small source snippet yet, treat that as a
 documentation bug. Add the snippet and connect it to a focused test in the same

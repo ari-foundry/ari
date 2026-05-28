@@ -8,8 +8,9 @@ hiding allocation, ownership, or backend behavior.
 
 - Keep public APIs readable from source in `lib/std.arih` and `lib/std/`.
 - Prefer source Ari implementations over compiler hooks.
-- Keep allocation explicit through `Zone` regions and `Allocator`
-  capabilities; there is no invisible global heap.
+- Keep allocation explicit through `Region` lifetimes and `Allocator`
+  capabilities; `Zone` remains the low-level runtime compatibility name, and
+  there is no invisible global heap.
 - Make ownership and borrowing behavior visible in API signatures.
 - Track every public declaration in `tests/std_api_manifest.txt`.
 - Regenerate `docs/stdlib/generated/api-index.md` from the manifest so users
@@ -34,7 +35,7 @@ API evolution.
 
 | Module | Purpose | First Things To Use |
 | --- | --- | --- |
-| `std` | Prelude root, shared ADTs, root aliases. | `Option`, `Result`, `Slice`, `char`, `try_get`, `move`, `take`, `assert`, `panic`, `Error`, `ErrorKind`, `CStr`, `CString`, `Library`, `Symbol`, `AtomicI64`, `Mutex`, `RwLock`, `Once`. Root `char` is an ASCII `u8` alias; root `Slice[T]` includes `len`, access, subslicing, subsequence search, compare, chunks, windows, split, copy helpers, stable/unstable partitioning, dedup variants, and direct algorithm wrappers. |
+| `std` | Prelude root, shared ADTs, root aliases. | `Option`, `Result`, `Slice`, `char`, `try_get`, `move`, `take`, `assert`, `panic`, `Error`, `ErrorKind`, `Region`, `Allocator`, `CStr`, `CString`, `Library`, `Symbol`, `AtomicI64`, `Mutex`, `RwLock`, `Once`. Root `char` is an ASCII `u8` alias; root `Slice[T]` includes `len`, access, subslicing, subsequence search, compare, chunks, windows, split, copy helpers, stable/unstable partitioning, dedup variants, and direct algorithm wrappers. |
 | `std::option` | Convenience methods for optional values. | `is_some`, `is_none`, `is_some_and`, `is_none_or`, `unwrap_or_else`, `map`, `and_then`, `filter`, `flatten`, `transpose`, `ok_or`. |
 | `std::result` | Convenience methods for success/failure values. | `is_ok`, `is_err`, `is_ok_and`, `is_err_and`, `unwrap_or_else`, `ok`, `err`, `map_err`, `or`, `transpose`. |
 | `std::io` | Byte-oriented process IO contracts and hooks. | `Reader`, `Writer`, `Seek`, `ReadByte`, `Stdin`, `Stdout`, `Stderr`, `Pipe`, `PipeReader`, `PipeWriter`, `Cursor`, `BufReader`, `BufWriter`, `stdin`, `stdout`, `stderr`, Result-returning `pipe`, `pipe_optional`, `cursor`, `buf_reader`, `buf_writer`, direct `Error` helpers `read_one`, `read`, `read_exact`, `read_line_from`, `read_to_string`, `copy`, `write`, `write_all`, `flush`, `Writer::write`, `Writer::write_all`, plain-text helpers `print`, `println`, `eprint`, `eprintln`, compatibility text aliases `print_text`, `println_text`, `eprint_text`, `eprintln_text`, compatibility `read_exact_unchecked`, `read_to_string_unchecked`, `try_copy`, `copy_unchecked`, `write_all_unchecked`, `flush_unchecked`, collection helper `read_all`, raw `write_bytes`, `read_line`. |
@@ -56,8 +57,9 @@ API evolution.
 | `std::path` | Source lexical path manipulation. | `Path`/`PathBytes`, distinct owned POSIX `PathBuf`, `Component`/`ComponentKind`, `bytes`, `from_os`, `from_bytes`, `from`, `to_string`, `is_empty`, `contains_nul`, `as_bytes`, method-style path-byte and owned-path helpers, `is_separator`, `is_absolute`, `is_relative`, explicit `windows_*` drive/UNC classifiers, `trim_trailing_separators`, `components`, `components_with_kinds`, `file_name`, `parent`, `extension`, `stem`, `file_stem`, `has_file_name`, `has_extension`, `has_stem`, `has_file_stem`, `starts_with`, `strip_prefix`, `ends_with`, `strip_suffix`, `with_file_name_in`, `with_extension_in`, `join_in`, `join`, `join_many`, `current_dir_join`, `normalize_in`. |
 | `std::net` | Network address values, DNS lookup, and explicit socket handles. | `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, `SocketAddr`, `TcpListener`, `TcpStream`, `UdpSocket`, `UnixListener`, `UnixStream`, `Shutdown`, `ToSocketAddrs`, address constructors/accessors, family/loopback/unspecified predicates, IPv4/IPv6 DNS lookup plus `"host:port"` and `"[host]:port"` endpoint resolution with direct `Error` and raw compatibility bridges, host-port TCP connect helpers, IPv4/IPv6 TCP bind/connect/accept/local-port/local-address/peer-address helpers, IPv4/IPv6 UDP bind/local-address/send-byte/receive-byte helpers, Unix stream bind/connect/accept helpers, direct `Error` and raw compatibility socket construction/accept/connect bridges, descriptor views, nonblocking flags, TCP listener/UDP reuse-address helpers, TCP nodelay helpers, `std::time::Duration` timeouts with raw millisecond compatibility helpers, stream shutdown, explicit close, TCP/Unix `std::io` byte adapters, and TCP/Unix `read_exact`/`write_all` stream buffer helpers. |
 | `std::mem` | Layout, raw pointer, byte memory, and hosted page-size operations. | `size_of`, `align_of`, `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store`, `copy_bytes`, `move_bytes`, `set_bytes`, `page_size`, `replace`, `swap`. |
+| `std::region` | Preferred public bulk allocation lifetime facade. | `Region`, `create`, `default_capacity`, `allocator`, raw and typed allocation, placement `new`, `promote`, logical counter helpers, preflight helpers, `reset`, `destroy`. |
 | `std::allocator` | Public allocation-capability view over zone-backed storage. | `Allocator`, `from_zone`, `from_data`, `of`, raw and typed allocation helpers, logical counter helpers, preflight helpers. |
-| `std::zone` | Explicit region/zone lifecycle capability. | `create`, `alloc`, `capacity`, `used`, `remaining`, `alloc<T>`, `alloc_array<T>`, `new<T>`, `promote<T>`, `allocation_zone`, `metadata`, `from_zone`, `ZoneMetadata`, metadata handle allocation/introspection, `ZoneBacked`, `of`, `reset`, `destroy`. |
+| `std::zone` | Low-level region runtime and compatibility layer. | `create`, `alloc`, `capacity`, `used`, `remaining`, `alloc<T>`, `alloc_array<T>`, `new<T>`, `promote<T>`, `allocation_zone`, `metadata`, `from_zone`, `ZoneMetadata`, metadata handle allocation/introspection, `ZoneBacked`, `of`, `reset`, `destroy`. |
 | `std::boxed` | Zone-backed single-value owner. | `Box[T]`, `new`, `get`, `try_get`, `set`, `take`, `try_take`, `copy_to`. |
 | `std::string` | Zone-backed owned byte string plus typed borrowed and owned text-boundary views. | `String`, borrowed `Utf8`, owned `Utf8String`, `Codepoints`, borrowed `OsStr`, owned `OsString`, `SplitOnce`, direct string-literal coercion to `Slice[u8]` / `Vec[u8]` / `[u8, N]` / `Utf8` / `OsStr` / `PathBytes` / `CStr`, `utf8`, `utf8_string`, `utf8_string_optional`, `utf8_string_unchecked`, `codepoints`, `os_str`, `os_string`, `os_string_from_slice`, `c_str`, `c_len`, `c_bytes`, `bytes`, `new`, `empty`, `from`, `copy`, `from`, `from_slice_in`, `join_in`, borrowed parser helpers `lines`, `trim`, `split_once`, `starts_with`, `ends_with`, `contains`, `find`, `strip_prefix`, `strip_suffix`, `substring`, allocating `replace`, `push`, `push_str`, `try_get`, `try_pop`, `remove`, `try_remove`, `retain`, `append`, `append_byte`, `append_bytes`, `find_text`, `contains_text`, `split`, `chunks`, `windows`, `push_codepoint_in`, `try_utf8`, `is_utf8`, `codepoint_count`, `codepoint_at`, `codepoint_next_index`, `codepoints`, `equals_text`, `equals_text_ignore_case`, `trimmed`, `parse_decimal`, `parse_signed_decimal`, `parse_decimal_prefix`, `parse_signed_decimal_prefix`, `as_slice`. `c_str` returns the shared `std::c::CStr` type. |
 | `std::ascii` | Source-only ASCII byte and slice helpers. | `is_digit`, `is_printable`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `parse_decimal`, `parse_decimal_prefix`, signed decimal parsers, and overflow-checked `i64` parser policy. |
@@ -77,13 +79,15 @@ API evolution.
 
 ## Allocation Rules
 
-Anything that creates a region takes a `ref mut Zone` or returns a handle tied
-to a zone. Anything that grows an existing handle should prefer
+Anything that creates a bulk lifetime should be described as a `Region` in
+user-facing APIs and docs. Today `Region` aliases the existing `Zone` runtime,
+so older `ref mut Zone` APIs continue to work while the source library
+migrates. Anything that grows an existing handle should prefer
 `std::allocator::Allocator`, which is the public capability view over that
-backing storage. Methods with an `_in` suffix take an explicit zone for growth
-or copying; methods with a `_to` suffix copy a derived value into a target
-zone. Heap-backed handles can expose an `Allocator` from their own backing
-allocation, so natural growth methods such as `vec.push(value)`,
+backing storage. Methods with an `_in` suffix take an explicit region/zone for
+growth or copying; methods with a `_to` suffix copy a derived value into a
+target region. Heap-backed handles can expose an `Allocator` from their own
+backing allocation, so natural growth methods such as `vec.push(value)`,
 `vec.reserve(capacity)`, and `String` byte appends allocate through the
 recovered runtime allocator after construction. For tracked local
 `std::collections` handles, Ari can infer the same source zone for common
@@ -95,9 +99,10 @@ zone provenance. Fixed-capacity `RingBuffer` allocates only at construction.
 Collection handles keep the same zone provenance as their backing storage, and
 collection iterator cursors preserve that provenance.
 
-Use `zone::destroy(zone)` when a manually created zone is no longer needed.
-Pointers, strings, vectors, boxes, and slices derived from that zone become
-invalid after `reset` or `destroy`, and sema rejects later use.
+Use `region::destroy(region)` or compatibility `zone::destroy(zone)` when a
+manually created region is no longer needed. Pointers, strings, vectors,
+boxes, and slices derived from that region become invalid after `reset` or
+`destroy`, and sema rejects later use where it can track provenance.
 
 ## Value Movement Rules
 

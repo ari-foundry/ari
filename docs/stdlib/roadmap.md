@@ -17,8 +17,10 @@ subslice, split, subsequence search, compare, chunk/window, copy helpers,
 direct algorithm wrappers, `algo` slice sort/search/reorder helpers, `hash` deterministic
 hasher/value/byte-slice helpers, `random` OS entropy plus deterministic
 non-cryptographic PRNG helpers, `mem` layout,
-pointer, value, byte memory, and hosted page-size helpers, `zone` raw
-allocation plus source typed array allocation and `ZoneMetadata`/`ZoneBacked`
+pointer, value, byte memory, and hosted page-size helpers, `region` as the
+preferred public bulk allocation lifetime facade, `allocator` as the public
+growth capability, and `zone` as the low-level runtime compatibility layer for
+raw allocation, source typed array allocation, and `ZoneMetadata`/`ZoneBacked`
 handle zone metadata access,
 `boxed`, `string` byte access/search/split/chunk/window/join/ASCII helpers
 including case search, prefix parsers, owned trim copies, typed borrowed

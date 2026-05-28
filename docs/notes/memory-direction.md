@@ -48,26 +48,41 @@ That keeps memory policy testable and local. Programs can choose arena, bump,
 debug, fixed-buffer, or OS-backed allocation without the language requiring one
 ambient heap.
 
-Current direction: `Zone` is the first concrete region implementation, but the
-public growth vocabulary should move toward `std::allocator::Allocator`.
-`ZoneMetadata` exists as a compatibility bridge over today's allocation header;
-ordinary library users should not need to name it.
+Current direction: `Region` is the public lifetime owner, `Allocator` is the
+growth capability, and `Zone` is the first concrete runtime implementation.
+`ZoneMetadata` exists as a compatibility bridge over today's allocation
+header; ordinary library users should not need to name it.
 
 ## Regions
 
 Regions are a good fit for short-lived allocation groups:
 
 ```ari
-with region temp using allocator {
-  let items = make_items(temp)
+region(8192) {
+  let items = make_items()
 }
 ```
 
-The spelling is not settled. The important rule is that a zone owns the large
-area of storage and can release it all at once, while an `Allocator` capability
-is what containers and strings use when they need more storage from the same
-region. Borrow and ownership analysis can still warn about obvious escapes or
-use-after-release cases, but Ari does not try to make raw memory fully safe.
+The current source spelling is still `zone { ... }` because the compiler
+feature predates the `Region` facade. The better user model is "a region owns
+the large area of storage and can release it all at once, while an
+`Allocator` capability is what containers and strings use when they need more
+storage from the same region." Borrow and ownership analysis can still warn
+about obvious escapes or use-after-release cases, but Ari does not try to make
+raw memory fully safe.
+
+The next ergonomic step should be a spelling that reads like region creation
+rather than allocator metadata plumbing. Good candidates are:
+
+- keep `zone { ... }` as compatibility syntax and document it as temporary
+  region syntax
+- add a future `region { ... }` alias once parser compatibility is clear
+- allow constructors inside a current region to omit the region argument only
+  when exactly one allocation lifetime is missing
+
+Avoid a runtime-global `region::current()` API for ordinary library code. A
+lexical current region is readable and checkable; an ambient global allocator
+would make lifetime and reset behavior much harder to reason about.
 
 Likely explicit memory operations:
 

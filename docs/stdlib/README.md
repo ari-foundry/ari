@@ -153,6 +153,10 @@ A few declarations are still compiler-known because the
 current language cannot express them directly: layout queries, typed raw
 pointer operations, byte memory intrinsics, runtime IO hooks, explicit zone
 allocation, formatting macro lowering, and some zone provenance checks.
+The user-facing allocation vocabulary should now be read as `Region` for the
+bulk lifetime owner plus `Allocator` for follow-up growth from existing
+region-backed storage. `Zone` remains the current runtime and compatibility
+name, not the long-term shape ordinary docs should force users to think in.
 
 The rule of thumb is simple: put behavior in Ari source first, and add
 compiler support only when the language cannot safely model the primitive yet.

@@ -38,17 +38,6 @@ enum std::target::Os|check-prelude std-target-basic compiler-known operating-sys
 enum std::target::SyscallAbi|check-prelude std-target-basic source syscall ABI classifier; docs/stdlib/modules/target.md
 enum std::thread::JoinError|check-prelude std-thread-basic join handle lifecycle failure reason; docs/stdlib/modules/thread.md
 enum std::thread::ThreadLocalSetError[T]|check-prelude std-thread-local recoverable ThreadLocal set capacity failure preserving value; docs/stdlib/modules/thread.md
-fn std::allocator::alloc|std allocator capability tests; docs/stdlib/modules/allocator.md
-fn std::allocator::alloc_array[T]|std allocator capability tests; docs/stdlib/modules/allocator.md
-fn std::allocator::can_alloc|std allocator capability tests; docs/stdlib/modules/allocator.md
-fn std::allocator::can_alloc_array[T]|std allocator capability tests; docs/stdlib/modules/allocator.md
-fn std::allocator::capacity|std allocator capability tests; docs/stdlib/modules/allocator.md
-fn std::allocator::from_data|std allocator capability tests; docs/stdlib/modules/allocator.md
-fn std::allocator::from_zone|std allocator capability tests; docs/stdlib/modules/allocator.md
-fn std::allocator::from_zone_metadata|std allocator capability tests; docs/stdlib/modules/allocator.md
-fn std::allocator::of[T: std::zone::ZoneBacked]|std allocator capability tests; docs/stdlib/modules/allocator.md
-fn std::allocator::remaining|std allocator capability tests; docs/stdlib/modules/allocator.md
-fn std::allocator::used|std allocator capability tests; docs/stdlib/modules/allocator.md
 fn std::algo::binary_search[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers binary search over ordered slices; docs/stdlib/modules/algo.md
 fn std::algo::binary_search_by[T]|check-prelude std-algo-by-helpers comparator binary search over sorted slices; docs/stdlib/modules/algo.md
 fn std::algo::clamp[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers clamp wrapper over cmp; docs/stdlib/modules/algo.md
@@ -89,6 +78,17 @@ fn std::algo::try_stable_sort[T: std::cmp::Ord[T]|check-prelude std-algo-final-s
 fn std::algo::try_stable_sort_by[T]|check-prelude std-algo-final-sort comparator direct Result stable sort entry; docs/stdlib/modules/algo.md
 fn std::algo::upper_bound[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers sorted insertion upper bound; docs/stdlib/modules/algo.md
 fn std::algo::upper_bound_by[T]|check-prelude std-algo-by-helpers comparator sorted insertion upper bound; docs/stdlib/modules/algo.md
+fn std::allocator::alloc|std allocator capability tests; docs/stdlib/modules/allocator.md
+fn std::allocator::alloc_array[T]|std allocator capability tests; docs/stdlib/modules/allocator.md
+fn std::allocator::can_alloc|std allocator capability tests; docs/stdlib/modules/allocator.md
+fn std::allocator::can_alloc_array[T]|std allocator capability tests; docs/stdlib/modules/allocator.md
+fn std::allocator::capacity|std allocator capability tests; docs/stdlib/modules/allocator.md
+fn std::allocator::from_data|std allocator capability tests; docs/stdlib/modules/allocator.md
+fn std::allocator::from_zone|std allocator capability tests; docs/stdlib/modules/allocator.md
+fn std::allocator::from_zone_metadata|std allocator capability tests; docs/stdlib/modules/allocator.md
+fn std::allocator::of[T: std::zone::ZoneBacked]|std allocator capability tests; docs/stdlib/modules/allocator.md
+fn std::allocator::remaining|std allocator capability tests; docs/stdlib/modules/allocator.md
+fn std::allocator::used|std allocator capability tests; docs/stdlib/modules/allocator.md
 fn std::ascii::contains_ignore_case|std ascii case search tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::digit_value|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::ends_with_ignore_case|std ascii case compare tests; docs/stdlib/api-reference.md ASCII section
@@ -1084,6 +1084,20 @@ fn std::random::try_below|check-prelude std-random-try-bounds Option-returning u
 fn std::random::try_range|check-prelude std-random-try-bounds Option-returning unbiased PRNG range helper; docs/stdlib/modules/random.md
 fn std::rc::arc[T]|check-prelude std-rc-arc-weak Arc constructor over zone-backed control block; docs/stdlib/modules/rc.md
 fn std::rc::rc[T]|check-prelude std-rc-arc-weak Rc constructor over zone-backed control block; docs/stdlib/modules/rc.md
+fn std::region::alloc|std region capability tests; docs/stdlib/modules/region.md
+fn std::region::alloc_array[T]|std region capability tests; docs/stdlib/modules/region.md
+fn std::region::allocator|std region capability tests; docs/stdlib/modules/region.md
+fn std::region::can_alloc|std region capability tests; docs/stdlib/modules/region.md
+fn std::region::can_alloc_array[T]|std region capability tests; docs/stdlib/modules/region.md
+fn std::region::capacity|std region capability tests; docs/stdlib/modules/region.md
+fn std::region::create|std region capability tests; docs/stdlib/modules/region.md
+fn std::region::default_capacity|std region capability tests; docs/stdlib/modules/region.md
+fn std::region::destroy|std region capability tests; docs/stdlib/modules/region.md
+fn std::region::new[T]|std region capability tests; docs/stdlib/modules/region.md
+fn std::region::promote[T]|std region capability tests; docs/stdlib/modules/region.md
+fn std::region::remaining|std region capability tests; docs/stdlib/modules/region.md
+fn std::region::reset|std region capability tests; docs/stdlib/modules/region.md
+fn std::region::used|std region capability tests; docs/stdlib/modules/region.md
 fn std::slice[T]|Slice construction tests; docs/dev/test-matrix.md Prelude row
 fn std::string::alloc_buffer|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::string::bytes|check-prelude std-string-byte-literals natural borrowed byte view over string literals; docs/stdlib/modules/string.md
@@ -1430,6 +1444,16 @@ method std::Slice[T]::try_stable_sort|check-prelude std-algo-final-sort direct R
 method std::Slice[T]::try_stable_sort_by|check-prelude std-algo-final-sort comparator direct Result borrowed slice stable sort wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::upper_bound|check-prelude prelude-slice-sequence ordered borrowed slice upper-bound wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::upper_bound_by|check-prelude std-algo-by-helpers comparator borrowed slice upper-bound wrapper; docs/stdlib/modules/slice.md
+method std::allocator::Allocator::alloc|std allocator capability tests; docs/stdlib/modules/allocator.md
+method std::allocator::Allocator::alloc_array[T]|std allocator capability tests; docs/stdlib/modules/allocator.md
+method std::allocator::Allocator::as_ptr|std allocator capability tests; docs/stdlib/modules/allocator.md
+method std::allocator::Allocator::can_alloc|std allocator capability tests; docs/stdlib/modules/allocator.md
+method std::allocator::Allocator::can_alloc_array[T]|std allocator capability tests; docs/stdlib/modules/allocator.md
+method std::allocator::Allocator::capacity|std allocator capability tests; docs/stdlib/modules/allocator.md
+method std::allocator::Allocator::equals|std allocator capability tests; docs/stdlib/modules/allocator.md
+method std::allocator::Allocator::metadata|std allocator capability tests; docs/stdlib/modules/allocator.md
+method std::allocator::Allocator::remaining|std allocator capability tests; docs/stdlib/modules/allocator.md
+method std::allocator::Allocator::used|std allocator capability tests; docs/stdlib/modules/allocator.md
 method std::boxed::Box[T]::as_mut|check-prelude std-boxed-as-ref-mut mutable value borrow with conflict diagnostic; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::as_mut_ptr|check-prelude std-boxed-as-mut-ptr mutable borrowed receiver with reset invalidation; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::as_ptr|check-prelude std-boxed-as-ptr borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
@@ -3199,16 +3223,6 @@ method std::vec::Vec[T]::upper_bound|check-prelude std-vec-sequence ordered sequ
 method std::vec::Vec[T]::upper_bound_by|check-prelude std-algo-by-helpers comparator sequence upper-bound wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::windows|check-prelude std-vec-sequence borrowed window iterator wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::with_capacity|check-prelude std-vec-convenience-api associated explicit-capacity constructor; docs/stdlib/modules/vec.md
-method std::allocator::Allocator::alloc|std allocator capability tests; docs/stdlib/modules/allocator.md
-method std::allocator::Allocator::alloc_array[T]|std allocator capability tests; docs/stdlib/modules/allocator.md
-method std::allocator::Allocator::as_ptr|std allocator capability tests; docs/stdlib/modules/allocator.md
-method std::allocator::Allocator::can_alloc|std allocator capability tests; docs/stdlib/modules/allocator.md
-method std::allocator::Allocator::can_alloc_array[T]|std allocator capability tests; docs/stdlib/modules/allocator.md
-method std::allocator::Allocator::capacity|std allocator capability tests; docs/stdlib/modules/allocator.md
-method std::allocator::Allocator::equals|std allocator capability tests; docs/stdlib/modules/allocator.md
-method std::allocator::Allocator::metadata|std allocator capability tests; docs/stdlib/modules/allocator.md
-method std::allocator::Allocator::remaining|std allocator capability tests; docs/stdlib/modules/allocator.md
-method std::allocator::Allocator::used|std allocator capability tests; docs/stdlib/modules/allocator.md
 method std::zone::ZoneMetadata::alloc|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 method std::zone::ZoneMetadata::alloc_array[T]|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 method std::zone::ZoneMetadata::as_ptr|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
@@ -3250,6 +3264,7 @@ module std::path|check-prelude std-path-basic source lexical path helpers; docs/
 module std::process|std process current-process and POSIX fork/wait tests; docs/stdlib/modules/process.md
 module std::random|check-prelude std-random-basic OS entropy and deterministic non-crypto PRNG helpers; docs/stdlib/modules/random.md
 module std::rc|check-prelude std-rc-arc-weak reference-counted shared ownership handles; docs/stdlib/modules/rc.md
+module std::region|std region capability tests; docs/stdlib/modules/region.md
 module std::result|prelude Result method tests; docs/dev/test-matrix.md Prelude row
 module std::string|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 module std::sync|check-prelude std-sync-atomic-i64 atomic primitive module; docs/stdlib/modules/sync.md
@@ -3269,6 +3284,7 @@ struct std::SliceSplit[T]|check-prelude prelude-slice-sequence borrowed delimite
 struct std::SliceValueMut[T]|check-prelude std-iter-slice-vec mutable slice value handle; docs/stdlib/modules/slice.md
 struct std::SliceWindows[T]|check-prelude prelude-slice-sequence borrowed window iterator; docs/stdlib/modules/slice.md
 struct std::Slice[T]|Slice view tests; docs/dev/test-matrix.md Prelude row
+struct std::allocator::Allocator|std allocator capability tests; docs/stdlib/modules/allocator.md
 struct std::ascii::ParsedInt|std ascii prefix parser tests; docs/stdlib/api-reference.md ASCII section
 struct std::boxed::Box[T]|std boxed handle tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::c::CStr|check-prelude std-c-interop borrowed C string view; docs/stdlib/modules/c.md
@@ -3455,7 +3471,6 @@ struct std::vec::Drain[T]|check-prelude std-vec-convenience-api draining cursor 
 struct std::vec::Iter[T]|std vec iterator tests; docs/dev/test-matrix.md Explicit memory zones and Control flow rows
 struct std::vec::RawVec[T]|std RawVec allocation tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::vec::Vec[T]|std vec handle tests; docs/dev/test-matrix.md Explicit memory zones row
-struct std::allocator::Allocator|std allocator capability tests; docs/stdlib/modules/allocator.md
 struct std::zone::ZoneMetadata|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 trait std::Clone|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 trait std::Copy|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
@@ -3557,8 +3572,10 @@ type std::process::ChildStdin|check-prelude std-process-high-level child stdin p
 type std::process::ChildStdout|check-prelude std-process-high-level child stdout pipe alias; docs/stdlib/modules/process.md
 type std::process::Error|check-prelude std-error-integration shared process error alias; docs/stdlib/modules/process.md
 type std::process::ErrorKind|check-prelude std-error-integration shared process error-kind alias; docs/stdlib/modules/process.md
+type std::region::Region|std region capability tests; docs/stdlib/modules/region.md
 type std::thread::Error|check-prelude std-thread-basic shared thread error alias; docs/stdlib/modules/thread.md
 type std::thread::ErrorKind|check-prelude std-thread-basic shared thread error-kind alias; docs/stdlib/modules/thread.md
+use std::Allocator|std allocator capability tests; docs/stdlib/modules/allocator.md
 use std::Arc|check-prelude std-rc-arc-weak root alias for std::rc::Arc[T]; docs/stdlib/modules/rc.md
 use std::AtomicBool|check-prelude std-sync-concurrency-api root alias for std::sync::AtomicBool; docs/stdlib/modules/sync.md
 use std::AtomicI64|check-prelude std-sync-atomic-i64 root alias for std::sync::AtomicI64; docs/stdlib/modules/sync.md
@@ -3596,6 +3613,7 @@ use std::RawRwLock|check-prelude std-sync-rwlock root alias for std::sync::RawRw
 use std::Rc|check-prelude std-rc-arc-weak root alias for std::rc::Rc[T]; docs/stdlib/modules/rc.md
 use std::Receiver|check-prelude std-sync-concurrency-api root alias for std::sync::Receiver[T]; docs/stdlib/modules/sync.md
 use std::RefCell|check-prelude std-cell-basic root alias for std::cell::RefCell[T]; docs/stdlib/modules/cell.md
+use std::Region|std region capability tests; docs/stdlib/modules/region.md
 use std::RingBuffer|check-prelude std-collections-ring-buffer root alias for std::collections::RingBuffer[T]; docs/stdlib/modules/collections.md
 use std::RwLock|check-prelude std-sync-value-locks root alias for std::sync::RwLock[T]; docs/stdlib/modules/sync.md
 use std::Sender|check-prelude std-sync-concurrency-api root alias for std::sync::Sender[T]; docs/stdlib/modules/sync.md
@@ -3613,7 +3631,6 @@ use std::TreeMap|check-prelude std-collections-tree root alias for std::collecti
 use std::TreeSet|check-prelude std-collections-tree root alias for std::collections::TreeSet[T]; docs/stdlib/modules/collections.md
 use std::Vec|check-prelude std-vec-root-alias explicit-zone alias for std::vec::Vec[T]; docs/dev/test-matrix.md Explicit memory zones row
 use std::Weak|check-prelude std-rc-arc-weak root alias for std::rc::Weak[T]; docs/stdlib/modules/rc.md
-use std::Allocator|std allocator capability tests; docs/stdlib/modules/allocator.md
 use std::ZoneBacked|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 use std::ZoneMetadata|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 use std::align_of|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows

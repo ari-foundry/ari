@@ -2521,8 +2521,33 @@ memory intrinsics and trap on negative lengths.
 alignment or prepare for future mapping APIs; it does not allocate or map
 memory.
 
+`std::region` is the preferred user-facing bulk allocation lifetime facade:
+
+```ari
+region::create(capacity)
+region::default_capacity()
+region::allocator(ref mut region)
+region::alloc(ref mut region, bytes, align)
+region::alloc_array<T>(ref mut region, count)
+region::new<T>(ref mut region, value)
+region::promote<T>(ref mut target, source)
+region::capacity(ref mut region)
+region::used(ref mut region)
+region::remaining(ref mut region)
+region::can_alloc(ref mut region, bytes)
+region::can_alloc_array<T>(ref mut region, count)
+region::reset(ref mut region)
+region::destroy(region)
+```
+
+Use `Region` when code chooses the owner of a bulk lifetime. The current
+implementation aliases `Region` to the existing `Zone` runtime, so older zone
+APIs remain source compatible. New user-facing docs should prefer `Region`
+for lifetime ownership and `Allocator` for follow-up growth from an existing
+region-backed handle.
+
 `std::allocator` is the public allocation-capability view used by handles that
-need to grow from existing zone-backed storage:
+need to grow from existing region-backed storage:
 
 ```ari
 allocator::from_zone(ref mut zone)
@@ -2547,13 +2572,13 @@ allocator.can_alloc_array<T>(count)
 allocator.equals(ref other)
 ```
 
-Use `Zone` for region creation and lifecycle. Use `Allocator` when a value
-already owns zone-backed storage and follow-up work needs the same allocation
+Use `Region` for region creation and lifecycle. Use `Allocator` when a value
+already owns region-backed storage and follow-up work needs the same allocation
 capability. `from_zone_metadata` and `allocator.metadata()` are compatibility
 bridges for existing low-level code; new public APIs should prefer
 `from_zone`, `from_data`, or `of`.
 
-`std::zone` exposes the explicit region/zone lifecycle capability:
+`std::zone` exposes the low-level region runtime and compatibility capability:
 
 ```ari
 zone::create(capacity)

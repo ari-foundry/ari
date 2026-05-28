@@ -24,34 +24,34 @@ platform notes.
 
 ## Summary
 
-- API entries: `3658`
-- Modules: `41`
+- API entries: `3675`
+- Modules: `42`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
-| `alloc` | 958 | usable |
+| `alloc` | 974 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 942 | stable candidate |
+| `core` | 943 | stable candidate |
 | `hosted` | 1559 | platform-backed |
 | `platform` | 163 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1253 |
+| `fn` | 1267 |
 | `method` | 1928 |
-| `module` | 40 |
+| `module` | 41 |
 | `struct` | 198 |
 | `trait` | 39 |
 | `trait-method` | 41 |
-| `type` | 22 |
-| `use` | 105 |
+| `type` | 23 |
+| `use` | 106 |
 
 ## Modules
 
 | Module | Tier | Entries |
 | --- | --- | ---: |
-| `std` | `core` | 302 |
+| `std` | `core` | 303 |
 | `std::algo` | `alloc` | 41 |
 | `std::allocator` | `alloc` | 23 |
 | `std::ascii` | `core` | 33 |
@@ -83,6 +83,7 @@ platform notes.
 | `std::process` | `hosted` | 181 |
 | `std::random` | `alloc/hosted` | 36 |
 | `std::rc` | `alloc` | 32 |
+| `std::region` | `alloc` | 16 |
 | `std::result` | `core` | 12 |
 | `std::string` | `alloc` | 172 |
 | `std::sync` | `hosted` | 224 |
@@ -337,6 +338,7 @@ Tier: `core`. Stability reading: stable candidate.
 
 | API | Coverage note |
 | --- | --- |
+| `use std::Allocator` | std allocator capability tests; docs/stdlib/modules/allocator.md |
 | `use std::Arc` | check-prelude std-rc-arc-weak root alias for std::rc::Arc[T]; docs/stdlib/modules/rc.md |
 | `use std::AtomicBool` | check-prelude std-sync-concurrency-api root alias for std::sync::AtomicBool; docs/stdlib/modules/sync.md |
 | `use std::AtomicI64` | check-prelude std-sync-atomic-i64 root alias for std::sync::AtomicI64; docs/stdlib/modules/sync.md |
@@ -374,6 +376,7 @@ Tier: `core`. Stability reading: stable candidate.
 | `use std::Rc` | check-prelude std-rc-arc-weak root alias for std::rc::Rc[T]; docs/stdlib/modules/rc.md |
 | `use std::Receiver` | check-prelude std-sync-concurrency-api root alias for std::sync::Receiver[T]; docs/stdlib/modules/sync.md |
 | `use std::RefCell` | check-prelude std-cell-basic root alias for std::cell::RefCell[T]; docs/stdlib/modules/cell.md |
+| `use std::Region` | std region capability tests; docs/stdlib/modules/region.md |
 | `use std::RingBuffer` | check-prelude std-collections-ring-buffer root alias for std::collections::RingBuffer[T]; docs/stdlib/modules/collections.md |
 | `use std::RwLock` | check-prelude std-sync-value-locks root alias for std::sync::RwLock[T]; docs/stdlib/modules/sync.md |
 | `use std::Sender` | check-prelude std-sync-concurrency-api root alias for std::sync::Sender[T]; docs/stdlib/modules/sync.md |
@@ -391,7 +394,6 @@ Tier: `core`. Stability reading: stable candidate.
 | `use std::TreeSet` | check-prelude std-collections-tree root alias for std::collections::TreeSet[T]; docs/stdlib/modules/collections.md |
 | `use std::Vec` | check-prelude std-vec-root-alias explicit-zone alias for std::vec::Vec[T]; docs/dev/test-matrix.md Explicit memory zones row |
 | `use std::Weak` | check-prelude std-rc-arc-weak root alias for std::rc::Weak[T]; docs/stdlib/modules/rc.md |
-| `use std::Allocator` | std allocator capability tests; docs/stdlib/modules/allocator.md |
 | `use std::ZoneBacked` | std zone backed handle metadata tests; docs/stdlib/modules/zone.md |
 | `use std::ZoneMetadata` | std zone backed handle metadata tests; docs/stdlib/modules/zone.md |
 | `use std::align_of` | std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows |
@@ -3749,6 +3751,41 @@ Tier: `alloc`. Stability reading: usable.
 | `struct std::rc::Arc[T]` | check-prelude std-rc-arc-weak atomic-count shared owner handle; docs/stdlib/modules/rc.md |
 | `struct std::rc::Rc[T]` | check-prelude std-rc-arc-weak shared owner handle; docs/stdlib/modules/rc.md |
 | `struct std::rc::Weak[T]` | check-prelude std-rc-arc-weak non-owning shared handle; docs/stdlib/modules/rc.md |
+
+## `std::region`
+
+Tier: `alloc`. Stability reading: usable.
+
+### fn
+
+| API | Coverage note |
+| --- | --- |
+| `fn std::region::alloc` | std region capability tests; docs/stdlib/modules/region.md |
+| `fn std::region::alloc_array[T]` | std region capability tests; docs/stdlib/modules/region.md |
+| `fn std::region::allocator` | std region capability tests; docs/stdlib/modules/region.md |
+| `fn std::region::can_alloc` | std region capability tests; docs/stdlib/modules/region.md |
+| `fn std::region::can_alloc_array[T]` | std region capability tests; docs/stdlib/modules/region.md |
+| `fn std::region::capacity` | std region capability tests; docs/stdlib/modules/region.md |
+| `fn std::region::create` | std region capability tests; docs/stdlib/modules/region.md |
+| `fn std::region::default_capacity` | std region capability tests; docs/stdlib/modules/region.md |
+| `fn std::region::destroy` | std region capability tests; docs/stdlib/modules/region.md |
+| `fn std::region::new[T]` | std region capability tests; docs/stdlib/modules/region.md |
+| `fn std::region::promote[T]` | std region capability tests; docs/stdlib/modules/region.md |
+| `fn std::region::remaining` | std region capability tests; docs/stdlib/modules/region.md |
+| `fn std::region::reset` | std region capability tests; docs/stdlib/modules/region.md |
+| `fn std::region::used` | std region capability tests; docs/stdlib/modules/region.md |
+
+### module
+
+| API | Coverage note |
+| --- | --- |
+| `module std::region` | std region capability tests; docs/stdlib/modules/region.md |
+
+### type
+
+| API | Coverage note |
+| --- | --- |
+| `type std::region::Region` | std region capability tests; docs/stdlib/modules/region.md |
 
 ## `std::result`
 

@@ -5,11 +5,12 @@ most code does not want to think in terms of allocation headers or
 `ZoneMetadata`; it wants a value that can allocate, report capacity, and be
 passed to helper code.
 
-Ari still uses zones as the first concrete allocator implementation. A `Zone`
-owns a bounded region and releases it all at once. `Allocator` is the smaller
-capability view over that storage. Prefer `std::allocator::Allocator` in new
-library APIs that need to grow existing zone-backed handles, and keep direct
-`Zone` parameters for constructors, explicit regions, and lifecycle control.
+Ari still uses zones as the first concrete allocator implementation. The
+preferred public model is now `Region` plus `Allocator`: a `Region` owns a
+bounded lifetime, and an `Allocator` is the smaller capability view over that
+storage. Prefer `std::allocator::Allocator` in new library APIs that need to
+grow existing region-backed handles, and keep direct `Region` or `Zone`
+parameters for constructors, explicit regions, and lifecycle control.
 
 ## API
 
@@ -43,12 +44,12 @@ allocator.equals(ref other) -> bool
 
 ## Choosing A Shape
 
-Use `Zone` when the operation creates or owns a region:
+Use `Region` when the operation creates or owns an allocation lifetime:
 
 ```ari
-var arena = zone::create(4096);
+var arena = region::create(4096);
 let text = string::from(ref mut arena, "hello");
-zone::destroy(arena);
+region::destroy(arena);
 ```
 
 Use `Allocator` when a handle already has storage and later operations need to
@@ -80,10 +81,10 @@ not reserve memory.
 
 The long-term model should be:
 
-- `Zone` or a future `Region` type owns bulk lifetime.
+- `Region` owns bulk lifetime.
 - `Allocator` is the capability used by containers, strings, formatters, and
   builders that need to allocate.
-- The raw allocation-header recovery APIs become compatibility or internal
-  implementation details.
+- `Zone` and raw allocation-header recovery APIs become compatibility or
+  internal implementation details.
 - Future allocator implementations can add debug, page, fixed-buffer, or
   OS-backed policies without changing ordinary collection APIs.

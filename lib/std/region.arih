@@ -1,0 +1,57 @@
+pub type Region = Zone;
+
+pub fn create(capacity: i64) -> own std::region::Region {
+  return std::zone::create(capacity);
+}
+
+pub fn default_capacity() -> i64 {
+  return std::zone::default_capacity();
+}
+
+pub fn allocator(region: ref mut std::region::Region) -> std::allocator::Allocator {
+  return std::allocator::from_zone(region);
+}
+
+pub fn alloc(region: ref mut std::region::Region, bytes: i64, align: i64) -> ptr u8 {
+  return std::zone::alloc(region, bytes, align);
+}
+
+pub fn alloc_array[T](region: ref mut std::region::Region, count: i64) -> ptr T {
+  return std::zone::alloc_array<T>(region, count);
+}
+
+pub fn new[T](region: ref mut std::region::Region, value: T) -> ptr T {
+  return std::zone::new<T>(region, value);
+}
+
+pub fn promote[T](target: ref mut std::region::Region, source: ptr T) -> ptr T {
+  return std::zone::promote<T>(target, source);
+}
+
+pub fn capacity(region: ref mut std::region::Region) -> i64 {
+  return std::zone::capacity(region);
+}
+
+pub fn used(region: ref mut std::region::Region) -> i64 {
+  return std::zone::used(region);
+}
+
+pub fn remaining(region: ref mut std::region::Region) -> i64 {
+  return std::zone::remaining(region);
+}
+
+pub fn can_alloc(region: ref mut std::region::Region, bytes: i64) -> bool {
+  return std::zone::can_alloc(region, bytes);
+}
+
+pub fn can_alloc_array[T](region: ref mut std::region::Region, count: i64) -> bool {
+  return std::zone::can_alloc_array<T>(region, count);
+}
+
+pub fn reset(region: ref mut std::region::Region) -> void {
+  std::zone::reset(region);
+}
+
+pub fn destroy(region: own std::region::Region) -> void {
+  std::zone::destroy(region);
+}

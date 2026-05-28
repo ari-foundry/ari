@@ -50,6 +50,7 @@ MODULE_TIERS = {
     "std::process": "hosted",
     "std::random": "alloc/hosted",
     "std::rc": "alloc",
+    "std::region": "alloc",
     "std::result": "core",
     "std::string": "alloc",
     "std::sync": "hosted",

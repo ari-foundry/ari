@@ -47,6 +47,11 @@ that need `Error(NotFound)`. Borrowed host strings are kept behind explicit
   `try_read_byte` for `Option[u8]` EOF handling.
 - [std::mem](mem.md): layout queries, raw pointer helpers, byte memory
   routines, hosted page-size lookup, and value `replace`/`swap`.
+- [std::region](region.md): preferred user-facing bulk allocation lifetime
+  model, with `Region` ownership, explicit reset/destroy, capacity planning,
+  and `Allocator` handoff.
+- [std::allocator](allocator.md): public allocation capability for growing
+  existing region-backed handles without exposing allocation-header metadata.
 - [Slice[T]](slice.md): root borrowed contiguous views, indexing, subslicing,
   subsequence search, comparison, lazy chunks/windows, delimiter splitting,
   copy-to-vector behavior, and direct algorithm wrappers.
@@ -150,8 +155,10 @@ that need `Error(NotFound)`. Borrowed host strings are kept behind explicit
   helpers, TCP peer-address helpers, Unix stream sockets, TCP/Unix stream
   buffer helpers, nonblocking/timeout/shutdown helpers, common socket options,
   and networking runtime roadmap.
-- [std::zone](zone.md): explicit allocation capability, raw typed allocation,
-  `alloc_array`, placement construction, promotion, reset, and destroy rules.
+- [std::zone](zone.md): low-level explicit allocation/runtime compatibility
+  layer, raw typed allocation, metadata recovery, placement construction,
+  promotion, reset, and destroy rules. Prefer `std::region` for new
+  user-facing examples.
 - [std::ascii](ascii.md): source-only ASCII byte classification,
   printable/control predicates, case conversion, borrowed-slice
   case-insensitive comparison/search, trimming, and overflow-checked

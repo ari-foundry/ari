@@ -1004,7 +1004,13 @@ Meanings:
   dereference load/store syntax for `ptr T`
 - `(*value).field`, `(*value).0`, `(*value)[index]`: scalar field or fixed-array
   element access through a raw pointer to an Ari aggregate layout
-- `Zone`: explicit allocation region capability; `zone::create` returns
+- `Region`: preferred public explicit allocation lifetime alias. Use
+  `region::create`, `region::allocator`, `region::reset`, and
+  `region::destroy` in new examples when the code is choosing a bulk
+  allocation lifetime.
+- `Allocator`: public allocation capability used by region-backed handles that
+  need more storage from the same backing lifetime.
+- `Zone`: low-level compatibility allocation region capability; `zone::create` returns
   `own Zone`, `zone::temp` returns a lexical automatically destroyed
   temporary zone, raw `zone::alloc` allocates bytes from `ref mut Zone`,
   `zone::alloc<T>` allocates `size_of<T>()` bytes with `align_of<T>()`
@@ -1177,8 +1183,14 @@ for example `ref mut (*pointer).0`. Whole raw-pointer copies
 are intentionally rejected for values that contain `own`, `ref`, or `ref mut`
 state until the zone and ownership diagnostics are broadened.
 
+`Region` is the preferred user-facing name for Ari's explicit bulk allocation
+lifetime. Today it aliases the existing `Zone` runtime, so `ref mut Region`
+and `ref mut Zone` are the same representation. Use `Region`/`region::*` in
+new user docs and ordinary examples; use `Zone`/`zone::*` for compatibility,
+low-level runtime tests, and existing APIs that have not been renamed yet.
+
 `Zone` values are explicit allocation regions on the LLVM host backend. A zone
-is created with `zone::create(capacity)` for manual ownership or
+is created with `zone::create(capacity)` or `region::create(capacity)` for manual ownership or
 `zone::temp(capacity)` for a lexical scratch region that is destroyed
 automatically when its declaring scope falls through, before returns, and before
 `break`, `continue`, or labeled-block exits that leave that scope. Temporary

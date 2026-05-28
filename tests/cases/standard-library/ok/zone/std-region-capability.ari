@@ -1,0 +1,31 @@
+// Covers the preferred Region + Allocator memory model over the zone runtime.
+fn main() -> i64 {
+  var region = std::region::create(256);
+  var score = 0;
+
+  if std::region::capacity(ref mut region) == 256 &&
+     std::region::remaining(ref mut region) == 256 &&
+     std::region::can_alloc_array<i64>(ref mut region, 4) {
+    score = score + 1;
+  }
+
+  let values = std::region::alloc_array<i64>(ref mut region, 2);
+  ptr_store(values, 30);
+  ptr_store(ptr_add(values, 1), 12);
+  score = score + ptr_load(values) + ptr_load(ptr_add(values, 1));
+
+  let allocator = std::region::allocator(ref mut region);
+  let extra = allocator.alloc_array<i64>(1);
+  ptr_store(extra, 23);
+  if allocator.used() == std::region::used(ref mut region) {
+    score = score + ptr_load(extra);
+  }
+
+  std::region::reset(ref mut region);
+  if std::region::used(ref mut region) == 0 {
+    score = score + 4;
+  }
+
+  std::region::destroy(region);
+  return score;
+}

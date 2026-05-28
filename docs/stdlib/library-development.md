@@ -69,7 +69,11 @@ depends on it.
   `<=`, and `>=` over direct `.eq(...)` or `.lt(...)` calls. The operators
   preserve the public `cmp::Eq[T]` and `cmp::Ord[T]` contracts while keeping
   library code close to normal user code.
-- Use `_in` when a function needs an explicit allocation zone.
+- Use `_in` when a function needs an explicit allocation region/zone.
+- In new user-facing docs and APIs, prefer `Region` for choosing a bulk
+  lifetime and `Allocator` for follow-up growth from existing region-backed
+  handles. Use `Zone` and `ZoneMetadata` when touching compatibility,
+  compiler/runtime hooks, or low-level implementation details.
 - Prefer `Option` or `Result` for ordinary absence or recoverable failure.
 - Prefer `std::error::Error`/`ErrorKind` for shared OS, runtime, IO,
   filesystem, network, or parser failures. Public library APIs should return
@@ -83,7 +87,8 @@ depends on it.
   `path.as_slice().equals("src")` over introducing a temporary only to satisfy
   a borrowed receiver. Bind a local when the receiver is mutable or owns
   resources.
-- Do not add hidden allocation. Every allocation must flow through `Zone`.
+- Do not add hidden allocation. Every allocation must flow through an explicit
+  `Region`/`Zone` owner or an `Allocator` capability derived from one.
 - Do not add compiler-tooling-only APIs such as source maps, source locations,
   labels, fix-its, or diagnostic report builders to runtime `std`; keep them
   in compiler/tooling packages.

@@ -5,9 +5,11 @@ semantic-checker, stdlib, and docs changes stay aligned.
 
 ## User Contract
 
-`zone { ... }` creates a short-lived temporary allocation zone for the block.
-Inside that block, stdlib allocation APIs that normally take exactly one
-`ref mut Zone` can omit that argument:
+`zone { ... }` creates a short-lived temporary allocation region for the
+block. The syntax keeps the historic `zone` spelling, but the user-facing
+memory model should now be explained as a `Region` lifetime plus an
+`Allocator` capability. Inside that block, stdlib allocation APIs that normally
+take exactly one `ref mut Zone` can omit that argument:
 
 ```ari
 zone {
@@ -91,17 +93,20 @@ The hidden zone receives the same automatic cleanup as a lexical
 
 The syntax does not create a process-global heap and does not relax reset or
 destroy invalidation. It only shortens the spelling for a local allocation
-capability whose lifetime is already obvious from the block.
+capability whose lifetime is already obvious from the block. Do not add a
+library-level `zone::current()` or `region::current()` escape hatch unless the
+type system also gains a way to express the lifetime of that ambient region.
 
 ## Design Direction
 
 The current zone is a lexical compiler capability, not a runtime global that
 library code can fetch arbitrarily. That keeps allocation visible in source:
-`zone { ... }` means "use this block's temporary zone unless I pass a
+`zone { ... }` means "use this block's temporary region unless I pass a
 different one." Future ergonomics should keep that property. Good next steps
-are cleaner resource-block spelling and capacity planning helpers; a hidden
-global allocator or long-lived ambient heap would work against Ari's explicit
-allocation model.
+are a `region { ... }` alias or another cleaner resource-block spelling,
+capacity planning helpers, and broader stdlib examples using `std::region`;
+a hidden global allocator or long-lived ambient heap would work against Ari's
+explicit allocation model.
 
 ## Stdlib Guidance
 
@@ -121,11 +126,13 @@ When adding a public zone-backed API:
 4. Update the hand-written module guide with lifetime and current-zone notes.
 
 For stdlib implementation work, prefer `std::allocator::of(ref handle)` or
-`std::allocator::from_zone(ref mut zone)` when heap-backed code needs to grow
+`std::region::allocator(ref mut region)` when heap-backed code needs to grow
 later. The handle should recover an allocator from backing allocation metadata
-instead of storing an extra zone field. Use `zone::capacity`,
-`zone::used`, `zone::remaining`, `zone::can_alloc`, and
-`zone::can_alloc_array` for direct region planning, diagnostics, and tests.
+instead of storing an extra zone field. Use `region::capacity`,
+`region::used`, `region::remaining`, `region::can_alloc`, and
+`region::can_alloc_array` for direct user-facing region planning,
+diagnostics, and tests; use `zone::*` when touching low-level compatibility
+or runtime internals.
 For handle methods, prefer `allocator.can_alloc(...)` and
 `allocator.can_alloc_array<T>(...)` so the public handle does not need to carry
 a duplicate zone pointer and user docs do not have to expose `ZoneMetadata`.
@@ -134,6 +141,8 @@ a duplicate zone pointer and user docs do not have to expose `ZoneMetadata`.
 
 - a future expression form only if the language gets a clean block-expression
   story; the current feature is intentionally statement-only
+- a possible `region { ... }` spelling, with `zone { ... }` kept as
+  compatibility syntax if source compatibility matters
 - optional compile-time or library-side sizing helpers for common scratch
   workloads, so large parser/formatter operations can choose a capacity before
   entering the block

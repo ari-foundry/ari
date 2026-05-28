@@ -127,6 +127,9 @@ pub mod zone;
 pub mod allocator;
 pub use allocator::Allocator;
 
+pub mod region;
+pub use region::Region;
+
 pub mod boxed;
 pub use boxed::Box;
 
