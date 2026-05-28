@@ -1,0 +1,16 @@
+// Current-zone insertion works for callable values whose signature takes a zone.
+fn render(zone: ref mut Zone, value: i64) -> std::string::String {
+  return std::fmt::format_value(zone, value);
+}
+
+fn main() -> i64 {
+  zone {
+    let op: fn(ref mut Zone, i64) -> std::string::String = render;
+    let text = op(42);
+    if !text.as_slice().equals("42") {
+      return 1;
+    }
+  }
+
+  return 0;
+}

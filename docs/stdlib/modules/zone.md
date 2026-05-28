@@ -85,8 +85,9 @@ zone(65536) {
 Inside a current-zone block, calls may omit exactly one `ref mut Zone`
 parameter. The checker inserts the current zone for ordinary functions,
 generic functions, ordinary methods, associated functions, trait-qualified
-methods, and dyn trait-object methods when the arity otherwise matches. This
-lets the natural, short spelling call the same stdlib implementation:
+methods, dyn trait-object methods, and callable values when the arity
+otherwise matches. This lets the natural, short spelling call the same stdlib
+implementation:
 
 ```ari
 zone {
@@ -194,6 +195,12 @@ explicit `ref mut Zone`. That diagnostic is intentionally different from a
 plain wrong-argument-count error because allocation lifetime is the important
 choice.
 
+The current zone is intentionally not exposed as a general `zone::current()`
+library function. Library APIs still declare `ref mut Zone`; the compiler only
+fills that parameter at call sites where the lifetime is lexical and obvious.
+That keeps temporary allocation easy to write without letting library code
+silently depend on a global allocator.
+
 Raw memory is not automatically initialized. After `alloc<T>` or
 `alloc_array<T>`, write each slot before reading it. If the element type owns
 resources, prefer a higher-level handle or an API that clearly owns drop
@@ -212,7 +219,7 @@ Current-zone blocks are intentionally lexical and conservative:
 4. A call inside the body may omit exactly one argument when the omitted
    parameter is uniquely typed as `ref mut Zone`. Ordinary functions, generic
    functions, ordinary methods, associated functions, trait-qualified methods,
-   and dyn trait-object methods use this rule.
+   dyn trait-object methods, and callable values use this rule.
 5. `format!` is the compiler-owned formatting shortcut for the current zone.
    Outside a current-zone block it remains a diagnostic and callers should use
    `format_in!(ref mut zone, ...)`.
@@ -246,10 +253,12 @@ Current-zone blocks are intentionally lexical and conservative:
 - `tests/cases/memory/ok/zone-current-trait-calls.ari` checks omitted
   current-zone arguments through trait-qualified static dispatch and
   object-safe dyn dispatch.
+- `tests/cases/memory/ok/zone-current-callable.ari` checks omitted
+  current-zone arguments through a function pointer value.
 - `tests/cases/memory/errors/zone-current-missing-function.ari` and
   `tests/cases/memory/errors/zone-current-missing-method.ari`, plus the
-  trait-qualified and trait-object variants, check targeted diagnostics for
-  calls that need a current or explicit zone.
+  callable, trait-qualified, and trait-object variants, check targeted
+  diagnostics for calls that need a current or explicit zone.
 
 Run `make check-std-api` after public API edits and `make check-prelude` for
 the focused zone allocation coverage.

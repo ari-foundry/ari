@@ -6718,6 +6718,8 @@ check-ffi: $(TARGET) check-layout-unit
 	grep -q 'load { i64, i64 }, ptr' $(BUILD_DIR)/ffi/zone-promote-return.ll
 	$(TARGET) tests/cases/memory/ok/zone-current-trait-calls.ari --emit-llvm $(BUILD_DIR)/ffi/zone-current-trait-calls.ll
 	grep -q "Render" $(BUILD_DIR)/ffi/zone-current-trait-calls.ll
+	$(TARGET) tests/cases/memory/ok/zone-current-callable.ari --emit-llvm $(BUILD_DIR)/ffi/zone-current-callable.ll
+	grep -q "render" $(BUILD_DIR)/ffi/zone-current-callable.ll
 	$(TARGET) tests/cases/memory/ok/pointer-add.ari --emit-llvm $(BUILD_DIR)/ffi/pointer-add.ll
 	grep -q 'getelementptr i64, ptr' $(BUILD_DIR)/ffi/pointer-add.ll
 	grep -q 'getelementptr i8, ptr' $(BUILD_DIR)/ffi/pointer-add.ll
@@ -6802,6 +6804,7 @@ check-ffi: $(TARGET) check-layout-unit
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/memory/ok/zone-scratch-local.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/zone-scratch-local.elf; $(BUILD_DIR)/ffi/zone-scratch-local.elf; code=$$?; test $$code -eq 42; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/memory/ok/zone-promote-return.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/zone-promote-return.elf; $(BUILD_DIR)/ffi/zone-promote-return.elf; code=$$?; test $$code -eq 42; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/memory/ok/zone-current-trait-calls.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/zone-current-trait-calls.elf; $(BUILD_DIR)/ffi/zone-current-trait-calls.elf; code=$$?; test $$code -eq 0; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/memory/ok/zone-current-callable.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/zone-current-callable.elf; $(BUILD_DIR)/ffi/zone-current-callable.elf; code=$$?; test $$code -eq 0; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/memory/ok/pointer-add.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/pointer-add.elf; $(BUILD_DIR)/ffi/pointer-add.elf; code=$$?; test $$code -eq 19; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/memory/ok/pointer-add-aggregate.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/pointer-add-aggregate.elf; $(BUILD_DIR)/ffi/pointer-add-aggregate.elf; code=$$?; test $$code -eq 56; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/memory/ok/pointer-load-store.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/pointer-load-store.elf; $(BUILD_DIR)/ffi/pointer-load-store.elf; code=$$?; test $$code -eq 12; fi
@@ -6870,6 +6873,8 @@ check-ffi: $(TARGET) check-layout-unit
 	grep -q "call to trait-qualified method 'Render::render' needs an allocation zone" $(BUILD_DIR)/ffi/zone-current-missing-trait-qualified.err
 	if $(TARGET) tests/cases/memory/errors/zone-current-missing-trait-object.ari -o $(BUILD_DIR)/ffi/zone-current-missing-trait-object.elf >$(BUILD_DIR)/ffi/zone-current-missing-trait-object.err 2>&1; then exit 1; fi
 	grep -q "call to trait object method 'render' needs an allocation zone" $(BUILD_DIR)/ffi/zone-current-missing-trait-object.err
+	if $(TARGET) tests/cases/memory/errors/zone-current-missing-callable.ari -o $(BUILD_DIR)/ffi/zone-current-missing-callable.elf >$(BUILD_DIR)/ffi/zone-current-missing-callable.err 2>&1; then exit 1; fi
+	grep -q "call to callable value needs an allocation zone" $(BUILD_DIR)/ffi/zone-current-missing-callable.err
 	if $(TARGET) tests/cases/memory/errors/zone-promote-source-type.ari -o $(BUILD_DIR)/ffi/zone-promote-source-type.elf >$(BUILD_DIR)/ffi/zone-promote-source-type.err 2>&1; then exit 1; fi
 	grep -q "type mismatch: expected ptr i64, got i64" $(BUILD_DIR)/ffi/zone-promote-source-type.err
 	if $(TARGET) tests/cases/memory/errors/zone-alloc-type-args.ari -o $(BUILD_DIR)/ffi/zone-alloc-type-args.elf >$(BUILD_DIR)/ffi/zone-alloc-type-args.err 2>&1; then exit 1; fi

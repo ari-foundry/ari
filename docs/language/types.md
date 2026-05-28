@@ -1225,7 +1225,10 @@ collections, process output, or filesystem buffers. Explicit zone arguments
 still work and are preferred when data must be allocated in a different
 lifetime than the current block. The current-zone shortcut is lexical: nested
 `zone` blocks shadow outer zones, and the hidden zone is destroyed on every
-control-flow path that leaves the block.
+control-flow path that leaves the block. The shortcut covers direct calls,
+methods, trait-qualified methods, dyn trait-object methods, and callable
+values such as `fn(ref mut Zone, T) -> U` when exactly one `ref mut Zone`
+argument is omitted.
 
 Direct local pointers from `zone::alloc<T>` and `zone::new<T>`,
 single-zone pointer-returning calls, source `std::boxed::Box<T>` handles, and

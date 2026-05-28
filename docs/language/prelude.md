@@ -871,7 +871,8 @@ hidden `zone::temp(4096)` binding, makes it the current allocation zone inside
 the block, and destroys it when control leaves. If a function, generic
 function, ordinary method, associated function, trait-qualified method, or dyn
 trait-object method call is missing exactly one `ref mut Zone` parameter, the
-current zone is inserted there. The explicit spelling remains valid for APIs
+current zone is inserted there. Callable values with a `fn(...)` or closure
+signature follow the same rule. The explicit spelling remains valid for APIs
 that must allocate into an outer or caller-provided zone.
 
 Host zone allocations carry a compiler-defined 8-byte header immediately

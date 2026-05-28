@@ -28765,21 +28765,50 @@ private:
         if (!is_function_pointer_type(callee->type) && !is_lambda_closure_type(callee->type)) {
             fail(loc, "called value must be a function pointer or closure, got " + type_name(callee->type));
         }
+        IrType callable_type = callee->type;
         std::size_t param_count = static_cast<std::size_t>(callee->type.array_size);
+        std::vector<IrType> param_types(
+            callable_type.args.begin(),
+            callable_type.args.begin() + static_cast<std::ptrdiff_t>(param_count));
+        std::optional<std::size_t> implicit_zone_param;
         if (param_count != arg_exprs.size()) {
-            fail_callable_value_argument_count(loc, param_count, arg_exprs.size());
+            implicit_zone_param = implicit_current_zone_param(param_types, arg_exprs.size());
+            if (!implicit_zone_param) {
+                if (current_zone_candidate_param(param_types, arg_exprs.size())) {
+                    fail_missing_current_zone_argument(
+                        loc,
+                        "callable value",
+                        "",
+                        loc,
+                        param_count,
+                        arg_exprs.size());
+                }
+                fail_callable_value_argument_count(loc, param_count, arg_exprs.size());
+            }
         }
 
         lowered->kind = IrExprKind::IndirectCall;
         lowered->loc = loc;
-        lowered->type = callable_result_type(callee->type);
+        lowered->type = callable_result_type(callable_type);
         set_ir_expr_operand(*lowered, std::move(callee));
-        lowered->args.reserve(arg_exprs.size());
+        lowered->args.reserve(param_count);
         std::size_t borrow_mark = temporary_borrow_mark();
-        for (std::size_t i = 0; i < arg_exprs.size(); ++i) {
-            IrExprPtr arg = check_call_argument_for_expected(*arg_exprs[i], ir_expr_operand(*lowered)->type.args[i]);
-            require_assignable(arg_exprs[i]->loc, ir_expr_operand(*lowered)->type.args[i], arg->type);
-            require_no_zone_pointer_escape(arg_exprs[i]->loc, *arg, "function pointer call argument");
+        std::size_t explicit_arg = 0;
+        for (std::size_t param_index = 0; param_index < param_count; ++param_index) {
+            IrExprPtr arg;
+            SourceLocation arg_loc = loc;
+            const IrType& expected = param_types[param_index];
+            if (implicit_zone_param && param_index == *implicit_zone_param) {
+                arg = make_current_zone_argument(loc, expected);
+            } else {
+                arg_loc = arg_exprs[explicit_arg]->loc;
+                arg = check_call_argument_for_expected(*arg_exprs[explicit_arg], expected);
+                require_assignable(arg_exprs[explicit_arg]->loc, expected, arg->type);
+                ++explicit_arg;
+            }
+            if (!is_mut_zone_param(expected)) {
+                require_no_zone_pointer_escape(arg_loc, *arg, "function pointer call argument");
+            }
             lowered->args.push_back(std::move(arg));
         }
         if (is_borrow_type(lowered->type)) {
@@ -31611,14 +31640,18 @@ private:
                                                                bool receiver_separate = false) {
         CompileError error(
             std::move(loc),
-            "call to " + callable_kind + " '" + callee + "' needs an allocation zone");
+            callee.empty()
+                ? "call to " + callable_kind + " needs an allocation zone"
+                : "call to " + callable_kind + " '" + callee + "' needs an allocation zone");
         std::string parameter_text = receiver_separate
             ? " non-receiver " + parameter_count_name(expected_count)
             : " " + parameter_count_name(expected_count);
         add_location_label_if_valid(
             error,
             declaration_loc,
-            callable_kind + " '" + callee + "' declares " +
+            (callee.empty()
+                ? callable_kind
+                : callable_kind + " '" + callee + "'") + " declares " +
                 std::to_string(expected_count) + parameter_text +
                 " including one ref mut Zone parameter");
         error.add_note(DiagnosticNote{

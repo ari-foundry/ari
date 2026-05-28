@@ -54,9 +54,11 @@ When checking a call while the stack is non-empty, the checker may synthesize a
 The same rule applies to ordinary function calls, generic function calls,
 ordinary method calls, associated function calls, trait-qualified method
 calls such as `Display::format_in(value)`, and object-safe dyn calls such as
-`object.render()`. The rule is deliberately arity-based and conservative.
-Calls with two zone parameters, no zone parameter, or an otherwise ambiguous
-omitted argument keep the ordinary diagnostic and must be written explicitly.
+`object.render()`. It also applies to callable values whose `fn(...)` or
+closure signature contains the unique omitted zone parameter. The rule is
+deliberately arity-based and conservative. Calls with two zone parameters, no
+zone parameter, or an otherwise ambiguous omitted argument keep the ordinary
+diagnostic and must be written explicitly.
 
 When a call outside a current-zone block is missing exactly one `ref mut Zone`
 argument, the checker reports the allocation-zone issue directly instead of
@@ -83,6 +85,16 @@ The hidden zone receives the same automatic cleanup as a lexical
 The syntax does not create a process-global heap and does not relax reset or
 destroy invalidation. It only shortens the spelling for a local allocation
 capability whose lifetime is already obvious from the block.
+
+## Design Direction
+
+The current zone is a lexical compiler capability, not a runtime global that
+library code can fetch arbitrarily. That keeps allocation visible in source:
+`zone { ... }` means "use this block's temporary zone unless I pass a
+different one." Future ergonomics should keep that property. Good next steps
+are better diagnostics and cleaner resource-block spelling; a hidden global
+allocator or long-lived ambient heap would work against Ari's explicit
+allocation model.
 
 ## Stdlib Guidance
 
