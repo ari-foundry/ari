@@ -27,6 +27,8 @@ zone::of<T: ZoneBacked>(ref value) -> ZoneMetadata
 value.zone() -> ZoneMetadata
 zone::reset(ref mut Zone) -> void
 zone::destroy(zone: own Zone) -> void
+zone { statements... }
+zone(capacity) { statements... }
 
 ZoneMetadata
 metadata.as_ptr() -> ptr c_void
@@ -45,6 +47,65 @@ promote<T>(ref mut target, source)
 reset(ref mut zone)
 destroy(zone)
 ```
+
+## Current-Zone Blocks
+
+Use `zone { ... }` when a command, parser, formatter, or small hosted-program
+operation needs temporary owned library values and all of those values should
+die together at the end of the block.
+
+```ari
+fn main() -> i64 {
+  zone {
+    let name = std::string::from("hello");
+    let line = format!("package {}", name);
+    io::println(line)?;
+  }
+
+  return 0;
+}
+```
+
+The block is compiler syntax. It lowers to a hidden `zone::temp(4096)` local,
+pushes that local as the current allocation zone, checks the body, and inserts
+the same cleanup that an explicit temporary zone binding receives. A larger
+scratch region can be requested with `zone(capacity) { ... }`:
+
+```ari
+zone(65536) {
+  let source = fs::read_to_string("Ari.toml")?;
+  let rendered = format!("manifest bytes = {}", source.as_slice().len);
+}
+```
+
+Inside a current-zone block, calls may omit exactly one `ref mut Zone`
+parameter. The checker inserts the current zone for ordinary functions,
+generic functions, ordinary methods, and associated functions when the arity
+otherwise matches. This lets the natural, short spelling call the same stdlib
+implementation:
+
+```ari
+zone {
+  let text = string::from("abc");                  // string::from(ref mut zone, ...)
+  let args = env::args();                          // env::args(ref mut zone)
+  let file = fs::read_to_string("notes.txt")?;     // fs::read_to_string(ref mut zone, ...)
+  let line = format!("{} {}", text, file.as_slice().len); // format_in!(ref mut zone, ...)
+}
+```
+
+Explicit `ref mut zone` still wins when data should live in another region:
+
+```ari
+var outer = zone::create(4096);
+zone {
+  let persistent = string::from(ref mut outer, "keep this");
+}
+zone::destroy(outer);
+```
+
+Nested current-zone blocks shadow outer ones. Values allocated in an inner
+block cannot escape to outer bindings or returns unless they are copied or
+promoted into an outer explicit zone.
 
 `alloc(ref mut zone, bytes, align)` is the raw byte allocator. It returns a
 `ptr u8` with the requested alignment.
@@ -117,6 +178,11 @@ Zone-backed pointers, boxes, strings, vectors, and derived slices keep
 provenance in the checker when Ari can track the source zone. Using them after
 `reset` or `destroy` is rejected.
 
+Current-zone blocks are still explicit allocation. The zone is just hidden
+because its lifetime is the block itself. If a function has two zone
+parameters, or if the missing argument is not uniquely identifiable as
+`ref mut Zone`, the checker requires the explicit call.
+
 Raw memory is not automatically initialized. After `alloc<T>` or
 `alloc_array<T>`, write each slot before reading it. If the element type owns
 resources, prefer a higher-level handle or an API that clearly owns drop
@@ -135,6 +201,9 @@ behavior.
   sequence, linked list, heap, and priority queue handles.
 - Existing zone, vector, string, and boxed tests cover reset/destroy
   invalidation and zone-backed handle provenance.
+- `tests/cases/memory/ok/zone-current-block.ari` checks current-zone block
+  syntax, default and explicit capacities, omitted `ref mut Zone` arguments for
+  `std::string`, `std::fmt`, and `std::fs`, and current-zone `format!`.
 
 Run `make check-std-api` after public API edits and `make check-prelude` for
 the focused zone allocation coverage.
@@ -142,5 +211,11 @@ the focused zone allocation coverage.
 ## Future Work
 
 - scoped allocation helpers that can express lifetime boundaries in source
+- possible `new zone { ... }` spelling if Ari later gets a general resource
+  construction grammar; today `zone { ... }` keeps `zone` contextual and
+  avoids reserving another keyword
+- better capacity policy for current-zone blocks, including diagnostics that
+  can suggest `zone(capacity) { ... }` when an allocation would exceed the
+  default temporary region
 - allocator traits after trait object and generic impl conventions settle
 - richer diagnostics for raw allocation of ownership-heavy values

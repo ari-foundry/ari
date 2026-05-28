@@ -353,6 +353,11 @@ private:
                 line(indent, "Block" + loc(stmt.loc));
                 dump_statements(stmt_statements(stmt), indent + 1);
                 break;
+            case StmtKind::ZoneBlock:
+                line(indent, "ZoneBlock" + loc(stmt.loc));
+                if (stmt.expr) dump_expr(*stmt.expr, indent + 1);
+                dump_statements(stmt_statements(stmt), indent + 1);
+                break;
             case StmtKind::VarDecl:
                 dump_binding(stmt.binding, indent, "VarDecl");
                 break;

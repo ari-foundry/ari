@@ -1203,6 +1203,30 @@ longer-lived bindings, returns, aggregates, or escape-prone call arguments; the
 diagnostic names the pointer and the temporary zone source. Associated
 constructor spelling such as `T::new(...)` is supported by ordinary inherent
 impl methods that call `zone::new<T>` or another explicit allocator helper.
+
+A `zone { ... }` statement creates a hidden temporary zone for the block and
+makes it the current allocation zone. Inside the block, a call that is missing
+one `ref mut Zone` parameter can receive that current zone automatically:
+
+```ari
+zone {
+  let text = std::string::from("hello");
+  let line = format!("text = {}", text);
+}
+
+zone(8192) {
+  let manifest = std::fs::read_to_string("Ari.toml")?;
+}
+```
+
+`zone { ... }` uses a default capacity of 4096 bytes. Use
+`zone(capacity) { ... }` when the block will build larger strings,
+collections, process output, or filesystem buffers. Explicit zone arguments
+still work and are preferred when data must be allocated in a different
+lifetime than the current block. The current-zone shortcut is lexical: nested
+`zone` blocks shadow outer zones, and the hidden zone is destroyed on every
+control-flow path that leaves the block.
+
 Direct local pointers from `zone::alloc<T>` and `zone::new<T>`,
 single-zone pointer-returning calls, source `std::boxed::Box<T>` handles, and
 source `std::vec::RawVec<T>` or `std::vec::Vec<T>` handles returned from a

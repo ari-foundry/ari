@@ -256,7 +256,7 @@ Or-pattern alternatives must bind the same names with compatible types.
 | raw pointers | `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store`, `mem::copy_bytes`, `mem::move_bytes`, `mem::set_bytes` |
 | replace/swap | `mem::replace(&mut place, value)`, `mem::swap(&mut a, &mut b)` |
 | explicit allocation | `zone::create`, `zone::alloc<T>`, `zone::alloc_array<T>`, `zone::new<T>`, `zone::reset`, `zone::destroy` |
-| temporary allocation | `zone::scratch<T>`, `zone::temp`, `zone::promote<T>` |
+| temporary allocation | `zone { ... }`, `zone(capacity) { ... }`, `zone::scratch<T>`, `zone::temp`, `zone::promote<T>` |
 | single-value handle | `std::boxed::Box<T>`, `Box!(T, &mut zone, value)` |
 | owned byte string | `std::string::String`, direct `"text"` to `Slice[u8]` / `Vec[u8]` / `[u8, N]` coercion, `std::string::bytes("text")`, `std::string::from(&mut zone, "text")`, `std::string::join_in(&mut zone, parts, separator)`, parser helpers `std::string::lines(bytes)`, `trim(bytes)`, `split_once(bytes, "=")`, `strip_prefix(bytes, "\"")`, allocating `replace(&mut zone, bytes, needle, replacement)`, `.push_str(&mut zone, bytes)`, `.try_get(index)`, `.find(bytes)`, `.split(delimiter)`, `.chunks(size)`, `.windows(size)`, `.is_utf8()`, `.codepoint_at(byte_index)`, `.push_codepoint_in(&mut zone, scalar)`, `.index_of_ignore_case(bytes)`, `.parse_decimal_prefix()`, `.parse_signed_decimal_prefix()`, `.trim_to(&mut zone)` |
 | unique linear set | `collections::new<T>(&mut zone, capacity)`, `Set::new<T>(&mut zone, capacity)`, `.insert(&mut zone, value)`, `.replace(&mut zone, value)`, `.try_get(index)`, `.try_pop()`, `.reserve(&mut zone, capacity)`, `.iter()`, `.contains(value)` |

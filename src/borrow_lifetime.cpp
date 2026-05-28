@@ -102,6 +102,8 @@ void collect_binding_init_uses(const Binding& binding, NameUseCounts& counts) {
 void collect_stmt_uses(const Stmt& stmt, NameUseCounts& counts) {
     switch (stmt.kind) {
         case StmtKind::Block:
+        case StmtKind::ZoneBlock:
+            collect_expr_uses(stmt.expr.get(), counts);
             collect_stmt_list_uses(stmt_statements(stmt), counts);
             return;
         case StmtKind::VarDecl:

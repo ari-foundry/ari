@@ -353,6 +353,13 @@ StmtPtr clone_statement_impl(const Stmt& stmt, CloneContext& context) {
             context.local_renames.resize(rename_mark);
             break;
         }
+        case StmtKind::ZoneBlock: {
+            std::size_t rename_mark = context.local_renames.size();
+            clone->expr = clone_optional_expression(stmt.expr, context);
+            set_stmt_statements(*clone, clone_statement_list(stmt_statements(stmt), context));
+            context.local_renames.resize(rename_mark);
+            break;
+        }
         case StmtKind::VarDecl:
             clone->binding = clone_binding_impl(stmt.binding, context);
             break;

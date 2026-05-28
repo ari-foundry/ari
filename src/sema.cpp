@@ -572,6 +572,7 @@ private:
     LocalScopeStack local_scopes_;
     BorrowContext borrow_context_;
     std::vector<LoopInfo> loops_;
+    std::vector<std::string> current_zone_stack_;
     std::map<std::string, IrType> current_type_substitutions_;
     std::set<std::string> resolving_type_aliases_;
     std::vector<std::string> resolving_aggregate_types_;
@@ -4143,6 +4144,7 @@ private:
                     }
                     break;
                 case StmtKind::Block:
+                case StmtKind::ZoneBlock:
                     collect_borrow_return_path_hints(stmt_statements(*stmt), param_name, param_type, scan);
                     break;
                 case StmtKind::If:
@@ -6498,6 +6500,7 @@ private:
         std::optional<std::size_t> previous_borrow_return_param_index = current_borrow_return_param_index_;
         std::string previous_borrow_return_param_name = std::move(current_borrow_return_param_name_);
         std::optional<std::string> previous_borrow_return_path = std::move(current_borrow_return_path_);
+        std::vector<std::string> previous_current_zone_stack = std::move(current_zone_stack_);
         SourceLocation previous_return_type_loc = current_return_type_loc_;
         std::string previous_function_name = std::move(current_function_name_);
         current_module_name_ = fn.module_name;
@@ -6515,6 +6518,7 @@ private:
         current_borrow_return_param_name_.clear();
         current_borrow_return_path_.reset();
         allow_zone_temp_init_ = false;
+        current_zone_stack_.clear();
         local_scopes_.clear();
         loops_.clear();
         borrow_context_.clear();
@@ -6642,6 +6646,7 @@ private:
         current_borrow_return_param_index_ = previous_borrow_return_param_index;
         current_borrow_return_param_name_ = std::move(previous_borrow_return_param_name);
         current_borrow_return_path_ = std::move(previous_borrow_return_path);
+        current_zone_stack_ = std::move(previous_current_zone_stack);
         current_return_type_loc_ = previous_return_type_loc;
         current_function_name_ = std::move(previous_function_name);
         return ir_fn;
@@ -8280,6 +8285,9 @@ private:
                     set_ir_stmt_statements(*lowered, std::move(block.statements));
                 }
                 break;
+            case StmtKind::ZoneBlock:
+                flow = check_zone_block(stmt, *lowered);
+                break;
             case StmtKind::VarDecl:
                 check_var_decl(stmt, *lowered);
                 break;
@@ -8357,6 +8365,140 @@ private:
         borrow.name = zone_name;
         borrow.mutable_borrow = true;
         return check_expr(borrow);
+    }
+
+    bool has_current_zone() const {
+        return !current_zone_stack_.empty();
+    }
+
+    const std::string& current_zone_name() const {
+        return current_zone_stack_.back();
+    }
+
+    static bool is_zone_type_name(const std::string& name) {
+        return name == "Zone" ||
+               name == "mem::Zone" ||
+               name == "std::Zone" ||
+               name == "prelude::Zone";
+    }
+
+    static bool is_mut_zone_param(const IrType& type) {
+        return type.qualifier == TypeQualifier::MutRef &&
+               type.primitive == IrPrimitiveKind::Zone;
+    }
+
+    static bool is_mut_zone_type_ref(const TypeRef& type) {
+        return type.qualifier == TypeQualifier::MutRef &&
+               type.args.empty() &&
+               !type.nullable &&
+               !type.is_dyn_object &&
+               !type.is_macro_invocation &&
+               !type.has_associated_projection &&
+               !type.is_union_by &&
+               is_zone_type_name(type.name);
+    }
+
+    std::optional<std::size_t> implicit_current_zone_param(
+        const std::vector<IrType>& params,
+        std::size_t explicit_arg_count,
+        std::size_t first_param = 0
+    ) const {
+        if (!has_current_zone()) return std::nullopt;
+        if (first_param > params.size()) return std::nullopt;
+        std::size_t non_receiver_count = params.size() - first_param;
+        if (non_receiver_count != explicit_arg_count + 1) return std::nullopt;
+        std::optional<std::size_t> zone_index;
+        for (std::size_t i = first_param; i < params.size(); ++i) {
+            if (!is_mut_zone_param(params[i])) continue;
+            if (zone_index) return std::nullopt;
+            zone_index = i;
+        }
+        return zone_index;
+    }
+
+    std::optional<std::size_t> implicit_current_zone_param(
+        const std::vector<Param>& params,
+        std::size_t explicit_arg_count,
+        std::size_t first_param = 0
+    ) const {
+        if (!has_current_zone()) return std::nullopt;
+        if (first_param > params.size()) return std::nullopt;
+        std::size_t non_receiver_count = params.size() - first_param;
+        if (non_receiver_count != explicit_arg_count + 1) return std::nullopt;
+        std::optional<std::size_t> zone_index;
+        for (std::size_t i = first_param; i < params.size(); ++i) {
+            if (!is_mut_zone_type_ref(params[i].type)) continue;
+            if (zone_index) return std::nullopt;
+            zone_index = i;
+        }
+        return zone_index;
+    }
+
+    IrExprPtr make_current_zone_argument(SourceLocation loc, const IrType& expected) {
+        if (!has_current_zone()) {
+            fail(loc, "this call needs ref mut Zone and there is no active zone block");
+        }
+        IrExprPtr zone_arg = make_mutable_zone_borrow(loc, current_zone_name());
+        coerce_expr_to_expected(*zone_arg, expected);
+        require_assignable(loc, expected, zone_arg->type);
+        return zone_arg;
+    }
+
+    IrStmtPtr make_current_zone_decl(SourceLocation loc,
+                                     const std::string& zone_name,
+                                     IrType zone_type,
+                                     IrExprPtr capacity) {
+        std::vector<IrExprPtr> temp_args;
+        temp_args.push_back(std::move(capacity));
+        IrExprPtr temp_init = make_builtin_call(loc, "zone::temp", std::move(temp_args), zone_type);
+        IrStmtPtr zone_decl = make_ir_var_decl(loc, zone_name, zone_type, std::move(temp_init), true);
+        IrStmt* zone_decl_ptr = zone_decl.get();
+        declare_local(loc, zone_name, zone_type, true);
+        LocalInfo& zone_local = local_slot_by_name(zone_name);
+        zone_local.ir_storage_type = &zone_decl_ptr->binding.type;
+        zone_local.ir_init_expr = zone_decl_ptr->binding.init.get();
+        zone_local.auto_destroy_zone = true;
+        return zone_decl;
+    }
+
+    Flow check_zone_block(const Stmt& stmt, IrStmt& lowered) {
+        lowered.kind = IrStmtKind::Block;
+        lowered.loc = stmt.loc;
+
+        push_scope();
+        IrType i64 = i64_type(stmt.loc);
+        IrExprPtr capacity = stmt.expr
+            ? check_expr_with_expected(*stmt.expr, i64)
+            : make_integer_literal(stmt.loc, i64, 4096);
+        coerce_expr_to_expected(*capacity, i64);
+        require_assignable(stmt.expr ? stmt.expr->loc : stmt.loc, i64, capacity->type);
+
+        IrType own_zone = primitive_type(IrPrimitiveKind::Zone, "Zone", stmt.loc);
+        own_zone.qualifier = TypeQualifier::Own;
+        std::string zone_name = make_hidden_local("$zone");
+        IrStmtPtr zone_decl = make_current_zone_decl(
+            stmt.loc,
+            zone_name,
+            own_zone,
+            std::move(capacity));
+        ir_stmt_statements(lowered).push_back(std::move(zone_decl));
+
+        current_zone_stack_.push_back(zone_name);
+        CheckedStatements body = check_statements(stmt_statements(stmt), false);
+        current_zone_stack_.pop_back();
+        for (auto& body_stmt : body.statements) {
+            ir_stmt_statements(lowered).push_back(std::move(body_stmt));
+        }
+
+        if (body.flow == Flow::Returns || body.flow == Flow::Stops) {
+            discard_scope();
+        } else {
+            append_current_scope_auto_destroy_cleanup(
+                stmt_statements(stmt).empty() ? stmt.loc : stmt_statements(stmt).back()->loc,
+                ir_stmt_statements(lowered));
+            pop_scope();
+        }
+        return body.flow;
     }
 
     void check_zone_scratch_var_decl(const Stmt& stmt, IrStmt& lowered) {
@@ -20527,6 +20669,7 @@ private:
     ) {
         switch (stmt.kind) {
             case StmtKind::Block:
+            case StmtKind::ZoneBlock:
                 return lambda_capture_from_stmt_list(stmt_statements(stmt), local_names);
             case StmtKind::VarDecl:
                 return lambda_capture_from_binding(stmt.binding, local_names);
@@ -26725,7 +26868,17 @@ private:
 
     IrExprPtr check_prelude_macro_call(const Expr& expr, PreludeMacroKind kind) {
         if (kind == PreludeMacroKind::Format) {
-            fail(expr.loc, "prelude macro 'format!' has no implicit allocation zone; use format_in!(ref mut zone, ...) for explicit-zone strings");
+            if (!has_current_zone()) {
+                fail(expr.loc, "prelude macro 'format!' has no implicit allocation zone; use format_in!(ref mut zone, ...) or call it inside a zone block");
+            }
+            if (!expr.macro_tokens) {
+                fail(expr.loc, "macro invocation '" + expr.name + "!' is missing token payload");
+            }
+            std::vector<ExprPtr> args = parse_macro_argument_expressions(*expr.macro_tokens, expr.loc);
+            args.insert(
+                args.begin(),
+                make_zone_argument_expr_from_source(expr.loc, current_zone_name(), "format!"));
+            return check_format_in_macro(expr, std::move(args));
         }
         if (kind == PreludeMacroKind::FormatIn) {
             if (!expr.macro_tokens) {
@@ -26801,17 +26954,21 @@ private:
             warn_deprecated_use(expr.loc, "function", resolved_name, deprecated_message(fn.attributes));
             (void)deprecated;
         }
+        std::optional<std::size_t> implicit_zone_param;
         if (fn.params.size() != expr.args.size()) {
-            fail_call_argument_count(expr.loc, expr.name, fn.loc, fn.params.size(), expr.args.size());
+            implicit_zone_param = implicit_current_zone_param(fn.params, expr.args.size());
+            if (!implicit_zone_param) {
+                fail_call_argument_count(expr.loc, expr.name, fn.loc, fn.params.size(), expr.args.size());
+            }
         }
         if (expr.args.size() > std::numeric_limits<std::uint16_t>::max()) {
             fail(expr.loc, "function calls support up to 65535 arguments");
         }
 
-        std::vector<IrExprPtr> args;
-        args.reserve(expr.args.size());
+        std::vector<IrExprPtr> checked_args;
+        checked_args.reserve(expr.args.size());
         std::size_t borrow_mark = temporary_borrow_mark();
-        for (const auto& arg_expr : expr.args) args.push_back(check_expr(*arg_expr));
+        for (const auto& arg_expr : expr.args) checked_args.push_back(check_expr(*arg_expr));
 
         std::map<std::string, IrType> substitutions;
         const ExprTypeArgs& type_args = expr_type_args(expr);
@@ -26833,8 +26990,16 @@ private:
                 );
             }
         }
+        std::size_t explicit_arg = 0;
         for (std::size_t i = 0; i < fn.params.size(); ++i) {
-            infer_generic_type(expr.args[i]->loc, fn.params[i].type, args[i]->type, fn.generics, substitutions);
+            if (implicit_zone_param && i == *implicit_zone_param) continue;
+            infer_generic_type(
+                expr.args[explicit_arg]->loc,
+                fn.params[i].type,
+                checked_args[explicit_arg]->type,
+                fn.generics,
+                substitutions);
+            ++explicit_arg;
         }
         for (const auto& generic : fn.generics) {
             if (!substitutions.count(generic.name)) {
@@ -26845,6 +27010,9 @@ private:
 
         std::vector<IrType> param_types;
         param_types.reserve(fn.params.size());
+        std::vector<IrExprPtr> args;
+        args.reserve(fn.params.size());
+        explicit_arg = 0;
         for (std::size_t i = 0; i < fn.params.size(); ++i) {
             IrType source_param_type = resolve_type_with_substitutions(fn.params[i].type, substitutions);
             bool vec_view = false;
@@ -26853,22 +27021,27 @@ private:
                 source_param_type,
                 "a function parameter",
                 vec_view);
-            if (vec_view) {
-                IrExprPtr slice_arg = try_make_implicit_slice_argument(*expr.args[i], param_type);
-                if (!slice_arg) {
-                    fail(expr.args[i]->loc,
-                         "Vec parameter arguments currently require a local array or Vec binding; bind the value to a local first");
-                }
-                args[i] = std::move(slice_arg);
+            if (implicit_zone_param && i == *implicit_zone_param) {
+                args.push_back(make_current_zone_argument(expr.loc, param_type));
             } else {
-                args[i] = coerce_checked_declared_call_argument_or_implicit_slice(
-                    *expr.args[i],
-                    std::move(args[i]),
+                if (vec_view) {
+                    IrExprPtr slice_arg = try_make_implicit_slice_argument(*expr.args[explicit_arg], param_type);
+                    if (!slice_arg) {
+                        fail(expr.args[explicit_arg]->loc,
+                             "Vec parameter arguments currently require a local array or Vec binding; bind the value to a local first");
+                    }
+                    args.push_back(std::move(slice_arg));
+                } else {
+                    args.push_back(coerce_checked_declared_call_argument_or_implicit_slice(
+                    *expr.args[explicit_arg],
+                    std::move(checked_args[explicit_arg]),
                     expr.name,
                     fn.params[i].type.loc,
                     fn.params[i].name,
                     i,
-                    param_type);
+                    param_type));
+                }
+                ++explicit_arg;
             }
             param_types.push_back(param_type);
         }
@@ -28805,6 +28978,7 @@ private:
         if (!expr_type_args(expr).empty()) {
             fail_nongeneric_function_type_arguments(expr.loc, expr.name, sig.loc);
         }
+        std::optional<std::size_t> implicit_zone_param;
         if (sig.is_variadic) {
             if (expr.args.size() < sig.params.size()) {
                 fail_call_argument_count(
@@ -28816,27 +28990,40 @@ private:
                     true);
             }
         } else if (sig.params.size() != expr.args.size()) {
-            fail_call_argument_count(expr.loc, expr.name, sig.loc, sig.params.size(), expr.args.size());
+            implicit_zone_param = implicit_current_zone_param(sig.params, expr.args.size());
+            if (!implicit_zone_param) {
+                fail_call_argument_count(expr.loc, expr.name, sig.loc, sig.params.size(), expr.args.size());
+            }
         }
         if (expr.args.size() > std::numeric_limits<std::uint16_t>::max()) {
             fail(expr.loc, "function calls support up to 65535 arguments");
         }
 
         std::vector<IrExprPtr> args;
-        args.reserve(expr.args.size());
+        args.reserve(implicit_zone_param ? sig.params.size() : expr.args.size());
         std::size_t borrow_mark = temporary_borrow_mark();
-        for (std::size_t i = 0; i < expr.args.size(); ++i) {
-            IrExprPtr arg = i < sig.params.size()
-                ? check_call_argument_for_parameter(*expr.args[i], sig.params[i], expr.name, sig, i)
-                : check_expr(*expr.args[i]);
+        std::size_t explicit_arg = 0;
+        std::size_t final_arg_count = implicit_zone_param ? sig.params.size() : expr.args.size();
+        for (std::size_t i = 0; i < final_arg_count; ++i) {
+            IrExprPtr arg;
+            SourceLocation arg_loc = expr.loc;
+            if (implicit_zone_param && i == *implicit_zone_param) {
+                arg = make_current_zone_argument(expr.loc, sig.params[i]);
+            } else {
+                const Expr& source_arg = *expr.args[explicit_arg++];
+                arg_loc = source_arg.loc;
+                arg = i < sig.params.size()
+                    ? check_call_argument_for_parameter(source_arg, sig.params[i], expr.name, sig, i)
+                    : check_expr(source_arg);
+            }
             if (i >= sig.params.size() && !is_c_vararg_value_type(arg->type)) {
                 fail_abi_diagnostic(
-                    expr.args[i]->loc,
+                    arg_loc,
                     "C variadic argument type is not supported: " + type_name(arg->type),
                     "Ari currently promotes only C-compatible scalar and pointer values through variadic extern calls",
                     "pass a supported scalar or pointer value, or wrap aggregate data behind a pointer before the varargs boundary");
             } else if (i >= sig.params.size()) {
-                arg = promote_c_vararg(std::move(arg), expr.args[i]->loc);
+                arg = promote_c_vararg(std::move(arg), arg_loc);
             }
             if (sig.is_extern) {
                 const char* escape_context = sig.extern_abi == "ari"
@@ -28845,7 +29032,7 @@ private:
                 if (!std_string_extern_builtin_allows_zone_pointer_argument(function_name, i) &&
                     !zone_metadata_extern_builtin_allows_zone_pointer_argument(function_name, i) &&
                     !memory_extern_builtin_allows_zone_pointer_argument(function_name, i)) {
-                    require_no_zone_pointer_escape(expr.args[i]->loc, *arg, escape_context);
+                    require_no_zone_pointer_escape(arg_loc, *arg, escape_context);
                 }
             }
             args.push_back(std::move(arg));
@@ -29229,26 +29416,37 @@ private:
         const ImplMethodInfo& method = has_generic_selected ? generic_selected : concrete_methods->front();
         require_impl_method_access(expr.loc, method, method_name);
         const FunctionSig& sig = method.sig;
+        std::optional<std::size_t> implicit_zone_param;
         if (sig.params.size() != expr.args.size()) {
-            fail_associated_function_argument_count(
-                expr.loc,
-                method_name,
-                method.loc,
-                sig.params.size(),
-                expr.args.size());
+            implicit_zone_param = implicit_current_zone_param(sig.params, expr.args.size());
+            if (!implicit_zone_param) {
+                fail_associated_function_argument_count(
+                    expr.loc,
+                    method_name,
+                    method.loc,
+                    sig.params.size(),
+                    expr.args.size());
+            }
         }
 
         queue_impl_method_for_lowering(method);
         std::vector<IrExprPtr> args;
-        args.reserve(expr.args.size());
-        for (std::size_t i = 0; i < expr.args.size(); ++i) {
-            IrExprPtr arg = coerce_checked_call_argument_for_parameter(
-                *expr.args[i],
-                std::move(checked_args[i]),
-                method_name,
-                sig,
-                i,
-                sig.params[i]);
+        args.reserve(implicit_zone_param ? sig.params.size() : expr.args.size());
+        std::size_t explicit_arg = 0;
+        for (std::size_t i = 0; i < sig.params.size(); ++i) {
+            IrExprPtr arg;
+            if (implicit_zone_param && i == *implicit_zone_param) {
+                arg = make_current_zone_argument(expr.loc, sig.params[i]);
+            } else {
+                arg = coerce_checked_call_argument_for_parameter(
+                    *expr.args[explicit_arg],
+                    std::move(checked_args[explicit_arg]),
+                    method_name,
+                    sig,
+                    i,
+                    sig.params[i]);
+                ++explicit_arg;
+            }
             args.push_back(std::move(arg));
         }
         return finish_tracked_call(
@@ -29522,7 +29720,11 @@ private:
         if (sig.params.empty()) {
             fail(expr.loc, "method '" + expr.name + "' for type " + type_name(receiver->type) + " has no receiver parameter");
         }
+        std::optional<std::size_t> implicit_zone_param;
         if (sig.params.size() != expr.args.size() + 1) {
+            implicit_zone_param = implicit_current_zone_param(sig.params, expr.args.size(), 1);
+        }
+        if (sig.params.size() != expr.args.size() + 1 && !implicit_zone_param) {
             fail_method_argument_count(
                 expr.loc,
                 expr.name,
@@ -29563,18 +29765,30 @@ private:
         require_impl_method_access(expr.loc, method, expr.name);
         queue_impl_method_for_lowering(method);
         std::vector<IrExprPtr> args;
-        args.reserve(expr.args.size() + 1);
+        args.reserve(implicit_zone_param ? sig.params.size() : expr.args.size() + 1);
         args.push_back(std::move(receiver_arg));
-        for (std::size_t i = 0; i < expr.args.size(); ++i) {
-            IrExprPtr arg = has_generic_selected
-                ? coerce_checked_call_argument_for_parameter(
-                      *expr.args[i],
-                      std::move(generic_args[i]),
-                      expr.name,
-                      sig,
-                      i + 1,
-                      sig.params[i + 1])
-                : check_call_argument_for_parameter(*expr.args[i], sig.params[i + 1], expr.name, sig, i + 1);
+        std::size_t explicit_arg = 0;
+        for (std::size_t param_index = 1; param_index < sig.params.size(); ++param_index) {
+            IrExprPtr arg;
+            if (implicit_zone_param && param_index == *implicit_zone_param) {
+                arg = make_current_zone_argument(expr.loc, sig.params[param_index]);
+            } else {
+                arg = has_generic_selected
+                    ? coerce_checked_call_argument_for_parameter(
+                          *expr.args[explicit_arg],
+                          std::move(generic_args[explicit_arg]),
+                          expr.name,
+                          sig,
+                          param_index,
+                          sig.params[param_index])
+                    : check_call_argument_for_parameter(
+                          *expr.args[explicit_arg],
+                          sig.params[param_index],
+                          expr.name,
+                          sig,
+                          param_index);
+                ++explicit_arg;
+            }
             args.push_back(std::move(arg));
         }
         require_std_vec_same_zone_method_matches_source(expr.loc, expr.name, method_receiver_type, args);
@@ -29807,6 +30021,7 @@ private:
     static IrStmtKind lower_stmt_kind(StmtKind kind, SourceLocation loc) {
         switch (kind) {
             case StmtKind::Block: return IrStmtKind::Block;
+            case StmtKind::ZoneBlock: return IrStmtKind::Block;
             case StmtKind::VarDecl: return IrStmtKind::VarDecl;
             case StmtKind::Assign: return IrStmtKind::Assign;
             case StmtKind::ExprStmt: return IrStmtKind::ExprStmt;

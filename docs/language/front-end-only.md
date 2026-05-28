@@ -654,10 +654,9 @@ macro invocations must resolve to
 identity-expand by parsing their token tree as one type before semantic type
 lowering; `type -> type` bodies that return `type!(...)` replace that input
 with the constructed type AST. General syntax-rewriting meta evaluation and
-additional derives are still planned. Default-zone `format!` is intentionally
-not executable in the 0.x language surface because Ari has no implicit
-allocation zone; use executable `format_in!` for explicit-zone owned string
-formatting.
+additional derives are still planned. Outside a `zone { ... }` current-zone
+block, `format!` still has no implicit allocation target; use executable
+`format_in!` for explicit-zone owned string formatting in that case.
 Pattern-position `ident!(...)` uses the same reserved spelling and balanced
 token-tree parser. It is preserved in the AST and module summaries, checked
 against `token_stream -> token_stream` or `ast -> ast` meta functions. Empty

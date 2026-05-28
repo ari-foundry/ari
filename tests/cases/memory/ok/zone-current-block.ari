@@ -1,0 +1,40 @@
+// Covers lexical current-zone blocks and implicit ref mut Zone call arguments.
+fn main() -> i64 {
+  zone {
+    let text = std::string::from("ari");
+    if !text.as_slice().equals("ari") {
+      return 1;
+    }
+
+    let formatted = std::fmt::format_value(42);
+    if !formatted.as_slice().equals("42") {
+      return 2;
+    }
+
+    let templated = format!("{} {}", text, 7);
+    if !templated.as_slice().equals("ari 7") {
+      return 6;
+    }
+
+    match std::fs::read_to_string("tests/cases/memory/ok/zone-current-block.ari") {
+      Ok(contents) => {
+        if !std::string::contains(contents.as_slice(), "current-zone") {
+          return 3;
+        }
+      }
+
+      Err(_) => {
+        return 4;
+      }
+    }
+  }
+
+  zone(128) {
+    let empty = std::string::empty();
+    if empty.as_slice().len != 0 {
+      return 5;
+    }
+  }
+
+  return 0;
+}

@@ -148,6 +148,9 @@ bool supported_ast_statement(const Stmt& stmt,
     switch (stmt.kind) {
         case StmtKind::Block:
             return require_scoped_body(stmt_statements(stmt));
+        case StmtKind::ZoneBlock:
+            if (!require_expr(stmt.expr)) return false;
+            return require_scoped_body(stmt_statements(stmt));
         case StmtKind::VarDecl:
             if (!require_expr(stmt.binding.init)) return false;
             collect_binding_names(stmt.binding, local_names);

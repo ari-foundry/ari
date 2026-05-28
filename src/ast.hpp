@@ -381,6 +381,7 @@ struct StmtBreakPayload {
 
 enum class StmtKind {
     Block,
+    ZoneBlock,
     VarDecl,
     Assign,
     ExprStmt,
