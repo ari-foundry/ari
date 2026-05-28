@@ -80,9 +80,9 @@ API evolution.
 ## Allocation Rules
 
 Anything that creates a bulk lifetime should be described as a `Region` in
-user-facing APIs and docs. Today `Region` aliases the existing `Zone` runtime,
-so older `ref mut Zone` APIs continue to work while the source library
-migrates. Anything that grows an existing handle should prefer
+user-facing APIs and docs. `Region` is now an owned wrapper over the existing
+`Zone` runtime, so older `ref mut Zone` APIs continue to work through explicit
+compatibility bridges while the source library migrates. Anything that grows an existing handle should prefer
 `std::allocator::Allocator`, which is the public capability view over that
 backing storage. Methods with an `_in` suffix take an explicit region/zone for
 growth or copying; methods with a `_to` suffix copy a derived value into a

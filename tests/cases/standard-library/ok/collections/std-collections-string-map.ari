@@ -3,7 +3,7 @@
 // key replacement, lookup with independently allocated keys, removal, and
 // iteration over map entries.
 
-fn text(zone: ref mut Zone, value: string) -> String {
+fn text(zone: ref mut Zone, value: Slice[u8]) -> String {
   return string::from(zone, value);
 }
 

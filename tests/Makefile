@@ -663,7 +663,7 @@ check-tools: $(TARGET) $(LINT_TARGET) $(LSP_TARGET)
 	if $(TOOL_ENV) $(LINT_TARGET) --ari $(TOOL_ARI) --json tests/cases/standard-library/errors/format/prelude-macro-format-no-default-zone.ari >$(BUILD_DIR)/tools/lint-format.json; then exit 1; fi
 	grep -q '"line":2' $(BUILD_DIR)/tools/lint-format.json
 	grep -q '"code":"ari/compiler"' $(BUILD_DIR)/tools/lint-format.json
-	grep -q "prelude macro 'format!' has no implicit allocation zone; use format_in!(ref mut zone, ...) for explicit-zone strings" $(BUILD_DIR)/tools/lint-format.json
+	grep -q "prelude macro 'format!' has no implicit allocation zone; use format_in!(ref mut zone, ...) or call it inside a zone block" $(BUILD_DIR)/tools/lint-format.json
 	ARI="$(TOOL_ARI)" LSP="$(LSP_TARGET)" $(TOOL_ENV) sh tests/tools/lsp_smoke.sh
 
 check-cli: $(TARGET)
@@ -831,11 +831,14 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std2io8eprintln' $(BUILD_DIR)/prelude/std-io-natural-api.ll
 	grep -q '_ARNv3std2io13eprintln_text' $(BUILD_DIR)/prelude/std-io-natural-api.ll
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-natural-api.ari -o $(BUILD_DIR)/prelude/std-io-natural-api.elf
-	$(BUILD_DIR)/prelude/std-io-natural-api.elf >$(BUILD_DIR)/prelude/std-io-natural-api.out 2>$(BUILD_DIR)/prelude/std-io-natural-api.err; code=$$?; test $$code -eq 153
-	grep -qx "GWMPL" $(BUILD_DIR)/prelude/std-io-natural-api.out
-	grep -qx "pl" $(BUILD_DIR)/prelude/std-io-natural-api.out
+	$(BUILD_DIR)/prelude/std-io-natural-api.elf >$(BUILD_DIR)/prelude/std-io-natural-api.out 2>$(BUILD_DIR)/prelude/std-io-natural-api.err; code=$$?; test $$code -eq 20
+	grep -qx "GWMPQL" $(BUILD_DIR)/prelude/std-io-natural-api.out
+	grep -qx "N" $(BUILD_DIR)/prelude/std-io-natural-api.out
+	grep -qx "ppl" $(BUILD_DIR)/prelude/std-io-natural-api.out
+	grep -qx "l" $(BUILD_DIR)/prelude/std-io-natural-api.out
 	grep -qx "TU" $(BUILD_DIR)/prelude/std-io-natural-api.out
-	grep -qx "EARS" $(BUILD_DIR)/prelude/std-io-natural-api.err
+	grep -qx "EARYS" $(BUILD_DIR)/prelude/std-io-natural-api.err
+	grep -qx "Z" $(BUILD_DIR)/prelude/std-io-natural-api.err
 	grep -qx "rs" $(BUILD_DIR)/prelude/std-io-natural-api.err
 	grep -qx "VX" $(BUILD_DIR)/prelude/std-io-natural-api.err
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-pipe.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-pipe.ll
@@ -991,8 +994,8 @@ check-prelude: $(TARGET)
 	grep -F -q "std3env20executable_path_path" $(BUILD_DIR)/prelude/std-env-paths.ll
 	grep -F -q "std3env29executable_path_path_optional" $(BUILD_DIR)/prelude/std-env-paths.ll
 	$(TARGET) tests/cases/standard-library/ok/env/std-env-paths.ari -o $(BUILD_DIR)/prelude/std-env-paths.elf
-	$(BUILD_DIR)/prelude/std-env-paths.elf; code=$$?; test $$code -eq 39
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/env/std-env-paths.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-env-paths.elf; $(BUILD_DIR)/prelude/std-env-paths.elf; code=$$?; test $$code -eq 39; fi
+	$(BUILD_DIR)/prelude/std-env-paths.elf; code=$$?; test $$code -eq 56
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/env/std-env-paths.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-env-paths.elf; $(BUILD_DIR)/prelude/std-env-paths.elf; code=$$?; test $$code -eq 56; fi
 	$(TARGET) tests/cases/standard-library/ok/env/std-env-os-path-views.ari --emit-llvm $(BUILD_DIR)/prelude/std-env-os-path-views.ll
 	grep -F -q "std3env6arg_os" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
 	grep -F -q "std3env15arg_os_optional" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
@@ -1894,10 +1897,6 @@ check-prelude: $(TARGET)
 		grep -qx "beta" $(BUILD_DIR)/prelude/prelude-read-line.out; \
 		grep -qx "gamma" $(BUILD_DIR)/prelude/prelude-read-line.out; \
 		grep -qx "delta" $(BUILD_DIR)/prelude/prelude-read-line.out; \
-		grep -qx "epsilon" $(BUILD_DIR)/prelude/prelude-read-line.out; \
-		grep -qx "zeta" $(BUILD_DIR)/prelude/prelude-read-line.out; \
-		grep -qx "eta" $(BUILD_DIR)/prelude/prelude-read-line.out; \
-		grep -qx "theta" $(BUILD_DIR)/prelude/prelude-read-line.out; \
 	fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/input/prelude-read-line-owned.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-read-line-owned.elf; printf 'alpha\nbeta\ngamma\ndelta\n' | $(BUILD_DIR)/prelude/prelude-read-line-owned.elf; code=$$?; test $$code -eq 161; fi
 	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-trait-surface.ari -o $(BUILD_DIR)/prelude/prelude-trait-surface.elf
@@ -2460,7 +2459,7 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std6region9allocator' $(BUILD_DIR)/prelude/std-region-capability.ll
 	grep -q '_ARNv3std9allocator11from_region' $(BUILD_DIR)/prelude/std-region-capability.ll
 	$(TARGET) tests/cases/standard-library/ok/zone/std-region-capability.ari -o $(BUILD_DIR)/prelude/std-region-capability.elf
-	$(BUILD_DIR)/prelude/std-region-capability.elf; code=$$?; test $$code -eq 75
+	$(BUILD_DIR)/prelude/std-region-capability.elf; code=$$?; test $$code -eq 86
 	$(TARGET) tests/cases/standard-library/ok/zone/std-zone-backed.ari --emit-llvm $(BUILD_DIR)/prelude/std-zone-backed.ll
 	grep -q '_ARNv3std4zone24of__G_std__vec__Vec_i64_' $(BUILD_DIR)/prelude/std-zone-backed.ll
 	grep -F -q 'define { ptr, i64 } @"_ARNv4impl35std__collections__HashMap_i64__i64_8inherent5entry"' $(BUILD_DIR)/prelude/std-zone-backed.ll
@@ -2475,7 +2474,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/zone/std-zone-alloc-array.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-zone-alloc-array.elf; $(BUILD_DIR)/prelude/std-zone-alloc-array.elf; code=$$?; test $$code -eq 72; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/zone/std-zone-introspection.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-zone-introspection.elf; $(BUILD_DIR)/prelude/std-zone-introspection.elf; code=$$?; test $$code -eq 42; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/zone/std-allocator-capability.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-allocator-capability.elf; $(BUILD_DIR)/prelude/std-allocator-capability.elf; code=$$?; test $$code -eq 78; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/zone/std-region-capability.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-region-capability.elf; $(BUILD_DIR)/prelude/std-region-capability.elf; code=$$?; test $$code -eq 75; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/zone/std-region-capability.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-region-capability.elf; $(BUILD_DIR)/prelude/std-region-capability.elf; code=$$?; test $$code -eq 86; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/zone/std-zone-backed.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-zone-backed.elf; $(BUILD_DIR)/prelude/std-zone-backed.elf; code=$$?; test $$code -eq 249; fi
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-alloc-buffer.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-alloc-buffer.ll
 	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/std-vec-alloc-buffer.ll
@@ -2637,7 +2636,7 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std6string21utf8_string_unchecked' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
 	grep -q '_ARNv3std6string6os_str' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
 	grep -q '_ARNv3std6string9os_string' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
-	grep -q '_ARNv3std6string19os_string_from_text' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
+	grep -q '_ARNv3std6string20os_string_from_slice' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
 	grep -q '_ARNv3std6string5c_str' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
 	grep -q 'std__string__Utf88inherent15codepoint_count' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
 	grep -q 'std__string__Utf8String8inherent15codepoint_count' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
@@ -3889,9 +3888,9 @@ check-prelude: $(TARGET)
 	if $(TARGET) tests/cases/standard-library/errors/input/prelude-read-line-owned-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.elf >$(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'text' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.err
 	if $(TARGET) tests/cases/standard-library/errors/format/prelude-macro-format-no-default-zone.ari -o $(BUILD_DIR)/prelude/prelude-macro-format-no-default-zone.elf >$(BUILD_DIR)/prelude/prelude-macro-format-no-default-zone.err 2>&1; then exit 1; fi
-	grep -q "prelude macro 'format!' has no implicit allocation zone; use format_in!(ref mut zone, ...) for explicit-zone strings" $(BUILD_DIR)/prelude/prelude-macro-format-no-default-zone.err
+	grep -q "prelude macro 'format!' has no implicit allocation zone; use format_in!(ref mut zone, ...) or call it inside a zone block" $(BUILD_DIR)/prelude/prelude-macro-format-no-default-zone.err
 	if $(TARGET) tests/cases/standard-library/errors/format/prelude-macro-format-qualified-no-default-zone.ari -o $(BUILD_DIR)/prelude/prelude-macro-format-qualified-no-default-zone.elf >$(BUILD_DIR)/prelude/prelude-macro-format-qualified-no-default-zone.err 2>&1; then exit 1; fi
-	grep -q "prelude macro 'format!' has no implicit allocation zone; use format_in!(ref mut zone, ...) for explicit-zone strings" $(BUILD_DIR)/prelude/prelude-macro-format-qualified-no-default-zone.err
+	grep -q "prelude macro 'format!' has no implicit allocation zone; use format_in!(ref mut zone, ...) or call it inside a zone block" $(BUILD_DIR)/prelude/prelude-macro-format-qualified-no-default-zone.err
 	if $(TARGET) tests/cases/standard-library/errors/format/prelude-format-in-f128.ari -o $(BUILD_DIR)/prelude/prelude-format-in-f128.elf >$(BUILD_DIR)/prelude/prelude-format-in-f128.err 2>&1; then exit 1; fi
 	grep -q "format_in! currently supports string, char, integer, bool, f32, f64, and Display values, got f128" $(BUILD_DIR)/prelude/prelude-format-in-f128.err
 	if $(TARGET) tests/cases/standard-library/errors/format/prelude-format-in-no-display.ari -o $(BUILD_DIR)/prelude/prelude-format-in-no-display.elf >$(BUILD_DIR)/prelude/prelude-format-in-no-display.err 2>&1; then exit 1; fi

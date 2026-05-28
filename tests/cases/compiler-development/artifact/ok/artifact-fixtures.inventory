@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=327
+CompilerArtifactFixtures version=1 group=all entries=326
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari

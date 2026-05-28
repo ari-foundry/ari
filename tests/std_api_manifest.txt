@@ -1,7 +1,7 @@
-# Source std public API manifest.
 #
-# Format:
 #   <extracted API>|<focused coverage note>
+# Format:
+# Source std public API manifest.
 # `make check-std-api` compares the left side of each entry with the public
 # declarations in lib/std. Add or remove entries only with focused tests,
 # docs/dev/test-matrix.md coverage, and language docs when the API is user
@@ -975,6 +975,7 @@ fn std::path::file_stem|check-prelude std-path-basic natural alias for borrowed 
 fn std::path::from|check-prelude std-path-buf owned path buffer constructor from host string; docs/stdlib/modules/path.md
 fn std::path::from_bytes|check-prelude std-path-buf owned path buffer constructor from bytes; docs/stdlib/modules/path.md
 fn std::path::from_os|check-prelude std-path-bytes path-byte view from OS-string bytes; docs/stdlib/modules/path.md
+fn std::path::from_string|check-prelude std-path-buf owned path buffer constructor from String; docs/stdlib/modules/path.md
 fn std::path::has_extension|check-prelude std-path-predicates final-extension predicate; docs/stdlib/modules/path.md
 fn std::path::has_file_name|check-prelude std-path-predicates final-component predicate; docs/stdlib/modules/path.md
 fn std::path::has_file_stem|check-prelude std-path-predicates natural alias for file-stem predicate; docs/stdlib/modules/path.md
@@ -1089,6 +1090,7 @@ fn std::rc::rc[T]|check-prelude std-rc-arc-weak Rc constructor over zone-backed 
 fn std::region::alloc|std region capability tests; docs/stdlib/modules/region.md
 fn std::region::alloc_array[T]|std region capability tests; docs/stdlib/modules/region.md
 fn std::region::allocator|std region capability tests; docs/stdlib/modules/region.md
+fn std::region::as_zone|std region capability compatibility bridge; docs/stdlib/modules/region.md
 fn std::region::can_alloc|std region capability tests; docs/stdlib/modules/region.md
 fn std::region::can_alloc_array[T]|std region capability tests; docs/stdlib/modules/region.md
 fn std::region::capacity|std region capability tests; docs/stdlib/modules/region.md
@@ -2681,6 +2683,17 @@ method std::rc::Weak[T]::strong_count|check-prelude std-rc-arc-weak Weak strong-
 method std::rc::Weak[T]::upgrade|check-prelude std-rc-arc-weak Weak upgrade to Rc; docs/stdlib/modules/rc.md
 method std::rc::Weak[T]::upgrade_arc|check-prelude std-rc-arc-weak Weak upgrade to Arc; docs/stdlib/modules/rc.md
 method std::rc::Weak[T]::weak_count|check-prelude std-rc-arc-weak Weak weak-count view; docs/stdlib/modules/rc.md
+method std::region::Region::alloc|std region capability tests; docs/stdlib/modules/region.md
+method std::region::Region::alloc_array[T]|std region capability tests; docs/stdlib/modules/region.md
+method std::region::Region::allocator|std region capability tests; docs/stdlib/modules/region.md
+method std::region::Region::can_alloc|std region capability tests; docs/stdlib/modules/region.md
+method std::region::Region::can_alloc_array[T]|std region capability tests; docs/stdlib/modules/region.md
+method std::region::Region::capacity|std region capability tests; docs/stdlib/modules/region.md
+method std::region::Region::new[T]|std region capability tests; docs/stdlib/modules/region.md
+method std::region::Region::promote[T]|std region capability tests; docs/stdlib/modules/region.md
+method std::region::Region::remaining|std region capability tests; docs/stdlib/modules/region.md
+method std::region::Region::reset|std region capability tests; docs/stdlib/modules/region.md
+method std::region::Region::used|std region capability tests; docs/stdlib/modules/region.md
 method std::result::ResultMut[T,E]::as_ref|check-prelude prelude-option-result-ref-access downgrade mutable result payload view to shared view; docs/stdlib/modules/option-result.md
 method std::result::ResultMut[T,E]::is_err|check-prelude prelude-option-result-ref-access mutable result error predicate; docs/stdlib/modules/option-result.md
 method std::result::ResultMut[T,E]::is_ok|check-prelude prelude-option-result-ref-access mutable result success predicate; docs/stdlib/modules/option-result.md
@@ -3422,6 +3435,7 @@ struct std::random::Prng|check-prelude std-random-basic deterministic non-crypto
 struct std::rc::Arc[T]|check-prelude std-rc-arc-weak atomic-count shared owner handle; docs/stdlib/modules/rc.md
 struct std::rc::Rc[T]|check-prelude std-rc-arc-weak shared owner handle; docs/stdlib/modules/rc.md
 struct std::rc::Weak[T]|check-prelude std-rc-arc-weak non-owning shared handle; docs/stdlib/modules/rc.md
+struct std::region::Region|std region capability tests; docs/stdlib/modules/region.md
 struct std::string::Codepoints|check-prelude std-string-unicode-helpers borrowed UTF-8 scalar iterator state; docs/stdlib/modules/string.md
 struct std::string::OsStr|check-prelude std-string-text-kinds typed borrowed OS string byte view; docs/stdlib/modules/string.md
 struct std::string::OsString|check-prelude std-string-text-kinds owned OS string byte wrapper; docs/stdlib/modules/string.md
@@ -3574,7 +3588,6 @@ type std::process::ChildStdin|check-prelude std-process-high-level child stdin p
 type std::process::ChildStdout|check-prelude std-process-high-level child stdout pipe alias; docs/stdlib/modules/process.md
 type std::process::Error|check-prelude std-error-integration shared process error alias; docs/stdlib/modules/process.md
 type std::process::ErrorKind|check-prelude std-error-integration shared process error-kind alias; docs/stdlib/modules/process.md
-type std::region::Region|std region capability tests; docs/stdlib/modules/region.md
 type std::thread::Error|check-prelude std-thread-basic shared thread error alias; docs/stdlib/modules/thread.md
 type std::thread::ErrorKind|check-prelude std-thread-basic shared thread error-kind alias; docs/stdlib/modules/thread.md
 use std::Allocator|std allocator capability tests; docs/stdlib/modules/allocator.md

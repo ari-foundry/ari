@@ -14,6 +14,15 @@ void collect_owned_field_states(const IrType& type,
                                 const std::string& path,
                                 std::map<std::string, LocalState>& states) {
     if (type.qualifier == TypeQualifier::Own) {
+        if (path.empty() &&
+            (type.primitive == IrPrimitiveKind::Tuple ||
+             type.primitive == IrPrimitiveKind::Array ||
+             type.primitive == IrPrimitiveKind::Struct)) {
+            IrType value_type = type;
+            value_type.qualifier = TypeQualifier::Value;
+            collect_owned_field_states(value_type, path, states);
+            return;
+        }
         if (!path.empty()) states.emplace(path, LocalState::Alive);
         return;
     }

@@ -249,13 +249,30 @@ out of temporary aggregate expressions is rejected, so bind the aggregate first.
 
 ## Allocation Direction
 
-Allocation should be capability based. Code should receive an allocator or
-region value explicitly instead of calling a global heap primitive. Ari now
-uses two names for the two jobs:
+Allocation is capability based. Code should receive a region or allocator value
+explicitly instead of calling a hidden global heap primitive. Ari uses three
+layers, from public to low-level:
 
-- `Zone` owns a bounded region and controls lifecycle.
-- `std::allocator::Allocator` is the public capability view used by growing
-  handles and helper code.
+- `std::region::Region` owns a bounded region and controls lifecycle.
+- `std::allocator::Allocator` is a small growth capability used by containers,
+  formatters, and helpers that should allocate without owning the lifetime.
+- `std::zone::Zone` is the runtime implementation and compatibility layer.
+
+Prefer `Region` in user code. A region is a real owner, not just a metadata
+handle:
+
+```ari
+var region = region::create(4096);
+let value = region.new<i64>(42);
+let scratch = region.allocator().alloc_array<u8>(64);
+region.reset();
+region::destroy(region);
+```
+
+Use `_in` or explicit `ref mut Region` APIs when the caller chooses the
+destination lifetime. Use `Allocator` when an existing handle only needs to
+grow in the same backing allocation family. Use `Zone` or `region::as_zone`
+only for older stdlib APIs and low-level runtime work.
 
 Longer-term allocator traits can still grow from that split:
 
@@ -266,13 +283,13 @@ trait Allocator {
 }
 ```
 
-Regions and zones remain the preferred model for allocation-heavy code. A zone
-is a large allocation area: values can be placed inside it freely, and
-destroying the zone releases the whole contained area at once. `Allocator`
-keeps code that only needs growth from depending on zone metadata or raw
-allocation-header recovery. Ari's memory model is not intended to prove full
-memory safety; it is meant to make common C/C++-style memory work more
-explicit and easier to audit.
+Regions remain the preferred model for allocation-heavy code. A region is a
+large allocation area: values can be placed inside it freely, and destroying
+the region releases the whole contained area at once. The region wrapper hides
+the low-level zone handle in ordinary source; `Allocator` keeps code that only
+needs growth from depending on zone metadata or raw allocation-header recovery.
+Ari's memory model is not intended to prove full memory safety; it is meant to
+make common C/C++-style memory work more explicit and easier to audit.
 
 Borrowing and ownership checks are useful diagnostics, not a promise that raw
 memory operations cannot go wrong. The language should still allow explicit

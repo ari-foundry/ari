@@ -13,16 +13,12 @@ and handle ownership belong in future `std::os` wrappers.
 
 ```ari
 target::triple(ref mut zone) -> String
-target::triple_text() -> String
 target::arch() -> target::Arch
 target::arch_name(ref mut zone) -> String
-target::arch_name_text() -> String
 target::os() -> target::Os
 target::os_name(ref mut zone) -> String
-target::os_name_text() -> String
 target::env() -> target::Env
 target::env_name(ref mut zone) -> String
-target::env_name_text() -> String
 target::object_format() -> target::ObjectFormat
 target::debug_format() -> target::DebugFormat
 target::errno_abi() -> target::ErrnoAbi
@@ -102,9 +98,9 @@ fn needs_posix_errno_path() -> bool {
 }
 ```
 
-Natural text helpers copy target names into the caller's zone as owned
-`String` values. The `_text` helpers expose the compiler-owned borrowed static
-strings and are intended for compatibility and raw boundaries.
+Natural text helpers copy target names into the caller's region/zone as owned
+`String` values. The compiler-owned static hooks stay private to the module so
+raw `string` values do not leak into ordinary user APIs.
 
 For architecture-specific code, prefer matching the enum over parsing the
 triple string:

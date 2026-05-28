@@ -6,10 +6,10 @@ from it live until the region is reset or destroyed, and higher-level handles
 such as `String` and `Vec[T]` can grow through an `Allocator` recovered from
 their backing storage.
 
-The current implementation is an alias over the existing `Zone` runtime. That
-is intentional: `Zone` remains the low-level implementation and compatibility
-name, while new user-facing docs and APIs should explain the model as
-`Region` ownership plus `Allocator` capability.
+The implementation is now a small owned wrapper around the existing `Zone`
+runtime. That split is deliberate: `Region` is the public lifetime object,
+`Allocator` is the public growth capability, and `Zone` remains the low-level
+runtime and compatibility layer.
 
 ## API
 
@@ -19,6 +19,7 @@ Region
 region::create(capacity: i64) -> own Region
 region::default_capacity() -> i64
 region::allocator(ref mut Region) -> Allocator
+region::as_zone(ref mut Region) -> ref mut Zone
 
 region::alloc(ref mut Region, bytes: i64, align: i64) -> ptr u8
 region::alloc_array<T>(ref mut Region, count: i64) -> ptr T
@@ -33,6 +34,18 @@ region::can_alloc_array<T>(ref mut Region, count: i64) -> bool
 
 region::reset(ref mut Region) -> void
 region::destroy(region: own Region) -> void
+
+Region::allocator() -> Allocator
+Region::alloc(bytes: i64, align: i64) -> ptr u8
+Region::alloc_array<T>(count: i64) -> ptr T
+Region::new<T>(value: T) -> ptr T
+Region::promote<T>(source: ptr T) -> ptr T
+Region::capacity() -> i64
+Region::used() -> i64
+Region::remaining() -> i64
+Region::can_alloc(bytes: i64) -> bool
+Region::can_alloc_array<T>(count: i64) -> bool
+Region::reset() -> void
 ```
 
 ## When To Use Region
@@ -42,6 +55,18 @@ Use `Region` when code chooses an allocation lifetime:
 ```ari
 var region = region::create(4096);
 let text = std::string::from(ref mut region, "hello");
+region::destroy(region);
+```
+
+The method form is equivalent and is the preferred spelling when the region is
+already named:
+
+```ari
+var region = region::create(4096);
+let data = region.alloc_array<i64>(4);
+ptr_store(data, 10);
+let spare = region.remaining();
+region.reset();
 region::destroy(region);
 ```
 
@@ -70,8 +95,9 @@ region::destroy(region);
 ```
 
 Use `std::zone` only when interacting with older APIs, low-level runtime
-tests, or implementation details such as `ZoneMetadata`. New docs should not
-require ordinary users to understand allocation-header recovery.
+tests, or implementation details such as `ZoneMetadata`. `region::as_zone` is
+the narrow compatibility escape for existing functions that still take
+`ref mut Zone`; new user-facing APIs should prefer `Region` or `Allocator`.
 
 ## Capacity And Failure
 
@@ -106,8 +132,9 @@ needed.
 
 Today:
 
-- `Region` is a public alias for `Zone`.
-- `region::*` functions delegate to `zone::*`.
+- `Region` is an owned wrapper over a private `Zone` field.
+- `region::*` functions and `Region` methods delegate to `zone::*`.
+- `region::as_zone` is exposed only as a compatibility bridge.
 - `Allocator` wraps the current zone-backed allocation metadata.
 
 Direction:

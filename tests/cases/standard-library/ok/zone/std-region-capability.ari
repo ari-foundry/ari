@@ -3,33 +3,38 @@ fn main() -> i64 {
   var region = std::region::create(256);
   var score = 0;
 
-  if std::region::capacity(ref mut region) == 256 &&
-     std::region::remaining(ref mut region) == 256 &&
-     std::region::can_alloc_array<i64>(ref mut region, 4) {
+  if region.capacity() == 256 &&
+     region.remaining() == 256 &&
+     region.can_alloc_array<i64>(4) {
     score = score + 1;
   }
 
-  let values = std::region::alloc_array<i64>(ref mut region, 2);
+  let values = region.alloc_array<i64>(2);
   ptr_store(values, 30);
   ptr_store(ptr_add(values, 1), 12);
   score = score + ptr_load(values) + ptr_load(ptr_add(values, 1));
 
-  let allocator = std::region::allocator(ref mut region);
+  let allocator = region.allocator();
   let extra = allocator.alloc_array<i64>(1);
   ptr_store(extra, 23);
-  if allocator.used() == std::region::used(ref mut region) {
+  if allocator.used() == region.used() {
     score = score + ptr_load(extra);
   }
 
   let direct_allocator = std::allocator::from_region(ref mut region);
   let direct_extra = direct_allocator.alloc_array<i64>(1);
   ptr_store(direct_extra, 5);
-  if direct_allocator.used() == std::region::used(ref mut region) {
+  if direct_allocator.used() == region.used() {
     score = score + ptr_load(direct_extra);
   }
 
-  std::region::reset(ref mut region);
-  if std::region::used(ref mut region) == 0 {
+  let placed = region.new<i64>(11);
+  if ptr_load(placed) == 11 && region.can_alloc(8) {
+    score = score + 11;
+  }
+
+  region.reset();
+  if region.used() == 0 {
     score = score + 4;
   }
 

@@ -45,8 +45,11 @@ resolve through implicit aliases to the source `std` module, even when a root
 re-export such as `input()` shares the prefix.
 The explicit paths still exist as `std::Vec`, `std::iter::range`,
 `std::mem::size_of`, `std::region::new`, and `std::zone::new`.
-`std::region::Region` is the preferred public alias for the current
-region/zone owner, and root `Region` is re-exported for ordinary code.
+`std::region::Region` is the preferred public owner for explicit allocation
+lifetimes, and root `Region` is re-exported for ordinary code. It wraps the
+low-level `Zone` runtime so ordinary programs can write `region.create(...)`,
+`region.alloc_array<T>(...)`, `region.reset()`, and `region::destroy(region)`
+without handling zone metadata directly.
 `std::vec::Vec` names the
 source-backed allocator seed handle, and `std::Vec[T]` is a public alias for
 that same explicit-zone handle. Bare root `Vec[T]` remains the current
@@ -865,10 +868,11 @@ zone::reset(zone: ref mut Zone) -> void
 zone::destroy(zone: own Zone) -> void
 ```
 
-`Region` is currently a public alias for `Zone`, so old and new spellings use
-the same runtime representation. A region owns a bounded bulk lifetime;
-`Allocator` is the smaller capability used when strings, vectors,
-collections, or formatters need more storage from an existing backing region.
+`Region` is the public owner over the low-level `Zone` runtime. A region owns a
+bounded bulk lifetime; `Allocator` is the smaller capability used when strings,
+vectors, collections, or formatters need more storage from an existing backing
+region. Use `region::as_zone` only when bridging to old APIs that still require
+`ref mut Zone`.
 
 Zones are explicit allocation regions. Allocation returns raw `ptr u8` memory,
 so callers cast or offset pointers deliberately and use `ptr_load`,

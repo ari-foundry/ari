@@ -50,7 +50,14 @@ fn main() -> i64 {
   assert(maybe_cwd_os.is_some());
   assert(!cwd_os.is_empty());
   assert(cwd_path.is_absolute());
-  assert(startup_cwd.equals_text(env::current_dir_text_or_default()));
+  match env::current_dir(ref mut zone) {
+    Ok(current) => {
+      assert(startup_cwd.equals(current.as_slice()));
+    }
+    Err(_) => {
+      panic();
+    }
+  }
 
   let startup_exe = context::executable_path(ref mut zone);
   let maybe_exe = context::try_executable_path(ref mut zone);
@@ -60,7 +67,14 @@ fn main() -> i64 {
   assert(maybe_exe.is_some());
   assert(maybe_exe_os.is_some());
   assert(!exe_os.is_empty());
-  assert(startup_exe.equals_text(env::executable_path_text_or_default()));
+  match env::executable_path(ref mut zone) {
+    Ok(current_exe) => {
+      assert(startup_exe.equals(current_exe.as_slice()));
+    }
+    Err(_) => {
+      panic();
+    }
+  }
 
   zone::destroy(zone);
   return score;

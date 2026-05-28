@@ -6373,7 +6373,8 @@ private:
                 if (type.qualifier != TypeQualifier::Value &&
                     type.qualifier != TypeQualifier::Ptr &&
                     type.qualifier != TypeQualifier::Ref &&
-                    type.qualifier != TypeQualifier::MutRef) {
+                    type.qualifier != TypeQualifier::MutRef &&
+                    type.qualifier != TypeQualifier::Own) {
                     fail(type.loc, "struct ownership qualifiers are not supported in the executable subset yet");
                 }
                 type.primitive = IrPrimitiveKind::Struct;
@@ -25562,6 +25563,9 @@ private:
     }
 
     static IrType impl_receiver_lookup_type(const IrType& receiver_type) {
+        if (receiver_type.qualifier == TypeQualifier::Own) {
+            return impl_receiver_lookup_type(value_qualified_type(receiver_type));
+        }
         if (is_vector_storage_type(receiver_type)) {
             return unsized_vector_storage_view_type(receiver_type);
         }
@@ -29801,7 +29805,8 @@ private:
             if (LocalInfo* local_slot = find_local_slot(receiver_source.name)) {
                 LocalInfo& local = *local_slot;
                 if (local.type.qualifier == TypeQualifier::Own &&
-                    local.type.primitive == IrPrimitiveKind::TraitObject) {
+                    (local.type.primitive == IrPrimitiveKind::TraitObject ||
+                     local.type.primitive == IrPrimitiveKind::Struct)) {
                     if (local_unavailable_binding_error(receiver_source.name, local)) {
                         fail_unavailable_binding(receiver_source.loc, receiver_source.name, local);
                     }

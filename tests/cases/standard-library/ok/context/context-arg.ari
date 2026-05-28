@@ -1,6 +1,6 @@
-extern "C" fn puts(text: string) -> i32;
-
 fn main() -> i64 {
-  puts(context::arg_text(1));
+  var zone = zone::temp(1);
+  let arg = context::arg(ref mut zone, 1);
+  println("{}", arg);
   return 0;
 }

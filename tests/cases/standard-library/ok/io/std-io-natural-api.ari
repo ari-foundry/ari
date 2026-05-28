@@ -38,8 +38,14 @@ fn main() -> i64 {
   if unit_ok(io::print("P")) {
     score = score + 4;
   }
+  if unit_ok(io::print_text(std::string::bytes("Q"))) {
+    score = score + 20;
+  }
   if unit_ok(io::println("L")) {
     score = score + 5;
+  }
+  if unit_ok(io::println_text(std::string::bytes("N"))) {
+    score = score + 21;
   }
   var print_lower = std::string::from(ref mut zone, "p");
   if unit_ok(io::print(ref print_lower)) {
@@ -72,8 +78,14 @@ fn main() -> i64 {
   if unit_ok(io::eprint("R")) {
     score = score + 8;
   }
+  if unit_ok(io::eprint_text(std::string::bytes("Y"))) {
+    score = score + 22;
+  }
   if unit_ok(io::eprintln("S")) {
     score = score + 9;
+  }
+  if unit_ok(io::eprintln_text(std::string::bytes("Z"))) {
+    score = score + 23;
   }
   var eprint_lower = std::string::from(ref mut zone, "r");
   if unit_ok(io::eprint_string(ref eprint_lower)) {
@@ -90,7 +102,7 @@ fn main() -> i64 {
     score = score + 13;
   }
 
-  assert_eq_i64(score, 190);
+  assert_eq_i64(score, 276);
   zone::destroy(zone);
   return score;
 }

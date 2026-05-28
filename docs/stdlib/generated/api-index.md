@@ -24,27 +24,27 @@ platform notes.
 
 ## Summary
 
-- API entries: `3672`
+- API entries: `3685`
 - Modules: `42`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
-| `alloc` | 976 | usable |
+| `alloc` | 988 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 938 | stable candidate |
+| `core` | 939 | stable candidate |
 | `hosted` | 1559 | platform-backed |
 | `platform` | 163 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1269 |
-| `method` | 1928 |
+| `fn` | 1271 |
+| `method` | 1939 |
 | `module` | 41 |
-| `struct` | 198 |
+| `struct` | 199 |
 | `trait` | 39 |
 | `trait-method` | 41 |
-| `type` | 23 |
+| `type` | 22 |
 | `use` | 101 |
 
 ## Modules
@@ -79,11 +79,11 @@ platform notes.
 | `std::option` | `core` | 12 |
 | `std::os` | `platform` | 62 |
 | `std::parse` | `core` | 103 |
-| `std::path` | `core` | 123 |
+| `std::path` | `core` | 124 |
 | `std::process` | `hosted` | 181 |
 | `std::random` | `alloc/hosted` | 36 |
 | `std::rc` | `alloc` | 32 |
-| `std::region` | `alloc` | 16 |
+| `std::region` | `alloc` | 28 |
 | `std::result` | `core` | 12 |
 | `std::string` | `alloc` | 172 |
 | `std::sync` | `hosted` | 224 |
@@ -3293,6 +3293,7 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::path::from` | check-prelude std-path-buf owned path buffer constructor from host string; docs/stdlib/modules/path.md |
 | `fn std::path::from_bytes` | check-prelude std-path-buf owned path buffer constructor from bytes; docs/stdlib/modules/path.md |
 | `fn std::path::from_os` | check-prelude std-path-bytes path-byte view from OS-string bytes; docs/stdlib/modules/path.md |
+| `fn std::path::from_string` | check-prelude std-path-buf owned path buffer constructor from String; docs/stdlib/modules/path.md |
 | `fn std::path::has_extension` | check-prelude std-path-predicates final-extension predicate; docs/stdlib/modules/path.md |
 | `fn std::path::has_file_name` | check-prelude std-path-predicates final-component predicate; docs/stdlib/modules/path.md |
 | `fn std::path::has_file_stem` | check-prelude std-path-predicates natural alias for file-stem predicate; docs/stdlib/modules/path.md |
@@ -3760,6 +3761,7 @@ Tier: `alloc`. Stability reading: usable.
 | `fn std::region::alloc` | std region capability tests; docs/stdlib/modules/region.md |
 | `fn std::region::alloc_array[T]` | std region capability tests; docs/stdlib/modules/region.md |
 | `fn std::region::allocator` | std region capability tests; docs/stdlib/modules/region.md |
+| `fn std::region::as_zone` | std region capability compatibility bridge; docs/stdlib/modules/region.md |
 | `fn std::region::can_alloc` | std region capability tests; docs/stdlib/modules/region.md |
 | `fn std::region::can_alloc_array[T]` | std region capability tests; docs/stdlib/modules/region.md |
 | `fn std::region::capacity` | std region capability tests; docs/stdlib/modules/region.md |
@@ -3772,17 +3774,33 @@ Tier: `alloc`. Stability reading: usable.
 | `fn std::region::reset` | std region capability tests; docs/stdlib/modules/region.md |
 | `fn std::region::used` | std region capability tests; docs/stdlib/modules/region.md |
 
+### method
+
+| API | Coverage note |
+| --- | --- |
+| `method std::region::Region::alloc` | std region capability tests; docs/stdlib/modules/region.md |
+| `method std::region::Region::alloc_array[T]` | std region capability tests; docs/stdlib/modules/region.md |
+| `method std::region::Region::allocator` | std region capability tests; docs/stdlib/modules/region.md |
+| `method std::region::Region::can_alloc` | std region capability tests; docs/stdlib/modules/region.md |
+| `method std::region::Region::can_alloc_array[T]` | std region capability tests; docs/stdlib/modules/region.md |
+| `method std::region::Region::capacity` | std region capability tests; docs/stdlib/modules/region.md |
+| `method std::region::Region::new[T]` | std region capability tests; docs/stdlib/modules/region.md |
+| `method std::region::Region::promote[T]` | std region capability tests; docs/stdlib/modules/region.md |
+| `method std::region::Region::remaining` | std region capability tests; docs/stdlib/modules/region.md |
+| `method std::region::Region::reset` | std region capability tests; docs/stdlib/modules/region.md |
+| `method std::region::Region::used` | std region capability tests; docs/stdlib/modules/region.md |
+
 ### module
 
 | API | Coverage note |
 | --- | --- |
 | `module std::region` | std region capability tests; docs/stdlib/modules/region.md |
 
-### type
+### struct
 
 | API | Coverage note |
 | --- | --- |
-| `type std::region::Region` | std region capability tests; docs/stdlib/modules/region.md |
+| `struct std::region::Region` | std region capability tests; docs/stdlib/modules/region.md |
 
 ## `std::result`
 

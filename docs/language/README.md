@@ -32,7 +32,8 @@ Ari is still a compiler prototype, so each page separates three states:
 20. [Standard Library](standard-library.md)
 21. [C FFI And Libraries](ffi.md)
 22. [Memory And Ownership](memory.md)
-23. [Front-End Only Syntax](front-end-only.md)
+23. [Memory Model](memory-model.md)
+24. [Front-End Only Syntax](front-end-only.md)
 
 ## First-Hour Path
 

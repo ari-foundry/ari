@@ -34,7 +34,6 @@ fn main() -> i64 {
   var zone = zone::temp(512);
   expect_linux_x86_64();
   assert(!target::triple(ref mut zone).is_empty());
-  assert(std::string::c_len(target::triple_text()) > 0);
   assert(target::arch_name(ref mut zone).equals_text("x86_64"));
   assert(target::os_name(ref mut zone).equals_text("linux"));
   assert(target::env_name(ref mut zone).equals_text("gnu"));

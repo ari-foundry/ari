@@ -50,6 +50,7 @@ Use these when writing Ari code:
 - [Standard Library](language/standard-library.md)
 - [C FFI And Libraries](language/ffi.md)
 - [Memory And Ownership](language/memory.md)
+- [Memory Model](language/memory-model.md)
 - [Front-End Only Syntax](language/front-end-only.md)
 
 ## Developer Docs

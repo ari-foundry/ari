@@ -1004,8 +1004,8 @@ Meanings:
   dereference load/store syntax for `ptr T`
 - `(*value).field`, `(*value).0`, `(*value)[index]`: scalar field or fixed-array
   element access through a raw pointer to an Ari aggregate layout
-- `Region`: preferred public explicit allocation lifetime alias. Use
-  `region::create`, `region::allocator`, `region::reset`, and
+- `Region`: preferred public explicit allocation lifetime owner. Use
+  `region::create`, `region.allocator()`, `region.reset()`, and
   `region::destroy` in new examples when the code is choosing a bulk
   allocation lifetime.
 - `Allocator`: public allocation capability used by region-backed handles that

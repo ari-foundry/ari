@@ -36,10 +36,10 @@ The few stdlib polish items that are blocked by compiler features are mapped in
 6. Generic thread results and compiler TLS: support generic `JoinHandle[T]`,
    result storage ownership, send/share diagnostics, and compiler-level
    `thread_local` declarations.
-7. Variadic formatting beyond compiler-known macros: decide between variadic
-   generics, continued compiler-known format lowering, or both. Current-zone
-   `format!` covers the local temporary allocation case; explicit
-   `format_in!` remains the long-lived allocation form.
+7. Variadic/default-zone formatting: decide between variadic generics,
+   continued compiler-known format lowering, or both. Current-zone `format!`
+   covers the local temporary allocation case; explicit `format_in!` remains
+   the long-lived allocation form.
 
 ## Language Ideas Parked For Later
 

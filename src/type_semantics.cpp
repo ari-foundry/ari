@@ -217,6 +217,7 @@ bool is_owned_executable_primitive(IrPrimitiveKind primitive) {
            primitive == IrPrimitiveKind::Bool ||
            primitive == IrPrimitiveKind::String ||
            primitive == IrPrimitiveKind::Zone ||
+           primitive == IrPrimitiveKind::Struct ||
            primitive == IrPrimitiveKind::TraitObject;
 }
 

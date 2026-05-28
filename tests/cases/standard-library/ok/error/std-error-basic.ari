@@ -54,7 +54,7 @@ fn main() -> i64 {
     }
   }
 
-  let name = missing.name_text() as ptr u8;
+  let name = missing.name_text().as_ptr();
   if ptr_load(name) == 110u8 {
     score = score + 1;
   }
