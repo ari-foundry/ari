@@ -1,22 +1,17 @@
 // Covers std::env path helpers that read or mutate process-local path state.
 // The test changes to the current directory itself so later tests inherit no
 // observable working-directory change.
-fn is_empty_text(value: string) -> bool {
-  return std::mem::ptr_load(value as ptr u8) == 0;
-}
 
 fn main() -> i64 {
   var zone = zone::create(1024);
-  let cwd_text = env::current_dir_text_or_default();
-  let exe_text = env::executable_path_text_or_default();
   let cwd = env::current_dir_or_default(ref mut zone);
   let exe = env::executable_path_or_default(ref mut zone);
   let maybe_cwd = env::current_dir_optional(ref mut zone);
   let maybe_exe = env::executable_path_optional(ref mut zone);
+  var home_name = std::string::from_string(ref mut zone, "HOME");
+  var home_value = std::string::from_string(ref mut zone, "/tmp/ari-home-test");
   var score = 0;
 
-  assert(!is_empty_text(env::current_dir_raw()));
-  assert(!is_empty_text(env::executable_path_raw()));
   if !cwd.is_empty() {
     score = score + 3;
   }
@@ -34,7 +29,7 @@ fn main() -> i64 {
   }
   assert(env::current_dir_os().is_ok());
   assert(env::current_dir_path().is_ok());
-  assert(env::set_var("HOME", "/tmp/ari-home-test").is_ok());
+  assert(env::set_var(ref home_name, ref home_value).is_ok());
   match env::home_dir() {
     std::Some(home) => {
       assert(home.is_absolute());
@@ -44,11 +39,10 @@ fn main() -> i64 {
       panic();
     }
   }
-  if env::set_current_dir(cwd_text).is_ok() {
+  if env::set_current_dir(ref cwd).is_ok() {
     score = score + 7;
   }
-  assert(env::set_current_dir_raw(cwd_text));
-  assert(env::set_current_dir_unchecked(cwd_text));
+  assert(env::set_current_dir_unchecked(ref cwd));
   if !exe.is_empty() {
     score = score + 11;
   }
@@ -70,7 +64,6 @@ fn main() -> i64 {
   assert(env::try_executable_path_path().is_some());
   assert(!env::executable_path_path_or_default().is_empty());
 
-  assert(!is_empty_text(exe_text));
   zone::destroy(zone);
   return score;
 }

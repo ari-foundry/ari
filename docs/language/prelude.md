@@ -544,28 +544,18 @@ env::arg_count() -> i64
 env::arg(ref mut zone, index: i64) -> Result[std::string::String, std::error::Error]
 env::has_arg(index: i64) -> bool
 env::try_arg(ref mut zone, index: i64) -> Option[std::string::String]
-env::arg_text(index: i64) -> Result[string, std::error::Error]
-env::try_arg_text(index: i64) -> Option[string]
 env::program_name(ref mut zone) -> Result[std::string::String, std::error::Error]
 env::program_name_optional(ref mut zone) -> Option[std::string::String]
 env::current_dir(ref mut zone) -> Result[std::string::String, std::error::Error]
 env::current_dir_or_default(ref mut zone) -> std::string::String
 env::current_dir_optional(ref mut zone) -> Option[std::string::String]
 env::try_current_dir(ref mut zone) -> Option[std::string::String]
-env::current_dir_text() -> Result[string, std::error::Error]
-env::current_dir_text_or_default() -> string
-env::current_dir_text_optional() -> Option[string]
-env::try_current_dir_text() -> Option[string]
-env::set_current_dir(path: string) -> Result[(), std::error::Error]
-env::set_current_dir_unchecked(path: string) -> bool
+env::set_current_dir(path: ref std::string::String) -> Result[(), std::error::Error]
+env::set_current_dir_unchecked(path: ref std::string::String) -> bool
 env::executable_path(ref mut zone) -> Result[std::string::String, std::error::Error]
 env::executable_path_or_default(ref mut zone) -> std::string::String
 env::executable_path_optional(ref mut zone) -> Option[std::string::String]
 env::try_executable_path(ref mut zone) -> Option[std::string::String]
-env::executable_path_text() -> Result[string, std::error::Error]
-env::executable_path_text_or_default() -> string
-env::executable_path_text_optional() -> Option[string]
-env::try_executable_path_text() -> Option[string]
 arg_count() -> i64
 arg(index: i64) -> string
 has_arg(index: i64) -> bool
@@ -752,28 +742,18 @@ env::arg_count() -> i64
 env::arg(ref mut zone, index: i64) -> Result[std::string::String, std::error::Error]
 env::has_arg(index: i64) -> bool
 env::try_arg(ref mut zone, index: i64) -> Option[std::string::String]
-env::arg_text(index: i64) -> Result[string, std::error::Error]
-env::try_arg_text(index: i64) -> Option[string]
 env::program_name(ref mut zone) -> Result[std::string::String, std::error::Error]
 env::program_name_optional(ref mut zone) -> Option[std::string::String]
 env::current_dir(ref mut zone) -> Result[std::string::String, std::error::Error]
 env::current_dir_or_default(ref mut zone) -> std::string::String
 env::current_dir_optional(ref mut zone) -> Option[std::string::String]
 env::try_current_dir(ref mut zone) -> Option[std::string::String]
-env::current_dir_text() -> Result[string, std::error::Error]
-env::current_dir_text_or_default() -> string
-env::current_dir_text_optional() -> Option[string]
-env::try_current_dir_text() -> Option[string]
-env::set_current_dir(path: string) -> Result[(), std::error::Error]
-env::set_current_dir_unchecked(path: string) -> bool
+env::set_current_dir(path: ref std::string::String) -> Result[(), std::error::Error]
+env::set_current_dir_unchecked(path: ref std::string::String) -> bool
 env::executable_path(ref mut zone) -> Result[std::string::String, std::error::Error]
 env::executable_path_or_default(ref mut zone) -> std::string::String
 env::executable_path_optional(ref mut zone) -> Option[std::string::String]
 env::try_executable_path(ref mut zone) -> Option[std::string::String]
-env::executable_path_text() -> Result[string, std::error::Error]
-env::executable_path_text_or_default() -> string
-env::executable_path_text_optional() -> Option[string]
-env::try_executable_path_text() -> Option[string]
 arg_count() -> i64
 arg(ref mut Zone, index: i64) -> Result[std::string::String, std::error::Error]
 arg_text(index: i64) -> string
@@ -783,13 +763,13 @@ has_arg(index: i64) -> bool
 `has_arg(index)` returns `true` only when `0 <= index < context::argc()`.
 Root `arg(ref mut zone, index)` is the same user-facing helper as
 `env::arg(ref mut zone, index)`: it returns owned `String` text and preserves
-missing arguments as `Err(Error)`. Use `arg_text(index)` or `env::arg_text`
-only at raw runtime boundaries.
+missing arguments as `Err(Error)`. Use root `arg_text(index)` only at raw
+runtime boundaries.
 `context::user_arg_count()` excludes `argv[0]`, while
 `context::thread_id()` returns the Ari runtime thread id. The main thread is
 `0`; spawned `std::thread` workers receive positive ids.
 `context::cwd(ref mut zone)` and `context::executable_path(ref mut zone)` are
-owned startup snapshots; they do not change after `env::set_current_dir(path)`.
+owned startup snapshots; they do not change after `env::set_current_dir(ref path)`.
 `context::*_text` keeps the borrowed hook. `env::program_name(ref mut zone)` is
 the owned `argv[0]` value. `env::current_dir(ref mut zone)` and
 `env::executable_path(ref mut zone)` preserve current process path lookup

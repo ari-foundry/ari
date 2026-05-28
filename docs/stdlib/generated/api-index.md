@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `3664`
+- API entries: `3633`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,13 +32,13 @@ platform notes.
 | `alloc` | 923 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 943 | stable candidate |
-| `hosted` | 1595 | platform-backed |
+| `hosted` | 1564 | platform-backed |
 | `platform` | 167 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1279 |
+| `fn` | 1248 |
 | `method` | 1911 |
 | `module` | 39 |
 | `struct` | 197 |
@@ -63,7 +63,7 @@ platform notes.
 | `std::context` | `hosted` | 27 |
 | `std::convert` | `core` | 14 |
 | `std::encoding` | `core` | 102 |
-| `std::env` | `hosted` | 87 |
+| `std::env` | `hosted` | 64 |
 | `std::error` | `core` | 41 |
 | `std::fmt` | `core` | 86 |
 | `std::fs` | `hosted` | 325 |
@@ -79,7 +79,7 @@ platform notes.
 | `std::os` | `platform` | 62 |
 | `std::parse` | `core` | 103 |
 | `std::path` | `core` | 123 |
-| `std::process` | `hosted` | 189 |
+| `std::process` | `hosted` | 181 |
 | `std::random` | `alloc/hosted` | 36 |
 | `std::rc` | `alloc` | 32 |
 | `std::result` | `core` | 12 |
@@ -1498,9 +1498,6 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::env::arg_os` | check-prelude std-env-os-path-views Result-returning OS-string argument view; docs/stdlib/modules/env.md |
 | `fn std::env::arg_os_optional` | check-prelude std-env-os-path-views Option-returning OS-string argument compatibility helper; docs/stdlib/modules/env.md |
 | `fn std::env::arg_os_unchecked` | check-prelude std-env-os-path-views unchecked OS-string argument compatibility helper; docs/stdlib/modules/env.md |
-| `fn std::env::arg_text` | check-prelude std-env-args borrowed text argument compatibility helper; docs/stdlib/modules/env.md |
-| `fn std::env::arg_text_optional` | check-prelude std-env-args borrowed text optional argument compatibility helper; docs/stdlib/modules/env.md |
-| `fn std::env::arg_unchecked` | check-prelude std-env-args unchecked argument compatibility helper; docs/stdlib/modules/env.md |
 | `fn std::env::args` | check-prelude std-env-args full owned argument vector helper; docs/stdlib/modules/env.md |
 | `fn std::env::args_os` | check-prelude std-env-args full OS-string argument vector helper; docs/stdlib/modules/env.md |
 | `fn std::env::current_dir` | check-prelude std-env-paths Result-returning current directory helper; docs/stdlib/modules/env.md |
@@ -1512,10 +1509,6 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::env::current_dir_path` | check-prelude std-env-os-path-views Result-returning path-byte current directory view; docs/stdlib/modules/env.md |
 | `fn std::env::current_dir_path_optional` | check-prelude std-env-os-path-views Option-returning path-byte current directory compatibility helper; docs/stdlib/modules/env.md |
 | `fn std::env::current_dir_path_or_default` | check-prelude std-env-os-path-views path-byte current directory compatibility helper; docs/stdlib/modules/env.md |
-| `fn std::env::current_dir_raw` | check-prelude std-env-paths raw runtime current directory hook; docs/stdlib/modules/env.md |
-| `fn std::env::current_dir_text` | check-prelude std-env-paths borrowed text current directory compatibility helper; docs/stdlib/modules/env.md |
-| `fn std::env::current_dir_text_optional` | check-prelude std-env-paths borrowed text optional current directory compatibility helper; docs/stdlib/modules/env.md |
-| `fn std::env::current_dir_text_or_default` | check-prelude std-env-paths borrowed text current directory fallback helper; docs/stdlib/modules/env.md |
 | `fn std::env::executable_path` | check-prelude std-env-paths Result-returning executable path helper; docs/stdlib/modules/env.md |
 | `fn std::env::executable_path_optional` | check-prelude std-env-paths Option-returning executable path compatibility helper; docs/stdlib/modules/env.md |
 | `fn std::env::executable_path_or_default` | check-prelude std-env-paths empty-string executable path compatibility helper; docs/stdlib/modules/env.md |
@@ -1525,16 +1518,10 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::env::executable_path_path` | check-prelude std-env-paths Result-returning path-byte executable path view; docs/stdlib/modules/env.md |
 | `fn std::env::executable_path_path_optional` | check-prelude std-env-paths Option-returning path-byte executable path compatibility helper; docs/stdlib/modules/env.md |
 | `fn std::env::executable_path_path_or_default` | check-prelude std-env-paths path-byte executable path compatibility helper; docs/stdlib/modules/env.md |
-| `fn std::env::executable_path_raw` | check-prelude std-env-paths raw runtime executable path hook; docs/stdlib/modules/env.md |
-| `fn std::env::executable_path_text` | check-prelude std-env-paths borrowed text executable path compatibility helper; docs/stdlib/modules/env.md |
-| `fn std::env::executable_path_text_optional` | check-prelude std-env-paths borrowed text optional executable path compatibility helper; docs/stdlib/modules/env.md |
-| `fn std::env::executable_path_text_or_default` | check-prelude std-env-paths borrowed text executable path fallback helper; docs/stdlib/modules/env.md |
 | `fn std::env::get` | check-prelude std-env-vars Result-returning environment variable lookup; docs/stdlib/modules/env.md |
 | `fn std::env::get_or_default` | check-prelude std-env-vars empty-string compatibility environment variable lookup; docs/stdlib/modules/env.md |
 | `fn std::env::get_os` | check-prelude std-env-vars/std-env-os-path-views Result-returning OS-string environment variable lookup; docs/stdlib/modules/env.md |
 | `fn std::env::get_os_or_default` | check-prelude std-env-os-path-views OS-string compatibility environment variable lookup; docs/stdlib/modules/env.md |
-| `fn std::env::get_text` | check-prelude std-env-vars borrowed text environment variable lookup; docs/stdlib/modules/env.md |
-| `fn std::env::get_text_or_default` | check-prelude std-env-vars borrowed text environment variable fallback helper; docs/stdlib/modules/env.md |
 | `fn std::env::has` | check-prelude std-env-vars environment variable presence; docs/stdlib/modules/env.md |
 | `fn std::env::has_arg` | check-prelude std-env-args argument range helper; docs/stdlib/modules/env.md |
 | `fn std::env::home_dir` | check-prelude std-env-paths HOME-backed optional path-byte helper; docs/stdlib/modules/env.md |
@@ -1542,40 +1529,30 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::env::program_name_optional` | check-prelude std-env-args Option-returning program name compatibility helper; docs/stdlib/modules/env.md |
 | `fn std::env::program_name_os` | check-prelude std-env-os-path-views Result-returning OS-string program name helper; docs/stdlib/modules/env.md |
 | `fn std::env::program_name_os_optional` | check-prelude std-env-os-path-views Option-returning OS-string program name compatibility helper; docs/stdlib/modules/env.md |
-| `fn std::env::program_name_text` | check-prelude std-env-args borrowed text program name compatibility helper; docs/stdlib/modules/env.md |
-| `fn std::env::program_name_text_optional` | check-prelude std-env-args borrowed text optional program name compatibility helper; docs/stdlib/modules/env.md |
 | `fn std::env::remove` | check-prelude std-env-vars Result-returning environment variable removal; docs/stdlib/modules/env.md |
 | `fn std::env::remove_unchecked` | check-prelude std-env-vars bool compatibility environment variable removal; docs/stdlib/modules/env.md |
 | `fn std::env::remove_var` | check-prelude std-env-vars Result-returning environment variable removal alias; docs/stdlib/modules/env.md |
 | `fn std::env::set` | check-prelude std-env-vars Result-returning environment variable mutation; docs/stdlib/modules/env.md |
 | `fn std::env::set_current_dir` | check-prelude std-env-paths Result-returning current directory mutation; docs/stdlib/modules/env.md |
-| `fn std::env::set_current_dir_raw` | check-prelude std-env-paths raw runtime current directory mutation hook; docs/stdlib/modules/env.md |
 | `fn std::env::set_current_dir_unchecked` | check-prelude std-env-paths bool current directory mutation compatibility helper; docs/stdlib/modules/env.md |
 | `fn std::env::set_unchecked` | check-prelude std-env-vars bool compatibility environment variable mutation; docs/stdlib/modules/env.md |
 | `fn std::env::set_var` | check-prelude std-env-vars Result-returning environment variable mutation alias; docs/stdlib/modules/env.md |
 | `fn std::env::try_arg` | check-prelude std-env-args optional argument helper; docs/stdlib/modules/env.md |
 | `fn std::env::try_arg_os` | check-prelude std-env-os-path-views optional OS-string argument helper; docs/stdlib/modules/env.md |
-| `fn std::env::try_arg_text` | check-prelude std-env-args optional borrowed text argument helper; docs/stdlib/modules/env.md |
 | `fn std::env::try_current_dir` | check-prelude std-env-paths optional current directory helper; docs/stdlib/modules/env.md |
 | `fn std::env::try_current_dir_os` | check-prelude std-env-os-path-views optional OS-string current directory helper; docs/stdlib/modules/env.md |
 | `fn std::env::try_current_dir_path` | check-prelude std-env-os-path-views optional path-byte current directory helper; docs/stdlib/modules/env.md |
-| `fn std::env::try_current_dir_text` | check-prelude std-env-paths optional borrowed text current directory helper; docs/stdlib/modules/env.md |
 | `fn std::env::try_executable_path` | check-prelude std-env-paths optional executable path helper; docs/stdlib/modules/env.md |
 | `fn std::env::try_executable_path_os` | check-prelude std-env-os-path-views optional OS-string executable path helper; docs/stdlib/modules/env.md |
 | `fn std::env::try_executable_path_path` | check-prelude std-env-paths optional path-byte executable path helper; docs/stdlib/modules/env.md |
-| `fn std::env::try_executable_path_text` | check-prelude std-env-paths optional borrowed text executable path helper; docs/stdlib/modules/env.md |
 | `fn std::env::try_get` | check-prelude std-env-vars optional environment variable helper; docs/stdlib/modules/env.md |
 | `fn std::env::try_get_os` | check-prelude std-env-os-path-views optional OS-string environment variable helper; docs/stdlib/modules/env.md |
-| `fn std::env::try_get_text` | check-prelude std-env-vars optional borrowed text environment variable helper; docs/stdlib/modules/env.md |
 | `fn std::env::var` | check-prelude std-env-vars Option-returning environment variable lookup; docs/stdlib/modules/env.md |
 | `fn std::env::var_optional` | check-prelude std-env-vars Option-returning environment variable compatibility helper; docs/stdlib/modules/env.md |
 | `fn std::env::var_or_default` | check-prelude std-env-vars empty-string environment variable compatibility helper; docs/stdlib/modules/env.md |
 | `fn std::env::var_os` | check-prelude std-env-vars Option-returning OS-string environment variable lookup; docs/stdlib/modules/env.md |
 | `fn std::env::var_os_optional` | check-prelude std-env-vars Option-returning OS-string environment variable compatibility helper; docs/stdlib/modules/env.md |
 | `fn std::env::var_os_or_default` | check-prelude std-env-vars OS-string environment variable compatibility helper; docs/stdlib/modules/env.md |
-| `fn std::env::var_text` | check-prelude std-env-vars borrowed text optional environment variable lookup; docs/stdlib/modules/env.md |
-| `fn std::env::var_text_optional` | check-prelude std-env-vars borrowed text optional environment variable compatibility helper; docs/stdlib/modules/env.md |
-| `fn std::env::var_text_or_default` | check-prelude std-env-vars borrowed text environment variable fallback helper; docs/stdlib/modules/env.md |
 
 ### module
 
@@ -3421,18 +3398,12 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::process::current_dir` | check-prelude std-process-basic Result-returning process-facing owned current directory wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::current_dir_optional` | check-prelude std-process-basic Option-returning process-facing owned current directory wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::current_dir_or_default` | check-prelude std-process-basic owned current directory fallback wrapper; docs/stdlib/modules/process.md |
-| `fn std::process::current_dir_text` | check-prelude std-process-basic borrowed process-facing current directory compatibility wrapper; docs/stdlib/modules/process.md |
-| `fn std::process::current_dir_text_optional` | check-prelude std-process-basic borrowed optional process-facing current directory compatibility wrapper; docs/stdlib/modules/process.md |
-| `fn std::process::current_dir_text_or_default` | check-prelude std-process-basic borrowed fallback process-facing current directory compatibility wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::env_var` | check-prelude std-process-command child environment assignment wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::env_var_bytes` | check-prelude std-process-high-level Result-returning child environment assignment wrapper for owned byte text; docs/stdlib/modules/process.md |
 | `fn std::process::exec` | check-prelude std-process-command module-level Command exec wrapper returning Error; docs/stdlib/modules/process.md |
 | `fn std::process::executable_path` | check-prelude std-process-basic Result-returning process-facing owned executable path wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::executable_path_optional` | check-prelude std-process-basic Option-returning process-facing owned executable path wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::executable_path_or_default` | check-prelude std-process-basic owned executable path fallback wrapper; docs/stdlib/modules/process.md |
-| `fn std::process::executable_path_text` | check-prelude std-process-basic borrowed process-facing executable path compatibility wrapper; docs/stdlib/modules/process.md |
-| `fn std::process::executable_path_text_optional` | check-prelude std-process-basic borrowed optional process-facing executable path compatibility wrapper; docs/stdlib/modules/process.md |
-| `fn std::process::executable_path_text_or_default` | check-prelude std-process-basic borrowed fallback process-facing executable path compatibility wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::exit` | check-prelude std-process-exit explicit process exit hook; docs/stdlib/modules/process.md |
 | `fn std::process::exit_code` | check-prelude std-process-high-level typed exit code constructor; docs/stdlib/modules/process.md |
 | `fn std::process::exit_status` | check-prelude std-process-command module-level Command typed status wrapper returning Error; docs/stdlib/modules/process.md |
@@ -3474,9 +3445,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::process::temp_file_in` | check-prelude std-process-high-level prefixed temp file constructor; docs/stdlib/modules/process.md |
 | `fn std::process::terminate` | check-prelude std-process-command SIGTERM convenience helper; docs/stdlib/modules/process.md |
 | `fn std::process::try_current_dir` | check-prelude std-process-high-level optional current directory wrapper; docs/stdlib/modules/process.md |
-| `fn std::process::try_current_dir_text` | check-prelude std-process-basic borrowed optional process-facing current directory compatibility alias; docs/stdlib/modules/process.md |
 | `fn std::process::try_executable_path` | check-prelude std-process-high-level optional executable path wrapper; docs/stdlib/modules/process.md |
-| `fn std::process::try_executable_path_text` | check-prelude std-process-basic borrowed optional process-facing executable path compatibility alias; docs/stdlib/modules/process.md |
 | `fn std::process::uid` | check-prelude std-process-identity current process user id hook; docs/stdlib/modules/process.md |
 | `fn std::process::wait` | check-prelude std-process-result POSIX wait direct Error result helper; docs/stdlib/modules/process.md |
 | `fn std::process::wait_raw` | check-prelude std-process-fork-wait POSIX wait raw compatibility hook; docs/stdlib/modules/process.md |

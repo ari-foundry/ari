@@ -72,18 +72,10 @@ process::current_dir(ref mut zone) -> Result[String, process::Error]
 process::current_dir_or_default(ref mut zone) -> String
 process::current_dir_optional(ref mut zone) -> Option[String]
 process::try_current_dir(ref mut zone) -> Option[String]
-process::current_dir_text() -> Result[string, process::Error]
-process::current_dir_text_or_default() -> string
-process::current_dir_text_optional() -> Option[string]
-process::try_current_dir_text() -> Option[string]
 process::executable_path(ref mut zone) -> Result[String, process::Error]
 process::executable_path_or_default(ref mut zone) -> String
 process::executable_path_optional(ref mut zone) -> Option[String]
 process::try_executable_path(ref mut zone) -> Option[String]
-process::executable_path_text() -> Result[string, process::Error]
-process::executable_path_text_or_default() -> string
-process::executable_path_text_optional() -> Option[string]
-process::try_executable_path_text() -> Option[string]
 process::temp_file(zone)
 process::temp_file_in(zone, prefix)
 process::temp_dir(zone)

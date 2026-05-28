@@ -264,22 +264,6 @@ pub fn output(command: ref std::process::Command, zone: ref mut Zone) -> std::Re
   return command.output(zone);
 }
 
-pub fn executable_path_text() -> std::Result[string, std::error::Error] {
-  return std::env::executable_path_text();
-}
-
-pub fn executable_path_text_or_default() -> string {
-  return std::env::executable_path_text_or_default();
-}
-
-pub fn executable_path_text_optional() -> std::Option[string] {
-  return std::env::executable_path_text_optional();
-}
-
-pub fn try_executable_path_text() -> std::Option[string] {
-  return std::process::executable_path_text_optional();
-}
-
 pub fn executable_path(zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
   return std::env::executable_path(zone);
 }
@@ -294,22 +278,6 @@ pub fn executable_path_optional(zone: ref mut Zone) -> std::Option[std::string::
 
 pub fn try_executable_path(zone: ref mut Zone) -> std::Option[std::string::String] {
   return std::process::executable_path_optional(zone);
-}
-
-pub fn current_dir_text() -> std::Result[string, std::error::Error] {
-  return std::env::current_dir_text();
-}
-
-pub fn current_dir_text_or_default() -> string {
-  return std::env::current_dir_text_or_default();
-}
-
-pub fn current_dir_text_optional() -> std::Option[string] {
-  return std::env::current_dir_text_optional();
-}
-
-pub fn try_current_dir_text() -> std::Option[string] {
-  return std::process::current_dir_text_optional();
 }
 
 pub fn current_dir(zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {

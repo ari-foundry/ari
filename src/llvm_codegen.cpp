@@ -553,6 +553,7 @@ private:
             symbol == "ari_builtin_target_os_name" ||
             symbol == "ari_builtin_target_env_name" ||
             symbol == "ari_builtin_env_get" ||
+            symbol == "ari_builtin_env_get_bytes" ||
             symbol == "ari_builtin_env_current_dir" ||
             symbol == "ari_builtin_env_executable_path" ||
             symbol == "ari_builtin_fs_canonicalize" ||
@@ -562,9 +563,13 @@ private:
             return IrType{TypeQualifier::Value, IrPrimitiveKind::String, "string", {}, {}, {}, {}, loc};
         }
         if (symbol == "ari_builtin_env_has" ||
+            symbol == "ari_builtin_env_has_bytes" ||
             symbol == "ari_builtin_env_set" ||
+            symbol == "ari_builtin_env_set_bytes" ||
             symbol == "ari_builtin_env_remove" ||
+            symbol == "ari_builtin_env_remove_bytes" ||
             symbol == "ari_builtin_env_set_current_dir" ||
+            symbol == "ari_builtin_env_set_current_dir_bytes" ||
             symbol == "ari_builtin_fs_exists" ||
             symbol == "ari_builtin_fs_can_read" ||
             symbol == "ari_builtin_fs_can_write" ||
@@ -1009,6 +1014,87 @@ private:
         line("  ret ptr %buffer");
         line("fail:");
         line("  ret ptr null");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "ptr @ari_builtin_env_get_bytes(ptr %data, i64 %len) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %name = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %name, null");
+        line("  br i1 %missing, label %empty, label %lookup");
+        line("lookup:");
+        line("  %value = call ptr @ari_builtin_env_get(ptr %name)");
+        line("  ret ptr %value");
+        line("empty:");
+        line("  ret ptr " + empty);
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_env_has_bytes(ptr %data, i64 %len) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %name = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %name, null");
+        line("  br i1 %missing, label %fail, label %lookup");
+        line("lookup:");
+        line("  %ok = call i1 @ari_builtin_env_has(ptr %name)");
+        line("  ret i1 %ok");
+        line("fail:");
+        line("  ret i1 false");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_env_set_bytes(ptr %name_data, i64 %name_len, ptr %value_data, i64 %value_len) {");
+        line("entry:");
+        line("  %name.storage = alloca [4096 x i8], align 16");
+        line("  %name.buffer = getelementptr inbounds [4096 x i8], ptr %name.storage, i64 0, i64 0");
+        line("  %value.storage = alloca [4096 x i8], align 16");
+        line("  %value.buffer = getelementptr inbounds [4096 x i8], ptr %value.storage, i64 0, i64 0");
+        line("  %name = call ptr @ari_runtime_fs_path_from_bytes(ptr %name_data, i64 %name_len, ptr %name.buffer)");
+        line("  %name.missing = icmp eq ptr %name, null");
+        line("  br i1 %name.missing, label %fail, label %prepare_value");
+        line("prepare_value:");
+        line("  %env.value = call ptr @ari_runtime_fs_path_from_bytes(ptr %value_data, i64 %value_len, ptr %value.buffer)");
+        line("  %value.missing = icmp eq ptr %env.value, null");
+        line("  br i1 %value.missing, label %fail, label %set");
+        line("set:");
+        line("  %ok = call i1 @ari_builtin_env_set(ptr %name, ptr %env.value)");
+        line("  ret i1 %ok");
+        line("fail:");
+        line("  ret i1 false");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_env_remove_bytes(ptr %data, i64 %len) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %name = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %name, null");
+        line("  br i1 %missing, label %fail, label %remove");
+        line("remove:");
+        line("  %ok = call i1 @ari_builtin_env_remove(ptr %name)");
+        line("  ret i1 %ok");
+        line("fail:");
+        line("  ret i1 false");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_env_set_current_dir_bytes(ptr %data, i64 %len) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %path = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %path, null");
+        line("  br i1 %missing, label %fail, label %chdir");
+        line("chdir:");
+        line("  %ok = call i1 @ari_builtin_env_set_current_dir(ptr %path)");
+        line("  ret i1 %ok");
+        line("fail:");
+        line("  ret i1 false");
         line("}");
         line();
 

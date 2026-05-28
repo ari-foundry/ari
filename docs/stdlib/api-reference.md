@@ -416,74 +416,54 @@ Application code should usually use the user-facing `std::env` wrappers:
 ```ari
 env::arg_count()
 env::arg(ref mut zone, index)
-env::arg_text(index)
 env::args(ref mut zone)
 env::args_os(ref mut zone)
 env::arg_optional(ref mut zone, index)
-env::arg_text_optional(index)
-env::arg_unchecked(index)
 env::arg_os(index)
 env::arg_os_optional(index)
 env::arg_os_unchecked(index)
 env::has_arg(index)
 env::try_arg(ref mut zone, index)
-env::try_arg_text(index)
 env::try_arg_os(index)
 env::program_name(ref mut zone)
 env::program_name_optional(ref mut zone)
-env::program_name_text()
-env::program_name_text_optional()
 env::program_name_os()
 env::program_name_os_optional()
-env::var(ref mut zone, name)
-env::var_optional(ref mut zone, name)
-env::var_or_default(ref mut zone, name)
-env::var_text(name)
-env::var_text_optional(name)
-env::var_text_or_default(name)
-env::var_os(name)
-env::var_os_optional(name)
-env::var_os_or_default(name)
-env::get(ref mut zone, name)
-env::get_text(name)
-env::get_os(name)
-env::get_or_default(ref mut zone, name)
-env::get_text_or_default(name)
-env::get_os_or_default(name)
-env::has(name)
-env::try_get(ref mut zone, name)
-env::try_get_text(name)
-env::try_get_os(name)
-env::set_var(name, value)
-env::set(name, value)
-env::set_unchecked(name, value)
-env::remove_var(name)
-env::remove(name)
-env::remove_unchecked(name)
+env::var(ref mut zone, ref name)
+env::var_optional(ref mut zone, ref name)
+env::var_or_default(ref mut zone, ref name)
+env::var_os(ref name)
+env::var_os_optional(ref name)
+env::var_os_or_default(ref name)
+env::get(ref mut zone, ref name)
+env::get_os(ref name)
+env::get_or_default(ref mut zone, ref name)
+env::get_os_or_default(ref name)
+env::has(ref name)
+env::try_get(ref mut zone, ref name)
+env::try_get_os(ref name)
+env::set_var(ref name, ref value)
+env::set(ref name, ref value)
+env::set_unchecked(ref name, ref value)
+env::remove_var(ref name)
+env::remove(ref name)
+env::remove_unchecked(ref name)
 env::current_dir(ref mut zone)
 env::current_dir_optional(ref mut zone)
 env::current_dir_or_default(ref mut zone)
 env::try_current_dir(ref mut zone)
-env::current_dir_text()
-env::current_dir_text_optional()
-env::current_dir_text_or_default()
-env::try_current_dir_text()
 env::current_dir_os()
 env::current_dir_os_optional()
 env::try_current_dir_os()
 env::current_dir_path()
 env::current_dir_path_optional()
 env::try_current_dir_path()
-env::set_current_dir(path)
-env::set_current_dir_unchecked(path)
+env::set_current_dir(ref path)
+env::set_current_dir_unchecked(ref path)
 env::executable_path(ref mut zone)
 env::executable_path_optional(ref mut zone)
 env::executable_path_or_default(ref mut zone)
 env::try_executable_path(ref mut zone)
-env::executable_path_text()
-env::executable_path_text_optional()
-env::executable_path_text_or_default()
-env::try_executable_path_text()
 env::executable_path_os()
 env::executable_path_os_optional()
 env::try_executable_path_os()
@@ -497,9 +477,9 @@ env::home_dir()
 `env::arg(ref mut zone, index)` returns `Result[String, Error]`, using
 `NotFound` for an out-of-range argument index. `env::arg_optional(ref mut zone,
 index)` and `env::try_arg(ref mut zone, index)` keep only the optional success
-payload, while `env::arg_text(index)` and `env::arg_unchecked(index)` expose
-borrowed startup-context string compatibility hooks. `env::program_name(ref
-mut zone)` follows the same Result policy for `argv[0]`, and
+payload. Raw startup-context strings stay behind `std::context` and boundary
+helpers. `env::program_name(ref mut zone)` follows the same Result policy for
+`argv[0]`, and
 `env::program_name_optional(ref mut zone)` is the optional form.
 `env::args(ref mut zone)` collects all arguments into an owned
 `Vec[std::string::String]`, while `env::args_os(ref mut zone)` collects
@@ -511,30 +491,32 @@ OS-string views for CLI code that wants byte-preserving argument handling.
 values as `std::string::OsStr` when an argument should stay in OS-string form
 until the caller chooses bytes or UTF-8.
 
-`env::var(ref mut zone, name)` returns `Option[String]` for environment
+`env::var(ref mut zone, ref name)` returns `Option[String]` for environment
 variables because a missing variable is ordinary configuration absence.
-`env::var_optional(ref mut zone, name)` and `env::try_get(ref mut zone, name)`
-keep the same optional shape, while `env::var_or_default(ref mut zone, name)`
-and `env::get_or_default(ref mut zone, name)` copy the fallback into owned
-`String` values. `env::get(ref mut zone, name)` is the Result-returning lookup
-and uses `NotFound` for missing names. Use the explicit `_text` variants when
-borrowed builtin strings are needed at a runtime boundary.
-`env::set_var(name, value)` overwrites a current-process variable and
-`env::remove_var(name)` unsets it; both return `Result[(), Error]`.
-`env::set(name, value)` and `env::remove(name)` are compatibility aliases with
-the same Result behavior. `set_unchecked` and `remove_unchecked` keep the older
-boolean compatibility shape. `env::current_dir(ref mut zone)`,
-`env::executable_path(ref mut zone)`, and `env::set_current_dir(path)` return
+`env::var_optional(ref mut zone, ref name)` and
+`env::try_get(ref mut zone, ref name)`
+keep the same optional shape, while `env::var_or_default(ref mut zone, ref name)`
+and `env::get_or_default(ref mut zone, ref name)` copy the fallback into owned
+`String` values. `env::get(ref mut zone, ref name)` is the Result-returning
+lookup and uses `NotFound` for missing names. Public environment variable names
+and values are owned `String` values passed by reference.
+`env::set_var(ref name, ref value)` overwrites a current-process variable and
+`env::remove_var(ref name)` unsets it; both return `Result[(), Error]`.
+`env::set(ref name, ref value)` and `env::remove(ref name)` are compatibility
+aliases with the same Result behavior. `set_unchecked` and `remove_unchecked`
+keep the older boolean compatibility shape. `env::current_dir(ref mut zone)`,
+`env::executable_path(ref mut zone)`, and `env::set_current_dir(ref path)` return
 `Result[..., Error]`; `_optional` and `try_*` wrappers keep only the success
 payload, `_or_default` wrappers copy fallback values into owned `String`
-handles, and `_text`/`_unchecked`/`_raw` names are compatibility or boundary
-hooks. Portable child-process spawn handles remain roadmap work; thread helpers
-live in `std::thread`.
+handles, and `_unchecked` names are explicit information-discarding helpers.
+Portable child-process spawn handles remain roadmap work; thread helpers live
+in `std::thread`.
 
-`env::var_os(name)` returns an `Option[OsStr]` environment view.
-`env::var_os_optional(name)` and `env::try_get_os(name)` keep the same optional
-shape, and `env::var_os_or_default(name)` / `env::get_os_or_default(name)` are
-the compatibility fallbacks. `env::get_os(name)` is the Result-returning
+`env::var_os(ref name)` returns an `Option[OsStr]` environment view.
+`env::var_os_optional(ref name)` and `env::try_get_os(ref name)` keep the same optional
+shape, and `env::var_os_or_default(ref name)` /
+`env::get_os_or_default(ref name)` are the compatibility fallbacks.
+`env::get_os(ref name)` is the Result-returning
 OS-string lookup.
 `env::current_dir_os()` / `current_dir_os_optional()` and
 `env::executable_path_os()` / `executable_path_os_optional()` expose path-like
@@ -655,18 +637,10 @@ process::current_dir(zone)
 process::current_dir_optional(zone)
 process::current_dir_or_default(zone)
 process::try_current_dir(zone)
-process::current_dir_text()
-process::current_dir_text_optional()
-process::current_dir_text_or_default()
-process::try_current_dir_text()
 process::executable_path(zone)
 process::executable_path_optional(zone)
 process::executable_path_or_default(zone)
 process::try_executable_path(zone)
-process::executable_path_text()
-process::executable_path_text_optional()
-process::executable_path_text_or_default()
-process::try_executable_path_text()
 process::temp_file(zone)
 process::temp_file_in(zone, prefix)
 process::temp_dir(zone)

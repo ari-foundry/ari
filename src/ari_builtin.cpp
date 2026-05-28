@@ -378,11 +378,16 @@ const std::unordered_map<std::string, AriBuiltinSignatureExpectation>& ari_built
         add("ari_builtin_target_pointer_bits", builtin_sig({}, i64));
         add("ari_builtin_target_long_bits", builtin_sig({}, i64));
         add("ari_builtin_env_get", builtin_sig({source_string}, source_string));
+        add("ari_builtin_env_get_bytes", builtin_sig({ptr_u8, i64}, source_string));
         add("ari_builtin_env_has", builtin_sig({source_string}, boolean));
+        add("ari_builtin_env_has_bytes", builtin_sig({ptr_u8, i64}, boolean));
         add("ari_builtin_env_set", builtin_sig({source_string, source_string}, boolean));
+        add("ari_builtin_env_set_bytes", builtin_sig({ptr_u8, i64, ptr_u8, i64}, boolean));
         add("ari_builtin_env_remove", builtin_sig({source_string}, boolean));
+        add("ari_builtin_env_remove_bytes", builtin_sig({ptr_u8, i64}, boolean));
         add("ari_builtin_env_current_dir", builtin_sig({}, source_string));
         add("ari_builtin_env_set_current_dir", builtin_sig({source_string}, boolean));
+        add("ari_builtin_env_set_current_dir_bytes", builtin_sig({ptr_u8, i64}, boolean));
         add("ari_builtin_env_executable_path", builtin_sig({}, source_string));
         add("ari_builtin_process_id", builtin_sig({}, i64));
         add("ari_builtin_process_uid", builtin_sig({}, i64));
