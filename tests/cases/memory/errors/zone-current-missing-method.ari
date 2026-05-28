@@ -1,0 +1,9 @@
+// Generic methods that allocate can also explain the missing current zone.
+fn main() -> i64 {
+  var zone = zone::create(128);
+  var values = std::vec::new<i64>(ref mut zone, 1);
+  values.push(42);
+  let copied = values.copy_to();
+  zone::destroy(zone);
+  return copied.len();
+}

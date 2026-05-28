@@ -1,0 +1,6 @@
+// Missing only `ref mut Zone` outside a current-zone block should produce a
+// targeted zone diagnostic instead of a plain argument-count error.
+fn main() -> i64 {
+  let text = std::string::from("ari");
+  return text.len();
+}

@@ -55,6 +55,12 @@ The rule is deliberately arity-based and conservative. Calls with two zone
 parameters, no zone parameter, or an otherwise ambiguous omitted argument keep
 the ordinary diagnostic and must be written explicitly.
 
+When a call outside a current-zone block is missing exactly one `ref mut Zone`
+argument, the checker reports the allocation-zone issue directly instead of
+showing only a wrong-argument-count error. The diagnostic should tell users to
+wrap local temporary work in `zone { ... }` or pass an explicit zone when the
+result needs a longer lifetime.
+
 `format!` is special compiler syntax. Inside a current-zone block it lowers as
 `format_in!(ref mut current_zone, ...)`. Outside a current-zone block it stays
 a targeted diagnostic.
@@ -96,8 +102,6 @@ When adding a public zone-backed API:
 
 - current-zone insertion for the few trait-qualified and trait-object call
   paths that still require explicit zone spelling
-- diagnostics that say "this call could use the current zone if written inside
-  `zone { ... }`" when an allocation API is called outside a current-zone block
 - better capacity diagnostics when the default temporary zone is too small
 - a future expression form only if the language gets a clean block-expression
   story; the current feature is intentionally statement-only

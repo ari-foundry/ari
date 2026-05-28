@@ -187,6 +187,12 @@ because its lifetime is the block itself. If a function has two zone
 parameters, or if the missing argument is not uniquely identifiable as
 `ref mut Zone`, the checker requires the explicit call.
 
+If code outside a current-zone block omits only the zone argument, Ari reports
+that the call needs an allocation zone and suggests either `zone { ... }` or an
+explicit `ref mut Zone`. That diagnostic is intentionally different from a
+plain wrong-argument-count error because allocation lifetime is the important
+choice.
+
 Raw memory is not automatically initialized. After `alloc<T>` or
 `alloc_array<T>`, write each slot before reading it. If the element type owns
 resources, prefer a higher-level handle or an API that clearly owns drop
@@ -235,6 +241,9 @@ Current-zone blocks are intentionally lexical and conservative:
   arguments across common stdlib APIs, including String/Vec/Box copy and
   growth methods, path joining, encoding decode, runtime `fmt::format`, and
   `fmt::concat2`.
+- `tests/cases/memory/errors/zone-current-missing-function.ari` and
+  `tests/cases/memory/errors/zone-current-missing-method.ari` check targeted
+  diagnostics for calls that need a current or explicit zone.
 
 Run `make check-std-api` after public API edits and `make check-prelude` for
 the focused zone allocation coverage.

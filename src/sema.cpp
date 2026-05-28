@@ -8398,12 +8398,11 @@ private:
                is_zone_type_name(type.name);
     }
 
-    std::optional<std::size_t> implicit_current_zone_param(
+    std::optional<std::size_t> current_zone_candidate_param(
         const std::vector<IrType>& params,
         std::size_t explicit_arg_count,
         std::size_t first_param = 0
     ) const {
-        if (!has_current_zone()) return std::nullopt;
         if (first_param > params.size()) return std::nullopt;
         std::size_t non_receiver_count = params.size() - first_param;
         if (non_receiver_count != explicit_arg_count + 1) return std::nullopt;
@@ -8416,12 +8415,11 @@ private:
         return zone_index;
     }
 
-    std::optional<std::size_t> implicit_current_zone_param(
+    std::optional<std::size_t> current_zone_candidate_param(
         const std::vector<Param>& params,
         std::size_t explicit_arg_count,
         std::size_t first_param = 0
     ) const {
-        if (!has_current_zone()) return std::nullopt;
         if (first_param > params.size()) return std::nullopt;
         std::size_t non_receiver_count = params.size() - first_param;
         if (non_receiver_count != explicit_arg_count + 1) return std::nullopt;
@@ -8432,6 +8430,24 @@ private:
             zone_index = i;
         }
         return zone_index;
+    }
+
+    std::optional<std::size_t> implicit_current_zone_param(
+        const std::vector<IrType>& params,
+        std::size_t explicit_arg_count,
+        std::size_t first_param = 0
+    ) const {
+        if (!has_current_zone()) return std::nullopt;
+        return current_zone_candidate_param(params, explicit_arg_count, first_param);
+    }
+
+    std::optional<std::size_t> implicit_current_zone_param(
+        const std::vector<Param>& params,
+        std::size_t explicit_arg_count,
+        std::size_t first_param = 0
+    ) const {
+        if (!has_current_zone()) return std::nullopt;
+        return current_zone_candidate_param(params, explicit_arg_count, first_param);
     }
 
     IrExprPtr make_current_zone_argument(SourceLocation loc, const IrType& expected) {
@@ -25928,7 +25944,7 @@ private:
             if (!infer_generic_impl_method_substitutions(candidate, receiver_type, substitutions)) continue;
             std::optional<std::size_t> implicit_zone_param;
             if (candidate.sig.params.size() != arg_types.size() + 1) {
-                implicit_zone_param = implicit_current_zone_param(candidate.sig.params, arg_types.size(), 1);
+                implicit_zone_param = current_zone_candidate_param(candidate.sig.params, arg_types.size(), 1);
             }
             if (candidate.sig.params.size() != arg_types.size() + 1 && !implicit_zone_param) {
                 if (!saw_wrong_arg_count) {
@@ -26986,6 +27002,15 @@ private:
         if (fn.params.size() != expr.args.size()) {
             implicit_zone_param = implicit_current_zone_param(fn.params, expr.args.size());
             if (!implicit_zone_param) {
+                if (current_zone_candidate_param(fn.params, expr.args.size())) {
+                    fail_missing_current_zone_argument(
+                        expr.loc,
+                        "function",
+                        expr.name,
+                        fn.loc,
+                        fn.params.size(),
+                        expr.args.size());
+                }
                 fail_call_argument_count(expr.loc, expr.name, fn.loc, fn.params.size(), expr.args.size());
             }
         }
@@ -28350,7 +28375,7 @@ private:
 
             std::optional<std::size_t> implicit_zone_param;
             if (candidate.sig.params.size() != arg_types.size() + 1) {
-                implicit_zone_param = implicit_current_zone_param(candidate.sig.params, arg_types.size(), 1);
+                implicit_zone_param = current_zone_candidate_param(candidate.sig.params, arg_types.size(), 1);
             }
             if (candidate.sig.params.size() != arg_types.size() + 1 && !implicit_zone_param) {
                 if (!saw_wrong_arg_count) {
@@ -29025,6 +29050,15 @@ private:
         } else if (sig.params.size() != expr.args.size()) {
             implicit_zone_param = implicit_current_zone_param(sig.params, expr.args.size());
             if (!implicit_zone_param) {
+                if (current_zone_candidate_param(sig.params, expr.args.size())) {
+                    fail_missing_current_zone_argument(
+                        expr.loc,
+                        "function",
+                        expr.name,
+                        sig.loc,
+                        sig.params.size(),
+                        expr.args.size());
+                }
                 fail_call_argument_count(expr.loc, expr.name, sig.loc, sig.params.size(), expr.args.size());
             }
         }
@@ -29453,6 +29487,15 @@ private:
         if (sig.params.size() != expr.args.size()) {
             implicit_zone_param = implicit_current_zone_param(sig.params, expr.args.size());
             if (!implicit_zone_param) {
+                if (current_zone_candidate_param(sig.params, expr.args.size())) {
+                    fail_missing_current_zone_argument(
+                        expr.loc,
+                        "associated function",
+                        method_name,
+                        method.loc,
+                        sig.params.size(),
+                        expr.args.size());
+                }
                 fail_associated_function_argument_count(
                     expr.loc,
                     method_name,
@@ -29758,6 +29801,16 @@ private:
             implicit_zone_param = implicit_current_zone_param(sig.params, expr.args.size(), 1);
         }
         if (sig.params.size() != expr.args.size() + 1 && !implicit_zone_param) {
+            if (current_zone_candidate_param(sig.params, expr.args.size(), 1)) {
+                fail_missing_current_zone_argument(
+                    expr.loc,
+                    "method",
+                    expr.name,
+                    method.loc,
+                    non_receiver_parameter_count(sig.params.size()),
+                    expr.args.size(),
+                    true);
+            }
             fail_method_argument_count(
                 expr.loc,
                 expr.name,
@@ -31474,6 +31527,48 @@ private:
             std::nullopt,
             "pass " + expected_text + " to method '" + method_name + "' instead of " + actual_text,
             DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_missing_current_zone_argument(SourceLocation loc,
+                                                               const std::string& callable_kind,
+                                                               const std::string& callee,
+                                                               SourceLocation declaration_loc,
+                                                               std::size_t expected_count,
+                                                               std::size_t actual_count,
+                                                               bool receiver_separate = false) {
+        CompileError error(
+            std::move(loc),
+            "call to " + callable_kind + " '" + callee + "' needs an allocation zone");
+        std::string parameter_text = receiver_separate
+            ? " non-receiver " + parameter_count_name(expected_count)
+            : " " + parameter_count_name(expected_count);
+        add_location_label_if_valid(
+            error,
+            declaration_loc,
+            callable_kind + " '" + callee + "' declares " +
+                std::to_string(expected_count) + parameter_text +
+                " including one ref mut Zone parameter");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "this call is missing only the allocation-zone argument",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "Ari can insert the current zone inside a zone { ... } block",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "wrap the call in zone { ... } or pass an explicit ref mut Zone argument",
+            DiagnosticNoteKind::Help});
+        if (actual_count + 1 != expected_count) {
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "after adding the zone argument this call should provide " +
+                    value_argument_count_text(expected_count) + " instead of " +
+                    value_argument_count_text(actual_count),
+                DiagnosticNoteKind::Note});
+        }
         throw error;
     }
 
