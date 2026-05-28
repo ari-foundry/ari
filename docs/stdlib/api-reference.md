@@ -2525,6 +2525,7 @@ memory.
 
 ```ari
 zone::create(capacity)
+zone::default_capacity()
 zone::alloc(ref mut zone, bytes, align)
 zone::alloc<T>(ref mut zone)
 zone::alloc_array<T>(ref mut zone, count)
@@ -2548,6 +2549,10 @@ zone::destroy(zone)
 values. It returns null for `0`, asserts for negative counts, and does not run
 destructors for the slots; initialize before reading and prefer higher-level
 handles when ownership matters.
+
+`default_capacity()` returns the capacity used by `zone { ... }` current-zone
+blocks when no explicit `zone(capacity)` value is written. It is 4096 bytes in
+the current hosted compiler.
 
 `allocation_zone(data)` reads Ari's allocation header for a non-null zone
 allocation and returns the raw opaque handle. Prefer `metadata(data)`, which

@@ -4,6 +4,10 @@ pub extern "ari" fn allocation_zone(data: ptr u8) -> ptr c_void = "ari_builtin_z
 extern "ari" fn zone_handle(zone: ref mut Zone) -> ptr c_void = "ari_builtin_zone_handle";
 extern "ari" fn alloc_handle(handle: ptr c_void, bytes: i64, align: i64) -> ptr u8 = "ari_builtin_zone_alloc_handle";
 
+pub fn default_capacity() -> i64 {
+  return 4096;
+}
+
 pub struct ZoneMetadata {
   handle: ptr c_void,
 }

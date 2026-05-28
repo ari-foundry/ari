@@ -15,7 +15,7 @@ compiler and stdlib boundary.
 | Area | Current usable surface | Why stdlib-only work stops here | Main files |
 | --- | --- | --- | --- |
 | `std::thread` | `thread::spawn(fn() -> i64) -> Result[JoinHandle, Error]`, `thread::spawn_raw(fn(ptr u8) -> i64, ptr u8) -> Result[JoinHandle, Error]`, nonblocking `try_join`, `ThreadScope` fixed-capacity join owners, `JoinHandle`, `JoinError`, `ThreadResult`, `Builder`, explicit `ThreadLocal[T]`. | Generic `JoinHandle[T]`, captured thread entries, borrowed scoped threads, generic return payloads, and compiler-owned `thread_local` declarations require closure environment transfer, send/share rules, result storage ownership, drop paths, borrow-scoped lifetime proofs, and TLS codegen. | `lib/std/thread.arih`, `src/std_thread_semantics.cpp`, `src/sema.cpp`, `src/llvm_codegen.cpp`, `docs/stdlib/modules/thread.md`, `tests/cases/standard-library/ok/thread/`, `tests/cases/functions/` |
-| `std::fmt` | `format_in!`, `Display::format_in`, `Debug::debug_in`, fixed-arity runtime `format`/`format2`/`format3`/`format4`, matching writer helpers, direct scalar/text streaming writer helpers, `concat2`/`concat3`, and variable-count concat/template helpers. | Variadic/default-zone formatting needs compiler lowering or variadic generic support plus an allocation-zone policy. Generic per-value streaming display needs a writer-facing formatting trait plus compiler support for selecting generic trait impls whose type parameter is carried by a trait argument such as `WriteDisplay[W]`. | `lib/std/fmt.arih`, `src/prelude_macros.cpp`, `src/sema.cpp`, `docs/stdlib/modules/fmt.md`, `tests/cases/standard-library/ok/format/`, `tests/cases/standard-library/errors/format/` |
+| `std::fmt` | `format_in!`, current-zone `format!`, `Display::format_in`, `Debug::debug_in`, fixed-arity runtime `format`/`format2`/`format3`/`format4`, matching writer helpers, direct scalar/text streaming writer helpers, `concat2`/`concat3`, and variable-count concat/template helpers. | True variadic source functions still need variadic generic support or continued compiler-known macro lowering. Generic per-value streaming display needs a writer-facing formatting trait plus compiler support for selecting generic trait impls whose type parameter is carried by a trait argument such as `WriteDisplay[W]`. | `lib/std/fmt.arih`, `src/prelude_macros.cpp`, `src/sema.cpp`, `docs/stdlib/modules/fmt.md`, `tests/cases/standard-library/ok/format/`, `tests/cases/standard-library/errors/format/` |
 
 ## Thread Implementation Path
 
@@ -90,13 +90,13 @@ conservative path is:
    error category and that literal bytes written before a later failure are
    documented as not rolled back.
 
-Variadic/default-zone formatting is compiler work, not just a new function:
+General variadic formatting is compiler work, not just a new function:
 
 1. Decide whether Ari gets variadic generics, a compiler-known format macro
    lowering, or both.
-2. Decide the default allocation-zone policy before enabling executable
-   `format!`. Today `format!` intentionally reports that no implicit allocation
-   zone exists; `format_in!(ref mut zone, ...)` is the explicit-zone form.
+2. Keep the allocation-zone policy explicit: `format!` is executable inside a
+   current-zone block, while `format_in!(ref mut zone, ...)` is the explicit
+   target-zone form outside one.
 3. Keep runtime `fmt::format` functions Result-returning because invalid
    templates are recoverable input/configuration errors.
 4. Keep compiler-assisted literal format strings type-checked at compile time

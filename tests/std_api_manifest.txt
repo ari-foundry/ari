@@ -1267,6 +1267,7 @@ fn std::zone::alloc[T]|typed zone allocation tests; docs/dev/test-matrix.md Expl
 fn std::zone::alloc_array[T]|std zone raw array allocation tests; docs/stdlib/modules/zone.md
 fn std::zone::allocation_zone|zone allocation header metadata tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::zone::create|zone lifecycle tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::zone::default_capacity|current-zone block tests; docs/stdlib/modules/zone.md
 fn std::zone::destroy|zone lifecycle and invalidation tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::zone::from_zone|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 fn std::zone::metadata|std zone backed handle metadata tests; docs/stdlib/modules/zone.md

@@ -15,6 +15,7 @@ or `std::vec::Vec[T]` when those shapes match the job.
 
 ```ari
 zone::create(capacity: i64) -> own Zone
+zone::default_capacity() -> i64
 zone::alloc(ref mut Zone, bytes: i64, align: i64) -> ptr u8
 zone::alloc<T>(ref mut Zone) -> ptr T
 zone::alloc_array<T>(ref mut Zone, count: i64) -> ptr T
@@ -39,6 +40,7 @@ metadata.equals(ref other) -> bool
 ZoneBacked
 
 create(capacity)
+default_capacity()
 alloc(ref mut zone, bytes, align)
 alloc<T>(ref mut zone)
 alloc_array<T>(ref mut zone, count)
@@ -66,10 +68,12 @@ fn main() -> i64 {
 }
 ```
 
-The block is compiler syntax. It lowers to a hidden `zone::temp(4096)` local,
-pushes that local as the current allocation zone, checks the body, and inserts
-the same cleanup that an explicit temporary zone binding receives. A larger
-scratch region can be requested with `zone(capacity) { ... }`:
+The block is compiler syntax. It lowers to a hidden
+`zone::temp(zone::default_capacity())` local, pushes that local as the current
+allocation zone, checks the body, and inserts the same cleanup that an
+explicit temporary zone binding receives. `zone::default_capacity()` is 4096
+bytes today. A larger scratch region can be requested with
+`zone(capacity) { ... }`:
 
 ```ari
 zone(65536) {
@@ -188,6 +192,29 @@ Raw memory is not automatically initialized. After `alloc<T>` or
 resources, prefer a higher-level handle or an API that clearly owns drop
 behavior.
 
+## Implementation Spec
+
+Current-zone blocks are intentionally lexical and conservative:
+
+1. `zone { body }` parses as a statement. `zone` is contextual, so existing
+   values named `zone` continue to work outside this exact statement shape.
+2. The checker creates a hidden `own Zone` local with the default capacity,
+   or with the checked `i64` expression from `zone(capacity)`.
+3. That hidden local is pushed onto the current-zone stack while `body` is
+   checked. Nested blocks shadow outer current zones.
+4. A call inside the body may omit exactly one argument when the omitted
+   parameter is uniquely typed as `ref mut Zone`. Ordinary functions, generic
+   functions, ordinary methods, and associated functions use this rule.
+5. `format!` is the compiler-owned formatting shortcut for the current zone.
+   Outside a current-zone block it remains a diagnostic and callers should use
+   `format_in!(ref mut zone, ...)`.
+6. The hidden zone receives the same cleanup treatment as `zone::temp`: it is
+   destroyed on fallthrough and when `return`, `break`, `continue`, or labeled
+   exits leave the block.
+7. Existing zone-provenance checks still decide whether pointers and
+   zone-backed handles may escape. Current-zone syntax does not make a global
+   heap and does not extend object lifetimes.
+
 ## Tests
 
 - `tests/cases/standard-library/ok/zone/std-zone-alloc-array.ari` checks
@@ -204,6 +231,10 @@ behavior.
 - `tests/cases/memory/ok/zone-current-block.ari` checks current-zone block
   syntax, default and explicit capacities, omitted `ref mut Zone` arguments for
   `std::string`, `std::fmt`, and `std::fs`, and current-zone `format!`.
+- `tests/cases/memory/ok/zone-current-stdlib.ari` checks omitted current-zone
+  arguments across common stdlib APIs, including String/Vec/Box copy and
+  growth methods, path joining, encoding decode, runtime `fmt::format`, and
+  `fmt::concat2`.
 
 Run `make check-std-api` after public API edits and `make check-prelude` for
 the focused zone allocation coverage.

@@ -49,6 +49,7 @@ Read these in order when you are new to compiler work in this repository:
 | Add an artifact or normalize an existing one | [Compiler Artifact Authoring](compiler-artifact-authoring.md) |
 | Add a module or package fixture | [Compiler Module Project Authoring](compiler-module-project-authoring.md) |
 | Work on stdlib items blocked by compiler features | [Compiler-Bound Standard Library Gaps](compiler-bound-stdlib-gaps.md) |
+| Work on current-zone allocation syntax | [Current-Zone Blocks](current-zone-blocks.md) |
 | Pick the right focused test bucket | [Compiler Test Authoring](compiler-test-authoring.md), [Feature Test Matrix](test-matrix.md) |
 | Understand semantic pass boundaries | [Compiler Pass Contracts](compiler-pass-contracts.md), [Semantic Checker Decomposition](sema-decomposition.md) |
 | Work on traits, operators, generics, ownership, or ABI | [Minimum Trait Readiness](trait-minimum-readiness.md), [Trait-Backed Operators](operator-trait-design.md), [Generic Aggregate Monomorphization](generic-aggregate-monomorphization.md), [Ownership Drop Readiness](ownership-drop-readiness.md), [Aggregate ABI Classification](aggregate-abi.md) |

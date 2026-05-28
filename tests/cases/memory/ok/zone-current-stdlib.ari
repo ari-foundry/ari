@@ -1,0 +1,75 @@
+// Covers current-zone insertion across common zone-backed stdlib APIs.
+fn main() -> i64 {
+  if std::zone::default_capacity() != 4096 {
+    return 1;
+  }
+
+  zone(16384) {
+    let text = std::string::from("ari");
+    if !text.as_slice().equals("ari") {
+      return 2;
+    }
+
+    let text_copy = text.copy_to();
+    if !text_copy.as_slice().equals("ari") {
+      return 3;
+    }
+
+    var grown = std::string::from("ar");
+    grown.push_str("i");
+    if !grown.as_slice().equals("ari") {
+      return 4;
+    }
+
+    var values = std::vec::new<i64>(1);
+    values.push(10);
+    values.push(32);
+    let copied_values = values.copy_to();
+    if copied_values.len() != 2 {
+      return 5;
+    }
+    if copied_values.get(0) + copied_values.get(1) != 42 {
+      return 6;
+    }
+
+    let boxed = std::boxed::new<i64>(42);
+    let boxed_copy = boxed.copy_to();
+    if boxed_copy.get() != 42 {
+      return 7;
+    }
+
+    let path = std::path::join(std::path::bytes("src"), std::path::bytes("main.ari"));
+    if !path.as_bytes().equals("src/main.ari") {
+      return 8;
+    }
+
+    match std::encoding::decode_hex("617269") {
+      std::Ok(decoded) => {
+        if !decoded.as_slice().equals("ari") {
+          return 9;
+        }
+      }
+      std::Err(_) => {
+        return 10;
+      }
+    }
+
+    match std::fmt::format("value={}", 42) {
+      std::Ok(line) => {
+        if !line.as_slice().equals("value=42") {
+          return 11;
+        }
+      }
+      std::Err(_) => {
+        return 12;
+      }
+    }
+
+    let joined = std::fmt::concat2(std::string::from("a"), std::string::from("ri"));
+    if !joined.as_slice().equals("ari") {
+      return 13;
+    }
+  }
+
+  return 0;
+}

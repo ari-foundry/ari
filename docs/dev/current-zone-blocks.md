@@ -1,0 +1,103 @@
+# Current-Zone Blocks
+
+This note documents the compiler-side contract for `zone { ... }` so parser,
+semantic-checker, stdlib, and docs changes stay aligned.
+
+## User Contract
+
+`zone { ... }` creates a short-lived temporary allocation zone for the block.
+Inside that block, stdlib allocation APIs that normally take exactly one
+`ref mut Zone` can omit that argument:
+
+```ari
+zone {
+  let name = std::string::from("ari");
+  let line = format!("package {}", name);
+  let bytes = std::encoding::decode_hex("617269")?;
+}
+```
+
+`zone(capacity) { ... }` uses the same rule with an explicit byte capacity.
+`zone { ... }` uses `std::zone::default_capacity()`, currently 4096 bytes.
+Explicit zone arguments remain valid and are required whenever a value should
+be allocated into a longer-lived caller-owned zone.
+
+## Parser Contract
+
+`zone` is contextual statement syntax, not a lexer keyword. The parser should
+recognize a zone block only for these forms:
+
+```ari
+zone { statements... }
+zone(capacity_expression) { statements... }
+```
+
+Other uses of an identifier named `zone` remain ordinary expression/name
+syntax. The AST statement kind is `ZoneBlock`; its optional expression is the
+capacity expression, and its body is the statement list.
+
+## Semantic Contract
+
+The checker lowers a zone block as a normal block with a hidden `own Zone`
+local initialized through the existing `zone::temp` builtin. The hidden local
+is pushed on the current-zone stack while the body is checked.
+
+When checking a call while the stack is non-empty, the checker may synthesize a
+`ref mut` borrow of the innermost hidden zone if all of these are true:
+
+- the call has exactly one fewer explicit argument than the selected function
+  or method signature requires after receiver handling
+- exactly one missing candidate parameter is typed as `ref mut Zone`
+- inserting the zone makes the remaining explicit arguments type-check in
+  their normal positions
+
+The rule is deliberately arity-based and conservative. Calls with two zone
+parameters, no zone parameter, or an otherwise ambiguous omitted argument keep
+the ordinary diagnostic and must be written explicitly.
+
+`format!` is special compiler syntax. Inside a current-zone block it lowers as
+`format_in!(ref mut current_zone, ...)`. Outside a current-zone block it stays
+a targeted diagnostic.
+
+## Cleanup And Escape Contract
+
+The hidden zone receives the same automatic cleanup as a lexical
+`zone::temp(...)` local:
+
+- cleanup is emitted on normal fallthrough
+- cleanup is emitted before returns that leave the scope
+- cleanup is emitted before `break`, `continue`, or labeled-block exits that
+  leave the scope
+- ordinary zone-provenance checks still reject pointers or zone-backed handles
+  escaping the block
+
+The syntax does not create a process-global heap and does not relax reset or
+destroy invalidation. It only shortens the spelling for a local allocation
+capability whose lifetime is already obvious from the block.
+
+## Stdlib Guidance
+
+Zone-taking stdlib APIs should keep using a real `ref mut Zone` parameter.
+Prefer one clear zone parameter per allocating operation so current-zone
+insertion remains predictable. Use `_in` names when the target zone is a
+semantic part of the operation, but document that callers may omit the zone
+inside a current-zone block.
+
+When adding a public zone-backed API:
+
+1. Add the source declaration.
+2. Add or update focused ordinary tests that compile the explicit-zone spelling
+   and, when useful, a `zone { ... }` spelling.
+3. Update `tests/std_api_manifest.txt` and regenerate
+   `docs/stdlib/generated/api-index.md` if the public API changed.
+4. Update the hand-written module guide with lifetime and current-zone notes.
+
+## Remaining Work
+
+- current-zone insertion for the few trait-qualified and trait-object call
+  paths that still require explicit zone spelling
+- diagnostics that say "this call could use the current zone if written inside
+  `zone { ... }`" when an allocation API is called outside a current-zone block
+- better capacity diagnostics when the default temporary zone is too small
+- a future expression form only if the language gets a clean block-expression
+  story; the current feature is intentionally statement-only

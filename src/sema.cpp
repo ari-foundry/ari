@@ -25926,7 +25926,11 @@ private:
             if (basename_of_qualified_name(candidate.fn->name) != method_name) continue;
             std::map<std::string, IrType> substitutions;
             if (!infer_generic_impl_method_substitutions(candidate, receiver_type, substitutions)) continue;
+            std::optional<std::size_t> implicit_zone_param;
             if (candidate.sig.params.size() != arg_types.size() + 1) {
+                implicit_zone_param = implicit_current_zone_param(candidate.sig.params, arg_types.size(), 1);
+            }
+            if (candidate.sig.params.size() != arg_types.size() + 1 && !implicit_zone_param) {
                 if (!saw_wrong_arg_count) {
                     wrong_arg_declaration_loc = candidate.loc;
                     wrong_arg_expected_count = non_receiver_parameter_count(candidate.sig.params.size());
@@ -25934,7 +25938,13 @@ private:
                 saw_wrong_arg_count = true;
                 continue;
             }
-            if (!bind_or_infer_method_generic_type_args(expr, candidate, arg_types, substitutions, &first_inference_failure)) {
+            if (!bind_or_infer_method_generic_type_args(
+                    expr,
+                    candidate,
+                    arg_types,
+                    substitutions,
+                    &first_inference_failure,
+                    implicit_zone_param)) {
                 continue;
             }
             std::set<std::string> visiting;
@@ -26017,7 +26027,17 @@ private:
         if (!infer_generic_impl_method_substitutions(*matches.front(), receiver_type, substitutions)) {
             fail(expr.loc, "generic impl method '" + expr.name + "' cannot be specialized for " + type_name(receiver_type));
         }
-        if (!bind_or_infer_method_generic_type_args(expr, *matches.front(), arg_types, substitutions, nullptr)) {
+        std::optional<std::size_t> implicit_zone_param;
+        if (matches.front()->sig.params.size() != arg_types.size() + 1) {
+            implicit_zone_param = implicit_current_zone_param(matches.front()->sig.params, arg_types.size(), 1);
+        }
+        if (!bind_or_infer_method_generic_type_args(
+                expr,
+                *matches.front(),
+                arg_types,
+                substitutions,
+                nullptr,
+                implicit_zone_param)) {
             fail(expr.loc, "generic method '" + expr.name + "' could not be specialized");
         }
         require_structural_capability_generics(expr.loc, *matches.front()->fn, substitutions);
@@ -26085,7 +26105,8 @@ private:
         const ImplMethodInfo& method,
         const std::vector<IrType>& arg_types,
         std::map<std::string, IrType>& substitutions,
-        std::string* failure
+        std::string* failure,
+        std::optional<std::size_t> implicit_zone_param = std::nullopt
     ) {
         const ExprTypeArgs& type_args = expr_type_args(expr);
         if (method.method_generic_names.empty()) {
@@ -26098,13 +26119,20 @@ private:
         if (!type_args.empty()) {
             bind_method_generic_type_args(expr.loc, method, type_args, substitutions);
         }
-        for (std::size_t i = 0; i < arg_types.size(); ++i) {
+        std::size_t explicit_arg = 0;
+        for (std::size_t param_index = 1;
+             param_index < method.fn->params.size() && explicit_arg < arg_types.size();
+             ++param_index) {
+            if (implicit_zone_param && param_index == *implicit_zone_param) {
+                continue;
+            }
             infer_named_generic_type(
                 expr.loc,
-                method.fn->params[i + 1].type,
-                arg_types[i],
+                method.fn->params[param_index].type,
+                arg_types[explicit_arg],
                 method.method_generic_names,
                 substitutions);
+            ++explicit_arg;
         }
 
         for (const auto& generic_name : method.method_generic_names) {
@@ -28320,7 +28348,11 @@ private:
                 continue;
             }
 
+            std::optional<std::size_t> implicit_zone_param;
             if (candidate.sig.params.size() != arg_types.size() + 1) {
+                implicit_zone_param = implicit_current_zone_param(candidate.sig.params, arg_types.size(), 1);
+            }
+            if (candidate.sig.params.size() != arg_types.size() + 1 && !implicit_zone_param) {
                 if (!saw_wrong_arg_count) {
                     wrong_arg_declaration_loc = candidate.loc;
                     wrong_arg_expected_count = non_receiver_parameter_count(candidate.sig.params.size());
@@ -28333,7 +28365,8 @@ private:
                     candidate,
                     arg_types,
                     substitutions,
-                    &first_inference_failure)) {
+                    &first_inference_failure,
+                    implicit_zone_param)) {
                 continue;
             }
 

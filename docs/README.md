@@ -64,6 +64,7 @@ Use these when changing the current C++ hosted compiler:
 - [Compiler Triage Guide](dev/compiler-triage-guide.md)
 - [Compiler Source Identity](dev/compiler-source-identity.md)
 - [Compiler Module Project Authoring](dev/compiler-module-project-authoring.md)
+- [Current-Zone Blocks](dev/current-zone-blocks.md)
 - [Compiler Diagnostic Authoring](dev/compiler-diagnostic-authoring.md)
 - [Compiler Artifact Authoring](dev/compiler-artifact-authoring.md)
 - [Compiler Test Authoring](dev/compiler-test-authoring.md)

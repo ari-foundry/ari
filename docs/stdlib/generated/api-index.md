@@ -24,12 +24,12 @@ platform notes.
 
 ## Summary
 
-- API entries: `3623`
+- API entries: `3624`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
-| `alloc` | 924 | usable |
+| `alloc` | 925 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 941 | stable candidate |
 | `hosted` | 1559 | platform-backed |
@@ -38,7 +38,7 @@ platform notes.
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1236 |
+| `fn` | 1237 |
 | `method` | 1913 |
 | `module` | 39 |
 | `struct` | 197 |
@@ -90,7 +90,7 @@ platform notes.
 | `std::thread` | `hosted` | 126 |
 | `std::time` | `hosted` | 74 |
 | `std::vec` | `alloc` | 115 |
-| `std::zone` | `alloc` | 21 |
+| `std::zone` | `alloc` | 22 |
 
 ## `std`
 
@@ -4718,6 +4718,7 @@ Tier: `alloc`. Stability reading: usable.
 | `fn std::zone::alloc_array[T]` | std zone raw array allocation tests; docs/stdlib/modules/zone.md |
 | `fn std::zone::allocation_zone` | zone allocation header metadata tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `fn std::zone::create` | zone lifecycle tests; docs/dev/test-matrix.md Explicit memory zones row |
+| `fn std::zone::default_capacity` | current-zone block tests; docs/stdlib/modules/zone.md |
 | `fn std::zone::destroy` | zone lifecycle and invalidation tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `fn std::zone::from_zone` | std zone backed handle metadata tests; docs/stdlib/modules/zone.md |
 | `fn std::zone::metadata` | std zone backed handle metadata tests; docs/stdlib/modules/zone.md |
