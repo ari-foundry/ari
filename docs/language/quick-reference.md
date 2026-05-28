@@ -269,8 +269,9 @@ Or-pattern alternatives must bind the same names with compatible types.
 | comparison helpers | `cmp::min`, `cmp::max`, `cmp::clamp` with `Ord` impls |
 | iteration traits | `Iterator[T]`, `IntoIterator[T]`, `iter::range`, `iter::range_inclusive` |
 
-Use lowercase `string` for borrowed pointer-shaped text. Use uppercase
-`String`/`std::string::String` when the text needs owned zone-backed storage.
+Use uppercase `String`/`std::string::String` for ordinary text that needs owned
+zone-backed storage. The lowercase raw text type is only for borrowed
+literal/FFI/runtime boundary code.
 Use bare `Vec<T>` for local compiler-known vectors and `std::vec::Vec<T>` for
 the source standard-library growable handle. Use `Set<T>` or
 `std::collections::Set<T>` when you need insertion-order uniqueness; it is

@@ -169,14 +169,14 @@ source string handle supports `len`, `capacity`,
 `is_empty`, checked byte `first`/`last`/`get`/`set`/`replace`, fixed-capacity
 `push`/`pop`/`insert`, same-zone growth through `reserve`, `reserve_extra`,
 `push_in`, `insert_in`, `extend_from_slice_in`, and `resize_in`, append
-helpers for lowercase `string`, signed/unsigned integer, bool, `f32`, and
+helpers for text literals or raw boundary text, signed/unsigned integer, bool, `f32`, and
 `f64` values through `append_string_in`, `append_i64_in`, `append_u64_in`,
 `append_bool_in`, `append_f32_in`, and `append_f64_in`, plus
 `truncate`, `clear`, byte search with `contains`, `index_of`, and `count`,
 `equals(Slice[u8])`, `starts_with(Slice[u8])`, `ends_with(Slice[u8])`,
 `copy_to(ref mut zone)`, `as_ptr`, and `as_slice`.
-`std::string::from_string(ref mut zone, text)` copies today's borrowed
-lowercase `string` into independent zone-backed bytes,
+`std::string::from_string(ref mut zone, text)` copies a borrowed raw text
+boundary value into independent zone-backed bytes,
 `std::string::from_slice_in(ref mut zone, values)` copies a borrowed byte slice
 into independent zone-backed bytes, and `std::string::copy_to(ref value, ref
 mut zone)` copies the current bytes into another explicit zone. Metadata,
@@ -255,15 +255,15 @@ Formatting rules:
 - `{{` writes a literal `{`
 - `}}` writes a literal `}`
 - the positional placeholder count is checked at compile time
-- formatted print values currently support lowercase `string`, owned
+- formatted print values currently support text literals, owned
   `String` / `std::string::String`, `char`/byte characters, integers, bool,
   `f32`, and `f64`
 - `println` and `eprintln` append one newline
 - `print` does not append a newline
 - `eprintln` writes to stderr
 
-`bool` prints as lowercase `true` or `false`. `{}` prints lowercase `string`
-values and owned `String` handles as raw text, while `{:?}` quotes them for
+`bool` prints as lowercase `true` or `false`. `{}` prints text literals and
+owned `String` handles as raw text, while `{:?}` quotes them for
 diagnostics. Owned `String` values are written by byte length, so they do not
 need to be NUL-terminated C strings. `char` is the standard ASCII-byte alias,
 so byte-character literals such as `'A'` display as characters in text-shaped
@@ -380,7 +380,7 @@ let third = input_text()
 let fourth = input::line_text()
 ```
 
-Those helpers return lowercase `string` views backed by one internal line
+Those helpers return raw borrowed text views backed by one internal line
 buffer, so a later line read can overwrite the bytes. `read_line_owned`,
 `input_owned`, and `input::owned_line` remain compatibility aliases for the
 owned `String` behavior.
@@ -437,7 +437,8 @@ bool-valued pattern test using the same pattern engine as `match`, so enum,
 scalar, tuple, array, struct, tuple-struct, alias, and or-pattern forms follow
 the same rules. `format_in!(ref mut zone, "...", values...)` builds a source
 `String` in the explicit zone and lowers `{}` or `{name}` placeholders for
-lowercase `string`, `char`, signed/unsigned integer, bool, `f32`, and `f64`
+text literals or raw boundary text, `char`, signed/unsigned integer, bool,
+`f32`, and `f64`
 values through the same checked append helpers as manual text construction.
 `{:?}` and `{name:?}` placeholders dispatch through borrowed-receiver
 `Debug::debug_in`, so custom diagnostic formatting can use the same syntax when
@@ -447,7 +448,7 @@ borrowed-receiver `Display::format_in`; `Display` and `Debug` are root aliases
 for `fmt::Display` and `fmt::Debug`, so either spelling names the same traits.
 These impls return a source `String` in the same explicit zone. The standard
 `fmt::Display` and `fmt::Debug` impls for `char`, `i64`, `u64`, `bool`, `f32`,
-`f64`, `string`, and `std::string::String` are also available to generic source
+`f64`, raw text-boundary values, and `std::string::String` are also available to generic source
 APIs such as `String.append_value(value)` and `fmt::debug_value(ref mut zone,
 value)`. `{:.N}` placeholders format
 `f32`/`f64` values with `N` decimal digits, matching the print formatting
@@ -618,8 +619,8 @@ ToOwned
 `Display` is the root prelude alias for `fmt::Display`. It defines the
 explicit-zone formatting hook used by `format_in!` for user-defined values and
 by generic source helpers such as `String.append_value(value)`. Built-in impls
-cover `i64`, `u64`, `bool`, `f32`, `f64`, lowercase `string`, and owned
-`String`. Values passed through compiler-assisted formatting are evaluated once
+cover `i64`, `u64`, `bool`, `f32`, `f64`, text literals or raw boundary text,
+and owned `String`. Values passed through compiler-assisted formatting are evaluated once
 into a hidden local, then passed to the hook by shared borrow:
 
 ```ari
@@ -927,7 +928,7 @@ byte-buffer seed for owned string storage. It returns `ptr u8` tied to the
 source zone; raw zero-capacity buffers can be null, while `String`
 constructors establish a recoverable backing allocation even for logical
 capacity zero. `std::string::String`/`String` builds the length/capacity handle
-and lowercase `string` copying on top of that same explicit-zone storage.
+and raw text-boundary copying on top of that same explicit-zone storage.
 
 ## Aggregate Surfaces
 

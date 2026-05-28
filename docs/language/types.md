@@ -145,7 +145,7 @@ let label: string = "count"
 The LLVM backend lowers `string` as an `i8*`/C string pointer, which makes
 string literals useful for C FFI, context arguments, and host `read_line`
 helpers. String literals are emitted as NUL-terminated static bytes, and
-lowercase `string` values lower as raw pointers to that storage. Those literal
+raw borrowed text values lower as pointers to that storage. Those literal
 pointers can be passed through Ari calls, returned, stored in locals, cast to
 `ptr u8` or `ptr c_char`, and read with raw-pointer helpers. Plain host line
 input returns a
@@ -158,20 +158,21 @@ input until it has a native input-buffer and owned-line allocation policy.
 The uppercase root type `String` is the public prelude alias for
 `std::string::String`; `std::String` names the same handle. New stdlib APIs that
 return ordinary text should prefer owned `String` results and take
-`ref mut Zone` when allocation is needed. Lowercase `string` remains a raw
-borrowed/literal boundary type for C strings, runtime snapshots, static names,
-and compatibility helpers with names such as `_text`, `_raw`, and
-`_unchecked`.
-Compiler-assisted `print`, `println`, and `eprintln` accept both lowercase
-`string` and owned `String` text. Owned `String` output uses the handle's byte
-length, so ordinary stdlib results such as `env::current_dir(ref mut zone)` can
-be printed without converting to a C string.
+`ref mut Zone` when allocation is needed. The raw text-boundary type remains a
+borrowed/literal boundary for C strings, runtime snapshots, static names, and
+compatibility helpers with names such as `_text`, `_raw`, and `_unchecked`.
+Compiler-assisted `print`, `println`, and `eprintln` accept text literals and
+owned `String` text. The raw borrowed boundary type is still accepted where it
+appears in compatibility code, but it is not the public stdlib string model.
+Owned `String` output uses the handle's byte length, so ordinary stdlib results
+such as `env::current_dir(ref mut zone)` can be printed without converting to a
+C string.
 
 The source prelude already has the allocator-backed seed under `std::string`.
 `std::string::new(ref mut zone, capacity)` creates a tracked
 `std::string::String` handle with separate `len` and `capacity` metadata over
 zone-backed bytes, and `std::string::from_string(ref mut zone, text)` copies a
-borrowed lowercase `string` into that handle.
+borrowed raw boundary text value into that handle.
 String literals coerce to byte-oriented containers when such a type is
 expected. A borrowed parser can take `"true"` as `Slice[u8]`, and local byte
 storage can be initialized as `var bytes: Vec[u8] = "true";` or
@@ -982,7 +983,7 @@ Meanings:
 - `null`: nullable raw-pointer literal; it defaults to `ptr c_void` unless a
   `ptr T` or `T?` type is expected
 - `value as ptr U`: raw pointer casts, pointer/integer address casts,
-  lowercase `string` to raw pointer casts, and `(ref mut value) as ptr U`
+  raw text-boundary to raw pointer casts, and `(ref mut value) as ptr U`
   borrow-to-raw-pointer casts use ordinary explicit casts
 - `ptr_offset(value, bytes)`: explicit byte-wise raw pointer offset; the result
   has the same `ptr T` type as `value`
@@ -1012,7 +1013,7 @@ Meanings:
   hidden temporary zone, `zone::promote<T>` copies a pointed-to value into an
   explicit target zone, and `zone::destroy` releases a non-temporary region
 - `String`: root alias for the source `std::string::String` explicit-zone
-  handle. Lowercase `string` remains today's borrowed C-string pointer-shaped
+  handle. The raw text-boundary type remains today's borrowed C-string pointer-shaped
   value.
 - `Box[T]`: root alias for the source `std::boxed::Box<T>` explicit-zone
   handle. Construct it with `Box::new<T>(ref mut Zone, value)`,

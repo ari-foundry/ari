@@ -112,7 +112,7 @@ println_debug[T: Debug](zone: ref mut Zone, value: T) -> i64
 That keeps allocation visible and matches Ari's current standard-library rule:
 owned strings never appear from a hidden global heap.
 The standard library implements `Display` for `char`, `i64`, `u64`, `bool`,
-`f32`, `f64`, lowercase `string`, and `std::string::String`, so
+`f32`, `f64`, text literals or raw boundary text, and `std::string::String`, so
 `String.append_value(value)` and custom formatting code can use those common
 values without adding type-suffixed append helpers. Float `Display` uses six
 fractional digits, matching the default compiler-assisted `{}` float surface.
@@ -120,8 +120,8 @@ fractional digits, matching the default compiler-assisted `{}` float surface.
 `format_in!` byte-character formatting.
 `Debug::debug_in` follows the same explicit-zone allocation rule, but describes
 diagnostic output instead of ordinary display text. The standard library
-implements `Debug` for the same initial scalar/text set. Literal `string` and
-owned `String` debug output are quoted, and `char` debug output uses
+implements `Debug` for the same initial scalar/text set. Text-literal and owned
+`String` debug output are quoted, and `char` debug output uses
 single-quoted byte-character syntax such as `'A'` or `'\n'`.
 
 Treat `FormatSpec` as a value built by helper functions. Start with a base such
@@ -212,7 +212,7 @@ fmt::println_debug(ref mut zone, quoted);
 zone::destroy(zone);
 ```
 
-`debug_text_in` remains a convenience for quoting a literal `string` directly.
+`debug_text_in` remains a convenience for quoting raw text-boundary values directly.
 Use `float_in(ref mut zone, value, precision)` when source code wants an
 explicit float precision without going through a format string.
 
@@ -234,7 +234,7 @@ they follow the same text policy as `format_in!`, `print_value`, and
 `String.append_value`.
 
 For variable-length text, prefer the slice-based helpers instead of adding more
-fixed arities. `concat_all` joins any number of borrowed `string` values, and
+fixed arities. `concat_all` joins any number of borrowed raw text-boundary values, and
 `concat_strings` joins any number of preformatted owned `String` values:
 
 ```ari
@@ -390,8 +390,8 @@ ordinary `{}` arguments for module paths, indexing, method calls, and computed
 expressions. `eprintln!` follows the same placeholder rules as `println!` but
 writes to stderr. `{:?}` is the debug placeholder: `format_in!` dispatches it
 through `Debug::debug_in`, while direct stdout/stderr `print!`, `println!`,
-and `eprintln!` support it for built-in printable values, lowercase `string`,
-and owned `String` handles without requiring a temporary zone at the call site.
+and `eprintln!` support it for built-in printable values, text literals, and
+owned `String` handles without requiring a temporary zone at the call site.
 Owned `String` output writes the stored byte span, so `env::current_dir(ref mut
 zone)` and other Result-returning text APIs can be printed directly. For custom
 debug output to stdout, use `fmt::print_debug` or `fmt::println_debug` with an
@@ -452,7 +452,7 @@ The source helpers complement the macros:
 - `Debug` is real source dispatch now, including `{:?}` for `format_in!`.
   Custom formatter objects are still future work.
 - `Display` is intentionally small first: byte characters, signed/unsigned
-  64-bit integers, floats, bools, literal `string`, owned `String`, and
+  64-bit integers, floats, bools, text literals, owned `String`, and
   user-defined impls. Because `char` is currently a `u8` alias, byte-oriented
   `u8` values also follow the byte-character display policy in text-shaped
   formatting paths.

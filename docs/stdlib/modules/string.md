@@ -1,20 +1,21 @@
 # std::string
 
 `std::string` contains Ari's current owned byte-string handle. It exists so
-programs can copy borrowed `string` literals, formatted output, or byte slices
-into an explicit allocation `Zone` without introducing a hidden global heap.
+programs can copy text literals, formatted output, raw boundary text, or byte
+slices into an explicit allocation `Zone` without introducing a hidden global
+heap.
 
 Today's `String` is intentionally a byte string. It is useful for compiler
 tests, CLI-style output, simple parser buffers, and ASCII-oriented text work.
 It now has UTF-8 validation and scalar helpers, but it is not a Unicode
 normalization, grapheme, or locale-aware text abstraction yet.
 
-For public stdlib APIs, `String` is the normal owned text shape. Lowercase
-`string` is reserved for borrowed literals, static compiler/runtime strings,
-C/OS boundaries, and compatibility helpers that say so explicitly, such as
-`_text`, `_raw`, or `_unchecked`. Because Ari does not have a hidden global
-heap, helpers that return owned text take `ref mut Zone` and copy into that
-zone.
+For public stdlib APIs, `String` is the normal owned text shape. The raw
+text-boundary type is reserved for borrowed literals, static compiler/runtime
+strings, C/OS boundaries, and compatibility helpers that say so explicitly,
+such as `_text`, `_raw`, or `_unchecked`. Because Ari does not have a hidden
+global heap, helpers that return owned text take `ref mut Zone` and copy into
+that zone.
 
 ## When To Use It
 
@@ -66,7 +67,7 @@ it validates the bytes, copies them into the target zone, and returns
 without allocating. `os_str(bytes)` keeps operating-system bytes distinct from
 normal text; the current POSIX slice stores raw bytes and may not be valid
 UTF-8. `os_string(ref mut zone, bytes)` is the owned raw OS-byte counterpart;
-`os_string_from_text` copies an Ari `string` literal or value into that shape.
+`os_string_from_text` copies a text literal or raw boundary value into that shape.
 `c_str(text)` is a convenience wrapper for
 `std::c::from_string(text)` and returns the shared `std::c::CStr` type, while
 `c_len` and `c_bytes` expose bytes before the trailing NUL. `bytes(text)` is
@@ -118,8 +119,8 @@ std::string::replace(ref mut zone, bytes, needle, replacement)
 
 `new` creates an empty buffer with fixed starting capacity.
 `empty` is the zero-capacity spelling for a string you plan to grow.
-`from` is the natural constructor for Ari `string` values and forwards to
-`from_string`. `copy` is the natural constructor for borrowed byte slices and
+`from` is the natural constructor for text literals or raw boundary values and
+forwards to `from_string`. `copy` is the natural constructor for borrowed byte slices and
 forwards to `from_slice_in`. The older names stay documented because they make
 the backing source explicit in low-level library code.
 `join_in` joins a `Slice[Slice[u8]]` with a byte separator and returns an owned

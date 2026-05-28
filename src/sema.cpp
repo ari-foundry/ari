@@ -24947,9 +24947,9 @@ private:
             }
             if (!is_value_integer_type(arg->type) && !is_bool && !is_string && !is_supported_float) {
                 if (spec.debug) {
-                    fail(source_arg->loc, "print debug placeholders currently support string, String, char, integer, bool, f32, and f64 values; use fmt::println_debug(ref mut zone, value) for Debug types");
+                    fail(source_arg->loc, "print debug placeholders currently support text literals, String, char, integer, bool, f32, and f64 values; use fmt::println_debug(ref mut zone, value) for Debug types");
                 }
-                fail(source_arg->loc, "format arguments currently support string, String, char, integer, bool, f32, and f64 values, got " + type_name(arg->type));
+                fail(source_arg->loc, "format arguments currently support text literals, String, char, integer, bool, f32, and f64 values, got " + type_name(arg->type));
             }
             args.push_back(std::move(arg));
         }

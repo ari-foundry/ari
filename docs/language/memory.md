@@ -407,8 +407,8 @@ and releases or decrements its allocation; raw pointers exposed from these
 handles will be non-owning views and must not transfer destruction rights.
 
 The root `String` name follows the same capability-oriented path: it aliases
-the source `std::string::String` explicit-zone handle. Lowercase `string`
-remains today's borrowed C-string pointer value and does not own or free its
+the source `std::string::String` explicit-zone handle. Raw text-boundary values
+remain today's borrowed C-string pointer values and do not own or free their
 bytes.
 
 ## Zone Allocation

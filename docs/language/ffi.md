@@ -161,7 +161,7 @@ scalar/pointer-shaped payload slots expose their stored `u64` payload word.
 `--emit-obj` output can emit direct imported `extern "C"` calls for scalar,
 raw-pointer, and classifier-approved small `@repr(C)` struct signatures as
 undefined C symbols with relocations. The supported imported-call slice covers
-integer and bool values, lowercase `string`/function-pointer slots,
+integer and bool values, raw text-boundary/function-pointer slots,
 `ptr`/`ref`/`ref mut` pointer-shaped slots, `c_void` returns, and by-value
 `@repr(C)` struct parameters or returns that the shared aggregate ABI classifier
 accepts as direct on the selected target. Object output also records explicit
@@ -362,7 +362,7 @@ fn main() -> i64 {
 ```
 
 When `null` is used without an expected type, it defaults to `ptr c_void`.
-Pointer-to-pointer casts, nullable raw-pointer casts, lowercase `string` to raw
+Pointer-to-pointer casts, nullable raw-pointer casts, raw text-boundary to raw
 pointer casts, and pointer/integer address casts use explicit `as` casts:
 
 ```ari

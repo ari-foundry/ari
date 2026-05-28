@@ -410,7 +410,7 @@ fn main() -> i64 {
 ```
 
 `std::string::String` is a byte string handle. It stores `u8` values and uses
-the source zone for its buffer. Use lowercase `string` for borrowed
+the source zone for its buffer. Use raw text-boundary values for borrowed
 NUL-terminated text pointers.
 
 ## Use Source `std::vec::Vec`
@@ -531,7 +531,7 @@ fn main() -> i64 {
 }
 ```
 
-Use lowercase `string` for C-style string pointers. For `@repr(C)` aggregates
+Use raw C-string boundary values for C-style string pointers. For `@repr(C)` aggregates
 and header emission details, see [C FFI And Libraries](ffi.md).
 
 ## Export A Shared Library Function
