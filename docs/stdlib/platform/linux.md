@@ -82,7 +82,7 @@ useful for modern systems work.
 
 | API Family | Current Status | Future Module Shape |
 | --- | --- | --- |
-| procfs | `target::has_procfs()` reports the Linux family; `std::env::executable_path()` currently reads `/proc/self/exe` and reports lookup failure as `Result`. | `std::os::linux::proc` should expose typed reads only after file/path/error policy improves. |
+| procfs | `target::has_procfs()` reports the Linux family; `std::env::executable_path(ref mut zone)` currently reads `/proc/self/exe`, copies the path into `String`, and reports lookup failure as `Result`. | `std::os::linux::proc` should expose typed reads only after file/path/error policy improves. |
 | sysfs | `target::has_sysfs()` reports the Linux family. | Keep as roadmap until a safe text/file parser pattern exists. |
 | cgroups | `target::has_cgroups_api()` reports the Linux family only. | Optional future wrapper; mount/layout differences should be explicit. |
 | namespaces | `target::has_namespaces_api()` reports the Linux family only. | Optional future process/capability API; requires privilege and error modeling. |

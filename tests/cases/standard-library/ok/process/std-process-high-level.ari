@@ -159,10 +159,10 @@ fn main() -> i64 {
     err_sink.close();
   }
 
-  if process::try_current_dir().is_some() {
+  if process::try_current_dir(ref mut zone).is_some() {
     score = score + 37;
   }
-  if process::try_executable_path().is_some() {
+  if process::try_executable_path(ref mut zone).is_some() {
     score = score + 41;
   }
 

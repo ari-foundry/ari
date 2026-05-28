@@ -12,13 +12,17 @@ and handle ownership belong in future `std::os` wrappers.
 ## API
 
 ```ari
-target::triple() -> string
+target::triple(ref mut zone) -> String
+target::triple_text() -> string
 target::arch() -> target::Arch
-target::arch_name() -> string
+target::arch_name(ref mut zone) -> String
+target::arch_name_text() -> string
 target::os() -> target::Os
-target::os_name() -> string
+target::os_name(ref mut zone) -> String
+target::os_name_text() -> string
 target::env() -> target::Env
-target::env_name() -> string
+target::env_name(ref mut zone) -> String
+target::env_name_text() -> string
 target::object_format() -> target::ObjectFormat
 target::debug_format() -> target::DebugFormat
 target::errno_abi() -> target::ErrnoAbi
@@ -97,6 +101,10 @@ fn needs_posix_errno_path() -> bool {
   return target::is_unix() && target::uses_posix_errno();
 }
 ```
+
+Natural text helpers copy target names into the caller's zone as owned
+`String` values. The `_text` helpers expose the compiler-owned borrowed static
+strings and are intended for compatibility and raw boundaries.
 
 For architecture-specific code, prefer matching the enum over parsing the
 triple string:

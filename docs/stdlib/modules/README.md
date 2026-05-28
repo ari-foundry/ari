@@ -21,9 +21,11 @@ discard information are named explicitly: `_optional` returns `Option`,
 fallible operations; new code should prefer the natural Result-returning names
 shown in each module guide.
 Some lookups model normal absence as `Option` instead of failure; for example,
-`std::env::var(name)` returns `Option[string]` because a missing environment
-variable is common CLI configuration state, while `std::env::get(name)` keeps
-the Result-returning form for callers that need `Error(NotFound)`.
+`std::env::var(ref mut zone, name)` returns `Option[String]` because a missing
+environment variable is common CLI configuration state, while
+`std::env::get(ref mut zone, name)` keeps the Result-returning form for callers
+that need `Error(NotFound)`. Borrowed host strings are kept behind explicit
+`*_text` names.
 
 ## Available Guides
 

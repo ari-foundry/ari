@@ -55,7 +55,7 @@ fn main() -> i64 {
   assert(maybe_cwd_os.is_some());
   assert(!cwd_os.is_empty());
   assert(cwd_path.is_absolute());
-  assert(same_text(startup_cwd, env::current_dir_or_default()));
+  assert(same_text(startup_cwd, env::current_dir_text_or_default()));
 
   let startup_exe = context::executable_path();
   let maybe_exe = context::try_executable_path();
@@ -65,7 +65,7 @@ fn main() -> i64 {
   assert(maybe_exe.is_some());
   assert(maybe_exe_os.is_some());
   assert(!exe_os.is_empty());
-  assert(same_text(startup_exe, env::executable_path_or_default()));
+  assert(same_text(startup_exe, env::executable_path_text_or_default()));
 
   return score;
 }

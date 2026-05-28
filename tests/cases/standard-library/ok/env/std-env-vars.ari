@@ -10,13 +10,13 @@ fn main() -> i64 {
     score = score + 3;
   }
 
-  let missing = env::try_get(name);
+  let missing = env::try_get(ref mut zone, name);
   if missing.is_none() {
     score = score + 5;
   }
-  assert(env::var(name).is_none());
+  assert(env::var(ref mut zone, name).is_none());
   assert(env::var_os(name).is_none());
-  match env::get(name) {
+  match env::get(ref mut zone, name) {
     Ok(_) => {
       panic();
     }
@@ -33,27 +33,24 @@ fn main() -> i64 {
   if env::has(name) {
     score = score + 11;
   }
-  assert(env::var(name).is_some());
-  assert(env::var_optional(name).is_some());
+  assert(env::var(ref mut zone, name).is_some());
+  assert(env::var_optional(ref mut zone, name).is_some());
   assert(env::var_os(name).is_some());
   assert(env::var_os_optional(name).is_some());
 
-  match env::var(name) {
+  match env::var(ref mut zone, name) {
     std::Some(var_value) => {
-      var var_text = std::string::from_string(ref mut zone, var_value);
-      var first_text = std::string::from_string(ref mut zone, "first");
-      assert(var_text.equals(first_text.as_slice()));
+      assert(var_value.equals_text("first"));
     }
     std::None => {
       panic();
     }
   }
 
-  match env::try_get(name) {
+  match env::try_get(ref mut zone, name) {
     std::Some(value) => {
-      var text = std::string::from_string(ref mut zone, value);
       var expected = std::string::from_string(ref mut zone, "first");
-      if text.equals(expected.as_slice()) {
+      if value.equals(expected.as_slice()) {
         score = score + 13;
       }
     }
@@ -63,11 +60,10 @@ fn main() -> i64 {
   if env::set_unchecked(name, "second") {
     score = score + 17;
   }
-  match env::get(name) {
+  match env::get(ref mut zone, name) {
     Ok(result_value) => {
-      var text_result = std::string::from_string(ref mut zone, result_value);
       var expected_result = std::string::from_string(ref mut zone, "second");
-      assert(text_result.equals(expected_result.as_slice()));
+      assert(result_value.equals(expected_result.as_slice()));
     }
     Err(_) => {
       panic();
@@ -82,12 +78,12 @@ fn main() -> i64 {
     }
   }
 
-  var updated = std::string::from_string(ref mut zone, env::get_or_default(name));
+  var updated = env::get_or_default(ref mut zone, name);
   var second = std::string::from_string(ref mut zone, "second");
   if updated.equals(second.as_slice()) {
     score = score + 19;
   }
-  var var_default = std::string::from_string(ref mut zone, env::var_or_default(name));
+  var var_default = env::var_or_default(ref mut zone, name);
   assert(var_default.equals(second.as_slice()));
   assert(env::var_os_or_default(name).len() == 6);
 
@@ -100,7 +96,7 @@ fn main() -> i64 {
     score = score + 29;
   }
 
-  let removed = env::try_get(name);
+  let removed = env::try_get(ref mut zone, name);
   if removed.is_none() {
     score = score + 31;
   }

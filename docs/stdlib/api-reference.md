@@ -386,40 +386,51 @@ returns a lowercase `string`; out-of-range access returns an empty string.
 and `thread_id()` returns the Ari runtime thread id. The main thread is `0`, so
 `is_main_thread()` is true for current executable builds.
 `context::cwd()` and `context::executable_path()` are startup snapshots captured
-by `@ari_entry`; use `std::env::current_dir()` when code needs the current
-process directory after possible `chdir` calls.
+by `@ari_entry`; use `std::env::current_dir(ref mut zone)` when code needs the
+current process directory after possible `chdir` calls.
 
 Application code should usually use the user-facing `std::env` wrappers:
 
 ```ari
 env::arg_count()
-env::arg(index)
+env::arg(ref mut zone, index)
+env::arg_text(index)
 env::args(ref mut zone)
 env::args_os(ref mut zone)
-env::arg_optional(index)
+env::arg_optional(ref mut zone, index)
+env::arg_text_optional(index)
 env::arg_unchecked(index)
 env::arg_os(index)
 env::arg_os_optional(index)
 env::arg_os_unchecked(index)
 env::has_arg(index)
-env::try_arg(index)
+env::try_arg(ref mut zone, index)
+env::try_arg_text(index)
 env::try_arg_os(index)
-env::program_name()
-env::program_name_optional()
+env::program_name(ref mut zone)
+env::program_name_optional(ref mut zone)
+env::program_name_text()
+env::program_name_text_optional()
 env::program_name_os()
 env::program_name_os_optional()
-env::var(name)
-env::var_optional(name)
-env::var_or_default(name)
+env::var(ref mut zone, name)
+env::var_optional(ref mut zone, name)
+env::var_or_default(ref mut zone, name)
+env::var_text(name)
+env::var_text_optional(name)
+env::var_text_or_default(name)
 env::var_os(name)
 env::var_os_optional(name)
 env::var_os_or_default(name)
-env::get(name)
+env::get(ref mut zone, name)
+env::get_text(name)
 env::get_os(name)
-env::get_or_default(name)
+env::get_or_default(ref mut zone, name)
+env::get_text_or_default(name)
 env::get_os_or_default(name)
 env::has(name)
-env::try_get(name)
+env::try_get(ref mut zone, name)
+env::try_get_text(name)
 env::try_get_os(name)
 env::set_var(name, value)
 env::set(name, value)
@@ -427,10 +438,14 @@ env::set_unchecked(name, value)
 env::remove_var(name)
 env::remove(name)
 env::remove_unchecked(name)
-env::current_dir()
-env::current_dir_optional()
-env::current_dir_or_default()
-env::try_current_dir()
+env::current_dir(ref mut zone)
+env::current_dir_optional(ref mut zone)
+env::current_dir_or_default(ref mut zone)
+env::try_current_dir(ref mut zone)
+env::current_dir_text()
+env::current_dir_text_optional()
+env::current_dir_text_or_default()
+env::try_current_dir_text()
 env::current_dir_os()
 env::current_dir_os_optional()
 env::try_current_dir_os()
@@ -439,10 +454,14 @@ env::current_dir_path_optional()
 env::try_current_dir_path()
 env::set_current_dir(path)
 env::set_current_dir_unchecked(path)
-env::executable_path()
-env::executable_path_optional()
-env::executable_path_or_default()
-env::try_executable_path()
+env::executable_path(ref mut zone)
+env::executable_path_optional(ref mut zone)
+env::executable_path_or_default(ref mut zone)
+env::try_executable_path(ref mut zone)
+env::executable_path_text()
+env::executable_path_text_optional()
+env::executable_path_text_or_default()
+env::try_executable_path_text()
 env::executable_path_os()
 env::executable_path_os_optional()
 env::try_executable_path_os()
@@ -453,12 +472,13 @@ env::try_executable_path_path()
 env::home_dir()
 ```
 
-`env::arg(index)` returns `Result[string, Error]`, using `NotFound` for an
-out-of-range argument index. `env::arg_optional(index)` and the older
-`env::try_arg(index)` keep only the optional success payload, while
-`env::arg_unchecked(index)` exposes the raw startup-context string hook.
-`env::program_name()` follows the same Result policy for `argv[0]`, and
-`env::program_name_optional()` is the optional compatibility form.
+`env::arg(ref mut zone, index)` returns `Result[String, Error]`, using
+`NotFound` for an out-of-range argument index. `env::arg_optional(ref mut zone,
+index)` and `env::try_arg(ref mut zone, index)` keep only the optional success
+payload, while `env::arg_text(index)` and `env::arg_unchecked(index)` expose
+borrowed startup-context string compatibility hooks. `env::program_name(ref
+mut zone)` follows the same Result policy for `argv[0]`, and
+`env::program_name_optional(ref mut zone)` is the optional form.
 `env::args(ref mut zone)` collects all arguments into an owned
 `Vec[std::string::String]`, while `env::args_os(ref mut zone)` collects
 OS-string views for CLI code that wants byte-preserving argument handling.
@@ -469,22 +489,25 @@ OS-string views for CLI code that wants byte-preserving argument handling.
 values as `std::string::OsStr` when an argument should stay in OS-string form
 until the caller chooses bytes or UTF-8.
 
-`env::var(name)` returns `Option[string]` for environment variables because a
-missing variable is ordinary configuration absence. `env::var_optional(name)`
-and the older `env::try_get(name)` keep the same optional shape, while
-`env::var_or_default(name)` and `env::get_or_default(name)` keep the older
-empty-string fallback. `env::get(name)` is the Result-returning lookup and uses
-`NotFound` for missing names.
+`env::var(ref mut zone, name)` returns `Option[String]` for environment
+variables because a missing variable is ordinary configuration absence.
+`env::var_optional(ref mut zone, name)` and `env::try_get(ref mut zone, name)`
+keep the same optional shape, while `env::var_or_default(ref mut zone, name)`
+and `env::get_or_default(ref mut zone, name)` copy the fallback into owned
+`String` values. `env::get(ref mut zone, name)` is the Result-returning lookup
+and uses `NotFound` for missing names. Use the explicit `_text` variants when
+borrowed builtin strings are needed at a runtime boundary.
 `env::set_var(name, value)` overwrites a current-process variable and
 `env::remove_var(name)` unsets it; both return `Result[(), Error]`.
 `env::set(name, value)` and `env::remove(name)` are compatibility aliases with
 the same Result behavior. `set_unchecked` and `remove_unchecked` keep the older
-boolean compatibility shape. `env::current_dir()`, `env::executable_path()`, and
-`env::set_current_dir(path)` return `Result[..., Error]`; `_optional` and
-`try_*` wrappers keep only the success payload, `_or_default` wrappers keep the
-older empty-string fallback, and `_unchecked`/`_raw` names are compatibility
-or boundary hooks. Portable child-process spawn handles remain roadmap work;
-thread helpers live in `std::thread`.
+boolean compatibility shape. `env::current_dir(ref mut zone)`,
+`env::executable_path(ref mut zone)`, and `env::set_current_dir(path)` return
+`Result[..., Error]`; `_optional` and `try_*` wrappers keep only the success
+payload, `_or_default` wrappers copy fallback values into owned `String`
+handles, and `_text`/`_unchecked`/`_raw` names are compatibility or boundary
+hooks. Portable child-process spawn handles remain roadmap work; thread helpers
+live in `std::thread`.
 
 `env::var_os(name)` returns an `Option[OsStr]` environment view.
 `env::var_os_optional(name)` and `env::try_get_os(name)` keep the same optional
@@ -503,13 +526,17 @@ POSIX-backed host slice.
 Target and platform facts live in `std::target`:
 
 ```ari
-target::triple()
+target::triple(zone)
+target::triple_text()
 target::arch()
-target::arch_name()
+target::arch_name(zone)
+target::arch_name_text()
 target::os()
-target::os_name()
+target::os_name(zone)
+target::os_name_text()
 target::env()
-target::env_name()
+target::env_name(zone)
+target::env_name_text()
 target::object_format()
 target::debug_format()
 target::errno_abi()
@@ -602,14 +629,22 @@ process::exec(command)
 process::kill(pid, signal)
 process::kill_signal(pid, signal)
 process::terminate(pid)
-process::current_dir()
-process::current_dir_optional()
-process::current_dir_or_default()
-process::try_current_dir()
-process::executable_path()
-process::executable_path_optional()
-process::executable_path_or_default()
-process::try_executable_path()
+process::current_dir(zone)
+process::current_dir_optional(zone)
+process::current_dir_or_default(zone)
+process::try_current_dir(zone)
+process::current_dir_text()
+process::current_dir_text_optional()
+process::current_dir_text_or_default()
+process::try_current_dir_text()
+process::executable_path(zone)
+process::executable_path_optional(zone)
+process::executable_path_or_default(zone)
+process::try_executable_path(zone)
+process::executable_path_text()
+process::executable_path_text_optional()
+process::executable_path_text_or_default()
+process::try_executable_path_text()
 process::temp_file(zone)
 process::temp_file_in(zone, prefix)
 process::temp_dir(zone)

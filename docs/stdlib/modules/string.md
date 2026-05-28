@@ -9,6 +9,13 @@ tests, CLI-style output, simple parser buffers, and ASCII-oriented text work.
 It now has UTF-8 validation and scalar helpers, but it is not a Unicode
 normalization, grapheme, or locale-aware text abstraction yet.
 
+For public stdlib APIs, `String` is the normal owned text shape. Lowercase
+`string` is reserved for borrowed literals, static compiler/runtime strings,
+C/OS boundaries, and compatibility helpers that say so explicitly, such as
+`_text`, `_raw`, or `_unchecked`. Because Ari does not have a hidden global
+heap, helpers that return owned text take `ref mut Zone` and copy into that
+zone.
+
 ## When To Use It
 
 Use `std::string::String` when bytes must outlive a borrowed literal or input

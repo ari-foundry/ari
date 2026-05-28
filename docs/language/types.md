@@ -155,9 +155,13 @@ pointer into one internal reusable buffer, while `read_line_owned(ref mut Zone)`
 `std::string::String` handle. The LLVM backend still rejects line
 input until it has a native input-buffer and owned-line allocation policy.
 
-The uppercase root type `String` is now the public prelude alias for
-`std::string::String`; `std::String` names the same handle. Use lowercase
-`string` for today's borrowed pointer-shaped string values.
+The uppercase root type `String` is the public prelude alias for
+`std::string::String`; `std::String` names the same handle. New stdlib APIs that
+return ordinary text should prefer owned `String` results and take
+`ref mut Zone` when allocation is needed. Lowercase `string` remains a raw
+borrowed/literal boundary type for C strings, runtime snapshots, static names,
+and compatibility helpers with names such as `_text`, `_raw`, and
+`_unchecked`.
 
 The source prelude already has the allocator-backed seed under `std::string`.
 `std::string::new(ref mut zone, capacity)` creates a tracked

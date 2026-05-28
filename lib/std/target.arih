@@ -55,18 +55,34 @@ pub enum SyscallAbi {
   LinuxRiscv64,
 }
 
-pub extern "ari" fn triple() -> string = "ari_builtin_target_triple";
+pub extern "ari" fn triple_text() -> string = "ari_builtin_target_triple";
 pub extern "ari" fn arch() -> Arch = "ari_builtin_target_arch";
-pub extern "ari" fn arch_name() -> string = "ari_builtin_target_arch_name";
+pub extern "ari" fn arch_name_text() -> string = "ari_builtin_target_arch_name";
 pub extern "ari" fn os() -> Os = "ari_builtin_target_os";
-pub extern "ari" fn os_name() -> string = "ari_builtin_target_os_name";
+pub extern "ari" fn os_name_text() -> string = "ari_builtin_target_os_name";
 pub extern "ari" fn env() -> Env = "ari_builtin_target_env";
-pub extern "ari" fn env_name() -> string = "ari_builtin_target_env_name";
+pub extern "ari" fn env_name_text() -> string = "ari_builtin_target_env_name";
 pub extern "ari" fn object_format() -> ObjectFormat = "ari_builtin_target_object_format";
 pub extern "ari" fn debug_format() -> DebugFormat = "ari_builtin_target_debug_format";
 pub extern "ari" fn errno_abi() -> ErrnoAbi = "ari_builtin_target_errno_abi";
 pub extern "ari" fn pointer_bits() -> i64 = "ari_builtin_target_pointer_bits";
 pub extern "ari" fn long_bits() -> i64 = "ari_builtin_target_long_bits";
+
+pub fn triple(zone: ref mut Zone) -> std::string::String {
+  return std::string::from(zone, triple_text());
+}
+
+pub fn arch_name(zone: ref mut Zone) -> std::string::String {
+  return std::string::from(zone, arch_name_text());
+}
+
+pub fn os_name(zone: ref mut Zone) -> std::string::String {
+  return std::string::from(zone, os_name_text());
+}
+
+pub fn env_name(zone: ref mut Zone) -> std::string::String {
+  return std::string::from(zone, env_name_text());
+}
 
 pub fn is_x86_64() -> bool {
   match arch() {

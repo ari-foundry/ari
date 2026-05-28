@@ -68,14 +68,22 @@ process::exec(command)
 process::kill(pid, signal)
 process::kill_signal(pid, signal)
 process::terminate(pid)
-process::current_dir() -> Result[string, process::Error]
-process::current_dir_or_default()
-process::current_dir_optional()
-process::try_current_dir()
-process::executable_path() -> Result[string, process::Error]
-process::executable_path_or_default()
-process::executable_path_optional()
-process::try_executable_path()
+process::current_dir(ref mut zone) -> Result[String, process::Error]
+process::current_dir_or_default(ref mut zone) -> String
+process::current_dir_optional(ref mut zone) -> Option[String]
+process::try_current_dir(ref mut zone) -> Option[String]
+process::current_dir_text() -> Result[string, process::Error]
+process::current_dir_text_or_default() -> string
+process::current_dir_text_optional() -> Option[string]
+process::try_current_dir_text() -> Option[string]
+process::executable_path(ref mut zone) -> Result[String, process::Error]
+process::executable_path_or_default(ref mut zone) -> String
+process::executable_path_optional(ref mut zone) -> Option[String]
+process::try_executable_path(ref mut zone) -> Option[String]
+process::executable_path_text() -> Result[string, process::Error]
+process::executable_path_text_or_default() -> string
+process::executable_path_text_optional() -> Option[string]
+process::try_executable_path_text() -> Option[string]
 process::temp_file(zone)
 process::temp_file_in(zone, prefix)
 process::temp_dir(zone)
@@ -398,12 +406,14 @@ endpoint types used by process IO. `ChildPipes` is the owning bundle returned by
 stream ownership explicit so callers can decide when to close stdin and how to
 drain stdout/stderr.
 
-`current_dir` and `executable_path` delegate to `std::env` and return
-`Result[string, Error]` so process-oriented code can stay inside
-`std::process` without losing failure detail. The `_optional` wrappers keep only
-the success payload, `try_current_dir` and `try_executable_path` are
+`current_dir(ref mut zone)` and `executable_path(ref mut zone)` delegate to
+`std::env`, copy successful paths into owned `String` values, and return
+`Result[String, Error]` so process-oriented code can stay inside
+`std::process` without losing failure detail. The `_optional` wrappers keep
+only the success payload, `try_current_dir` and `try_executable_path` are
 compatibility aliases for those optional forms, and `_or_default` wrappers keep
-the older empty-string fallback behavior.
+the older empty-string fallback behavior while still returning owned `String`.
+Use the explicit `_text` family only at raw borrowed-runtime boundaries.
 
 `temp_file(zone)` and `temp_dir(zone)` create unique paths under `/tmp` on the
 current hosted backend. The `_in` variants accept a path prefix. Temp paths are

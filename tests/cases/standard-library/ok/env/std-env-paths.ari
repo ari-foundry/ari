@@ -6,24 +6,27 @@ fn is_empty_text(value: string) -> bool {
 }
 
 fn main() -> i64 {
-  let cwd = env::current_dir_or_default();
-  let exe = env::executable_path_or_default();
-  let maybe_cwd = env::current_dir_optional();
-  let maybe_exe = env::executable_path_optional();
+  var zone = zone::create(1024);
+  let cwd_text = env::current_dir_text_or_default();
+  let exe_text = env::executable_path_text_or_default();
+  let cwd = env::current_dir_or_default(ref mut zone);
+  let exe = env::executable_path_or_default(ref mut zone);
+  let maybe_cwd = env::current_dir_optional(ref mut zone);
+  let maybe_exe = env::executable_path_optional(ref mut zone);
   var score = 0;
 
   assert(!is_empty_text(env::current_dir_raw()));
   assert(!is_empty_text(env::executable_path_raw()));
-  if !is_empty_text(cwd) {
+  if !cwd.is_empty() {
     score = score + 3;
   }
   if maybe_cwd.is_some() {
     score = score + 5;
   }
-  assert(env::try_current_dir().is_some());
-  match env::current_dir() {
+  assert(env::try_current_dir(ref mut zone).is_some());
+  match env::current_dir(ref mut zone) {
     Ok(current_path) => {
-      assert(!is_empty_text(current_path));
+      assert(!current_path.is_empty());
     }
     Err(_) => {
       panic();
@@ -41,21 +44,21 @@ fn main() -> i64 {
       panic();
     }
   }
-  if env::set_current_dir(cwd).is_ok() {
+  if env::set_current_dir(cwd_text).is_ok() {
     score = score + 7;
   }
-  assert(env::set_current_dir_raw(cwd));
-  assert(env::set_current_dir_unchecked(cwd));
-  if !is_empty_text(exe) {
+  assert(env::set_current_dir_raw(cwd_text));
+  assert(env::set_current_dir_unchecked(cwd_text));
+  if !exe.is_empty() {
     score = score + 11;
   }
   if maybe_exe.is_some() {
     score = score + 13;
   }
-  assert(env::try_executable_path().is_some());
-  match env::executable_path() {
+  assert(env::try_executable_path(ref mut zone).is_some());
+  match env::executable_path(ref mut zone) {
     Ok(executable_path) => {
-      assert(!is_empty_text(executable_path));
+      assert(!executable_path.is_empty());
     }
     Err(_) => {
       panic();
@@ -67,5 +70,7 @@ fn main() -> i64 {
   assert(env::try_executable_path_path().is_some());
   assert(!env::executable_path_path_or_default().is_empty());
 
+  assert(!is_empty_text(exe_text));
+  zone::destroy(zone);
   return score;
 }

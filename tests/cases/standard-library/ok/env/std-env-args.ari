@@ -4,6 +4,7 @@ fn consume_arg(value: string) -> i64 {
 }
 
 fn main() -> i64 {
+  var zone = zone::create(1024);
   let count = env::arg_count();
   var score = 0;
 
@@ -20,18 +21,18 @@ fn main() -> i64 {
     score = score + 11;
   }
 
-  let first = env::try_arg(0);
+  let first = env::try_arg(ref mut zone, 0);
   if first.is_some() {
     score = score + 13;
   }
-  assert(env::arg_optional(0).is_some());
-  match env::arg(0) {
+  assert(env::arg_optional(ref mut zone, 0).is_some());
+  match env::arg(ref mut zone, 0) {
     Ok(_) => {}
     Err(_) => {
       panic();
     }
   }
-  assert(env::arg(0).is_ok());
+  assert(env::arg(ref mut zone, 0).is_ok());
   match env::arg_os(0) {
     Ok(raw_arg) => {
       assert(raw_arg.len() > 0);
@@ -42,13 +43,13 @@ fn main() -> i64 {
   }
   assert(env::arg_os(0).is_ok());
 
-  let missing = env::try_arg(count);
+  let missing = env::try_arg(ref mut zone, count);
   if missing.is_none() {
     score = score + 17;
   }
-  assert(env::arg_optional(count).is_none());
+  assert(env::arg_optional(ref mut zone, count).is_none());
   assert(env::arg_os_optional(count).is_none());
-  match env::arg(count) {
+  match env::arg(ref mut zone, count) {
     Ok(_) => {
       panic();
     }
@@ -61,7 +62,6 @@ fn main() -> i64 {
     score = score + consume_arg(env::arg_unchecked(0));
   }
 
-  var zone = zone::create(512);
   let collected = env::args(ref mut zone);
   assert(collected.len() == count);
   if count > 0 {
@@ -72,17 +72,16 @@ fn main() -> i64 {
   if count > 0 {
     assert(!collected_os.get(0).is_empty());
   }
-  zone::destroy(zone);
-
-  let program = env::program_name();
+  let program = env::program_name(ref mut zone);
   if program.is_ok() {
     score = score + 23;
   }
-  assert(env::program_name_optional().is_some());
-  assert(env::program_name().is_ok());
+  assert(env::program_name_optional(ref mut zone).is_some());
+  assert(env::program_name(ref mut zone).is_ok());
   assert(env::program_name_os().is_ok());
   assert(env::program_name_os_optional().is_some());
   assert(env::program_name_os().is_ok());
 
+  zone::destroy(zone);
   return score;
 }
