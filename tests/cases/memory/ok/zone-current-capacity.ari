@@ -1,0 +1,16 @@
+// Current-zone blocks can choose a larger temporary zone for bulk scratch work.
+fn main() -> i64 {
+  zone(8192) {
+    let text = std::string::new(6000);
+    if text.capacity() != 6000 {
+      return 1;
+    }
+
+    var values = std::vec::new<i64>(256);
+    if values.capacity() != 256 {
+      return 2;
+    }
+  }
+
+  return 0;
+}

@@ -6720,6 +6720,9 @@ check-ffi: $(TARGET) check-layout-unit
 	grep -q "Render" $(BUILD_DIR)/ffi/zone-current-trait-calls.ll
 	$(TARGET) tests/cases/memory/ok/zone-current-callable.ari --emit-llvm $(BUILD_DIR)/ffi/zone-current-callable.ll
 	grep -q "render" $(BUILD_DIR)/ffi/zone-current-callable.ll
+	$(TARGET) tests/cases/memory/ok/zone-current-capacity.ari --emit-llvm $(BUILD_DIR)/ffi/zone-current-capacity.ll
+	grep -q "fail.bad.capacity" $(BUILD_DIR)/ffi/zone-current-capacity.ll
+	grep -q "fail.capacity" $(BUILD_DIR)/ffi/zone-current-capacity.ll
 	$(TARGET) tests/cases/memory/ok/pointer-add.ari --emit-llvm $(BUILD_DIR)/ffi/pointer-add.ll
 	grep -q 'getelementptr i64, ptr' $(BUILD_DIR)/ffi/pointer-add.ll
 	grep -q 'getelementptr i8, ptr' $(BUILD_DIR)/ffi/pointer-add.ll
@@ -6805,6 +6808,7 @@ check-ffi: $(TARGET) check-layout-unit
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/memory/ok/zone-promote-return.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/zone-promote-return.elf; $(BUILD_DIR)/ffi/zone-promote-return.elf; code=$$?; test $$code -eq 42; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/memory/ok/zone-current-trait-calls.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/zone-current-trait-calls.elf; $(BUILD_DIR)/ffi/zone-current-trait-calls.elf; code=$$?; test $$code -eq 0; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/memory/ok/zone-current-callable.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/zone-current-callable.elf; $(BUILD_DIR)/ffi/zone-current-callable.elf; code=$$?; test $$code -eq 0; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/memory/ok/zone-current-capacity.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/zone-current-capacity.elf; $(BUILD_DIR)/ffi/zone-current-capacity.elf; code=$$?; test $$code -eq 0; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/memory/ok/pointer-add.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/pointer-add.elf; $(BUILD_DIR)/ffi/pointer-add.elf; code=$$?; test $$code -eq 19; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/memory/ok/pointer-add-aggregate.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/pointer-add-aggregate.elf; $(BUILD_DIR)/ffi/pointer-add-aggregate.elf; code=$$?; test $$code -eq 56; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/memory/ok/pointer-load-store.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/pointer-load-store.elf; $(BUILD_DIR)/ffi/pointer-load-store.elf; code=$$?; test $$code -eq 12; fi

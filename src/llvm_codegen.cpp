@@ -784,6 +784,28 @@ private:
         const std::string zone_min_payload_align = std::to_string(kZoneRuntimeMinimumPayloadAlign);
         const std::string zone_header_bytes = std::to_string(kZoneAllocationHeaderBytes);
         const std::string zone_header_zone_offset = std::to_string(kZoneAllocationHeaderZoneOffset);
+        const std::string zone_bad_capacity_message =
+            std::string("ari: runtime error: zone capacity must be between 1 and ") +
+            zone_max_capacity +
+            " bytes; use zone(capacity) or zone::create(capacity)\n";
+        const std::string zone_create_failed_message =
+            "ari: runtime error: failed to allocate zone backing storage; use a smaller zone(capacity)\n";
+        const std::string zone_bad_handle_message =
+            "ari: runtime error: invalid zone handle\n";
+        const std::string zone_bad_alloc_argument_message =
+            "ari: runtime error: invalid zone allocation request\n";
+        const std::string zone_capacity_exceeded_message =
+            "ari: runtime error: zone allocation exceeded its capacity; use zone(capacity) or a larger explicit zone\n";
+        std::string zone_bad_capacity_text = string_ptr(zone_bad_capacity_message);
+        std::string zone_create_failed_text = string_ptr(zone_create_failed_message);
+        std::string zone_bad_handle_text = string_ptr(zone_bad_handle_message);
+        std::string zone_bad_alloc_argument_text = string_ptr(zone_bad_alloc_argument_message);
+        std::string zone_capacity_exceeded_text = string_ptr(zone_capacity_exceeded_message);
+        const std::string zone_bad_capacity_len = std::to_string(zone_bad_capacity_message.size());
+        const std::string zone_create_failed_len = std::to_string(zone_create_failed_message.size());
+        const std::string zone_bad_handle_len = std::to_string(zone_bad_handle_message.size());
+        const std::string zone_bad_alloc_argument_len = std::to_string(zone_bad_alloc_argument_message.size());
+        const std::string zone_capacity_exceeded_len = std::to_string(zone_capacity_exceeded_message.size());
 
         line("define " + runtime_visibility + "void @ari_context_init(i32 %argc, ptr %argv) {");
         line("entry:");
@@ -5075,20 +5097,20 @@ private:
         line("  %nonpositive.capacity = icmp sle i64 %capacity, 0");
         line("  %too.large.capacity = icmp ugt i64 %capacity, " + zone_max_capacity);
         line("  %bad.capacity = or i1 %nonpositive.capacity, %too.large.capacity");
-        line("  br i1 %bad.capacity, label %fail, label %alloc.data");
+        line("  br i1 %bad.capacity, label %fail.bad.capacity, label %alloc.data");
         line("alloc.data:");
         line("  %raw.scaled = mul i64 %capacity, " + zone_arena_scale);
         line("  %raw.capacity = add i64 %raw.scaled, " + zone_arena_slack);
         line("  %data = call ptr @malloc(i64 %raw.capacity)");
         line("  %data.null = icmp eq ptr %data, null");
-        line("  br i1 %data.null, label %fail, label %alloc.zone");
+        line("  br i1 %data.null, label %fail.create, label %alloc.zone");
         line("alloc.zone:");
         line("  %zone = call ptr @malloc(i64 " + zone_struct_bytes + ")");
         line("  %zone.null = icmp eq ptr %zone, null");
         line("  br i1 %zone.null, label %free.data, label %init");
         line("free.data:");
         line("  call void @free(ptr %data)");
-        line("  br label %fail");
+        line("  br label %fail.create");
         line("init:");
         line("  %capacity.slot = getelementptr i64, ptr %zone, i64 0");
         line("  store i64 %capacity, ptr %capacity.slot");
@@ -5101,7 +5123,12 @@ private:
         line("  %raw.capacity.slot = getelementptr i64, ptr %zone, i64 4");
         line("  store i64 %raw.capacity, ptr %raw.capacity.slot");
         line("  ret ptr %zone");
-        line("fail:");
+        line("fail.bad.capacity:");
+        line("  call i64 @write(i32 2, ptr " + zone_bad_capacity_text + ", i64 " + zone_bad_capacity_len + ")");
+        line("  call void @exit(i32 1)");
+        line("  unreachable");
+        line("fail.create:");
+        line("  call i64 @write(i32 2, ptr " + zone_create_failed_text + ", i64 " + zone_create_failed_len + ")");
         line("  call void @exit(i32 1)");
         line("  unreachable");
         line("}");
@@ -5115,6 +5142,7 @@ private:
         line("ok:");
         line("  ret ptr %zone");
         line("fail:");
+        line("  call i64 @write(i32 2, ptr " + zone_bad_handle_text + ", i64 " + zone_bad_handle_len + ")");
         line("  call void @exit(i32 1)");
         line("  unreachable");
         line("}");
@@ -5135,12 +5163,12 @@ private:
         line("  %align.bad = icmp sle i64 %align, 0");
         line("  %bad.0 = or i1 %zone.null, %bytes.bad");
         line("  %bad.1 = or i1 %bad.0, %align.bad");
-        line("  br i1 %bad.1, label %fail, label %check.align");
+        line("  br i1 %bad.1, label %fail.bad.argument, label %check.align");
         line("check.align:");
         line("  %mask = sub i64 %align, 1");
         line("  %power.bits = and i64 %align, %mask");
         line("  %power.bad = icmp ne i64 %power.bits, 0");
-        line("  br i1 %power.bad, label %fail, label %load");
+        line("  br i1 %power.bad, label %fail.bad.argument, label %load");
         line("load:");
         line("  %capacity.slot = getelementptr i64, ptr %zone, i64 0");
         line("  %capacity = load i64, ptr %capacity.slot");
@@ -5154,7 +5182,7 @@ private:
         line("  %logical.overflow = icmp ult i64 %logical.new, %logical.used");
         line("  %logical.too.big = icmp ugt i64 %logical.new, %capacity");
         line("  %bad.logical = or i1 %logical.overflow, %logical.too.big");
-        line("  br i1 %bad.logical, label %fail, label %layout");
+        line("  br i1 %bad.logical, label %fail.capacity, label %layout");
         line("layout:");
         line("  %needs.min.align = icmp ult i64 %align, " + zone_min_payload_align);
         line("  %effective.align = select i1 %needs.min.align, i64 " + zone_min_payload_align + ", i64 %align");
@@ -5172,7 +5200,7 @@ private:
         line("  %bad.raw.0 = or i1 %payload.unaligned.overflow, %payload.biased.overflow");
         line("  %bad.raw.1 = or i1 %raw.overflow, %raw.too.big");
         line("  %bad.raw = or i1 %bad.raw.0, %bad.raw.1");
-        line("  br i1 %bad.raw, label %fail, label %commit");
+        line("  br i1 %bad.raw, label %fail.capacity, label %commit");
         line("commit:");
         line("  store i64 %raw.new, ptr %raw.offset.slot");
         line("  store i64 %logical.new, ptr %logical.used.slot");
@@ -5182,7 +5210,12 @@ private:
         line("  store ptr %zone, ptr %header");
         line("  %out = getelementptr i8, ptr %data, i64 %payload.offset");
         line("  ret ptr %out");
-        line("fail:");
+        line("fail.bad.argument:");
+        line("  call i64 @write(i32 2, ptr " + zone_bad_alloc_argument_text + ", i64 " + zone_bad_alloc_argument_len + ")");
+        line("  call void @exit(i32 1)");
+        line("  unreachable");
+        line("fail.capacity:");
+        line("  call i64 @write(i32 2, ptr " + zone_capacity_exceeded_text + ", i64 " + zone_capacity_exceeded_len + ")");
         line("  call void @exit(i32 1)");
         line("  unreachable");
         line("}");
@@ -5200,6 +5233,7 @@ private:
         line("ok:");
         line("  ret ptr %zone");
         line("fail:");
+        line("  call i64 @write(i32 2, ptr " + zone_bad_handle_text + ", i64 " + zone_bad_handle_len + ")");
         line("  call void @exit(i32 1)");
         line("  unreachable");
         line("}");

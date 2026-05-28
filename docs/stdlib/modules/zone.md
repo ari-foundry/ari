@@ -82,6 +82,13 @@ zone(65536) {
 }
 ```
 
+Capacity is a runtime limit for the temporary arena. If `zone { ... }` is too
+small for the values created inside it, the hosted runtime writes a diagnostic
+to stderr and exits. The diagnostic suggests `zone(capacity) { ... }` or a
+larger explicit zone. Invalid capacities, invalid zone handles, and malformed
+raw allocation requests also get named runtime diagnostics instead of a silent
+exit.
+
 Inside a current-zone block, calls may omit exactly one `ref mut Zone`
 parameter. The checker inserts the current zone for ordinary functions,
 generic functions, ordinary methods, associated functions, trait-qualified
@@ -255,6 +262,9 @@ Current-zone blocks are intentionally lexical and conservative:
   object-safe dyn dispatch.
 - `tests/cases/memory/ok/zone-current-callable.ari` checks omitted
   current-zone arguments through a function pointer value.
+- `tests/cases/memory/ok/zone-current-capacity.ari` checks explicit
+  current-zone capacity for bulk scratch allocation and the LLVM runtime
+  labels used by zone capacity diagnostics.
 - `tests/cases/memory/errors/zone-current-missing-function.ari` and
   `tests/cases/memory/errors/zone-current-missing-method.ari`, plus the
   callable, trait-qualified, and trait-object variants, check targeted
@@ -269,8 +279,7 @@ the focused zone allocation coverage.
 - possible `new zone { ... }` spelling if Ari later gets a general resource
   construction grammar; today `zone { ... }` keeps `zone` contextual and
   avoids reserving another keyword
-- better capacity policy for current-zone blocks, including diagnostics that
-  can suggest `zone(capacity) { ... }` when an allocation would exceed the
-  default temporary region
+- capacity planning helpers for common parser/formatter workloads, so callers
+  can choose `zone(capacity) { ... }` before entering the block
 - allocator traits after trait object and generic impl conventions settle
 - richer diagnostics for raw allocation of ownership-heavy values

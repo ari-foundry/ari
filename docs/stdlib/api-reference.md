@@ -2554,6 +2554,13 @@ handles when ownership matters.
 blocks when no explicit `zone(capacity)` value is written. It is 4096 bytes in
 the current hosted compiler.
 
+Zone capacity failures are runtime traps, not recoverable allocation results.
+The hosted runtime writes a short stderr diagnostic before exiting: invalid
+zone capacities name the valid range, allocation exhaustion suggests
+`zone(capacity)` or a larger explicit zone, and invalid raw zone handles or raw
+allocation arguments are named separately. Use `zone(capacity) { ... }` for
+bulk scratch work when the 4096-byte default is too small.
+
 `allocation_zone(data)` reads Ari's allocation header for a non-null zone
 allocation and returns the raw opaque handle. Prefer `metadata(data)`, which
 wraps that handle as `ZoneMetadata`. `from_zone(ref mut zone)` captures

@@ -22,6 +22,13 @@ zone {
 Explicit zone arguments remain valid and are required whenever a value should
 be allocated into a longer-lived caller-owned zone.
 
+If a temporary zone cannot satisfy an allocation, the hosted runtime writes a
+short diagnostic to stderr before exiting. Invalid capacities name the valid
+range, and capacity exhaustion suggests `zone(capacity) { ... }` or a larger
+explicit zone. This is still a runtime trap rather than a recoverable
+`Result`; callers that need recovery should size the zone deliberately or use
+an API that reports capacity failure before allocating.
+
 ## Parser Contract
 
 `zone` is contextual statement syntax, not a lexer keyword. The parser should
@@ -92,8 +99,8 @@ The current zone is a lexical compiler capability, not a runtime global that
 library code can fetch arbitrarily. That keeps allocation visible in source:
 `zone { ... }` means "use this block's temporary zone unless I pass a
 different one." Future ergonomics should keep that property. Good next steps
-are better diagnostics and cleaner resource-block spelling; a hidden global
-allocator or long-lived ambient heap would work against Ari's explicit
+are cleaner resource-block spelling and capacity planning helpers; a hidden
+global allocator or long-lived ambient heap would work against Ari's explicit
 allocation model.
 
 ## Stdlib Guidance
@@ -115,6 +122,8 @@ When adding a public zone-backed API:
 
 ## Remaining Work
 
-- better capacity diagnostics when the default temporary zone is too small
 - a future expression form only if the language gets a clean block-expression
   story; the current feature is intentionally statement-only
+- optional compile-time or library-side sizing helpers for common scratch
+  workloads, so large parser/formatter operations can choose a capacity before
+  entering the block
