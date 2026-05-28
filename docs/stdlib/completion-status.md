@@ -38,43 +38,6 @@ For the remaining items that require compiler features before stdlib APIs can
 be finished, see
 [Compiler-Bound Standard Library Gaps](../dev/compiler-bound-stdlib-gaps.md).
 
-## Already Completed From Older Gap Lists
-
-Several old gap lists still mention work that is now done:
-
-- `std::io::print`, `println`, `eprint`, and `eprintln` are natural
-  `Result[(), Error]` APIs. The old `*_text` forms remain compatibility
-  helpers.
-- `BufWriter` has explicit `flush()` and best-effort drop-time flushing.
-- `std::fs` has natural Result names for open/read/write/mutation/query paths,
-  temp file and temp directory wrappers, hosted POSIX advisory file locks,
-  structured `PathError`/`TwoPathError` detailed helpers, per-entry
-  `DirEntryInfo` metadata snapshots, POSIX owner/group ids, and an explicit
-  portable creation-time fallback policy.
-- `std::process` has environment clear/inherit policy, typed exit status
-  helpers, readiness-drained stdout/stderr capture, output UTF-8 conversion,
-  execution helpers for file-backed stdin and `/dev/null`, bounded pipe-backed
-  stdin, interactive stdin/stdout/stderr `ChildPipes`, explicit detach
-  vocabulary, and parent-visible child setup/exec errors for fork-based command
-  helpers.
-- `std::net` has IPv6 TCP/UDP hooks, bracketed IPv6 endpoint parsing,
-  `resolve_all`/`to_socket_addrs`, natural `bind`/`connect`, UDP source
-  address receive helpers, single-descriptor readiness probes, and common
-  socket options such as keepalive, linger, reuse-port, broadcast, buffer sizes, TTL,
-  and hop-limit.
-- `std::collections` has natural `new` constructors, String-key borrowed
-  byte-slice lookup, tree `range_mut`, tree split/append, lazy set algebra, and
-  focused tests for those collection-polish paths.
-- `std::sync` has guard types, no-poison policy docs, Result compare-exchange,
-  fallible `OnceLock` initialization status, timeout-shaped condvar waiting,
-  and Result channel send/receive errors.
-- `std::thread` has a separate owning `JoinHandle`, detach, join errors,
-  nonblocking `try_join`, raw-data thread entry bridges, fixed-capacity
-  `ThreadScope` join owners, and Result available-parallelism helpers for the
-  current `fn() -> i64` and explicit `fn(ptr u8) -> i64` entry models.
-- `std::string`, `std::parse`, and `std::encoding` have the parser-friendly and
-  Result-returning helpers needed for small Ari manifest/config parsers.
-
 ## Current Remaining Work
 
 This is the live remaining list after the current source/docs/API-manifest
@@ -95,63 +58,3 @@ tests, or CI matrix work.
 | `std::string` | Platform-specific `OsString` storage beyond the current POSIX byte wrapper, Unicode normalization/transcoding, grapheme iteration, and locale-sensitive case policy. A dedicated string-builder type is intentionally not planned for the basic slice. |
 | `std::parse` | Future taxonomy splits backed by real caller needs; the current basic slice already covers natural Result parsers, stable diagnostic names/messages, byte offsets, and finite/subnormal float boundary checks. |
 | `std::encoding` | Unicode normalization/transcoding and optional compression policy outside the core encoding module. |
-| `union by` language idea | Syntax is chosen, parser/AST tooling preserves selector and arm payload types, sema validates earlier-field selector roots, nested struct-field selector segments, unique arm names, arm payload type refs, exact enum-case arm coverage, exact bool `false`/`true` arm coverage, and targeted rejection for non-enum/non-bool selectors. Enum and bool selector fields can be constructed in struct literals with natural `field: arm(payload)` syntax or compatibility `field: arm => payload`; natural call constructors require exactly one payload expression, and struct payload arms can also use `field: arm { field: value }`. Same-literal selector mismatches are diagnosed, explicit dynamic selector expressions are rejected instead of accepted unchecked, omitted enum/bool selectors can be inferred from constructor arms, direct `match` over the field reads active payloads with the declared arm names, and direct `match` over the selector path narrows linked payload-slot projection inside each arm. Unproven direct payload-slot projection such as `packet.fragment.0` is rejected because it does not prove the active arm. Local aliases such as `let fragment = packet.fragment;` and aliases created by destructuring patterns keep the same projection restriction and cannot be reassigned independently. Direct owner-word arms can be moved and dropped through active-arm matches, whole-value drops clean up only the active owner payload, live owner-carrying union values must be moved or dropped before return, and owner-bearing aggregate arm payloads produce a targeted diagnostic. Future compiler work is limited to non-enum selector policy and public ABI promises. |
-| Structural capability parameters | Ordinary free functions, inherent `impl` methods, trait methods, and trait impl methods now support single-method `fn save(x: has serialize() -> i64)`, grouped `fn save(x: has { serialize() -> i64, add(i64) -> i64 })`, explicit generic bounds, reusable aliases such as `type Serializable = has serialize() -> i64;` plus `fn save[T: Serializable](x: T)`, and generic aliases such as `type Mapper[Input, Output] = has map(Input) -> Output;` plus `fn f[T: Mapper[i64, bool]](x: T)`. Struct and enum generic declarations can use direct `has` bounds or capability aliases, and concrete aggregate type applications check the selected type argument before storage or enum payload lowering, including forwarded aggregate fields such as `Outer[T]` storing `DirectBox[T]`. These requirements lower through hidden or named generics, field/property-style requirements are rejected as method-only, duplicate method names in one capability set are rejected, call-site and aggregate-application method checking, alias type-argument substitution, full grouped-set and alias-expanded failure diagnostics, trait impl structural-bound matching, and normal static method monomorphization. Hidden capability generics stay out of visible method type-argument counts. Remaining work is possible future requirement kinds beyond methods and implicit import of forwarded aggregate bounds into generic method bodies. |
-
-## Language Roadmap Interaction
-
-The discriminant-linked struct field idea is compiler roadmap work, not a
-stdlib API. The chosen spelling is:
-
-```ari
-fragment: union by security.cipher_type {
-  stream => GenericStreamCipher,
-  block => GenericBlockCipher,
-  aead => GenericAEADCipher,
-}
-```
-
-Enum- and bool-selector forms are now usable for construction, matching, and
-owner cleanup in executable programs. The parser and AST preserve the spelling
-for tooling, and sema validates that the selector is a stable earlier-field path
-with unique, type-resolved arms. Enum selectors require arm names to exactly
-cover the enum cases, bool selectors use exact `false` and `true` arms, and
-non-enum/non-bool selectors are rejected with a policy diagnostic. Constructor
-forms either infer omitted selectors, check statically visible selectors, or
-reject dynamic selector expressions that would otherwise be unchecked. Direct
-owner-word payload arms are integrated with ownership checks; nested
-owner-bearing aggregate payloads are deliberately rejected until per-field
-active-payload layout is designed.
-
-Structural capability parameters are also language work rather than a stdlib
-API. The initial executable shape is:
-
-```ari
-fn save(x: has serialize() -> i64) -> i64 {
-  x.serialize()
-}
-```
-
-Grouped requirements use braces and attach every listed method requirement to
-the same hidden generic:
-
-```ari
-fn save(x: has { serialize() -> i64, add(i64) -> i64 }, amount: i64) -> i64 {
-  x.serialize() + x.add(amount)
-}
-```
-
-For ordinary free functions, inherent `impl` methods, trait methods, and trait
-impl methods, the compiler desugars the parameter to a hidden generic, checks
-the concrete call-site type for matching static methods, and lowers the
-function body through the same monomorphized method-call path as other generic
-functions. Trait impl conformance checks require the structural method
-requirements to match the trait declaration. Unsupported type positions still
-get a targeted diagnostic. Capability aliases make reusable capability sets
-available in supported function, method, struct, and enum bounds; generic alias
-type arguments are substituted into the required method signatures before
-call-site or aggregate-application checking. Using a capability alias as a
-runtime value type, storage field, trait bound, or unsupported generic context
-is rejected for now. The compiler must still improve diagnostics that point
-users toward named traits when that boundary is clearer. The feature must
-continue to avoid an `interface` keyword or accidental dynamic dispatch.

@@ -21,135 +21,31 @@ The few stdlib polish items that are blocked by compiler features are mapped in
 
 ## Near-Term Order
 
-1. Source identity and spans: every source-backed diagnostic and artifact should
-   carry stable source ids, byte spans, line/column lookup, snippets, and
-   imported-file identity.
-2. Diagnostics: common parser, semantic, module, ownership, trait, generic, and
-   backend errors should be specific, source-aware, and stable.
-3. Module/project flow: nested imports, visibility, duplicate modules, missing
-   modules, cycles, same-filename directories, and module graph artifacts should
-   be deterministic.
-4. Frontend reliability: invalid characters, EOF edges, unterminated strings or
-   comments, malformed declarations, malformed expressions, recovery, and syntax
-   artifacts should stay stable.
-5. Compiler-shaped data readiness: normal Ari structs, enums, matches,
-   generics, and ownership should be enough to model tokens, spans, diagnostics,
-   symbols, type references, and pass results.
-6. Trait and generic readiness: generic functions, generic aggregates, trait
-   bounds, trait method resolution, monomorphization keys, and generic
-   ownership/drop should work through general compiler paths.
-7. Artifact comparison: token, source-map, syntax, diagnostic, module graph,
-   declaration index, typed IR, pass summary, LLVM fragment, object/shared
-   symbol, and runtime-output artifacts should be deterministic.
-8. ABI/backend reliability: primitive, pointer, aggregate, enum, generic
-   aggregate, function, object, shared library, and C FFI cases should either
-   work in the documented subset or fail with a clear diagnostic.
+1. Function parameter patterns: parse, check, and lower pattern shapes in
+   function parameter positions without weakening current ownership or
+   diagnostics.
+2. Runtime strings and floats: finish owned runtime string semantics and full
+   float value behavior across typing, constants, formatting, and LLVM output.
+3. Raw pointers and allocation zones: expose explicit pointer operations and
+   allocation-zone diagnostics without adding a magical global heap.
+4. General iterator protocol: move beyond compiler-known `range` loops toward a
+   trait-backed iterator lowering path.
+5. Closure and environment lowering: model captured values, move/drop paths,
+   and call ABI well enough to unlock captured thread entries and broader
+   callback APIs.
+6. Generic thread results and compiler TLS: support generic `JoinHandle[T]`,
+   result storage ownership, send/share diagnostics, and compiler-level
+   `thread_local` declarations.
+7. Variadic/default-zone formatting: decide between variadic generics,
+   compiler-known format lowering, or both, and settle the default allocation
+   policy before enabling executable `format!`.
 
 ## Language Ideas Parked For Later
 
-Structural capability parameters now have an implemented static method-only
-subset for ordinary free functions, inherent `impl` methods, trait methods,
-trait impl methods, struct generics, and enum generics:
-
-```ari
-fn save(x: has serialize() -> i64) -> i64 {
-    x.serialize()
-}
-```
-
-The parser accepts `has method(...) -> Type` and grouped
-`has { method(...) -> Type, other(...) -> Type }` in ordinary free-function,
-inherent `impl` method, trait method, and trait impl method parameter type
-positions, plus explicit generic bounds such as
-`fn save[T: has serialize() -> i64](x: T)`. Non-generic capability aliases such
-as `type Serializable = has serialize() -> i64;` and generic aliases such as
-`type Mapper[Input, Output] = has map(Input) -> Output;` can be reused as
-supported function, method, struct, and enum generic bounds. Semantic analysis
-lowers anonymous parameters to hidden generics, substitutes alias type
-arguments into reusable capability requirements, checks concrete call-site and
-aggregate application types for every listed static method, and monomorphizes
-function bodies through the ordinary method-call path. Forwarded aggregate
-fields such as `Outer[T]` containing `Boxed[T: has serialize() -> i64]` carry
-the requirement into concrete aggregate applications and generic impl bodies.
-Trait impl conformance now compares structural capability method signatures
-exactly, so a trait method and its impl can use direct `has ...` spelling or an
-equivalent capability alias but cannot silently change the requirement. Hidden
-capability generics do not count as visible method type arguments. Field or
-property-style requirements are rejected as method-only. It must continue to
-avoid an `interface` keyword, accidental dynamic dispatch, or a shortcut around
-named trait-bound diagnostics. Remaining roadmap work is future language design
-beyond method requirements, not the base compiler implementation.
-
-Discriminant-linked union fields are also worth exploring for protocol and
-binary-format records whose payload shape is controlled by data already present
-in the surrounding value or in an explicit context value. The intent is the
-same modeling niche as a tagged union inside a struct, but with the tag tied to
-a real field or context expression instead of inventing a second hidden enum
-tag:
-
-```ari
-struct TLSCiphertext {
-  content_type: ContentType,
-  version: ProtocolVersion,
-  length: u16,
-  security: SecurityParameters,
-  fragment: union by security.cipher_type {
-    stream => GenericStreamCipher,
-    block => GenericBlockCipher,
-    aead => GenericAEADCipher,
-  },
-}
-```
-
-The spelling is `union by` for the discriminant link and named arms for the
-alternatives. The union field's active payload type is determined by the named
-discriminant value.
-
-This is no longer syntax-only. The parser builds a `TypeRef` for `union by`
-that records the selector path and each arm's payload type, so
-syntax/declaration tooling can inspect the shape. Sema validates that the
-selector starts from an earlier struct field, nested selector segments resolve
-through known struct fields, arm names are unique, arm payload types resolve,
-enum selectors use arms that exactly cover the enum cases, and bool selectors
-use exactly `false` and `true` arms. For enum and bool selectors, the compiler
-lowers the field to hidden enum storage and accepts struct literal construction
-with natural `fragment: stream(payload)` / `payload: true(payload)` syntax or
-compatibility `fragment: stream => payload`. Struct payload arms also accept the
-shorthand `fragment: stream { field: value }`, which uses the arm's declared
-payload type as the struct literal type. When the selector value is visible in
-the same struct literal, the constructor arm must match it; if the selector is
-written with a dynamic expression, construction is rejected because the active
-arm cannot be proven locally. Direct enum selector fields such as `kind`,
-direct bool selector
-fields such as `enabled`, and nested selector paths such as
-`security.cipher_type` when their omitted intermediate struct value can be
-synthesized from the selector alone, may also be omitted and inferred from
-any supported `union by` constructor spelling; if multiple union
-fields share that omitted selector, their constructor arms must agree.
-The field value can also be matched directly with the same arm names, for
-example `match packet.fragment { stream(stream_payload) => ... }`; pattern
-resolution prefers the subject enum type before global case names so `union by`
-arms can share names with the selector enum cases. Matching the selector path
-itself also narrows the linked payload field inside each arm, so
-`match packet.security.cipher_type { stream => packet.fragment.0.value, ... }`
-is accepted with the arm's declared payload type. Selector-path narrowing also
-works through wrapper structs such as
-`match envelope.packet.security.cipher_type { stream => envelope.packet.fragment.0.value, ... }`.
-Local aliases of a `union by` field can be matched and projected inside the
-matching arm, while aliases outside a matching arm still require a proof. After
-construction, direct assignment to the selector path, an ancestor field, or the
-`union by` field itself is rejected; rebuild the whole struct when the
-discriminant and active payload must change together.
-
-It should not replace ordinary `enum` ADTs, unchecked C unions, or `match`.
-Non-enum and non-bool selectors are rejected so the active-arm set stays closed
-and exhaustively checkable. Direct owner-word arms participate in ownership:
-matching the union field moves the active payload binding, whole-value `drop`
-cleans up only the active payload, live owner-carrying union values must be
-moved or dropped before return, and nested owner-bearing aggregate arm payloads
-produce a targeted diagnostic. Remaining design work is outside the implemented
-compiler subset and covers non-enum selector policies and public ABI promises.
-The compiler capability inventory tracks this as `union-by-fields`.
+- Capability requirement extensions: associated types, operators, and field
+  requirements remain explicit future design.
+- `union by` extensions: non-enum selectors and public/stable ABI promises
+  remain future design outside the executable enum/bool selector subset.
 
 ## What Not To Track Here
 
