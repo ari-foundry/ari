@@ -210,8 +210,6 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-cyclic-module.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-cyclic-module.diagnostic
 	$(TARGET) tests/cases/modules/errors/self-import-main.ari --no-implicit-std --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-self-import-source-id.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-self-import-source-id.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-self-import-source-id.diagnostic
-	$(TARGET) tests/cases/modules/errors/duplicate-module-file-identity.ari --no-implicit-std --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-duplicate-module-file-identity.diagnostic
-	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-duplicate-module-file-identity.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-duplicate-module-file-identity.diagnostic
 	$(TARGET) tests/cases/modules/errors/imported-parse-error-main.ari --no-implicit-std --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-imported-parse-source-id.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-imported-parse-source-id.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-imported-parse-source-id.diagnostic
 	$(TARGET) tests/cases/modules/errors/imported-semantic-error-main.ari --no-implicit-std --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-imported-semantic-source-id.diagnostic
@@ -4612,6 +4610,8 @@ check-modules: $(TARGET)
 	$(BUILD_DIR)/modules/same-filename-project-main.elf; code=$$?; test $$code -eq 33
 	$(TARGET) tests/cases/modules/ok/file-relative-child-main.ari -o $(BUILD_DIR)/modules/file-relative-child-main.elf
 	$(BUILD_DIR)/modules/file-relative-child-main.elf; code=$$?; test $$code -eq 38
+	$(TARGET) tests/cases/modules/ok/reimport-same-source-main.ari -o $(BUILD_DIR)/modules/reimport-same-source-main.elf
+	$(BUILD_DIR)/modules/reimport-same-source-main.elf; code=$$?; test $$code -eq 42
 	$(TARGET) tests/cases/modules/ok/project-compiler-main.ari --emit-module-graph $(BUILD_DIR)/modules/project-compiler-main.graph
 	grep -E -q "Source ordinal=3 source_id=[0-9]+ module=project_compiler::parser .*path=tests/cases/modules/ok/project_compiler/parse.ari" $(BUILD_DIR)/modules/project-compiler-main.graph
 	grep -q "Import owner=project_compiler module=project_compiler::parser local=parse visibility=pub" $(BUILD_DIR)/modules/project-compiler-main.graph
@@ -4887,8 +4887,6 @@ check-modules: $(TARGET)
 	grep -q "ambiguous module file for 'ambiguous_module'" $(BUILD_DIR)/modules/ambiguous-module.err
 	if $(TARGET) tests/cases/modules/errors/duplicate-module-decl.ari --check >$(BUILD_DIR)/modules/duplicate-module-decl.err 2>&1; then exit 1; fi
 	grep -q "duplicate module 'Repeated'" $(BUILD_DIR)/modules/duplicate-module-decl.err
-	if $(TARGET) tests/cases/modules/errors/duplicate-module-file-identity.ari --check >$(BUILD_DIR)/modules/duplicate-module-file-identity.err 2>&1; then exit 1; fi
-	grep -q "module file 'tests/cases/modules/errors/module_identity_source.ari' was already loaded as 'First', not 'Second'" $(BUILD_DIR)/modules/duplicate-module-file-identity.err
 	if $(TARGET) tests/cases/modules/errors/unknown-imported-symbol.ari --check >$(BUILD_DIR)/modules/unknown-imported-symbol.err 2>&1; then exit 1; fi
 	grep -q "unknown function or enum case 'missing'" $(BUILD_DIR)/modules/unknown-imported-symbol.err
 	if $(TARGET) tests/cases/modules/errors/type-value-namespace-confusion.ari --check >$(BUILD_DIR)/modules/type-value-namespace-confusion.err 2>&1; then exit 1; fi

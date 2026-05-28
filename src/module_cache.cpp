@@ -519,6 +519,15 @@ const ModuleCacheSource* find_module_cache_source(const ModuleCache& cache, cons
     return nullptr;
 }
 
+const ModuleCacheSource* find_module_cache_source(const ModuleCache& cache,
+                                                  const std::string& module_name,
+                                                  const std::string& path) {
+    for (const auto& source : cache.sources) {
+        if (source.module_name == module_name && source.path == path) return &source;
+    }
+    return nullptr;
+}
+
 const ModuleCacheAstSummary* find_module_cache_ast_summary(const ModuleCache& cache,
                                                            const std::string& path) {
     for (const auto& summary : cache.ast_summaries) {
@@ -527,10 +536,28 @@ const ModuleCacheAstSummary* find_module_cache_ast_summary(const ModuleCache& ca
     return nullptr;
 }
 
+const ModuleCacheAstSummary* find_module_cache_ast_summary(const ModuleCache& cache,
+                                                           const std::string& module_name,
+                                                           const std::string& path) {
+    for (const auto& summary : cache.ast_summaries) {
+        if (summary.module_name == module_name && summary.path == path) return &summary;
+    }
+    return nullptr;
+}
+
 const ModuleCacheIrSummary* find_module_cache_ir_summary(const ModuleCache& cache,
                                                          const std::string& path) {
     for (const auto& summary : cache.ir_summaries) {
         if (summary.path == path) return &summary;
+    }
+    return nullptr;
+}
+
+const ModuleCacheIrSummary* find_module_cache_ir_summary(const ModuleCache& cache,
+                                                         const std::string& module_name,
+                                                         const std::string& path) {
+    for (const auto& summary : cache.ir_summaries) {
+        if (summary.module_name == module_name && summary.path == path) return &summary;
     }
     return nullptr;
 }

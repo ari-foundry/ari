@@ -187,14 +187,6 @@ void add_generic_param_names(std::set<std::string>& names,
     for (const auto& generic : generics) names.insert(generic.name);
 }
 
-void add_secondary_label_if_valid(CompileError& error,
-                                  SourceLocation loc,
-                                  const std::string& message) {
-    Span span = span_from_location(loc);
-    if (!span_has_source(span) || !span_has_valid_order(span)) return;
-    error.add_label(DiagnosticLabel{span, message, false});
-}
-
 std::string impl_origin_method_key(const std::string& trait_key,
                                    const std::string& method_name) {
     return trait_key + "::" + method_name;
@@ -311,30 +303,6 @@ ModuleFileSearch find_module_file(const ModuleImport& import,
     error.add_note(DiagnosticNote{
         std::nullopt,
         "move shared declarations to a third module or remove one of the imports in the cycle",
-        DiagnosticNoteKind::Help});
-    throw error;
-}
-
-[[noreturn]] void fail_duplicate_module_source_identity(SourceLocation loc,
-                                                        SourceLocation previous_loc,
-                                                        const std::string& source_path,
-                                                        const std::string& loaded_name,
-                                                        const std::string& requested_name) {
-    CompileError error(std::move(loc),
-                       "module file '" + source_path +
-                           "' was already loaded as '" + loaded_name +
-                           "', not '" + requested_name + "'");
-    add_secondary_label_if_valid(
-        error,
-        previous_loc,
-        "previous import loaded this source file as '" + loaded_name + "'");
-    error.add_note(DiagnosticNote{
-        std::nullopt,
-        "a single source file has one module identity during a compile",
-        DiagnosticNoteKind::Note});
-    error.add_note(DiagnosticNote{
-        std::nullopt,
-        "import this file with the same module name or split the modules into separate files",
         DiagnosticNoteKind::Help});
     throw error;
 }
@@ -779,16 +747,18 @@ ParsedModuleFile parse_file_in_module(const std::string& path,
                                       bool allow_summary_materialize) {
     std::string source;
     if (input_cache) {
-        const ModuleCacheSource* cached = find_module_cache_source(*input_cache, path);
+        const std::string module_name = join_qualified_path(module_path);
+        const ModuleCacheSource* cached = find_module_cache_source(*input_cache, module_name, path);
         if (!cached) throw CompileError("module cache is missing source '" + path + "'");
         const bool ast_summaries_preserve_source_spans = false;
         if (allow_summary_materialize && ast_summaries_preserve_source_spans) {
-            const ModuleCacheAstSummary* summary = find_module_cache_ast_summary(*input_cache, path);
+            const ModuleCacheAstSummary* summary =
+                find_module_cache_ast_summary(*input_cache, module_name, path);
             if (summary) {
                 Program declarations = materialize_module_cache_ast_summary_declarations(*summary, path);
                 std::vector<ModuleCacheIrFunctionSummary> ir_functions;
                 const ModuleCacheIrSummary* ir_summary =
-                    find_module_cache_ir_summary(*input_cache, path);
+                    find_module_cache_ir_summary(*input_cache, module_name, path);
                 bool can_load_ast_summary = can_load_module_cache_ast_summary_declarations(declarations);
                 if (ir_summary) {
                     ir_functions = materialize_module_cache_ir_summary_functions(*ir_summary, path);
@@ -809,11 +779,12 @@ ParsedModuleFile parse_file_in_module(const std::string& path,
             }
         }
         if (allow_summary_materialize && !ast_summaries_preserve_source_spans) {
-            const ModuleCacheAstSummary* summary = find_module_cache_ast_summary(*input_cache, path);
+            const ModuleCacheAstSummary* summary =
+                find_module_cache_ast_summary(*input_cache, module_name, path);
             if (summary) {
                 Program declarations = materialize_module_cache_ast_summary_declarations(*summary, path);
                 const ModuleCacheIrSummary* ir_summary =
-                    find_module_cache_ir_summary(*input_cache, path);
+                    find_module_cache_ir_summary(*input_cache, module_name, path);
                 if (ir_summary) {
                     std::vector<ModuleCacheIrFunctionSummary> ir_functions =
                         materialize_module_cache_ir_summary_functions(*ir_summary, path);
@@ -854,8 +825,6 @@ public:
         ParsedModuleFile root = parse_file_in_module(input, {}, options_.cfg_features, options_.target_triple, options_.input_cache, false);
         Program program = std::move(root.program);
         collect_source(input, root, {}, program, true);
-        loaded_source_modules_.emplace(input, "<root>");
-        loaded_source_module_locs_.emplace(input, SourceLocation{});
         if (options_.implicit_std) load_standard_module(program);
         resolve_imports(program, dirname(input));
         ModuleCache cache;
@@ -877,8 +846,6 @@ private:
     std::vector<ModuleCacheAstSummary> cache_ast_summaries_;
     std::vector<ModuleCacheIrFunctionSummary> cached_ir_functions_;
     std::map<std::string, std::string> loaded_modules_;
-    std::map<std::string, std::string> loaded_source_modules_;
-    std::map<std::string, SourceLocation> loaded_source_module_locs_;
     std::set<std::string> loading_modules_;
     std::set<std::string> loading_source_paths_;
 
@@ -903,7 +870,9 @@ private:
             is_root
         ));
         if (options_.input_cache) {
-            const ModuleCacheAstSummary* cached = find_module_cache_ast_summary(*options_.input_cache, path);
+            std::string module_name = join_qualified_path(module_path);
+            const ModuleCacheAstSummary* cached =
+                find_module_cache_ast_summary(*options_.input_cache, module_name, path);
             if (!cached) throw CompileError("module cache is missing AST summary for source '" + path + "'");
             require_matching_module_cache_ast_summary(*cached, cache_ast_summaries_.back());
         }
@@ -928,8 +897,6 @@ private:
         collect_source(*path, standard_file, module_path, standard, false);
         move_append(cached_ir_functions_, standard_file.cached_ir_functions);
         loaded_modules_.emplace(name, *path);
-        loaded_source_modules_.emplace(*path, name);
-        loaded_source_module_locs_.emplace(*path, decl.loc);
         resolve_imports(standard, dirname(*path));
         append_program(program, std::move(standard));
     }
@@ -960,19 +927,6 @@ private:
             if (loading_source_paths_.count(source_path)) {
                 fail_cyclic_module_import(import.loc, import.name, source_path);
             }
-            auto loaded_source = loaded_source_modules_.find(source_path);
-            if (loaded_source != loaded_source_modules_.end() &&
-                loaded_source->second != import.name) {
-                auto loaded_source_loc = loaded_source_module_locs_.find(source_path);
-                fail_duplicate_module_source_identity(
-                    import.loc,
-                    loaded_source_loc == loaded_source_module_locs_.end()
-                        ? SourceLocation{}
-                        : loaded_source_loc->second,
-                    source_path,
-                    loaded_source->second,
-                    import.name);
-            }
             auto loaded = loaded_modules_.find(import.name);
             if (loaded != loaded_modules_.end()) {
                 if (loaded->second != source_path) {
@@ -992,8 +946,6 @@ private:
             loading_source_paths_.erase(source_path);
             loading_modules_.erase(import.name);
             loaded_modules_.emplace(import.name, source_path);
-            loaded_source_modules_.emplace(source_path, import.name);
-            loaded_source_module_locs_.emplace(source_path, import.loc);
             append_program(program, std::move(child));
         }
     }

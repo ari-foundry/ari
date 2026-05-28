@@ -1,6 +1,0 @@
-mod module_identity_source as First;
-mod module_identity_source as Second;
-
-fn main() -> i64 {
-  return First::value();
-}

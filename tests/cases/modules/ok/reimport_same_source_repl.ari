@@ -1,0 +1,5 @@
+mod reimport_same_source_parse as parse;
+
+pub fn run() -> i64 {
+  return parse::words();
+}

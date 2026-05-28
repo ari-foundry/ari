@@ -102,7 +102,7 @@ The production-ready module subset is intentionally narrow and tested:
 | Aliased modules and `use` aliases | complete | alias, grouped use, glob use, and duplicate alias diagnostics |
 | Cross-file structs, enums, generics, traits | complete | compiler-shaped project fixture plus `trait-project-main.ari` |
 | Diamond-shaped shared modules | complete | `diamond-project-main.ari` imports shared definitions once through a parent facade |
-| Cycles and duplicate module identities | complete | `cyclic-import-main.ari`, `self-import-main.ari`, `duplicate-module-file-identity.ari` |
+| Cycles and module identity reuse | complete | `cyclic-import-main.ari`, `self-import-main.ari`, `reimport-same-source-main.ari` |
 | Ambiguous module candidates | complete | `ambiguous-module-main.ari` |
 | Imported-file parse/sema diagnostics | complete | `imported-parse-error-main.ari`, `imported-semantic-error-main.ari` |
 | Persistent package manifests | unsupported by design | use Makefiles plus explicit `-I` roots |

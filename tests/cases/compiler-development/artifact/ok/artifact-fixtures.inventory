@@ -27,7 +27,6 @@ CompilerArtifactFixtures version=1 group=all entries=327
   Fixture group=errors kind=source path=errors/diagnostic-double-move.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-double-move.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-duplicate-function.diagnostic
-  Fixture group=errors kind=diagnostic path=errors/diagnostic-duplicate-module-file-identity.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-duplicate-name.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-duplicate-name.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-duplicate-trait-impl.diagnostic

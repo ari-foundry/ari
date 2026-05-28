@@ -1,0 +1,6 @@
+mod reimport_same_source_repl;
+mod reimport_same_source_parse as parse;
+
+fn main() -> i64 {
+  return reimport_same_source_repl::run() + parse::words();
+}

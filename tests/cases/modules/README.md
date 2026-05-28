@@ -16,9 +16,8 @@ and cross-file trait bounds.
 
 Use `errors/` for one failure mode per entry file. The current module model has
 separate diagnostics for missing modules, duplicate aliases, private access,
-cyclic imports, self-imports, ambiguous file candidates, duplicate source-file
-identities, invalid module syntax, namespace confusion, and imported-file parse
-or semantic failures.
+cyclic imports, self-imports, ambiguous file candidates, invalid module syntax,
+namespace confusion, and imported-file parse or semantic failures.
 
 Wire new cases into the matching target in `tests/Makefile` and keep each file
 centered on one behavior.

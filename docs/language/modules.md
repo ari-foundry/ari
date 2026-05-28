@@ -96,10 +96,16 @@ mod source_file as Source;
 
 The example above searches for `source_file.ari`, `source_file.arih`,
 `source_file/mod.ari`, and `source_file/mod.arih`, but declarations are exposed
-under `Source`. Loading the same resolved source file under two different
-module identities in one compiler invocation is rejected, because a source file
-must have one module identity for deterministic name resolution and cache
-metadata.
+under `Source`.
+
+The same resolved source file may be imported under more than one module
+identity. Each import is parsed and checked in that module's namespace, so a
+private child import does not automatically expose a root import and a root
+import does not automatically expose the child. For example, `main.ari` can
+declare `mod parse;` while `repl.ari` declares its own private `mod parse;`.
+Both may resolve to `parse.ari`, but they are still separate modules named
+`parse` and `repl::parse`. Recursive imports through a file that is already on
+the active loading stack are still diagnosed as cycles.
 
 The standard library prelude is special-cased before general library loading:
 when `lib/std.arih` exists, the compiler auto-loads it as the public `std`
