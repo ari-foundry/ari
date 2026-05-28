@@ -1,0 +1,27 @@
+// Current-zone insertion also works through trait-qualified and dyn method calls.
+trait Render {
+  fn render(self, zone: ref mut Zone) -> std::string::String
+}
+
+impl Render for i64 {
+  fn render(self, zone: ref mut Zone) -> std::string::String {
+    return std::fmt::format_value(zone, self);
+  }
+}
+
+fn main() -> i64 {
+  zone {
+    let qualified = Render::render(42i64);
+    if !qualified.as_slice().equals("42") {
+      return 1;
+    }
+
+    let object: dyn Render = 7i64 as dyn Render;
+    let dynamic = object.render();
+    if !dynamic.as_slice().equals("7") {
+      return 2;
+    }
+  }
+
+  return 0;
+}

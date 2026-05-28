@@ -51,9 +51,12 @@ When checking a call while the stack is non-empty, the checker may synthesize a
 - inserting the zone makes the remaining explicit arguments type-check in
   their normal positions
 
-The rule is deliberately arity-based and conservative. Calls with two zone
-parameters, no zone parameter, or an otherwise ambiguous omitted argument keep
-the ordinary diagnostic and must be written explicitly.
+The same rule applies to ordinary function calls, generic function calls,
+ordinary method calls, associated function calls, trait-qualified method
+calls such as `Display::format_in(value)`, and object-safe dyn calls such as
+`object.render()`. The rule is deliberately arity-based and conservative.
+Calls with two zone parameters, no zone parameter, or an otherwise ambiguous
+omitted argument keep the ordinary diagnostic and must be written explicitly.
 
 When a call outside a current-zone block is missing exactly one `ref mut Zone`
 argument, the checker reports the allocation-zone issue directly instead of
@@ -100,8 +103,6 @@ When adding a public zone-backed API:
 
 ## Remaining Work
 
-- current-zone insertion for the few trait-qualified and trait-object call
-  paths that still require explicit zone spelling
 - better capacity diagnostics when the default temporary zone is too small
 - a future expression form only if the language gets a clean block-expression
   story; the current feature is intentionally statement-only

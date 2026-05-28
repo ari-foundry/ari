@@ -869,9 +869,10 @@ zone(16384) {
 `zone { ... }` is statement syntax, not a library function. It creates a
 hidden `zone::temp(4096)` binding, makes it the current allocation zone inside
 the block, and destroys it when control leaves. If a function, generic
-function, or ordinary method call is missing exactly one `ref mut Zone`
-parameter, the current zone is inserted there. The explicit spelling remains
-valid for APIs that must allocate into an outer or caller-provided zone.
+function, ordinary method, associated function, trait-qualified method, or dyn
+trait-object method call is missing exactly one `ref mut Zone` parameter, the
+current zone is inserted there. The explicit spelling remains valid for APIs
+that must allocate into an outer or caller-provided zone.
 
 Host zone allocations carry a compiler-defined 8-byte header immediately
 before the returned user pointer. That header stores only the owning raw zone

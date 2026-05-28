@@ -1,0 +1,14 @@
+trait Render {
+  fn render(self, zone: ref mut Zone) -> std::string::String
+}
+
+impl Render for i64 {
+  fn render(self, zone: ref mut Zone) -> std::string::String {
+    return std::fmt::format_value(zone, self);
+  }
+}
+
+fn main() -> i64 {
+  let text = Render::render(1i64);
+  return text.len();
+}

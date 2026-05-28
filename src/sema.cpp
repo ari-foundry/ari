@@ -8432,6 +8432,23 @@ private:
         return zone_index;
     }
 
+    std::optional<std::size_t> current_zone_candidate_param(
+        const std::vector<TypeRef>& params,
+        std::size_t explicit_arg_count,
+        std::size_t first_param = 0
+    ) const {
+        if (first_param > params.size()) return std::nullopt;
+        std::size_t non_receiver_count = params.size() - first_param;
+        if (non_receiver_count != explicit_arg_count + 1) return std::nullopt;
+        std::optional<std::size_t> zone_index;
+        for (std::size_t i = first_param; i < params.size(); ++i) {
+            if (!is_mut_zone_type_ref(params[i])) continue;
+            if (zone_index) return std::nullopt;
+            zone_index = i;
+        }
+        return zone_index;
+    }
+
     std::optional<std::size_t> implicit_current_zone_param(
         const std::vector<IrType>& params,
         std::size_t explicit_arg_count,
@@ -8443,6 +8460,15 @@ private:
 
     std::optional<std::size_t> implicit_current_zone_param(
         const std::vector<Param>& params,
+        std::size_t explicit_arg_count,
+        std::size_t first_param = 0
+    ) const {
+        if (!has_current_zone()) return std::nullopt;
+        return current_zone_candidate_param(params, explicit_arg_count, first_param);
+    }
+
+    std::optional<std::size_t> implicit_current_zone_param(
+        const std::vector<TypeRef>& params,
         std::size_t explicit_arg_count,
         std::size_t first_param = 0
     ) const {
@@ -29196,7 +29222,22 @@ private:
             fail(expr.loc, "method '" + method_name + "' for type " + type_name(method_receiver_type) +
                      " has no receiver parameter");
         }
+        std::optional<std::size_t> implicit_zone_param;
+        std::size_t explicit_non_receiver_args = expr.args.size() - 1;
         if (sig.params.size() != expr.args.size()) {
+            implicit_zone_param = implicit_current_zone_param(sig.params, explicit_non_receiver_args, 1);
+        }
+        if (sig.params.size() != expr.args.size() && !implicit_zone_param) {
+            if (current_zone_candidate_param(sig.params, explicit_non_receiver_args, 1)) {
+                fail_missing_current_zone_argument(
+                    expr.loc,
+                    "trait-qualified method",
+                    display,
+                    method.loc,
+                    non_receiver_parameter_count(sig.params.size()),
+                    explicit_non_receiver_args,
+                    true);
+            }
             fail_trait_qualified_method_argument_count(
                 expr.loc,
                 display,
@@ -29237,16 +29278,25 @@ private:
         require_impl_method_access(expr.loc, method, method_name);
         queue_impl_method_for_lowering(method);
         std::vector<IrExprPtr> args;
-        args.reserve(expr.args.size());
+        args.reserve(implicit_zone_param ? sig.params.size() : expr.args.size());
         args.push_back(std::move(receiver_arg));
-        for (std::size_t i = 1; i < expr.args.size(); ++i) {
-            IrExprPtr arg = coerce_checked_call_argument_for_parameter(
-                *expr.args[i],
-                std::move(checked_args[i - 1]),
-                display,
-                sig,
-                i,
-                sig.params[i]);
+        std::size_t explicit_arg = 1;
+        std::size_t checked_arg = 0;
+        for (std::size_t param_index = 1; param_index < sig.params.size(); ++param_index) {
+            IrExprPtr arg;
+            if (implicit_zone_param && param_index == *implicit_zone_param) {
+                arg = make_current_zone_argument(expr.loc, sig.params[param_index]);
+            } else {
+                arg = coerce_checked_call_argument_for_parameter(
+                    *expr.args[explicit_arg],
+                    std::move(checked_args[checked_arg]),
+                    display,
+                    sig,
+                    param_index,
+                    sig.params[param_index]);
+                ++explicit_arg;
+                ++checked_arg;
+            }
             args.push_back(std::move(arg));
         }
         IrExprPtr call = finish_tracked_call(
@@ -29553,7 +29603,21 @@ private:
             fail(expr.loc, "trait object method '" + expr.name + "' does not accept type arguments under dyn dispatch");
         }
         require_trait_object_method_object_safe(expr.loc, method);
+        std::optional<std::size_t> implicit_zone_param;
         if (method.params.size() != expr.args.size() + 1) {
+            implicit_zone_param = implicit_current_zone_param(method.params, expr.args.size(), 1);
+        }
+        if (method.params.size() != expr.args.size() + 1 && !implicit_zone_param) {
+            if (current_zone_candidate_param(method.params, expr.args.size(), 1)) {
+                fail_missing_current_zone_argument(
+                    expr.loc,
+                    "trait object method",
+                    expr.name,
+                    method.loc,
+                    non_receiver_parameter_count(method.params.size()),
+                    expr.args.size(),
+                    true);
+            }
             fail_method_argument_count(
                 expr.loc,
                 expr.name,
@@ -29581,7 +29645,7 @@ private:
         data_pointer.qualifier = TypeQualifier::Ptr;
         erased_params.push_back(data_pointer);
         std::vector<IrType> expected_args;
-        expected_args.reserve(expr.args.size());
+        expected_args.reserve(non_receiver_parameter_count(method.params.size()));
         for (std::size_t i = 1; i < method.params.size(); ++i) {
             IrType source_param = resolve_type_with_substitutions(method.params[i], substitutions);
             bool vec_view = false;
@@ -29599,10 +29663,18 @@ private:
         current_module_name_ = previous_module;
 
         std::vector<IrExprPtr> args;
-        args.reserve(expr.args.size());
-        for (std::size_t i = 0; i < expr.args.size(); ++i) {
-            IrExprPtr arg = check_call_argument_for_expected(*expr.args[i], expected_args[i]);
-            require_assignable(expr.args[i]->loc, expected_args[i], arg->type);
+        args.reserve(expected_args.size());
+        std::size_t explicit_arg = 0;
+        for (std::size_t param_index = 1; param_index < method.params.size(); ++param_index) {
+            IrExprPtr arg;
+            const std::size_t expected_index = param_index - 1;
+            if (implicit_zone_param && param_index == *implicit_zone_param) {
+                arg = make_current_zone_argument(expr.loc, expected_args[expected_index]);
+            } else {
+                arg = check_call_argument_for_expected(*expr.args[explicit_arg], expected_args[expected_index]);
+                require_assignable(expr.args[explicit_arg]->loc, expected_args[expected_index], arg->type);
+                ++explicit_arg;
+            }
             args.push_back(std::move(arg));
         }
         return make_trait_object_call_expr(

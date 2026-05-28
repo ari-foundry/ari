@@ -484,6 +484,15 @@ The macro evaluates the value once, passes a shared borrow to the hook, then
 appends the returned source `String` into the final output. Struct display impls
 can read fields through the shared receiver, for example `self.x`, without
 loading the receiver through a raw pointer.
+Inside a `zone { ... }` block, the explicit-zone hook can also use current-zone
+insertion through normal method syntax or trait-qualified syntax:
+
+```ari
+zone {
+  let a = value.format_in();
+  let b = Display::format_in(value);
+}
+```
 
 `Iterator[T]` requires `fn next(self: ref mut Self) -> Option[T]`. Direct `for`
 lowering works for copyable non-borrow iterator values by storing the iterator
@@ -655,6 +664,14 @@ dispatch on the concrete value before erasing it. A dyn object can also be
 upcast to the same trait or one of its supertraits with `as dyn Base`; the data
 pointer is preserved and the vtable pointer is adjusted to the inherited
 supertrait method slots. Unrelated dyn-to-dyn casts remain rejected.
+If an object-safe dyn method has exactly one omitted `ref mut Zone` parameter,
+the same current-zone insertion rule applies inside `zone { ... }`:
+
+```ari
+zone {
+  let text = object.render();
+}
+```
 
 Owned trait objects are explicit-zone values. Construct `own dyn Trait` from a
 tracked `ptr T` produced by `zone::new<T>`, `zone::alloc<T>`, or another
