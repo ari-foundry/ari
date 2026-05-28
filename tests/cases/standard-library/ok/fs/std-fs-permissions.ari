@@ -1,9 +1,9 @@
 // Covers access-style filesystem permission queries and the source
 // Permissions value wrapper.
 fn main() -> i64 {
-  let file_path = "build/prelude/std-fs-permissions.tmp";
-  let dir_path = "build/prelude/std-fs-permissions-dir.tmp";
-  let missing_path = "build/prelude/std-fs-permissions-missing.tmp";
+  let file_path: Slice[u8] = "build/prelude/std-fs-permissions.tmp";
+  let dir_path: Slice[u8] = "build/prelude/std-fs-permissions-dir.tmp";
+  let missing_path: Slice[u8] = "build/prelude/std-fs-permissions-missing.tmp";
 
   if fs::exists(file_path) {
     fs::remove_bool(file_path);

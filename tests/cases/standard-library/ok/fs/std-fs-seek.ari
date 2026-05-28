@@ -1,7 +1,7 @@
 // Covers std::fs::File as a std::io::Seek adapter. The test checks direct
 // module hooks, trait method syntax, negative seek rejection, and generic
 // Seek-bound dispatch over the same file handle.
-fn cleanup(path: string) -> void {
+fn cleanup(path: Slice[u8]) -> void {
   if fs::exists(path) {
     fs::remove_bool(path);
   }
@@ -15,7 +15,7 @@ fn rewind[S: io::Seek](stream: ref mut S) -> bool {
 }
 
 fn main() -> i64 {
-  let path = "build/prelude/std-fs-seek.tmp";
+  let path: Slice[u8] = "build/prelude/std-fs-seek.tmp";
   cleanup(path);
 
   var score = 0;

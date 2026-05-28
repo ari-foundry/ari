@@ -783,9 +783,9 @@ fn status_with_stdin_pipe(
   }
 }
 
-fn temp_template_in(zone: ref mut Zone, prefix: ref std::string::String) -> std::process::TempPath {
+fn temp_template_in(zone: ref mut Zone, prefix: std::Slice[u8]) -> std::process::TempPath {
   var path = std::string::new(zone, 64);
-  path.append_bytes(zone, prefix.as_slice());
+  path.append_bytes(zone, prefix);
   path.append_i64_in(zone, std::process::id());
   path.append_string_in(zone, "-");
   path.append_i64_in(zone, std::time::unix_nanos());
@@ -806,7 +806,7 @@ fn temp_template_in(zone: ref mut Zone, prefix: ref std::string::String) -> std:
 
 pub fn temp_file_in(
   zone: ref mut Zone,
-  prefix: ref std::string::String
+  prefix: std::Slice[u8]
 ) -> std::Result[std::process::TempFile, std::error::Error] {
   let path = std::process::temp_template_in(zone, prefix);
   if std::c::is_null(path.data as ptr c_void) {
@@ -826,13 +826,12 @@ pub fn temp_file_in(
 }
 
 pub fn temp_file(zone: ref mut Zone) -> std::Result[std::process::TempFile, std::error::Error] {
-  var prefix = std::string::from(zone, "/tmp/ari-file-");
-  return std::process::temp_file_in(zone, ref prefix);
+  return std::process::temp_file_in(zone, "/tmp/ari-file-");
 }
 
 pub fn temp_dir_in(
   zone: ref mut Zone,
-  prefix: ref std::string::String
+  prefix: std::Slice[u8]
 ) -> std::Result[std::process::TempDir, std::error::Error] {
   let path = std::process::temp_template_in(zone, prefix);
   if std::c::is_null(path.data as ptr c_void) {
@@ -851,8 +850,7 @@ pub fn temp_dir_in(
 }
 
 pub fn temp_dir(zone: ref mut Zone) -> std::Result[std::process::TempDir, std::error::Error] {
-  var prefix = std::string::from(zone, "/tmp/ari-dir-");
-  return std::process::temp_dir_in(zone, ref prefix);
+  return std::process::temp_dir_in(zone, "/tmp/ari-dir-");
 }
 
 pub fn kill_signal(pid: i64, signal: std::process::Signal) -> std::Result[(), std::error::Error] {

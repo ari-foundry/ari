@@ -1,7 +1,7 @@
 // Covers metadata helpers on DirEntry values. Directory entries keep a
 // zone-owned path string, and these methods query metadata from that stored
 // path without forcing callers to manually rebuild C-compatible path bytes.
-fn cleanup(root: string, file_path: string, dir_path: string, link_path: string) -> void {
+fn cleanup(root: Slice[u8], file_path: Slice[u8], dir_path: Slice[u8], link_path: Slice[u8]) -> void {
   fs::remove_bool(link_path);
   fs::remove_bool(file_path);
   fs::remove_dir_bool(dir_path);
@@ -9,11 +9,11 @@ fn cleanup(root: string, file_path: string, dir_path: string, link_path: string)
 }
 
 fn main() -> i64 {
-  let root = "build/prelude/std-fs-dir-entry-metadata.tmp";
-  let file_path = "build/prelude/std-fs-dir-entry-metadata.tmp/file.txt";
-  let dir_path = "build/prelude/std-fs-dir-entry-metadata.tmp/nested";
-  let link_path = "build/prelude/std-fs-dir-entry-metadata.tmp/file-link";
-  let link_target = "file.txt";
+  let root: Slice[u8] = "build/prelude/std-fs-dir-entry-metadata.tmp";
+  let file_path: Slice[u8] = "build/prelude/std-fs-dir-entry-metadata.tmp/file.txt";
+  let dir_path: Slice[u8] = "build/prelude/std-fs-dir-entry-metadata.tmp/nested";
+  let link_path: Slice[u8] = "build/prelude/std-fs-dir-entry-metadata.tmp/file-link";
+  let link_target: Slice[u8] = "file.txt";
   cleanup(root, file_path, dir_path, link_path);
 
   var score = 0;
@@ -78,7 +78,7 @@ fn main() -> i64 {
                  entry.is_file() && !entry.is_dir() &&
                  followed.is_file() && followed.len() == 4 &&
                  direct.is_symlink() && link_info.is_symlink() &&
-                 link_info.len() == std::string::c_len(link_target) &&
+                 link_info.len() == link_target.len &&
                  entry.try_symlink_metadata().is_some() && entry.symlink_metadata_optional().is_some() {
                 score = score + 8;
               }

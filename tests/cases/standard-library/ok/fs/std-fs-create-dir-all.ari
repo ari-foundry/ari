@@ -1,26 +1,26 @@
 // Covers recursive directory creation. create_dir_all builds missing parent
 // directories, treats existing directories as success, ensure_dir_all is the
 // natural idempotent alias, and existing file paths still fail.
-fn cleanup_file(path: string) -> void {
+fn cleanup_file(path: Slice[u8]) -> void {
   if fs::exists(path) {
     fs::remove_bool(path);
   }
 }
 
-fn cleanup_dir(path: string) -> void {
+fn cleanup_dir(path: Slice[u8]) -> void {
   if fs::exists(path) {
     fs::remove_dir_bool(path);
   }
 }
 
 fn main() -> i64 {
-  let root = "build/prelude/std-fs-create-dir-all.tmp";
-  let first = "build/prelude/std-fs-create-dir-all.tmp/alpha";
-  let second = "build/prelude/std-fs-create-dir-all.tmp/alpha/beta";
-  let nested = "build/prelude/std-fs-create-dir-all.tmp/alpha/beta/gamma";
-  let data_path = "build/prelude/std-fs-create-dir-all.tmp/alpha/beta/gamma/data.txt";
-  let file_path = "build/prelude/std-fs-create-dir-all-file.tmp";
-  let file_child = "build/prelude/std-fs-create-dir-all-file.tmp/child";
+  let root: Slice[u8] = "build/prelude/std-fs-create-dir-all.tmp";
+  let first: Slice[u8] = "build/prelude/std-fs-create-dir-all.tmp/alpha";
+  let second: Slice[u8] = "build/prelude/std-fs-create-dir-all.tmp/alpha/beta";
+  let nested: Slice[u8] = "build/prelude/std-fs-create-dir-all.tmp/alpha/beta/gamma";
+  let data_path: Slice[u8] = "build/prelude/std-fs-create-dir-all.tmp/alpha/beta/gamma/data.txt";
+  let file_path: Slice[u8] = "build/prelude/std-fs-create-dir-all-file.tmp";
+  let file_child: Slice[u8] = "build/prelude/std-fs-create-dir-all-file.tmp/child";
 
   cleanup_file(data_path);
   cleanup_dir(nested);

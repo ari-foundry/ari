@@ -1,9 +1,9 @@
 // Covers runtime-backed std::fs rename and single-directory create/remove.
 fn main() -> i64 {
-  let dir_path = "build/prelude/std-fs-rename-dir.tmp";
-  let source_path = "build/prelude/std-fs-rename-dir-source.tmp";
-  let target_path = "build/prelude/std-fs-rename-dir-target.tmp";
-  let missing_path = "build/prelude/std-fs-rename-dir-missing.tmp";
+  let dir_path: Slice[u8] = "build/prelude/std-fs-rename-dir.tmp";
+  let source_path: Slice[u8] = "build/prelude/std-fs-rename-dir-source.tmp";
+  let target_path: Slice[u8] = "build/prelude/std-fs-rename-dir-target.tmp";
+  let missing_path: Slice[u8] = "build/prelude/std-fs-rename-dir-missing.tmp";
 
   if fs::exists(dir_path) {
     fs::remove_bool(dir_path);

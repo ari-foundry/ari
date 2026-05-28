@@ -1,7 +1,7 @@
 // Covers direct Error-returning filesystem query helpers. The natural names
 // return Result values; *_optional, try_*, and *_unchecked spellings remain
 // compatibility forms for non-default behavior.
-fn has_name(values: ref std::vec::Vec[std::string::String], expected: string) -> bool {
+fn has_name(values: ref std::vec::Vec[std::string::String], expected: Slice[u8]) -> bool {
   var index = 0;
   while index < values.len() {
     let name = values.get(index);
@@ -13,7 +13,7 @@ fn has_name(values: ref std::vec::Vec[std::string::String], expected: string) ->
   return false;
 }
 
-fn has_entry(values: ref std::vec::Vec[std::fs::DirEntry], expected: string) -> bool {
+fn has_entry(values: ref std::vec::Vec[std::fs::DirEntry], expected: Slice[u8]) -> bool {
   var index = 0;
   while index < values.len() {
     let entry = values.get(index);
@@ -26,10 +26,10 @@ fn has_entry(values: ref std::vec::Vec[std::fs::DirEntry], expected: string) -> 
 }
 
 fn main() -> i64 {
-  let dir_path = "build/prelude/std-fs-query-result-dir.tmp";
-  let file_path = "build/prelude/std-fs-query-result-dir.tmp/item.txt";
-  let link_path = "build/prelude/std-fs-query-result-dir.tmp/item.link";
-  let missing = "build/prelude/std-fs-query-result-missing.tmp";
+  let dir_path: Slice[u8] = "build/prelude/std-fs-query-result-dir.tmp";
+  let file_path: Slice[u8] = "build/prelude/std-fs-query-result-dir.tmp/item.txt";
+  let link_path: Slice[u8] = "build/prelude/std-fs-query-result-dir.tmp/item.link";
+  let missing: Slice[u8] = "build/prelude/std-fs-query-result-missing.tmp";
 
   fs::remove_bool(link_path);
   fs::remove_bool(file_path);

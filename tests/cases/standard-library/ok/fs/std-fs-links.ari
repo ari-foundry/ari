@@ -1,5 +1,5 @@
 // Covers filesystem hard links and symbolic links over the runtime hooks.
-fn first_byte(path: string) -> i64 {
+fn first_byte(path: Slice[u8]) -> i64 {
   let file = fs::try_open(path, "r").unwrap_or(fs::File::invalid());
   if !file.is_open() {
     return -1;
@@ -10,10 +10,10 @@ fn first_byte(path: string) -> i64 {
 }
 
 fn main() -> i64 {
-  let source = "build/prelude/std-fs-links-source.tmp";
-  let hard = "build/prelude/std-fs-links-hard.tmp";
-  let symbolic = "build/prelude/std-fs-links-symbolic.tmp";
-  let symbolic_target = "std-fs-links-source.tmp";
+  let source: Slice[u8] = "build/prelude/std-fs-links-source.tmp";
+  let hard: Slice[u8] = "build/prelude/std-fs-links-hard.tmp";
+  let symbolic: Slice[u8] = "build/prelude/std-fs-links-symbolic.tmp";
+  let symbolic_target: Slice[u8] = "std-fs-links-source.tmp";
 
   fs::remove_bool(symbolic);
   fs::remove_bool(hard);

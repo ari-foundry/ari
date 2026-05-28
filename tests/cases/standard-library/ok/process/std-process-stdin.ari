@@ -16,9 +16,7 @@ fn main() -> i64 {
   var score = 0;
 
   let path: Slice[u8] = "build/prelude/std-process-stdin-input.txt";
-  var path_text = std::string::from(ref mut zone, path);
-  var ari_line = std::string::from(ref mut zone, "ari\n");
-  if fs::write_string(ref path_text, ref ari_line).is_err() {
+  if fs::write_string(path, "ari\n").is_err() {
     return 1;
   }
 
@@ -50,9 +48,7 @@ fn main() -> i64 {
   }
 
   let cwd_path: Slice[u8] = "build/prelude/std-process-stdin-cwd.txt";
-  var cwd_path_text = std::string::from(ref mut zone, cwd_path);
-  var cwd_line = std::string::from(ref mut zone, "cwd\n");
-  if fs::write_string(ref cwd_path_text, ref cwd_line).is_err() {
+  if fs::write_string(cwd_path, "cwd\n").is_err() {
     return 2;
   }
   var cwd_cmd = process::Command::new(c("sh"))

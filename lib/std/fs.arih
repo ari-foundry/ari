@@ -192,8 +192,8 @@ extern "ari" fn read_dir_next_raw(dir: Dir) -> string = "ari_builtin_fs_read_dir
 extern "ari" fn canonicalize_host_raw(path: string) -> string = "ari_builtin_fs_canonicalize";
 extern "ari" fn canonicalize_bytes_raw(data: ptr u8, len: i64) -> string = "ari_builtin_fs_canonicalize_bytes";
 
-fn bytes(path: ref std::string::String) -> std::Slice[u8] {
-  return path.as_slice();
+fn bytes(path: std::Slice[u8]) -> std::Slice[u8] {
+  return path;
 }
 
 fn source_text_len(value: string) -> i64 {
@@ -217,60 +217,60 @@ fn mode_equals(mode: std::Slice[u8], value: string) -> bool {
   return mode.equals(source_text_bytes(value));
 }
 
-pub fn exists(path: ref std::string::String) -> bool {
+pub fn exists(path: std::Slice[u8]) -> bool {
   let value = bytes(path);
   return exists_bytes_raw(value.data, value.len);
 }
 
-pub fn can_read(path: ref std::string::String) -> bool {
+pub fn can_read(path: std::Slice[u8]) -> bool {
   let value = bytes(path);
   return can_read_bytes_raw(value.data, value.len);
 }
 
-pub fn can_write(path: ref std::string::String) -> bool {
+pub fn can_write(path: std::Slice[u8]) -> bool {
   let value = bytes(path);
   return can_write_bytes_raw(value.data, value.len);
 }
 
-pub fn can_execute(path: ref std::string::String) -> bool {
+pub fn can_execute(path: std::Slice[u8]) -> bool {
   let value = bytes(path);
   return can_execute_bytes_raw(value.data, value.len);
 }
 
-pub fn remove_unchecked(path: ref std::string::String) -> bool {
+pub fn remove_unchecked(path: std::Slice[u8]) -> bool {
   let value = bytes(path);
   return remove_bytes_raw(value.data, value.len);
 }
 
-pub fn rename_unchecked(source: ref std::string::String, target: ref std::string::String) -> bool {
+pub fn rename_unchecked(source: std::Slice[u8], target: std::Slice[u8]) -> bool {
   let source_bytes = bytes(source);
   let target_bytes = bytes(target);
   return rename_bytes_raw(source_bytes.data, source_bytes.len, target_bytes.data, target_bytes.len);
 }
 
-pub fn hard_link_unchecked(existing: ref std::string::String, link_path: ref std::string::String) -> bool {
+pub fn hard_link_unchecked(existing: std::Slice[u8], link_path: std::Slice[u8]) -> bool {
   let existing_bytes = bytes(existing);
   let link_bytes = bytes(link_path);
   return hard_link_bytes_raw(existing_bytes.data, existing_bytes.len, link_bytes.data, link_bytes.len);
 }
 
-pub fn symbolic_link_unchecked(target: ref std::string::String, link_path: ref std::string::String) -> bool {
+pub fn symbolic_link_unchecked(target: std::Slice[u8], link_path: std::Slice[u8]) -> bool {
   let target_bytes = bytes(target);
   let link_bytes = bytes(link_path);
   return symbolic_link_bytes_raw(target_bytes.data, target_bytes.len, link_bytes.data, link_bytes.len);
 }
 
-pub fn create_dir_unchecked(path: ref std::string::String) -> bool {
+pub fn create_dir_unchecked(path: std::Slice[u8]) -> bool {
   let value = bytes(path);
   return create_dir_bytes_raw(value.data, value.len);
 }
 
-pub fn create_dir_all_unchecked(path: ref std::string::String) -> bool {
+pub fn create_dir_all_unchecked(path: std::Slice[u8]) -> bool {
   let value = bytes(path);
   return create_dir_all_bytes_raw(value.data, value.len);
 }
 
-pub fn remove_dir_unchecked(path: ref std::string::String) -> bool {
+pub fn remove_dir_unchecked(path: std::Slice[u8]) -> bool {
   let value = bytes(path);
   return remove_dir_bytes_raw(value.data, value.len);
 }
@@ -297,11 +297,11 @@ fn open_unchecked_bytes(path_bytes: std::Slice[u8], mode_bytes: std::Slice[u8]) 
   return File::invalid();
 }
 
-pub fn open_unchecked(path: ref std::string::String, mode: ref std::string::String) -> File {
-  return open_unchecked_bytes(bytes(path), mode.as_slice());
+pub fn open_unchecked(path: std::Slice[u8], mode: std::Slice[u8]) -> File {
+  return open_unchecked_bytes(bytes(path), mode);
 }
 
-pub fn permissions(path: ref std::string::String) -> Permissions {
+pub fn permissions(path: std::Slice[u8]) -> Permissions {
   return Permissions {
     readable: can_read(path),
     writable: can_write(path),
@@ -313,7 +313,7 @@ pub fn temp_file(zone: ref mut Zone) -> std::Result[std::fs::TempFile, std::erro
   return std::process::temp_file(zone);
 }
 
-pub fn temp_file_in(zone: ref mut Zone, prefix: ref std::string::String) -> std::Result[std::fs::TempFile, std::error::Error] {
+pub fn temp_file_in(zone: ref mut Zone, prefix: std::Slice[u8]) -> std::Result[std::fs::TempFile, std::error::Error] {
   return std::process::temp_file_in(zone, prefix);
 }
 
@@ -321,7 +321,7 @@ pub fn temp_dir(zone: ref mut Zone) -> std::Result[std::fs::TempDir, std::error:
   return std::process::temp_dir(zone);
 }
 
-pub fn temp_dir_in(zone: ref mut Zone, prefix: ref std::string::String) -> std::Result[std::fs::TempDir, std::error::Error] {
+pub fn temp_dir_in(zone: ref mut Zone, prefix: std::Slice[u8]) -> std::Result[std::fs::TempDir, std::error::Error] {
   return std::process::temp_dir_in(zone, prefix);
 }
 
@@ -429,7 +429,7 @@ fn two_path_error(
 
 fn map_path_error[T](
   operation: Operation,
-  path: ref std::string::String,
+  path: std::Slice[u8],
   value: std::Result[T, Error]
 ) -> std::Result[T, PathError] {
   match value {
@@ -437,15 +437,15 @@ fn map_path_error[T](
       return std::Ok<T, PathError>(payload);
     }
     std::Err(reason) => {
-      return std::Err<T, PathError>(path_error(operation, path.as_slice(), reason));
+      return std::Err<T, PathError>(path_error(operation, path, reason));
     }
   }
 }
 
 fn map_two_path_error[T](
   operation: Operation,
-  source: ref std::string::String,
-  target: ref std::string::String,
+  source: std::Slice[u8],
+  target: std::Slice[u8],
   value: std::Result[T, Error]
 ) -> std::Result[T, TwoPathError] {
   match value {
@@ -453,100 +453,100 @@ fn map_two_path_error[T](
       return std::Ok<T, TwoPathError>(payload);
     }
     std::Err(reason) => {
-      return std::Err<T, TwoPathError>(two_path_error(operation, source.as_slice(), target.as_slice(), reason));
+      return std::Err<T, TwoPathError>(two_path_error(operation, source, target, reason));
     }
   }
 }
 
-pub fn remove_raw(path: ref std::string::String) -> std::Result[(), i64] {
+pub fn remove_raw(path: std::Slice[u8]) -> std::Result[(), i64] {
   return unit_raw(remove_unchecked(path));
 }
 
-pub fn remove(path: ref std::string::String) -> std::Result[(), std::error::Error] {
+pub fn remove(path: std::Slice[u8]) -> std::Result[(), std::error::Error] {
   return std::error::map_raw<()>(remove_raw(path));
 }
 
-pub fn remove_file(path: ref std::string::String) -> std::Result[(), std::error::Error] {
+pub fn remove_file(path: std::Slice[u8]) -> std::Result[(), std::error::Error] {
   return remove(path);
 }
 
-pub fn remove_bool(path: ref std::string::String) -> bool {
+pub fn remove_bool(path: std::Slice[u8]) -> bool {
   return remove_unchecked(path);
 }
 
-pub fn remove_file_bool(path: ref std::string::String) -> bool {
+pub fn remove_file_bool(path: std::Slice[u8]) -> bool {
   return remove_bool(path);
 }
 
-pub fn rename_raw(source: ref std::string::String, target: ref std::string::String) -> std::Result[(), i64] {
+pub fn rename_raw(source: std::Slice[u8], target: std::Slice[u8]) -> std::Result[(), i64] {
   return unit_raw(rename_unchecked(source, target));
 }
 
-pub fn rename(source: ref std::string::String, target: ref std::string::String) -> std::Result[(), std::error::Error] {
+pub fn rename(source: std::Slice[u8], target: std::Slice[u8]) -> std::Result[(), std::error::Error] {
   return std::error::map_raw<()>(rename_raw(source, target));
 }
 
-pub fn rename_bool(source: ref std::string::String, target: ref std::string::String) -> bool {
+pub fn rename_bool(source: std::Slice[u8], target: std::Slice[u8]) -> bool {
   return rename_unchecked(source, target);
 }
 
-pub fn hard_link_raw(existing: ref std::string::String, link_path: ref std::string::String) -> std::Result[(), i64] {
+pub fn hard_link_raw(existing: std::Slice[u8], link_path: std::Slice[u8]) -> std::Result[(), i64] {
   return unit_raw(hard_link_unchecked(existing, link_path));
 }
 
-pub fn hard_link(existing: ref std::string::String, link_path: ref std::string::String) -> std::Result[(), std::error::Error] {
+pub fn hard_link(existing: std::Slice[u8], link_path: std::Slice[u8]) -> std::Result[(), std::error::Error] {
   return std::error::map_raw<()>(hard_link_raw(existing, link_path));
 }
 
-pub fn hard_link_bool(existing: ref std::string::String, link_path: ref std::string::String) -> bool {
+pub fn hard_link_bool(existing: std::Slice[u8], link_path: std::Slice[u8]) -> bool {
   return hard_link_unchecked(existing, link_path);
 }
 
-pub fn symbolic_link_raw(target: ref std::string::String, link_path: ref std::string::String) -> std::Result[(), i64] {
+pub fn symbolic_link_raw(target: std::Slice[u8], link_path: std::Slice[u8]) -> std::Result[(), i64] {
   return unit_raw(symbolic_link_unchecked(target, link_path));
 }
 
-pub fn symbolic_link(target: ref std::string::String, link_path: ref std::string::String) -> std::Result[(), std::error::Error] {
+pub fn symbolic_link(target: std::Slice[u8], link_path: std::Slice[u8]) -> std::Result[(), std::error::Error] {
   return std::error::map_raw<()>(symbolic_link_raw(target, link_path));
 }
 
-pub fn symbolic_link_bool(target: ref std::string::String, link_path: ref std::string::String) -> bool {
+pub fn symbolic_link_bool(target: std::Slice[u8], link_path: std::Slice[u8]) -> bool {
   return symbolic_link_unchecked(target, link_path);
 }
 
-pub fn create_dir_raw(path: ref std::string::String) -> std::Result[(), i64] {
+pub fn create_dir_raw(path: std::Slice[u8]) -> std::Result[(), i64] {
   return unit_raw(create_dir_unchecked(path));
 }
 
-pub fn create_dir(path: ref std::string::String) -> std::Result[(), std::error::Error] {
+pub fn create_dir(path: std::Slice[u8]) -> std::Result[(), std::error::Error] {
   return std::error::map_raw<()>(create_dir_raw(path));
 }
 
-pub fn create_dir_bool(path: ref std::string::String) -> bool {
+pub fn create_dir_bool(path: std::Slice[u8]) -> bool {
   return create_dir_unchecked(path);
 }
 
-pub fn create_dir_all_raw(path: ref std::string::String) -> std::Result[(), i64] {
+pub fn create_dir_all_raw(path: std::Slice[u8]) -> std::Result[(), i64] {
   return unit_raw(create_dir_all_unchecked(path));
 }
 
-pub fn create_dir_all(path: ref std::string::String) -> std::Result[(), std::error::Error] {
+pub fn create_dir_all(path: std::Slice[u8]) -> std::Result[(), std::error::Error] {
   return std::error::map_raw<()>(create_dir_all_raw(path));
 }
 
-pub fn create_dir_all_bool(path: ref std::string::String) -> bool {
+pub fn create_dir_all_bool(path: std::Slice[u8]) -> bool {
   return create_dir_all_unchecked(path);
 }
 
-pub fn remove_dir_raw(path: ref std::string::String) -> std::Result[(), i64] {
+pub fn remove_dir_raw(path: std::Slice[u8]) -> std::Result[(), i64] {
   return unit_raw(remove_dir_unchecked(path));
 }
 
-pub fn remove_dir(path: ref std::string::String) -> std::Result[(), std::error::Error] {
+pub fn remove_dir(path: std::Slice[u8]) -> std::Result[(), std::error::Error] {
   return std::error::map_raw<()>(remove_dir_raw(path));
 }
 
-pub fn remove_dir_bool(path: ref std::string::String) -> bool {
+pub fn remove_dir_bool(path: std::Slice[u8]) -> bool {
   return remove_dir_unchecked(path);
 }
 
@@ -588,7 +588,7 @@ fn metadata_from_parts(
 }
 
 fn metadata_from_raw(
-  path: ref std::string::String,
+  path: std::Slice[u8],
   kind: i64,
   size: i64,
   accessed_nanos: i64,
@@ -639,15 +639,15 @@ fn metadata_from_bytes(
   );
 }
 
-pub fn metadata_raw(path: ref std::string::String) -> std::Result[Metadata, i64] {
-  return metadata_bytes_raw(path.as_slice());
+pub fn metadata_raw(path: std::Slice[u8]) -> std::Result[Metadata, i64] {
+  return metadata_bytes_raw(path);
 }
 
-pub fn metadata(path: ref std::string::String) -> std::Result[Metadata, std::error::Error] {
+pub fn metadata(path: std::Slice[u8]) -> std::Result[Metadata, std::error::Error] {
   return std::error::map_raw<Metadata>(metadata_raw(path));
 }
 
-pub fn metadata_optional(path: ref std::string::String) -> std::Option[Metadata] {
+pub fn metadata_optional(path: std::Slice[u8]) -> std::Option[Metadata] {
   match metadata(path) {
     std::Ok(value) => {
       return std::Some<Metadata>(value);
@@ -657,11 +657,11 @@ pub fn metadata_optional(path: ref std::string::String) -> std::Option[Metadata]
   return std::None<Metadata>();
 }
 
-pub fn try_metadata(path: ref std::string::String) -> std::Option[Metadata] {
+pub fn try_metadata(path: std::Slice[u8]) -> std::Option[Metadata] {
   return metadata_optional(path);
 }
 
-pub fn metadata_unchecked(path: ref std::string::String) -> Metadata {
+pub fn metadata_unchecked(path: std::Slice[u8]) -> Metadata {
   match metadata(path) {
     std::Ok(value) => {
       return value;
@@ -681,15 +681,15 @@ pub fn metadata_unchecked(path: ref std::string::String) -> Metadata {
   };
 }
 
-pub fn symlink_metadata_raw(path: ref std::string::String) -> std::Result[Metadata, i64] {
-  return symlink_metadata_bytes_raw(path.as_slice());
+pub fn symlink_metadata_raw(path: std::Slice[u8]) -> std::Result[Metadata, i64] {
+  return symlink_metadata_bytes_raw(path);
 }
 
-pub fn symlink_metadata(path: ref std::string::String) -> std::Result[Metadata, std::error::Error] {
+pub fn symlink_metadata(path: std::Slice[u8]) -> std::Result[Metadata, std::error::Error] {
   return std::error::map_raw<Metadata>(symlink_metadata_raw(path));
 }
 
-pub fn symlink_metadata_optional(path: ref std::string::String) -> std::Option[Metadata] {
+pub fn symlink_metadata_optional(path: std::Slice[u8]) -> std::Option[Metadata] {
   match symlink_metadata(path) {
     std::Ok(value) => {
       return std::Some<Metadata>(value);
@@ -699,11 +699,11 @@ pub fn symlink_metadata_optional(path: ref std::string::String) -> std::Option[M
   return std::None<Metadata>();
 }
 
-pub fn try_symlink_metadata(path: ref std::string::String) -> std::Option[Metadata] {
+pub fn try_symlink_metadata(path: std::Slice[u8]) -> std::Option[Metadata] {
   return symlink_metadata_optional(path);
 }
 
-pub fn symlink_metadata_unchecked(path: ref std::string::String) -> Metadata {
+pub fn symlink_metadata_unchecked(path: std::Slice[u8]) -> Metadata {
   match symlink_metadata(path) {
     std::Ok(value) => {
       return value;
@@ -835,12 +835,12 @@ fn symlink_metadata_bytes_raw(path: std::Slice[u8]) -> std::Result[Metadata, i64
   return std::Err<Metadata, i64>(last_errno_error_raw());
 }
 
-pub fn try_file_type(path: ref std::string::String) -> std::Option[FileKind] {
+pub fn try_file_type(path: std::Slice[u8]) -> std::Option[FileKind] {
   return file_type_optional(path);
 }
 
-pub fn file_type_raw(path: ref std::string::String) -> std::Result[FileKind, i64] {
-  let data = path.as_slice();
+pub fn file_type_raw(path: std::Slice[u8]) -> std::Result[FileKind, i64] {
+  let data = path;
   let kind = metadata_kind_bytes_raw(data.data, data.len);
   if kind < 0 {
     return std::Err<FileKind, i64>(last_errno_error_raw());
@@ -848,11 +848,11 @@ pub fn file_type_raw(path: ref std::string::String) -> std::Result[FileKind, i64
   return std::Ok<FileKind, i64>(file_kind_from_raw(kind));
 }
 
-pub fn file_type(path: ref std::string::String) -> std::Result[FileKind, std::error::Error] {
+pub fn file_type(path: std::Slice[u8]) -> std::Result[FileKind, std::error::Error] {
   return std::error::map_raw<FileKind>(file_type_raw(path));
 }
 
-pub fn file_type_optional(path: ref std::string::String) -> std::Option[FileKind] {
+pub fn file_type_optional(path: std::Slice[u8]) -> std::Option[FileKind] {
   match file_type(path) {
     std::Ok(value) => {
       return std::Some<FileKind>(value);
@@ -862,7 +862,7 @@ pub fn file_type_optional(path: ref std::string::String) -> std::Option[FileKind
   return std::None<FileKind>();
 }
 
-pub fn file_type_unchecked(path: ref std::string::String) -> FileKind {
+pub fn file_type_unchecked(path: std::Slice[u8]) -> FileKind {
   match file_type(path) {
     std::Ok(value) => {
       return value;
@@ -881,7 +881,7 @@ fn file_type_bytes_raw(path: std::Slice[u8]) -> std::Result[FileKind, i64] {
   return std::Ok<FileKind, i64>(file_kind_from_raw(kind));
 }
 
-pub fn is_file(path: ref std::string::String) -> bool {
+pub fn is_file(path: std::Slice[u8]) -> bool {
   match file_type_optional(path) {
     std::Some(kind) => {
       match kind {
@@ -896,7 +896,7 @@ pub fn is_file(path: ref std::string::String) -> bool {
   return false;
 }
 
-pub fn is_dir(path: ref std::string::String) -> bool {
+pub fn is_dir(path: std::Slice[u8]) -> bool {
   match file_type_optional(path) {
     std::Some(kind) => {
       match kind {
@@ -911,7 +911,7 @@ pub fn is_dir(path: ref std::string::String) -> bool {
   return false;
 }
 
-pub fn is_symlink(path: ref std::string::String) -> bool {
+pub fn is_symlink(path: std::Slice[u8]) -> bool {
   match symlink_metadata_optional(path) {
     std::Some(info) => {
       return info.is_symlink();
@@ -921,7 +921,7 @@ pub fn is_symlink(path: ref std::string::String) -> bool {
   return false;
 }
 
-pub fn is_other(path: ref std::string::String) -> bool {
+pub fn is_other(path: std::Slice[u8]) -> bool {
   match file_type_optional(path) {
     std::Some(kind) => {
       match kind {
@@ -936,12 +936,12 @@ pub fn is_other(path: ref std::string::String) -> bool {
   return false;
 }
 
-pub fn try_mode(path: ref std::string::String) -> std::Option[i64] {
+pub fn try_mode(path: std::Slice[u8]) -> std::Option[i64] {
   return mode_optional(path);
 }
 
-pub fn mode_raw(path: ref std::string::String) -> std::Result[i64, i64] {
-  let data = path.as_slice();
+pub fn mode_raw(path: std::Slice[u8]) -> std::Result[i64, i64] {
+  let data = path;
   let mode = metadata_mode_bytes_raw(data.data, data.len);
   if mode < 0 {
     return std::Err<i64, i64>(last_errno_error_raw());
@@ -949,11 +949,11 @@ pub fn mode_raw(path: ref std::string::String) -> std::Result[i64, i64] {
   return std::Ok<i64, i64>(mode & 511);
 }
 
-pub fn mode(path: ref std::string::String) -> std::Result[i64, std::error::Error] {
+pub fn mode(path: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
   return std::error::map_raw<i64>(mode_raw(path));
 }
 
-pub fn mode_optional(path: ref std::string::String) -> std::Option[i64] {
+pub fn mode_optional(path: std::Slice[u8]) -> std::Option[i64] {
   match mode(path) {
     std::Ok(value) => {
       return std::Some<i64>(value);
@@ -963,7 +963,7 @@ pub fn mode_optional(path: ref std::string::String) -> std::Option[i64] {
   return std::None<i64>();
 }
 
-pub fn mode_unchecked(path: ref std::string::String) -> i64 {
+pub fn mode_unchecked(path: std::Slice[u8]) -> i64 {
   match mode(path) {
     std::Ok(value) => {
       return value;
@@ -974,19 +974,19 @@ pub fn mode_unchecked(path: ref std::string::String) -> i64 {
   return -1;
 }
 
-pub fn set_mode(path: ref std::string::String, mode: i64) -> bool {
+pub fn set_mode(path: std::Slice[u8], mode: i64) -> bool {
   if mode < 0 || mode > 511 {
     return false;
   }
-  let data = path.as_slice();
+  let data = path;
   return set_mode_bytes_raw(data.data, data.len, mode);
 }
 
-pub fn set_permissions(path: ref std::string::String, permissions: Permissions) -> bool {
+pub fn set_permissions(path: std::Slice[u8], permissions: Permissions) -> bool {
   return set_mode(path, permissions.to_mode());
 }
 
-pub fn ensure_dir(path: ref std::string::String) -> bool {
+pub fn ensure_dir(path: std::Slice[u8]) -> bool {
   if is_dir(path) {
     return true;
   }
@@ -996,12 +996,12 @@ pub fn ensure_dir(path: ref std::string::String) -> bool {
   return create_dir(path).is_ok();
 }
 
-pub fn ensure_dir_all(path: ref std::string::String) -> bool {
+pub fn ensure_dir_all(path: std::Slice[u8]) -> bool {
   return create_dir_all(path).is_ok();
 }
 
 // Keep setup code rerunnable without truncating existing regular files.
-pub fn ensure_file(path: ref std::string::String) -> bool {
+pub fn ensure_file(path: std::Slice[u8]) -> bool {
   if is_file(path) {
     return true;
   }
@@ -1016,7 +1016,7 @@ pub fn ensure_file(path: ref std::string::String) -> bool {
   return file.close().is_ok();
 }
 
-pub fn open_dir_raw(path: ref std::string::String) -> std::Result[Dir, i64] {
+pub fn open_dir_raw(path: std::Slice[u8]) -> std::Result[Dir, i64] {
   let dir = open_dir_unchecked(path);
   if dir.is_open() {
     return std::Ok<Dir, i64>(dir);
@@ -1024,16 +1024,16 @@ pub fn open_dir_raw(path: ref std::string::String) -> std::Result[Dir, i64] {
   return std::Err<Dir, i64>(last_errno_error_raw());
 }
 
-pub fn open_dir(path: ref std::string::String) -> std::Result[Dir, std::error::Error] {
+pub fn open_dir(path: std::Slice[u8]) -> std::Result[Dir, std::error::Error] {
   return std::error::map_raw<Dir>(open_dir_raw(path));
 }
 
-pub fn open_dir_unchecked(path: ref std::string::String) -> Dir {
-  let data = path.as_slice();
+pub fn open_dir_unchecked(path: std::Slice[u8]) -> Dir {
+  let data = path;
   return open_dir_bytes_raw(data.data, data.len);
 }
 
-pub fn try_open_dir(path: ref std::string::String) -> std::Option[Dir] {
+pub fn try_open_dir(path: std::Slice[u8]) -> std::Option[Dir] {
   let dir = open_dir_unchecked(path);
   if dir.is_open() {
     return std::Some<Dir>(dir);
@@ -1049,7 +1049,7 @@ pub fn read_dir_next(zone: ref mut Zone, dir: Dir) -> std::Option[std::string::S
   return std::Some<std::string::String>(source_text_string(zone, name));
 }
 
-pub fn try_read_dir(zone: ref mut Zone, path: ref std::string::String) -> std::Option[std::vec::Vec[std::string::String]] {
+pub fn try_read_dir(zone: ref mut Zone, path: std::Slice[u8]) -> std::Option[std::vec::Vec[std::string::String]] {
   match try_open_dir(path) {
     std::Some(dir) => {
       var entries = std::vec::new<std::string::String>(zone, 8);
@@ -1075,7 +1075,7 @@ pub fn try_read_dir(zone: ref mut Zone, path: ref std::string::String) -> std::O
   return std::None<std::vec::Vec[std::string::String]>();
 }
 
-pub fn read_dir_names(zone: ref mut Zone, path: ref std::string::String) -> std::Result[std::vec::Vec[std::string::String], std::error::Error] {
+pub fn read_dir_names(zone: ref mut Zone, path: std::Slice[u8]) -> std::Result[std::vec::Vec[std::string::String], std::error::Error] {
   match open_dir(path) {
     std::Ok(dir) => {
       var entries = std::vec::new<std::string::String>(zone, 8);
@@ -1106,15 +1106,15 @@ pub fn read_dir_names(zone: ref mut Zone, path: ref std::string::String) -> std:
   }
 }
 
-pub fn read_dir_names_optional(zone: ref mut Zone, path: ref std::string::String) -> std::Option[std::vec::Vec[std::string::String]] {
+pub fn read_dir_names_optional(zone: ref mut Zone, path: std::Slice[u8]) -> std::Option[std::vec::Vec[std::string::String]] {
   return try_read_dir(zone, path);
 }
 
-pub fn try_read_dir_names(zone: ref mut Zone, path: ref std::string::String) -> std::Option[std::vec::Vec[std::string::String]] {
+pub fn try_read_dir_names(zone: ref mut Zone, path: std::Slice[u8]) -> std::Option[std::vec::Vec[std::string::String]] {
   return try_read_dir(zone, path);
 }
 
-pub fn read_dir_names_unchecked(zone: ref mut Zone, path: ref std::string::String) -> std::vec::Vec[std::string::String] {
+pub fn read_dir_names_unchecked(zone: ref mut Zone, path: std::Slice[u8]) -> std::vec::Vec[std::string::String] {
   match read_dir_names(zone, path) {
     std::Ok(entries) => {
       return entries;
@@ -1142,11 +1142,7 @@ fn make_dir_entry_bytes(zone: ref mut Zone, base: std::Slice[u8], name: std::str
   return DirEntry { name_value: entry_name, path_value: entry_path };
 }
 
-fn make_dir_entry(zone: ref mut Zone, base: ref std::string::String, name: std::string::String) -> DirEntry {
-  return make_dir_entry_bytes(zone, base.as_slice(), name);
-}
-
-pub fn try_read_dir_entries(zone: ref mut Zone, path: ref std::string::String) -> std::Option[std::vec::Vec[DirEntry]] {
+pub fn try_read_dir_entries(zone: ref mut Zone, path: std::Slice[u8]) -> std::Option[std::vec::Vec[DirEntry]] {
   match try_open_dir(path) {
     std::Some(dir) => {
       var entries = std::vec::new<DirEntry>(zone, 8);
@@ -1154,7 +1150,7 @@ pub fn try_read_dir_entries(zone: ref mut Zone, path: ref std::string::String) -
       while reading {
         match dir.next(zone) {
           std::Some(name) => {
-            entries.push_in(zone, make_dir_entry(zone, path, name));
+            entries.push_in(zone, make_dir_entry_bytes(zone, path, name));
           }
           std::None => {
             reading = false;
@@ -1172,7 +1168,7 @@ pub fn try_read_dir_entries(zone: ref mut Zone, path: ref std::string::String) -
   return std::None<std::vec::Vec[DirEntry]>();
 }
 
-pub fn read_dir_entries(zone: ref mut Zone, path: ref std::string::String) -> std::Result[std::vec::Vec[DirEntry], std::error::Error] {
+pub fn read_dir_entries(zone: ref mut Zone, path: std::Slice[u8]) -> std::Result[std::vec::Vec[DirEntry], std::error::Error] {
   match open_dir(path) {
     std::Ok(dir) => {
       var entries = std::vec::new<DirEntry>(zone, 8);
@@ -1180,7 +1176,7 @@ pub fn read_dir_entries(zone: ref mut Zone, path: ref std::string::String) -> st
       while reading {
         match dir.next(zone) {
           std::Some(name) => {
-            entries.push_in(zone, make_dir_entry(zone, path, name));
+            entries.push_in(zone, make_dir_entry_bytes(zone, path, name));
           }
           std::None => {
             reading = false;
@@ -1203,19 +1199,19 @@ pub fn read_dir_entries(zone: ref mut Zone, path: ref std::string::String) -> st
   }
 }
 
-pub fn read_dir_entries_optional(zone: ref mut Zone, path: ref std::string::String) -> std::Option[std::vec::Vec[DirEntry]] {
+pub fn read_dir_entries_optional(zone: ref mut Zone, path: std::Slice[u8]) -> std::Option[std::vec::Vec[DirEntry]] {
   return try_read_dir_entries(zone, path);
 }
 
-pub fn read_dir(zone: ref mut Zone, path: ref std::string::String) -> std::Result[std::vec::Vec[DirEntry], std::error::Error] {
+pub fn read_dir(zone: ref mut Zone, path: std::Slice[u8]) -> std::Result[std::vec::Vec[DirEntry], std::error::Error] {
   return read_dir_entries(zone, path);
 }
 
-pub fn read_dir_optional(zone: ref mut Zone, path: ref std::string::String) -> std::Option[std::vec::Vec[DirEntry]] {
+pub fn read_dir_optional(zone: ref mut Zone, path: std::Slice[u8]) -> std::Option[std::vec::Vec[DirEntry]] {
   return try_read_dir_entries(zone, path);
 }
 
-pub fn read_dir_unchecked(zone: ref mut Zone, path: ref std::string::String) -> std::vec::Vec[DirEntry] {
+pub fn read_dir_unchecked(zone: ref mut Zone, path: std::Slice[u8]) -> std::vec::Vec[DirEntry] {
   match read_dir(zone, path) {
     std::Ok(entries) => {
       return entries;
@@ -1252,7 +1248,7 @@ fn try_read_dir_entries_bytes(zone: ref mut Zone, path: std::Slice[u8]) -> std::
   return std::None<std::vec::Vec[DirEntry]>();
 }
 
-pub fn read_dir_entries_unchecked(zone: ref mut Zone, path: ref std::string::String) -> std::vec::Vec[DirEntry] {
+pub fn read_dir_entries_unchecked(zone: ref mut Zone, path: std::Slice[u8]) -> std::vec::Vec[DirEntry] {
   match read_dir_entries(zone, path) {
     std::Ok(entries) => {
       return entries;
@@ -1275,7 +1271,7 @@ fn make_dir_entry_info(entry: DirEntry) -> DirEntryInfo {
   };
 }
 
-pub fn read_dir_info(zone: ref mut Zone, path: ref std::string::String) -> std::Result[std::vec::Vec[DirEntryInfo], std::error::Error] {
+pub fn read_dir_info(zone: ref mut Zone, path: std::Slice[u8]) -> std::Result[std::vec::Vec[DirEntryInfo], std::error::Error] {
   match read_dir_entries(zone, path) {
     std::Ok(entries) => {
       var output = std::vec::new<DirEntryInfo>(zone, entries.len());
@@ -1294,12 +1290,12 @@ pub fn read_dir_info(zone: ref mut Zone, path: ref std::string::String) -> std::
 
 pub fn read_dir_info_detailed(
   zone: ref mut Zone,
-  path: ref std::string::String
+  path: std::Slice[u8]
 ) -> std::Result[std::vec::Vec[DirEntryInfo], PathError] {
   return map_path_error<std::vec::Vec[DirEntryInfo]>(FsReadDir, path, read_dir_info(zone, path));
 }
 
-pub fn read_dir_info_optional(zone: ref mut Zone, path: ref std::string::String) -> std::Option[std::vec::Vec[DirEntryInfo]] {
+pub fn read_dir_info_optional(zone: ref mut Zone, path: std::Slice[u8]) -> std::Option[std::vec::Vec[DirEntryInfo]] {
   match read_dir_info(zone, path) {
     std::Ok(entries) => {
       return std::Some<std::vec::Vec[DirEntryInfo]>(entries);
@@ -1309,11 +1305,11 @@ pub fn read_dir_info_optional(zone: ref mut Zone, path: ref std::string::String)
   return std::None<std::vec::Vec[DirEntryInfo]>();
 }
 
-pub fn try_read_dir_info(zone: ref mut Zone, path: ref std::string::String) -> std::Option[std::vec::Vec[DirEntryInfo]] {
+pub fn try_read_dir_info(zone: ref mut Zone, path: std::Slice[u8]) -> std::Option[std::vec::Vec[DirEntryInfo]] {
   return read_dir_info_optional(zone, path);
 }
 
-pub fn read_dir_info_unchecked(zone: ref mut Zone, path: ref std::string::String) -> std::vec::Vec[DirEntryInfo] {
+pub fn read_dir_info_unchecked(zone: ref mut Zone, path: std::Slice[u8]) -> std::vec::Vec[DirEntryInfo] {
   match read_dir_info(zone, path) {
     std::Ok(entries) => {
       return entries;
@@ -1369,22 +1365,22 @@ fn remove_dir_all_bytes(zone: ref mut Zone, path: std::Slice[u8]) -> bool {
   return remove_dir_bytes_raw(path.data, path.len);
 }
 
-pub fn remove_dir_all_bool(path: ref std::string::String) -> bool {
+pub fn remove_dir_all_bool(path: std::Slice[u8]) -> bool {
   var zone = std::zone::create(4096);
-  let ok = remove_dir_all_bytes(ref mut zone, path.as_slice());
+  let ok = remove_dir_all_bytes(ref mut zone, path);
   std::zone::destroy(zone);
   return ok;
 }
 
-pub fn remove_dir_all(path: ref std::string::String) -> std::Result[(), std::error::Error] {
+pub fn remove_dir_all(path: std::Slice[u8]) -> std::Result[(), std::error::Error] {
   if remove_dir_all_bool(path) {
     return std::Ok<(), std::error::Error>(());
   }
   return std::Err<(), std::error::Error>(std::error::from_raw(last_errno_error_raw()));
 }
 
-pub fn try_canonicalize(zone: ref mut Zone, path: ref std::string::String) -> std::Option[std::string::String] {
-  let data = path.as_slice();
+pub fn try_canonicalize(zone: ref mut Zone, path: std::Slice[u8]) -> std::Option[std::string::String] {
+  let data = path;
   let resolved = canonicalize_bytes_raw(data.data, data.len);
   if source_text_bytes(resolved).len == 0 {
     return std::None<std::string::String>();
@@ -1392,8 +1388,8 @@ pub fn try_canonicalize(zone: ref mut Zone, path: ref std::string::String) -> st
   return std::Some<std::string::String>(source_text_string(zone, resolved));
 }
 
-pub fn canonicalize(zone: ref mut Zone, path: ref std::string::String) -> std::Result[std::string::String, std::error::Error] {
-  let data = path.as_slice();
+pub fn canonicalize(zone: ref mut Zone, path: std::Slice[u8]) -> std::Result[std::string::String, std::error::Error] {
+  let data = path;
   let resolved = canonicalize_bytes_raw(data.data, data.len);
   if source_text_bytes(resolved).len == 0 {
     return std::Err<std::string::String, std::error::Error>(std::error::from_raw(last_errno_error_raw()));
@@ -1401,11 +1397,11 @@ pub fn canonicalize(zone: ref mut Zone, path: ref std::string::String) -> std::R
   return std::Ok<std::string::String, std::error::Error>(source_text_string(zone, resolved));
 }
 
-pub fn canonicalize_optional(zone: ref mut Zone, path: ref std::string::String) -> std::Option[std::string::String] {
+pub fn canonicalize_optional(zone: ref mut Zone, path: std::Slice[u8]) -> std::Option[std::string::String] {
   return try_canonicalize(zone, path);
 }
 
-pub fn canonicalize_unchecked(zone: ref mut Zone, path: ref std::string::String) -> std::string::String {
+pub fn canonicalize_unchecked(zone: ref mut Zone, path: std::Slice[u8]) -> std::string::String {
   match canonicalize(zone, path) {
     std::Ok(value) => {
       return value;
@@ -1416,8 +1412,8 @@ pub fn canonicalize_unchecked(zone: ref mut Zone, path: ref std::string::String)
   return std::string::empty(zone);
 }
 
-pub fn try_read_link(zone: ref mut Zone, path: ref std::string::String) -> std::Option[std::string::String] {
-  let data = path.as_slice();
+pub fn try_read_link(zone: ref mut Zone, path: std::Slice[u8]) -> std::Option[std::string::String] {
+  let data = path;
   let target = read_link_bytes_raw(data.data, data.len);
   if source_text_bytes(target).len == 0 {
     return std::None<std::string::String>();
@@ -1425,8 +1421,8 @@ pub fn try_read_link(zone: ref mut Zone, path: ref std::string::String) -> std::
   return std::Some<std::string::String>(source_text_string(zone, target));
 }
 
-pub fn read_link(zone: ref mut Zone, path: ref std::string::String) -> std::Result[std::string::String, std::error::Error] {
-  let data = path.as_slice();
+pub fn read_link(zone: ref mut Zone, path: std::Slice[u8]) -> std::Result[std::string::String, std::error::Error] {
+  let data = path;
   let target = read_link_bytes_raw(data.data, data.len);
   if source_text_bytes(target).len == 0 {
     return std::Err<std::string::String, std::error::Error>(std::error::from_raw(last_errno_error_raw()));
@@ -1434,11 +1430,11 @@ pub fn read_link(zone: ref mut Zone, path: ref std::string::String) -> std::Resu
   return std::Ok<std::string::String, std::error::Error>(source_text_string(zone, target));
 }
 
-pub fn read_link_optional(zone: ref mut Zone, path: ref std::string::String) -> std::Option[std::string::String] {
+pub fn read_link_optional(zone: ref mut Zone, path: std::Slice[u8]) -> std::Option[std::string::String] {
   return try_read_link(zone, path);
 }
 
-pub fn read_link_unchecked(zone: ref mut Zone, path: ref std::string::String) -> std::string::String {
+pub fn read_link_unchecked(zone: ref mut Zone, path: std::Slice[u8]) -> std::string::String {
   match read_link(zone, path) {
     std::Ok(value) => {
       return value;
@@ -1449,7 +1445,7 @@ pub fn read_link_unchecked(zone: ref mut Zone, path: ref std::string::String) ->
   return std::string::empty(zone);
 }
 
-pub fn open_optional(path: ref std::string::String, mode: ref std::string::String) -> std::Option[File] {
+pub fn open_optional(path: std::Slice[u8], mode: std::Slice[u8]) -> std::Option[File] {
   let file = open_unchecked(path, mode);
   if file.is_open() {
     return std::Some<File>(file);
@@ -1457,34 +1453,34 @@ pub fn open_optional(path: ref std::string::String, mode: ref std::string::Strin
   return std::None<File>();
 }
 
-pub fn try_open(path: ref std::string::String, mode: ref std::string::String) -> std::Option[File] {
+pub fn try_open(path: std::Slice[u8], mode: std::Slice[u8]) -> std::Option[File] {
   return open_optional(path, mode);
 }
 
-pub fn open_raw(path: ref std::string::String, mode: ref std::string::String) -> std::Result[File, i64] {
-  return open_raw_with_mode_bytes(path, mode.as_slice());
+pub fn open_raw(path: std::Slice[u8], mode: std::Slice[u8]) -> std::Result[File, i64] {
+  return open_raw_with_mode_bytes(path, mode);
 }
 
-fn open_raw_with_mode_bytes(path: ref std::string::String, mode: std::Slice[u8]) -> std::Result[File, i64] {
+fn open_raw_with_mode_bytes(path: std::Slice[u8], mode: std::Slice[u8]) -> std::Result[File, i64] {
   if !supported_open_mode(mode) {
     return std::Err<File, i64>(invalid_input_error_raw());
   }
-  let file = open_unchecked_bytes(path.as_slice(), mode);
+  let file = open_unchecked_bytes(path, mode);
   if file.is_open() {
     return std::Ok<File, i64>(file);
   }
   return std::Err<File, i64>(last_errno_error_raw());
 }
 
-fn open_raw_with_mode_literal(path: ref std::string::String, mode: string) -> std::Result[File, i64] {
+fn open_raw_with_mode_literal(path: std::Slice[u8], mode: string) -> std::Result[File, i64] {
   return open_raw_with_mode_bytes(path, source_text_bytes(mode));
 }
 
-pub fn open(path: ref std::string::String, mode: ref std::string::String) -> std::Result[File, std::error::Error] {
+pub fn open(path: std::Slice[u8], mode: std::Slice[u8]) -> std::Result[File, std::error::Error] {
   return std::error::map_raw<File>(open_raw(path, mode));
 }
 
-fn open_with_mode_literal(path: ref std::string::String, mode: string) -> std::Result[File, std::error::Error] {
+fn open_with_mode_literal(path: std::Slice[u8], mode: string) -> std::Result[File, std::error::Error] {
   return std::error::map_raw<File>(open_raw_with_mode_literal(path, mode));
 }
 
@@ -1492,15 +1488,15 @@ pub fn open_options() -> OpenOptions {
   return OpenOptions::new();
 }
 
-pub fn create_unchecked(path: ref std::string::String) -> File {
-  return open_unchecked_bytes(path.as_slice(), std::string::bytes("w"));
+pub fn create_unchecked(path: std::Slice[u8]) -> File {
+  return open_unchecked_bytes(path, std::string::bytes("w"));
 }
 
-pub fn create(path: ref std::string::String) -> std::Result[File, std::error::Error] {
+pub fn create(path: std::Slice[u8]) -> std::Result[File, std::error::Error] {
   return open_with_mode_literal(path, "w");
 }
 
-pub fn create_optional(path: ref std::string::String) -> std::Option[File] {
+pub fn create_optional(path: std::Slice[u8]) -> std::Option[File] {
   let file = create_unchecked(path);
   if file.is_open() {
     return std::Some<File>(file);
@@ -1508,39 +1504,39 @@ pub fn create_optional(path: ref std::string::String) -> std::Option[File] {
   return std::None<File>();
 }
 
-pub fn try_create(path: ref std::string::String) -> std::Option[File] {
+pub fn try_create(path: std::Slice[u8]) -> std::Option[File] {
   return create_optional(path);
 }
 
-pub fn create_raw(path: ref std::string::String) -> std::Result[File, i64] {
+pub fn create_raw(path: std::Slice[u8]) -> std::Result[File, i64] {
   return open_raw_with_mode_literal(path, "w");
 }
 
-pub fn open_read_unchecked(path: ref std::string::String) -> File {
-  return open_unchecked_bytes(path.as_slice(), std::string::bytes("r"));
+pub fn open_read_unchecked(path: std::Slice[u8]) -> File {
+  return open_unchecked_bytes(path, std::string::bytes("r"));
 }
 
-pub fn open_read(path: ref std::string::String) -> std::Result[File, std::error::Error] {
+pub fn open_read(path: std::Slice[u8]) -> std::Result[File, std::error::Error] {
   return open_with_mode_literal(path, "r");
 }
 
-pub fn open_write_unchecked(path: ref std::string::String) -> File {
-  return open_unchecked_bytes(path.as_slice(), std::string::bytes("w"));
+pub fn open_write_unchecked(path: std::Slice[u8]) -> File {
+  return open_unchecked_bytes(path, std::string::bytes("w"));
 }
 
-pub fn open_write(path: ref std::string::String) -> std::Result[File, std::error::Error] {
+pub fn open_write(path: std::Slice[u8]) -> std::Result[File, std::error::Error] {
   return open_with_mode_literal(path, "w");
 }
 
-pub fn open_append_unchecked(path: ref std::string::String) -> File {
-  return open_unchecked_bytes(path.as_slice(), std::string::bytes("a"));
+pub fn open_append_unchecked(path: std::Slice[u8]) -> File {
+  return open_unchecked_bytes(path, std::string::bytes("a"));
 }
 
-pub fn open_append(path: ref std::string::String) -> std::Result[File, std::error::Error] {
+pub fn open_append(path: std::Slice[u8]) -> std::Result[File, std::error::Error] {
   return open_with_mode_literal(path, "a");
 }
 
-pub fn open_read_optional(path: ref std::string::String) -> std::Option[File] {
+pub fn open_read_optional(path: std::Slice[u8]) -> std::Option[File] {
   let file = open_read_unchecked(path);
   if file.is_open() {
     return std::Some<File>(file);
@@ -1548,7 +1544,7 @@ pub fn open_read_optional(path: ref std::string::String) -> std::Option[File] {
   return std::None<File>();
 }
 
-pub fn open_write_optional(path: ref std::string::String) -> std::Option[File] {
+pub fn open_write_optional(path: std::Slice[u8]) -> std::Option[File] {
   let file = open_write_unchecked(path);
   if file.is_open() {
     return std::Some<File>(file);
@@ -1556,7 +1552,7 @@ pub fn open_write_optional(path: ref std::string::String) -> std::Option[File] {
   return std::None<File>();
 }
 
-pub fn open_append_optional(path: ref std::string::String) -> std::Option[File] {
+pub fn open_append_optional(path: std::Slice[u8]) -> std::Option[File] {
   let file = open_append_unchecked(path);
   if file.is_open() {
     return std::Some<File>(file);
@@ -1564,15 +1560,15 @@ pub fn open_append_optional(path: ref std::string::String) -> std::Option[File] 
   return std::None<File>();
 }
 
-pub fn try_open_read(path: ref std::string::String) -> std::Option[File] {
+pub fn try_open_read(path: std::Slice[u8]) -> std::Option[File] {
   return open_read_optional(path);
 }
 
-pub fn try_open_write(path: ref std::string::String) -> std::Option[File] {
+pub fn try_open_write(path: std::Slice[u8]) -> std::Option[File] {
   return open_write_optional(path);
 }
 
-pub fn try_open_append(path: ref std::string::String) -> std::Option[File] {
+pub fn try_open_append(path: std::Slice[u8]) -> std::Option[File] {
   return open_append_optional(path);
 }
 
@@ -1726,7 +1722,7 @@ pub fn try_read_byte(file: File) -> std::Option[u8] {
   return std::Some<u8>(byte as u8);
 }
 
-fn write_all_raw_with_mode(path: ref std::string::String, mode: string, values: std::Slice[u8]) -> std::Result[i64, i64] {
+fn write_all_raw_with_mode(path: std::Slice[u8], mode: string, values: std::Slice[u8]) -> std::Result[i64, i64] {
   match open_raw_with_mode_literal(path, mode) {
     std::Ok(file) => {
       match write_bytes_raw(file, values) {
@@ -1752,32 +1748,32 @@ fn write_all_raw_with_mode(path: ref std::string::String, mode: string, values: 
   }
 }
 
-pub fn write(path: ref std::string::String, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+pub fn write(path: std::Slice[u8], values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
   return std::error::map_raw<i64>(write_raw(path, values));
 }
 
-pub fn write_bool(path: ref std::string::String, values: std::Slice[u8]) -> bool {
+pub fn write_bool(path: std::Slice[u8], values: std::Slice[u8]) -> bool {
   return try_write(path, values).is_some();
 }
 
-pub fn append(path: ref std::string::String, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+pub fn append(path: std::Slice[u8], values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
   return std::error::map_raw<i64>(append_raw(path, values));
 }
 
-pub fn append_bool(path: ref std::string::String, values: std::Slice[u8]) -> bool {
+pub fn append_bool(path: std::Slice[u8], values: std::Slice[u8]) -> bool {
   return try_append(path, values).is_some();
 }
 
-pub fn write_raw(path: ref std::string::String, values: std::Slice[u8]) -> std::Result[i64, i64] {
+pub fn write_raw(path: std::Slice[u8], values: std::Slice[u8]) -> std::Result[i64, i64] {
   return write_all_raw_with_mode(path, "w", values);
 }
 
-pub fn append_raw(path: ref std::string::String, values: std::Slice[u8]) -> std::Result[i64, i64] {
+pub fn append_raw(path: std::Slice[u8], values: std::Slice[u8]) -> std::Result[i64, i64] {
   return write_all_raw_with_mode(path, "a", values);
 }
 
-pub fn write_string(path: ref std::string::String, text: ref std::string::String) -> std::Result[(), std::error::Error] {
-  match write(path, text.as_slice()) {
+pub fn write_string(path: std::Slice[u8], text: std::Slice[u8]) -> std::Result[(), std::error::Error] {
+  match write(path, text) {
     std::Ok(_) => {
       return std::Ok<(), std::error::Error>(());
     }
@@ -1787,15 +1783,15 @@ pub fn write_string(path: ref std::string::String, text: ref std::string::String
   }
 }
 
-pub fn try_write(path: ref std::string::String, values: std::Slice[u8]) -> std::Option[i64] {
+pub fn try_write(path: std::Slice[u8], values: std::Slice[u8]) -> std::Option[i64] {
   return byte_count_option(write_raw(path, values));
 }
 
-pub fn try_append(path: ref std::string::String, values: std::Slice[u8]) -> std::Option[i64] {
+pub fn try_append(path: std::Slice[u8], values: std::Slice[u8]) -> std::Option[i64] {
   return byte_count_option(append_raw(path, values));
 }
 
-pub fn read_to_string(zone: ref mut Zone, path: ref std::string::String) -> std::Result[std::string::String, std::error::Error] {
+pub fn read_to_string(zone: ref mut Zone, path: std::Slice[u8]) -> std::Result[std::string::String, std::error::Error] {
   match open_read(path) {
     std::Err(reason) => {
       return std::Err<std::string::String, std::error::Error>(reason);
@@ -1821,11 +1817,11 @@ pub fn read_to_string(zone: ref mut Zone, path: ref std::string::String) -> std:
   }
 }
 
-pub fn read_to_string_optional(zone: ref mut Zone, path: ref std::string::String) -> std::Option[std::string::String] {
+pub fn read_to_string_optional(zone: ref mut Zone, path: std::Slice[u8]) -> std::Option[std::string::String] {
   return try_read_to_string(zone, path);
 }
 
-pub fn read_to_string_or_default(zone: ref mut Zone, path: ref std::string::String) -> std::string::String {
+pub fn read_to_string_or_default(zone: ref mut Zone, path: std::Slice[u8]) -> std::string::String {
   match try_read_to_string(zone, path) {
     std::Some(output) => {
       return output;
@@ -1835,7 +1831,7 @@ pub fn read_to_string_or_default(zone: ref mut Zone, path: ref std::string::Stri
   return std::string::new(zone, 64);
 }
 
-pub fn read_to_string_unchecked(zone: ref mut Zone, path: ref std::string::String) -> std::string::String {
+pub fn read_to_string_unchecked(zone: ref mut Zone, path: std::Slice[u8]) -> std::string::String {
   match read_to_string(zone, path) {
     std::Ok(output) => {
       return output;
@@ -1846,7 +1842,7 @@ pub fn read_to_string_unchecked(zone: ref mut Zone, path: ref std::string::Strin
   return std::string::new(zone, 64);
 }
 
-pub fn try_read_to_string(zone: ref mut Zone, path: ref std::string::String) -> std::Option[std::string::String] {
+pub fn try_read_to_string(zone: ref mut Zone, path: std::Slice[u8]) -> std::Option[std::string::String] {
   var output = std::string::new(zone, 64);
   let file = try_open_read(path).unwrap_or(File::invalid());
   if !file.is_open() {
@@ -1869,11 +1865,11 @@ pub fn try_read_to_string(zone: ref mut Zone, path: ref std::string::String) -> 
   return std::Some<std::string::String>(output);
 }
 
-pub fn read(zone: ref mut Zone, path: ref std::string::String) -> std::Result[std::string::String, std::error::Error] {
+pub fn read(zone: ref mut Zone, path: std::Slice[u8]) -> std::Result[std::string::String, std::error::Error] {
   return read_to_string(zone, path);
 }
 
-pub fn read_bytes(zone: ref mut Zone, path: ref std::string::String) -> std::Result[std::vec::Vec[u8], std::error::Error] {
+pub fn read_bytes(zone: ref mut Zone, path: std::Slice[u8]) -> std::Result[std::vec::Vec[u8], std::error::Error] {
   match read(zone, path) {
     std::Ok(text) => {
       return std::Ok<std::vec::Vec[u8], std::error::Error>(std::vec::from_slice_in<u8>(zone, text.as_slice()));
@@ -1884,23 +1880,23 @@ pub fn read_bytes(zone: ref mut Zone, path: ref std::string::String) -> std::Res
   }
 }
 
-pub fn read_optional(zone: ref mut Zone, path: ref std::string::String) -> std::Option[std::string::String] {
+pub fn read_optional(zone: ref mut Zone, path: std::Slice[u8]) -> std::Option[std::string::String] {
   return try_read(zone, path);
 }
 
-pub fn read_or_default(zone: ref mut Zone, path: ref std::string::String) -> std::string::String {
+pub fn read_or_default(zone: ref mut Zone, path: std::Slice[u8]) -> std::string::String {
   return read_to_string_or_default(zone, path);
 }
 
-pub fn read_unchecked(zone: ref mut Zone, path: ref std::string::String) -> std::string::String {
+pub fn read_unchecked(zone: ref mut Zone, path: std::Slice[u8]) -> std::string::String {
   return read_to_string_unchecked(zone, path);
 }
 
-pub fn try_read(zone: ref mut Zone, path: ref std::string::String) -> std::Option[std::string::String] {
+pub fn try_read(zone: ref mut Zone, path: std::Slice[u8]) -> std::Option[std::string::String] {
   return try_read_to_string(zone, path);
 }
 
-pub fn truncate(path: ref std::string::String) -> bool {
+pub fn truncate(path: std::Slice[u8]) -> bool {
   let file = try_create(path).unwrap_or(File::invalid());
   if !file.is_open() {
     return false;
@@ -1908,7 +1904,7 @@ pub fn truncate(path: ref std::string::String) -> bool {
   return file.close().is_ok();
 }
 
-pub fn copy_bool(source: ref std::string::String, target: ref std::string::String) -> bool {
+pub fn copy_bool(source: std::Slice[u8], target: std::Slice[u8]) -> bool {
   match try_copy(source, target) {
     std::Some(_bytes) => {
       return true;
@@ -1918,7 +1914,7 @@ pub fn copy_bool(source: ref std::string::String, target: ref std::string::Strin
   return false;
 }
 
-pub fn copy_raw(source: ref std::string::String, target: ref std::string::String) -> std::Result[i64, i64] {
+pub fn copy_raw(source: std::Slice[u8], target: std::Slice[u8]) -> std::Result[i64, i64] {
   match open_raw_with_mode_literal(source, "r") {
     std::Ok(reader) => {
       match open_raw_with_mode_literal(target, "w") {
@@ -1973,124 +1969,124 @@ pub fn copy_raw(source: ref std::string::String, target: ref std::string::String
   }
 }
 
-pub fn copy(source: ref std::string::String, target: ref std::string::String) -> std::Result[i64, std::error::Error] {
+pub fn copy(source: std::Slice[u8], target: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
   return std::error::map_raw<i64>(copy_raw(source, target));
 }
 
-pub fn try_copy(source: ref std::string::String, target: ref std::string::String) -> std::Option[i64] {
+pub fn try_copy(source: std::Slice[u8], target: std::Slice[u8]) -> std::Option[i64] {
   return byte_count_option(copy_raw(source, target));
 }
 
-pub fn open_detailed(path: ref std::string::String, mode: ref std::string::String) -> std::Result[File, PathError] {
+pub fn open_detailed(path: std::Slice[u8], mode: std::Slice[u8]) -> std::Result[File, PathError] {
   return map_path_error<File>(FsOpen, path, open(path, mode));
 }
 
-pub fn create_detailed(path: ref std::string::String) -> std::Result[File, PathError] {
+pub fn create_detailed(path: std::Slice[u8]) -> std::Result[File, PathError] {
   return map_path_error<File>(FsCreate, path, create(path));
 }
 
 pub fn read_detailed(
   zone: ref mut Zone,
-  path: ref std::string::String
+  path: std::Slice[u8]
 ) -> std::Result[std::string::String, PathError] {
   return map_path_error<std::string::String>(FsRead, path, read(zone, path));
 }
 
 pub fn read_bytes_detailed(
   zone: ref mut Zone,
-  path: ref std::string::String
+  path: std::Slice[u8]
 ) -> std::Result[std::vec::Vec[u8], PathError] {
   return map_path_error<std::vec::Vec[u8]>(FsRead, path, read_bytes(zone, path));
 }
 
 pub fn write_detailed(
-  path: ref std::string::String,
+  path: std::Slice[u8],
   values: std::Slice[u8]
 ) -> std::Result[i64, PathError] {
   return map_path_error<i64>(FsWrite, path, write(path, values));
 }
 
 pub fn write_string_detailed(
-  path: ref std::string::String,
-  text: ref std::string::String
+  path: std::Slice[u8],
+  text: std::Slice[u8]
 ) -> std::Result[(), PathError] {
   return map_path_error<()>(FsWrite, path, write_string(path, text));
 }
 
 pub fn append_detailed(
-  path: ref std::string::String,
+  path: std::Slice[u8],
   values: std::Slice[u8]
 ) -> std::Result[i64, PathError] {
   return map_path_error<i64>(FsAppend, path, append(path, values));
 }
 
-pub fn remove_file_detailed(path: ref std::string::String) -> std::Result[(), PathError] {
+pub fn remove_file_detailed(path: std::Slice[u8]) -> std::Result[(), PathError] {
   return map_path_error<()>(FsRemove, path, remove_file(path));
 }
 
-pub fn remove_dir_detailed(path: ref std::string::String) -> std::Result[(), PathError] {
+pub fn remove_dir_detailed(path: std::Slice[u8]) -> std::Result[(), PathError] {
   return map_path_error<()>(FsRemoveDir, path, remove_dir(path));
 }
 
-pub fn remove_dir_all_detailed(path: ref std::string::String) -> std::Result[(), PathError] {
+pub fn remove_dir_all_detailed(path: std::Slice[u8]) -> std::Result[(), PathError] {
   return map_path_error<()>(FsRemoveDir, path, remove_dir_all(path));
 }
 
-pub fn create_dir_detailed(path: ref std::string::String) -> std::Result[(), PathError] {
+pub fn create_dir_detailed(path: std::Slice[u8]) -> std::Result[(), PathError] {
   return map_path_error<()>(FsCreateDir, path, create_dir(path));
 }
 
-pub fn create_dir_all_detailed(path: ref std::string::String) -> std::Result[(), PathError] {
+pub fn create_dir_all_detailed(path: std::Slice[u8]) -> std::Result[(), PathError] {
   return map_path_error<()>(FsCreateDir, path, create_dir_all(path));
 }
 
 pub fn rename_detailed(
-  source: ref std::string::String,
-  target: ref std::string::String
+  source: std::Slice[u8],
+  target: std::Slice[u8]
 ) -> std::Result[(), TwoPathError] {
   return map_two_path_error<()>(FsRename, source, target, rename(source, target));
 }
 
 pub fn copy_detailed(
-  source: ref std::string::String,
-  target: ref std::string::String
+  source: std::Slice[u8],
+  target: std::Slice[u8]
 ) -> std::Result[i64, TwoPathError] {
   return map_two_path_error<i64>(FsCopy, source, target, copy(source, target));
 }
 
-pub fn metadata_detailed(path: ref std::string::String) -> std::Result[Metadata, PathError] {
+pub fn metadata_detailed(path: std::Slice[u8]) -> std::Result[Metadata, PathError] {
   return map_path_error<Metadata>(FsMetadata, path, metadata(path));
 }
 
-pub fn symlink_metadata_detailed(path: ref std::string::String) -> std::Result[Metadata, PathError] {
+pub fn symlink_metadata_detailed(path: std::Slice[u8]) -> std::Result[Metadata, PathError] {
   return map_path_error<Metadata>(FsSymlinkMetadata, path, symlink_metadata(path));
 }
 
-pub fn file_type_detailed(path: ref std::string::String) -> std::Result[FileKind, PathError] {
+pub fn file_type_detailed(path: std::Slice[u8]) -> std::Result[FileKind, PathError] {
   return map_path_error<FileKind>(FsFileType, path, file_type(path));
 }
 
-pub fn mode_detailed(path: ref std::string::String) -> std::Result[i64, PathError] {
+pub fn mode_detailed(path: std::Slice[u8]) -> std::Result[i64, PathError] {
   return map_path_error<i64>(FsMode, path, mode(path));
 }
 
 pub fn canonicalize_detailed(
   zone: ref mut Zone,
-  path: ref std::string::String
+  path: std::Slice[u8]
 ) -> std::Result[std::string::String, PathError] {
   return map_path_error<std::string::String>(FsCanonicalize, path, canonicalize(zone, path));
 }
 
 pub fn read_link_detailed(
   zone: ref mut Zone,
-  path: ref std::string::String
+  path: std::Slice[u8]
 ) -> std::Result[std::string::String, PathError] {
   return map_path_error<std::string::String>(FsReadLink, path, read_link(zone, path));
 }
 
 pub fn read_dir_detailed(
   zone: ref mut Zone,
-  path: ref std::string::String
+  path: std::Slice[u8]
 ) -> std::Result[std::vec::Vec[DirEntry], PathError] {
   return map_path_error<std::vec::Vec[DirEntry]>(FsReadDir, path, read_dir(zone, path));
 }
@@ -2172,8 +2168,8 @@ pub impl std::fs::PathError {
     return self.reason_value.code();
   }
 
-  fn path_equals(self: ref Self, value: ref std::string::String) -> bool {
-    return self.path_value.equals(value.as_slice());
+  fn path_equals(self: ref Self, value: std::Slice[u8]) -> bool {
+    return self.path_value.equals(value);
   }
 }
 
@@ -2202,12 +2198,12 @@ pub impl std::fs::TwoPathError {
     return self.reason_value.code();
   }
 
-  fn source_equals(self: ref Self, value: ref std::string::String) -> bool {
-    return self.source_value.equals(value.as_slice());
+  fn source_equals(self: ref Self, value: std::Slice[u8]) -> bool {
+    return self.source_value.equals(value);
   }
 
-  fn target_equals(self: ref Self, value: ref std::string::String) -> bool {
-    return self.target_value.equals(value.as_slice());
+  fn target_equals(self: ref Self, value: std::Slice[u8]) -> bool {
+    return self.target_value.equals(value);
   }
 }
 
@@ -2478,8 +2474,8 @@ pub impl std::fs::OpenOptions {
     };
   }
 
-  fn open_unchecked(self: ref Self, path: ref std::string::String) -> File {
-    let data = path.as_slice();
+  fn open_unchecked(self: ref Self, path: std::Slice[u8]) -> File {
+    let data = path;
     return open_options_bytes_raw(
       data.data,
       data.len,
@@ -2492,7 +2488,7 @@ pub impl std::fs::OpenOptions {
     );
   }
 
-  fn open_raw(self: ref Self, path: ref std::string::String) -> std::Result[File, i64] {
+  fn open_raw(self: ref Self, path: std::Slice[u8]) -> std::Result[File, i64] {
     if !open_options_valid(self) {
       return std::Err<File, i64>(invalid_input_error_raw());
     }
@@ -2503,11 +2499,11 @@ pub impl std::fs::OpenOptions {
     return std::Err<File, i64>(last_errno_error_raw());
   }
 
-  fn open(self: ref Self, path: ref std::string::String) -> std::Result[File, std::error::Error] {
+  fn open(self: ref Self, path: std::Slice[u8]) -> std::Result[File, std::error::Error] {
     return std::error::map_raw<File>(self.open_raw(path));
   }
 
-  fn open_optional(self: ref Self, path: ref std::string::String) -> std::Option[File] {
+  fn open_optional(self: ref Self, path: std::Slice[u8]) -> std::Option[File] {
     let file = self.open_unchecked(path);
     if file.is_open() {
       return std::Some<File>(file);
@@ -2515,7 +2511,7 @@ pub impl std::fs::OpenOptions {
     return std::None<File>();
   }
 
-  fn try_open(self: ref Self, path: ref std::string::String) -> std::Option[File] {
+  fn try_open(self: ref Self, path: std::Slice[u8]) -> std::Option[File] {
     return self.open_optional(path);
   }
 }
@@ -2603,12 +2599,12 @@ pub impl std::fs::DirEntry {
     return ref self.path_value;
   }
 
-  fn name_equals(self: ref Self, value: ref std::string::String) -> bool {
-    return self.name_value.equals(value.as_slice());
+  fn name_equals(self: ref Self, value: std::Slice[u8]) -> bool {
+    return self.name_value.equals(value);
   }
 
-  fn path_equals(self: ref Self, value: ref std::string::String) -> bool {
-    return self.path_value.equals(value.as_slice());
+  fn path_equals(self: ref Self, value: std::Slice[u8]) -> bool {
+    return self.path_value.equals(value);
   }
 
   fn try_metadata(self: ref Self) -> std::Option[Metadata] {
@@ -2806,11 +2802,11 @@ pub impl std::fs::DirEntryInfo {
     return self.file_type_result_value.is_err();
   }
 
-  fn name_equals(self: ref Self, value: ref std::string::String) -> bool {
+  fn name_equals(self: ref Self, value: std::Slice[u8]) -> bool {
     return self.entry_value.name_equals(value);
   }
 
-  fn path_equals(self: ref Self, value: ref std::string::String) -> bool {
+  fn path_equals(self: ref Self, value: std::Slice[u8]) -> bool {
     return self.entry_value.path_equals(value);
   }
 }

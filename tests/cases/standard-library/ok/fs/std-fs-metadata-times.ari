@@ -14,17 +14,17 @@ fn has_all_timestamps(info: fs::Metadata) -> bool {
          has_timestamp(info.changed());
 }
 
-fn cleanup(root: string, file_path: string, link_path: string) -> void {
+fn cleanup(root: Slice[u8], file_path: Slice[u8], link_path: Slice[u8]) -> void {
   fs::remove_bool(link_path);
   fs::remove_bool(file_path);
   fs::remove_dir_bool(root);
 }
 
 fn main() -> i64 {
-  let root = "build/prelude/std-fs-metadata-times.tmp";
-  let file_path = "build/prelude/std-fs-metadata-times.tmp/file.txt";
-  let link_path = "build/prelude/std-fs-metadata-times.tmp/file-link";
-  let link_target = "file.txt";
+  let root: Slice[u8] = "build/prelude/std-fs-metadata-times.tmp";
+  let file_path: Slice[u8] = "build/prelude/std-fs-metadata-times.tmp/file.txt";
+  let link_path: Slice[u8] = "build/prelude/std-fs-metadata-times.tmp/file-link";
+  let link_target: Slice[u8] = "file.txt";
   cleanup(root, file_path, link_path);
 
   var score = 0;

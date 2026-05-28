@@ -50,6 +50,16 @@ POSIX-style byte paths: `std::path::PathBytes` is a borrowed byte view and
 byte string. In this module `canonicalize(ref mut zone, path)` therefore
 returns an owned path byte buffer.
 
+Path, mode, prefix, and whole-file text arguments use borrowed byte slices at
+the public boundary. That means string literals work directly:
+`fs::read_dir_entries(ref mut zone, ".")`, `fs::open("Ari.toml", "r")`, and
+`fs::write_string("out.txt", "ok")` all type-check without first building an
+owned `String`. When a path is already an owned `String`, pass `path.as_slice()`;
+when it is a `PathBuf`, pass the path's borrowed byte view. A variable declared
+as `let path = "file.txt"` is currently inferred as the primitive literal type,
+so reusable path constants should be written as `let path: Slice[u8] =
+"file.txt"` until literal-variable inference grows a path-byte default.
+
 Common natural API shapes:
 
 | Operation | Preferred API | Compatibility APIs |
@@ -633,10 +643,10 @@ errors for compatibility adapters.
 `write(path, values)` opens `path` with `"w"`, writes the whole `Slice[u8]`,
 closes the handle, and returns `Ok(byte_count)` when the complete write and
 close succeeded. `write_string(path, text)` is the text-shaped convenience
-wrapper for writing Ari's byte-oriented `String`; it returns `Result[(),
-Error]` after discarding the byte count. `append(path, values)` does the same
-with `"a"` mode. Failed opens, short writes, or failed closes return
-`Err(Error)`.
+wrapper for writing borrowed UTF-8 or byte text such as a string literal or
+`owned.as_slice()`; it returns `Result[(), Error]` after discarding the byte
+count. `append(path, values)` does the same with `"a"` mode. Failed opens,
+short writes, or failed closes return `Err(Error)`.
 `try_write(path, values)` and `try_append(path, values)` are byte-counting
 `Option` wrappers over the same operation. Use `write_raw` and
 `append_raw` only when a compatibility caller needs `Result[i64, i64]`.

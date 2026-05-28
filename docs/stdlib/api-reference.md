@@ -1592,6 +1592,13 @@ month length. Timezone databases are outside the first standard-library slice.
 
 Filesystem helpers live in `std::fs`:
 
+Filesystem path-like public arguments are borrowed byte slices. String
+literals therefore work directly for paths, mode strings, temporary prefixes,
+and `write_string` text, for example `fs::read_dir_entries(ref mut zone, ".")`
+or `fs::write_string("out.txt", "ok")`. Owned `String` values should pass
+`value.as_slice()`, and reusable literal path variables should be annotated as
+`Slice[u8]` until literal variables get a path-byte default.
+
 ```ari
 fs::exists(path)
 fs::can_read(path)
@@ -1924,8 +1931,9 @@ copies preserve open, read, write, and close failures as `Error`.
 and returns `Result[i64, Error]` with the byte count.
 `write(path, values)` truncates or creates a small byte file, writes the whole
 `Slice[u8]`, and returns `Ok(byte_count)` when the write and close succeed.
-`write_string(path, text)` writes Ari's byte-oriented `String` and returns
-`Result[(), Error]` after discarding the byte count.
+`write_string(path, text)` writes borrowed byte text such as a literal or an
+owned `String`'s `as_slice()` view and returns `Result[(), Error]` after
+discarding the byte count.
 `append(path, values)` creates if needed and appends the whole slice with the
 same `Result[i64, Error]` policy. `write_raw` and
 `append_raw` preserve the raw

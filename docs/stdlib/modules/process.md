@@ -200,6 +200,10 @@ ChildPipes::terminate()
 ChildPipes::detach()
 ```
 
+`temp_file_in` and `temp_dir_in` take the prefix as a borrowed byte slice, so
+literal prefixes such as `"/tmp/ari-tool-"` work directly. Pass
+`owned_prefix.as_slice()` when the prefix is already an owned `String`.
+
 `id()` returns the host process id as `i64`. `uid()` and `gid()` return the
 current user id and group id as non-negative `i64` values. On the current
 Linux/LLVM path these lower through runtime hooks backed by `getpid`, `getuid`,

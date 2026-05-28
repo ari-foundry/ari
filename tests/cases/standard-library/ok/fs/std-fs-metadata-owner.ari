@@ -1,6 +1,6 @@
 // Covers POSIX owner/group metadata and the explicit creation-time policy.
 fn main() -> i64 {
-  let path = "build/prelude/std-fs-metadata-owner.tmp";
+  let path: Slice[u8] = "build/prelude/std-fs-metadata-owner.tmp";
   fs::remove_file_bool(path);
   var score = 0;
 

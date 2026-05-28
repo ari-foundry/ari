@@ -2,11 +2,11 @@
 // regular file without truncating it, creates a missing empty file, and rejects
 // directory paths or paths whose parent directory is missing.
 fn main() -> i64 {
-  let existing_path = "build/prelude/std-fs-ensure-file-existing.tmp";
-  let missing_path = "build/prelude/std-fs-ensure-file-created.tmp";
-  let dir_path = "build/prelude/std-fs-ensure-file-dir.tmp";
-  let missing_parent_dir = "build/prelude/std-fs-ensure-file-missing";
-  let missing_parent_path = "build/prelude/std-fs-ensure-file-missing/child.tmp";
+  let existing_path: Slice[u8] = "build/prelude/std-fs-ensure-file-existing.tmp";
+  let missing_path: Slice[u8] = "build/prelude/std-fs-ensure-file-created.tmp";
+  let dir_path: Slice[u8] = "build/prelude/std-fs-ensure-file-dir.tmp";
+  let missing_parent_dir: Slice[u8] = "build/prelude/std-fs-ensure-file-missing";
+  let missing_parent_path: Slice[u8] = "build/prelude/std-fs-ensure-file-missing/child.tmp";
 
   if fs::exists(existing_path) {
     fs::remove_bool(existing_path);

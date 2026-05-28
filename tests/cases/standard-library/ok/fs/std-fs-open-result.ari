@@ -1,6 +1,6 @@
 // Covers natural Result-returning filesystem open helpers. Compatibility
 // aliases remain available for Option-only and raw host-error callers.
-fn cleanup(path: string, missing: string) -> void {
+fn cleanup(path: Slice[u8], missing: Slice[u8]) -> void {
   fs::remove_bool(path);
   fs::remove_bool(missing);
 }
@@ -37,15 +37,15 @@ fn raw_file_error_matches(value: Result[fs::File, i64], kind: error::Kind, code:
   }
 }
 
-fn read_text(zone: ref mut Zone, path: string, expected: string) -> bool {
+fn read_text(zone: ref mut Zone, path: Slice[u8], expected: Slice[u8]) -> bool {
   let text = fs::read_to_string_unchecked(zone, path);
   return text.equals_text(expected);
 }
 
 fn main() -> i64 {
-  let path = "build/prelude/std-fs-open-result.tmp";
-  let missing = "build/prelude/std-fs-open-result-missing.tmp";
-  let aux = "build/prelude/std-fs-open-result-aux.tmp";
+  let path: Slice[u8] = "build/prelude/std-fs-open-result.tmp";
+  let missing: Slice[u8] = "build/prelude/std-fs-open-result-missing.tmp";
+  let aux: Slice[u8] = "build/prelude/std-fs-open-result-aux.tmp";
   cleanup(path, missing);
   fs::remove_bool(aux);
 

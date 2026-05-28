@@ -1,7 +1,7 @@
 // Covers the first std::fs slice: existence checks, mode-string open calls,
 // read/write/close, byte-slice writes, deletion, and Option-returning helpers.
 fn main() -> i64 {
-  let path = "build/prelude/std-fs-basic.tmp";
+  let path: Slice[u8] = "build/prelude/std-fs-basic.tmp";
   if fs::exists(path) {
     fs::remove_bool(path);
   }

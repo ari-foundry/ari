@@ -1,7 +1,7 @@
 // Covers Result-returning whole-file byte helpers. These keep byte counts on
 // success and preserve direct Error payloads plus the raw bridge on ordinary
 // open, write, and close failures.
-fn cleanup(path: string, copy_path: string, missing_source: string, missing_parent: string) -> void {
+fn cleanup(path: Slice[u8], copy_path: Slice[u8], missing_source: Slice[u8], missing_parent: Slice[u8]) -> void {
   fs::remove_bool(path);
   fs::remove_bool(copy_path);
   fs::remove_bool(missing_source);
@@ -38,11 +38,11 @@ fn byte_raw_error(value: Result[i64, i64], kind: error::Kind, code: i64) -> bool
 }
 
 fn main() -> i64 {
-  let path = "build/prelude/std-fs-byte-result.tmp";
-  let copy_path = "build/prelude/std-fs-byte-result-copy.tmp";
-  let missing_source = "build/prelude/std-fs-byte-result-missing.tmp";
-  let missing_parent = "build/prelude/std-fs-byte-result-missing-dir";
-  let missing_child = "build/prelude/std-fs-byte-result-missing-dir/child.tmp";
+  let path: Slice[u8] = "build/prelude/std-fs-byte-result.tmp";
+  let copy_path: Slice[u8] = "build/prelude/std-fs-byte-result-copy.tmp";
+  let missing_source: Slice[u8] = "build/prelude/std-fs-byte-result-missing.tmp";
+  let missing_parent: Slice[u8] = "build/prelude/std-fs-byte-result-missing-dir";
+  let missing_child: Slice[u8] = "build/prelude/std-fs-byte-result-missing-dir/child.tmp";
   cleanup(path, copy_path, missing_source, missing_parent);
 
   var zone = zone::create(2048);

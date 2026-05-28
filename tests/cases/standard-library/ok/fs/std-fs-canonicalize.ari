@@ -2,9 +2,9 @@
 // to absolute owned strings, lexical "." is removed by the host, and missing
 // paths return None through the fallible helper.
 fn main() -> i64 {
-  let path = "build/prelude/std-fs-canonicalize.tmp";
-  let dotted = "build/prelude/./std-fs-canonicalize.tmp";
-  let missing = "build/prelude/std-fs-canonicalize-missing.tmp";
+  let path: Slice[u8] = "build/prelude/std-fs-canonicalize.tmp";
+  let dotted: Slice[u8] = "build/prelude/./std-fs-canonicalize.tmp";
+  let missing: Slice[u8] = "build/prelude/std-fs-canonicalize-missing.tmp";
 
   if fs::exists(path) {
     fs::remove_bool(path);

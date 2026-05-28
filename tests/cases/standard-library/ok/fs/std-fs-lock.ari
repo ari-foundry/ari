@@ -1,6 +1,6 @@
 // Covers hosted advisory file-lock helpers over POSIX flock.
 fn main() -> i64 {
-  let path = "build/prelude/std-fs-lock.tmp";
+  let path: Slice[u8] = "build/prelude/std-fs-lock.tmp";
   var score = 0;
 
   match fs::create(path) {

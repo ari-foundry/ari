@@ -1,7 +1,7 @@
 // Covers std::fs::File as a std::io Reader/Writer adapter. Generic IO helpers
 // can read a file into a String, copy between files, write whole byte slices,
 // flush direct file writes, and reject invalid handles through the traits.
-fn cleanup(path: string) -> void {
+fn cleanup(path: Slice[u8]) -> void {
   if fs::exists(path) {
     fs::remove_bool(path);
   }
@@ -15,9 +15,9 @@ fn unit_error_is(value: Result[(), error::Error], kind: error::Kind) -> bool {
 }
 
 fn main() -> i64 {
-  let source_path = "build/prelude/std-fs-io-traits-source.tmp";
-  let copy_path = "build/prelude/std-fs-io-traits-copy.tmp";
-  let write_path = "build/prelude/std-fs-io-traits-write.tmp";
+  let source_path: Slice[u8] = "build/prelude/std-fs-io-traits-source.tmp";
+  let copy_path: Slice[u8] = "build/prelude/std-fs-io-traits-copy.tmp";
+  let write_path: Slice[u8] = "build/prelude/std-fs-io-traits-write.tmp";
   cleanup(source_path);
   cleanup(copy_path);
   cleanup(write_path);

@@ -1,19 +1,19 @@
 // Covers std::fs::OpenOptions. The test separates the options-value API from
 // the older mode-string surface and checks non-truncating read/write,
 // exclusive creation, append, and invalid option combinations.
-fn cleanup(path: string, missing: string) -> void {
+fn cleanup(path: Slice[u8], missing: Slice[u8]) -> void {
   fs::remove_bool(path);
   fs::remove_bool(missing);
 }
 
-fn read_text(zone: ref mut Zone, path: string, expected: string) -> bool {
+fn read_text(zone: ref mut Zone, path: Slice[u8], expected: Slice[u8]) -> bool {
   let text = fs::read_to_string_unchecked(zone, path);
   return text.equals_text(expected);
 }
 
 fn main() -> i64 {
-  let path = "build/prelude/std-fs-open-options.tmp";
-  let missing = "build/prelude/std-fs-open-options-missing.tmp";
+  let path: Slice[u8] = "build/prelude/std-fs-open-options.tmp";
+  let missing: Slice[u8] = "build/prelude/std-fs-open-options-missing.tmp";
   cleanup(path, missing);
 
   var score = 0;

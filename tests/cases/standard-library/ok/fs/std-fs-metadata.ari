@@ -1,9 +1,9 @@
 // Covers stat-backed filesystem metadata: missing paths return None,
 // files report byte length and kind, and directories report directory kind.
 fn main() -> i64 {
-  let file_path = "build/prelude/std-fs-metadata.tmp";
-  let dir_path = "build/prelude/std-fs-metadata-dir.tmp";
-  let missing_path = "build/prelude/std-fs-metadata-missing.tmp";
+  let file_path: Slice[u8] = "build/prelude/std-fs-metadata.tmp";
+  let dir_path: Slice[u8] = "build/prelude/std-fs-metadata-dir.tmp";
+  let missing_path: Slice[u8] = "build/prelude/std-fs-metadata-missing.tmp";
 
   if fs::exists(file_path) {
     fs::remove_bool(file_path);

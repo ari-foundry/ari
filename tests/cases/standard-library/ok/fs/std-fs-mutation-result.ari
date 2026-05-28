@@ -1,7 +1,7 @@
 // Covers Result-returning filesystem mutation helpers. The success payload is
 // unit because callers only need to know that the operation completed; failures
 // use direct Error payloads while raw helpers stay available for compatibility.
-fn cleanup(dir_path: string, source_path: string, target_path: string) -> void {
+fn cleanup(dir_path: Slice[u8], source_path: Slice[u8], target_path: Slice[u8]) -> void {
   fs::remove_bool(source_path);
   fs::remove_bool(target_path);
   fs::remove_dir_bool(dir_path);
@@ -37,10 +37,10 @@ fn result_ok(value: Result[(), error::Error]) -> bool {
 }
 
 fn main() -> i64 {
-  let dir_path = "build/prelude/std-fs-mutation-result.dir";
-  let source_path = "build/prelude/std-fs-mutation-result-source.tmp";
-  let target_path = "build/prelude/std-fs-mutation-result-target.tmp";
-  let missing_path = "build/prelude/std-fs-mutation-result-missing.tmp";
+  let dir_path: Slice[u8] = "build/prelude/std-fs-mutation-result.dir";
+  let source_path: Slice[u8] = "build/prelude/std-fs-mutation-result-source.tmp";
+  let target_path: Slice[u8] = "build/prelude/std-fs-mutation-result-target.tmp";
+  let missing_path: Slice[u8] = "build/prelude/std-fs-mutation-result-missing.tmp";
   cleanup(dir_path, source_path, target_path);
   fs::remove_bool(missing_path);
 

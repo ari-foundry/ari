@@ -1,17 +1,17 @@
 // Covers read_dir_info, which snapshots each DirEntry together with the
 // per-entry metadata/file-type results callers otherwise have to query one by
 // one.
-fn cleanup(root: string, file_path: string, link_path: string) -> void {
+fn cleanup(root: Slice[u8], file_path: Slice[u8], link_path: Slice[u8]) -> void {
   fs::remove_file_bool(link_path);
   fs::remove_file_bool(file_path);
   fs::remove_dir_bool(root);
 }
 
 fn main() -> i64 {
-  let root = "build/prelude/std-fs-dir-entry-info.tmp";
-  let file_path = "build/prelude/std-fs-dir-entry-info.tmp/data.txt";
-  let link_path = "build/prelude/std-fs-dir-entry-info.tmp/broken-link";
-  let missing_target = "missing-target";
+  let root: Slice[u8] = "build/prelude/std-fs-dir-entry-info.tmp";
+  let file_path: Slice[u8] = "build/prelude/std-fs-dir-entry-info.tmp/data.txt";
+  let link_path: Slice[u8] = "build/prelude/std-fs-dir-entry-info.tmp/broken-link";
+  let missing_target: Slice[u8] = "missing-target";
 
   cleanup(root, file_path, link_path);
   var score = 0;

@@ -1,14 +1,14 @@
 // Covers no-follow symbolic-link metadata. `metadata` follows a link to its
 // target, while `symlink_metadata` reports the link object itself.
-fn cleanup(path: string) -> void {
+fn cleanup(path: Slice[u8]) -> void {
   fs::remove_bool(path);
 }
 
 fn main() -> i64 {
-  let source = "build/prelude/std-fs-symlink-metadata-source.tmp";
-  let link = "build/prelude/std-fs-symlink-metadata-link.tmp";
-  let target = "std-fs-symlink-metadata-source.tmp";
-  let missing = "build/prelude/std-fs-symlink-metadata-missing.tmp";
+  let source: Slice[u8] = "build/prelude/std-fs-symlink-metadata-source.tmp";
+  let link: Slice[u8] = "build/prelude/std-fs-symlink-metadata-link.tmp";
+  let target: Slice[u8] = "std-fs-symlink-metadata-source.tmp";
+  let missing: Slice[u8] = "build/prelude/std-fs-symlink-metadata-missing.tmp";
   cleanup(link);
   cleanup(source);
 
@@ -45,7 +45,7 @@ fn main() -> i64 {
 
   match fs::try_symlink_metadata(link) {
     std::Some(link_info) => {
-      if link_info.is_symlink() && !link_info.is_file() && link_info.len() == std::string::c_len(target) {
+      if link_info.is_symlink() && !link_info.is_file() && link_info.len() == target.len {
         score = score + 32;
       }
     }

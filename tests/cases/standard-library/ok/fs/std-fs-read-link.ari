@@ -1,15 +1,15 @@
 // Covers symbolic-link target reads. This keeps link creation and link
 // inspection separate from canonicalization: read_link returns the stored link
 // target bytes, while canonicalize resolves an existing path.
-fn cleanup(path: string) -> void {
+fn cleanup(path: Slice[u8]) -> void {
   fs::remove_bool(path);
 }
 
 fn main() -> i64 {
-  let source = "build/prelude/std-fs-read-link-source.tmp";
-  let link = "build/prelude/std-fs-read-link-symbolic.tmp";
-  let target = "std-fs-read-link-source.tmp";
-  let missing = "build/prelude/std-fs-read-link-missing.tmp";
+  let source: Slice[u8] = "build/prelude/std-fs-read-link-source.tmp";
+  let link: Slice[u8] = "build/prelude/std-fs-read-link-symbolic.tmp";
+  let target: Slice[u8] = "std-fs-read-link-source.tmp";
+  let missing: Slice[u8] = "build/prelude/std-fs-read-link-missing.tmp";
   cleanup(link);
   cleanup(source);
 

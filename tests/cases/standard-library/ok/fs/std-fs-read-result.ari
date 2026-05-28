@@ -1,7 +1,7 @@
 // Covers natural Error-returning whole-file read helpers. Compatibility
 // aliases intentionally stay available, but callers that need failure details
 // should use read or read_to_string directly.
-fn string_ok(value: Result[std::string::String, error::Error], expected: string) -> bool {
+fn string_ok(value: Result[std::string::String, error::Error], expected: Slice[u8]) -> bool {
   match value {
     Ok(text) => {
       return text.equals_text(expected);
@@ -24,8 +24,8 @@ fn string_err(value: Result[std::string::String, error::Error], kind: error::Kin
 }
 
 fn main() -> i64 {
-  let path = "build/prelude/std-fs-read-result.tmp";
-  let missing = "build/prelude/std-fs-read-result-missing.tmp";
+  let path: Slice[u8] = "build/prelude/std-fs-read-result.tmp";
+  let missing: Slice[u8] = "build/prelude/std-fs-read-result-missing.tmp";
   fs::remove_bool(path);
   fs::remove_bool(missing);
 

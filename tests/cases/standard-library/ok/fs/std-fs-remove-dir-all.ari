@@ -2,17 +2,17 @@
 // removes file and symlink entries inside it, rejects non-directory roots, and
 // never follows directory symlinks outside the tree.
 fn cleanup_manual(
-  root: string,
-  alpha: string,
-  beta: string,
-  file_path: string,
-  nested_file: string,
-  link_file: string,
-  link_dir: string,
-  outside: string,
-  outside_file: string,
-  standalone: string,
-  empty: string
+  root: Slice[u8],
+  alpha: Slice[u8],
+  beta: Slice[u8],
+  file_path: Slice[u8],
+  nested_file: Slice[u8],
+  link_file: Slice[u8],
+  link_dir: Slice[u8],
+  outside: Slice[u8],
+  outside_file: Slice[u8],
+  standalone: Slice[u8],
+  empty: Slice[u8]
 ) -> void {
   fs::remove_bool(link_file);
   fs::remove_bool(link_dir);
@@ -28,18 +28,18 @@ fn cleanup_manual(
 }
 
 fn main() -> i64 {
-  let root = "build/prelude/std-fs-remove-dir-all.tmp";
-  let alpha = "build/prelude/std-fs-remove-dir-all.tmp/alpha";
-  let beta = "build/prelude/std-fs-remove-dir-all.tmp/alpha/beta";
-  let file_path = "build/prelude/std-fs-remove-dir-all.tmp/file.txt";
-  let nested_file = "build/prelude/std-fs-remove-dir-all.tmp/alpha/beta/nested.txt";
-  let link_file = "build/prelude/std-fs-remove-dir-all.tmp/link-file";
-  let link_dir = "build/prelude/std-fs-remove-dir-all.tmp/link-dir";
-  let outside = "build/prelude/std-fs-remove-dir-all-target.tmp";
-  let outside_file = "build/prelude/std-fs-remove-dir-all-target.tmp/keep.txt";
-  let standalone = "build/prelude/std-fs-remove-dir-all-file.tmp";
-  let empty = "build/prelude/std-fs-remove-dir-all-empty.tmp";
-  let missing = "build/prelude/std-fs-remove-dir-all-missing.tmp";
+  let root: Slice[u8] = "build/prelude/std-fs-remove-dir-all.tmp";
+  let alpha: Slice[u8] = "build/prelude/std-fs-remove-dir-all.tmp/alpha";
+  let beta: Slice[u8] = "build/prelude/std-fs-remove-dir-all.tmp/alpha/beta";
+  let file_path: Slice[u8] = "build/prelude/std-fs-remove-dir-all.tmp/file.txt";
+  let nested_file: Slice[u8] = "build/prelude/std-fs-remove-dir-all.tmp/alpha/beta/nested.txt";
+  let link_file: Slice[u8] = "build/prelude/std-fs-remove-dir-all.tmp/link-file";
+  let link_dir: Slice[u8] = "build/prelude/std-fs-remove-dir-all.tmp/link-dir";
+  let outside: Slice[u8] = "build/prelude/std-fs-remove-dir-all-target.tmp";
+  let outside_file: Slice[u8] = "build/prelude/std-fs-remove-dir-all-target.tmp/keep.txt";
+  let standalone: Slice[u8] = "build/prelude/std-fs-remove-dir-all-file.tmp";
+  let empty: Slice[u8] = "build/prelude/std-fs-remove-dir-all-empty.tmp";
+  let missing: Slice[u8] = "build/prelude/std-fs-remove-dir-all-missing.tmp";
 
   cleanup_manual(
     root,

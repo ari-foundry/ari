@@ -1,10 +1,10 @@
 // Covers idempotent single-directory creation. ensure_dir succeeds for an
 // existing directory, creates a missing directory, and rejects file paths.
 fn main() -> i64 {
-  let dir_path = "build/prelude/std-fs-ensure-dir.tmp";
-  let file_path = "build/prelude/std-fs-ensure-dir-file.tmp";
-  let missing_parent_dir = "build/prelude/std-fs-ensure-dir-missing";
-  let missing_parent_path = "build/prelude/std-fs-ensure-dir-missing/child";
+  let dir_path: Slice[u8] = "build/prelude/std-fs-ensure-dir.tmp";
+  let file_path: Slice[u8] = "build/prelude/std-fs-ensure-dir-file.tmp";
+  let missing_parent_dir: Slice[u8] = "build/prelude/std-fs-ensure-dir-missing";
+  let missing_parent_path: Slice[u8] = "build/prelude/std-fs-ensure-dir-missing/child";
 
   if fs::exists(missing_parent_path) {
     fs::remove_dir_bool(missing_parent_path);

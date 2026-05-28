@@ -2,10 +2,10 @@
 // create/try_create, read aliasing read_to_string, truncate, streaming copy,
 // and Option-returning copy byte counts.
 fn main() -> i64 {
-  let source_path = "build/prelude/std-fs-create-truncate-copy-src.tmp";
-  let copy_path = "build/prelude/std-fs-create-truncate-copy-dst.tmp";
-  let counted_path = "build/prelude/std-fs-create-truncate-copy-counted.tmp";
-  let missing_path = "build/prelude/std-fs-create-truncate-copy-missing.tmp";
+  let source_path: Slice[u8] = "build/prelude/std-fs-create-truncate-copy-src.tmp";
+  let copy_path: Slice[u8] = "build/prelude/std-fs-create-truncate-copy-dst.tmp";
+  let counted_path: Slice[u8] = "build/prelude/std-fs-create-truncate-copy-counted.tmp";
+  let missing_path: Slice[u8] = "build/prelude/std-fs-create-truncate-copy-missing.tmp";
   if fs::exists(source_path) {
     fs::remove_bool(source_path);
   }
