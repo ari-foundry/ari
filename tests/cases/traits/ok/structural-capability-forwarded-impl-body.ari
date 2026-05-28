@@ -1,0 +1,30 @@
+struct Packet {
+  value: i64,
+}
+
+impl Packet {
+  fn serialize(self) -> i64 {
+    return self.value + 1;
+  }
+}
+
+struct Boxed[T: has serialize() -> i64] {
+  value: T,
+}
+
+struct Outer[T] {
+  boxed: Boxed[T],
+}
+
+impl[T] Outer[T] {
+  fn score(self) -> i64 {
+    return self.boxed.value.serialize();
+  }
+}
+
+fn main() -> i64 {
+  let outer = Outer<Packet> {
+    boxed: Boxed<Packet> { value: Packet { value: 40 } },
+  };
+  return outer.score();
+}

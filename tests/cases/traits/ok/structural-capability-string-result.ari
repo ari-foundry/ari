@@ -1,0 +1,27 @@
+struct Packet {
+  value: i64,
+}
+
+impl Packet {
+  fn label(self: ref Self, zone: ref mut Zone) -> String {
+    var text = std::string::from(zone, "packet-");
+    text.append_i64_in(zone, self.value);
+    return text;
+  }
+}
+
+fn save(value: has label(ref mut Zone) -> String, zone: ref mut Zone) -> i64 {
+  let text = value.label(zone);
+  if text.equals_text("packet-44") {
+    return 44;
+  }
+  return 1;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(128);
+  let packet = Packet { value: 44 };
+  let score = save(packet, ref mut zone);
+  zone::destroy(zone);
+  return score;
+}

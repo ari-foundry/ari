@@ -679,9 +679,9 @@ and drop thunk.
 
 ## Structural Capability Parameters
 
-Ari has an initial, static-only form of anonymous structural parameter
-requirements for ordinary free functions and inherent `impl` methods. Use the
-single-method spelling when one method is enough:
+Ari has a static-only form of anonymous structural parameter requirements for
+ordinary free functions, inherent `impl` methods, trait methods, and trait impl
+methods. Use the single-method spelling when one method is enough:
 
 ```ari
 struct Packet {
@@ -709,6 +709,23 @@ type has a callable method with the requested name, non-receiver parameter
 types, and result type. Calls inside the function body still lower through the
 normal static method-dispatch and monomorphization path. This is not dynamic
 dispatch and it does not introduce an `interface` keyword.
+
+The requested method may take ordinary non-receiver parameters and may return
+non-scalar values such as the explicit-zone `String` handle:
+
+```ari
+impl Packet {
+  fn label(self: ref Self, zone: ref mut Zone) -> String {
+    var text = std::string::from(zone, "packet");
+    return text;
+  }
+}
+
+fn save_label(x: has label(ref mut Zone) -> String, zone: ref mut Zone) -> i64 {
+  let text = x.label(zone);
+  return text.len();
+}
+```
 
 Capability method parameter lists contain types, not parameter names:
 
@@ -790,6 +807,28 @@ same context as the function or method bound using the alias. If an aliased
 requirement fails, the diagnostic names the alias and shows the expanded
 method requirement after type-argument substitution.
 
+Struct and enum generic declarations can use the same direct `has` bounds or
+capability aliases. Concrete aggregate type applications check the selected
+type arguments before storage or payload lowering. If an unconstrained generic
+aggregate forwards a type into a constrained field, the forwarded requirement
+is enforced at concrete use sites and is available inside generic impl bodies:
+
+```ari
+struct Boxed[T: has serialize() -> i64] {
+  value: T,
+}
+
+struct Outer[T] {
+  boxed: Boxed[T],
+}
+
+impl[T] Outer[T] {
+  fn score(self) -> i64 {
+    self.boxed.value.serialize()
+  }
+}
+```
+
 Inherent `impl` methods and associated functions can use the same parameter
 syntax and the same explicit generic-bound syntax. Trait methods and their
 trait impl methods can use the same syntax as part of a trait contract; the
@@ -847,18 +886,18 @@ impl Sink for Runner {
 }
 ```
 
-The initial subset is intentionally narrow:
+The implemented method-only subset is intentionally narrow:
 
 - The syntax is accepted in ordinary free-function, inherent `impl` method,
   trait method, and trait impl method parameter type position, plus their
   generic parameter bounds.
 - A `has` parameter or bound currently describes method requirements only.
 - Capability aliases, including generic aliases, can be used in supported
-  function and method generic bounds.
+  function, method, struct, and enum generic bounds.
 - Associated types, field requirements, and operators are not implemented yet.
 - `has method(...) -> Type` in struct fields, extern declarations, meta
-  functions, lambdas, struct/enum/trait generic bounds, or other type
-  positions is rejected with a targeted diagnostic.
+  functions, lambdas, trait declaration generic bounds, or other type positions
+  is rejected with a targeted diagnostic.
 
 Use a named trait when the contract should be shared across APIs, documented as
 part of a stable interface, or implemented through trait-object dispatch:

@@ -47,8 +47,9 @@ The few stdlib polish items that are blocked by compiler features are mapped in
 
 ## Language Ideas Parked For Later
 
-Structural capability parameters now have a narrow executable seed for ordinary
-free functions, inherent `impl` methods, trait methods, and trait impl methods:
+Structural capability parameters now have an implemented static method-only
+subset for ordinary free functions, inherent `impl` methods, trait methods,
+trait impl methods, struct generics, and enum generics:
 
 ```ari
 fn save(x: has serialize() -> i64) -> i64 {
@@ -67,16 +68,17 @@ supported function, method, struct, and enum generic bounds. Semantic analysis
 lowers anonymous parameters to hidden generics, substitutes alias type
 arguments into reusable capability requirements, checks concrete call-site and
 aggregate application types for every listed static method, and monomorphizes
-function bodies through the ordinary method-call path. Trait impl conformance
-now compares structural capability method signatures exactly, so a trait method
-and its impl can use direct `has ...` spelling or an equivalent capability
-alias but cannot silently change the requirement. Hidden capability generics do
-not count as visible method type arguments. Field or property-style
-requirements are rejected as method-only. It must continue to avoid an
-`interface` keyword, accidental dynamic dispatch, or a shortcut around named
-trait-bound diagnostics. Remaining roadmap work includes richer diagnostics for
-when a named trait is better, unresolved generic-placeholder propagation between
-constrained aggregates, and any future extension beyond method requirements.
+function bodies through the ordinary method-call path. Forwarded aggregate
+fields such as `Outer[T]` containing `Boxed[T: has serialize() -> i64]` carry
+the requirement into concrete aggregate applications and generic impl bodies.
+Trait impl conformance now compares structural capability method signatures
+exactly, so a trait method and its impl can use direct `has ...` spelling or an
+equivalent capability alias but cannot silently change the requirement. Hidden
+capability generics do not count as visible method type arguments. Field or
+property-style requirements are rejected as method-only. It must continue to
+avoid an `interface` keyword, accidental dynamic dispatch, or a shortcut around
+named trait-bound diagnostics. Remaining roadmap work is future language design
+beyond method requirements, not the base compiler implementation.
 
 Discriminant-linked union fields are also worth exploring for protocol and
 binary-format records whose payload shape is controlled by data already present

@@ -71,7 +71,7 @@ def main() -> int:
         "## Near-Term Order",
         "## Language Ideas Parked For Later",
         "fn save(x: has serialize() -> i64) -> i64",
-        "Structural capability parameters now have a narrow executable seed",
+        "Structural capability parameters now have an implemented static method-only",
         "## What Not To Track Here",
         "Ari compiler rewrite tasks",
         "package manager or cargo-like tool work",

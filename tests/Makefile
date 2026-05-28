@@ -5745,6 +5745,10 @@ check-traits: $(TARGET)
 	$(BUILD_DIR)/traits/structural-capability-enum-bound.elf; code=$$?; test $$code -eq 42
 	$(TARGET) tests/cases/traits/ok/structural-capability-forwarded-aggregate-bound.ari -o $(BUILD_DIR)/traits/structural-capability-forwarded-aggregate-bound.elf
 	$(BUILD_DIR)/traits/structural-capability-forwarded-aggregate-bound.elf; code=$$?; test $$code -eq 41
+	$(TARGET) tests/cases/traits/ok/structural-capability-forwarded-impl-body.ari -o $(BUILD_DIR)/traits/structural-capability-forwarded-impl-body.elf
+	$(BUILD_DIR)/traits/structural-capability-forwarded-impl-body.elf; code=$$?; test $$code -eq 41
+	$(TARGET) tests/cases/traits/ok/structural-capability-string-result.ari -o $(BUILD_DIR)/traits/structural-capability-string-result.elf
+	$(BUILD_DIR)/traits/structural-capability-string-result.elf; code=$$?; test $$code -eq 44
 	$(TARGET) tests/cases/traits/ok/structural-capability-trait-method.ari -o $(BUILD_DIR)/traits/structural-capability-trait-method.elf
 	$(BUILD_DIR)/traits/structural-capability-trait-method.elf; code=$$?; test $$code -eq 40
 	$(TARGET) tests/cases/traits/ok/trait-minimum-compiler-shaped.ari -o $(BUILD_DIR)/traits/trait-minimum-compiler-shaped.elf
