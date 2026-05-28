@@ -33,14 +33,48 @@ pub fn with_capacity[T](zone: ref mut Zone, capacity: i64) -> RawVec[T] {
   return RawVec<T> { data: alloc_buffer<T>(zone, allocation_capacity), len: 0, capacity: capacity };
 }
 
+pub fn with_capacity_with_allocator[T](
+  allocator: ref std::allocator::Allocator,
+  capacity: i64
+) -> RawVec[T] {
+  std::assert(capacity >= 0);
+  var allocation_capacity = capacity;
+  if allocation_capacity == 0 {
+    allocation_capacity = 1;
+  }
+  return RawVec<T> {
+    data: allocator.alloc_array<T>(allocation_capacity),
+    len: 0,
+    capacity: capacity,
+  };
+}
+
 pub fn new[T](zone: ref mut Zone, capacity: i64) -> std::vec::Vec[T] {
   return std::vec::Vec<T> {
     raw: with_capacity<T>(zone, capacity),
   };
 }
 
+pub fn new_with_allocator[T](
+  allocator: ref std::allocator::Allocator,
+  capacity: i64
+) -> std::vec::Vec[T] {
+  return std::vec::Vec<T> {
+    raw: with_capacity_with_allocator<T>(allocator, capacity),
+  };
+}
+
 pub fn from_slice_in[T](zone: ref mut Zone, values: std::Slice[T]) -> std::vec::Vec[T] {
   var output = std::vec::new<T>(zone, values.len);
+  output.extend_from_slice(values);
+  return output;
+}
+
+pub fn from_slice_with_allocator[T](
+  allocator: ref std::allocator::Allocator,
+  values: std::Slice[T]
+) -> std::vec::Vec[T] {
+  var output = std::vec::new_with_allocator<T>(allocator, values.len);
   output.extend_from_slice(values);
   return output;
 }
@@ -483,6 +517,10 @@ pub impl[T] std::vec::Vec[T] {
     return std::vec::new<T>(zone, capacity);
   }
 
+  fn with_allocator(allocator: ref std::allocator::Allocator, capacity: i64) -> std::vec::Vec[T] {
+    return std::vec::new_with_allocator<T>(allocator, capacity);
+  }
+
   fn len(self: ref Self) -> i64 {
     return self.raw.len;
   }
@@ -658,6 +696,16 @@ pub impl[T] std::vec::Vec[T] {
 
   fn copy_to(self: ref Self, target: ref mut Zone) -> std::vec::Vec[T] {
     var copied = std::vec::new<T>(target, self.raw.len);
+    var index = 0;
+    while index < self.raw.len {
+      copied.push(ptr_load(ptr_add(self.raw.data, index)));
+      index = index + 1;
+    }
+    return copied;
+  }
+
+  fn copy_with_allocator(self: ref Self, allocator: ref std::allocator::Allocator) -> std::vec::Vec[T] {
+    var copied = std::vec::new_with_allocator<T>(allocator, self.raw.len);
     var index = 0;
     while index < self.raw.len {
       copied.push(ptr_load(ptr_add(self.raw.data, index)));

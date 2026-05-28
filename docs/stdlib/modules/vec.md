@@ -30,6 +30,18 @@ the associated-constructor spelling for the same operation, and `Vec!` is the
 macro shorthand. `from_slice_in` copies a borrowed `Slice[T]` into a new
 target-zone vector.
 
+For new region-first code, prefer the `Region` facade or allocator variants:
+
+```ari
+var region = region::create(2048);
+var values = region.vec<i64>(4);
+values.push(10);
+
+let allocator = region.allocator();
+var copied = std::vec::from_slice_with_allocator<i64>(ref allocator, values.as_slice());
+region::destroy(region);
+```
+
 Copies also require a target zone:
 
 ```ari

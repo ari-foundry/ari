@@ -81,13 +81,13 @@ bool zone_source_name_from_arg(const IrExpr& zone_arg,
                                std::string& out) {
     if (zone_arg.kind == IrExprKind::Borrow && ir_expr_label(zone_arg).empty()) {
         const LocalInfo* zone = locals.find_local(ir_expr_name(zone_arg));
-        if (!zone || !is_zone_value_type(zone->type)) return false;
+        if (!zone || !is_zone_source_type(zone->type)) return false;
         out = ir_expr_name(zone_arg);
         return true;
     }
     if (zone_arg.kind == IrExprKind::Local) {
         const LocalInfo* zone = locals.find_local(ir_expr_name(zone_arg));
-        if (!zone || !is_zone_borrow_type(zone->type)) return false;
+        if (!zone || !is_zone_source_type(zone->type)) return false;
         if (!zone->borrow_source.empty()) {
             const LocalInfo* source = locals.find_local(zone->borrow_source);
             if (source && is_zone_source_type(source->type)) {
@@ -97,6 +97,12 @@ bool zone_source_name_from_arg(const IrExpr& zone_arg,
         }
         out = ir_expr_name(zone_arg);
         return true;
+    }
+    if (zone_arg.kind == IrExprKind::Call &&
+        (ir_expr_name(zone_arg) == "std::region::as_zone" ||
+         ir_expr_name(zone_arg) == "region::as_zone") &&
+        !zone_arg.args.empty()) {
+        return zone_source_name_from_arg(*zone_arg.args[0], locals, out);
     }
     return false;
 }
@@ -354,7 +360,7 @@ bool set_zone_pointer_source_from_name(LocalInfo& target,
                                        const ZonePointerLocalAdapter& locals) {
     if (source_name == "<multiple zones>") return false;
     LocalInfo* zone = locals.find_local(source_name);
-    if (!zone || !is_zone_source_type(zone->type)) return false;
+    if (!zone || (!is_zone_source_type(zone->type) && !is_zone_metadata_type(zone->type))) return false;
     target.zone_pointer = true;
     target.zone_pointer_source = source_name;
     target.zone_pointer_generation = zone->zone_generation;
@@ -384,12 +390,27 @@ std::optional<std::string> zone_pointer_invalid_error(const std::string& pointer
         zone->zone_generation == pointer.zone_pointer_generation) {
         return std::nullopt;
     }
+    if (zone &&
+        is_zone_metadata_type(zone->type) &&
+        local_is_alive(*zone) &&
+        zone->zone_generation == pointer.zone_pointer_generation) {
+        return std::nullopt;
+    }
     return "cannot use zone pointer '" + pointer_name + "' after zone '" +
            pointer.zone_pointer_source + "' was reset or destroyed";
 }
 
 bool mark_zone_reset_call(const IrExpr& call, const ZonePointerLocalAdapter& locals) {
     if (call.kind != IrExprKind::Call || call.args.empty()) return false;
+    if (ir_expr_name(call) == "std::region::reset" ||
+        ir_expr_name(call) == "std::region::Region::reset") {
+        std::string source_name;
+        if (!zone_source_name_from_arg(*call.args[0], locals, source_name)) return false;
+        LocalInfo* zone = locals.find_local(source_name);
+        if (!zone || !is_zone_source_type(zone->type)) return false;
+        bump_local_zone_generation(*zone);
+        return true;
+    }
     std::optional<std::string> builtin_symbol = ari_builtin_symbol_for_source_name(ir_expr_name(call));
     if (!builtin_symbol || *builtin_symbol != "ari_builtin_zone_reset") return false;
     std::string source_name;

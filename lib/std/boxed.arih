@@ -6,6 +6,13 @@ pub fn new[T](zone: ref mut Zone, value: T) -> std::boxed::Box[T] {
   return std::boxed::Box<T> { data: std::zone::new<T>(zone, value) };
 }
 
+pub fn new_with_allocator[T](
+  allocator: ref std::allocator::Allocator,
+  value: T
+) -> std::boxed::Box[T] {
+  return std::boxed::Box<T> { data: allocator.new<T>(value) };
+}
+
 fn empty_data[T]() -> ptr T {
   return 0u64 as ptr T;
 }
@@ -17,6 +24,10 @@ fn has_data[T](data: ptr T) -> bool {
 pub impl[T] std::boxed::Box[T] {
   fn new(zone: ref mut Zone, value: T) -> std::boxed::Box[T] {
     return std::boxed::new<T>(zone, value);
+  }
+
+  fn new_with_allocator(allocator: ref std::allocator::Allocator, value: T) -> std::boxed::Box[T] {
+    return std::boxed::new_with_allocator<T>(allocator, value);
   }
 
   fn is_empty(self: ref Self) -> bool {
@@ -77,8 +88,17 @@ pub impl[T] std::boxed::Box[T] {
     self.data = std::zone::new<T>(zone, value);
   }
 
+  fn put_with_allocator(self: ref mut Self, allocator: ref std::allocator::Allocator, value: T) -> void {
+    std::assert(self.is_empty());
+    self.data = allocator.new<T>(value);
+  }
+
   fn copy_to(self: ref Self, target: ref mut Zone) -> std::boxed::Box[T] {
     return std::boxed::new<T>(target, self.get());
+  }
+
+  fn copy_with_allocator(self: ref Self, allocator: ref std::allocator::Allocator) -> std::boxed::Box[T] {
+    return std::boxed::new_with_allocator<T>(allocator, self.get());
   }
 
   fn as_ref(self: ref Self) -> ref T {

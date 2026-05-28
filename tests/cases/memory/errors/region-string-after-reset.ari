@@ -1,0 +1,7 @@
+fn main() -> i64 {
+  var region = std::region::create(64);
+  let text = region.string("hi");
+  region.reset();
+  std::region::destroy(region);
+  return text.len();
+}

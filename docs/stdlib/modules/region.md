@@ -24,6 +24,10 @@ region::as_zone(ref mut Region) -> ref mut Zone
 region::alloc(ref mut Region, bytes: i64, align: i64) -> ptr u8
 region::alloc_array<T>(ref mut Region, count: i64) -> ptr T
 region::new<T>(ref mut Region, value: T) -> ptr T
+region::string(ref mut Region, bytes: Slice[u8]) -> String
+region::vec<T>(ref mut Region, capacity: i64) -> Vec[T]
+region::boxed<T>(ref mut Region, value: T) -> Box[T]
+region::cstring(ref mut Region, bytes: Slice[u8]) -> Result[CString, Error]
 region::promote<T>(ref mut target, source: ptr T) -> ptr T
 
 region::capacity(ref mut Region) -> i64
@@ -39,6 +43,10 @@ Region::allocator() -> Allocator
 Region::alloc(bytes: i64, align: i64) -> ptr u8
 Region::alloc_array<T>(count: i64) -> ptr T
 Region::new<T>(value: T) -> ptr T
+Region::string(bytes: Slice[u8]) -> String
+Region::vec<T>(capacity: i64) -> Vec[T]
+Region::boxed<T>(value: T) -> Box[T]
+Region::cstring(bytes: Slice[u8]) -> Result[CString, Error]
 Region::promote<T>(source: ptr T) -> ptr T
 Region::capacity() -> i64
 Region::used() -> i64
@@ -54,7 +62,10 @@ Use `Region` when code chooses an allocation lifetime:
 
 ```ari
 var region = region::create(4096);
-let text = std::string::from(ref mut region, "hello");
+let text = region.string("hello");
+var values = region.vec<i64>(4);
+values.push(10);
+let boxed = region.boxed<i64>(42);
 region::destroy(region);
 ```
 
@@ -75,7 +86,7 @@ allocate more storage from the same backing region:
 
 ```ari
 var region = region::create(4096);
-var values = std::vec::new<i64>(ref mut region, 2);
+var values = region.vec<i64>(2);
 let allocator = std::allocator::of(ref values);
 let scratch = allocator.alloc_array<i64>(4);
 region::destroy(region);
@@ -98,6 +109,12 @@ Use `std::zone` only when interacting with older APIs, low-level runtime
 tests, or implementation details such as `ZoneMetadata`. `region::as_zone` is
 the narrow compatibility escape for existing functions that still take
 `ref mut Zone`; new user-facing APIs should prefer `Region` or `Allocator`.
+
+The convenience methods are deliberately small. They cover the common standard
+handles that otherwise force users to spell `region::as_zone`: owned text,
+vectors, boxes, and C strings. Once a handle is created from a `Region`, its
+growth methods recover the same allocation source, so `values.push(...)` or
+`text.push(...)` can grow without storing a region field in the handle.
 
 ## Capacity And Failure
 
@@ -136,6 +153,8 @@ Today:
 - `region::*` functions and `Region` methods delegate to `zone::*`.
 - `region::as_zone` is exposed only as a compatibility bridge.
 - `Allocator` wraps the current zone-backed allocation metadata.
+- the compiler tracks `Region` as an allocation source and rejects handles
+  used after `region.reset()` or `region::destroy(region)`.
 
 Direction:
 

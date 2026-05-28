@@ -38,6 +38,9 @@ fn main() -> i64 {
     score = score + ptr_load(extra);
   }
 
+  let placed = direct.new<i64>(14);
+  score = score + ptr_load(placed);
+
   zone::destroy(arena);
   return score;
 }

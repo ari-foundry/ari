@@ -28,6 +28,7 @@ allocator::of_mut<T: zone::ZoneBacked>(ref mut value) -> Allocator
 
 allocator::alloc(ref Allocator, bytes: i64, align: i64) -> ptr u8
 allocator::alloc_array<T>(ref Allocator, count: i64) -> ptr T
+allocator::new<T>(ref Allocator, value: T) -> ptr T
 allocator::capacity(ref Allocator) -> i64
 allocator::used(ref Allocator) -> i64
 allocator::remaining(ref Allocator) -> i64
@@ -38,6 +39,7 @@ allocator.metadata() -> zone::ZoneMetadata
 allocator.as_ptr() -> ptr c_void
 allocator.alloc(bytes: i64, align: i64) -> ptr u8
 allocator.alloc_array<T>(count: i64) -> ptr T
+allocator.new<T>(value: T) -> ptr T
 allocator.capacity() -> i64
 allocator.used() -> i64
 allocator.remaining() -> i64
@@ -63,6 +65,7 @@ grow from the same allocation capability:
 var values = std::vec::new<i64>(ref mut arena, 4);
 let allocator = std::allocator::of(ref values);
 let scratch = allocator.alloc_array<i64>(8);
+let placed = allocator.new<i64>(42);
 ```
 
 Use `allocator::from_region(ref mut region)` when an API wants the smaller
@@ -99,6 +102,11 @@ zone APIs and simply captures the same region-backed capability.
 The current implementation is still region-backed and bounded. `can_alloc` and
 `can_alloc_array` are preflight checks over logical payload counters; they do
 not reserve memory.
+
+`allocator.new<T>(value)` is placement construction over the same capability as
+`alloc_array<T>(1)`. Like `region::new<T>`, it is for value types that can be
+copied into raw storage; prefer `Region` convenience constructors or standard
+owning handles when building higher-level values.
 
 ## Future Direction
 

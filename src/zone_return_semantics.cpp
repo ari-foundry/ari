@@ -25,8 +25,25 @@ bool is_zone_borrow_type(const IrType& type) {
             type.qualifier == TypeQualifier::MutRef);
 }
 
+bool is_region_value_type(const IrType& type) {
+    return type.primitive == IrPrimitiveKind::Struct &&
+           type.name == "std::region::Region" &&
+           (type.qualifier == TypeQualifier::Value ||
+            type.qualifier == TypeQualifier::Own);
+}
+
+bool is_region_borrow_type(const IrType& type) {
+    return type.primitive == IrPrimitiveKind::Struct &&
+           type.name == "std::region::Region" &&
+           (type.qualifier == TypeQualifier::Ref ||
+            type.qualifier == TypeQualifier::MutRef);
+}
+
 bool is_zone_source_type(const IrType& type) {
-    return is_zone_value_type(type) || is_zone_borrow_type(type);
+    return is_zone_value_type(type) ||
+           is_zone_borrow_type(type) ||
+           is_region_value_type(type) ||
+           is_region_borrow_type(type);
 }
 
 bool is_zone_metadata_type(const IrType& type) {
@@ -49,7 +66,9 @@ std::optional<std::size_t> zone_pointer_return_param_index(const std::vector<IrT
 
     std::optional<std::size_t> index;
     for (std::size_t i = 0; i < params.size(); ++i) {
-        if (!is_zone_borrow_type(params[i]) && !is_zone_metadata_type(params[i])) continue;
+        if (!is_zone_borrow_type(params[i]) &&
+            !is_region_borrow_type(params[i]) &&
+            !is_zone_metadata_type(params[i])) continue;
         if (index) return std::nullopt;
         index = i;
     }

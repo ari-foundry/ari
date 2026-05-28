@@ -10,6 +10,8 @@ heap.
 `Box[T]` is intentionally smaller than a general shared pointer:
 
 - allocation is explicit through `ref mut Zone`
+- region-first allocation is available through `Region::boxed` and
+  allocator-based helpers
 - the handle owns at most one value
 - `try_get` reports an empty handle with `Option[T]`
 - `take` moves the value out and leaves an empty handle
@@ -31,6 +33,16 @@ var zone = zone::create(64);
 var value = std::boxed::new<i64>(ref mut zone, 21);
 var other = Box::new<i64>(ref mut zone, 34);
 var macro_value = Box!(i64, ref mut zone, 55);
+```
+
+New code can keep the public lifetime at the `Region` layer:
+
+```ari
+var region = region::create(64);
+var value = region.boxed<i64>(21);
+let allocator = region.allocator();
+var other = std::boxed::new_with_allocator<i64>(ref allocator, 34);
+region::destroy(region);
 ```
 
 Read and update the value with natural method names:
@@ -79,7 +91,9 @@ let raw = value.as_ptr();
 `Box[T]` remembers the zone provenance of its allocation. Values copied with
 `copy_to(ref mut target)` belong to the target zone. Methods that can allocate,
 such as `put_in`, take an explicit `ref mut Zone` so the allocation site is
-visible at the call site.
+visible at the call site. The allocator variants, such as
+`put_with_allocator` and `copy_with_allocator`, are the migration path for
+helper APIs that need allocation capability without owning region lifecycle.
 
 After `zone::reset(zone)` or `zone::destroy(zone)`, using a box allocated from
 that zone is invalid and sema should reject it. This is why `std::boxed` stays

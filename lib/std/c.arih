@@ -91,11 +91,38 @@ pub fn from_slice_unchecked_in(zone: ref mut Zone, bytes: std::Slice[u8]) -> std
   return std::c::CString { data: data, len: bytes.len };
 }
 
+pub fn from_slice_unchecked_with_allocator(
+  allocator: ref std::allocator::Allocator,
+  bytes: std::Slice[u8]
+) -> std::c::CString {
+  std::assert(!contains_nul(bytes));
+  let data = allocator.alloc_array<u8>(bytes.len + 1);
+  var index = 0;
+  while index < bytes.len {
+    ptr_store(ptr_add(data, index), bytes[index]);
+    index = index + 1;
+  }
+  ptr_store(ptr_add(data, bytes.len), 0u8);
+  return std::c::CString { data: data, len: bytes.len };
+}
+
 pub fn from_slice_in(zone: ref mut Zone, bytes: std::Slice[u8]) -> std::Result[std::c::CString, std::error::Error] {
   if contains_nul(bytes) {
     return std::Err<std::c::CString, std::error::Error>(invalid_input_error());
   }
   return std::Ok<std::c::CString, std::error::Error>(from_slice_unchecked_in(zone, bytes));
+}
+
+pub fn from_slice_with_allocator(
+  allocator: ref std::allocator::Allocator,
+  bytes: std::Slice[u8]
+) -> std::Result[std::c::CString, std::error::Error] {
+  if contains_nul(bytes) {
+    return std::Err<std::c::CString, std::error::Error>(invalid_input_error());
+  }
+  return std::Ok<std::c::CString, std::error::Error>(
+    from_slice_unchecked_with_allocator(allocator, bytes)
+  );
 }
 
 pub fn from_cstr_unchecked_in(zone: ref mut Zone, value: std::c::CStr) -> std::c::CString {
@@ -104,6 +131,20 @@ pub fn from_cstr_unchecked_in(zone: ref mut Zone, value: std::c::CStr) -> std::c
 
 pub fn from_cstr_in(zone: ref mut Zone, value: std::c::CStr) -> std::Result[std::c::CString, std::error::Error] {
   return std::c::from_slice_in(zone, value.as_slice());
+}
+
+pub fn from_cstr_unchecked_with_allocator(
+  allocator: ref std::allocator::Allocator,
+  value: std::c::CStr
+) -> std::c::CString {
+  return std::c::from_slice_unchecked_with_allocator(allocator, value.as_slice());
+}
+
+pub fn from_cstr_with_allocator(
+  allocator: ref std::allocator::Allocator,
+  value: std::c::CStr
+) -> std::Result[std::c::CString, std::error::Error] {
+  return std::c::from_slice_with_allocator(allocator, value.as_slice());
 }
 
 pub fn errno() -> i64 {

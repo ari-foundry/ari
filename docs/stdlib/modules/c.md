@@ -52,8 +52,12 @@ c::from_ptr(data: ptr c_char) -> Result[CStr, std::error::Error]
 c::from_ptr_unchecked(data: ptr c_char) -> CStr
 c::from_slice_in(zone: ref mut Zone, bytes: Slice[u8]) -> Result[CString, std::error::Error]
 c::from_slice_unchecked_in(zone: ref mut Zone, bytes: Slice[u8]) -> CString
+c::from_slice_with_allocator(ref Allocator, bytes: Slice[u8]) -> Result[CString, std::error::Error]
+c::from_slice_unchecked_with_allocator(ref Allocator, bytes: Slice[u8]) -> CString
 c::from_cstr_in(zone: ref mut Zone, value: CStr) -> Result[CString, std::error::Error]
 c::from_cstr_unchecked_in(zone: ref mut Zone, value: CStr) -> CString
+c::from_cstr_with_allocator(ref Allocator, value: CStr) -> Result[CString, std::error::Error]
+c::from_cstr_unchecked_with_allocator(ref Allocator, value: CStr) -> CString
 c::is_null(value: ptr c_void) -> bool
 
 c::errno() -> i64
@@ -88,6 +92,11 @@ Symbol
 
 `CStr` is a borrowed view of a NUL-terminated C string. It does not own bytes.
 It can wrap an Ari `string` literal or a non-null `ptr c_char` from C.
+
+`CString` owns a NUL-terminated copy in an explicit allocation lifetime. Use
+`region.cstring(bytes)` in ordinary region-first code, or the allocator
+variants when a helper should receive allocation capability without reset or
+destroy authority.
 
 ```ari
 extern "C" fn strlen(text: ptr c_char) -> size_t;

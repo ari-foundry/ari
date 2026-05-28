@@ -15,7 +15,16 @@ text-boundary type is reserved for borrowed literals, static compiler/runtime
 strings, C/OS boundaries, and compatibility helpers that say so explicitly,
 such as `_text`, `_raw`, or `_unchecked`. Because Ari does not have a hidden
 global heap, helpers that return owned text take `ref mut Zone` and copy into
-that zone.
+that zone. New region-oriented code can also use `Region` convenience methods
+or `Allocator` helpers, which keep the zone runtime behind the memory model:
+
+```ari
+var region = region::create(1024);
+let text = region.string("hello");
+let allocator = region.allocator();
+let copied = std::string::from_slice_with_allocator(ref allocator, "world");
+region::destroy(region);
+```
 
 ## When To Use It
 

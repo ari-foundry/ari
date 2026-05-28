@@ -19,6 +19,22 @@ pub impl std::region::Region {
     return std::region::new<T>(self, value);
   }
 
+  fn string(self: ref mut Self, bytes: std::Slice[u8]) -> std::string::String {
+    return std::region::string(self, bytes);
+  }
+
+  fn vec[T](self: ref mut Self, capacity: i64) -> std::vec::Vec[T] {
+    return std::region::vec<T>(self, capacity);
+  }
+
+  fn boxed[T](self: ref mut Self, value: T) -> std::boxed::Box[T] {
+    return std::region::boxed<T>(self, value);
+  }
+
+  fn cstring(self: ref mut Self, bytes: std::Slice[u8]) -> std::Result[std::c::CString, std::error::Error] {
+    return std::region::cstring(self, bytes);
+  }
+
   fn promote[T](self: ref mut Self, source: ptr T) -> ptr T {
     return std::region::promote<T>(self, source);
   }
@@ -74,6 +90,29 @@ pub fn alloc_array[T](region: ref mut std::region::Region, count: i64) -> ptr T 
 
 pub fn new[T](region: ref mut std::region::Region, value: T) -> ptr T {
   return std::zone::new<T>(std::region::as_zone(region), value);
+}
+
+pub fn string(region: ref mut std::region::Region, bytes: std::Slice[u8]) -> std::string::String {
+  let allocator = std::region::allocator(region);
+  return std::string::from_slice_with_allocator(ref allocator, bytes);
+}
+
+pub fn vec[T](region: ref mut std::region::Region, capacity: i64) -> std::vec::Vec[T] {
+  let allocator = std::region::allocator(region);
+  return std::vec::new_with_allocator<T>(ref allocator, capacity);
+}
+
+pub fn boxed[T](region: ref mut std::region::Region, value: T) -> std::boxed::Box[T] {
+  let allocator = std::region::allocator(region);
+  return std::boxed::new_with_allocator<T>(ref allocator, value);
+}
+
+pub fn cstring(
+  region: ref mut std::region::Region,
+  bytes: std::Slice[u8]
+) -> std::Result[std::c::CString, std::error::Error] {
+  let allocator = std::region::allocator(region);
+  return std::c::from_slice_with_allocator(ref allocator, bytes);
 }
 
 pub fn promote[T](target: ref mut std::region::Region, source: ptr T) -> ptr T {

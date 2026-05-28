@@ -29,6 +29,9 @@ A `Region` owns a bounded allocation area:
 var region = region::create(4096);
 let value = region.new<i64>(42);
 let bytes = region.alloc_array<u8>(128);
+let text = region.string("hello");
+var values = region.vec<i64>(4);
+values.push(10);
 region.reset();
 region::destroy(region);
 ```
@@ -58,12 +61,20 @@ Containers such as `String`, `Vec[T]`, and maps can recover an allocator from
 their existing backing storage. This keeps growth paths from storing redundant
 zone or region fields in every view and iterator.
 
+The checker now treats `Region` as an allocation source, not merely as an
+ordinary struct that happens to contain a `Zone`. A `String` or `Vec[T]`
+created through `region.string(...)` or `region.vec<T>(...)` carries the region
+source for implicit growth calls, and using that handle after
+`region.reset()` or `region::destroy(region)` is rejected.
+
 ## Library Rules
 
 User-facing allocation APIs should follow these rules:
 
 - constructors that choose a lifetime take `ref mut Region`
 - helpers that only need growth take `Allocator`
+- convenience constructors may live on `Region` when they are the clearest
+  user-facing path to a standard handle
 - `_in` means "allocate into this explicit region"
 - `_to` means "copy into this destination"
 - `Zone`, `ZoneMetadata`, and allocation-header recovery stay in low-level
@@ -84,6 +95,8 @@ The compiler tracks:
 - immutable and mutable borrows
 - use-after-reset and use-after-destroy for many region-backed values
 - method calls on owned struct receivers when the method borrows `self`
+- `Region` as a first-class allocation source for zone-backed handles
+- `Allocator` parameters as allocation-capability sources inside helper APIs
 
 The model is intentionally diagnostic, not a full formal proof of raw memory
 safety. Raw pointers, casts, manual allocation, and FFI remain explicit escape
@@ -115,10 +128,12 @@ lexical compile-time convenience, not a process-global allocator.
 
 Open work:
 
-- migrate remaining stdlib APIs from `Zone` parameters to `Region` or
-  `Allocator`
+- migrate remaining stdlib APIs from `Zone` parameters to `Region`,
+  `Allocator`, or `Region` convenience methods
 - improve ownership diagnostics for owner-bearing structs beyond the Region
   wrapper case
+- replace compatibility examples that still spell `zone::create` when a
+  `Region` form now exists
 - decide whether short region scopes use a keyword, a standard macro-like
   form, or ordinary library sugar after block-lifetime lowering is stronger
 - keep `Zone` documented as low-level compatibility until old APIs are gone

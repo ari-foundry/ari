@@ -40,6 +40,31 @@ pub extern "ari" fn new(zone: ref mut Zone, capacity: i64) -> std::string::Strin
 extern "ari" fn from_literal_raw(zone: ref mut Zone, text: string) -> std::string::String = "ari_builtin_string_from_string";
 pub extern "ari" fn copy_to(value: ref std::string::String, target: ref mut Zone) -> std::string::String = "ari_builtin_string_copy_to";
 
+pub fn with_capacity_with_allocator(
+  allocator: ref std::allocator::Allocator,
+  capacity: i64
+) -> std::string::RawString {
+  std::assert(capacity >= 0);
+  var allocation_capacity = capacity;
+  if allocation_capacity == 0 {
+    allocation_capacity = 1;
+  }
+  return std::string::RawString {
+    data: allocator.alloc_array<u8>(allocation_capacity),
+    len: 0,
+    capacity: capacity,
+  };
+}
+
+pub fn new_with_allocator(
+  allocator: ref std::allocator::Allocator,
+  capacity: i64
+) -> std::string::String {
+  return std::string::String {
+    raw: std::string::with_capacity_with_allocator(allocator, capacity),
+  };
+}
+
 fn utf8_string_from_owned(value: std::string::String) -> std::string::Utf8String {
   return std::string::Utf8String { text: value };
 }
@@ -158,6 +183,19 @@ pub fn from_slice_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::string:
   return output;
 }
 
+pub fn from_slice_with_allocator(
+  allocator: ref std::allocator::Allocator,
+  values: std::Slice[u8]
+) -> std::string::String {
+  var output = std::string::new_with_allocator(allocator, values.len);
+  var index = 0;
+  while index < values.len {
+    output.push(values[index]);
+    index = index + 1;
+  }
+  return output;
+}
+
 pub fn from(zone: ref mut Zone, text: std::Slice[u8]) -> std::string::String {
   return std::string::from_slice_in(zone, text);
 }
@@ -168,6 +206,13 @@ fn from_raw(zone: ref mut Zone, text: string) -> std::string::String {
 
 pub fn copy(zone: ref mut Zone, values: std::Slice[u8]) -> std::string::String {
   return std::string::from_slice_in(zone, values);
+}
+
+pub fn copy_with_allocator(
+  allocator: ref std::allocator::Allocator,
+  values: std::Slice[u8]
+) -> std::string::String {
+  return std::string::from_slice_with_allocator(allocator, values);
 }
 
 pub fn empty(zone: ref mut Zone) -> std::string::String {
@@ -1169,6 +1214,10 @@ pub impl std::string::String {
 
   fn copy_to(self: ref Self, target: ref mut Zone) -> std::string::String {
     return std::string::copy_to(self, target);
+  }
+
+  fn copy_with_allocator(self: ref Self, allocator: ref std::allocator::Allocator) -> std::string::String {
+    return std::string::copy_with_allocator(allocator, self.as_slice());
   }
 
   fn as_ptr(self: ref Self) -> ptr u8 {

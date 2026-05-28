@@ -40,6 +40,10 @@ pub fn alloc_array[T](allocator: ref std::allocator::Allocator, count: i64) -> p
   return allocator.alloc_array<T>(count);
 }
 
+pub fn new[T](allocator: ref std::allocator::Allocator, value: T) -> ptr T {
+  return allocator.new<T>(value);
+}
+
 pub fn capacity(allocator: ref std::allocator::Allocator) -> i64 {
   return allocator.capacity();
 }
@@ -75,6 +79,12 @@ pub impl std::allocator::Allocator {
 
   fn alloc_array[T](self: ref Self, count: i64) -> ptr T {
     return self.handle.alloc_array<T>(count);
+  }
+
+  fn new[T](self: ref Self, value: T) -> ptr T {
+    let data = self.alloc_array<T>(1);
+    ptr_store(data, value);
+    return data;
   }
 
   fn capacity(self: ref Self) -> i64 {

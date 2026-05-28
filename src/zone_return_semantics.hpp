@@ -10,6 +10,8 @@ namespace ari {
 
 bool is_zone_value_type(const IrType& type);
 bool is_zone_borrow_type(const IrType& type);
+bool is_region_value_type(const IrType& type);
+bool is_region_borrow_type(const IrType& type);
 bool is_zone_source_type(const IrType& type);
 bool is_zone_metadata_type(const IrType& type);
 bool is_zone_pointer_return_type(const IrType& type);

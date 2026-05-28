@@ -6575,6 +6575,11 @@ private:
             LocalInfo& param_local = local_slot_by_name(ir_param_name);
             param_local.function_parameter = true;
             param_local.generic_origin = param.has_pattern ? "" : generic_origin_from_type_ref(param.type);
+            if (is_zone_metadata_type(type)) {
+                param_local.zone_pointer = true;
+                param_local.zone_pointer_source = ir_param_name;
+                param_local.zone_pointer_generation = param_local.zone_generation;
+            }
             if (contains_borrow_type(type) && !is_borrow_type(type)) {
                 seed_parameter_aggregate_borrow_sources(param_local, ir_param_name, type, "");
             }
@@ -7729,7 +7734,12 @@ private:
         ZonePointerSourceResolver resolver;
         resolver.local_zone_pointer_source = [this](const std::string& name, std::string& out) {
             const LocalInfo* local = find_local_slot(name);
-            if (!local || !local->zone_pointer) return false;
+            if (!local) return false;
+            if (is_zone_source_type(local->type)) {
+                out = name;
+                return true;
+            }
+            if (!local->zone_pointer) return false;
             out = local->zone_pointer_source;
             return true;
         };
@@ -7876,6 +7886,18 @@ private:
         const LocalInfo* zone = find_local_slot(source_name);
         if (!zone || !is_zone_source_type(zone->type)) {
             fail(loc, context + " tracked zone source '" + source_name + "' is not available");
+        }
+        if (is_region_borrow_type(zone->type) || is_region_value_type(zone->type)) {
+            if (zone->type.qualifier == TypeQualifier::Ref) {
+                fail(loc, context + " requires a mutable region source");
+            }
+            std::vector<ExprPtr> args;
+            if (zone->type.qualifier == TypeQualifier::MutRef) {
+                args.push_back(make_ast_name_expr(loc, source_name));
+            } else {
+                args.push_back(make_ast_borrow_expr(loc, make_ast_name_expr(loc, source_name), true));
+            }
+            return make_ast_call_expr(loc, "std::region::as_zone", nullptr, std::move(args));
         }
         if (is_zone_borrow_type(zone->type)) {
             if (zone->type.qualifier != TypeQualifier::MutRef) {
