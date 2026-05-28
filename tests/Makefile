@@ -4610,6 +4610,8 @@ check-modules: $(TARGET)
 	$(BUILD_DIR)/modules/project-compiler-main.elf; code=$$?; test $$code -eq 23
 	$(TARGET) tests/cases/modules/ok/same-filename-project-main.ari -o $(BUILD_DIR)/modules/same-filename-project-main.elf
 	$(BUILD_DIR)/modules/same-filename-project-main.elf; code=$$?; test $$code -eq 33
+	$(TARGET) tests/cases/modules/ok/file-relative-child-main.ari -o $(BUILD_DIR)/modules/file-relative-child-main.elf
+	$(BUILD_DIR)/modules/file-relative-child-main.elf; code=$$?; test $$code -eq 38
 	$(TARGET) tests/cases/modules/ok/project-compiler-main.ari --emit-module-graph $(BUILD_DIR)/modules/project-compiler-main.graph
 	grep -E -q "Source ordinal=3 source_id=[0-9]+ module=project_compiler::parser .*path=tests/cases/modules/ok/project_compiler/parse.ari" $(BUILD_DIR)/modules/project-compiler-main.graph
 	grep -q "Import owner=project_compiler module=project_compiler::parser local=parse visibility=pub" $(BUILD_DIR)/modules/project-compiler-main.graph

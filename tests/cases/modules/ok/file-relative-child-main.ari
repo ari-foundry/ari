@@ -1,0 +1,5 @@
+mod file_relative_child;
+
+fn main() -> i64 {
+  return file_relative_child::run();
+}

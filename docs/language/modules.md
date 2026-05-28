@@ -42,6 +42,22 @@ fn main() -> i64 {
 }
 ```
 
+Inside the importing module, the loaded child can be addressed directly by its
+local module name. In a file `commands.ari`, this is enough:
+
+```ari
+mod parse;
+
+pub fn run() -> i64 {
+  return parse::score()
+}
+```
+
+That path resolves as `self::parse::score`, so each source file can import and
+use its own sibling child modules without depending on the process working
+directory. `self::parse::score` remains accepted when the fully explicit form
+is clearer.
+
 The compiler first searches relative to the importing file:
 
 ```text

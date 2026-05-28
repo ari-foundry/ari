@@ -1,0 +1,7 @@
+pub mod words;
+
+pub fn run() -> i64 {
+  return words::score() + imported_score();
+}
+
+use words::score as imported_score

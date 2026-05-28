@@ -820,6 +820,21 @@ private:
         return resolve_relative_path(loc, module_name, name);
     }
 
+    std::string resolve_child_module_path_in_scope(const std::string& module_name,
+                                                   const std::string& name) const {
+        if (module_name.empty()) return name;
+        std::vector<std::string> parts = split_qualified_name(name);
+        if (parts.empty()) return name;
+        if (parts[0] == "self" || parts[0] == "super") return name;
+
+        std::string child_module = module_name + "::" + parts[0];
+        if (!modules_.count(child_module)) return name;
+
+        std::vector<std::string> resolved = split_qualified_name(module_name);
+        resolved.insert(resolved.end(), parts.begin(), parts.end());
+        return join_qualified_path(resolved);
+    }
+
     std::string resolve_current_relative_name(const std::string& name) const {
         try {
             return resolve_relative_name(SourceLocation{}, current_module_name_, name);
@@ -870,6 +885,10 @@ private:
             }
             return rest.empty() ? prefix->path : prefix->path + "::" + rest;
         }
+
+        std::string child_module_path =
+            resolve_child_module_path_in_scope(current_module_name_, relative);
+        if (child_module_path != relative) return child_module_path;
 
         return relative;
     }
@@ -1234,6 +1253,7 @@ private:
     ) {
         auto& scope = uses_[module_name];
         std::string resolved_path = resolve_relative_name(loc, module_name, path);
+        resolved_path = resolve_child_module_path_in_scope(module_name, resolved_path);
         auto inserted = scope.emplace(alias, UseInfo{resolved_path, module_name, is_public, loc});
         if (!inserted.second) {
             CompileError error(std::move(loc), "duplicate use alias '" + alias + "'");
