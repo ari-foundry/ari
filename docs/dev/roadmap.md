@@ -115,8 +115,10 @@ with natural `fragment: stream(payload)` / `payload: true(payload)` syntax or
 compatibility `fragment: stream => payload`. Struct payload arms also accept the
 shorthand `fragment: stream { field: value }`, which uses the arm's declared
 payload type as the struct literal type. When the selector value is visible in
-the same struct literal, the constructor arm must match it. Direct enum
-selector fields such as `kind`, direct bool selector
+the same struct literal, the constructor arm must match it; if the selector is
+written with a dynamic expression, construction is rejected because the active
+arm cannot be proven locally. Direct enum selector fields such as `kind`,
+direct bool selector
 fields such as `enabled`, and nested selector paths such as
 `security.cipher_type` when their omitted intermediate struct value can be
 synthesized from the selector alone, may also be omitted and inferred from
@@ -133,9 +135,8 @@ payload must change together.
 It should not replace ordinary `enum` ADTs, unchecked C unions, or `match`.
 Non-enum and non-bool selectors are rejected so the active-arm set stays closed
 and exhaustively checkable. Remaining design work covers public active-arm
-borrowing/narrowing outside direct field matches, runtime selector consistency
-policy beyond direct local assignments, active-arm drop diagnostics, and stable
-ABI naming.
+borrowing/narrowing outside direct field matches, wrapper-struct provenance,
+richer active-arm mutation/drop diagnostics, and stable ABI naming.
 The compiler capability inventory tracks this as `union-by-fields`.
 
 ## What Not To Track Here

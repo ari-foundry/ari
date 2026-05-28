@@ -6095,6 +6095,10 @@ check-structs: $(TARGET)
 	grep -q "union by constructor arm 'record' is not declared for field 'fragment'" $(BUILD_DIR)/structs/union-by-constructor-unknown-arm.err
 	if $(TARGET) tests/cases/structs/errors/union-by-constructor-selector-mismatch.ari -o $(BUILD_DIR)/structs/union-by-constructor-selector-mismatch.elf >$(BUILD_DIR)/structs/union-by-constructor-selector-mismatch.err 2>&1; then exit 1; fi
 	grep -q "union by constructor arm 'block' does not match selector 'security.cipher_type' value 'stream'" $(BUILD_DIR)/structs/union-by-constructor-selector-mismatch.err
+	if $(TARGET) tests/cases/structs/errors/union-by-constructor-dynamic-selector.ari -o $(BUILD_DIR)/structs/union-by-constructor-dynamic-selector.elf >$(BUILD_DIR)/structs/union-by-constructor-dynamic-selector.err 2>&1; then exit 1; fi
+	grep -q "union by constructor arm 'stream' cannot be checked against non-static selector 'kind'" $(BUILD_DIR)/structs/union-by-constructor-dynamic-selector.err
+	if $(TARGET) tests/cases/structs/errors/union-by-nested-constructor-dynamic-selector.ari -o $(BUILD_DIR)/structs/union-by-nested-constructor-dynamic-selector.elf >$(BUILD_DIR)/structs/union-by-nested-constructor-dynamic-selector.err 2>&1; then exit 1; fi
+	grep -q "union by constructor arm 'stream' cannot be checked against non-static selector 'security.cipher_type'" $(BUILD_DIR)/structs/union-by-nested-constructor-dynamic-selector.err
 	if $(TARGET) tests/cases/structs/errors/union-by-constructor-payload-count.ari -o $(BUILD_DIR)/structs/union-by-constructor-payload-count.elf >$(BUILD_DIR)/structs/union-by-constructor-payload-count.err 2>&1; then exit 1; fi
 	grep -q "union by constructor arm 'stream' for field 'fragment' in struct 'TLSCiphertext' expects exactly one payload expression" $(BUILD_DIR)/structs/union-by-constructor-payload-count.err
 	if $(TARGET) tests/cases/structs/errors/union-by-bool-selector-missing-arm.ari -o $(BUILD_DIR)/structs/union-by-bool-selector-missing-arm.elf >$(BUILD_DIR)/structs/union-by-bool-selector-missing-arm.err 2>&1; then exit 1; fi

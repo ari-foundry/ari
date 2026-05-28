@@ -109,7 +109,11 @@ The field payload is checked against the selected arm's payload type. The
 compiler lowers the field to internal enum storage, so the aggregate can be
 laid out and emitted by the existing enum backend. When the selector value is
 statically visible in the same struct literal, the constructor arm must match
-that value.
+that value. If the selector field is written with a dynamic expression such as
+a function call or local variable, the compiler cannot prove the selected
+payload arm from the literal alone and rejects the constructor. Omit the
+selector so it can be inferred from the arm, or write a literal enum case/bool
+selector that matches the arm.
 
 When the selected arm's payload type is a struct, the constructor can omit the
 payload type name and write the arm name directly before the payload fields:
@@ -252,8 +256,11 @@ policies, selector inference through intermediate structs that need unrelated
 required fields, active-arm narrowing outside `match`, aggregate-field
 provenance through arbitrary wrapper structs, active-arm mutation beyond direct
 reconstruction, active-arm drop diagnostics, and stable ABI naming remain
-compiler work. Use ordinary `enum` ADTs when the discriminant is not an existing
-product field or when the type must be part of a stable public ABI.
+compiler work. The supported constructor forms either infer the selector or
+check a statically visible selector, so they do not create a value whose
+payload arm disagrees with the discriminant. Use ordinary `enum` ADTs when the
+discriminant is not an existing product field or when the type must be part of
+a stable public ABI.
 
 The compiler capability inventory tracks this as `union-by-fields`.
 

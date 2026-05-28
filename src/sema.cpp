@@ -21397,12 +21397,23 @@ private:
         return nullptr;
     }
 
-    std::optional<std::string> static_union_by_selector_arm(
+    enum class UnionBySelectorValueKind {
+        Missing,
+        StaticArm,
+        Dynamic,
+    };
+
+    struct UnionBySelectorValue {
+        UnionBySelectorValueKind kind = UnionBySelectorValueKind::Missing;
+        std::string arm_name;
+    };
+
+    UnionBySelectorValue static_union_by_selector_value(
         const TypeRef& ast_type,
         const std::map<std::string, const Expr*>& struct_literal_values,
         const IrType& struct_type
     ) const {
-        if (ast_type.union_by_selector.empty()) return std::nullopt;
+        if (ast_type.union_by_selector.empty()) return {};
         const std::string& root_name = ast_type.union_by_selector.front();
 
         std::size_t root_index = struct_type.field_names.size();
@@ -21412,16 +21423,17 @@ private:
                 break;
             }
         }
-        if (root_index == struct_type.field_names.size()) return std::nullopt;
+        if (root_index == struct_type.field_names.size()) return {};
 
         auto root_expr = struct_literal_values.find(root_name);
-        if (root_expr == struct_literal_values.end()) return std::nullopt;
+        if (root_expr == struct_literal_values.end()) return {};
 
         const Expr* current_expr = root_expr->second;
         IrType current_type = struct_type.field_types[root_index];
         for (std::size_t i = 1; i < ast_type.union_by_selector.size(); ++i) {
-            if (!current_expr || current_type.primitive != IrPrimitiveKind::Struct) {
-                return std::nullopt;
+            if (!current_expr) return {};
+            if (current_type.primitive != IrPrimitiveKind::Struct) {
+                return {UnionBySelectorValueKind::Dynamic, ""};
             }
             const std::string& segment = ast_type.union_by_selector[i];
             std::size_t field_index = current_type.field_names.size();
@@ -21431,15 +21443,23 @@ private:
                     break;
                 }
             }
-            if (field_index == current_type.field_names.size()) return std::nullopt;
+            if (field_index == current_type.field_names.size()) {
+                return {UnionBySelectorValueKind::Dynamic, ""};
+            }
+            if (current_expr->kind != ExprKind::StructLiteral) {
+                return {UnionBySelectorValueKind::Dynamic, ""};
+            }
             current_expr = struct_literal_field_value(*current_expr, segment);
             current_type = current_type.field_types[field_index];
         }
-        if (!current_expr) return std::nullopt;
+        if (!current_expr) return {};
         if (auto enum_arm = static_enum_case_arm_name(*current_expr, current_type)) {
-            return enum_arm;
+            return {UnionBySelectorValueKind::StaticArm, *enum_arm};
         }
-        return static_bool_arm_name(*current_expr, current_type);
+        if (auto bool_arm = static_bool_arm_name(*current_expr, current_type)) {
+            return {UnionBySelectorValueKind::StaticArm, *bool_arm};
+        }
+        return {UnionBySelectorValueKind::Dynamic, ""};
     }
 
     [[noreturn]] void fail_union_by_constructor_selector_mismatch(SourceLocation loc,
@@ -21460,6 +21480,26 @@ private:
         error.add_note(DiagnosticNote{
             std::nullopt,
             "use arm '" + selector_arm + "' or change the selector value",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] void fail_union_by_constructor_dynamic_selector(SourceLocation loc,
+                                                                  const StructInfo& info,
+                                                                  const StructInfo::Field& field,
+                                                                  const std::string& constructor_arm) const {
+        CompileError error(std::move(loc),
+                           "union by constructor arm '" + constructor_arm +
+                               "' cannot be checked against non-static selector '" +
+                               union_by_selector_text(field.type) + "'");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "field '" + field.name + "' in struct '" + info.name +
+                "' follows selector path '" + union_by_selector_text(field.type) + "'",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "omit the selector so it can be inferred from the constructor arm, or write a literal enum case/bool selector that matches the arm",
             DiagnosticNoteKind::Help});
         throw error;
     }
@@ -21675,16 +21715,23 @@ private:
                 *arm_name,
                 value_expr.args.size());
         }
-        if (auto selector_arm =
-                static_union_by_selector_arm(field.type, struct_literal_values, struct_type)) {
-            if (*selector_arm != *arm_name) {
+        UnionBySelectorValue selector_value =
+            static_union_by_selector_value(field.type, struct_literal_values, struct_type);
+        if (selector_value.kind == UnionBySelectorValueKind::StaticArm) {
+            if (selector_value.arm_name != *arm_name) {
                 fail_union_by_constructor_selector_mismatch(
                     value_expr.loc,
                     info,
                     field,
-                    *selector_arm,
+                    selector_value.arm_name,
                     *arm_name);
             }
+        } else if (selector_value.kind == UnionBySelectorValueKind::Dynamic) {
+            fail_union_by_constructor_dynamic_selector(
+                value_expr.loc,
+                info,
+                field,
+                *arm_name);
         }
 
         std::vector<IrExprPtr> args;
