@@ -55,6 +55,11 @@ struct LocalInfo {
     std::uint64_t zone_pointer_generation = 0;
     std::uint64_t zone_generation = 0;
     std::string generic_origin;
+    struct UnionByAlias {
+        std::string field_name;
+        std::string selector_path;
+    };
+    std::optional<UnionByAlias> union_by_alias;
     struct BorrowSource {
         std::string aggregate_path;
         std::string name;
@@ -83,6 +88,7 @@ struct StateSnapshotEntry {
     bool auto_drop_owner = false;
     bool owned_field_states_complete = false;
     std::vector<LocalInfo::BorrowSource> aggregate_borrow_sources;
+    std::optional<LocalInfo::UnionByAlias> union_by_alias;
 };
 
 using StateSnapshot = std::map<std::string, StateSnapshotEntry>;

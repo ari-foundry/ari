@@ -390,6 +390,14 @@ static bool borrow_sources_equal(const std::vector<LocalInfo::BorrowSource>& lef
     return true;
 }
 
+static bool union_by_alias_equal(const std::optional<LocalInfo::UnionByAlias>& left,
+                                 const std::optional<LocalInfo::UnionByAlias>& right) {
+    if (left.has_value() != right.has_value()) return false;
+    if (!left) return true;
+    return left->field_name == right->field_name &&
+           left->selector_path == right->selector_path;
+}
+
 static bool field_borrow_counts_equal(
     const std::map<std::string, LocalInfo::FieldBorrowCounts>& left,
     const std::map<std::string, LocalInfo::FieldBorrowCounts>& right
@@ -427,7 +435,8 @@ bool state_snapshot_entry_borrow_state_equal(const StateSnapshotEntry& left,
            left.borrow_source_path == right.borrow_source_path &&
            left.borrow_source_mutable == right.borrow_source_mutable &&
            left.borrow_sources_released == right.borrow_sources_released &&
-           borrow_sources_equal(left.aggregate_borrow_sources, right.aggregate_borrow_sources);
+           borrow_sources_equal(left.aggregate_borrow_sources, right.aggregate_borrow_sources) &&
+           union_by_alias_equal(left.union_by_alias, right.union_by_alias);
 }
 
 bool merge_state_snapshot_entry_borrow_state_conservatively(StateSnapshotEntry& target,
@@ -436,7 +445,8 @@ bool merge_state_snapshot_entry_borrow_state_conservatively(StateSnapshotEntry& 
     if (target.borrow_source != source.borrow_source ||
         target.borrow_source_path != source.borrow_source_path ||
         target.borrow_source_mutable != source.borrow_source_mutable ||
-        !borrow_sources_equal(target.aggregate_borrow_sources, source.aggregate_borrow_sources)) {
+        !borrow_sources_equal(target.aggregate_borrow_sources, source.aggregate_borrow_sources) ||
+        !union_by_alias_equal(target.union_by_alias, source.union_by_alias)) {
         return false;
     }
     target.immutable_borrows = std::max(target.immutable_borrows, source.immutable_borrows);
@@ -695,7 +705,8 @@ StateSnapshot LocalScopeStack::snapshot_states() const {
                 item.second.borrow_sources_released,
                 item.second.auto_drop_owner,
                 item.second.owned_field_states_complete,
-                item.second.aggregate_borrow_sources
+                item.second.aggregate_borrow_sources,
+                item.second.union_by_alias
             };
             for (const auto& field : item.second.owned_field_states) {
                 StateSnapshotEntry field_entry;
@@ -731,6 +742,7 @@ void LocalScopeStack::restore_states(const StateSnapshot& snapshot) {
             local.auto_drop_owner = item.second.auto_drop_owner;
             local.owned_field_states_complete = item.second.owned_field_states_complete;
             local.aggregate_borrow_sources = item.second.aggregate_borrow_sources;
+            local.union_by_alias = item.second.union_by_alias;
         }
     }
 }

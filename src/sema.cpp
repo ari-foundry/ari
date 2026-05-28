@@ -8441,6 +8441,7 @@ private:
         local.auto_destroy_zone = is_zone_temp_call(*local.ir_init_expr);
         set_local_vector_known_length(local, init_vector_length);
         initialize_owned_field_states_from_direct_enum_constructor(local, *local.ir_init_expr);
+        set_union_by_alias_from_expr(local, *local.ir_init_expr);
         set_known_integer_value_from_expr(local, *stmt.binding.init, *local.ir_init_expr);
         set_zone_pointer_source_from_expr(local, *local.ir_init_expr);
     }
@@ -11937,17 +11938,17 @@ private:
 
     [[noreturn]] void fail_union_by_payload_projection(
         SourceLocation loc,
-        const StructInfo::Field& field,
+        const std::string& field_name,
+        const std::string& selector_path,
         std::uint64_t payload_index
     ) const {
         CompileError error(
             std::move(loc),
-            "cannot project union by payload slot '" + field.name + "." +
+            "cannot project union by payload slot '" + field_name + "." +
                 std::to_string(payload_index) + "' without matching the active arm");
         error.add_note(DiagnosticNote{
             std::nullopt,
-            "union by field '" + field.name + "' follows selector path '" +
-                union_by_selector_text(field.type) + "'",
+            "union by field '" + field_name + "' follows selector path '" + selector_path + "'",
             DiagnosticNoteKind::Note});
         error.add_note(DiagnosticNote{
             std::nullopt,
@@ -11955,10 +11956,72 @@ private:
             DiagnosticNoteKind::Note});
         error.add_note(DiagnosticNote{
             std::nullopt,
-            "read the payload with `match " + field.name +
+            "read the payload with `match " + field_name +
                 " { arm(payload) => ... }` or replace the whole struct with a matching selector and constructor",
             DiagnosticNoteKind::Help});
         throw error;
+    }
+
+    [[noreturn]] void fail_union_by_payload_projection(
+        SourceLocation loc,
+        const StructInfo::Field& field,
+        std::uint64_t payload_index
+    ) const {
+        fail_union_by_payload_projection(
+            std::move(loc),
+            field.name,
+            union_by_selector_text(field.type),
+            payload_index);
+    }
+
+    [[noreturn]] void fail_union_by_alias_payload_projection(
+        SourceLocation loc,
+        const std::string& local_name,
+        const LocalInfo::UnionByAlias& alias,
+        std::uint64_t payload_index
+    ) const {
+        CompileError error(
+            std::move(loc),
+            "cannot project union by payload slot '" + local_name + "." +
+                std::to_string(payload_index) + "' without matching the active arm");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "local '" + local_name + "' aliases union by field '" + alias.field_name +
+                "' whose selector path is '" + alias.selector_path + "'",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "the alias keeps the same active-arm proof requirement as the original field",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "read the payload with `match " + local_name +
+                " { arm(payload) => ... }` before using arm-specific fields",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    void set_union_by_alias_from_expr(LocalInfo& local, const IrExpr& init) {
+        local.union_by_alias.reset();
+        if (!has_aggregate_enum_layout(local.type)) return;
+
+        std::string base_name;
+        std::string path;
+        if (!tracked_ir_access_path(init, base_name, path)) return;
+        LocalInfo* source = find_local_slot(base_name);
+        if (!source) return;
+
+        if (path.empty() && source->union_by_alias) {
+            local.union_by_alias = source->union_by_alias;
+            return;
+        }
+
+        if (const StructInfo::Field* field = union_by_field_for_storage_path(source->type, path)) {
+            local.union_by_alias = LocalInfo::UnionByAlias{
+                field->name,
+                union_by_selector_text(field->type)
+            };
+        }
     }
 
     static std::string enum_payload_move_display(const std::string& base_name, const std::string& storage_path) {
@@ -12393,6 +12456,7 @@ private:
         mark_local_alive(target);
         initialize_owned_field_states(target);
         initialize_owned_field_states_from_direct_enum_constructor(target, *value);
+        set_union_by_alias_from_expr(target, *value);
         set_local_vector_known_length(target, assigned_vector_length);
         set_zone_pointer_source_from_expr(target, *value);
         set_ir_stmt_assign_name(lowered, assign_name);
@@ -12627,6 +12691,17 @@ private:
             TrackedAggregateAccess base;
             if (!try_build_tracked_aggregate_access(*expr_operand(expr), base)) return false;
             if (has_aggregate_enum_layout(base.type)) {
+                if (base.path.empty()) {
+                    if (const LocalInfo* local = find_local_slot(base.base_name)) {
+                        if (local->union_by_alias) {
+                            fail_union_by_alias_payload_projection(
+                                expr.loc,
+                                base.base_name,
+                                *local->union_by_alias,
+                                expr.tuple_index);
+                        }
+                    }
+                }
                 if (const StructInfo::Field* union_by_field =
                         union_by_field_for_storage_path(base.base_type, base.path)) {
                     fail_union_by_payload_projection(expr.loc, *union_by_field, expr.tuple_index);
