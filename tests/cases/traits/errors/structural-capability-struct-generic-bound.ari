@@ -1,7 +1,12 @@
+struct Packet {
+  value: i64,
+}
+
 struct Box[T: has serialize() -> i64] {
   value: T,
 }
 
 fn main() -> i64 {
+  let packet = Box<Packet> { value: Packet { value: 1 } };
   return 0;
 }

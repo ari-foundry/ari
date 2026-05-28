@@ -533,28 +533,28 @@ private:
 
     [[noreturn]] static void fail_structural_capability_type(SourceLocation loc) {
         CompileError error(std::move(loc),
-                           "structural capability syntax is only supported in function parameter types and generic function bounds");
+                           "structural capability syntax is only supported in function parameter types and generic bounds");
         error.add_note(DiagnosticNote{
             std::nullopt,
             "`has method(...) -> Type` introduces a structural method requirement",
             DiagnosticNoteKind::Note});
         error.add_note(DiagnosticNote{
             std::nullopt,
-            "write it directly after a parameter colon, or as a function generic bound such as `fn save[T: has serialize() -> String](x: T)`",
+            "write it directly after a parameter colon, or as a generic bound such as `fn save[T: has serialize() -> String](x: T)` or `struct Box[T: has serialize() -> String]`",
             DiagnosticNoteKind::Help});
         throw error;
     }
 
     [[noreturn]] static void fail_structural_capability_parameter_context(SourceLocation loc) {
         CompileError error(std::move(loc),
-                           "structural capability parameters and bounds are only supported on callable function and method declarations");
+                           "structural capability parameters and bounds are only supported on callable declarations and generic aggregate declarations");
         error.add_note(DiagnosticNote{
             std::nullopt,
             "the current implementation lowers `has method(...) -> Type` to a hidden generic parameter",
             DiagnosticNoteKind::Note});
         error.add_note(DiagnosticNote{
             std::nullopt,
-            "use a named trait bound in extern declarations, meta functions, lambdas, and aggregate type declarations",
+            "use `has` on ordinary functions, methods, structs, enums, or as a reusable capability alias bound; use a named trait elsewhere",
             DiagnosticNoteKind::Help});
         throw error;
     }
@@ -1514,7 +1514,7 @@ private:
         decl.is_public = public_decl;
         decl.loc = name.loc;
         decl.attributes = std::move(attributes);
-        decl.generics = parse_generics();
+        decl.generics = parse_generics(true);
 
         if (match(TokenKind::LParen)) {
             decl.tuple_struct = true;
@@ -1586,7 +1586,7 @@ private:
         decl.is_public = public_decl;
         decl.loc = name.loc;
         decl.attributes = std::move(attributes);
-        decl.generics = parse_generics();
+        decl.generics = parse_generics(true);
         Token open = expect(TokenKind::LBrace, "expected { after enum name");
         while (!match(TokenKind::RBrace)) {
             if (check(TokenKind::End)) {

@@ -1,0 +1,12 @@
+struct Packet {
+  value: i64,
+}
+
+enum Box[T: has serialize() -> i64] {
+  Item(T),
+}
+
+fn main() -> i64 {
+  let packet = Item<Packet>(Packet { value: 1 });
+  return 0;
+}

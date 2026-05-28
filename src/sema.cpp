@@ -140,6 +140,7 @@ struct EnumInfo {
     SourceLocation loc;
     std::vector<std::string> case_names;
     std::size_t generic_arity = 0;
+    std::vector<GenericParam> generics;
     std::vector<std::string> generic_names;
     std::vector<Case> cases;
     bool is_public = false;
@@ -159,6 +160,7 @@ struct StructInfo {
     std::string name;
     std::string module_name;
     std::size_t generic_arity = 0;
+    std::vector<GenericParam> generics;
     std::vector<std::string> generic_names;
     std::vector<Field> fields;
     bool tuple_struct = false;
@@ -2193,6 +2195,7 @@ private:
             info.name = decl.name;
             info.module_name = decl.module_name;
             info.generic_arity = decl.generics.size();
+            info.generics = decl.generics;
             info.tuple_struct = decl.tuple_struct;
             info.is_public = decl.is_public;
             info.deprecated = deprecated_attribute(decl.attributes) != nullptr;
@@ -3287,10 +3290,10 @@ private:
 
     void validate_generic_constraints() {
         for_each_struct_decl([&](const StructDecl& decl) {
-            validate_generic_constraints_for(decl.generics, decl.module_name);
+            validate_generic_constraints_for(decl.generics, decl.module_name, true);
         });
         for_each_enum_decl([&](const EnumDecl& decl) {
-            validate_generic_constraints_for(decl.generics, decl.module_name);
+            validate_generic_constraints_for(decl.generics, decl.module_name, true);
         });
         for_each_trait_decl([&](const TraitDecl& decl) {
             validate_generic_constraints_for(decl.generics, decl.module_name);
@@ -4357,7 +4360,7 @@ private:
         SourceLocation loc,
         const EnumInfo& info,
         const std::vector<IrType>& type_args
-    ) const {
+    ) {
         if (type_args.size() != info.generic_arity) {
             fail(loc,
                  "enum '" + info.name + "' expects " + std::to_string(info.generic_arity) +
@@ -4368,6 +4371,13 @@ private:
         for (std::size_t i = 0; i < type_args.size(); ++i) {
             substitutions.emplace(info.generic_names[i], type_args[i]);
         }
+        require_generic_type_application_bounds(
+            loc,
+            info.generics,
+            info.module_name,
+            substitutions,
+            "enum",
+            info.name);
         return substitutions;
     }
 
@@ -4675,6 +4685,7 @@ private:
             info.type = type;
             info.loc = decl.loc;
             info.generic_arity = decl.generics.size();
+            info.generics = decl.generics;
             info.is_public = decl.is_public;
             info.deprecated = deprecated_attribute(decl.attributes) != nullptr;
             info.deprecated_message = deprecated_message(decl.attributes);
@@ -6263,6 +6274,13 @@ private:
                     type.args.push_back(arg);
                     substitutions.emplace(info.generic_names[i], arg);
                 }
+                require_generic_type_application_bounds(
+                    type.loc,
+                    info.generics,
+                    info.module_name,
+                    substitutions,
+                    "struct",
+                    info.name);
 
                 if (aggregate_resolution_is_recursive(type)) {
                     if (type.qualifier == TypeQualifier::Value) {
@@ -20958,6 +20976,13 @@ private:
             type.args.push_back(explicit_type_args[i]);
             substitutions.emplace(info.generic_names[i], explicit_type_args[i]);
         }
+        require_generic_type_application_bounds(
+            loc,
+            info.generics,
+            info.module_name,
+            substitutions,
+            "struct",
+            info.name);
 
         std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
         for (const auto& item : substitutions) current_type_substitutions_.emplace(item.first, item.second);
@@ -25773,6 +25798,94 @@ private:
                 if (generic.has_constraint) {
                     if (const TypeAliasInfo* alias = find_structural_capability_alias_bound(generic.constraint)) {
                         require_structural_capability_alias_bound(loc, generic, *alias, self_found->second);
+                    }
+                }
+            }
+        } catch (...) {
+            current_type_substitutions_ = std::move(previous_substitutions);
+            current_module_name_ = previous_module;
+            throw;
+        }
+        current_type_substitutions_ = std::move(previous_substitutions);
+        current_module_name_ = previous_module;
+    }
+
+    static bool contains_unresolved_generic_placeholder(const IrType& type) {
+        if (type.qualifier == TypeQualifier::Value &&
+            type.primitive == IrPrimitiveKind::Unknown &&
+            !type.name.empty() &&
+            type.args.empty() &&
+            type.field_types.empty()) {
+            return true;
+        }
+        for (const auto& arg : type.args) {
+            if (contains_unresolved_generic_placeholder(arg)) return true;
+        }
+        for (const auto& field_type : type.field_types) {
+            if (contains_unresolved_generic_placeholder(field_type)) return true;
+        }
+        return false;
+    }
+
+    void require_generic_type_application_bounds(
+        SourceLocation loc,
+        const std::vector<GenericParam>& generics,
+        const std::string& module_name,
+        const std::map<std::string, IrType>& substitutions,
+        const std::string& owner_kind,
+        const std::string& owner_name
+    ) {
+        bool has_constraint = false;
+        for (const auto& generic : generics) {
+            if (generic_has_any_constraint(generic)) {
+                has_constraint = true;
+                break;
+            }
+        }
+        if (!has_constraint) return;
+
+        std::string previous_module = current_module_name_;
+        std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
+        current_module_name_ = module_name;
+        current_type_substitutions_ = substitutions;
+        try {
+            for (const auto& generic : generics) {
+                auto self_found = substitutions.find(generic.name);
+                if (self_found == substitutions.end()) continue;
+                if (contains_unresolved_generic_placeholder(self_found->second)) continue;
+                if (generic.has_structural_capability) {
+                    require_structural_capabilities(loc, generic, self_found->second);
+                }
+                if (generic.has_constraint) {
+                    if (const TypeAliasInfo* alias = find_structural_capability_alias_bound(generic.constraint)) {
+                        require_structural_capability_alias_bound(loc, generic, *alias, self_found->second);
+                        continue;
+                    }
+                    GenericTraitBound bound = resolve_generic_trait_bound(generic);
+                    if (!type_implements_trait(bound.trait_name, bound.trait_args, self_found->second)) {
+                        const std::string trait_display =
+                            trait_application_display(bound.trait_name, bound.trait_args);
+                        CompileError error(
+                            loc,
+                            "type " + type_name(self_found->second) + " does not implement trait '" +
+                                trait_display + "' required by generic parameter '" + generic.name + "'");
+                        Span bound_span = span_from_location(generic.constraint.loc);
+                        if (span_has_source(bound_span) && span_has_valid_order(bound_span)) {
+                            error.add_label(DiagnosticLabel{
+                                bound_span,
+                                "generic parameter '" + generic.name + "' requires trait '" + trait_display + "'",
+                                false});
+                        }
+                        error.add_note(DiagnosticNote{
+                            std::nullopt,
+                            "generic " + owner_kind + " '" + owner_name +
+                                "' type application checks bounds after type arguments are known",
+                            DiagnosticNoteKind::Note});
+                        error.add_note(DiagnosticNote{
+                            std::nullopt,
+                            "use a type argument that satisfies the bound or move the requirement to a helper that constrains the same type",
+                            DiagnosticNoteKind::Help});
+                        throw error;
                     }
                 }
             }

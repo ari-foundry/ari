@@ -1,0 +1,25 @@
+struct Packet {
+  value: i64,
+}
+
+impl Packet {
+  fn serialize(self) -> i64 {
+    self.value + 1
+  }
+}
+
+type Serializable = has serialize() -> i64;
+
+struct DirectBox[T: has serialize() -> i64] {
+  value: T,
+}
+
+struct AliasBox[T: Serializable] {
+  value: T,
+}
+
+fn main() -> i64 {
+  let direct = DirectBox<Packet> { value: Packet { value: 20 } };
+  let alias = AliasBox<Packet> { value: Packet { value: 20 } };
+  return direct.value.serialize() + alias.value.serialize();
+}

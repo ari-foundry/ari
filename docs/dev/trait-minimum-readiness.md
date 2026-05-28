@@ -20,7 +20,7 @@ The minimum supported subset is:
 - duplicate and overlapping impl rejection
 - concrete method-call static dispatch
 - trait-qualified method calls such as `Trait::method(value)`
-- trait bounds on generic functions and generic impls
+- trait bounds on generic functions, generic impls, structs, and enums
 - static dispatch from a bound generic parameter
 - single trait applications in bounds, including trait arguments such as
   `Eq[T]`
@@ -42,8 +42,6 @@ The following are intentionally outside the minimum production subset:
 - negative impls
 - blanket impl solving beyond Ari's conservative generic coherence checks
 - multiple bounds on one type parameter
-- bounds written directly on generic type declarations such as
-  `struct Box[T: Debuggable]`
 - higher-ranked bounds and lifetime solving
 - implicit dynamic dispatch
 - object-safe dispatch for generic trait methods
@@ -65,6 +63,7 @@ static trait path that normal compiler data structures should use first.
 | Trait-qualified calls | already supported | `trait-qualified-call` |
 | Generic functions with bounds | already supported | `trait-bound-static-dispatch`, `trait-minimum-compiler-shaped` |
 | Generic impl bounds | already supported | `generic-impl-bounds` |
+| Generic aggregate bounds | newly covered | `structural-capability-struct-bound`, `structural-capability-enum-bound` |
 | User-defined Eq/Hash/Debug/Ord-like fixtures | newly covered | `trait-minimum-compiler-shaped` |
 | Stdlib Eq/Ord/Hash/Debug/Iterator-like fixtures | newly covered in the trait target | `trait-minimum-stdlib-like` |
 | Compiler-shaped trait data | newly covered | token, source position, symbol, token cursor, work item fixtures |

@@ -134,10 +134,31 @@ impl[T: Score] Box[T] {
 
 The bound is checked when the impl method is specialized for a concrete
 receiver. Calling `Box[i64].score()` requires `i64` to implement `Score`.
-Bounds are currently written on functions, methods, and impl blocks. Generic
-type declarations such as `struct Box[T: Score]` are intentionally outside the
-minimum supported subset; keep the data declaration unconstrained and place the
-behavioral requirement on the helper function or impl that needs it.
+Bounds are currently written on functions, methods, impl blocks, structs, and
+enums. Generic type declarations can use named trait bounds or structural
+capability bounds when the stored type must satisfy a method contract:
+
+```ari
+type Serializable = has serialize() -> i64;
+
+struct DirectBox[T: has serialize() -> i64] {
+  value: T,
+}
+
+struct AliasBox[T: Serializable] {
+  value: T,
+}
+
+enum Envelope[T: Serializable] {
+  Item(T),
+}
+```
+
+The bound is checked when a concrete type application or constructor fixes the
+type argument, so `DirectBox[Packet]` and `Item[Packet](...)` both require
+`Packet::serialize() -> i64`. If a generic type merely forwards another
+generic placeholder, restate the same bound on the forwarding declaration until
+richer bound propagation is added.
 
 ## Supertraits
 
