@@ -17,6 +17,9 @@ or `std::vec::Vec[T]` when those shapes match the job.
 zone::create(capacity: i64) -> own Zone
 zone::default_capacity() -> i64
 zone::alloc(ref mut Zone, bytes: i64, align: i64) -> ptr u8
+zone::capacity(ref mut Zone) -> i64
+zone::used(ref mut Zone) -> i64
+zone::remaining(ref mut Zone) -> i64
 zone::alloc<T>(ref mut Zone) -> ptr T
 zone::alloc_array<T>(ref mut Zone, count: i64) -> ptr T
 zone::new<T>(ref mut Zone, value: T) -> ptr T
@@ -36,12 +39,18 @@ metadata.as_ptr() -> ptr c_void
 metadata.as_zone_ptr() -> ptr Zone
 metadata.alloc(bytes: i64, align: i64) -> ptr u8
 metadata.alloc_array<T>(count: i64) -> ptr T
+metadata.capacity() -> i64
+metadata.used() -> i64
+metadata.remaining() -> i64
 metadata.equals(ref other) -> bool
 ZoneBacked
 
 create(capacity)
 default_capacity()
 alloc(ref mut zone, bytes, align)
+capacity(ref mut zone)
+used(ref mut zone)
+remaining(ref mut zone)
 alloc<T>(ref mut zone)
 alloc_array<T>(ref mut zone, count)
 new<T>(ref mut zone, value)
@@ -103,6 +112,7 @@ zone {
   let file = fs::read_to_string("notes.txt")?;     // fs::read_to_string(ref mut zone, ...)
   let rendered = std::fmt::Display::format_in(42); // Display::format_in(42, ref mut zone)
   let line = format!("{} {}", text, file.as_slice().len); // format_in!(ref mut zone, ...)
+  let spare = zone::remaining();                          // remaining(ref mut zone)
 }
 ```
 
@@ -122,6 +132,12 @@ promoted into an outer explicit zone.
 
 `alloc(ref mut zone, bytes, align)` is the raw byte allocator. It returns a
 `ptr u8` with the requested alignment.
+
+`capacity(ref mut zone)` returns the logical byte capacity originally chosen
+for the zone. `used(ref mut zone)` returns the logical payload bytes allocated
+so far. `remaining(ref mut zone)` returns `capacity - used`. These helpers are
+for planning and diagnostics; they do not include runtime header padding or
+alignment slack, and they do not make allocation recoverable.
 
 `alloc<T>(ref mut zone)` allocates uninitialized storage for one `T`.
 `alloc_array<T>(ref mut zone, count)` allocates uninitialized storage for
@@ -152,6 +168,11 @@ checks handle identity.
 through that recovered runtime zone handle; this is the preferred internal
 building block for heap handles that need to grow without carrying an explicit
 `ref mut Zone` argument.
+`metadata.capacity()`, `metadata.used()`, and `metadata.remaining()` read the
+same logical counters through the recovered handle, which is useful when a
+zone-backed stdlib container wants to report or plan follow-up allocation
+without storing an extra zone field. Like other zone-backed handles,
+`ZoneMetadata` is invalid after the source zone is reset or destroyed.
 
 Raw header recovery requires an actual backing allocation. Heap-backed stdlib
 handles therefore create a small backing allocation even when their logical
@@ -242,6 +263,9 @@ Current-zone blocks are intentionally lexical and conservative:
 - `tests/cases/standard-library/ok/zone/std-zone-alloc-array.ari` checks
   `std::zone::alloc_array`, the root `alloc_array` alias, null return for
   zero count, pointer loads/stores, LLVM symbol emission, and runtime result.
+- `tests/cases/standard-library/ok/zone/std-zone-introspection.ari` checks
+  `zone::capacity`, `zone::used`, `zone::remaining`, the matching
+  `ZoneMetadata` methods, reset behavior, and LLVM symbol emission.
 - `tests/cases/standard-library/ok/zone/std-zone-backed.ari` checks
   `ZoneMetadata`, `ZoneBacked`, `zone::metadata(data)`, `zone::from_zone`,
   `metadata.alloc_array<T>`, `metadata.as_ptr()`,

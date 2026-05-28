@@ -2527,6 +2527,9 @@ memory.
 zone::create(capacity)
 zone::default_capacity()
 zone::alloc(ref mut zone, bytes, align)
+zone::capacity(ref mut zone)
+zone::used(ref mut zone)
+zone::remaining(ref mut zone)
 zone::alloc<T>(ref mut zone)
 zone::alloc_array<T>(ref mut zone, count)
 zone::new<T>(ref mut zone, value)
@@ -2540,6 +2543,9 @@ metadata.as_ptr()
 metadata.as_zone_ptr()
 metadata.alloc(bytes, align)
 metadata.alloc_array<T>(count)
+metadata.capacity()
+metadata.used()
+metadata.remaining()
 metadata.equals(ref other)
 zone::reset(ref mut zone)
 zone::destroy(zone)
@@ -2561,6 +2567,12 @@ zone capacities name the valid range, allocation exhaustion suggests
 allocation arguments are named separately. Use `zone(capacity) { ... }` for
 bulk scratch work when the 4096-byte default is too small.
 
+`capacity(ref mut zone)`, `used(ref mut zone)`, and `remaining(ref mut zone)`
+read logical payload counters from a zone. Inside a current-zone block they can
+omit the argument, so `zone::remaining()` reports the current block's scratch
+space. The counters are planning/debugging helpers; they do not include
+allocation headers or alignment padding.
+
 `allocation_zone(data)` reads Ari's allocation header for a non-null zone
 allocation and returns the raw opaque handle. Prefer `metadata(data)`, which
 wraps that handle as `ZoneMetadata`. `from_zone(ref mut zone)` captures
@@ -2574,6 +2586,10 @@ identity. `metadata.alloc(bytes, align)` and `metadata.alloc_array<T>(count)`
 allocate through the recovered runtime zone handle. Zero-capacity handles may
 carry metadata from construction even when they have no backing data pointer;
 raw `metadata(data)` still requires a non-null allocation pointer.
+`metadata.capacity()`, `metadata.used()`, and `metadata.remaining()` expose the
+same counters through the recovered handle. The metadata handle follows normal
+zone provenance rules and cannot be used after the source zone is reset or
+destroyed.
 
 ## Option And Result
 

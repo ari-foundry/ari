@@ -120,6 +120,13 @@ When adding a public zone-backed API:
    `docs/stdlib/generated/api-index.md` if the public API changed.
 4. Update the hand-written module guide with lifetime and current-zone notes.
 
+For stdlib implementation work, prefer `zone::of(ref handle)` or
+`ZoneMetadata` when a heap-backed handle needs to grow later. The handle should
+recover its zone from backing allocation metadata instead of storing an extra
+zone field. Use `zone::capacity`, `zone::used`, and `zone::remaining` only for
+planning, diagnostics, and tests; allocation still goes through a real zone
+capability or recovered metadata.
+
 ## Remaining Work
 
 - a future expression form only if the language gets a clean block-expression

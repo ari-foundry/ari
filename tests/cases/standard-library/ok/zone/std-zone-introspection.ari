@@ -1,0 +1,36 @@
+// Covers public zone capacity/used/remaining introspection on explicit zones
+// and ZoneMetadata handles.
+fn main() -> i64 {
+  var arena = zone::create(128);
+
+  assert(zone::capacity(ref mut arena) == 128);
+  assert(zone::used(ref mut arena) == 0);
+  assert(zone::remaining(ref mut arena) == 128);
+
+  let metadata = zone::from_zone(ref mut arena);
+  assert(metadata.capacity() == 128);
+  assert(metadata.used() == 0);
+  assert(metadata.remaining() == 128);
+
+  let values = zone::alloc_array<i64>(ref mut arena, 2);
+  ptr_store(values, 21);
+  ptr_store(ptr_add(values, 1), 21);
+
+  assert(zone::used(ref mut arena) == 16);
+  assert(zone::remaining(ref mut arena) == 112);
+  assert(metadata.used() == 16);
+  assert(metadata.remaining() == 112);
+
+  let more = metadata.alloc_array<i64>(1);
+  ptr_store(more, ptr_load(values) + ptr_load(ptr_add(values, 1)));
+  assert(zone::used(ref mut arena) == 24);
+  assert(metadata.remaining() == 104);
+
+  let score = ptr_load(more);
+  zone::reset(ref mut arena);
+  assert(zone::used(ref mut arena) == 0);
+  assert(zone::remaining(ref mut arena) == 128);
+
+  zone::destroy(arena);
+  return score;
+}

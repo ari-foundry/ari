@@ -3,6 +3,13 @@ pub extern "ari" fn alloc(zone: ref mut Zone, bytes: i64, align: i64) -> ptr u8 
 pub extern "ari" fn allocation_zone(data: ptr u8) -> ptr c_void = "ari_builtin_zone_allocation_zone";
 extern "ari" fn zone_handle(zone: ref mut Zone) -> ptr c_void = "ari_builtin_zone_handle";
 extern "ari" fn alloc_handle(handle: ptr c_void, bytes: i64, align: i64) -> ptr u8 = "ari_builtin_zone_alloc_handle";
+extern "ari" fn capacity_handle(handle: ptr c_void) -> i64 = "ari_builtin_zone_capacity_handle";
+extern "ari" fn used_handle(handle: ptr c_void) -> i64 = "ari_builtin_zone_used_handle";
+extern "ari" fn remaining_handle(handle: ptr c_void) -> i64 = "ari_builtin_zone_remaining_handle";
+
+pub extern "ari" fn capacity(zone: ref mut Zone) -> i64 = "ari_builtin_zone_capacity";
+pub extern "ari" fn used(zone: ref mut Zone) -> i64 = "ari_builtin_zone_used";
+pub extern "ari" fn remaining(zone: ref mut Zone) -> i64 = "ari_builtin_zone_remaining";
 
 pub fn default_capacity() -> i64 {
   return 4096;
@@ -47,6 +54,18 @@ pub impl std::zone::ZoneMetadata {
       return 0u64 as ptr T;
     }
     return self.alloc(count * std::mem::size_of<T>(), std::mem::align_of<T>()) as ptr T;
+  }
+
+  fn capacity(self: ref Self) -> i64 {
+    return capacity_handle(self.handle);
+  }
+
+  fn used(self: ref Self) -> i64 {
+    return used_handle(self.handle);
+  }
+
+  fn remaining(self: ref Self) -> i64 {
+    return remaining_handle(self.handle);
   }
 
   fn equals(self: ref Self, other: ref Self) -> bool {

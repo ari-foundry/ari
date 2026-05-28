@@ -24,12 +24,12 @@ platform notes.
 
 ## Summary
 
-- API entries: `3624`
+- API entries: `3630`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
-| `alloc` | 925 | usable |
+| `alloc` | 931 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 941 | stable candidate |
 | `hosted` | 1559 | platform-backed |
@@ -38,8 +38,8 @@ platform notes.
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1237 |
-| `method` | 1913 |
+| `fn` | 1240 |
+| `method` | 1916 |
 | `module` | 39 |
 | `struct` | 197 |
 | `trait` | 39 |
@@ -90,7 +90,7 @@ platform notes.
 | `std::thread` | `hosted` | 126 |
 | `std::time` | `hosted` | 74 |
 | `std::vec` | `alloc` | 115 |
-| `std::zone` | `alloc` | 22 |
+| `std::zone` | `alloc` | 28 |
 
 ## `std`
 
@@ -4717,6 +4717,7 @@ Tier: `alloc`. Stability reading: usable.
 | `fn std::zone::alloc[T]` | typed zone allocation tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `fn std::zone::alloc_array[T]` | std zone raw array allocation tests; docs/stdlib/modules/zone.md |
 | `fn std::zone::allocation_zone` | zone allocation header metadata tests; docs/dev/test-matrix.md Explicit memory zones row |
+| `fn std::zone::capacity` | std zone introspection tests; docs/stdlib/modules/zone.md |
 | `fn std::zone::create` | zone lifecycle tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `fn std::zone::default_capacity` | current-zone block tests; docs/stdlib/modules/zone.md |
 | `fn std::zone::destroy` | zone lifecycle and invalidation tests; docs/dev/test-matrix.md Explicit memory zones row |
@@ -4725,7 +4726,9 @@ Tier: `alloc`. Stability reading: usable.
 | `fn std::zone::new[T]` | placement construction tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `fn std::zone::of[T: std::zone::ZoneBacked]` | std zone backed handle metadata tests; docs/stdlib/modules/zone.md |
 | `fn std::zone::promote[T]` | scratch promotion tests; docs/dev/test-matrix.md Explicit memory zones row |
+| `fn std::zone::remaining` | std zone introspection tests; docs/stdlib/modules/zone.md |
 | `fn std::zone::reset` | zone reset invalidation tests; docs/dev/test-matrix.md Explicit memory zones row |
+| `fn std::zone::used` | std zone introspection tests; docs/stdlib/modules/zone.md |
 
 ### method
 
@@ -4735,7 +4738,10 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::zone::ZoneMetadata::alloc_array[T]` | std zone backed handle metadata tests; docs/stdlib/modules/zone.md |
 | `method std::zone::ZoneMetadata::as_ptr` | std zone backed handle metadata tests; docs/stdlib/modules/zone.md |
 | `method std::zone::ZoneMetadata::as_zone_ptr` | std zone backed handle metadata tests; docs/stdlib/modules/zone.md |
+| `method std::zone::ZoneMetadata::capacity` | std zone introspection tests; docs/stdlib/modules/zone.md |
 | `method std::zone::ZoneMetadata::equals` | std zone backed handle metadata tests; docs/stdlib/modules/zone.md |
+| `method std::zone::ZoneMetadata::remaining` | std zone introspection tests; docs/stdlib/modules/zone.md |
+| `method std::zone::ZoneMetadata::used` | std zone introspection tests; docs/stdlib/modules/zone.md |
 
 ### module
 

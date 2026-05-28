@@ -5148,6 +5148,78 @@ private:
         line("}");
         line();
 
+        line("define " + runtime_visibility + "i64 @ari_builtin_zone_capacity_handle(ptr %zone) {");
+        line("entry:");
+        line("  %zone.null = icmp eq ptr %zone, null");
+        line("  br i1 %zone.null, label %fail, label %load");
+        line("load:");
+        line("  %capacity.slot = getelementptr i64, ptr %zone, i64 0");
+        line("  %capacity = load i64, ptr %capacity.slot");
+        line("  ret i64 %capacity");
+        line("fail:");
+        line("  call i64 @write(i32 2, ptr " + zone_bad_handle_text + ", i64 " + zone_bad_handle_len + ")");
+        line("  call void @exit(i32 1)");
+        line("  unreachable");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_zone_used_handle(ptr %zone) {");
+        line("entry:");
+        line("  %zone.null = icmp eq ptr %zone, null");
+        line("  br i1 %zone.null, label %fail, label %load");
+        line("load:");
+        line("  %used.slot = getelementptr i64, ptr %zone, i64 3");
+        line("  %used = load i64, ptr %used.slot");
+        line("  ret i64 %used");
+        line("fail:");
+        line("  call i64 @write(i32 2, ptr " + zone_bad_handle_text + ", i64 " + zone_bad_handle_len + ")");
+        line("  call void @exit(i32 1)");
+        line("  unreachable");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_zone_remaining_handle(ptr %zone) {");
+        line("entry:");
+        line("  %zone.null = icmp eq ptr %zone, null");
+        line("  br i1 %zone.null, label %fail, label %load");
+        line("load:");
+        line("  %capacity.slot = getelementptr i64, ptr %zone, i64 0");
+        line("  %capacity = load i64, ptr %capacity.slot");
+        line("  %used.slot = getelementptr i64, ptr %zone, i64 3");
+        line("  %used = load i64, ptr %used.slot");
+        line("  %remaining = sub i64 %capacity, %used");
+        line("  ret i64 %remaining");
+        line("fail:");
+        line("  call i64 @write(i32 2, ptr " + zone_bad_handle_text + ", i64 " + zone_bad_handle_len + ")");
+        line("  call void @exit(i32 1)");
+        line("  unreachable");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_zone_capacity(ptr %zone.slot) {");
+        line("entry:");
+        line("  %zone = load ptr, ptr %zone.slot");
+        line("  %capacity = call i64 @ari_builtin_zone_capacity_handle(ptr %zone)");
+        line("  ret i64 %capacity");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_zone_used(ptr %zone.slot) {");
+        line("entry:");
+        line("  %zone = load ptr, ptr %zone.slot");
+        line("  %used = call i64 @ari_builtin_zone_used_handle(ptr %zone)");
+        line("  ret i64 %used");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_zone_remaining(ptr %zone.slot) {");
+        line("entry:");
+        line("  %zone = load ptr, ptr %zone.slot");
+        line("  %remaining = call i64 @ari_builtin_zone_remaining_handle(ptr %zone)");
+        line("  ret i64 %remaining");
+        line("}");
+        line();
+
         line("define " + runtime_visibility + "ptr @ari_builtin_zone_alloc(ptr %zone.slot, i64 %bytes, i64 %align) {");
         line("entry:");
         line("  %zone = load ptr, ptr %zone.slot");
@@ -5366,6 +5438,7 @@ private:
         line("  store i64 0, ptr %used.slot");
         line("  ret void");
         line("fail:");
+        line("  call i64 @write(i32 2, ptr " + zone_bad_handle_text + ", i64 " + zone_bad_handle_len + ")");
         line("  call void @exit(i32 1)");
         line("  unreachable");
         line("}");
@@ -5382,6 +5455,7 @@ private:
         line("  call void @free(ptr %zone)");
         line("  ret void");
         line("fail:");
+        line("  call i64 @write(i32 2, ptr " + zone_bad_handle_text + ", i64 " + zone_bad_handle_len + ")");
         line("  call void @exit(i32 1)");
         line("  unreachable");
         line("}");

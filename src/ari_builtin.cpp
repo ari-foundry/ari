@@ -264,6 +264,18 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::zone::alloc_handle", "ari_builtin_zone_alloc_handle"},
         {"zone::zone_handle", "ari_builtin_zone_handle"},
         {"std::zone::zone_handle", "ari_builtin_zone_handle"},
+        {"zone::capacity", "ari_builtin_zone_capacity"},
+        {"std::zone::capacity", "ari_builtin_zone_capacity"},
+        {"zone::used", "ari_builtin_zone_used"},
+        {"std::zone::used", "ari_builtin_zone_used"},
+        {"zone::remaining", "ari_builtin_zone_remaining"},
+        {"std::zone::remaining", "ari_builtin_zone_remaining"},
+        {"zone::capacity_handle", "ari_builtin_zone_capacity_handle"},
+        {"std::zone::capacity_handle", "ari_builtin_zone_capacity_handle"},
+        {"zone::used_handle", "ari_builtin_zone_used_handle"},
+        {"std::zone::used_handle", "ari_builtin_zone_used_handle"},
+        {"zone::remaining_handle", "ari_builtin_zone_remaining_handle"},
+        {"std::zone::remaining_handle", "ari_builtin_zone_remaining_handle"},
         {"allocation_zone", "ari_builtin_zone_allocation_zone"},
         {"std::allocation_zone", "ari_builtin_zone_allocation_zone"},
         {"zone::allocation_zone", "ari_builtin_zone_allocation_zone"},
@@ -599,6 +611,12 @@ const std::unordered_map<std::string, AriBuiltinSignatureExpectation>& ari_built
         add("ari_builtin_zone_alloc", builtin_sig({ref_mut_zone, i64, i64}, ptr_u8));
         add("ari_builtin_zone_alloc_handle", builtin_sig({ptr_c_void, i64, i64}, ptr_u8));
         add("ari_builtin_zone_handle", builtin_sig({ref_mut_zone}, ptr_c_void));
+        add("ari_builtin_zone_capacity", builtin_sig({ref_mut_zone}, i64));
+        add("ari_builtin_zone_used", builtin_sig({ref_mut_zone}, i64));
+        add("ari_builtin_zone_remaining", builtin_sig({ref_mut_zone}, i64));
+        add("ari_builtin_zone_capacity_handle", builtin_sig({ptr_c_void}, i64));
+        add("ari_builtin_zone_used_handle", builtin_sig({ptr_c_void}, i64));
+        add("ari_builtin_zone_remaining_handle", builtin_sig({ptr_c_void}, i64));
         add("ari_builtin_zone_allocation_zone", builtin_sig({ptr_u8}, ptr_c_void));
         add("ari_builtin_string_alloc_buffer", builtin_sig({ref_mut_zone, i64}, ptr_u8));
         add("ari_builtin_string_with_capacity", builtin_sig({ref_mut_zone, i64}, raw_string));
