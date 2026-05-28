@@ -225,7 +225,9 @@ let raw = fragment.0;
 ```
 
 Match the field or alias and use the payload binding from the matching arm
-instead.
+instead. A local alias of a `union by` field also cannot be reassigned: it is a
+proof-carrying view of the original field, not an independent enum variable.
+Rebuild the whole source struct when the selector and payload should change.
 
 Selector fields and their linked payload fields are stable after a value has
 been built. Direct assignment to the selector path, to an ancestor of that

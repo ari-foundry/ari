@@ -12019,6 +12019,28 @@ private:
         throw error;
     }
 
+    [[noreturn]] void fail_union_by_alias_assignment(SourceLocation loc,
+                                                     const std::string& local_name,
+                                                     const LocalInfo::UnionByAlias& alias) const {
+        CompileError error(
+            std::move(loc),
+            "cannot assign to union by alias '" + local_name + "'");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "local '" + local_name + "' aliases union by field '" + alias.field_name +
+                "' whose selector path is '" + alias.selector_path + "'",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "changing only the alias would detach it from the selector proof carried by the original struct",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "match the alias to read it, or rebuild the whole source struct with a matching selector and union by constructor arm",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     void set_union_by_alias_from_expr(LocalInfo& local, const IrExpr& init) {
         local.union_by_alias.reset();
         if (!has_aggregate_enum_layout(local.type)) return;
@@ -12449,6 +12471,9 @@ private:
         LocalInfo& target = require_local_slot(stmt.loc, assign_name);
         if (local_assignment_target_error(assign_name, target)) {
             fail_assignment_target_state(stmt.loc, assign_name, target);
+        }
+        if (target.union_by_alias) {
+            fail_union_by_alias_assignment(stmt.loc, assign_name, *target.union_by_alias);
         }
         require_not_borrowed(stmt.loc, assign_name, target, "assign to");
         if (auto error = local_assignment_storage_error(assign_name, target)) fail(stmt.loc, *error);
