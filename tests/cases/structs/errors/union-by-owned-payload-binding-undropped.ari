@@ -1,0 +1,34 @@
+impl Drop for i64 {
+  fn drop(self) -> void {
+    return;
+  }
+}
+
+enum PayloadKind {
+  owned,
+  empty,
+}
+
+struct Packet {
+  kind: PayloadKind,
+  payload: union by kind {
+    owned => own i64,
+    empty => i64,
+  },
+}
+
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn leak_packet() -> i64 {
+  let packet = Packet {
+    kind: owned,
+    payload: owned(make_owned(11)),
+  };
+  return 1;
+}
+
+fn main() -> i64 {
+  return leak_packet();
+}

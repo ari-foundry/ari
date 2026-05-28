@@ -6040,6 +6040,10 @@ check-structs: $(TARGET)
 	$(BUILD_DIR)/structs/union-by-bool-call-constructor.elf; code=$$?; test $$code -eq 44
 	$(TARGET) tests/cases/structs/ok/union-by-shorthand-constructor.ari -o $(BUILD_DIR)/structs/union-by-shorthand-constructor.elf
 	$(BUILD_DIR)/structs/union-by-shorthand-constructor.elf; code=$$?; test $$code -eq 47
+	$(TARGET) tests/cases/structs/ok/union-by-owned-payload-drop.ari -o $(BUILD_DIR)/structs/union-by-owned-payload-drop.elf
+	$(BUILD_DIR)/structs/union-by-owned-payload-drop.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/cases/structs/ok/union-by-owned-payload-drop.ari --emit-llvm $(BUILD_DIR)/structs/union-by-owned-payload-drop.ll
+	test $$(grep -c 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/structs/union-by-owned-payload-drop.ll) -eq 2
 	$(TARGET) tests/cases/traits/ok/impl-associated-new.ari --emit-llvm $(BUILD_DIR)/structs/impl-associated-new.ll
 	grep -q "_ARNv4impl5Point8inherent3new" $(BUILD_DIR)/structs/impl-associated-new.ll
 	grep -q "call { i64, i64 }" $(BUILD_DIR)/structs/impl-associated-new.ll
@@ -6125,6 +6129,12 @@ check-structs: $(TARGET)
 	grep -q "cannot use struct payload shorthand" $(BUILD_DIR)/structs/union-by-shorthand-non-struct-payload.err
 	if $(TARGET) tests/cases/structs/errors/union-by-shorthand-selector-mismatch.ari -o $(BUILD_DIR)/structs/union-by-shorthand-selector-mismatch.elf >$(BUILD_DIR)/structs/union-by-shorthand-selector-mismatch.err 2>&1; then exit 1; fi
 	grep -q "union by constructor arm 'stream' does not match selector 'security.cipher_type' value 'block'" $(BUILD_DIR)/structs/union-by-shorthand-selector-mismatch.err
+	if $(TARGET) tests/cases/structs/errors/union-by-owned-payload-aggregate.ari -o $(BUILD_DIR)/structs/union-by-owned-payload-aggregate.elf >$(BUILD_DIR)/structs/union-by-owned-payload-aggregate.err 2>&1; then exit 1; fi
+	grep -q "ownership-carrying aggregate union by payloads are not supported yet" $(BUILD_DIR)/structs/union-by-owned-payload-aggregate.err
+	if $(TARGET) tests/cases/structs/errors/union-by-owned-payload-undropped.ari -o $(BUILD_DIR)/structs/union-by-owned-payload-undropped.elf >$(BUILD_DIR)/structs/union-by-owned-payload-undropped.err 2>&1; then exit 1; fi
+	grep -q "owning binding 'token' must be moved or dropped before return" $(BUILD_DIR)/structs/union-by-owned-payload-undropped.err
+	if $(TARGET) tests/cases/structs/errors/union-by-owned-payload-binding-undropped.ari -o $(BUILD_DIR)/structs/union-by-owned-payload-binding-undropped.elf >$(BUILD_DIR)/structs/union-by-owned-payload-binding-undropped.err 2>&1; then exit 1; fi
+	grep -q "owning binding 'packet' must be moved or dropped before return" $(BUILD_DIR)/structs/union-by-owned-payload-binding-undropped.err
 	if $(TARGET) tests/cases/structs/errors/union-by-selector-inference-conflict.ari -o $(BUILD_DIR)/structs/union-by-selector-inference-conflict.elf >$(BUILD_DIR)/structs/union-by-selector-inference-conflict.err 2>&1; then exit 1; fi
 	grep -q "union by constructors infer conflicting values for selector 'kind'" $(BUILD_DIR)/structs/union-by-selector-inference-conflict.err
 	if $(TARGET) tests/cases/structs/errors/union-by-nested-selector-inference-conflict.ari -o $(BUILD_DIR)/structs/union-by-nested-selector-inference-conflict.elf >$(BUILD_DIR)/structs/union-by-nested-selector-inference-conflict.err 2>&1; then exit 1; fi

@@ -4543,6 +4543,80 @@ private:
         throw error;
     }
 
+    [[noreturn]] static void fail_ownership_union_by_payload_layout(
+        SourceLocation loc,
+        const std::string& arm_name,
+        const IrType& payload_type
+    ) {
+        CompileError error(
+            std::move(loc),
+            "ownership-carrying aggregate union by payloads are not supported yet; use a direct own i64/u64 arm payload or store the owner outside the union by field, got " +
+                type_name(payload_type));
+        add_enum_payload_cause_label(error, owner_payload_cause(payload_type));
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "union by arm '" + arm_name +
+                "' lowers to active enum storage; current active-arm drop tracking supports direct owner words but not nested owner-bearing aggregates",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "move the owning value into a direct union by arm payload, keep the owner beside the union by field, or drop it before constructing the payload",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_borrow_union_by_payload_layout(
+        SourceLocation loc,
+        const std::string& arm_name,
+        const IrType& payload_type
+    ) {
+        CompileError error(
+            std::move(loc),
+            "borrow-carrying aggregate union by payloads are not supported yet; store the borrow outside the union by field, got " +
+                type_name(payload_type));
+        add_enum_payload_cause_label(error, borrow_payload_cause(payload_type));
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "union by arm '" + arm_name +
+                "' lowers to active enum storage; nested borrow-bearing aggregate payloads do not preserve enough lifetime state today",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "store the borrowed view beside the union by field or pass it directly to the code that consumes the active arm",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    void note_union_by_payload_layout_requirement(SourceLocation loc,
+                                                  const std::string& arm_name,
+                                                  const IrType& payload_type) const {
+        bool unresolved_generic_payload =
+            payload_type.qualifier == TypeQualifier::Value &&
+            payload_type.primitive == IrPrimitiveKind::Unknown &&
+            payload_type.args.empty();
+        bool payload_needs_aggregate = !is_legacy_enum_payload_type(payload_type);
+        if (payload_needs_aggregate &&
+            !unresolved_generic_payload &&
+            !is_aggregate_enum_payload_type(payload_type)) {
+            if (is_owner_type(payload_type)) {
+                fail_ownership_union_by_payload_layout(loc, arm_name, payload_type);
+            }
+            if (contains_borrow_type(payload_type)) {
+                fail_borrow_union_by_payload_layout(loc, arm_name, payload_type);
+            }
+            fail(loc,
+                 "union by arm '" + arm_name +
+                     "' payload must be integer, float, bool, pointer-shaped, one-word enum, direct owned i64/u64, plain tuple/array/struct aggregate, fixed-capacity vector, or nested aggregate enum value, got " +
+                     type_name(payload_type));
+        }
+        if (!payload_needs_aggregate && !is_legacy_enum_payload_type(payload_type)) {
+            fail(loc,
+                 "union by arm '" + arm_name +
+                     "' payload must fit the 32-bit tagged-union payload slot, got " +
+                     type_name(payload_type));
+        }
+    }
+
     void note_enum_payload_layout_requirement(
         SourceLocation loc,
         const IrType& payload_type,
@@ -5712,7 +5786,8 @@ private:
                 fail_duplicate_union_by_arm(ast_type, i, inserted.first->second);
             }
             if (i < ast_type.union_by_arm_types.size()) {
-                (void)resolve_executable_type(ast_type.union_by_arm_types[i]);
+                IrType payload_type = resolve_executable_type(ast_type.union_by_arm_types[i]);
+                note_union_by_payload_layout_requirement(loc, ast_type.union_by_arm_names[i], payload_type);
             }
         }
     }
@@ -6874,6 +6949,7 @@ private:
         if (!name_was_used) local_scopes_.mark_name_used(name);
         LocalInfo local = make_local_info(loc, type, mutable_binding);
         initialize_owned_field_states(local);
+        initialize_runtime_enum_owner_field_states(loc, local);
         local_scopes_.declare_current(name, std::move(local));
     }
 
@@ -11864,6 +11940,17 @@ private:
                 }
             }
         }
+        TrackedAggregateAccess access;
+        if (try_build_tracked_aggregate_access(expr, access) && has_aggregate_enum_layout(access.type)) {
+            LocalInfo& local = require_live_local(expr.loc, access.base_name);
+            if (local_unavailable_binding_error(access.base_name, local)) {
+                fail_unavailable_binding(expr.loc, access.base_name, local);
+            }
+            require_can_read_borrow_path(expr.loc, access.base_name, local, access.path);
+            require_zone_pointer_valid(expr.loc, access.base_name, local);
+            copy_aggregate_borrow_sources_to_temporaries(expr.loc, access.base_name, local);
+            return std::move(access.expr);
+        }
         return check_expr(expr);
     }
 
@@ -11907,6 +11994,56 @@ private:
         }
         for (auto& item : states) item.second = state;
         return states;
+    }
+
+    void collect_runtime_enum_owner_field_states(SourceLocation loc,
+                                                 const IrType& type,
+                                                 const std::string& path,
+                                                 LocalState state,
+                                                 std::map<std::string, LocalState>& states) {
+        if (has_aggregate_enum_layout(type)) {
+            collect_enum_owner_payload_states(loc, type, path, state, states);
+            return;
+        }
+        if (type.qualifier != TypeQualifier::Value) return;
+
+        if (type.primitive == IrPrimitiveKind::Tuple ||
+            type.primitive == IrPrimitiveKind::Array ||
+            type.primitive == IrPrimitiveKind::Struct) {
+            const std::vector<IrType>& fields = aggregate_field_types(type);
+            for (std::size_t i = 0; i < fields.size(); ++i) {
+                collect_runtime_enum_owner_field_states(
+                    loc,
+                    fields[i],
+                    local_owned_field_path(path, i),
+                    state,
+                    states);
+            }
+            return;
+        }
+
+        if (type.primitive == IrPrimitiveKind::Vector && type.args.size() == 1 && type.array_size != 0) {
+            for (std::uint64_t i = 0; i < type.array_size; ++i) {
+                collect_runtime_enum_owner_field_states(
+                    loc,
+                    type.args[0],
+                    local_owned_field_path(path, static_cast<std::size_t>(i)),
+                    state,
+                    states);
+            }
+        }
+    }
+
+    void initialize_runtime_enum_owner_field_states(SourceLocation loc, LocalInfo& local) {
+        if (has_aggregate_enum_layout(local.type)) return;
+
+        std::map<std::string, LocalState> states;
+        collect_runtime_enum_owner_field_states(loc, local.type, "", LocalState::Alive, states);
+        if (states.empty()) return;
+        for (const auto& item : states) {
+            local.owned_field_states.emplace(item.first, item.second);
+        }
+        local.owned_field_states_complete = true;
     }
 
     void require_enum_owner_payload_states_available(SourceLocation loc,
@@ -12384,8 +12521,11 @@ private:
     }
 
     void mark_tracked_aggregate_access_moved_if_owner(SourceLocation loc, const TrackedAggregateAccess& access) {
-        if (!is_owner_type(access.type)) return;
         LocalInfo& local = local_slot_by_name(access.base_name);
+        if (!is_owner_type(access.type) &&
+            (access.path.empty() || !local_owned_field_has_state(local, access.path))) {
+            return;
+        }
         seed_uniform_runtime_enum_payload_states_for_move(loc, access, local);
         mark_owned_field_moved(loc, access.base_name, access.path);
     }
@@ -13485,14 +13625,32 @@ private:
                                                           std::vector<IrStmtPtr>& statements,
                                                           const LocalInfo* tracked_local,
                                                           const std::string& path) {
-        for (std::size_t i = 1; i < type.field_types.size(); ++i) {
-            const IrType& field_type = type.field_types[i];
-            if (!is_owner_type(field_type)) continue;
-            std::string field_path = local_owned_field_path(path, i);
-            DropValueFactory make_field = [this, loc, make_value, i, field_type]() {
-                return make_field_value_expr(loc, make_value, i, field_type);
-            };
-            append_drop_stmts_for_value(loc, field_type, make_field, statements, tracked_local, field_path);
+        for (const EnumCaseInfo& case_info : aggregate_enum_cases_for_type(loc, type)) {
+            std::vector<IrStmtPtr> then_body;
+            for (std::size_t payload_index = 0; payload_index < case_info.payloads.size(); ++payload_index) {
+                const IrType& payload_type = case_info.payloads[payload_index];
+                if (!is_owner_type(payload_type) && !has_aggregate_enum_layout(payload_type)) continue;
+
+                const std::string field_path = local_owned_field_path(path, payload_index + 1);
+                if (tracked_local && !local_owned_field_is_live(*tracked_local, field_path)) continue;
+
+                DropValueFactory make_payload = [this, loc, make_value, payload_index, payload_type]() {
+                    return make_enum_payload_slot_expr(loc, make_value(), payload_index, payload_type);
+                };
+                append_drop_stmts_for_value(
+                    loc,
+                    payload_type,
+                    make_payload,
+                    then_body,
+                    tracked_local,
+                    field_path);
+            }
+
+            if (then_body.empty()) continue;
+            statements.push_back(make_if_stmt(
+                loc,
+                make_enum_tag_equals_expr(loc, make_value, case_info.tag),
+                std::move(then_body)));
         }
     }
 
@@ -13504,20 +13662,12 @@ private:
             std::vector<IrStmtPtr> then_body;
             for (std::size_t payload_index = 0; payload_index < case_info.payloads.size(); ++payload_index) {
                 const IrType& payload_type = case_info.payloads[payload_index];
-                if (!is_owner_type(payload_type)) continue;
+                if (!is_owner_type(payload_type) && !has_aggregate_enum_layout(payload_type)) continue;
 
-                std::size_t field_index = payload_index + 1;
-                if (field_index >= type.field_types.size()) {
-                    fail(loc,
-                         "internal error: enum payload slot " + std::to_string(payload_index) +
-                             " is missing while lowering owner cleanup");
-                }
-
-                const IrType& field_type = type.field_types[field_index];
-                DropValueFactory make_field = [this, loc, make_value, field_index, field_type]() {
-                    return make_field_value_expr(loc, make_value, field_index, field_type);
+                DropValueFactory make_payload = [this, loc, make_value, payload_index, payload_type]() {
+                    return make_enum_payload_slot_expr(loc, make_value(), payload_index, payload_type);
                 };
-                append_drop_stmts_for_value(loc, field_type, make_field, then_body);
+                append_drop_stmts_for_value(loc, payload_type, make_payload, then_body);
             }
 
             if (then_body.empty()) continue;
@@ -13576,7 +13726,7 @@ private:
             const std::vector<IrType>& fields = aggregate_field_types(type);
             for (std::size_t i = 0; i < fields.size(); ++i) {
                 const IrType& field_type = fields[i];
-                if (!is_owner_type(field_type)) continue;
+                if (!is_owner_type(field_type) && !has_aggregate_enum_layout(field_type)) continue;
                 std::string field_path = local_owned_field_path(path, i);
                 DropValueFactory make_field = [this, loc, make_value, i, field_type]() {
                     return make_field_value_expr(loc, make_value, i, field_type);
@@ -13586,7 +13736,10 @@ private:
             return;
         }
 
-        if (type.primitive == IrPrimitiveKind::Vector && type.args.size() == 1 && type.array_size != 0 && is_owner_type(type.args[0])) {
+        if (type.primitive == IrPrimitiveKind::Vector &&
+            type.args.size() == 1 &&
+            type.array_size != 0 &&
+            (is_owner_type(type.args[0]) || has_aggregate_enum_layout(type.args[0]))) {
             const IrType element_type = type.args[0];
             for (std::uint64_t i = 0; i < type.array_size; ++i) {
                 std::string element_path = local_owned_field_path(path, static_cast<std::size_t>(i));
@@ -20980,7 +21133,7 @@ private:
                 lowered->kind = IrExprKind::Local;
                 set_ir_expr_name(*lowered, expr.name);
                 lowered->type = local.type;
-                if (is_owner_type(local.type)) {
+                if (is_owner_type(local.type) || local_has_live_owner(local)) {
                     if (is_auto_destroy_zone(local)) {
                         fail(expr.loc,
                              "temporary zone '" + expr.name +

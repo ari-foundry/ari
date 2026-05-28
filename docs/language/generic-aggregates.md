@@ -301,14 +301,17 @@ packet = TLSCiphertext {
 };
 ```
 
-This is intentionally still an early executable slice: non-enum selector
-policies, selector inference through intermediate structs that need unrelated
-required fields, active-arm mutation beyond direct reconstruction, active-arm
-drop diagnostics, and stable ABI naming remain compiler work. The supported
-constructor forms either infer the selector or check a statically visible
+The current executable subset is implemented for enum and bool selectors.
+Constructor forms either infer the selector or check a statically visible
 selector, so they do not create a value whose payload arm disagrees with the
-discriminant. Use ordinary `enum` ADTs when the discriminant is not an existing
-product field or when the type must be part of a stable public ABI.
+discriminant. Direct owner-word arms such as `owned => own i64` participate in
+the normal ownership model: matching the union field moves the active payload
+binding, every moved owner must be dropped or forwarded, whole-value `drop`
+cleans up only the active payload, and leaving an owner-carrying `union by`
+value live at `return` is rejected. Owner-bearing aggregate arm payloads are
+rejected for now; keep the owner in a direct arm payload or beside the union
+field. Use ordinary `enum` ADTs when the discriminant is not an existing product
+field or when the type must be part of a stable public ABI.
 
 The compiler capability inventory tracks this as `union-by-fields`.
 

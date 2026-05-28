@@ -1,0 +1,41 @@
+impl Drop for i64 {
+  fn drop(self) -> void {
+    return;
+  }
+}
+
+enum PayloadKind {
+  owned,
+  empty,
+}
+
+struct Packet {
+  kind: PayloadKind,
+  payload: union by kind {
+    owned => own i64,
+    empty => i64,
+  },
+}
+
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn consume_active(packet: Packet) -> i64 {
+  match packet.payload {
+    owned(token) => {
+      return 1;
+    },
+    empty(value) => {
+      return value;
+    },
+  }
+}
+
+fn main() -> i64 {
+  let packet = Packet {
+    kind: owned,
+    payload: owned(make_owned(11)),
+  };
+  return consume_active(packet);
+}

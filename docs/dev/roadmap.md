@@ -143,8 +143,12 @@ discriminant and active payload must change together.
 
 It should not replace ordinary `enum` ADTs, unchecked C unions, or `match`.
 Non-enum and non-bool selectors are rejected so the active-arm set stays closed
-and exhaustively checkable. Remaining design work covers richer active-arm
-mutation/drop diagnostics beyond direct reconstruction and stable ABI naming.
+and exhaustively checkable. Direct owner-word arms participate in ownership:
+matching the union field moves the active payload binding, whole-value `drop`
+cleans up only the active payload, live owner-carrying union values must be
+moved or dropped before return, and nested owner-bearing aggregate arm payloads
+produce a targeted diagnostic. Remaining design work is outside the implemented
+compiler subset and covers non-enum selector policies and public ABI promises.
 The compiler capability inventory tracks this as `union-by-fields`.
 
 ## What Not To Track Here
