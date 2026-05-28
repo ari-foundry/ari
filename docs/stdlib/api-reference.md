@@ -501,7 +501,8 @@ and `env::get_or_default(ref mut zone, name)` copy the fallback into owned
 lookup and uses `NotFound` for missing names. Public environment variable names
 and values are borrowed byte text (`Slice[u8]`): string literals work directly,
 immutable literal bindings keep their byte length, and owned `String` locals are
-viewed as byte slices at the call site.
+viewed as byte slices at the call site. Explicit `ref String` borrows also
+coerce to the same read-only byte view.
 `env::set_var(name, value)` overwrites a current-process variable and
 `env::remove_var(name)` unsets it; both return `Result[(), Error]`.
 `env::set(name, value)` and `env::remove(name)` are compatibility
@@ -1597,9 +1598,9 @@ Filesystem helpers live in `std::fs`:
 Filesystem path-like public arguments are borrowed byte slices. String
 literals therefore work directly for paths, mode strings, temporary prefixes,
 and `write_string` text, for example `fs::read_dir_entries(ref mut zone, ".")`
-or `fs::write_string("out.txt", "ok")`. Owned `String` values should pass
-`value.as_slice()`, and reusable literal path variables should be annotated as
-`Slice[u8]` until literal variables get a path-byte default.
+or `fs::write_string("out.txt", "ok")`. Owned `String` values can be passed as
+`value`, `ref value`, or the explicit `value.as_slice()` view, and reusable
+literal path variables keep their literal length when initialized immutably.
 
 ```ari
 fs::exists(path)

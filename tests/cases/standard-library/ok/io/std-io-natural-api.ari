@@ -42,10 +42,16 @@ fn main() -> i64 {
     score = score + 5;
   }
   var print_lower = std::string::from(ref mut zone, "p");
+  if unit_ok(io::print(ref print_lower)) {
+    score = score + 18;
+  }
   if unit_ok(io::print_string(ref print_lower)) {
     score = score + 14;
   }
   var println_lower = std::string::from(ref mut zone, "l");
+  if unit_ok(io::println(ref println_lower)) {
+    score = score + 19;
+  }
   if unit_ok(io::println_string(ref println_lower)) {
     score = score + 15;
   }
@@ -84,7 +90,7 @@ fn main() -> i64 {
     score = score + 13;
   }
 
-  assert_eq_i64(score, 153);
+  assert_eq_i64(score, 190);
   zone::destroy(zone);
   return score;
 }

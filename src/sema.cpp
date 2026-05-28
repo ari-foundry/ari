@@ -27288,54 +27288,84 @@ private:
         }
     }
 
+    IrExprPtr try_make_implicit_slice_argument_from_local(SourceLocation loc,
+                                                          SourceLocation receiver_loc,
+                                                          const std::string& name,
+                                                          const IrType& expected) {
+        LocalInfo* local = find_local_slot(name);
+        if (!local) return nullptr;
+
+        if (local->type.primitive == IrPrimitiveKind::Array ||
+            local->type.primitive == IrPrimitiveKind::Vector) {
+            if (local_unavailable_binding_error(name, *local)) {
+                fail_unavailable_binding(loc, name, *local);
+            }
+            require_can_read_borrow_path(loc, name, *local, "");
+            require_zone_pointer_valid(loc, name, *local);
+            copy_aggregate_borrow_sources_to_temporaries(loc, name, *local);
+            return make_slice_view_from_local_binding(
+                loc,
+                receiver_loc,
+                name,
+                *local,
+                expected);
+        }
+        if (is_std_string_handle_type(local->type) && is_prelude_u8_slice_type(expected)) {
+            if (local_unavailable_binding_error(name, *local)) {
+                fail_unavailable_binding(loc, name, *local);
+            }
+            require_can_read_borrow_path(loc, name, *local, "");
+            require_zone_pointer_valid(loc, name, *local);
+            copy_aggregate_borrow_sources_to_temporaries(loc, name, *local);
+            return make_u8_slice_view_from_std_string_local(
+                loc,
+                receiver_loc,
+                name,
+                *local,
+                expected);
+        }
+        if (local->type.qualifier == TypeQualifier::Value &&
+            local->type.primitive == IrPrimitiveKind::String &&
+            local->string_literal_known &&
+            is_prelude_u8_slice_type(expected)) {
+            if (local_unavailable_binding_error(name, *local)) {
+                fail_unavailable_binding(loc, name, *local);
+            }
+            return make_string_literal_slice_expr(
+                loc,
+                *local->string_literal_known,
+                expected);
+        }
+        return nullptr;
+    }
+
     IrExprPtr try_make_implicit_slice_argument(const Expr& arg_expr, const IrType& expected) {
         if (!is_prelude_slice_type(expected) || expected.args.size() != 1) return nullptr;
         if (arg_expr.kind == ExprKind::String && is_prelude_u8_slice_type(expected)) {
             return make_string_literal_slice_expr(arg_expr.loc, arg_expr.string_value, expected);
         }
         if (arg_expr.kind == ExprKind::Name) {
-            if (LocalInfo* local = find_local_slot(arg_expr.name)) {
-                if (local->type.primitive == IrPrimitiveKind::Array ||
-                    local->type.primitive == IrPrimitiveKind::Vector) {
-                    if (local_unavailable_binding_error(arg_expr.name, *local)) {
-                        fail_unavailable_binding(arg_expr.loc, arg_expr.name, *local);
-                    }
-                    require_can_read_borrow_path(arg_expr.loc, arg_expr.name, *local, "");
-                    require_zone_pointer_valid(arg_expr.loc, arg_expr.name, *local);
-                    copy_aggregate_borrow_sources_to_temporaries(arg_expr.loc, arg_expr.name, *local);
-                    return make_slice_view_from_local_binding(
+            return try_make_implicit_slice_argument_from_local(
+                arg_expr.loc,
+                arg_expr.loc,
+                arg_expr.name,
+                expected);
+        }
+        if (arg_expr.kind == ExprKind::Borrow) {
+            if (const Expr* operand = expr_operand(arg_expr).get()) {
+                if (operand->kind == ExprKind::Name) {
+                    return try_make_implicit_slice_argument_from_local(
                         arg_expr.loc,
-                        arg_expr.loc,
-                        arg_expr.name,
-                        *local,
+                        operand->loc,
+                        operand->name,
                         expected);
                 }
-                if (is_std_string_handle_type(local->type) && is_prelude_u8_slice_type(expected)) {
-                    if (local_unavailable_binding_error(arg_expr.name, *local)) {
-                        fail_unavailable_binding(arg_expr.loc, arg_expr.name, *local);
-                    }
-                    require_can_read_borrow_path(arg_expr.loc, arg_expr.name, *local, "");
-                    require_zone_pointer_valid(arg_expr.loc, arg_expr.name, *local);
-                    copy_aggregate_borrow_sources_to_temporaries(arg_expr.loc, arg_expr.name, *local);
-                    return make_u8_slice_view_from_std_string_local(
-                        arg_expr.loc,
-                        arg_expr.loc,
-                        arg_expr.name,
-                        *local,
-                        expected);
-                }
-                if (local->type.qualifier == TypeQualifier::Value &&
-                    local->type.primitive == IrPrimitiveKind::String &&
-                    local->string_literal_known &&
-                    is_prelude_u8_slice_type(expected)) {
-                    if (local_unavailable_binding_error(arg_expr.name, *local)) {
-                        fail_unavailable_binding(arg_expr.loc, arg_expr.name, *local);
-                    }
-                    return make_string_literal_slice_expr(
-                        arg_expr.loc,
-                        *local->string_literal_known,
-                        expected);
-                }
+            } else if (!arg_expr.name.empty()) {
+                return try_make_implicit_slice_argument_from_local(
+                    arg_expr.loc,
+                    arg_expr.loc,
+                    arg_expr.name,
+                    expected);
             }
             return nullptr;
         }

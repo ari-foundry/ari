@@ -42,6 +42,9 @@ fn main() -> i64 {
   if env::set_current_dir(cwd).is_ok() {
     score = score + 7;
   }
+  if env::set_current_dir(ref cwd).is_ok() {
+    score = score + 17;
+  }
   assert(env::set_current_dir_unchecked(cwd));
   if !exe.is_empty() {
     score = score + 11;

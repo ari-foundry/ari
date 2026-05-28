@@ -28,7 +28,8 @@ classification, ASCII-only comparison/search, trimming, and integer parsing.
 
 For parser-style code that works mostly with borrowed bytes, use the module
 view helpers. They accept `Slice[u8]`, so string literals can be passed
-directly and owned `String` values can pass `text.as_slice()`:
+directly and owned `String` values can be passed either as `text`, `ref text`,
+or the explicit `text.as_slice()` view:
 
 ```ari
 std::string::lines(bytes)
@@ -95,9 +96,12 @@ libraries without forcing `std::string::bytes(...)` noise:
 
 When a function parameter expects `Slice[u8]`, a literal can be passed directly,
 an immutable binding initialized from a literal keeps the literal length, and an
-owned `String` local is borrowed as bytes at the call site. That is why APIs such
-as `io::print("prompt")`, `fs::read("Ari.toml")`, and `env::set_var(name,
-value)` do not require `ref String` just to read text.
+owned `String` local is borrowed as bytes at the call site. An explicit
+`ref owned_string` borrow is also accepted for the same read-only view, so code
+does not have to remember whether a text API wants the owned handle or a byte
+view. That is why APIs such as `io::print("prompt")`,
+`io::print(ref prompt)`, `fs::read("Ari.toml")`, and
+`env::set_var(name, value)` all read as plain text operations.
 
 The view length stops before the first embedded NUL byte, matching the existing
 literal-to-`Slice[u8]` boundary. Use an owned `String`, `Vec[u8]`, or explicit

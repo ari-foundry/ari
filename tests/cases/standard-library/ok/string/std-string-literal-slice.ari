@@ -42,6 +42,7 @@ fn main() -> i64 {
   assert(text.ends_with("th"));
   assert(text.equals("truth"));
   assert(is_truth(text));
+  assert(is_truth(ref text));
   zone::destroy(zone);
 
   return 0;
