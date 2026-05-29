@@ -1,58 +1,70 @@
-# Current-Zone Blocks
+# Current Allocation Blocks
 
-This note documents the compiler-side contract for `zone { ... }` so parser,
-semantic-checker, stdlib, and docs changes stay aligned.
+This note documents the compiler-side contract for `region { ... }` and
+compatibility `zone { ... }` so parser, semantic-checker, stdlib, and docs
+changes stay aligned.
 
 ## User Contract
 
-`zone { ... }` creates a short-lived temporary allocation region for the
-block. The syntax keeps the historic `zone` spelling, but the user-facing
-memory model should now be explained as a `Region` lifetime plus an
-`Allocator` capability. Inside that block, stdlib allocation APIs that normally
-take exactly one `ref mut Zone` can omit that argument:
+`region { ... }` creates a short-lived temporary allocation region for the
+block. This is the preferred user-facing spelling: the hidden owner is a
+`std::region::Region`, and the current-source bridge keeps old
+`ref mut Zone` APIs callable while the stdlib migrates. `zone { ... }` remains
+accepted as compatibility syntax and still creates a hidden low-level `Zone`.
+Inside either block, stdlib allocation APIs that normally take exactly one
+`ref mut Zone` can omit that argument:
 
 ```ari
-zone {
+region {
   let name = std::string::from("ari");
   let line = format!("package {}", name);
   let bytes = std::encoding::decode_hex("617269")?;
 }
 ```
 
-`zone(capacity) { ... }` uses the same rule with an explicit byte capacity.
-`zone { ... }` uses `std::zone::default_capacity()`, currently 4096 bytes.
-Explicit zone arguments remain valid and are required whenever a value should
-be allocated into a longer-lived caller-owned zone.
+`region(capacity) { ... }` and `zone(capacity) { ... }` use the same current
+argument insertion rule with an explicit byte capacity. Default-capacity forms
+use 4096 bytes today. Explicit allocation arguments remain valid and are
+required whenever a value should be allocated into a longer-lived caller-owned
+region or zone.
 
-If a temporary zone cannot satisfy an allocation, the hosted runtime writes a
-short diagnostic to stderr before exiting. Invalid capacities name the valid
-range, and capacity exhaustion suggests `zone(capacity) { ... }` or a larger
-explicit zone. This is still a runtime trap rather than a recoverable
-`Result`; callers that need recovery should size the zone deliberately or use
-an API that reports capacity failure before allocating.
+If a temporary region or zone cannot satisfy an allocation, the hosted runtime
+writes a short diagnostic to stderr before exiting. Invalid capacities name the
+valid range, and capacity exhaustion suggests `region(capacity) { ... }`,
+`zone(capacity) { ... }`, or a larger explicit allocation source. This is
+still a runtime trap rather than a recoverable `Result`; callers that need
+recovery should size the region deliberately or use an API that reports
+capacity failure before allocating.
 
 ## Parser Contract
 
-`zone` is contextual statement syntax, not a lexer keyword. The parser should
-recognize a zone block only for these forms:
+`region` and `zone` are contextual statement syntax, not lexer keywords. The
+parser should recognize allocation blocks only for these forms:
 
 ```ari
+region { statements... }
+region(capacity_expression) { statements... }
 zone { statements... }
 zone(capacity_expression) { statements... }
 ```
 
-Other uses of an identifier named `zone` remain ordinary expression/name
-syntax. The AST statement kind is `ZoneBlock`; its optional expression is the
+Other uses of identifiers named `region` or `zone` remain ordinary
+expression/name syntax. The AST statement kind is still `ZoneBlock` for
+compatibility; `zone_block_uses_region` distinguishes the preferred Region
+lowering from the compatibility Zone lowering. Its optional expression is the
 capacity expression, and its body is the statement list.
 
 ## Semantic Contract
 
-The checker lowers a zone block as a normal block with a hidden `own Zone`
-local initialized through the existing `zone::temp` builtin. The hidden local
-is pushed on the current-zone stack while the body is checked.
+The checker lowers a region block as a normal block with a hidden
+`own std::region::Region` local initialized through `std::region::create`.
+The compatibility zone block keeps the older hidden `own Zone` initialized
+through the existing `zone::temp` builtin. The hidden owner is pushed on the
+current allocation-source stack while the body is checked.
 
 When checking a call while the stack is non-empty, the checker may synthesize a
-`ref mut` borrow of the innermost hidden zone if all of these are true:
+`ref mut` borrow of the innermost hidden allocation source if all of these are
+true:
 
 - the call has exactly one fewer explicit argument than the selected function
   or method signature requires after receiver handling
@@ -67,27 +79,32 @@ calls such as `Display::format_in(value)`, and object-safe dyn calls such as
 closure signature contains the unique omitted zone parameter. The rule is
 deliberately arity-based and conservative. Calls with two zone parameters, no
 zone parameter, or an otherwise ambiguous omitted argument keep the ordinary
-diagnostic and must be written explicitly.
+diagnostic and must be written explicitly. When the hidden source is a Region,
+the synthesized argument lowers through `std::region::as_zone`.
 
-When a call outside a current-zone block is missing exactly one `ref mut Zone`
-argument, the checker reports the allocation-zone issue directly instead of
-showing only a wrong-argument-count error. The diagnostic should tell users to
-wrap local temporary work in `zone { ... }` or pass an explicit zone when the
-result needs a longer lifetime.
+When a call outside a current allocation block is missing exactly one
+`ref mut Zone` argument, the checker reports the allocation-source issue
+directly instead of showing only a wrong-argument-count error. The diagnostic
+should tell users to wrap local temporary work in `region { ... }`, use
+compatibility
+`zone { ... }`, or pass an explicit allocation argument when the result needs a
+longer lifetime.
 
-`format!` is special compiler syntax. Inside a current-zone block it lowers as
-`format_in!(ref mut current_zone, ...)`. Outside a current-zone block it stays
-a targeted diagnostic.
+`format!` is special compiler syntax. Inside a current allocation block it
+lowers as `format_in!(ref mut current_source, ...)`, with Region blocks using
+the same `as_zone` bridge. Outside a current allocation block it stays a
+targeted diagnostic.
 
 ## Cleanup And Escape Contract
 
-The hidden zone receives the same automatic cleanup as a lexical
-`zone::temp(...)` local:
+The hidden owner receives automatic cleanup:
 
 - cleanup is emitted on normal fallthrough
 - cleanup is emitted before returns that leave the scope
 - cleanup is emitted before `break`, `continue`, or labeled-block exits that
   leave the scope
+- compatibility Zone blocks emit `zone::destroy`; Region blocks emit
+  `std::region::destroy`
 - ordinary zone-provenance checks still reject pointers or zone-backed handles
   escaping the block
 
@@ -99,31 +116,34 @@ type system also gains a way to express the lifetime of that ambient region.
 
 ## Design Direction
 
-The current zone is a lexical compiler capability, not a runtime global that
-library code can fetch arbitrarily. That keeps allocation visible in source:
-`zone { ... }` means "use this block's temporary region unless I pass a
+The current allocation source is a lexical compiler capability, not a runtime
+global that library code can fetch arbitrarily. That keeps allocation visible
+in source:
+`region { ... }` means "use this block's temporary region unless I pass a
 different one." Future ergonomics should keep that property. Good next steps
-are a `region { ... }` alias or another cleaner resource-block spelling,
-capacity planning helpers, and broader stdlib examples using `std::region`;
+are capacity planning helpers and broader stdlib examples using `std::region`;
 a hidden global allocator or long-lived ambient heap would work against Ari's
 explicit allocation model.
 
 ## Stdlib Guidance
 
-Zone-taking stdlib APIs should keep using a real `ref mut Zone` parameter.
-Prefer one clear zone parameter per allocating operation so current-zone
-insertion remains predictable. Use `_in` names when the target zone is a
-semantic part of the operation, but document that callers may omit the zone
-inside a current-zone block.
+Zone-taking stdlib APIs should keep using a real `ref mut Zone` parameter
+until the module migrates to `Region` or `Allocator`. Prefer one clear zone
+parameter per allocating operation so current-source insertion remains
+predictable. Use `_in` names when the target zone is a semantic part of the
+operation, but document that callers may omit the zone inside a current
+allocation block.
 
 When adding a public zone-backed API:
 
 1. Add the source declaration.
 2. Add or update focused ordinary tests that compile the explicit-zone spelling
-   and, when useful, a `zone { ... }` spelling.
+   and, when useful, a `region { ... }` spelling. Keep `zone { ... }` tests for
+   compatibility and low-level zone coverage.
 3. Update `tests/std_api_manifest.txt` and regenerate
    `docs/stdlib/generated/api-index.md` if the public API changed.
-4. Update the hand-written module guide with lifetime and current-zone notes.
+4. Update the hand-written module guide with lifetime and current allocation
+   notes.
 
 For stdlib implementation work, prefer `std::allocator::of(ref handle)`,
 `std::allocator::of_mut(ref mut handle)`,
@@ -143,10 +163,10 @@ a duplicate zone pointer and user docs do not have to expose `ZoneMetadata`.
 
 - a future expression form only if the language gets a clean block-expression
   story; the current feature is intentionally statement-only
-- a possible `region { ... }` spelling, with `zone { ... }` kept as
-  compatibility syntax if source compatibility matters
+- keep `zone { ... }` as compatibility syntax while docs and examples migrate
+  to `region { ... }`
 - optional compile-time or library-side sizing helpers for common scratch
   workloads, so large parser/formatter operations can choose a capacity before
   entering the block
-- a cleaner source-level spelling for temporary zones that keeps allocation
-  lexical while making "use the current zone" feel like ordinary construction
+- a cleaner named-source spelling for cases where code wants to bind the
+  temporary Region and still keep allocation lexical

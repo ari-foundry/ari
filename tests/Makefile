@@ -664,7 +664,7 @@ check-tools: $(TARGET) $(LINT_TARGET) $(LSP_TARGET)
 	if $(TOOL_ENV) $(LINT_TARGET) --ari $(TOOL_ARI) --json tests/cases/standard-library/errors/format/prelude-macro-format-no-default-zone.ari >$(BUILD_DIR)/tools/lint-format.json; then exit 1; fi
 	grep -q '"line":2' $(BUILD_DIR)/tools/lint-format.json
 	grep -q '"code":"ari/compiler"' $(BUILD_DIR)/tools/lint-format.json
-	grep -q "prelude macro 'format!' has no implicit allocation zone; use format_in!(ref mut zone, ...) or call it inside a zone block" $(BUILD_DIR)/tools/lint-format.json
+	grep -q "prelude macro 'format!' has no implicit allocation source; use format_in!(ref mut zone, ...) or call it inside a region or zone block" $(BUILD_DIR)/tools/lint-format.json
 	ARI="$(TOOL_ARI)" LSP="$(LSP_TARGET)" $(TOOL_ENV) sh tests/tools/lsp_smoke.sh
 
 check-cli: $(TARGET)
@@ -3899,9 +3899,9 @@ check-prelude: $(TARGET)
 	if $(TARGET) tests/cases/standard-library/errors/input/prelude-read-line-owned-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.elf >$(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'text' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.err
 	if $(TARGET) tests/cases/standard-library/errors/format/prelude-macro-format-no-default-zone.ari -o $(BUILD_DIR)/prelude/prelude-macro-format-no-default-zone.elf >$(BUILD_DIR)/prelude/prelude-macro-format-no-default-zone.err 2>&1; then exit 1; fi
-	grep -q "prelude macro 'format!' has no implicit allocation zone; use format_in!(ref mut zone, ...) or call it inside a zone block" $(BUILD_DIR)/prelude/prelude-macro-format-no-default-zone.err
+	grep -q "prelude macro 'format!' has no implicit allocation source; use format_in!(ref mut zone, ...) or call it inside a region or zone block" $(BUILD_DIR)/prelude/prelude-macro-format-no-default-zone.err
 	if $(TARGET) tests/cases/standard-library/errors/format/prelude-macro-format-qualified-no-default-zone.ari -o $(BUILD_DIR)/prelude/prelude-macro-format-qualified-no-default-zone.elf >$(BUILD_DIR)/prelude/prelude-macro-format-qualified-no-default-zone.err 2>&1; then exit 1; fi
-	grep -q "prelude macro 'format!' has no implicit allocation zone; use format_in!(ref mut zone, ...) or call it inside a zone block" $(BUILD_DIR)/prelude/prelude-macro-format-qualified-no-default-zone.err
+	grep -q "prelude macro 'format!' has no implicit allocation source; use format_in!(ref mut zone, ...) or call it inside a region or zone block" $(BUILD_DIR)/prelude/prelude-macro-format-qualified-no-default-zone.err
 	if $(TARGET) tests/cases/standard-library/errors/format/prelude-format-in-f128.ari -o $(BUILD_DIR)/prelude/prelude-format-in-f128.elf >$(BUILD_DIR)/prelude/prelude-format-in-f128.err 2>&1; then exit 1; fi
 	grep -q "format_in! currently supports string, char, integer, bool, f32, f64, and Display values, got f128" $(BUILD_DIR)/prelude/prelude-format-in-f128.err
 	if $(TARGET) tests/cases/standard-library/errors/format/prelude-format-in-no-display.ari -o $(BUILD_DIR)/prelude/prelude-format-in-no-display.elf >$(BUILD_DIR)/prelude/prelude-format-in-no-display.err 2>&1; then exit 1; fi
@@ -6753,6 +6753,10 @@ check-ffi: $(TARGET) check-layout-unit
 	$(TARGET) tests/cases/memory/ok/zone-current-capacity.ari --emit-llvm $(BUILD_DIR)/ffi/zone-current-capacity.ll
 	grep -q "fail.bad.capacity" $(BUILD_DIR)/ffi/zone-current-capacity.ll
 	grep -q "fail.capacity" $(BUILD_DIR)/ffi/zone-current-capacity.ll
+	$(TARGET) tests/cases/memory/ok/region-current-block.ari --emit-llvm $(BUILD_DIR)/ffi/region-current-block.ll
+	grep -q '_ARNv3std6region6create' $(BUILD_DIR)/ffi/region-current-block.ll
+	grep -q '_ARNv3std6region7as_zone' $(BUILD_DIR)/ffi/region-current-block.ll
+	grep -q '_ARNv3std6region7destroy' $(BUILD_DIR)/ffi/region-current-block.ll
 	$(TARGET) tests/cases/memory/ok/pointer-add.ari --emit-llvm $(BUILD_DIR)/ffi/pointer-add.ll
 	grep -q 'getelementptr i64, ptr' $(BUILD_DIR)/ffi/pointer-add.ll
 	grep -q 'getelementptr i8, ptr' $(BUILD_DIR)/ffi/pointer-add.ll
@@ -6839,6 +6843,7 @@ check-ffi: $(TARGET) check-layout-unit
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/memory/ok/zone-current-trait-calls.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/zone-current-trait-calls.elf; $(BUILD_DIR)/ffi/zone-current-trait-calls.elf; code=$$?; test $$code -eq 0; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/memory/ok/zone-current-callable.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/zone-current-callable.elf; $(BUILD_DIR)/ffi/zone-current-callable.elf; code=$$?; test $$code -eq 0; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/memory/ok/zone-current-capacity.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/zone-current-capacity.elf; $(BUILD_DIR)/ffi/zone-current-capacity.elf; code=$$?; test $$code -eq 0; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/memory/ok/region-current-block.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/region-current-block.elf; $(BUILD_DIR)/ffi/region-current-block.elf; code=$$?; test $$code -eq 0; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/memory/ok/pointer-add.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/pointer-add.elf; $(BUILD_DIR)/ffi/pointer-add.elf; code=$$?; test $$code -eq 19; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/memory/ok/pointer-add-aggregate.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/pointer-add-aggregate.elf; $(BUILD_DIR)/ffi/pointer-add-aggregate.elf; code=$$?; test $$code -eq 56; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/memory/ok/pointer-load-store.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/pointer-load-store.elf; $(BUILD_DIR)/ffi/pointer-load-store.elf; code=$$?; test $$code -eq 12; fi
@@ -6925,6 +6930,9 @@ check-ffi: $(TARGET) check-layout-unit
 	grep -q "cannot use zone pointer 'text' after zone 'region' was reset or destroyed" $(BUILD_DIR)/ffi/region-string-after-reset.err
 	if $(TARGET) tests/cases/memory/errors/region-zone-bridge-immutable.ari -o $(BUILD_DIR)/ffi/region-zone-bridge-immutable.elf >$(BUILD_DIR)/ffi/region-zone-bridge-immutable.err 2>&1; then exit 1; fi
 	grep -q "expected ref mut Zone, got ref std::region::Region" $(BUILD_DIR)/ffi/region-zone-bridge-immutable.err
+	if $(TARGET) tests/cases/memory/errors/region-current-block-escape.ari -o $(BUILD_DIR)/ffi/region-current-block-escape.elf >$(BUILD_DIR)/ffi/region-current-block-escape.err 2>&1; then exit 1; fi
+	grep -q "from temporary zone" $(BUILD_DIR)/ffi/region-current-block-escape.err
+	grep -q "cannot escape through function return" $(BUILD_DIR)/ffi/region-current-block-escape.err
 	if $(TARGET) tests/cases/memory/errors/zone-pointer-enum-payload-after-reset.ari -o $(BUILD_DIR)/ffi/zone-pointer-enum-payload-after-reset.elf >$(BUILD_DIR)/ffi/zone-pointer-enum-payload-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'maybe' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/ffi/zone-pointer-enum-payload-after-reset.err
 	if $(TARGET) tests/cases/memory/errors/zone-pointer-after-borrowed-reset.ari -o $(BUILD_DIR)/ffi/zone-pointer-after-borrowed-reset.elf >$(BUILD_DIR)/ffi/zone-pointer-after-borrowed-reset.err 2>&1; then exit 1; fi

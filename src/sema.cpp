@@ -6992,8 +6992,31 @@ private:
             zone_pointer_locals(),
             [this](const std::string& prefix) {
                 return make_hidden_local(prefix);
+            },
+            [this](SourceLocation loc, const std::string& name, const IrType& type) {
+                return make_auto_destroy_allocation_source_stmt(loc, name, type);
             }
         };
+    }
+
+    IrStmtPtr make_auto_destroy_allocation_source_stmt(SourceLocation loc,
+                                                       const std::string& name,
+                                                       const IrType& type) {
+        if (is_region_value_type(type)) {
+            queue_std_function_for_lowering("std::region::destroy");
+            std::vector<IrExprPtr> args;
+            args.push_back(make_local_lvalue_expr(loc, name, type));
+            auto stmt = std::make_unique<IrStmt>();
+            stmt->kind = IrStmtKind::ExprStmt;
+            stmt->loc = loc;
+            stmt->expr = make_ir_call_expr(
+                loc,
+                "std::region::destroy",
+                void_type(loc),
+                std::move(args));
+            return stmt;
+        }
+        return make_zone_destroy_stmt(loc, name, type);
     }
 
     bool has_auto_destroy_zone_cleanup(std::size_t first_scope_index) const {
@@ -8572,12 +8595,23 @@ private:
 
     IrExprPtr make_current_zone_argument(SourceLocation loc, const IrType& expected) {
         if (!has_current_zone()) {
-            fail(loc, "this call needs ref mut Zone and there is no active zone block");
+            fail(loc, "this call needs ref mut Zone and there is no active region or zone block");
         }
         IrExprPtr zone_arg = make_mutable_zone_borrow(loc, current_zone_name());
+        if (IrExprPtr bridged = try_bridge_region_borrow_to_zone(loc, zone_arg, expected)) {
+            return bridged;
+        }
         coerce_expr_to_expected(*zone_arg, expected);
         require_assignable(loc, expected, zone_arg->type);
         return zone_arg;
+    }
+
+    IrType make_region_owner_type(SourceLocation loc) {
+        TypeRef region_ref;
+        region_ref.loc = loc;
+        region_ref.name = "std::region::Region";
+        region_ref.qualifier = TypeQualifier::Own;
+        return resolve_executable_type(region_ref);
     }
 
     IrStmtPtr make_current_zone_decl(SourceLocation loc,
@@ -8597,6 +8631,28 @@ private:
         return zone_decl;
     }
 
+    IrStmtPtr make_current_region_decl(SourceLocation loc,
+                                       const std::string& region_name,
+                                       IrType region_type,
+                                       IrExprPtr capacity) {
+        queue_std_function_for_lowering("std::region::create");
+        std::vector<IrExprPtr> args;
+        args.push_back(std::move(capacity));
+        IrExprPtr init = make_ir_call_expr(
+            loc,
+            "std::region::create",
+            region_type,
+            std::move(args));
+        IrStmtPtr region_decl = make_ir_var_decl(loc, region_name, region_type, std::move(init), true);
+        IrStmt* region_decl_ptr = region_decl.get();
+        declare_local(loc, region_name, region_type, true);
+        LocalInfo& region_local = local_slot_by_name(region_name);
+        region_local.ir_storage_type = &region_decl_ptr->binding.type;
+        region_local.ir_init_expr = region_decl_ptr->binding.init.get();
+        region_local.auto_destroy_zone = true;
+        return region_decl;
+    }
+
     Flow check_zone_block(const Stmt& stmt, IrStmt& lowered) {
         lowered.kind = IrStmtKind::Block;
         lowered.loc = stmt.loc;
@@ -8609,15 +8665,15 @@ private:
         coerce_expr_to_expected(*capacity, i64);
         require_assignable(stmt.expr ? stmt.expr->loc : stmt.loc, i64, capacity->type);
 
-        IrType own_zone = primitive_type(IrPrimitiveKind::Zone, "Zone", stmt.loc);
-        own_zone.qualifier = TypeQualifier::Own;
-        std::string zone_name = make_hidden_local("$zone");
-        IrStmtPtr zone_decl = make_current_zone_decl(
-            stmt.loc,
-            zone_name,
-            own_zone,
-            std::move(capacity));
-        ir_stmt_statements(lowered).push_back(std::move(zone_decl));
+        IrType allocation_source = stmt.zone_block_uses_region
+            ? make_region_owner_type(stmt.loc)
+            : primitive_type(IrPrimitiveKind::Zone, "Zone", stmt.loc);
+        allocation_source.qualifier = TypeQualifier::Own;
+        std::string zone_name = make_hidden_local(stmt.zone_block_uses_region ? "$region" : "$zone");
+        IrStmtPtr source_decl = stmt.zone_block_uses_region
+            ? make_current_region_decl(stmt.loc, zone_name, allocation_source, std::move(capacity))
+            : make_current_zone_decl(stmt.loc, zone_name, allocation_source, std::move(capacity));
+        ir_stmt_statements(lowered).push_back(std::move(source_decl));
 
         current_zone_stack_.push_back(zone_name);
         CheckedStatements body = check_statements(stmt_statements(stmt), false);
@@ -27046,7 +27102,7 @@ private:
     IrExprPtr check_prelude_macro_call(const Expr& expr, PreludeMacroKind kind) {
         if (kind == PreludeMacroKind::Format) {
             if (!has_current_zone()) {
-                fail(expr.loc, "prelude macro 'format!' has no implicit allocation zone; use format_in!(ref mut zone, ...) or call it inside a zone block");
+                fail(expr.loc, "prelude macro 'format!' has no implicit allocation source; use format_in!(ref mut zone, ...) or call it inside a region or zone block");
             }
             if (!expr.macro_tokens) {
                 fail(expr.loc, "macro invocation '" + expr.name + "!' is missing token payload");
@@ -31783,11 +31839,11 @@ private:
             DiagnosticNoteKind::Note});
         error.add_note(DiagnosticNote{
             std::nullopt,
-            "Ari can insert the current zone inside a zone { ... } block",
+            "Ari can insert the current allocation source inside a region { ... } or zone { ... } block",
             DiagnosticNoteKind::Note});
         error.add_note(DiagnosticNote{
             std::nullopt,
-            "wrap the call in zone { ... } or pass an explicit ref mut Zone argument",
+            "wrap the call in region { ... }, wrap it in zone { ... }, or pass an explicit ref mut Zone argument",
             DiagnosticNoteKind::Help});
         if (actual_count + 1 != expected_count) {
             error.add_note(DiagnosticNote{

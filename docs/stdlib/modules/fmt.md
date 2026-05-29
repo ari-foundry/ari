@@ -426,9 +426,10 @@ Owned `String` output writes the stored byte span, so `env::current_dir(ref mut
 zone)` and other Result-returning text APIs can be printed directly. For custom
 debug output to stdout, use `fmt::print_debug` or `fmt::println_debug` with an
 explicit zone.
-Inside `zone { ... }`, `format!` uses the active current zone and returns an
-owned `String`. Outside a current-zone block, use `format_in!` so the
-allocation zone is clear.
+Inside `region { ... }`, `format!` uses the active current allocation source
+and returns an owned `String`. `zone { ... }` works as the compatibility
+spelling. Outside a current allocation block, use `format_in!` so the
+allocation lifetime is clear.
 
 The source helpers complement the macros:
 

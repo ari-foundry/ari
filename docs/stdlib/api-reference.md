@@ -2621,29 +2621,32 @@ values. It returns null for `0`, asserts for negative counts, and does not run
 destructors for the slots; initialize before reading and prefer higher-level
 handles when ownership matters.
 
-`default_capacity()` returns the capacity used by `zone { ... }` current-zone
-blocks when no explicit `zone(capacity)` value is written. It is 4096 bytes in
-the current hosted compiler.
+`default_capacity()` returns the capacity used by compatibility
+`zone { ... }` current allocation blocks when no explicit `zone(capacity)`
+value is written. The preferred `region { ... }` block uses
+`std::region::default_capacity()`, which matches this value today. Both are
+4096 bytes in the current hosted compiler.
 
 Zone capacity failures are runtime traps, not recoverable allocation results.
 The hosted runtime writes a short stderr diagnostic before exiting: invalid
 zone capacities name the valid range, allocation exhaustion suggests
-`zone(capacity)` or a larger explicit zone, and invalid raw zone handles or raw
-allocation arguments are named separately. Use `zone(capacity) { ... }` for
-bulk scratch work when the 4096-byte default is too small.
+`region(capacity)`, `zone(capacity)`, or a larger explicit allocation source,
+and invalid raw zone handles or raw allocation arguments are named separately.
+Use `region(capacity) { ... }` for bulk scratch work when the 4096-byte
+default is too small; keep `zone(capacity) { ... }` for low-level zone tests.
 
 `capacity(ref mut zone)`, `used(ref mut zone)`, and `remaining(ref mut zone)`
-read logical payload counters from a zone. Inside a current-zone block they can
-omit the argument, so `zone::remaining()` reports the current block's scratch
-space. The counters are planning/debugging helpers; they do not include
+read logical payload counters from a zone. Inside a current allocation block
+they can omit the argument, so `zone::remaining()` reports the current block's
+scratch space. The counters are planning/debugging helpers; they do not include
 allocation headers or alignment padding.
 
 `can_alloc(ref mut zone, bytes)` and `can_alloc_array<T>(ref mut zone, count)`
 are preflight helpers over those logical counters. They return `false` for
 negative inputs, `true` for zero array counts, and otherwise report whether the
 requested payload bytes fit in the zone's current remaining capacity. Inside a
-current-zone block the zone argument can be omitted, so `zone::can_alloc(512)`
-checks the block's hidden scratch zone.
+current allocation block the zone argument can be omitted, so
+`zone::can_alloc(512)` checks the block's hidden scratch source.
 
 `allocation_zone(data)` reads Ari's allocation header for a non-null zone
 allocation and returns the raw opaque handle. `metadata(data)`,

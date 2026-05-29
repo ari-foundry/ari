@@ -99,20 +99,21 @@ region(8192) {
 }
 ```
 
-The current source spelling is still `zone { ... }` because the compiler
-feature predates the `Region` facade. The better user model is "a region owns
-the large area of storage and can release it all at once, while an
-`Allocator` capability is what containers and strings use when they need more
-storage from the same region." Borrow and ownership analysis can still warn
-about obvious escapes or use-after-release cases, but Ari does not try to make
-raw memory fully safe.
+The current source spelling is now `region { ... }`; `zone { ... }` remains the
+compatibility form because the compiler feature originally predated the
+`Region` facade. The user model is "a region owns the large area of storage and
+can release it all at once, while an `Allocator` capability is what containers
+and strings use when they need more storage from the same region." Borrow and
+ownership analysis can still warn about obvious escapes or use-after-release
+cases, but Ari does not try to make raw memory fully safe.
 
-The next ergonomic step should be a spelling that reads like region creation
-rather than allocator metadata plumbing. Good candidates are:
+The next ergonomic step should make named region creation as direct as the
+anonymous block form. Good candidates are:
 
-- keep `zone { ... }` as compatibility syntax and document it as temporary
-  region syntax
-- add a future `region { ... }` alias once parser compatibility is clear
+- keep `zone { ... }` as compatibility syntax and document it as low-level
+  temporary-zone syntax
+- improve named region helpers and examples so users rarely need direct
+  `Zone` spelling
 - allow constructors inside a current region to omit the region argument only
   when exactly one allocation lifetime is missing
 

@@ -493,8 +493,9 @@ zone contains a live `T`.
 `zone::capacity`, `zone::used`, and `zone::remaining` read logical payload
 counters. `zone::can_alloc` and `zone::can_alloc_array<T>` are preflight
 helpers over those counters. They are useful for choosing a larger
-`zone(capacity) { ... }` block or producing a nicer library diagnostic before a
-raw allocation would trap. They do not reserve memory.
+`region(capacity) { ... }` block, compatibility `zone(capacity) { ... }`
+block, or producing a nicer library diagnostic before a raw allocation would
+trap. They do not reserve memory.
 
 On the LLVM host backend, every non-empty `zone::alloc` result has a fixed
 8-byte allocation header immediately before the returned user pointer. The

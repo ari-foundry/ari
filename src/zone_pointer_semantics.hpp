@@ -31,11 +31,13 @@ struct ZonePointerLocalAdapter {
 
 struct AutoDestroyZoneCleanupContext {
     using HiddenLocalNameFactory = std::function<std::string(const std::string&)>;
+    using DestroyStmtFactory = std::function<IrStmtPtr(SourceLocation, const std::string&, const IrType&)>;
 
     LocalScopeStack& scopes;
     ZonePointerSourceResolver source_resolver;
     ZonePointerLocalAdapter locals;
     HiddenLocalNameFactory make_hidden_local;
+    DestroyStmtFactory make_destroy_stmt;
 };
 
 struct AutoDestroyZoneMaterialization {

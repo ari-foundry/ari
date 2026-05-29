@@ -26,8 +26,9 @@ namespace ari {
 
 bool is_auto_destroy_zone(const LocalInfo& local) {
     return local.auto_destroy_zone &&
-           local.type.qualifier == TypeQualifier::Own &&
-           local.type.primitive == IrPrimitiveKind::Zone;
+           ((local.type.qualifier == TypeQualifier::Own &&
+             local.type.primitive == IrPrimitiveKind::Zone) ||
+            is_region_value_type(local.type));
 }
 
 const IrExpr& zone_pointer_source_expr(const IrExpr& value) {
@@ -591,7 +592,22 @@ std::optional<std::string> append_auto_destroy_zone_cleanup(
     AutoDestroyZoneCleanupContext& cleanup,
     std::size_t first_scope_index
 ) {
-    return append_auto_destroy_zone_cleanup(loc, statements, cleanup.scopes, first_scope_index);
+    if (!cleanup.scopes.contains_scope(first_scope_index)) return std::nullopt;
+    if (auto error = outer_temporary_zone_pointer_escape_error(first_scope_index, cleanup.scopes)) {
+        return error;
+    }
+    cleanup.scopes.for_each_local_from_inner_to_outer(
+        first_scope_index,
+        [&](const std::string& name, LocalInfo& local) {
+            if (!is_auto_destroy_zone(local) || !local_is_alive(local)) return;
+            if (cleanup.make_destroy_stmt) {
+                statements.push_back(cleanup.make_destroy_stmt(loc, name, local.type));
+            } else {
+                statements.push_back(make_zone_destroy_stmt(loc, name, local.type));
+            }
+            mark_local_zone_destroyed(local, loc);
+        });
+    return std::nullopt;
 }
 
 AutoDestroyZoneMaterialization materialize_value_before_auto_destroy_cleanup(

@@ -426,6 +426,7 @@ struct StmtBodyPayload {
 struct Stmt {
     StmtKind kind = StmtKind::ExprStmt;
     SourceLocation loc;
+    bool zone_block_uses_region = false;
     std::unique_ptr<StmtBodyPayload> body_payload;
     Binding binding;
     std::unique_ptr<StmtAssignPayload> assign_payload;

@@ -1,0 +1,10 @@
+fn leak() -> std::string::String {
+  region {
+    return std::string::from("escape");
+  }
+}
+
+fn main() -> i64 {
+  let text = leak();
+  return text.len();
+}

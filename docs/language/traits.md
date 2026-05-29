@@ -484,11 +484,12 @@ The macro evaluates the value once, passes a shared borrow to the hook, then
 appends the returned source `String` into the final output. Struct display impls
 can read fields through the shared receiver, for example `self.x`, without
 loading the receiver through a raw pointer.
-Inside a `zone { ... }` block, the explicit-zone hook can also use current-zone
-insertion through normal method syntax or trait-qualified syntax:
+Inside a `region { ... }` block, the explicit-zone hook can also use current
+allocation-source insertion through normal method syntax or trait-qualified
+syntax. Compatibility `zone { ... }` blocks use the same rule:
 
 ```ari
-zone {
+region {
   let a = value.format_in();
   let b = Display::format_in(value);
 }
@@ -665,10 +666,11 @@ upcast to the same trait or one of its supertraits with `as dyn Base`; the data
 pointer is preserved and the vtable pointer is adjusted to the inherited
 supertrait method slots. Unrelated dyn-to-dyn casts remain rejected.
 If an object-safe dyn method has exactly one omitted `ref mut Zone` parameter,
-the same current-zone insertion rule applies inside `zone { ... }`:
+the same current allocation-source insertion rule applies inside
+`region { ... }`:
 
 ```ari
-zone {
+region {
   let text = object.render();
 }
 ```

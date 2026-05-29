@@ -146,3 +146,9 @@ pub fn reset(region: ref mut std::region::Region) -> void {
 pub fn destroy(region: own std::region::Region) -> void {
   std::zone::destroy(region.inner);
 }
+
+impl std::Drop for std::region::Region {
+  fn drop(self) -> void {
+    std::region::destroy(self);
+  }
+}

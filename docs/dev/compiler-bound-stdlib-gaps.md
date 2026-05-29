@@ -95,8 +95,9 @@ General variadic formatting is compiler work, not just a new function:
 1. Decide whether Ari gets variadic generics, a compiler-known format macro
    lowering, or both.
 2. Keep the allocation-zone policy explicit: `format!` is executable inside a
-   current-zone block, while `format_in!(ref mut zone, ...)` is the explicit
-   target-zone form outside one.
+   `region { ... }` current allocation block or compatibility `zone { ... }`
+   block, while `format_in!(ref mut zone, ...)` is the explicit target-zone
+   form outside one.
 3. Keep runtime `fmt::format` functions Result-returning because invalid
    templates are recoverable input/configuration errors.
 4. Keep compiler-assisted literal format strings type-checked at compile time

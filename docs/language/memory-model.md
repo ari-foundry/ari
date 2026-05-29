@@ -21,6 +21,19 @@ Ordinary code should start with `Region`. Library internals should accept
 `Zone` remains available for low-level tests, older APIs, and compiler/runtime
 implementation work.
 
+The preferred short-lived spelling is a lexical region block:
+
+```ari
+region {
+  let text = string::from("hello");
+  let line = format!("message: {}", text);
+}
+```
+
+The block still creates an owned allocation source. It is just hidden because
+the lifetime is exactly the block body. `zone { ... }` remains accepted as
+compatibility syntax for older examples and tests.
+
 ## Region
 
 A `Region` owns a bounded allocation area:
@@ -116,20 +129,31 @@ Ari also avoids making `ZoneMetadata` the normal user API. Metadata is useful
 for allocator recovery, but making users pass metadata handles teaches the
 runtime implementation rather than the memory model.
 
-## Future Direction
+## Lexical Region Blocks
 
-The best-looking future surface is a short region scope form that still creates
-an explicit owner:
+`region { ... }` and `region(capacity) { ... }` are statement forms for local
+scratch allocation:
 
 ```ari
-region scratch {
-  let text = string::copy("hello");
+region(8192) {
+  let path = path::join("target", "ari")?;
+  let message = format!("built {}", path);
 }
 ```
 
-That syntax should lower to a named `Region`, make it available as the default
-destination only inside the block, and destroy it at block exit. It should be a
-lexical compile-time convenience, not a process-global allocator.
+The checker lowers the block to a hidden `own std::region::Region`, makes that
+region the current allocation source while the body is checked, and inserts
+`std::region::destroy` when control leaves the block. Calls may omit exactly
+one `ref mut Zone` parameter inside the block because the hidden region is
+bridged through `std::region::as_zone`. This is the same compatibility bridge
+used when source code passes `ref mut region` to a legacy zone-taking API.
+
+Values allocated in the hidden region cannot escape through returns, outer
+bindings, struct literals, or other lifetime-extending paths. If the result
+must outlive the block, allocate it in a caller-owned `Region` and pass that
+region explicitly.
+
+## Future Direction
 
 Open work:
 
@@ -141,6 +165,4 @@ Open work:
   wrapper case
 - replace compatibility examples that still spell `zone::create` when a
   `Region` form now exists
-- decide whether short region scopes use a keyword, a standard macro-like
-  form, or ordinary library sugar after block-lifetime lowering is stronger
 - keep `Zone` documented as low-level compatibility until old APIs are gone

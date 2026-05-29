@@ -89,15 +89,16 @@ reset(ref mut zone)
 destroy(zone)
 ```
 
-## Current-Zone Blocks
+## Lexical Allocation Blocks
 
-Use `zone { ... }` when a command, parser, formatter, or small hosted-program
+Use `region { ... }` when a command, parser, formatter, or small hosted-program
 operation needs temporary owned library values and all of those values should
-die together at the end of the block.
+die together at the end of the block. `zone { ... }` remains accepted as the
+compatibility spelling for older low-level examples.
 
 ```ari
 fn main() -> i64 {
-  zone {
+  region {
     let name = std::string::from("hello");
     let line = format!("package {}", name);
     io::println(line)?;
@@ -108,35 +109,36 @@ fn main() -> i64 {
 ```
 
 The block is compiler syntax. It lowers to a hidden
-`zone::temp(zone::default_capacity())` local, pushes that local as the current
-allocation zone, checks the body, and inserts the same cleanup that an
-explicit temporary zone binding receives. `zone::default_capacity()` is 4096
-bytes today. A larger scratch region can be requested with
-`zone(capacity) { ... }`:
+`std::region::Region` for `region { ... }`, pushes that owner as the current
+allocation source, checks the body, and inserts `std::region::destroy` cleanup
+on every exit. The compatibility form `zone { ... }` lowers to the older
+hidden `Zone` temporary. `region::default_capacity()` and
+`zone::default_capacity()` are both 4096 bytes today. A larger scratch region
+can be requested with `region(capacity) { ... }`:
 
 ```ari
-zone(65536) {
+region(65536) {
   let source = fs::read_to_string("Ari.toml")?;
   let rendered = format!("manifest bytes = {}", source.as_slice().len);
 }
 ```
 
-Capacity is a runtime limit for the temporary arena. If `zone { ... }` is too
+Capacity is a runtime limit for the temporary arena. If `region { ... }` is too
 small for the values created inside it, the hosted runtime writes a diagnostic
-to stderr and exits. The diagnostic suggests `zone(capacity) { ... }` or a
-larger explicit zone. Invalid capacities, invalid zone handles, and malformed
-raw allocation requests also get named runtime diagnostics instead of a silent
-exit.
+to stderr and exits. The diagnostic suggests `region(capacity) { ... }`,
+`zone(capacity) { ... }`, or a larger explicit allocation source. Invalid
+capacities, invalid handles, and malformed raw allocation requests also get
+named runtime diagnostics instead of a silent exit.
 
-Inside a current-zone block, calls may omit exactly one `ref mut Zone`
-parameter. The checker inserts the current zone for ordinary functions,
+Inside a current allocation block, calls may omit exactly one `ref mut Zone`
+parameter. The checker inserts the current source for ordinary functions,
 generic functions, ordinary methods, associated functions, trait-qualified
 methods, dyn trait-object methods, and callable values when the arity
 otherwise matches. This lets the natural, short spelling call the same stdlib
 implementation:
 
 ```ari
-zone {
+region {
   let text = string::from("abc");                  // string::from(ref mut zone, ...)
   let args = env::args();                          // env::args(ref mut zone)
   let file = fs::read_to_string("notes.txt")?;     // fs::read_to_string(ref mut zone, ...)
@@ -149,14 +151,14 @@ zone {
 Explicit `ref mut zone` still wins when data should live in another region:
 
 ```ari
-var outer = zone::create(4096);
-zone {
+var outer = region::create(4096);
+region {
   let persistent = string::from(ref mut outer, "keep this");
 }
-zone::destroy(outer);
+region::destroy(outer);
 ```
 
-Nested current-zone blocks shadow outer ones. Values allocated in an inner
+Nested current allocation blocks shadow outer ones. Values allocated in an inner
 block cannot escape to outer bindings or returns unless they are copied or
 promoted into an outer explicit zone.
 
@@ -259,20 +261,21 @@ Zone-backed pointers, boxes, strings, vectors, and derived slices keep
 provenance in the checker when Ari can track the source zone. Using them after
 `reset` or `destroy` is rejected.
 
-Current-zone blocks are still explicit allocation. The zone is just hidden
-because its lifetime is the block itself. If a function has two zone
-parameters, or if the missing argument is not uniquely identifiable as
-`ref mut Zone`, the checker requires the explicit call.
+Lexical allocation blocks are still explicit allocation. The `Region` or `Zone`
+owner is just hidden because its lifetime is the block itself. If a function
+has two zone parameters, or if the missing argument is not uniquely
+identifiable as `ref mut Zone`, the checker requires the explicit call.
 
-If code outside a current-zone block omits only the zone argument, Ari reports
-that the call needs an allocation zone and suggests either `zone { ... }` or an
-explicit `ref mut Zone`. That diagnostic is intentionally different from a
-plain wrong-argument-count error because allocation lifetime is the important
-choice.
+If code outside a current allocation block omits only the zone argument, Ari reports
+that the call needs an allocation zone and suggests `region { ... }`,
+`zone { ... }`, or an explicit `ref mut Zone`. That diagnostic is intentionally
+different from a plain wrong-argument-count error because allocation lifetime
+is the important choice.
 
-The current zone is intentionally not exposed as a general `zone::current()`
-library function. Library APIs still declare `ref mut Zone`; the compiler only
-fills that parameter at call sites where the lifetime is lexical and obvious.
+The current allocation source is intentionally not exposed as a general
+`zone::current()` or `region::current()` library function. Library APIs still
+declare `ref mut Zone`; the compiler only fills that parameter at call sites
+where the lifetime is lexical and obvious.
 That keeps temporary allocation easy to write without letting library code
 silently depend on a global allocator.
 
@@ -285,22 +288,24 @@ behavior.
 
 Current-zone blocks are intentionally lexical and conservative:
 
-1. `zone { body }` parses as a statement. `zone` is contextual, so existing
-   values named `zone` continue to work outside this exact statement shape.
-2. The checker creates a hidden `own Zone` local with the default capacity,
-   or with the checked `i64` expression from `zone(capacity)`.
+1. `region { body }` and `zone { body }` parse as statements. Both words are
+   contextual, so existing values named `region` or `zone` continue to work
+   outside this exact statement shape.
+2. The checker creates a hidden `own Region` for `region { ... }` or a hidden
+   `own Zone` for compatibility `zone { ... }`, with the default capacity or
+   the checked `i64` expression from the capacity form.
 3. That hidden local is pushed onto the current-zone stack while `body` is
-   checked. Nested blocks shadow outer current zones.
+   checked. Nested blocks shadow outer current sources.
 4. A call inside the body may omit exactly one argument when the omitted
    parameter is uniquely typed as `ref mut Zone`. Ordinary functions, generic
    functions, ordinary methods, associated functions, trait-qualified methods,
    dyn trait-object methods, and callable values use this rule.
-5. `format!` is the compiler-owned formatting shortcut for the current zone.
-   Outside a current-zone block it remains a diagnostic and callers should use
+5. `format!` is the compiler-owned formatting shortcut for the current source.
+   Outside a current allocation block it remains a diagnostic and callers should use
    `format_in!(ref mut zone, ...)`.
-6. The hidden zone receives the same cleanup treatment as `zone::temp`: it is
-   destroyed on fallthrough and when `return`, `break`, `continue`, or labeled
-   exits leave the block.
+6. The hidden owner is destroyed on fallthrough and when `return`, `break`,
+   `continue`, or labeled exits leave the block. `region { ... }` emits
+   `region::destroy`; compatibility `zone { ... }` emits `zone::destroy`.
 7. Existing zone-provenance checks still decide whether pointers and
    zone-backed handles may escape. Current-zone syntax does not make a global
    heap and does not extend object lifetimes.
@@ -327,6 +332,11 @@ Current-zone blocks are intentionally lexical and conservative:
 - `tests/cases/memory/ok/zone-current-block.ari` checks current-zone block
   syntax, default and explicit capacities, omitted `ref mut Zone` arguments for
   `std::string`, `std::fmt`, and `std::fs`, and current-zone `format!`.
+- `tests/cases/memory/ok/region-current-block.ari` checks the preferred
+  `region { ... }` spelling, Region-to-Zone current-source bridging,
+  `format!`, stdlib String/Vec/Box construction, and inserted region cleanup.
+- `tests/cases/memory/errors/region-current-block-escape.ari` checks that
+  values allocated in a hidden region cannot escape through returns.
 - `tests/cases/memory/ok/zone-current-stdlib.ari` checks omitted current-zone
   arguments across common stdlib APIs, including String/Vec/Box copy and
   growth methods, path joining, encoding decode, runtime `fmt::format`, and
@@ -349,11 +359,12 @@ the focused zone allocation coverage.
 
 ## Future Work
 
-- scoped allocation helpers that can express lifetime boundaries in source
-- possible `new zone { ... }` spelling if Ari later gets a general resource
-  construction grammar; today `zone { ... }` keeps `zone` contextual and
-  avoids reserving another keyword
+- migrate remaining examples from compatibility `zone { ... }` to preferred
+  `region { ... }` where they are not specifically testing low-level zones
+- possible resource construction grammar for future named regions; today
+  `region { ... }` keeps allocation lexical without reserving another global
+  allocator concept
 - capacity planning helpers for common parser/formatter workloads, so callers
-  can choose `zone(capacity) { ... }` before entering the block
+  can choose `region(capacity) { ... }` before entering the block
 - allocator traits after trait object and generic impl conventions settle
 - richer diagnostics for raw allocation of ownership-heavy values

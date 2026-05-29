@@ -1874,7 +1874,7 @@ private:
     StmtPtr parse_function_body_item() {
         if (!starts_expression(peek().kind) ||
             is_assignment_statement_start() ||
-            is_zone_block_start() ||
+            is_allocation_block_start() ||
             (check(TokenKind::Identifier) && peek(1).kind == TokenKind::Colon)) {
             return parse_statement();
         }
@@ -1916,8 +1916,11 @@ private:
                kind == TokenKind::LBrace;
     }
 
-    bool is_zone_block_start() const {
-        if (!check(TokenKind::Identifier) || peek().text != "zone") return false;
+    bool is_allocation_block_start() const {
+        if (!check(TokenKind::Identifier) ||
+            (peek().text != "zone" && peek().text != "region")) {
+            return false;
+        }
         if (peek(1).kind == TokenKind::LBrace) return true;
         if (peek(1).kind != TokenKind::LParen) return false;
         int offset = 1;
@@ -1925,17 +1928,18 @@ private:
         return peek(offset).kind == TokenKind::LBrace;
     }
 
-    StmtPtr parse_zone_block() {
-        Token zone_token = expect(TokenKind::Identifier, "expected zone block");
+    StmtPtr parse_allocation_block() {
+        Token zone_token = expect(TokenKind::Identifier, "expected allocation block");
         auto stmt = std::make_unique<Stmt>();
         stmt->kind = StmtKind::ZoneBlock;
         stmt->loc = zone_token.loc;
+        stmt->zone_block_uses_region = zone_token.text == "region";
         if (match(TokenKind::LParen)) {
             if (check(TokenKind::RParen)) {
-                fail(peek().loc, "zone block capacity cannot be empty");
+                fail(peek().loc, zone_token.text + " block capacity cannot be empty");
             }
             stmt->expr = parse_expression();
-            expect(TokenKind::RParen, "expected ) after zone block capacity");
+            expect(TokenKind::RParen, "expected ) after " + zone_token.text + " block capacity");
         }
         set_stmt_statements(*stmt, parse_block());
         return stmt;
@@ -1951,7 +1955,7 @@ private:
             set_stmt_statements(*stmt, parse_block());
             return stmt;
         }
-        if (is_zone_block_start()) return parse_zone_block();
+        if (is_allocation_block_start()) return parse_allocation_block();
         if (check(TokenKind::Identifier) && peek(1).kind == TokenKind::Colon) return parse_labeled_statement();
         if (match(TokenKind::KwLet)) return parse_let_or_variable();
         if (match(TokenKind::KwVar)) return parse_variable(true);

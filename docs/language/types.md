@@ -1216,31 +1216,33 @@ diagnostic names the pointer and the temporary zone source. Associated
 constructor spelling such as `T::new(...)` is supported by ordinary inherent
 impl methods that call `zone::new<T>` or another explicit allocator helper.
 
-A `zone { ... }` statement creates a hidden temporary zone for the block and
-makes it the current allocation zone. Inside the block, a call that is missing
-one `ref mut Zone` parameter can receive that current zone automatically:
+A `region { ... }` statement creates a hidden temporary region for the block
+and makes it the current allocation source. Inside the block, a call that is
+missing one legacy `ref mut Zone` parameter can receive that current source
+automatically through the Region-to-Zone bridge. `zone { ... }` remains
+accepted as compatibility syntax:
 
 ```ari
-zone {
+region {
   let text = std::string::from("hello");
   let line = format!("text = {}", text);
 }
 
-zone(8192) {
+region(8192) {
   let manifest = std::fs::read_to_string("Ari.toml")?;
 }
 ```
 
-`zone { ... }` uses a default capacity of 4096 bytes. Use
-`zone(capacity) { ... }` when the block will build larger strings,
-collections, process output, or filesystem buffers. Explicit zone arguments
-still work and are preferred when data must be allocated in a different
-lifetime than the current block. The current-zone shortcut is lexical: nested
-`zone` blocks shadow outer zones, and the hidden zone is destroyed on every
-control-flow path that leaves the block. The shortcut covers direct calls,
-methods, trait-qualified methods, dyn trait-object methods, and callable
-values such as `fn(ref mut Zone, T) -> U` when exactly one `ref mut Zone`
-argument is omitted.
+`region { ... }` uses a default capacity of 4096 bytes. Use
+`region(capacity) { ... }` when the block will build larger strings,
+collections, process output, or filesystem buffers. Explicit region or zone
+arguments still work and are preferred when data must be allocated in a
+different lifetime than the current block. The current-source shortcut is
+lexical: nested allocation blocks shadow outer ones, and the hidden owner is
+destroyed on every control-flow path that leaves the block. The shortcut
+covers direct calls, methods, trait-qualified methods, dyn trait-object
+methods, and callable values such as `fn(ref mut Zone, T) -> U` when exactly
+one `ref mut Zone` argument is omitted.
 
 Direct local pointers from `zone::alloc<T>` and `zone::new<T>`,
 single-zone pointer-returning calls, source `std::boxed::Box<T>` handles, and

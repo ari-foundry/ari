@@ -466,9 +466,10 @@ so function calls and computed bool/integer expressions work the same as local
 bindings. Named captures can follow local fields and tuple indexes, such as
 `{point.x}` or `{pair.0}`. Use ordinary `{}` with an explicit argument for
 module paths, indexing, method calls, and other computed expressions.
-Ari does not provide an implicit allocation zone in the 0.x language surface,
-so `format!` is a reserved spelling with a targeted diagnostic that points to
-`format_in!`.
+Outside a lexical allocation block, Ari does not provide an implicit
+allocation target, so `format!` produces a targeted diagnostic that points to
+`format_in!`. Inside `region { ... }` or compatibility `zone { ... }`,
+`format!` uses the current allocation source.
 Other prelude expression macros are recognized as unqualified names or paths
 that resolve to the root `std` macro name, such as `std::print!`,
 `std::eprintln!`, `std::format!`, or an alias of `std::format_in!`; arbitrary
@@ -897,31 +898,33 @@ automatically when its declaring scope falls through, before returns, and before
 rejected to avoid hiding the bulk free. Zone allocation is LLVM-hosted today and
 lowers through compiler-emitted `malloc`/`free` runtime helpers.
 
-For ordinary hosted code, prefer a current-zone block when a group of
+For ordinary hosted code, prefer a current region block when a group of
 allocations has one local lifetime:
 
 ```ari
-zone {
+region {
   let title = std::string::from("ari");
   let message = format!("building {}", title);
 }
 
-zone(16384) {
+region(16384) {
   let source = std::fs::read_to_string("src/main.ari")?;
 }
 ```
 
-`zone { ... }` is statement syntax, not a library function. It creates a
-hidden `zone::temp(4096)` binding, makes it the current allocation zone inside
-the block, and destroys it when control leaves. If a function, generic
+`region { ... }` is statement syntax, not a library function. It creates a
+hidden `std::region::Region` owner, makes it the current allocation source
+inside the block, and destroys it when control leaves. `zone { ... }` remains
+available as the low-level compatibility spelling. If a function, generic
 function, ordinary method, associated function, trait-qualified method, or dyn
 trait-object method call is missing exactly one `ref mut Zone` parameter, the
-current zone is inserted there. Callable values with a `fn(...)` or closure
-signature follow the same rule. The explicit spelling remains valid for APIs
-that must allocate into an outer or caller-provided zone.
-The same insertion rule applies to `zone::capacity()`, `zone::remaining()`, and
+current source is inserted there, with Region blocks bridged through
+`std::region::as_zone`. Callable values with a `fn(...)` or closure signature
+follow the same rule. The explicit spelling remains valid for APIs that must
+allocate into an outer or caller-provided region or zone. The same insertion
+rule applies to `zone::capacity()`, `zone::remaining()`, and
 `zone::can_alloc(...)` calls, so code can inspect or preflight the hidden
-scratch zone without naming it.
+scratch source without naming it.
 
 Use `std::allocator::from_region(ref mut region)` when helper code should be
 able to allocate without owning the region lifecycle. Use

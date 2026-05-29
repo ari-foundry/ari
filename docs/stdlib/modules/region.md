@@ -38,6 +38,8 @@ region::can_alloc_array<T>(ref mut Region, count: i64) -> bool
 
 region::reset(ref mut Region) -> void
 region::destroy(region: own Region) -> void
+region { statements... }
+region(capacity) { statements... }
 
 Region::allocator() -> Allocator
 Region::alloc(bytes: i64, align: i64) -> ptr u8
@@ -68,6 +70,34 @@ values.push(10);
 let boxed = region.boxed<i64>(42);
 region::destroy(region);
 ```
+
+For short-lived scratch work, prefer a lexical region block:
+
+```ari
+region {
+  let text = string::from("hello");
+  let rendered = format!("value={}", text);
+}
+
+region(65536) {
+  var values = vec::new<i64>(8);
+  values.push(1);
+  values.push(2);
+}
+```
+
+`region { ... }` creates a hidden `own Region` with
+`region::default_capacity()`, makes it the current allocation source for the
+body, and destroys it on every exit from the block. `region(capacity) { ... }`
+uses the checked `i64` capacity expression instead. The hidden region can
+satisfy legacy `ref mut Zone` parameters through the same narrow
+`region::as_zone` bridge used for explicit `ref mut region` arguments, so older
+zone-backed APIs become pleasant without adding a global heap.
+
+Values allocated inside a lexical region block are temporary. The checker
+rejects returning them, storing them into outer bindings, or otherwise letting
+them outlive the block. Allocate into a named caller-owned `Region` when the
+result must survive.
 
 The method form is equivalent and is the preferred spelling when the region is
 already named:
@@ -169,6 +199,8 @@ needed.
 Today:
 
 - `Region` is an owned wrapper over a private `Zone` field.
+- `region { ... }` lowers to a hidden `Region`, a current allocation source,
+  and an inserted `region::destroy` cleanup at block exit.
 - `region::*` functions and `Region` methods delegate to `zone::*`.
 - `region::as_zone` is exposed as the concrete compatibility bridge, and the
   compiler inserts it when `ref mut Region` is passed to an old
@@ -180,11 +212,11 @@ Today:
 Direction:
 
 - write new user-facing examples with `Region` or `region::*`
+- use `region { ... }` for short-lived scratch work
 - keep `Allocator` as the growth capability for containers and formatters
 - keep `Zone`/`ZoneMetadata` as low-level compatibility names until the
   compiler and stdlib can migrate old APIs without breaking existing programs
-- future syntax can make short-lived regions prettier without adding a hidden
-  ambient heap
+- keep `zone { ... }` as compatibility syntax until older examples migrate
 
 ## Tests
 
@@ -192,6 +224,8 @@ Focused coverage:
 
 - `tests/cases/standard-library/ok/zone/std-region-capability.ari`
 - `tests/cases/standard-library/ok/zone/std-region-zone-bridge.ari`
+- `tests/cases/memory/ok/region-current-block.ari`
+- `tests/cases/memory/errors/region-current-block-escape.ari`
 - `tests/cases/memory/errors/region-zone-bridge-immutable.ari`
 
 Related compatibility coverage:

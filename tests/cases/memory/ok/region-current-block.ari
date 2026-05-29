@@ -1,0 +1,35 @@
+// Covers Region-first lexical allocation blocks.
+fn main() -> i64 {
+  region {
+    let text = std::string::from("ari");
+    if !text.as_slice().equals("ari") {
+      return 1;
+    }
+
+    let formatted = format!("{} {}", text, 7);
+    if !formatted.as_slice().equals("ari 7") {
+      return 2;
+    }
+
+    var values = std::vec::new<i64>(1);
+    values.push(19);
+    values.push(23);
+    if values.get(0) + values.get(1) != 42 {
+      return 3;
+    }
+
+    let boxed = std::boxed::new<i64>(42);
+    if boxed.get() != 42 {
+      return 4;
+    }
+  }
+
+  region(128) {
+    let empty = std::string::empty();
+    if empty.len() != 0 {
+      return 5;
+    }
+  }
+
+  return 0;
+}
