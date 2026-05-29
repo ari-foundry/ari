@@ -8277,7 +8277,41 @@ private:
         return Value{result_type, out, result};
     }
 
+    Value emit_logical_and(const IrExpr& expr) {
+        Value left = emit_expr(*ir_expr_left(expr));
+        std::string left_block = current_label_;
+        std::string rhs_label = label("and.rhs");
+        std::string end_label = label("and.end");
+        line("  br i1 " + left.name + ", label %" + rhs_label + ", label %" + end_label);
+        emit_label(rhs_label);
+        Value right = emit_expr(*ir_expr_right(expr));
+        std::string rhs_block = current_label_;
+        line("  br label %" + end_label);
+        emit_label(end_label);
+        std::string out = temp();
+        line("  " + out + " = phi i1 [ false, %" + left_block + " ], [ " + right.name + ", %" + rhs_block + " ]");
+        return Value{"i1", out, expr.type};
+    }
+
+    Value emit_logical_or(const IrExpr& expr) {
+        Value left = emit_expr(*ir_expr_left(expr));
+        std::string left_block = current_label_;
+        std::string rhs_label = label("or.rhs");
+        std::string end_label = label("or.end");
+        line("  br i1 " + left.name + ", label %" + end_label + ", label %" + rhs_label);
+        emit_label(rhs_label);
+        Value right = emit_expr(*ir_expr_right(expr));
+        std::string rhs_block = current_label_;
+        line("  br label %" + end_label);
+        emit_label(end_label);
+        std::string out = temp();
+        line("  " + out + " = phi i1 [ true, %" + left_block + " ], [ " + right.name + ", %" + rhs_block + " ]");
+        return Value{"i1", out, expr.type};
+    }
+
     Value emit_binary(const IrExpr& expr) {
+        if (expr.op == IrBinaryOp::LogicalAnd) return emit_logical_and(expr);
+        if (expr.op == IrBinaryOp::LogicalOr)  return emit_logical_or(expr);
         Value left = emit_expr(*ir_expr_left(expr));
         Value right = cast_value(emit_expr(*ir_expr_right(expr)), left.ir_type);
         std::string out = temp();
@@ -8289,10 +8323,10 @@ private:
             case IrBinaryOp::Mul: line("  " + out + " = " + std::string(is_float ? "fmul " : "mul ") + left.type + " " + left.name + ", " + right.name); break;
             case IrBinaryOp::Div: line("  " + out + " = " + std::string(is_float ? "fdiv " : (is_unsigned ? "udiv " : "sdiv ")) + left.type + " " + left.name + ", " + right.name); break;
             case IrBinaryOp::Mod: line("  " + out + " = " + std::string(is_unsigned ? "urem " : "srem ") + left.type + " " + left.name + ", " + right.name); break;
-            case IrBinaryOp::BitAnd:
-            case IrBinaryOp::LogicalAnd: line("  " + out + " = and " + left.type + " " + left.name + ", " + right.name); break;
-            case IrBinaryOp::BitOr:
-            case IrBinaryOp::LogicalOr: line("  " + out + " = or " + left.type + " " + left.name + ", " + right.name); break;
+            case IrBinaryOp::BitAnd: line("  " + out + " = and " + left.type + " " + left.name + ", " + right.name); break;
+            case IrBinaryOp::LogicalAnd: break; // handled above
+            case IrBinaryOp::BitOr: line("  " + out + " = or " + left.type + " " + left.name + ", " + right.name); break;
+            case IrBinaryOp::LogicalOr: break; // handled above
             case IrBinaryOp::BitXor: line("  " + out + " = xor " + left.type + " " + left.name + ", " + right.name); break;
             case IrBinaryOp::Shl: line("  " + out + " = shl " + left.type + " " + left.name + ", " + right.name); break;
             case IrBinaryOp::Shr: line("  " + out + " = " + std::string(is_unsigned ? "lshr " : "ashr ") + left.type + " " + left.name + ", " + right.name); break;
