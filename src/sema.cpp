@@ -8092,6 +8092,17 @@ private:
         coerce_expr_to_expected(expr, expected);
     }
 
+    IrExprPtr coerce_zone_allocation_argument_to_expected(SourceLocation loc,
+                                                         IrExprPtr expr,
+                                                         const IrType& expected) override {
+        if (IrExprPtr bridged = try_bridge_region_borrow_to_zone(loc, expr, expected)) {
+            return bridged;
+        }
+        coerce_expr_to_expected(*expr, expected);
+        require_assignable(loc, expected, expr->type);
+        return expr;
+    }
+
     void prefix_temporary_borrow_targets(std::size_t mark, const std::string& target_path) {
         borrow_context_.prefix_temporary_targets(mark, target_path);
     }
@@ -8157,6 +8168,66 @@ private:
             activate_borrow_result(loc, *call, *source, locals);
         }
         return call;
+    }
+
+    bool can_bridge_region_borrow_to_zone(const IrType& expected, const IrType& actual) const {
+        return expected.qualifier == TypeQualifier::MutRef &&
+               actual.qualifier == TypeQualifier::MutRef &&
+               is_zone_borrow_type(expected) &&
+               is_region_borrow_type(actual);
+    }
+
+    IrExprPtr try_bridge_region_borrow_to_zone(SourceLocation loc,
+                                               IrExprPtr& arg,
+                                               const IrType& expected) {
+        if (!arg || !can_bridge_region_borrow_to_zone(expected, arg->type)) {
+            return nullptr;
+        }
+
+        const std::string bridge_name = "std::region::as_zone";
+        auto found = functions_.find(bridge_name);
+        if (found == functions_.end()) {
+            fail(loc,
+                 "Region-to-Zone argument bridge requires '" + bridge_name +
+                     "' from the standard library");
+        }
+
+        const FunctionSig& sig = found->second;
+        if (sig.params.size() != 1 ||
+            !can_bridge_region_borrow_to_zone(sig.result, arg->type)) {
+            fail(loc,
+                 "standard library function '" + bridge_name +
+                     "' does not have the expected Region-to-Zone bridge shape");
+        }
+
+        coerce_expr_to_expected(*arg, sig.params[0]);
+        require_assignable(loc, sig.params[0], arg->type);
+
+        std::vector<IrExprPtr> bridge_args;
+        bridge_args.push_back(std::move(arg));
+        if (!sig.is_extern) {
+            queue_std_function_for_lowering(bridge_name);
+        }
+        BorrowCallContract contract{
+            sig.result,
+            sig.borrow_return_param_index,
+            sig.borrow_return_path,
+            sig.is_extern,
+            sig.borrow_return_contract_explicit
+        };
+        std::optional<BorrowResultSource> source =
+            call_borrow_result_source(loc, bridge_name, contract, bridge_args);
+        IrExprPtr bridged = make_ir_call_expr(
+            loc,
+            bridge_name,
+            sig.result,
+            std::move(bridge_args));
+        if (source) {
+            set_borrow_result_source(*bridged, *source);
+        }
+        coerce_expr_to_expected(*bridged, expected);
+        require_assignable(loc, expected, bridged->type);
+        return bridged;
     }
 
     bool is_diverging_call(const IrExpr& expr) const {
@@ -27706,6 +27777,9 @@ private:
             return slice_view;
         }
         IrExprPtr arg = check_expr_with_expected(arg_expr, expected);
+        if (IrExprPtr bridged = try_bridge_region_borrow_to_zone(arg_expr.loc, arg, expected)) {
+            return bridged;
+        }
         coerce_expr_to_expected(*arg, expected);
         require_assignable(arg_expr.loc, expected, arg->type);
         return arg;
@@ -27716,6 +27790,9 @@ private:
                                                              const IrType& expected) {
         if (IrExprPtr slice_view = try_make_implicit_slice_argument(arg_expr, expected)) {
             return slice_view;
+        }
+        if (IrExprPtr bridged = try_bridge_region_borrow_to_zone(arg_expr.loc, checked, expected)) {
+            return bridged;
         }
         coerce_expr_to_expected(*checked, expected);
         require_assignable(arg_expr.loc, expected, checked->type);
@@ -27733,6 +27810,9 @@ private:
             return slice_view;
         }
         IrExprPtr arg = check_expr_with_expected(arg_expr, expected);
+        if (IrExprPtr bridged = try_bridge_region_borrow_to_zone(arg_expr.loc, arg, expected)) {
+            return bridged;
+        }
         coerce_expr_to_expected(*arg, expected);
         require_call_argument_assignable(
             arg_expr.loc,
@@ -27754,6 +27834,9 @@ private:
     ) {
         if (IrExprPtr slice_view = try_make_implicit_slice_argument(arg_expr, expected)) {
             return slice_view;
+        }
+        if (IrExprPtr bridged = try_bridge_region_borrow_to_zone(arg_expr.loc, checked, expected)) {
+            return bridged;
         }
         coerce_expr_to_expected(*checked, expected);
         require_call_argument_assignable(
@@ -27777,6 +27860,9 @@ private:
     ) {
         if (IrExprPtr slice_view = try_make_implicit_slice_argument(arg_expr, expected)) {
             return slice_view;
+        }
+        if (IrExprPtr bridged = try_bridge_region_borrow_to_zone(arg_expr.loc, checked, expected)) {
+            return bridged;
         }
         coerce_expr_to_expected(*checked, expected);
         require_declared_call_argument_assignable(

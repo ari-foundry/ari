@@ -14,6 +14,9 @@ public:
     virtual IrType resolve_executable_type(const TypeRef& ast_type) = 0;
     virtual IrExprPtr check_expr(const Expr& expr) = 0;
     virtual void coerce_zone_allocation_expr_to_expected(IrExpr& expr, const IrType& expected) = 0;
+    virtual IrExprPtr coerce_zone_allocation_argument_to_expected(SourceLocation loc,
+                                                                 IrExprPtr expr,
+                                                                 const IrType& expected) = 0;
     virtual std::size_t temporary_borrow_mark() const = 0;
     virtual void release_temporary_borrows(std::size_t mark) = 0;
 };

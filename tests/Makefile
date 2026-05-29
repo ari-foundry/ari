@@ -6,6 +6,7 @@ check-debug: $(DEBUG_TARGET) check
 
 TOOL_ENV ?=
 TOOL_ARI ?= $(TARGET)
+CXXFLAGS ?= -std=c++17 -O2 -Wall -Wextra -Wpedantic
 
 check-sanitize: TARGET := env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1 $(SANITIZE_TARGET)
 check-sanitize: TOOL_ENV := env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1
@@ -2465,6 +2466,10 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std9allocator11from_region' $(BUILD_DIR)/prelude/std-region-capability.ll
 	$(TARGET) tests/cases/standard-library/ok/zone/std-region-capability.ari -o $(BUILD_DIR)/prelude/std-region-capability.elf
 	$(BUILD_DIR)/prelude/std-region-capability.elf; code=$$?; test $$code -eq 119
+	$(TARGET) tests/cases/standard-library/ok/zone/std-region-zone-bridge.ari --emit-llvm $(BUILD_DIR)/prelude/std-region-zone-bridge.ll
+	grep -q '_ARNv3std6region7as_zone' $(BUILD_DIR)/prelude/std-region-zone-bridge.ll
+	$(TARGET) tests/cases/standard-library/ok/zone/std-region-zone-bridge.ari -o $(BUILD_DIR)/prelude/std-region-zone-bridge.elf
+	$(BUILD_DIR)/prelude/std-region-zone-bridge.elf; code=$$?; test $$code -eq 41
 	$(TARGET) tests/cases/standard-library/ok/zone/std-zone-backed.ari --emit-llvm $(BUILD_DIR)/prelude/std-zone-backed.ll
 	grep -q '_ARNv3std4zone24of__G_std__vec__Vec_i64_' $(BUILD_DIR)/prelude/std-zone-backed.ll
 	grep -F -q 'define { ptr, i64 } @"_ARNv4impl35std__collections__HashMap_i64__i64_8inherent5entry"' $(BUILD_DIR)/prelude/std-zone-backed.ll
@@ -2480,6 +2485,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/zone/std-zone-introspection.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-zone-introspection.elf; $(BUILD_DIR)/prelude/std-zone-introspection.elf; code=$$?; test $$code -eq 42; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/zone/std-allocator-capability.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-allocator-capability.elf; $(BUILD_DIR)/prelude/std-allocator-capability.elf; code=$$?; test $$code -eq 92; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/zone/std-region-capability.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-region-capability.elf; $(BUILD_DIR)/prelude/std-region-capability.elf; code=$$?; test $$code -eq 119; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/zone/std-region-zone-bridge.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-region-zone-bridge.elf; $(BUILD_DIR)/prelude/std-region-zone-bridge.elf; code=$$?; test $$code -eq 41; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/zone/std-zone-backed.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-zone-backed.elf; $(BUILD_DIR)/prelude/std-zone-backed.elf; code=$$?; test $$code -eq 249; fi
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-alloc-buffer.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-alloc-buffer.ll
 	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/std-vec-alloc-buffer.ll
@@ -6917,6 +6923,8 @@ check-ffi: $(TARGET) check-layout-unit
 	grep -q "cannot use zone pointer 'item' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/ffi/zone-pointer-after-reset.err
 	if $(TARGET) tests/cases/memory/errors/region-string-after-reset.ari -o $(BUILD_DIR)/ffi/region-string-after-reset.elf >$(BUILD_DIR)/ffi/region-string-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'text' after zone 'region' was reset or destroyed" $(BUILD_DIR)/ffi/region-string-after-reset.err
+	if $(TARGET) tests/cases/memory/errors/region-zone-bridge-immutable.ari -o $(BUILD_DIR)/ffi/region-zone-bridge-immutable.elf >$(BUILD_DIR)/ffi/region-zone-bridge-immutable.err 2>&1; then exit 1; fi
+	grep -q "expected ref mut Zone, got ref std::region::Region" $(BUILD_DIR)/ffi/region-zone-bridge-immutable.err
 	if $(TARGET) tests/cases/memory/errors/zone-pointer-enum-payload-after-reset.ari -o $(BUILD_DIR)/ffi/zone-pointer-enum-payload-after-reset.elf >$(BUILD_DIR)/ffi/zone-pointer-enum-payload-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'maybe' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/ffi/zone-pointer-enum-payload-after-reset.err
 	if $(TARGET) tests/cases/memory/errors/zone-pointer-after-borrowed-reset.ari -o $(BUILD_DIR)/ffi/zone-pointer-after-borrowed-reset.elf >$(BUILD_DIR)/ffi/zone-pointer-after-borrowed-reset.err 2>&1; then exit 1; fi

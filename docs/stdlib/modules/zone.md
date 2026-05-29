@@ -11,6 +11,20 @@ handle only needs to grow from existing region-backed storage. Keep
 `std::zone` for compatibility, raw allocation tests, and implementation details
 such as metadata recovery.
 
+When older `std::zone` functions are still useful, callers can usually keep the
+newer `Region` spelling. Passing `ref mut Region` to a parameter typed
+`ref mut Zone` is lowered through `std::region::as_zone` by the compiler:
+
+```ari
+var region = std::region::create(4096);
+let bytes = std::zone::alloc(ref mut region, 64, 1);
+let spare = std::zone::remaining(ref mut region);
+std::region::destroy(region);
+```
+
+This is a compatibility bridge, not a new ambient allocator. The call site
+still has to borrow the region mutably.
+
 `ZoneMetadata` and `ZoneBacked` remain available under `std::zone` as
 compatibility and implementation bridges while the stdlib migrates away from
 metadata-shaped user APIs. They are intentionally not root `std` prelude
@@ -299,6 +313,9 @@ Current-zone blocks are intentionally lexical and conservative:
 - `tests/cases/standard-library/ok/zone/std-zone-introspection.ari` checks
   `zone::capacity`, `zone::used`, `zone::remaining`, the matching
   `ZoneMetadata` methods, reset behavior, and LLVM symbol emission.
+- `tests/cases/standard-library/ok/zone/std-region-zone-bridge.ari` checks
+  that `ref mut Region` can call legacy `ref mut Zone` functions and methods
+  without manually spelling `std::region::as_zone`.
 - `tests/cases/standard-library/ok/zone/std-zone-backed.ari` checks
   `ZoneMetadata`, `ZoneBacked`, `zone::metadata(data)`, `zone::from_zone`,
   `metadata.alloc_array<T>`, `metadata.as_ptr()`,

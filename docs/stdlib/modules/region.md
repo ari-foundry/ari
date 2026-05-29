@@ -107,8 +107,27 @@ region::destroy(region);
 
 Use `std::zone` only when interacting with older APIs, low-level runtime
 tests, or implementation details such as `ZoneMetadata`. `region::as_zone` is
-the narrow compatibility escape for existing functions that still take
+the narrow compatibility operation for existing functions that still take
 `ref mut Zone`; new user-facing APIs should prefer `Region` or `Allocator`.
+
+The compiler applies that compatibility operation for ordinary calls. If a
+legacy API expects `ref mut Zone`, a caller may pass `ref mut region` directly:
+
+```ari
+var region = region::create(4096);
+
+let text = std::string::from_slice_in(ref mut region, "hello");
+var values = std::vec::new<i64>(ref mut region, 2);
+values.push_in(ref mut region, 10);
+let spare = std::zone::remaining(ref mut region);
+
+region::destroy(region);
+```
+
+The bridge is intentionally narrow. The argument must be an explicit mutable
+borrow of `Region`; immutable borrows and owned region values are not silently
+converted. That keeps allocation authority visible while avoiding the old
+`std::region::as_zone(ref mut region)` spelling in routine code.
 
 The convenience methods are deliberately small. They cover the common standard
 handles that otherwise force users to spell `region::as_zone`: owned text,
@@ -151,7 +170,9 @@ Today:
 
 - `Region` is an owned wrapper over a private `Zone` field.
 - `region::*` functions and `Region` methods delegate to `zone::*`.
-- `region::as_zone` is exposed only as a compatibility bridge.
+- `region::as_zone` is exposed as the concrete compatibility bridge, and the
+  compiler inserts it when `ref mut Region` is passed to an old
+  `ref mut Zone` parameter.
 - `Allocator` wraps the current zone-backed allocation metadata.
 - the compiler tracks `Region` as an allocation source and rejects handles
   used after `region.reset()` or `region::destroy(region)`.
@@ -170,6 +191,8 @@ Direction:
 Focused coverage:
 
 - `tests/cases/standard-library/ok/zone/std-region-capability.ari`
+- `tests/cases/standard-library/ok/zone/std-region-zone-bridge.ari`
+- `tests/cases/memory/errors/region-zone-bridge-immutable.ari`
 
 Related compatibility coverage:
 

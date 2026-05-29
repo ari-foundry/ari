@@ -1,0 +1,10 @@
+fn spare(region: ref std::region::Region) -> i64 {
+  return std::zone::remaining(region);
+}
+
+fn main() -> i64 {
+  var region = std::region::create(128);
+  let value = spare(ref region);
+  std::region::destroy(region);
+  return value;
+}

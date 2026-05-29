@@ -10,7 +10,7 @@ pub fn from_zone(zone: ref mut Zone) -> std::allocator::Allocator {
 }
 
 pub fn from_region(region: ref mut std::region::Region) -> std::allocator::Allocator {
-  return std::allocator::from_zone(std::region::as_zone(region));
+  return std::allocator::from_zone(region);
 }
 
 pub fn from_data(data: ptr u8) -> std::allocator::Allocator {

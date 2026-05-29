@@ -41,9 +41,12 @@ keeps the region itself alive. `destroy` consumes the region owner and releases
 the backing storage. Passing a region by `ref mut Region` means the callee may
 allocate from that lifetime but does not own the lifetime.
 
-`region::as_zone(ref mut Region) -> ref mut Zone` exists only as a compatibility
-escape for APIs that have not moved to `Region` yet. New APIs should not expose
-`Zone` unless they are explicitly low-level.
+`region::as_zone(ref mut Region) -> ref mut Zone` exists as the concrete
+compatibility operation for APIs that have not moved to `Region` yet. Source
+code normally does not need to spell it: when a call expects exactly
+`ref mut Zone`, passing `ref mut region` lowers through `region::as_zone`
+automatically. This bridge still requires an explicit mutable region borrow,
+so it does not create a hidden heap or ambient allocation capability.
 
 ## Allocator
 
@@ -97,6 +100,8 @@ The compiler tracks:
 - method calls on owned struct receivers when the method borrows `self`
 - `Region` as a first-class allocation source for zone-backed handles
 - `Allocator` parameters as allocation-capability sources inside helper APIs
+- `ref mut Region` arguments as compatibility input for old `ref mut Zone`
+  parameters by lowering through `region::as_zone`
 
 The model is intentionally diagnostic, not a full formal proof of raw memory
 safety. Raw pointers, casts, manual allocation, and FFI remain explicit escape
@@ -130,6 +135,8 @@ Open work:
 
 - migrate remaining stdlib APIs from `Zone` parameters to `Region`,
   `Allocator`, or `Region` convenience methods
+- keep the Region-to-Zone argument bridge narrow: only explicit
+  `ref mut Region` may satisfy a legacy `ref mut Zone` parameter
 - improve ownership diagnostics for owner-bearing structs beyond the Region
   wrapper case
 - replace compatibility examples that still spell `zone::create` when a

@@ -83,9 +83,10 @@ ZoneAllocationLayout require_zone_allocation_layout(
 IrExprPtr checked_zone_arg(const Expr& arg, ZoneAllocationSemanticContext& context) {
     IrType zone = zone_type(arg.loc, TypeQualifier::MutRef);
     IrExprPtr zone_arg = context.check_expr(arg);
-    context.coerce_zone_allocation_expr_to_expected(*zone_arg, zone);
-    require_assignable(arg.loc, zone, zone_arg->type);
-    return zone_arg;
+    return context.coerce_zone_allocation_argument_to_expected(
+        arg.loc,
+        std::move(zone_arg),
+        zone);
 }
 
 IrExprPtr make_i64_layout_literal(SourceLocation loc, std::uint64_t value) {
