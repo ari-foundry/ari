@@ -24,22 +24,22 @@ platform notes.
 
 ## Summary
 
-- API entries: `3685`
+- API entries: `3723`
 - Modules: `42`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
-| `alloc` | 988 | usable |
+| `alloc` | 1022 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 939 | stable candidate |
 | `hosted` | 1559 | platform-backed |
-| `platform` | 163 | platform-specific |
+| `platform` | 167 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1271 |
-| `method` | 1939 |
+| `fn` | 1293 |
+| `method` | 1955 |
 | `module` | 41 |
 | `struct` | 199 |
 | `trait` | 39 |
@@ -53,11 +53,11 @@ platform notes.
 | --- | --- | ---: |
 | `std` | `core` | 298 |
 | `std::algo` | `alloc` | 41 |
-| `std::allocator` | `alloc` | 25 |
+| `std::allocator` | `alloc` | 27 |
 | `std::ascii` | `core` | 33 |
 | `std::bits` | `core` | 26 |
-| `std::boxed` | `alloc` | 19 |
-| `std::c` | `platform` | 49 |
+| `std::boxed` | `alloc` | 23 |
+| `std::c` | `platform` | 53 |
 | `std::cell` | `alloc` | 44 |
 | `std::cmp` | `core` | 38 |
 | `std::collections` | `alloc` | 415 |
@@ -83,15 +83,15 @@ platform notes.
 | `std::process` | `hosted` | 181 |
 | `std::random` | `alloc/hosted` | 36 |
 | `std::rc` | `alloc` | 32 |
-| `std::region` | `alloc` | 28 |
+| `std::region` | `alloc` | 46 |
 | `std::result` | `core` | 12 |
-| `std::string` | `alloc` | 172 |
+| `std::string` | `alloc` | 177 |
 | `std::sync` | `hosted` | 224 |
 | `std::target` | `platform` | 52 |
 | `std::test` | `hosted` | 32 |
 | `std::thread` | `hosted` | 126 |
 | `std::time` | `hosted` | 74 |
-| `std::vec` | `alloc` | 115 |
+| `std::vec` | `alloc` | 120 |
 | `std::zone` | `alloc` | 32 |
 
 ## `std`
@@ -508,6 +508,7 @@ Tier: `alloc`. Stability reading: usable.
 | `fn std::allocator::from_region` | std region capability tests; docs/stdlib/modules/allocator.md |
 | `fn std::allocator::from_zone` | std allocator capability tests; docs/stdlib/modules/allocator.md |
 | `fn std::allocator::from_zone_metadata` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+| `fn std::allocator::new[T]` | std allocator capability placement test; docs/stdlib/modules/allocator.md |
 | `fn std::allocator::of[T: std::zone::ZoneBacked]` | std allocator capability tests; docs/stdlib/modules/allocator.md |
 | `fn std::allocator::of_mut[T: std::zone::ZoneBacked]` | std allocator capability tests; docs/stdlib/modules/allocator.md |
 | `fn std::allocator::remaining` | std allocator capability tests; docs/stdlib/modules/allocator.md |
@@ -525,6 +526,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::allocator::Allocator::capacity` | std allocator capability tests; docs/stdlib/modules/allocator.md |
 | `method std::allocator::Allocator::equals` | std allocator capability tests; docs/stdlib/modules/allocator.md |
 | `method std::allocator::Allocator::metadata` | std allocator capability tests; docs/stdlib/modules/allocator.md |
+| `method std::allocator::Allocator::new[T]` | std allocator capability placement test; docs/stdlib/modules/allocator.md |
 | `method std::allocator::Allocator::remaining` | std allocator capability tests; docs/stdlib/modules/allocator.md |
 | `method std::allocator::Allocator::used` | std allocator capability tests; docs/stdlib/modules/allocator.md |
 
@@ -641,6 +643,7 @@ Tier: `alloc`. Stability reading: usable.
 | API | Coverage note |
 | --- | --- |
 | `fn std::boxed::new[T]` | check-prelude std-boxed-* provenance tests; docs/dev/test-matrix.md Explicit memory zones row |
+| `fn std::boxed::new_with_allocator[T]` | std region capability allocator-backed box construction test; docs/stdlib/modules/boxed.md |
 
 ### method
 
@@ -652,10 +655,13 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::boxed::Box[T]::as_ref` | check-prelude std-boxed-as-ref-mut shared value borrow with conflict diagnostic; docs/dev/test-matrix.md Explicit memory zones row |
 | `method std::boxed::Box[T]::clear` | check-prelude std-boxed-clear value-drop empty-handle clear; docs/dev/test-matrix.md Explicit memory zones row |
 | `method std::boxed::Box[T]::copy_to` | check-prelude std-boxed-copy-to borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row |
+| `method std::boxed::Box[T]::copy_with_allocator` | std region capability allocator-backed box copy helper; docs/stdlib/modules/boxed.md |
 | `method std::boxed::Box[T]::get` | check-prelude std-boxed-box borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row |
 | `method std::boxed::Box[T]::is_empty` | check-prelude std-boxed-take empty handle contract; docs/dev/test-matrix.md Explicit memory zones row |
 | `method std::boxed::Box[T]::new` | check-prelude prelude-box-root; docs/dev/test-matrix.md Explicit memory zones row |
+| `method std::boxed::Box[T]::new_with_allocator` | std region capability allocator-backed box construction helper; docs/stdlib/modules/boxed.md |
 | `method std::boxed::Box[T]::put_in` | check-prelude std-boxed-put-in same-zone empty-handle refill; docs/dev/test-matrix.md Explicit memory zones row |
+| `method std::boxed::Box[T]::put_with_allocator` | std region capability allocator-backed box refill helper; docs/stdlib/modules/boxed.md |
 | `method std::boxed::Box[T]::replace` | check-prelude std-boxed-replace; docs/dev/test-matrix.md Explicit memory zones row |
 | `method std::boxed::Box[T]::set` | check-prelude std-boxed-box and std-boxed-set-drop-value overwrite drop; docs/dev/test-matrix.md Explicit memory zones row |
 | `method std::boxed::Box[T]::swap` | check-prelude std-boxed-swap; docs/dev/test-matrix.md Explicit memory zones row |
@@ -690,10 +696,14 @@ Tier: `platform`. Stability reading: platform-specific.
 | `fn std::c::from` | check-prelude std-c-interop borrowed Ari string to CStr wrapper; docs/stdlib/modules/c.md |
 | `fn std::c::from_cstr_in` | check-prelude std-c-interop Result-returning CString copy from borrowed CStr; docs/stdlib/modules/c.md |
 | `fn std::c::from_cstr_unchecked_in` | check-prelude std-c-interop assert-on-invalid CString copy from borrowed CStr; docs/stdlib/modules/c.md |
+| `fn std::c::from_cstr_unchecked_with_allocator` | std region capability allocator-backed unchecked CString copy; docs/stdlib/modules/c.md |
+| `fn std::c::from_cstr_with_allocator` | std region capability allocator-backed CString copy; docs/stdlib/modules/c.md |
 | `fn std::c::from_ptr` | check-prelude std-c-interop null-checked Result C string wrapper; docs/stdlib/modules/c.md |
 | `fn std::c::from_ptr_unchecked` | check-prelude std-c-interop assert-on-null borrowed C string wrapper; docs/stdlib/modules/c.md |
 | `fn std::c::from_slice_in` | check-prelude std-c-interop Result-returning CString constructor rejecting interior NUL bytes; docs/stdlib/modules/c.md |
 | `fn std::c::from_slice_unchecked_in` | check-prelude std-c-interop assert-on-invalid zone-backed NUL-terminated CString constructor; docs/stdlib/modules/c.md |
+| `fn std::c::from_slice_unchecked_with_allocator` | std region capability allocator-backed unchecked NUL-terminated CString constructor; docs/stdlib/modules/c.md |
+| `fn std::c::from_slice_with_allocator` | std region capability allocator-backed NUL-terminated CString constructor; docs/stdlib/modules/c.md |
 | `fn std::c::function[T]` | check-prelude std-c-dynamic-function typed dynamic function pointer extraction; docs/stdlib/modules/c.md |
 | `fn std::c::global` | check-prelude std-c-interop dynamic loader flag helper; docs/stdlib/modules/c.md |
 | `fn std::c::is_null` | check-prelude std-c-interop raw pointer null predicate; docs/stdlib/modules/c.md |
@@ -3762,17 +3772,26 @@ Tier: `alloc`. Stability reading: usable.
 | `fn std::region::alloc_array[T]` | std region capability tests; docs/stdlib/modules/region.md |
 | `fn std::region::allocator` | std region capability tests; docs/stdlib/modules/region.md |
 | `fn std::region::as_zone` | std region capability compatibility bridge; docs/stdlib/modules/region.md |
+| `fn std::region::boxed[T]` | std region capability allocator-backed box construction test; docs/stdlib/modules/region.md |
+| `fn std::region::boxed_copy[T]` | std region capability allocator-backed box copy test; docs/stdlib/modules/region.md |
 | `fn std::region::can_alloc` | std region capability tests; docs/stdlib/modules/region.md |
 | `fn std::region::can_alloc_array[T]` | std region capability tests; docs/stdlib/modules/region.md |
 | `fn std::region::capacity` | std region capability tests; docs/stdlib/modules/region.md |
 | `fn std::region::create` | std region capability tests; docs/stdlib/modules/region.md |
+| `fn std::region::cstring` | std region capability allocator-backed CString construction test; docs/stdlib/modules/region.md |
 | `fn std::region::default_capacity` | std region capability tests; docs/stdlib/modules/region.md |
 | `fn std::region::destroy` | std region capability tests; docs/stdlib/modules/region.md |
 | `fn std::region::new[T]` | std region capability tests; docs/stdlib/modules/region.md |
 | `fn std::region::promote[T]` | std region capability tests; docs/stdlib/modules/region.md |
 | `fn std::region::remaining` | std region capability tests; docs/stdlib/modules/region.md |
 | `fn std::region::reset` | std region capability tests; docs/stdlib/modules/region.md |
+| `fn std::region::string` | std region capability allocator-backed String construction test; docs/stdlib/modules/region.md |
+| `fn std::region::string_copy` | std region capability allocator-backed String copy test; docs/stdlib/modules/region.md |
+| `fn std::region::string_with_capacity` | std region capability allocator-backed empty String capacity test; docs/stdlib/modules/region.md |
 | `fn std::region::used` | std region capability tests; docs/stdlib/modules/region.md |
+| `fn std::region::vec[T]` | std region capability allocator-backed Vec construction test; docs/stdlib/modules/region.md |
+| `fn std::region::vec_copy[T]` | std region capability allocator-backed Vec copy test; docs/stdlib/modules/region.md |
+| `fn std::region::vec_from_slice[T]` | std region capability allocator-backed Vec slice copy test; docs/stdlib/modules/region.md |
 
 ### method
 
@@ -3781,14 +3800,23 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::region::Region::alloc` | std region capability tests; docs/stdlib/modules/region.md |
 | `method std::region::Region::alloc_array[T]` | std region capability tests; docs/stdlib/modules/region.md |
 | `method std::region::Region::allocator` | std region capability tests; docs/stdlib/modules/region.md |
+| `method std::region::Region::boxed[T]` | std region capability allocator-backed box construction test; docs/stdlib/modules/region.md |
+| `method std::region::Region::boxed_copy[T]` | std region capability allocator-backed box copy test; docs/stdlib/modules/region.md |
 | `method std::region::Region::can_alloc` | std region capability tests; docs/stdlib/modules/region.md |
 | `method std::region::Region::can_alloc_array[T]` | std region capability tests; docs/stdlib/modules/region.md |
 | `method std::region::Region::capacity` | std region capability tests; docs/stdlib/modules/region.md |
+| `method std::region::Region::cstring` | std region capability allocator-backed CString construction test; docs/stdlib/modules/region.md |
 | `method std::region::Region::new[T]` | std region capability tests; docs/stdlib/modules/region.md |
 | `method std::region::Region::promote[T]` | std region capability tests; docs/stdlib/modules/region.md |
 | `method std::region::Region::remaining` | std region capability tests; docs/stdlib/modules/region.md |
 | `method std::region::Region::reset` | std region capability tests; docs/stdlib/modules/region.md |
+| `method std::region::Region::string` | std region capability allocator-backed String construction test; docs/stdlib/modules/region.md |
+| `method std::region::Region::string_copy` | std region capability allocator-backed String copy test; docs/stdlib/modules/region.md |
+| `method std::region::Region::string_with_capacity` | std region capability allocator-backed empty String capacity test; docs/stdlib/modules/region.md |
 | `method std::region::Region::used` | std region capability tests; docs/stdlib/modules/region.md |
+| `method std::region::Region::vec[T]` | std region capability allocator-backed Vec construction test; docs/stdlib/modules/region.md |
+| `method std::region::Region::vec_copy[T]` | std region capability allocator-backed Vec copy test; docs/stdlib/modules/region.md |
+| `method std::region::Region::vec_from_slice[T]` | std region capability allocator-backed Vec slice copy test; docs/stdlib/modules/region.md |
 
 ### module
 
@@ -3850,14 +3878,17 @@ Tier: `alloc`. Stability reading: usable.
 | `fn std::string::contains` | check-prelude std-string-module-views borrowed byte-slice contains helper; docs/stdlib/modules/string.md |
 | `fn std::string::copy` | check-prelude std-string-natural-api natural borrowed byte copy constructor; docs/stdlib/modules/string.md |
 | `fn std::string::copy_to` | check-prelude std-string-from-copy borrowed source and target reset tests; docs/dev/test-matrix.md Explicit memory zones row |
+| `fn std::string::copy_with_allocator` | std region capability allocator-backed string copy constructor; docs/stdlib/modules/string.md |
 | `fn std::string::empty` | check-prelude std-string-natural-api natural empty owned string constructor; docs/stdlib/modules/string.md |
 | `fn std::string::ends_with` | check-prelude std-string-module-views borrowed byte-slice suffix predicate; docs/stdlib/modules/string.md |
 | `fn std::string::find` | check-prelude std-string-module-views borrowed byte-slice search helper; docs/stdlib/modules/string.md |
 | `fn std::string::from` | check-prelude std-string-natural-api natural Ari string copy constructor; docs/stdlib/modules/string.md |
 | `fn std::string::from_slice_in` | std string from-slice target-zone copy tests; docs/dev/test-matrix.md Explicit memory zones row |
+| `fn std::string::from_slice_with_allocator` | std region capability allocator-backed string copy constructor; docs/stdlib/modules/string.md |
 | `fn std::string::join_in` | check-prelude std-string-split-join allocator-backed byte-slice join helper; docs/stdlib/modules/string.md |
 | `fn std::string::lines` | check-prelude std-string-module-views borrowed newline split helper for parser-style code; docs/stdlib/modules/string.md |
 | `fn std::string::new` | std string handle tests; docs/dev/test-matrix.md Explicit memory zones row |
+| `fn std::string::new_with_allocator` | std region capability allocator-backed string constructor; docs/stdlib/modules/string.md |
 | `fn std::string::os_str` | check-prelude std-string-text-kinds typed borrowed OS-string byte view constructor; docs/stdlib/modules/string.md |
 | `fn std::string::os_string` | check-prelude std-string-text-kinds owned OS-string byte constructor; docs/stdlib/modules/string.md |
 | `fn std::string::os_string_from_slice` | check-prelude std-string-text-kinds owned OS-string text constructor; docs/stdlib/modules/string.md |
@@ -3876,6 +3907,7 @@ Tier: `alloc`. Stability reading: usable.
 | `fn std::string::utf8_string_optional` | check-prelude std-string-text-kinds Option-returning owned UTF-8 string compatibility constructor; docs/stdlib/modules/string.md |
 | `fn std::string::utf8_string_unchecked` | check-prelude std-string-text-kinds asserting owned UTF-8 string constructor; docs/stdlib/modules/string.md |
 | `fn std::string::with_capacity` | std string handle tests; docs/dev/test-matrix.md Explicit memory zones row |
+| `fn std::string::with_capacity_with_allocator` | std region capability allocator-backed raw string constructor; docs/stdlib/modules/string.md |
 
 ### method
 
@@ -3926,6 +3958,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::string::String::contains_text` | check-prelude std-string-natural-api natural exact text search predicate; docs/stdlib/modules/string.md |
 | `method std::string::String::contains_text_ignore_case` | check-prelude std-string-natural-api natural ASCII-insensitive text search predicate; docs/stdlib/modules/string.md |
 | `method std::string::String::copy_to` | check-prelude std-string-copy-to-method borrowed receiver and target reset tests; docs/dev/test-matrix.md Explicit memory zones row |
+| `method std::string::String::copy_with_allocator` | std region capability allocator-backed String copy method; docs/stdlib/modules/string.md |
 | `method std::string::String::count` | check-prelude std-string-search borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `method std::string::String::ends_with` | check-prelude std-string-prefix-suffix borrowed receiver Slice[u8] tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `method std::string::String::ends_with_ignore_case` | check-prelude std-string-ascii-case-helpers borrowed receiver ASCII-only comparison; docs/stdlib/api-reference.md String section |
@@ -4678,8 +4711,11 @@ Tier: `alloc`. Stability reading: usable.
 | `fn std::vec::alloc_buffer[T]` | std vec allocation tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `fn std::vec::collect[T, I: std::Iterator[T]` | check-prelude std-iter-adapters zone-backed iterator collection; docs/stdlib/modules/iter.md |
 | `fn std::vec::from_slice_in[T]` | std vec from-slice target-zone copy tests; docs/dev/test-matrix.md Explicit memory zones row |
+| `fn std::vec::from_slice_with_allocator[T]` | std region capability allocator-backed Vec copy constructor; docs/stdlib/modules/vec.md |
 | `fn std::vec::new[T]` | std vec handle tests; docs/dev/test-matrix.md Explicit memory zones row |
+| `fn std::vec::new_with_allocator[T]` | std region capability allocator-backed Vec constructor; docs/stdlib/modules/vec.md |
 | `fn std::vec::with_capacity[T]` | std RawVec tests; docs/dev/test-matrix.md Explicit memory zones row |
+| `fn std::vec::with_capacity_with_allocator[T]` | std region capability allocator-backed RawVec constructor; docs/stdlib/modules/vec.md |
 
 ### method
 
@@ -4699,6 +4735,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::vec::Vec[T]::contains_slice` | check-prelude std-vec-sequence borrowed subsequence predicate wrapper; docs/stdlib/modules/vec.md |
 | `method std::vec::Vec[T]::copy_from` | check-prelude std-vec-sequence owned target prefix copy wrapper; docs/stdlib/modules/vec.md |
 | `method std::vec::Vec[T]::copy_to` | check-prelude std-vec-copy-to borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row |
+| `method std::vec::Vec[T]::copy_with_allocator` | std region capability allocator-backed Vec copy method; docs/stdlib/modules/vec.md |
 | `method std::vec::Vec[T]::copy_within` | check-prelude std-vec-range-mutation owned vector overlap-safe in-place range copy; docs/stdlib/modules/vec.md |
 | `method std::vec::Vec[T]::count` | check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row |
 | `method std::vec::Vec[T]::dedup` | check-prelude std-vec-sequence owned consecutive duplicate compaction and truncation; docs/stdlib/modules/vec.md |
@@ -4789,6 +4826,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::vec::Vec[T]::upper_bound` | check-prelude std-vec-sequence ordered sequence upper-bound wrapper; docs/stdlib/modules/vec.md |
 | `method std::vec::Vec[T]::upper_bound_by` | check-prelude std-algo-by-helpers comparator sequence upper-bound wrapper; docs/stdlib/modules/vec.md |
 | `method std::vec::Vec[T]::windows` | check-prelude std-vec-sequence borrowed window iterator wrapper; docs/stdlib/modules/vec.md |
+| `method std::vec::Vec[T]::with_allocator` | std region capability allocator-backed associated Vec constructor; docs/stdlib/modules/vec.md |
 | `method std::vec::Vec[T]::with_capacity` | check-prelude std-vec-convenience-api associated explicit-capacity constructor; docs/stdlib/modules/vec.md |
 
 ### module

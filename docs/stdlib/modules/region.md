@@ -25,8 +25,13 @@ region::alloc(ref mut Region, bytes: i64, align: i64) -> ptr u8
 region::alloc_array<T>(ref mut Region, count: i64) -> ptr T
 region::new<T>(ref mut Region, value: T) -> ptr T
 region::string(ref mut Region, bytes: Slice[u8]) -> String
+region::string_with_capacity(ref mut Region, capacity: i64) -> String
+region::string_copy(ref mut Region, ref String) -> String
 region::vec<T>(ref mut Region, capacity: i64) -> Vec[T]
+region::vec_from_slice<T>(ref mut Region, Slice[T]) -> Vec[T]
+region::vec_copy<T>(ref mut Region, ref Vec[T]) -> Vec[T]
 region::boxed<T>(ref mut Region, value: T) -> Box[T]
+region::boxed_copy<T>(ref mut Region, ref Box[T]) -> Box[T]
 region::cstring(ref mut Region, bytes: Slice[u8]) -> Result[CString, Error]
 region::promote<T>(ref mut target, source: ptr T) -> ptr T
 
@@ -46,8 +51,13 @@ Region::alloc(bytes: i64, align: i64) -> ptr u8
 Region::alloc_array<T>(count: i64) -> ptr T
 Region::new<T>(value: T) -> ptr T
 Region::string(bytes: Slice[u8]) -> String
+Region::string_with_capacity(capacity: i64) -> String
+Region::string_copy(ref String) -> String
 Region::vec<T>(capacity: i64) -> Vec[T]
+Region::vec_from_slice<T>(Slice[T]) -> Vec[T]
+Region::vec_copy<T>(ref Vec[T]) -> Vec[T]
 Region::boxed<T>(value: T) -> Box[T]
+Region::boxed_copy<T>(ref Box[T]) -> Box[T]
 Region::cstring(bytes: Slice[u8]) -> Result[CString, Error]
 Region::promote<T>(source: ptr T) -> ptr T
 Region::capacity() -> i64
@@ -67,7 +77,9 @@ var region = region::create(4096);
 let text = region.string("hello");
 var values = region.vec<i64>(4);
 values.push(10);
+let saved_values = region.vec_copy<i64>(ref values);
 let boxed = region.boxed<i64>(42);
+let saved_box = region.boxed_copy<i64>(ref boxed);
 region::destroy(region);
 ```
 
@@ -161,8 +173,11 @@ converted. That keeps allocation authority visible while avoiding the old
 
 The convenience methods are deliberately small. They cover the common standard
 handles that otherwise force users to spell `region::as_zone`: owned text,
-vectors, boxes, and C strings. Once a handle is created from a `Region`, its
-growth methods recover the same allocation source, so `values.push(...)` or
+vectors, boxes, and C strings. Use `string_with_capacity` when a builder-like
+owned string should start empty, `string_copy` / `vec_copy` / `boxed_copy`
+when a value should be copied into a chosen region, and `vec_from_slice` when
+a slice is the source. Once a handle is created from a `Region`, its growth
+methods recover the same allocation source, so `values.push(...)` or
 `text.push(...)` can grow without storing a region field in the handle.
 
 ## Capacity And Failure

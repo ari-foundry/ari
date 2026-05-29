@@ -43,8 +43,10 @@ var region = region::create(4096);
 let value = region.new<i64>(42);
 let bytes = region.alloc_array<u8>(128);
 let text = region.string("hello");
+let text_copy = region.string_copy(ref text);
 var values = region.vec<i64>(4);
 values.push(10);
+let values_copy = region.vec_copy<i64>(ref values);
 region.reset();
 region::destroy(region);
 ```
@@ -90,7 +92,8 @@ User-facing allocation APIs should follow these rules:
 - constructors that choose a lifetime take `ref mut Region`
 - helpers that only need growth take `Allocator`
 - convenience constructors may live on `Region` when they are the clearest
-  user-facing path to a standard handle
+  user-facing path to a standard handle, including copy constructors that move
+  data into an explicitly chosen region
 - `_in` means "allocate into this explicit region"
 - `_to` means "copy into this destination"
 - `Zone`, `ZoneMetadata`, and allocation-header recovery stay in low-level

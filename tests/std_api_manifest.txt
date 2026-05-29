@@ -1098,6 +1098,7 @@ fn std::region::alloc_array[T]|std region capability tests; docs/stdlib/modules/
 fn std::region::allocator|std region capability tests; docs/stdlib/modules/region.md
 fn std::region::as_zone|std region capability compatibility bridge; docs/stdlib/modules/region.md
 fn std::region::boxed[T]|std region capability allocator-backed box construction test; docs/stdlib/modules/region.md
+fn std::region::boxed_copy[T]|std region capability allocator-backed box copy test; docs/stdlib/modules/region.md
 fn std::region::can_alloc|std region capability tests; docs/stdlib/modules/region.md
 fn std::region::can_alloc_array[T]|std region capability tests; docs/stdlib/modules/region.md
 fn std::region::capacity|std region capability tests; docs/stdlib/modules/region.md
@@ -1110,8 +1111,12 @@ fn std::region::promote[T]|std region capability tests; docs/stdlib/modules/regi
 fn std::region::remaining|std region capability tests; docs/stdlib/modules/region.md
 fn std::region::reset|std region capability tests; docs/stdlib/modules/region.md
 fn std::region::string|std region capability allocator-backed String construction test; docs/stdlib/modules/region.md
+fn std::region::string_copy|std region capability allocator-backed String copy test; docs/stdlib/modules/region.md
+fn std::region::string_with_capacity|std region capability allocator-backed empty String capacity test; docs/stdlib/modules/region.md
 fn std::region::used|std region capability tests; docs/stdlib/modules/region.md
 fn std::region::vec[T]|std region capability allocator-backed Vec construction test; docs/stdlib/modules/region.md
+fn std::region::vec_copy[T]|std region capability allocator-backed Vec copy test; docs/stdlib/modules/region.md
+fn std::region::vec_from_slice[T]|std region capability allocator-backed Vec slice copy test; docs/stdlib/modules/region.md
 fn std::slice[T]|Slice construction tests; docs/dev/test-matrix.md Prelude row
 fn std::string::alloc_buffer|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::string::bytes|check-prelude std-string-byte-literals natural borrowed byte view over string literals; docs/stdlib/modules/string.md
@@ -2708,6 +2713,7 @@ method std::region::Region::alloc|std region capability tests; docs/stdlib/modul
 method std::region::Region::alloc_array[T]|std region capability tests; docs/stdlib/modules/region.md
 method std::region::Region::allocator|std region capability tests; docs/stdlib/modules/region.md
 method std::region::Region::boxed[T]|std region capability allocator-backed box construction test; docs/stdlib/modules/region.md
+method std::region::Region::boxed_copy[T]|std region capability allocator-backed box copy test; docs/stdlib/modules/region.md
 method std::region::Region::can_alloc|std region capability tests; docs/stdlib/modules/region.md
 method std::region::Region::can_alloc_array[T]|std region capability tests; docs/stdlib/modules/region.md
 method std::region::Region::capacity|std region capability tests; docs/stdlib/modules/region.md
@@ -2717,8 +2723,12 @@ method std::region::Region::promote[T]|std region capability tests; docs/stdlib/
 method std::region::Region::remaining|std region capability tests; docs/stdlib/modules/region.md
 method std::region::Region::reset|std region capability tests; docs/stdlib/modules/region.md
 method std::region::Region::string|std region capability allocator-backed String construction test; docs/stdlib/modules/region.md
+method std::region::Region::string_copy|std region capability allocator-backed String copy test; docs/stdlib/modules/region.md
+method std::region::Region::string_with_capacity|std region capability allocator-backed empty String capacity test; docs/stdlib/modules/region.md
 method std::region::Region::used|std region capability tests; docs/stdlib/modules/region.md
 method std::region::Region::vec[T]|std region capability allocator-backed Vec construction test; docs/stdlib/modules/region.md
+method std::region::Region::vec_copy[T]|std region capability allocator-backed Vec copy test; docs/stdlib/modules/region.md
+method std::region::Region::vec_from_slice[T]|std region capability allocator-backed Vec slice copy test; docs/stdlib/modules/region.md
 method std::result::ResultMut[T,E]::as_ref|check-prelude prelude-option-result-ref-access downgrade mutable result payload view to shared view; docs/stdlib/modules/option-result.md
 method std::result::ResultMut[T,E]::is_err|check-prelude prelude-option-result-ref-access mutable result error predicate; docs/stdlib/modules/option-result.md
 method std::result::ResultMut[T,E]::is_ok|check-prelude prelude-option-result-ref-access mutable result success predicate; docs/stdlib/modules/option-result.md

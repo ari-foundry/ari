@@ -36,6 +36,14 @@ fn main() -> i64 {
   let text = region.string("ari");
   score = score + text.len();
 
+  let spare_text = region.string_with_capacity(4);
+  if spare_text.len() == 0 {
+    score = score + 3;
+  }
+
+  let copied_text = region.string_copy(ref text);
+  score = score + copied_text.len();
+
   var mutable_text = region.string("a");
   mutable_text.push('b');
   score = score + mutable_text.len();
@@ -49,8 +57,21 @@ fn main() -> i64 {
   grown.push(6);
   score = score + grown.last();
 
+  var source = region.vec<i64>(2);
+  source.push(2);
+  source.push(8);
+
+  let copied_from_slice = region.vec_from_slice<i64>(source.as_slice());
+  score = score + copied_from_slice.first() + copied_from_slice.last();
+
+  let copied_vec = region.vec_copy<i64>(ref source);
+  score = score + copied_vec.len();
+
   let boxed = region.boxed<i64>(13);
   score = score + boxed.get();
+
+  let copied_box = region.boxed_copy<i64>(ref boxed);
+  score = score + copied_box.get();
 
   match region.cstring("ok") {
     Ok(name) => {

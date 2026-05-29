@@ -23,12 +23,32 @@ pub impl std::region::Region {
     return std::region::string(self, bytes);
   }
 
+  fn string_with_capacity(self: ref mut Self, capacity: i64) -> std::string::String {
+    return std::region::string_with_capacity(self, capacity);
+  }
+
+  fn string_copy(self: ref mut Self, value: ref std::string::String) -> std::string::String {
+    return std::region::string_copy(self, value);
+  }
+
   fn vec[T](self: ref mut Self, capacity: i64) -> std::vec::Vec[T] {
     return std::region::vec<T>(self, capacity);
   }
 
+  fn vec_from_slice[T](self: ref mut Self, values: std::Slice[T]) -> std::vec::Vec[T] {
+    return std::region::vec_from_slice<T>(self, values);
+  }
+
+  fn vec_copy[T](self: ref mut Self, value: ref std::vec::Vec[T]) -> std::vec::Vec[T] {
+    return std::region::vec_copy<T>(self, value);
+  }
+
   fn boxed[T](self: ref mut Self, value: T) -> std::boxed::Box[T] {
     return std::region::boxed<T>(self, value);
+  }
+
+  fn boxed_copy[T](self: ref mut Self, value: ref std::boxed::Box[T]) -> std::boxed::Box[T] {
+    return std::region::boxed_copy<T>(self, value);
   }
 
   fn cstring(self: ref mut Self, bytes: std::Slice[u8]) -> std::Result[std::c::CString, std::error::Error] {
@@ -97,14 +117,53 @@ pub fn string(region: ref mut std::region::Region, bytes: std::Slice[u8]) -> std
   return std::string::from_slice_with_allocator(ref allocator, bytes);
 }
 
+pub fn string_with_capacity(
+  region: ref mut std::region::Region,
+  capacity: i64
+) -> std::string::String {
+  let allocator = std::region::allocator(region);
+  return std::string::new_with_allocator(ref allocator, capacity);
+}
+
+pub fn string_copy(
+  region: ref mut std::region::Region,
+  value: ref std::string::String
+) -> std::string::String {
+  let allocator = std::region::allocator(region);
+  return std::string::from_slice_with_allocator(ref allocator, value.as_slice());
+}
+
 pub fn vec[T](region: ref mut std::region::Region, capacity: i64) -> std::vec::Vec[T] {
   let allocator = std::region::allocator(region);
   return std::vec::new_with_allocator<T>(ref allocator, capacity);
 }
 
+pub fn vec_from_slice[T](
+  region: ref mut std::region::Region,
+  values: std::Slice[T]
+) -> std::vec::Vec[T] {
+  let allocator = std::region::allocator(region);
+  return std::vec::from_slice_with_allocator<T>(ref allocator, values);
+}
+
+pub fn vec_copy[T](
+  region: ref mut std::region::Region,
+  value: ref std::vec::Vec[T]
+) -> std::vec::Vec[T] {
+  let allocator = std::region::allocator(region);
+  return value.copy_with_allocator(ref allocator);
+}
+
 pub fn boxed[T](region: ref mut std::region::Region, value: T) -> std::boxed::Box[T] {
   let allocator = std::region::allocator(region);
   return std::boxed::new_with_allocator<T>(ref allocator, value);
+}
+
+pub fn boxed_copy[T](
+  region: ref mut std::region::Region,
+  value: ref std::boxed::Box[T]
+) -> std::boxed::Box[T] {
+  return std::region::boxed<T>(region, value.get());
 }
 
 pub fn cstring(
