@@ -93,7 +93,9 @@ User-facing allocation APIs should follow these rules:
 - helpers that only need growth take `Allocator`
 - convenience constructors may live on `Region` when they are the clearest
   user-facing path to a standard handle, including copy constructors that move
-  data into an explicitly chosen region
+  data into an explicitly chosen region and facade methods for common CLI
+  handles such as environment strings, process commands, captured process
+  output, and temporary paths
 - module-level `*_with_region` functions are the migration spelling for public
   APIs whose older names still take `ref mut Zone`
 - final-form `_in` means "allocate into this explicit region"; during the

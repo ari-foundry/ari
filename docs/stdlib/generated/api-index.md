@@ -24,22 +24,22 @@ platform notes.
 
 ## Summary
 
-- API entries: `3803`
+- API entries: `3850`
 - Modules: `42`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
-| `alloc` | 1061 | usable |
+| `alloc` | 1073 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 959 | stable candidate |
-| `hosted` | 1580 | platform-backed |
+| `hosted` | 1615 | platform-backed |
 | `platform` | 167 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1346 |
-| `method` | 1982 |
+| `fn` | 1369 |
+| `method` | 2006 |
 | `module` | 41 |
 | `struct` | 199 |
 | `trait` | 39 |
@@ -80,10 +80,10 @@ platform notes.
 | `std::os` | `platform` | 62 |
 | `std::parse` | `core` | 103 |
 | `std::path` | `core` | 144 |
-| `std::process` | `hosted` | 181 |
+| `std::process` | `hosted` | 216 |
 | `std::random` | `alloc/hosted` | 36 |
 | `std::rc` | `alloc` | 32 |
-| `std::region` | `alloc` | 76 |
+| `std::region` | `alloc` | 88 |
 | `std::result` | `core` | 12 |
 | `std::string` | `alloc` | 182 |
 | `std::sync` | `hosted` | 224 |
@@ -3486,17 +3486,26 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::process::abort` | check-prelude std-process-abort explicit process abort hook; docs/stdlib/modules/process.md |
 | `fn std::process::arg` | check-prelude std-process-command C-argv argument wrapper for Command; docs/stdlib/modules/process.md |
 | `fn std::process::arg_bytes` | check-prelude std-process-high-level Result-returning C-argv argument wrapper for owned byte text; docs/stdlib/modules/process.md |
+| `fn std::process::arg_bytes_with_region` | check-prelude std-process-high-level Region-backed C-argv argument wrapper for owned byte text; docs/stdlib/modules/process.md |
 | `fn std::process::command` | check-prelude std-process-command natural Command constructor; docs/stdlib/modules/process.md |
+| `fn std::process::command_bytes_with_region` | check-prelude std-process-high-level Region-backed Command constructor from owned byte text; docs/stdlib/modules/process.md |
 | `fn std::process::command_with_args` | check-prelude std-process-command Command constructor with argv slice; docs/stdlib/modules/process.md |
 | `fn std::process::current_dir` | check-prelude std-process-basic Result-returning process-facing owned current directory wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::current_dir_optional` | check-prelude std-process-basic Option-returning process-facing owned current directory wrapper; docs/stdlib/modules/process.md |
+| `fn std::process::current_dir_optional_with_region` | check-prelude std-process-high-level Region-backed optional process-facing current directory wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::current_dir_or_default` | check-prelude std-process-basic owned current directory fallback wrapper; docs/stdlib/modules/process.md |
+| `fn std::process::current_dir_or_default_with_region` | check-prelude std-process-high-level Region-backed process-facing current directory fallback wrapper; docs/stdlib/modules/process.md |
+| `fn std::process::current_dir_with_region` | check-prelude std-process-high-level Region-backed Result-returning process-facing current directory wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::env_var` | check-prelude std-process-command child environment assignment wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::env_var_bytes` | check-prelude std-process-high-level Result-returning child environment assignment wrapper for owned byte text; docs/stdlib/modules/process.md |
+| `fn std::process::env_var_bytes_with_region` | check-prelude std-process-high-level Region-backed child environment assignment wrapper for owned byte text; docs/stdlib/modules/process.md |
 | `fn std::process::exec` | check-prelude std-process-command module-level Command exec wrapper returning Error; docs/stdlib/modules/process.md |
 | `fn std::process::executable_path` | check-prelude std-process-basic Result-returning process-facing owned executable path wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::executable_path_optional` | check-prelude std-process-basic Option-returning process-facing owned executable path wrapper; docs/stdlib/modules/process.md |
+| `fn std::process::executable_path_optional_with_region` | check-prelude std-process-high-level Region-backed optional process-facing executable path wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::executable_path_or_default` | check-prelude std-process-basic owned executable path fallback wrapper; docs/stdlib/modules/process.md |
+| `fn std::process::executable_path_or_default_with_region` | check-prelude std-process-high-level Region-backed process-facing executable path fallback wrapper; docs/stdlib/modules/process.md |
+| `fn std::process::executable_path_with_region` | check-prelude std-process-high-level Region-backed Result-returning process-facing executable path wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::exit` | check-prelude std-process-exit explicit process exit hook; docs/stdlib/modules/process.md |
 | `fn std::process::exit_code` | check-prelude std-process-high-level typed exit code constructor; docs/stdlib/modules/process.md |
 | `fn std::process::exit_status` | check-prelude std-process-command module-level Command typed status wrapper returning Error; docs/stdlib/modules/process.md |
@@ -3517,6 +3526,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::process::kill_signal` | check-prelude std-process-high-level typed signal send helper; docs/stdlib/modules/process.md |
 | `fn std::process::output` | check-prelude std-process-high-level natural Command output capture wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::output_in` | check-prelude std-process-output module-level Command output capture wrapper returning Error; docs/stdlib/modules/process.md |
+| `fn std::process::output_in_with_region` | check-prelude std-process-high-level Region-backed module-level Command output capture wrapper returning Error; docs/stdlib/modules/process.md |
+| `fn std::process::output_with_region` | check-prelude std-process-high-level Region-backed natural Command output capture wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::sig_check` | check-prelude std-process-high-level POSIX signal-zero check helper; docs/stdlib/modules/process.md |
 | `fn std::process::sighup` | check-prelude std-process-high-level POSIX SIGHUP typed signal helper; docs/stdlib/modules/process.md |
 | `fn std::process::sigint` | check-prelude std-process-high-level POSIX SIGINT typed signal helper; docs/stdlib/modules/process.md |
@@ -3534,11 +3545,17 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::process::success_code` | check-prelude std-process-high-level typed success exit code helper; docs/stdlib/modules/process.md |
 | `fn std::process::temp_dir` | check-prelude std-process-high-level default temp directory constructor; docs/stdlib/modules/process.md |
 | `fn std::process::temp_dir_in` | check-prelude std-process-high-level prefixed temp directory constructor; docs/stdlib/modules/process.md |
+| `fn std::process::temp_dir_in_with_region` | check-prelude std-process-high-level Region-backed prefixed temp directory constructor; docs/stdlib/modules/process.md |
+| `fn std::process::temp_dir_with_region` | check-prelude std-process-high-level Region-backed default temp directory constructor; docs/stdlib/modules/process.md |
 | `fn std::process::temp_file` | check-prelude std-process-high-level default temp file constructor; docs/stdlib/modules/process.md |
 | `fn std::process::temp_file_in` | check-prelude std-process-high-level prefixed temp file constructor; docs/stdlib/modules/process.md |
+| `fn std::process::temp_file_in_with_region` | check-prelude std-process-high-level Region-backed prefixed temp file constructor; docs/stdlib/modules/process.md |
+| `fn std::process::temp_file_with_region` | check-prelude std-process-high-level Region-backed default temp file constructor; docs/stdlib/modules/process.md |
 | `fn std::process::terminate` | check-prelude std-process-command SIGTERM convenience helper; docs/stdlib/modules/process.md |
 | `fn std::process::try_current_dir` | check-prelude std-process-high-level optional current directory wrapper; docs/stdlib/modules/process.md |
+| `fn std::process::try_current_dir_with_region` | check-prelude std-process-high-level Region-backed optional current directory wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::try_executable_path` | check-prelude std-process-high-level optional executable path wrapper; docs/stdlib/modules/process.md |
+| `fn std::process::try_executable_path_with_region` | check-prelude std-process-high-level Region-backed optional executable path wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::uid` | check-prelude std-process-identity current process user id hook; docs/stdlib/modules/process.md |
 | `fn std::process::wait` | check-prelude std-process-result POSIX wait direct Error result helper; docs/stdlib/modules/process.md |
 | `fn std::process::wait_raw` | check-prelude std-process-fork-wait POSIX wait raw compatibility hook; docs/stdlib/modules/process.md |
@@ -3573,23 +3590,35 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::process::ChildPipes::wait_status` | check-prelude std-process-piped piped child typed ExitStatus wait helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::arg` | check-prelude std-process-high-level explicit-zone single argv append helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::arg_bytes` | check-prelude std-process-high-level Result-returning explicit-zone argv append helper for owned byte text; docs/stdlib/modules/process.md |
+| `method std::process::Command::arg_bytes_with_region` | check-prelude std-process-high-level Region-backed argv append helper for owned byte text; docs/stdlib/modules/process.md |
 | `method std::process::Command::arg_value` | check-prelude std-process-high-level explicit-zone Arg append helper; docs/stdlib/modules/process.md |
+| `method std::process::Command::arg_value_with_region` | check-prelude std-process-high-level Region-backed Arg append helper; docs/stdlib/modules/process.md |
+| `method std::process::Command::arg_with_region` | check-prelude std-process-high-level Region-backed single argv append helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::args` | check-prelude std-process-command replace command argument slice; docs/stdlib/modules/process.md |
 | `method std::process::Command::clear_env` | check-prelude std-process-high-level child environment clearing policy helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::current_dir` | check-prelude std-process-command child working-directory setup; docs/stdlib/modules/process.md |
 | `method std::process::Command::current_dir_bytes` | check-prelude std-process-high-level Result-returning child working-directory setup from owned byte text; docs/stdlib/modules/process.md |
+| `method std::process::Command::current_dir_bytes_with_region` | check-prelude std-process-high-level Region-backed child working-directory setup from owned byte text; docs/stdlib/modules/process.md |
 | `method std::process::Command::current_dir_path` | check-prelude std-process-high-level Result-returning child working-directory setup from PathBytes; docs/stdlib/modules/process.md |
+| `method std::process::Command::current_dir_path_with_region` | check-prelude std-process-high-level Region-backed child working-directory setup from PathBytes; docs/stdlib/modules/process.md |
 | `method std::process::Command::env` | check-prelude std-process-command explicit-zone single environment append helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::env_bytes` | check-prelude std-process-high-level Result-returning environment append helper for owned byte text; docs/stdlib/modules/process.md |
+| `method std::process::Command::env_bytes_with_region` | check-prelude std-process-high-level Region-backed environment append helper for owned byte text; docs/stdlib/modules/process.md |
 | `method std::process::Command::env_value` | check-prelude std-process-high-level explicit-zone EnvVar append helper; docs/stdlib/modules/process.md |
+| `method std::process::Command::env_value_with_region` | check-prelude std-process-high-level Region-backed EnvVar append helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::env_values` | check-prelude std-process-command replace child environment assignment slice; docs/stdlib/modules/process.md |
 | `method std::process::Command::env_var` | check-prelude std-process-high-level explicit-zone environment append compatibility helper; docs/stdlib/modules/process.md |
+| `method std::process::Command::env_var_with_region` | check-prelude std-process-high-level Region-backed environment append compatibility helper; docs/stdlib/modules/process.md |
+| `method std::process::Command::env_with_region` | check-prelude std-process-high-level Region-backed single environment append helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::exec` | check-prelude std-process-command replace current process with command; docs/stdlib/modules/process.md |
 | `method std::process::Command::exit_status` | check-prelude std-process-exit-status spawn and wait for typed ExitStatus; docs/stdlib/modules/process.md |
 | `method std::process::Command::inherit_env` | check-prelude std-process-high-level child environment inheritance policy helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::new` | check-prelude std-process-command associated Command constructor; docs/stdlib/modules/process.md |
+| `method std::process::Command::new_bytes_with_region` | check-prelude std-process-high-level Region-backed associated Command constructor from owned byte text; docs/stdlib/modules/process.md |
 | `method std::process::Command::output` | check-prelude std-process-high-level natural output capture alias; docs/stdlib/modules/process.md |
 | `method std::process::Command::output_in` | check-prelude std-process-output zone-backed stdout/stderr capture helper; docs/stdlib/modules/process.md |
+| `method std::process::Command::output_in_with_region` | check-prelude std-process-high-level Region-backed stdout/stderr capture helper; docs/stdlib/modules/process.md |
+| `method std::process::Command::output_with_region` | check-prelude std-process-high-level Region-backed natural output capture alias; docs/stdlib/modules/process.md |
 | `method std::process::Command::spawn` | check-prelude std-process-command spawn child process handle; docs/stdlib/modules/process.md |
 | `method std::process::Command::spawn_piped` | check-prelude std-process-piped spawn child with interactive stdin/stdout/stderr pipe handles; docs/stdlib/modules/process.md |
 | `method std::process::Command::spawn_with_stdin_file` | check-prelude std-process-stdin spawn child process with file-backed stdin; docs/stdlib/modules/process.md |
@@ -3599,14 +3628,18 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::process::Command::status_with_stdin` | check-prelude std-process-stdin bounded pipe-backed stdin status helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::status_with_stdin_file` | check-prelude std-process-stdin child status with file-backed stdin; docs/stdlib/modules/process.md |
 | `method std::process::Command::status_with_stdin_file_bytes` | check-prelude std-process-stdin Result-returning child status with owned byte path stdin; docs/stdlib/modules/process.md |
+| `method std::process::Command::status_with_stdin_file_bytes_with_region` | check-prelude std-process-high-level Region-backed child status with owned byte path stdin; docs/stdlib/modules/process.md |
 | `method std::process::Command::status_with_stdin_file_path` | check-prelude std-process-stdin Result-returning child status with PathBytes stdin; docs/stdlib/modules/process.md |
+| `method std::process::Command::status_with_stdin_file_path_with_region` | check-prelude std-process-high-level Region-backed child status with PathBytes stdin; docs/stdlib/modules/process.md |
 | `method std::process::Command::status_with_stdin_null` | check-prelude std-process-stdin child status with /dev/null stdin; docs/stdlib/modules/process.md |
 | `method std::process::Command::status_with_stdin_string` | check-prelude std-process-stdin string stdin status helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::with_arg` | check-prelude std-process-high-level by-value chainable single argv append helper; docs/stdlib/modules/process.md |
+| `method std::process::Command::with_arg_with_region` | check-prelude std-process-high-level Region-backed by-value chainable single argv append helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::with_args` | check-prelude std-process-command associated Command constructor with argv slice; docs/stdlib/modules/process.md |
 | `method std::process::Command::with_clear_env` | check-prelude std-process-high-level by-value child environment clearing policy helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::with_current_dir` | check-prelude std-process-high-level by-value chainable child working-directory setup helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::with_env` | check-prelude std-process-high-level by-value chainable environment append helper; docs/stdlib/modules/process.md |
+| `method std::process::Command::with_env_with_region` | check-prelude std-process-high-level Region-backed by-value chainable environment append helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::with_inherit_env` | check-prelude std-process-high-level by-value child environment inheritance policy helper; docs/stdlib/modules/process.md |
 | `method std::process::ExitCode::code` | check-prelude std-process-high-level typed exit code accessor; docs/stdlib/modules/process.md |
 | `method std::process::ExitCode::exit` | check-prelude std-process-high-level typed process exit helper; docs/stdlib/modules/process.md |
@@ -3637,8 +3670,10 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::process::Output::status` | check-prelude std-process-output captured exit-status accessor; docs/stdlib/modules/process.md |
 | `method std::process::Output::stderr` | check-prelude std-process-output captured stderr byte view; docs/stdlib/modules/process.md |
 | `method std::process::Output::stderr_string` | check-prelude std-process-output UTF-8 stderr copy returning Error on invalid data; docs/stdlib/modules/process.md |
+| `method std::process::Output::stderr_string_with_region` | check-prelude std-process-high-level Region-backed UTF-8 stderr copy returning Error on invalid data; docs/stdlib/modules/process.md |
 | `method std::process::Output::stdout` | check-prelude std-process-output captured stdout byte view; docs/stdlib/modules/process.md |
 | `method std::process::Output::stdout_string` | check-prelude std-process-output UTF-8 stdout copy returning Error on invalid data; docs/stdlib/modules/process.md |
+| `method std::process::Output::stdout_string_with_region` | check-prelude std-process-high-level Region-backed UTF-8 stdout copy returning Error on invalid data; docs/stdlib/modules/process.md |
 | `method std::process::Signal::is_check` | check-prelude std-process-high-level signal-zero predicate; docs/stdlib/modules/process.md |
 | `method std::process::Signal::raw` | check-prelude std-process-high-level raw signal accessor; docs/stdlib/modules/process.md |
 | `method std::process::TempDir::as_c_str` | check-prelude std-process-high-level temp directory C path view; docs/stdlib/modules/process.md |
@@ -3838,6 +3873,12 @@ Tier: `alloc`. Stability reading: usable.
 | `fn std::region::path_join` | check-prelude std-path-buf Region facade for owned path join; docs/stdlib/modules/region.md |
 | `fn std::region::path_join_many` | check-prelude std-path-buf Region facade for owned multi-part path join; docs/stdlib/modules/region.md |
 | `fn std::region::path_normalize` | check-prelude std-path-buf Region facade for owned lexical path normalization; docs/stdlib/modules/region.md |
+| `fn std::region::process_arg` | check-prelude std-process-high-level Region facade for C-argv argument construction; docs/stdlib/modules/region.md |
+| `fn std::region::process_command` | check-prelude std-process-high-level Region facade for Command construction from owned byte text; docs/stdlib/modules/region.md |
+| `fn std::region::process_env_var` | check-prelude std-process-high-level Region facade for child environment assignment construction; docs/stdlib/modules/region.md |
+| `fn std::region::process_output` | check-prelude std-process-high-level Region facade for Command output capture; docs/stdlib/modules/region.md |
+| `fn std::region::process_temp_dir` | check-prelude std-process-high-level Region facade for temporary directory construction; docs/stdlib/modules/region.md |
+| `fn std::region::process_temp_file` | check-prelude std-process-high-level Region facade for temporary file construction; docs/stdlib/modules/region.md |
 | `fn std::region::promote[T]` | std region capability tests; docs/stdlib/modules/region.md |
 | `fn std::region::remaining` | std region capability tests; docs/stdlib/modules/region.md |
 | `fn std::region::reset` | std region capability tests; docs/stdlib/modules/region.md |
@@ -3878,6 +3919,12 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::region::Region::path_join` | check-prelude std-path-buf Region facade for owned path join; docs/stdlib/modules/region.md |
 | `method std::region::Region::path_join_many` | check-prelude std-path-buf Region facade for owned multi-part path join; docs/stdlib/modules/region.md |
 | `method std::region::Region::path_normalize` | check-prelude std-path-buf Region facade for owned lexical path normalization; docs/stdlib/modules/region.md |
+| `method std::region::Region::process_arg` | check-prelude std-process-high-level Region method for C-argv argument construction; docs/stdlib/modules/region.md |
+| `method std::region::Region::process_command` | check-prelude std-process-high-level Region method for Command construction from owned byte text; docs/stdlib/modules/region.md |
+| `method std::region::Region::process_env_var` | check-prelude std-process-high-level Region method for child environment assignment construction; docs/stdlib/modules/region.md |
+| `method std::region::Region::process_output` | check-prelude std-process-high-level Region method for Command output capture; docs/stdlib/modules/region.md |
+| `method std::region::Region::process_temp_dir` | check-prelude std-process-high-level Region method for temporary directory construction; docs/stdlib/modules/region.md |
+| `method std::region::Region::process_temp_file` | check-prelude std-process-high-level Region method for temporary file construction; docs/stdlib/modules/region.md |
 | `method std::region::Region::promote[T]` | std region capability tests; docs/stdlib/modules/region.md |
 | `method std::region::Region::remaining` | std region capability tests; docs/stdlib/modules/region.md |
 | `method std::region::Region::reset` | std region capability tests; docs/stdlib/modules/region.md |

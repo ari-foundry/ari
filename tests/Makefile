@@ -1689,6 +1689,11 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-high-level.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-high-level.ll
 	grep -F -q "std__process__Command8inherent3arg" $(BUILD_DIR)/prelude/std-process-high-level.ll
 	grep -F -q "std__process__Command8inherent9arg_bytes" $(BUILD_DIR)/prelude/std-process-high-level.ll
+	grep -F -q "std__process__Command8inherent21new_bytes_with_region" $(BUILD_DIR)/prelude/std-process-high-level.ll
+	grep -F -q "std__process__Command8inherent21arg_bytes_with_region" $(BUILD_DIR)/prelude/std-process-high-level.ll
+	grep -F -q "std__process__Command8inherent21env_bytes_with_region" $(BUILD_DIR)/prelude/std-process-high-level.ll
+	grep -F -q "std__process__Command8inherent28current_dir_path_with_region" $(BUILD_DIR)/prelude/std-process-high-level.ll
+	grep -F -q "std__process__Command8inherent18output_with_region" $(BUILD_DIR)/prelude/std-process-high-level.ll
 	grep -F -q "std__process__Command8inherent3env" $(BUILD_DIR)/prelude/std-process-high-level.ll
 	grep -F -q "std__process__Command8inherent9env_bytes" $(BUILD_DIR)/prelude/std-process-high-level.ll
 	grep -F -q "std__process__Command8inherent9clear_env" $(BUILD_DIR)/prelude/std-process-high-level.ll
@@ -1700,9 +1705,17 @@ check-prelude: $(TARGET)
 	grep -F -q "std__process__Command8inherent16with_inherit_env" $(BUILD_DIR)/prelude/std-process-high-level.ll
 	grep -F -q "std__process__Command8inherent16with_current_dir" $(BUILD_DIR)/prelude/std-process-high-level.ll
 	grep -F -q "std7process9arg_bytes" $(BUILD_DIR)/prelude/std-process-high-level.ll
+	grep -F -q "std7process21arg_bytes_with_region" $(BUILD_DIR)/prelude/std-process-high-level.ll
 	grep -F -q "std7process13env_var_bytes" $(BUILD_DIR)/prelude/std-process-high-level.ll
+	grep -F -q "std7process25env_var_bytes_with_region" $(BUILD_DIR)/prelude/std-process-high-level.ll
+	grep -F -q "std7process25command_bytes_with_region" $(BUILD_DIR)/prelude/std-process-high-level.ll
+	grep -F -q "std7process18output_with_region" $(BUILD_DIR)/prelude/std-process-high-level.ll
 	grep -F -q "std7process9temp_file" $(BUILD_DIR)/prelude/std-process-high-level.ll
+	grep -F -q "std7process21temp_file_with_region" $(BUILD_DIR)/prelude/std-process-high-level.ll
 	grep -F -q "std7process8temp_dir" $(BUILD_DIR)/prelude/std-process-high-level.ll
+	grep -F -q "std7process20temp_dir_with_region" $(BUILD_DIR)/prelude/std-process-high-level.ll
+	grep -F -q "std6region15process_command" $(BUILD_DIR)/prelude/std-process-high-level.ll
+	grep -F -q "std6region14process_output" $(BUILD_DIR)/prelude/std-process-high-level.ll
 	grep -F -q "std7process11kill_signal" $(BUILD_DIR)/prelude/std-process-high-level.ll
 	grep -F -q '@"mkstemp"' $(BUILD_DIR)/prelude/std-process-high-level.ll
 	grep -F -q '@"mkdtemp"' $(BUILD_DIR)/prelude/std-process-high-level.ll

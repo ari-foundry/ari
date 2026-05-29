@@ -30,6 +30,7 @@ fn c(value: Slice[u8]) -> std::c::CStr {
 
 fn main() -> i64 {
   var zone = zone::temp(2048);
+  var region = region::create(4096);
   var score = 0;
 
   var cmd = process::Command::new(c("sh"))
@@ -101,6 +102,55 @@ fn main() -> i64 {
   if bytes_cmd.current_dir_bytes(ref mut zone, bad.as_slice()).is_err() {
     score = score + 71;
   }
+  assert(process::arg_bytes_with_region(ref mut region, bad.as_slice()).is_err());
+  assert(process::env_var_bytes_with_region(ref mut region, "ARI_BAD", bad.as_slice()).is_err());
+
+  match process::Command::new_bytes_with_region(ref mut region, "sh") {
+    Ok(region_cmd_value) => {
+      var region_cmd = region_cmd_value;
+      assert(region_cmd.arg_bytes_with_region(ref mut region, "-c").is_ok());
+      assert(region_cmd.arg_bytes_with_region(
+        ref mut region,
+        "test \"$ARI_REGION_PROCESS\" = ok && pwd | grep -q '/build/prelude$' && exit 0"
+      ).is_ok());
+      assert(region_cmd.env_bytes_with_region(ref mut region, "ARI_REGION_PROCESS", "ok").is_ok());
+      assert(region_cmd.current_dir_path_with_region(ref mut region, "build/prelude").is_ok());
+      assert(status_is(region_cmd.status(), 0));
+    }
+    Err(_) => {
+      panic();
+    }
+  }
+
+  assert(region.process_arg("-c").is_ok());
+  assert(region.process_env_var("ARI_REGION_PROCESS", "ok").is_ok());
+  match region.process_command("sh") {
+    Ok(region_facade_cmd_value) => {
+      var region_facade_cmd = region_facade_cmd_value;
+      assert(region_facade_cmd.arg_bytes_with_region(ref mut region, "-c").is_ok());
+      assert(region_facade_cmd.arg_bytes_with_region(ref mut region, "printf region").is_ok());
+      match region.process_output(ref region_facade_cmd) {
+        Ok(region_output_value) => {
+          var region_output = region_output_value;
+          match region_output.stdout_string_with_region(ref mut region) {
+            Ok(region_text) => {
+              assert(region_text.equals_text("region"));
+            }
+            Err(_) => {
+              panic();
+            }
+          }
+          assert(region_output.stderr_string_with_region(ref mut region).is_ok());
+        }
+        Err(_) => {
+          panic();
+        }
+      }
+    }
+    Err(_) => {
+      panic();
+    }
+  }
 
   let ok = process::success_code();
   let fail = process::failure_code();
@@ -166,9 +216,17 @@ fn main() -> i64 {
   if process::try_current_dir(ref mut zone).is_some() {
     score = score + 37;
   }
+  assert(process::try_current_dir_with_region(ref mut region).is_some());
+  assert(process::current_dir_with_region(ref mut region).is_ok());
+  assert(process::current_dir_optional_with_region(ref mut region).is_some());
+  assert(!process::current_dir_or_default_with_region(ref mut region).is_empty());
   if process::try_executable_path(ref mut zone).is_some() {
     score = score + 41;
   }
+  assert(process::try_executable_path_with_region(ref mut region).is_some());
+  assert(process::executable_path_with_region(ref mut region).is_ok());
+  assert(process::executable_path_optional_with_region(ref mut region).is_some());
+  assert(!process::executable_path_or_default_with_region(ref mut region).is_empty());
 
   match process::temp_file(ref mut zone) {
     Ok(temp_value) => {
@@ -194,6 +252,29 @@ fn main() -> i64 {
     Err(_) => {}
   }
 
+  match process::temp_file_with_region(ref mut region) {
+    Ok(region_temp_value) => {
+      var region_temp = region_temp_value;
+      assert(region_temp.path().len > 0);
+      assert(unit_ok(region_temp.close()));
+      assert(unit_ok(region_temp.remove()));
+    }
+    Err(_) => {
+      panic();
+    }
+  }
+
+  match region.process_temp_dir() {
+    Ok(region_dir) => {
+      assert(region_dir.path().len > 0);
+      assert(unit_ok(region_dir.remove()));
+    }
+    Err(_) => {
+      panic();
+    }
+  }
+
+  region::destroy(region);
   assert_eq_i64(score, 695);
   return score;
 }

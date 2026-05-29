@@ -184,6 +184,13 @@ pub fn arg_bytes(zone: ref mut Zone, value: std::Slice[u8]) -> std::Result[std::
   }
 }
 
+pub fn arg_bytes_with_region(
+  region: ref mut std::region::Region,
+  value: std::Slice[u8]
+) -> std::Result[std::process::Arg, std::error::Error] {
+  return std::process::arg_bytes(std::region::as_zone(region), value);
+}
+
 pub fn env_var(name: std::c::CStr, value: std::c::CStr) -> std::process::EnvVar {
   return std::process::EnvVar {
     name: name,
@@ -210,8 +217,23 @@ pub fn env_var_bytes(
   });
 }
 
+pub fn env_var_bytes_with_region(
+  region: ref mut std::region::Region,
+  name: std::Slice[u8],
+  value: std::Slice[u8]
+) -> std::Result[std::process::EnvVar, std::error::Error] {
+  return std::process::env_var_bytes(std::region::as_zone(region), name, value);
+}
+
 pub fn command(program: std::c::CStr) -> std::process::Command {
   return std::process::Command::new(program);
+}
+
+pub fn command_bytes_with_region(
+  region: ref mut std::region::Region,
+  program: std::Slice[u8]
+) -> std::Result[std::process::Command, std::error::Error] {
+  return std::process::Command::new_bytes_with_region(region, program);
 }
 
 pub fn command_with_args(program: std::c::CStr, args: std::Slice[std::process::Arg]) -> std::process::Command {
@@ -264,36 +286,94 @@ pub fn output(command: ref std::process::Command, zone: ref mut Zone) -> std::Re
   return command.output(zone);
 }
 
+pub fn output_in_with_region(
+  command: ref std::process::Command,
+  region: ref mut std::region::Region
+) -> std::Result[std::process::Output, std::error::Error] {
+  return command.output_in_with_region(region);
+}
+
+pub fn output_with_region(
+  command: ref std::process::Command,
+  region: ref mut std::region::Region
+) -> std::Result[std::process::Output, std::error::Error] {
+  return command.output_with_region(region);
+}
+
 pub fn executable_path(zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
   return std::env::executable_path(zone);
+}
+
+pub fn executable_path_with_region(
+  region: ref mut std::region::Region
+) -> std::Result[std::string::String, std::error::Error] {
+  return std::env::executable_path_with_region(region);
 }
 
 pub fn executable_path_or_default(zone: ref mut Zone) -> std::string::String {
   return std::env::executable_path_or_default(zone);
 }
 
+pub fn executable_path_or_default_with_region(region: ref mut std::region::Region) -> std::string::String {
+  return std::env::executable_path_or_default_with_region(region);
+}
+
 pub fn executable_path_optional(zone: ref mut Zone) -> std::Option[std::string::String] {
   return std::env::executable_path_optional(zone);
+}
+
+pub fn executable_path_optional_with_region(
+  region: ref mut std::region::Region
+) -> std::Option[std::string::String] {
+  return std::env::executable_path_optional_with_region(region);
 }
 
 pub fn try_executable_path(zone: ref mut Zone) -> std::Option[std::string::String] {
   return std::process::executable_path_optional(zone);
 }
 
+pub fn try_executable_path_with_region(
+  region: ref mut std::region::Region
+) -> std::Option[std::string::String] {
+  return std::process::executable_path_optional_with_region(region);
+}
+
 pub fn current_dir(zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
   return std::env::current_dir(zone);
+}
+
+pub fn current_dir_with_region(
+  region: ref mut std::region::Region
+) -> std::Result[std::string::String, std::error::Error] {
+  return std::env::current_dir_with_region(region);
 }
 
 pub fn current_dir_or_default(zone: ref mut Zone) -> std::string::String {
   return std::env::current_dir_or_default(zone);
 }
 
+pub fn current_dir_or_default_with_region(region: ref mut std::region::Region) -> std::string::String {
+  return std::env::current_dir_or_default_with_region(region);
+}
+
 pub fn current_dir_optional(zone: ref mut Zone) -> std::Option[std::string::String] {
   return std::env::current_dir_optional(zone);
 }
 
+pub fn current_dir_optional_with_region(
+  region: ref mut std::region::Region
+) -> std::Option[std::string::String] {
+  return std::env::current_dir_optional_with_region(region);
+}
+
 pub fn try_current_dir(zone: ref mut Zone) -> std::Option[std::string::String] {
   return std::process::current_dir_optional(zone);
+}
+
+pub fn try_current_dir_with_region(
+  region: ref mut std::region::Region
+) -> std::Option[std::string::String] {
+  return std::process::current_dir_optional_with_region(region);
 }
 
 fn non_normal_exit_error() -> std::error::Error {
@@ -825,8 +905,21 @@ pub fn temp_file_in(
   });
 }
 
+pub fn temp_file_in_with_region(
+  region: ref mut std::region::Region,
+  prefix: std::Slice[u8]
+) -> std::Result[std::process::TempFile, std::error::Error] {
+  return std::process::temp_file_in(std::region::as_zone(region), prefix);
+}
+
 pub fn temp_file(zone: ref mut Zone) -> std::Result[std::process::TempFile, std::error::Error] {
   return std::process::temp_file_in(zone, "/tmp/ari-file-");
+}
+
+pub fn temp_file_with_region(
+  region: ref mut std::region::Region
+) -> std::Result[std::process::TempFile, std::error::Error] {
+  return std::process::temp_file_in_with_region(region, "/tmp/ari-file-");
 }
 
 pub fn temp_dir_in(
@@ -849,8 +942,21 @@ pub fn temp_dir_in(
   });
 }
 
+pub fn temp_dir_in_with_region(
+  region: ref mut std::region::Region,
+  prefix: std::Slice[u8]
+) -> std::Result[std::process::TempDir, std::error::Error] {
+  return std::process::temp_dir_in(std::region::as_zone(region), prefix);
+}
+
 pub fn temp_dir(zone: ref mut Zone) -> std::Result[std::process::TempDir, std::error::Error] {
   return std::process::temp_dir_in(zone, "/tmp/ari-dir-");
+}
+
+pub fn temp_dir_with_region(
+  region: ref mut std::region::Region
+) -> std::Result[std::process::TempDir, std::error::Error] {
+  return std::process::temp_dir_in_with_region(region, "/tmp/ari-dir-");
 }
 
 pub fn kill_signal(pid: i64, signal: std::process::Signal) -> std::Result[(), std::error::Error] {
@@ -1092,6 +1198,13 @@ pub impl std::process::Output {
     }
   }
 
+  fn stdout_string_with_region(
+    self: ref Self,
+    region: ref mut std::region::Region
+  ) -> std::Result[std::string::String, std::error::Error] {
+    return self.stdout_string(std::region::as_zone(region));
+  }
+
   fn stderr(self: ref Self) -> std::Slice[u8] {
     return self.stderr_bytes.slice(0, self.stderr_bytes.len());
   }
@@ -1106,6 +1219,13 @@ pub impl std::process::Output {
         return std::Ok<std::string::String, std::error::Error>(text);
       }
     }
+  }
+
+  fn stderr_string_with_region(
+    self: ref Self,
+    region: ref mut std::region::Region
+  ) -> std::Result[std::string::String, std::error::Error] {
+    return self.stderr_string(std::region::as_zone(region));
   }
 }
 
@@ -1230,6 +1350,22 @@ pub impl std::process::Command {
     };
   }
 
+  fn new_bytes_with_region(
+    region: ref mut std::region::Region,
+    program: std::Slice[u8]
+  ) -> std::Result[std::process::Command, std::error::Error] {
+    match std::c::from_slice_in(std::region::as_zone(region), program) {
+      std::Ok(program_c) => {
+        return std::Ok<std::process::Command, std::error::Error>(
+          std::process::Command::new(program_c.as_c_str())
+        );
+      }
+      std::Err(reason) => {
+        return std::Err<std::process::Command, std::error::Error>(reason);
+      }
+    }
+  }
+
   fn with_args(program: std::c::CStr, args: std::Slice[std::process::Arg]) -> std::process::Command {
     return std::process::Command {
       program: program,
@@ -1247,6 +1383,14 @@ pub impl std::process::Command {
     self.arg_value(zone, std::process::arg(value));
   }
 
+  fn arg_with_region(
+    self: ref mut Self,
+    region: ref mut std::region::Region,
+    value: std::c::CStr
+  ) -> void {
+    self.arg(std::region::as_zone(region), value);
+  }
+
   fn arg_value(self: ref mut Self, zone: ref mut Zone, value: std::process::Arg) -> void {
     let old_len = self.arg_values.len;
     let storage = std::zone::alloc_array<std::process::Arg>(zone, old_len + 1);
@@ -1259,6 +1403,14 @@ pub impl std::process::Command {
     self.arg_values = std::Slice<std::process::Arg> { data: storage, len: old_len + 1 };
   }
 
+  fn arg_value_with_region(
+    self: ref mut Self,
+    region: ref mut std::region::Region,
+    value: std::process::Arg
+  ) -> void {
+    self.arg_value(std::region::as_zone(region), value);
+  }
+
   fn arg_bytes(self: ref mut Self, zone: ref mut Zone, value: std::Slice[u8]) -> std::Result[(), std::error::Error] {
     match std::process::arg_bytes(zone, value) {
       std::Ok(arg_value) => {
@@ -1269,6 +1421,14 @@ pub impl std::process::Command {
         return std::Err<(), std::error::Error>(reason);
       }
     }
+  }
+
+  fn arg_bytes_with_region(
+    self: ref mut Self,
+    region: ref mut std::region::Region,
+    value: std::Slice[u8]
+  ) -> std::Result[(), std::error::Error] {
+    return self.arg_bytes(std::region::as_zone(region), value);
   }
 
   fn env_values(self: ref mut Self, values: std::Slice[std::process::EnvVar]) -> void {
@@ -1305,8 +1465,26 @@ pub impl std::process::Command {
     self.env_value(zone, std::process::env_var(name, value));
   }
 
+  fn env_with_region(
+    self: ref mut Self,
+    region: ref mut std::region::Region,
+    name: std::c::CStr,
+    value: std::c::CStr
+  ) -> void {
+    self.env(std::region::as_zone(region), name, value);
+  }
+
   fn env_var(self: ref mut Self, zone: ref mut Zone, name: std::c::CStr, value: std::c::CStr) -> void {
     self.env(zone, name, value);
+  }
+
+  fn env_var_with_region(
+    self: ref mut Self,
+    region: ref mut std::region::Region,
+    name: std::c::CStr,
+    value: std::c::CStr
+  ) -> void {
+    self.env_var(std::region::as_zone(region), name, value);
   }
 
   fn env_value(self: ref mut Self, zone: ref mut Zone, value: std::process::EnvVar) -> void {
@@ -1330,6 +1508,14 @@ pub impl std::process::Command {
     self.env_values = next_env;
   }
 
+  fn env_value_with_region(
+    self: ref mut Self,
+    region: ref mut std::region::Region,
+    value: std::process::EnvVar
+  ) -> void {
+    self.env_value(std::region::as_zone(region), value);
+  }
+
   fn env_bytes(
     self: ref mut Self,
     zone: ref mut Zone,
@@ -1345,6 +1531,15 @@ pub impl std::process::Command {
         return std::Err<(), std::error::Error>(reason);
       }
     }
+  }
+
+  fn env_bytes_with_region(
+    self: ref mut Self,
+    region: ref mut std::region::Region,
+    name: std::Slice[u8],
+    value: std::Slice[u8]
+  ) -> std::Result[(), std::error::Error] {
+    return self.env_bytes(std::region::as_zone(region), name, value);
   }
 
   fn current_dir(self: ref mut Self, path: std::c::CStr) -> void {
@@ -1363,8 +1558,24 @@ pub impl std::process::Command {
     }
   }
 
+  fn current_dir_bytes_with_region(
+    self: ref mut Self,
+    region: ref mut std::region::Region,
+    path: std::Slice[u8]
+  ) -> std::Result[(), std::error::Error] {
+    return self.current_dir_bytes(std::region::as_zone(region), path);
+  }
+
   fn current_dir_path(self: ref mut Self, zone: ref mut Zone, path: std::path::PathBytes) -> std::Result[(), std::error::Error] {
     return self.current_dir_bytes(zone, path.as_slice());
+  }
+
+  fn current_dir_path_with_region(
+    self: ref mut Self,
+    region: ref mut std::region::Region,
+    path: std::path::PathBytes
+  ) -> std::Result[(), std::error::Error] {
+    return self.current_dir_path(std::region::as_zone(region), path);
   }
 
   fn with_arg(self, zone: ref mut Zone, value: std::c::CStr) -> std::process::Command {
@@ -1373,9 +1584,30 @@ pub impl std::process::Command {
     return command;
   }
 
+  fn with_arg_with_region(
+    self,
+    region: ref mut std::region::Region,
+    value: std::c::CStr
+  ) -> std::process::Command {
+    var command = self;
+    command.arg_with_region(region, value);
+    return command;
+  }
+
   fn with_env(self, zone: ref mut Zone, name: std::c::CStr, value: std::c::CStr) -> std::process::Command {
     var command = self;
     command.env(zone, name, value);
+    return command;
+  }
+
+  fn with_env_with_region(
+    self,
+    region: ref mut std::region::Region,
+    name: std::c::CStr,
+    value: std::c::CStr
+  ) -> std::process::Command {
+    var command = self;
+    command.env_with_region(region, name, value);
     return command;
   }
 
@@ -1591,12 +1823,28 @@ pub impl std::process::Command {
     }
   }
 
+  fn status_with_stdin_file_bytes_with_region(
+    self: ref Self,
+    region: ref mut std::region::Region,
+    path: std::Slice[u8]
+  ) -> std::Result[std::process::ExitStatus, std::error::Error] {
+    return self.status_with_stdin_file_bytes(std::region::as_zone(region), path);
+  }
+
   fn status_with_stdin_file_path(
     self: ref Self,
     zone: ref mut Zone,
     path: std::path::PathBytes
   ) -> std::Result[std::process::ExitStatus, std::error::Error] {
     return self.status_with_stdin_file_bytes(zone, path.as_slice());
+  }
+
+  fn status_with_stdin_file_path_with_region(
+    self: ref Self,
+    region: ref mut std::region::Region,
+    path: std::path::PathBytes
+  ) -> std::Result[std::process::ExitStatus, std::error::Error] {
+    return self.status_with_stdin_file_path(std::region::as_zone(region), path);
   }
 
   fn status_with_stdin_null(self: ref Self) -> std::Result[std::process::ExitStatus, std::error::Error] {
@@ -1878,6 +2126,20 @@ pub impl std::process::Command {
 
   fn output(self: ref Self, zone: ref mut Zone) -> std::Result[std::process::Output, std::error::Error] {
     return self.output_in(zone);
+  }
+
+  fn output_in_with_region(
+    self: ref Self,
+    region: ref mut std::region::Region
+  ) -> std::Result[std::process::Output, std::error::Error] {
+    return self.output_in(std::region::as_zone(region));
+  }
+
+  fn output_with_region(
+    self: ref Self,
+    region: ref mut std::region::Region
+  ) -> std::Result[std::process::Output, std::error::Error] {
+    return self.output_in_with_region(region);
   }
 }
 

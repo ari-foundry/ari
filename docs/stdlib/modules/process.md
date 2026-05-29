@@ -51,9 +51,12 @@ process::sigkill()
 process::sigterm()
 process::arg(value)
 process::arg_bytes(zone, value) -> Result[process::Arg, process::Error]
+process::arg_bytes_with_region(region, value) -> Result[process::Arg, process::Error]
 process::env_var(name, value)
 process::env_var_bytes(zone, name, value) -> Result[process::EnvVar, process::Error]
+process::env_var_bytes_with_region(region, name, value) -> Result[process::EnvVar, process::Error]
 process::command(program)
+process::command_bytes_with_region(region, program) -> Result[process::Command, process::Error]
 process::command_with_args(program, args)
 process::spawn(command)
 process::spawn_piped(command)
@@ -64,22 +67,36 @@ process::status_with_stdin_string(command, text) -> Result[process::ExitStatus, 
 process::exit_status(command)
 process::output_in(command, zone)
 process::output(command, zone)
+process::output_in_with_region(command, region)
+process::output_with_region(command, region)
 process::exec(command)
 process::kill(pid, signal)
 process::kill_signal(pid, signal)
 process::terminate(pid)
 process::current_dir(ref mut zone) -> Result[String, process::Error]
+process::current_dir_with_region(ref mut region) -> Result[String, process::Error]
 process::current_dir_or_default(ref mut zone) -> String
+process::current_dir_or_default_with_region(ref mut region) -> String
 process::current_dir_optional(ref mut zone) -> Option[String]
+process::current_dir_optional_with_region(ref mut region) -> Option[String]
 process::try_current_dir(ref mut zone) -> Option[String]
+process::try_current_dir_with_region(ref mut region) -> Option[String]
 process::executable_path(ref mut zone) -> Result[String, process::Error]
+process::executable_path_with_region(ref mut region) -> Result[String, process::Error]
 process::executable_path_or_default(ref mut zone) -> String
+process::executable_path_or_default_with_region(ref mut region) -> String
 process::executable_path_optional(ref mut zone) -> Option[String]
+process::executable_path_optional_with_region(ref mut region) -> Option[String]
 process::try_executable_path(ref mut zone) -> Option[String]
+process::try_executable_path_with_region(ref mut region) -> Option[String]
 process::temp_file(zone)
+process::temp_file_with_region(region)
 process::temp_file_in(zone, prefix)
+process::temp_file_in_with_region(region, prefix)
 process::temp_dir(zone)
+process::temp_dir_with_region(region)
 process::temp_dir_in(zone, prefix)
+process::temp_dir_in_with_region(region, prefix)
 
 process::ChildStdin
 process::ChildStdout
@@ -87,24 +104,36 @@ process::ChildStderr
 process::ChildPipes
 
 process::Command::new(program)
+process::Command::new_bytes_with_region(region, program)
 process::Command::with_args(program, args)
 Command::arg(zone, value)
+Command::arg_with_region(region, value)
 Command::arg_bytes(zone, value) -> Result[(), process::Error]
+Command::arg_bytes_with_region(region, value) -> Result[(), process::Error]
 Command::arg_value(zone, value)
+Command::arg_value_with_region(region, value)
 Command::args(args)
 Command::clear_env()
 Command::env(zone, name, value)
+Command::env_with_region(region, name, value)
 Command::env_bytes(zone, name, value) -> Result[(), process::Error]
+Command::env_bytes_with_region(region, name, value) -> Result[(), process::Error]
 Command::env_values(env_values)
 Command::env_var(zone, name, value)
+Command::env_var_with_region(region, name, value)
 Command::env_value(zone, value)
+Command::env_value_with_region(region, value)
 Command::inherit_env()
 Command::current_dir(path)
 Command::current_dir_bytes(zone, path) -> Result[(), process::Error]
+Command::current_dir_bytes_with_region(region, path) -> Result[(), process::Error]
 Command::current_dir_path(zone, path) -> Result[(), process::Error]
+Command::current_dir_path_with_region(region, path) -> Result[(), process::Error]
 Command::with_arg(zone, value)
+Command::with_arg_with_region(region, value)
 Command::with_clear_env()
 Command::with_env(zone, name, value)
+Command::with_env_with_region(region, name, value)
 Command::with_inherit_env()
 Command::with_current_dir(path)
 Command::spawn()
@@ -116,12 +145,16 @@ Command::status_with_stdin(values) -> Result[process::ExitStatus, process::Error
 Command::status_with_stdin_string(text) -> Result[process::ExitStatus, process::Error]
 Command::status_with_stdin_file(path) -> Result[process::ExitStatus, process::Error]
 Command::status_with_stdin_file_bytes(zone, path) -> Result[process::ExitStatus, process::Error]
+Command::status_with_stdin_file_bytes_with_region(region, path) -> Result[process::ExitStatus, process::Error]
 Command::status_with_stdin_file_path(zone, path) -> Result[process::ExitStatus, process::Error]
+Command::status_with_stdin_file_path_with_region(region, path) -> Result[process::ExitStatus, process::Error]
 Command::status_with_stdin_null() -> Result[process::ExitStatus, process::Error]
 Command::status_code() -> Result[i64, process::Error]
 Command::exit_status()
 Command::output_in(zone)
+Command::output_in_with_region(region)
 Command::output(zone)
+Command::output_with_region(region)
 Command::exec()
 
 ExitCode::raw()
@@ -158,8 +191,10 @@ Output::exit_status()
 Output::is_success()
 Output::stdout()
 Output::stdout_string(zone)
+Output::stdout_string_with_region(region)
 Output::stderr()
 Output::stderr_string(zone)
+Output::stderr_string_with_region(region)
 
 TempFile::path()
 TempFile::as_c_str()
@@ -260,15 +295,17 @@ redundant allocator handle in `Command`. The zone must outlive the call to
 There are two ergonomic construction styles:
 
 ```ari
+var region = region::create(4096);
 var cmd = process::Command::new("sh");
-cmd.arg(ref mut zone, "-c");
-cmd.arg(ref mut zone, "exit 0");
-cmd.env(ref mut zone, "ARI_MODE", "test");
+cmd.arg_with_region(ref mut region, "-c");
+cmd.arg_with_region(ref mut region, "exit 0");
+cmd.env_with_region(ref mut region, "ARI_MODE", "test");
 
 var chained = process::Command::new("sh")
-  .with_arg(ref mut zone, "-c")
-  .with_arg(ref mut zone, "exit 0")
-  .with_env(ref mut zone, "ARI_MODE", "test");
+  .with_arg_with_region(ref mut region, "-c")
+  .with_arg_with_region(ref mut region, "exit 0")
+  .with_env_with_region(ref mut region, "ARI_MODE", "test");
+region::destroy(region);
 ```
 
 The mutating `arg`/`env` methods return `void` because they take both
@@ -278,6 +315,11 @@ parameters. The `with_*` methods take the command by value, append using the
 explicit zone, and return the updated command, so they support arix-style
 builder chains without hiding allocation.
 
+Prefer the `*_with_region` forms in new public code. They keep the chosen
+allocation lifetime visible while using the public `Region` capability instead
+of the low-level `Zone` compatibility type. The older `zone` methods remain so
+existing code and low-level tests do not need to move all at once.
+
 Use `process::arg("...")` and `process::env_var("NAME", "value")` for string
 literals and other borrowed C-string-shaped values. Use `arg_bytes`,
 `env_var_bytes`, `Command::arg_bytes`, `Command::env_bytes`,
@@ -286,6 +328,11 @@ comes from an owned `String`, `PathBuf`, `Slice[u8]`, or `PathBytes`. These
 byte-boundary helpers allocate NUL-terminated storage in the caller's zone,
 return `Result`, and reject interior NUL bytes as `Error(InvalidInput)` through
 the shared C-string boundary helpers.
+
+The Region variants (`arg_bytes_with_region`, `env_var_bytes_with_region`,
+`Command::new_bytes_with_region`, `Command::arg_bytes_with_region`,
+`Command::env_bytes_with_region`, and `Command::current_dir_path_with_region`)
+perform the same checks while allocating from a named public `Region`.
 
 `status()` spawns the command, waits for it, and returns
 `Result[ExitStatus, Error]` so natural fallible process APIs preserve signal
@@ -352,7 +399,9 @@ The module-level wrappers `process::spawn(ref command)`,
 `process::status_with_stdin_string(ref command, text)`,
 `process::spawn_piped(ref command)`, `process::exit_status(ref command)`,
 `process::output_in(ref command, ref mut zone)`,
-`process::output(ref command, ref mut zone)`, and
+`process::output(ref command, ref mut zone)`,
+`process::output_in_with_region(ref command, ref mut region)`,
+`process::output_with_region(ref command, ref mut region)`, and
 `process::exec(ref command)` call the matching `Command` methods. They exist so
 code can use either builder method style or the direct `process::spawn(cmd)`
 shape common in other standard libraries without losing `Error` detail.
@@ -381,6 +430,9 @@ the captured bytes. `stdout_string(zone)` and `stderr_string(zone)` validate the
 captured bytes as UTF-8, copy them into a zone-owned `String`, and return
 `Error(InvalidData)` for non-UTF-8 output. The `_in` suffix is intentional:
 captured output owns buffers, so the caller chooses the allocation zone.
+Use `output_in_with_region`, `output_with_region`,
+`stdout_string_with_region`, and `stderr_string_with_region` when that caller
+chosen lifetime is represented by a public `Region`.
 
 Arguments use `process::arg("...")` rather than raw `string` slices so the
 builder can keep an executable-friendly C argv representation. Environment
@@ -409,7 +461,9 @@ drain stdout/stderr.
 only the success payload, `try_current_dir` and `try_executable_path` are
 compatibility aliases for those optional forms, and `_or_default` wrappers keep
 the older empty-string fallback behavior while still returning owned `String`.
-Use the explicit `_text` family only at raw borrowed-runtime boundaries.
+The `*_with_region` variants allocate those `String` values from a public
+`Region`; prefer them in new CLI-oriented code. Use the explicit `_text` family
+only at raw borrowed-runtime boundaries.
 
 `temp_file(zone)` and `temp_dir(zone)` create unique paths under `/tmp` on the
 current hosted backend. The `_in` variants accept a path prefix. Temp paths are
@@ -418,6 +472,9 @@ owned by the returned handle; `TempFile` owns the file descriptor until
 `TempFile::close()` preserves close failures as `Result[(), Error]`;
 `close_bool()` is the compatibility helper for callers that intentionally only
 need a success flag.
+`temp_file_with_region`, `temp_file_in_with_region`,
+`temp_dir_with_region`, and `temp_dir_in_with_region` allocate the temporary
+path storage from a public `Region`.
 
 ## Example
 

@@ -122,6 +122,37 @@ pub impl std::region::Region {
     return std::region::env_executable_path(self);
   }
 
+  fn process_command(self: ref mut Self, program: std::Slice[u8]) -> std::Result[std::process::Command, std::error::Error] {
+    return std::region::process_command(self, program);
+  }
+
+  fn process_arg(self: ref mut Self, value: std::Slice[u8]) -> std::Result[std::process::Arg, std::error::Error] {
+    return std::region::process_arg(self, value);
+  }
+
+  fn process_env_var(
+    self: ref mut Self,
+    name: std::Slice[u8],
+    value: std::Slice[u8]
+  ) -> std::Result[std::process::EnvVar, std::error::Error] {
+    return std::region::process_env_var(self, name, value);
+  }
+
+  fn process_output(
+    self: ref mut Self,
+    command: ref std::process::Command
+  ) -> std::Result[std::process::Output, std::error::Error] {
+    return std::region::process_output(self, command);
+  }
+
+  fn process_temp_file(self: ref mut Self) -> std::Result[std::process::TempFile, std::error::Error] {
+    return std::region::process_temp_file(self);
+  }
+
+  fn process_temp_dir(self: ref mut Self) -> std::Result[std::process::TempDir, std::error::Error] {
+    return std::region::process_temp_dir(self);
+  }
+
   fn promote[T](self: ref mut Self, source: ptr T) -> ptr T {
     return std::region::promote<T>(self, source);
   }
@@ -333,6 +364,47 @@ pub fn env_executable_path(
   region: ref mut std::region::Region
 ) -> std::Result[std::string::String, std::error::Error] {
   return std::env::executable_path_with_region(region);
+}
+
+pub fn process_command(
+  region: ref mut std::region::Region,
+  program: std::Slice[u8]
+) -> std::Result[std::process::Command, std::error::Error] {
+  return std::process::command_bytes_with_region(region, program);
+}
+
+pub fn process_arg(
+  region: ref mut std::region::Region,
+  value: std::Slice[u8]
+) -> std::Result[std::process::Arg, std::error::Error] {
+  return std::process::arg_bytes_with_region(region, value);
+}
+
+pub fn process_env_var(
+  region: ref mut std::region::Region,
+  name: std::Slice[u8],
+  value: std::Slice[u8]
+) -> std::Result[std::process::EnvVar, std::error::Error] {
+  return std::process::env_var_bytes_with_region(region, name, value);
+}
+
+pub fn process_output(
+  region: ref mut std::region::Region,
+  command: ref std::process::Command
+) -> std::Result[std::process::Output, std::error::Error] {
+  return std::process::output_with_region(command, region);
+}
+
+pub fn process_temp_file(
+  region: ref mut std::region::Region
+) -> std::Result[std::process::TempFile, std::error::Error] {
+  return std::process::temp_file_with_region(region);
+}
+
+pub fn process_temp_dir(
+  region: ref mut std::region::Region
+) -> std::Result[std::process::TempDir, std::error::Error] {
+  return std::process::temp_dir_with_region(region);
 }
 
 pub fn promote[T](target: ref mut std::region::Region, source: ptr T) -> ptr T {

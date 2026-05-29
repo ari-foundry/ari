@@ -48,6 +48,12 @@ region::env_args_os(ref mut Region) -> Vec[OsStr]
 region::env_program_name(ref mut Region) -> Result[String, Error]
 region::env_current_dir(ref mut Region) -> Result[String, Error]
 region::env_executable_path(ref mut Region) -> Result[String, Error]
+region::process_command(ref mut Region, program: Slice[u8]) -> Result[process::Command, Error]
+region::process_arg(ref mut Region, value: Slice[u8]) -> Result[process::Arg, Error]
+region::process_env_var(ref mut Region, name: Slice[u8], value: Slice[u8]) -> Result[process::EnvVar, Error]
+region::process_output(ref mut Region, ref process::Command) -> Result[process::Output, Error]
+region::process_temp_file(ref mut Region) -> Result[process::TempFile, Error]
+region::process_temp_dir(ref mut Region) -> Result[process::TempDir, Error]
 region::promote<T>(ref mut target, source: ptr T) -> ptr T
 
 region::capacity(ref mut Region) -> i64
@@ -89,6 +95,12 @@ Region::env_args_os() -> Vec[OsStr]
 Region::env_program_name() -> Result[String, Error]
 Region::env_current_dir() -> Result[String, Error]
 Region::env_executable_path() -> Result[String, Error]
+Region::process_command(program: Slice[u8]) -> Result[process::Command, Error]
+Region::process_arg(value: Slice[u8]) -> Result[process::Arg, Error]
+Region::process_env_var(name: Slice[u8], value: Slice[u8]) -> Result[process::EnvVar, Error]
+Region::process_output(ref process::Command) -> Result[process::Output, Error]
+Region::process_temp_file() -> Result[process::TempFile, Error]
+Region::process_temp_dir() -> Result[process::TempDir, Error]
 Region::promote<T>(source: ptr T) -> ptr T
 Region::capacity() -> i64
 Region::used() -> i64
@@ -114,6 +126,7 @@ let manifest = region.path("Ari.toml");
 let cache = region.path_join("target", "cache");
 let args = region.env_args();
 let compiler = region.env_var("ARI_COMPILER");
+let sh = region.process_command("sh").unwrap();
 region::destroy(region);
 ```
 
@@ -207,7 +220,7 @@ converted. That keeps allocation authority visible while avoiding the old
 
 The convenience methods are deliberately small. They cover the common standard
 handles that otherwise force users to spell `region::as_zone`: owned text,
-vectors, boxes, C strings, owned path buffers, and owned process environment
+vectors, boxes, C strings, owned path buffers, process commands, and owned process environment
 text. Use `string_with_capacity` when a builder-like owned string should start empty,
 `string_copy` / `vec_copy` / `boxed_copy` when a value should be copied into a
 chosen region, and `vec_from_slice` when a slice is the source. Use `path`,
@@ -215,8 +228,11 @@ chosen region, and `vec_from_slice` when a slice is the source. Use `path`,
 `current_dir_join` for path buffers whose storage belongs to the region. Use
 `env_args`, `env_arg`, `env_get`, `env_var`, `env_current_dir`, and
 `env_executable_path` when a CLI needs owned process text without carrying a
-separate `Zone` parameter through every call. Once a handle is created from a
-`Region`, its growth methods recover the same allocation source, so
+separate `Zone` parameter through every call. Use `process_command`,
+`process_arg`, `process_env_var`, `process_output`, `process_temp_file`, and
+`process_temp_dir` for child-process construction and captured output that
+should share the same region lifetime as the surrounding CLI scratch data.
+Once a handle is created from a `Region`, its growth methods recover the same allocation source, so
 `values.push(...)` or `text.push(...)` can grow without storing a region field
 in the handle.
 
@@ -269,8 +285,9 @@ Direction:
 - write new user-facing examples with `Region` or `region::*`
 - use `region { ... }` for short-lived scratch work
 - prefer `*_with_region` stdlib helpers or `Region` facade methods when a
-  function returns owned text, vectors, boxes, C strings, paths, or process
-  environment strings
+  function returns owned text, vectors, boxes, C strings, paths, process
+  environment strings, process command arguments, captured process output, or
+  temporary process paths
 - keep `Allocator` as the growth capability for containers and formatters
 - keep `Zone`/`ZoneMetadata` as low-level compatibility names until the
   compiler and stdlib can migrate old APIs without breaking existing programs
@@ -283,6 +300,7 @@ Focused coverage:
 - `tests/cases/standard-library/ok/zone/std-region-capability.ari`
 - `tests/cases/standard-library/ok/zone/std-region-zone-bridge.ari`
 - `tests/cases/standard-library/ok/path/std-path-buf.ari`
+- `tests/cases/standard-library/ok/process/std-process-high-level.ari`
 - `tests/cases/memory/ok/region-current-block.ari`
 - `tests/cases/memory/errors/region-current-block-escape.ari`
 - `tests/cases/memory/errors/region-zone-bridge-immutable.ari`
