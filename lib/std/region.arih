@@ -153,6 +153,102 @@ pub impl std::region::Region {
     return std::region::process_temp_dir(self);
   }
 
+  fn io_read_all[R: std::io::Reader](self: ref mut Self, reader: ref mut R) -> std::vec::Vec[u8] {
+    return std::region::io_read_all<R>(self, reader);
+  }
+
+  fn io_read_line_from[R: std::io::Reader](
+    self: ref mut Self,
+    reader: ref mut R
+  ) -> std::Result[std::string::String, std::error::Error] {
+    return std::region::io_read_line_from<R>(self, reader);
+  }
+
+  fn io_read_to_string[R: std::io::Reader](
+    self: ref mut Self,
+    reader: ref mut R
+  ) -> std::Result[std::string::String, std::error::Error] {
+    return std::region::io_read_to_string<R>(self, reader);
+  }
+
+  fn io_buf_reader[R: std::io::Reader](
+    self: ref mut Self,
+    inner: R,
+    capacity: i64
+  ) -> std::Result[std::io::BufReader[R], std::error::Error] {
+    return std::region::io_buf_reader<R>(self, inner, capacity);
+  }
+
+  fn io_buf_writer[W: std::io::Writer](
+    self: ref mut Self,
+    inner: W,
+    capacity: i64
+  ) -> std::Result[std::io::BufWriter[W], std::error::Error] {
+    return std::region::io_buf_writer<W>(self, inner, capacity);
+  }
+
+  fn decode_utf8(
+    self: ref mut Self,
+    values: std::Slice[u8]
+  ) -> std::Result[std::string::String, std::encoding::Utf8Error] {
+    return std::region::decode_utf8(self, values);
+  }
+
+  fn encode_utf8(
+    self: ref mut Self,
+    value: u32
+  ) -> std::Result[std::string::String, std::encoding::Utf8Error] {
+    return std::region::encode_utf8(self, value);
+  }
+
+  fn encode_hex(self: ref mut Self, values: std::Slice[u8]) -> std::string::String {
+    return std::region::encode_hex(self, values);
+  }
+
+  fn decode_hex(
+    self: ref mut Self,
+    values: std::Slice[u8]
+  ) -> std::Result[std::string::String, std::error::Error] {
+    return std::region::decode_hex(self, values);
+  }
+
+  fn encode_base64(self: ref mut Self, values: std::Slice[u8]) -> std::string::String {
+    return std::region::encode_base64(self, values);
+  }
+
+  fn decode_base64(
+    self: ref mut Self,
+    values: std::Slice[u8]
+  ) -> std::Result[std::string::String, std::error::Error] {
+    return std::region::decode_base64(self, values);
+  }
+
+  fn encode_base64_mime(self: ref mut Self, values: std::Slice[u8]) -> std::string::String {
+    return std::region::encode_base64_mime(self, values);
+  }
+
+  fn decode_base64_mime(
+    self: ref mut Self,
+    values: std::Slice[u8]
+  ) -> std::Result[std::string::String, std::error::Error] {
+    return std::region::decode_base64_mime(self, values);
+  }
+
+  fn encode_base64_url(self: ref mut Self, values: std::Slice[u8]) -> std::string::String {
+    return std::region::encode_base64_url(self, values);
+  }
+
+  fn encode_base64_url_unpadded(self: ref mut Self, values: std::Slice[u8]) -> std::string::String {
+    return std::region::encode_base64_url_unpadded(self, values);
+  }
+
+  fn decode_base64_url(
+    self: ref mut Self,
+    values: std::Slice[u8]
+  ) -> std::Result[std::string::String, std::error::Error] {
+    return std::region::decode_base64_url(self, values);
+  }
+
   fn promote[T](self: ref mut Self, source: ptr T) -> ptr T {
     return std::region::promote<T>(self, source);
   }
@@ -405,6 +501,108 @@ pub fn process_temp_dir(
   region: ref mut std::region::Region
 ) -> std::Result[std::process::TempDir, std::error::Error] {
   return std::process::temp_dir_with_region(region);
+}
+
+pub fn io_read_all[R: std::io::Reader](
+  region: ref mut std::region::Region,
+  reader: ref mut R
+) -> std::vec::Vec[u8] {
+  return std::io::read_all_with_region<R>(region, reader);
+}
+
+pub fn io_read_line_from[R: std::io::Reader](
+  region: ref mut std::region::Region,
+  reader: ref mut R
+) -> std::Result[std::string::String, std::error::Error] {
+  return std::io::read_line_from_with_region<R>(region, reader);
+}
+
+pub fn io_read_to_string[R: std::io::Reader](
+  region: ref mut std::region::Region,
+  reader: ref mut R
+) -> std::Result[std::string::String, std::error::Error] {
+  return std::io::read_to_string_with_region<R>(region, reader);
+}
+
+pub fn io_buf_reader[R: std::io::Reader](
+  region: ref mut std::region::Region,
+  inner: R,
+  capacity: i64
+) -> std::Result[std::io::BufReader[R], std::error::Error] {
+  return std::io::buf_reader_with_region<R>(region, inner, capacity);
+}
+
+pub fn io_buf_writer[W: std::io::Writer](
+  region: ref mut std::region::Region,
+  inner: W,
+  capacity: i64
+) -> std::Result[std::io::BufWriter[W], std::error::Error] {
+  return std::io::buf_writer_with_region<W>(region, inner, capacity);
+}
+
+pub fn decode_utf8(
+  region: ref mut std::region::Region,
+  values: std::Slice[u8]
+) -> std::Result[std::string::String, std::encoding::Utf8Error] {
+  return std::encoding::decode_utf8_with_region(region, values);
+}
+
+pub fn encode_utf8(
+  region: ref mut std::region::Region,
+  value: u32
+) -> std::Result[std::string::String, std::encoding::Utf8Error] {
+  return std::encoding::encode_utf8_with_region(region, value);
+}
+
+pub fn encode_hex(region: ref mut std::region::Region, values: std::Slice[u8]) -> std::string::String {
+  return std::encoding::encode_hex_with_region(region, values);
+}
+
+pub fn decode_hex(
+  region: ref mut std::region::Region,
+  values: std::Slice[u8]
+) -> std::Result[std::string::String, std::error::Error] {
+  return std::encoding::decode_hex_with_region(region, values);
+}
+
+pub fn encode_base64(region: ref mut std::region::Region, values: std::Slice[u8]) -> std::string::String {
+  return std::encoding::encode_base64_with_region(region, values);
+}
+
+pub fn decode_base64(
+  region: ref mut std::region::Region,
+  values: std::Slice[u8]
+) -> std::Result[std::string::String, std::error::Error] {
+  return std::encoding::decode_base64_with_region(region, values);
+}
+
+pub fn encode_base64_mime(region: ref mut std::region::Region, values: std::Slice[u8]) -> std::string::String {
+  return std::encoding::encode_base64_mime_with_region(region, values);
+}
+
+pub fn decode_base64_mime(
+  region: ref mut std::region::Region,
+  values: std::Slice[u8]
+) -> std::Result[std::string::String, std::error::Error] {
+  return std::encoding::decode_base64_mime_with_region(region, values);
+}
+
+pub fn encode_base64_url(region: ref mut std::region::Region, values: std::Slice[u8]) -> std::string::String {
+  return std::encoding::encode_base64_url_with_region(region, values);
+}
+
+pub fn encode_base64_url_unpadded(
+  region: ref mut std::region::Region,
+  values: std::Slice[u8]
+) -> std::string::String {
+  return std::encoding::encode_base64_url_unpadded_with_region(region, values);
+}
+
+pub fn decode_base64_url(
+  region: ref mut std::region::Region,
+  values: std::Slice[u8]
+) -> std::Result[std::string::String, std::error::Error] {
+  return std::encoding::decode_base64_url_with_region(region, values);
 }
 
 pub fn promote[T](target: ref mut std::region::Region, source: ptr T) -> ptr T {

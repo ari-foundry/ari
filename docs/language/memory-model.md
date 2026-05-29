@@ -95,7 +95,8 @@ User-facing allocation APIs should follow these rules:
   user-facing path to a standard handle, including copy constructors that move
   data into an explicitly chosen region and facade methods for common CLI
   handles such as environment strings, process commands, captured process
-  output, and temporary paths
+  output, temporary paths, whole-reader IO buffers, buffered IO adapters, and
+  codec output
 - module-level `*_with_region` functions are the migration spelling for public
   APIs whose older names still take `ref mut Zone`
 - final-form `_in` means "allocate into this explicit region"; during the
@@ -109,6 +110,14 @@ User-facing allocation APIs should follow these rules:
 The current stdlib still has older `ref mut Zone` entry points. Those are
 compatibility APIs and should migrate a module at a time, with focused tests
 for each public surface change.
+
+The migration shape is now visible in the high-use hosted modules. `String`,
+`Vec[T]`, `Box[T]`, `CString`, `PathBuf`, environment strings, process command
+arguments, captured process output, IO whole-read buffers, buffered IO
+adapters, and UTF-8/hex/base64 codec output all have `Region` entry points or
+`Region` facade methods. That means ordinary CLI and parser code can usually
+pick one named `Region` and let library calls place all short-lived owned
+values into it, instead of threading a low-level `Zone` through each helper.
 
 ## Compiler Rules
 

@@ -84,6 +84,10 @@ pub fn read_line(zone: ref mut Zone) -> std::string::String {
   return read_line_owned(zone);
 }
 
+pub fn read_line_with_region(region: ref mut std::region::Region) -> std::string::String {
+  return std::io::read_line(std::region::as_zone(region));
+}
+
 pub fn stdout() -> std::io::Stdout {
   return std::io::Stdout {};
 }
@@ -149,6 +153,14 @@ pub fn buf_reader_in[R: Reader](zone: ref mut Zone, inner: R, capacity: i64) -> 
   }
 }
 
+pub fn buf_reader_with_region[R: Reader](
+  region: ref mut std::region::Region,
+  inner: R,
+  capacity: i64
+) -> std::Result[std::io::BufReader[R], std::error::Error] {
+  return std::io::buf_reader_in<R>(std::region::as_zone(region), inner, capacity);
+}
+
 pub fn buf_writer_in[W: Writer](zone: ref mut Zone, inner: W, capacity: i64) -> std::Result[std::io::BufWriter[W], std::error::Error] {
   match std::io::allocate_buffer_in(zone, capacity) {
     std::Err(reason) => {
@@ -158,6 +170,14 @@ pub fn buf_writer_in[W: Writer](zone: ref mut Zone, inner: W, capacity: i64) -> 
       return std::Ok<std::io::BufWriter[W], std::error::Error>(std::io::buf_writer<W>(inner, buffer));
     }
   }
+}
+
+pub fn buf_writer_with_region[W: Writer](
+  region: ref mut std::region::Region,
+  inner: W,
+  capacity: i64
+) -> std::Result[std::io::BufWriter[W], std::error::Error] {
+  return std::io::buf_writer_in<W>(std::region::as_zone(region), inner, capacity);
 }
 
 pub fn write_bytes(values: std::Slice[u8]) -> i64 {
@@ -371,6 +391,13 @@ pub fn read_all[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::vec::V
   return output;
 }
 
+pub fn read_all_with_region[R: Reader](
+  region: ref mut std::region::Region,
+  reader: ref mut R
+) -> std::vec::Vec[u8] {
+  return std::io::read_all<R>(std::region::as_zone(region), reader);
+}
+
 pub fn read_to_string_unchecked[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::string::String {
   var output = std::string::new(zone, 16);
   var value = reader.read_byte();
@@ -379,6 +406,13 @@ pub fn read_to_string_unchecked[R: Reader](zone: ref mut Zone, reader: ref mut R
     value = reader.read_byte();
   }
   return output;
+}
+
+pub fn read_to_string_unchecked_with_region[R: Reader](
+  region: ref mut std::region::Region,
+  reader: ref mut R
+) -> std::string::String {
+  return std::io::read_to_string_unchecked<R>(std::region::as_zone(region), reader);
 }
 
 pub fn read_to_string[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::Result[std::string::String, std::error::Error] {
@@ -398,6 +432,13 @@ pub fn read_to_string[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::
     }
   }
   return std::Ok<std::string::String, std::error::Error>(output);
+}
+
+pub fn read_to_string_with_region[R: Reader](
+  region: ref mut std::region::Region,
+  reader: ref mut R
+) -> std::Result[std::string::String, std::error::Error] {
+  return std::io::read_to_string<R>(std::region::as_zone(region), reader);
 }
 
 pub fn read_line_from[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::Result[std::string::String, std::error::Error] {
@@ -420,6 +461,13 @@ pub fn read_line_from[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::
     }
   }
   return std::Ok<std::string::String, std::error::Error>(output);
+}
+
+pub fn read_line_from_with_region[R: Reader](
+  region: ref mut std::region::Region,
+  reader: ref mut R
+) -> std::Result[std::string::String, std::error::Error] {
+  return std::io::read_line_from<R>(std::region::as_zone(region), reader);
 }
 
 pub fn copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -> std::Result[i64, std::error::Error] {
@@ -538,6 +586,14 @@ pub impl[R: Reader] std::io::BufReader[R] {
     return std::io::buf_reader_in<R>(zone, inner, capacity);
   }
 
+  fn with_capacity_with_region(
+    region: ref mut std::region::Region,
+    inner: R,
+    capacity: i64
+  ) -> std::Result[std::io::BufReader[R], std::error::Error] {
+    return std::io::buf_reader_with_region<R>(region, inner, capacity);
+  }
+
   fn buffered_len(self: ref Self) -> i64 {
     return self.end - self.start;
   }
@@ -562,8 +618,22 @@ pub impl[R: Reader] std::io::BufReader[R] {
     return std::io::read_line_from<std::io::BufReader[R]>(zone, self);
   }
 
+  fn read_line_with_region(
+    self: ref mut Self,
+    region: ref mut std::region::Region
+  ) -> std::Result[std::string::String, std::error::Error] {
+    return std::io::read_line_from_with_region<std::io::BufReader[R]>(region, self);
+  }
+
   fn read_to_string(self: ref mut Self, zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
     return std::io::read_to_string<std::io::BufReader[R]>(zone, self);
+  }
+
+  fn read_to_string_with_region(
+    self: ref mut Self,
+    region: ref mut std::region::Region
+  ) -> std::Result[std::string::String, std::error::Error] {
+    return std::io::read_to_string_with_region<std::io::BufReader[R]>(region, self);
   }
 }
 
@@ -574,6 +644,14 @@ pub impl[W: Writer] std::io::BufWriter[W] {
 
   fn with_capacity(zone: ref mut Zone, inner: W, capacity: i64) -> std::Result[std::io::BufWriter[W], std::error::Error] {
     return std::io::buf_writer_in<W>(zone, inner, capacity);
+  }
+
+  fn with_capacity_with_region(
+    region: ref mut std::region::Region,
+    inner: W,
+    capacity: i64
+  ) -> std::Result[std::io::BufWriter[W], std::error::Error] {
+    return std::io::buf_writer_with_region<W>(region, inner, capacity);
   }
 
   fn buffered_len(self: ref Self) -> i64 {
@@ -602,8 +680,22 @@ pub impl std::io::Stdin {
     return std::io::read_line_from<std::io::Stdin>(zone, self);
   }
 
+  fn read_line_with_region(
+    self: ref mut Self,
+    region: ref mut std::region::Region
+  ) -> std::Result[std::string::String, std::error::Error] {
+    return std::io::read_line_from_with_region<std::io::Stdin>(region, self);
+  }
+
   fn read_to_string(self: ref mut Self, zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
     return std::io::read_to_string<std::io::Stdin>(zone, self);
+  }
+
+  fn read_to_string_with_region(
+    self: ref mut Self,
+    region: ref mut std::region::Region
+  ) -> std::Result[std::string::String, std::error::Error] {
+    return std::io::read_to_string_with_region<std::io::Stdin>(region, self);
   }
 }
 
@@ -675,8 +767,22 @@ pub impl std::io::PipeReader {
     return std::io::read_line_from<std::io::PipeReader>(zone, self);
   }
 
+  fn read_line_with_region(
+    self: ref mut Self,
+    region: ref mut std::region::Region
+  ) -> std::Result[std::string::String, std::error::Error] {
+    return std::io::read_line_from_with_region<std::io::PipeReader>(region, self);
+  }
+
   fn read_to_string(self: ref mut Self, zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
     return std::io::read_to_string<std::io::PipeReader>(zone, self);
+  }
+
+  fn read_to_string_with_region(
+    self: ref mut Self,
+    region: ref mut std::region::Region
+  ) -> std::Result[std::string::String, std::error::Error] {
+    return std::io::read_to_string_with_region<std::io::PipeReader>(region, self);
   }
 }
 
@@ -727,8 +833,22 @@ pub impl std::io::Cursor {
     return std::io::read_line_from<std::io::Cursor>(zone, self);
   }
 
+  fn read_line_with_region(
+    self: ref mut Self,
+    region: ref mut std::region::Region
+  ) -> std::Result[std::string::String, std::error::Error] {
+    return std::io::read_line_from_with_region<std::io::Cursor>(region, self);
+  }
+
   fn read_to_string(self: ref mut Self, zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
     return std::io::read_to_string<std::io::Cursor>(zone, self);
+  }
+
+  fn read_to_string_with_region(
+    self: ref mut Self,
+    region: ref mut std::region::Region
+  ) -> std::Result[std::string::String, std::error::Error] {
+    return std::io::read_to_string_with_region<std::io::Cursor>(region, self);
   }
 }
 

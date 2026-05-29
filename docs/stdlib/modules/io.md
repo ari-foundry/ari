@@ -47,11 +47,14 @@ Implemented now:
   `Seek`
 - source constructors and adapters: `stdin`, `stdout`, `stderr`, `pipe`,
   `pipe_optional`, `cursor`, `buf_reader`, `buf_reader_in`, `buf_writer`,
-  `buf_writer_in`, `BufReader::new`, `BufReader::with_capacity`,
-  `BufWriter::new`, `BufWriter::with_capacity`
+  `buf_writer_in`, Region variants `buf_reader_with_region` and
+  `buf_writer_with_region`, `BufReader::new`, `BufReader::with_capacity`,
+  `BufReader::with_capacity_with_region`, `BufWriter::new`,
+  `BufWriter::with_capacity`, and `BufWriter::with_capacity_with_region`
 - direct error helpers: `read_one`, `read`, `read_exact`, `read_line_from`,
-  `read_to_string`, `copy`, `write`, `write_all`, `flush`
-- collection helper: `read_all`
+  `read_to_string`, `copy`, `write`, `write_all`, `flush`, plus Region
+  variants for owned reads
+- collection helper: `read_all` and `read_all_with_region`
 - compatibility helpers: `read_exact_unchecked`, `read_to_string_unchecked`,
   `try_copy`, `copy_unchecked`, `write_all_unchecked`, `flush_unchecked`
 
@@ -117,16 +120,22 @@ pipe_writer.close_bool() -> bool
 io::cursor(values: Slice[u8]) -> io::Cursor
 io::buf_reader[R: Reader](inner: R, buffer: Slice[u8]) -> io::BufReader[R]
 io::buf_reader_in[R: Reader](zone: ref mut Zone, inner: R, capacity: i64) -> Result[io::BufReader[R], Error]
+io::buf_reader_with_region[R: Reader](region: ref mut Region, inner: R, capacity: i64) -> Result[io::BufReader[R], Error]
 io::buf_writer[W: Writer](inner: W, buffer: Slice[u8]) -> io::BufWriter[W]
 io::buf_writer_in[W: Writer](zone: ref mut Zone, inner: W, capacity: i64) -> Result[io::BufWriter[W], Error]
+io::buf_writer_with_region[W: Writer](region: ref mut Region, inner: W, capacity: i64) -> Result[io::BufWriter[W], Error]
 io::BufReader::new<R>(inner: R, buffer: Slice[u8]) -> io::BufReader[R]
 io::BufReader::with_capacity<R>(zone: ref mut Zone, inner: R, capacity: i64) -> Result[io::BufReader[R], Error]
+io::BufReader::with_capacity_with_region<R>(region: ref mut Region, inner: R, capacity: i64) -> Result[io::BufReader[R], Error]
 reader.read_one() -> ReadByte
 reader.read(output) -> Result[i64, Error]
 reader.read_line(zone) -> Result[String, Error]
+reader.read_line_with_region(region) -> Result[String, Error]
 reader.read_to_string(zone) -> Result[String, Error]
+reader.read_to_string_with_region(region) -> Result[String, Error]
 io::BufWriter::new<W>(inner: W, buffer: Slice[u8]) -> io::BufWriter[W]
 io::BufWriter::with_capacity<W>(zone: ref mut Zone, inner: W, capacity: i64) -> Result[io::BufWriter[W], Error]
+io::BufWriter::with_capacity_with_region<W>(region: ref mut Region, inner: W, capacity: i64) -> Result[io::BufWriter[W], Error]
 writer.write(values) -> Result[i64, Error]
 writer.write_all(values) -> Result[(), Error]
 
@@ -135,9 +144,13 @@ io::read_one[R: Reader](reader: ref mut R) -> ReadByte
 io::read[R: Reader](reader: ref mut R, output: Slice[u8]) -> Result[i64, Error]
 io::read_exact_unchecked[R: Reader](reader: ref mut R, output: ptr u8, len: i64) -> bool
 io::read_all[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::vec::Vec[u8]
+io::read_all_with_region[R: Reader](region: ref mut Region, reader: ref mut R) -> std::vec::Vec[u8]
 io::read_line_from[R: Reader](zone: ref mut Zone, reader: ref mut R) -> Result[String, Error]
+io::read_line_from_with_region[R: Reader](region: ref mut Region, reader: ref mut R) -> Result[String, Error]
 io::read_to_string[R: Reader](zone: ref mut Zone, reader: ref mut R) -> Result[String, Error]
+io::read_to_string_with_region[R: Reader](region: ref mut Region, reader: ref mut R) -> Result[String, Error]
 io::read_to_string_unchecked[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::string::String
+io::read_to_string_unchecked_with_region[R: Reader](region: ref mut Region, reader: ref mut R) -> std::string::String
 io::copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -> Result[i64, Error]
 io::try_copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -> Option[i64]
 io::copy_unchecked[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -> bool
@@ -167,6 +180,7 @@ io::write_bytes(values: Slice[u8]) -> i64
 io::newline() -> i64
 io::read_byte() -> i64
 io::read_line(ref mut Zone) -> std::string::String
+io::read_line_with_region(ref mut Region) -> std::string::String
 io::read_line_text() -> String
 io::read_line_owned(ref mut Zone) -> std::string::String
 
@@ -209,19 +223,25 @@ real failure. Negative lengths return `Err(Error(InvalidInput))`.
 `read_exact_unchecked` is the bool compatibility wrapper over that result
 shape.
 `read_all(ref mut zone, ref mut reader)` repeatedly reads until EOF and returns
-a zone-backed `Vec[u8]`. Use it when the caller wants the whole remaining byte
-stream and can make allocation explicit through the zone.
+a zone-backed `Vec[u8]`. New user-facing code should prefer
+`read_all_with_region(ref mut region, ref mut reader)` or
+`region.io_read_all(ref mut reader)`, which allocate the same bytes in a
+public `Region` lifetime while keeping the old zone entry point as a
+compatibility shim.
 `read_line_from(ref mut zone, ref mut reader)` reads through the first newline
 or EOF and returns a zone-backed `String`. EOF after some bytes is success;
 EOF before any bytes returns an empty `String`; adapter-detected read failures
 drop the partial line and return `Err(error)`. Reader methods named
 `read_line(zone)` are available on `Stdin`, `Cursor`, `BufReader`, and
-`PipeReader`.
+`PipeReader`; `read_line_with_region(region)` is the Region form.
 `read_to_string(ref mut zone, ref mut reader)` follows the same EOF rule but
 collects the whole remaining stream into an owned `std::string::String` inside
 `Result`. Adapter-detected read failures drop the partial string and return
 `Err(error)`. Ari strings are byte-backed, so this helper does not validate
 UTF-8; call `text.try_utf8()` when a caller needs a validated UTF-8 view.
+Prefer `read_to_string_with_region(ref mut region, ref mut reader)` or
+`region.io_read_to_string(ref mut reader)` when the caller owns a public
+allocation lifetime.
 `read_to_string_unchecked` is the compatibility helper for older call sites
 that intentionally discard the `Result` wrapper.
 `copy(ref mut reader, ref mut writer)` streams from any `Reader` into any
@@ -294,8 +314,10 @@ buffer. `buf_reader(inner, buffer)`, `buf_writer(inner, buffer)`, and the
 must stay alive while the wrapper is used. `buf_reader_in(zone, inner,
 capacity)`, `buf_writer_in(zone, inner, capacity)`, and the `with_capacity`
 associated constructors allocate the byte buffer in the supplied zone and
-return `Err(InvalidInput)` when `capacity <= 0`. Zone-backed buffers stay valid
-until that zone is reset or destroyed. `BufWriter` flushes when the buffer is
+return `Err(InvalidInput)` when `capacity <= 0`. For public code, prefer
+`buf_reader_with_region`, `buf_writer_with_region`, or the
+`with_capacity_with_region` associated constructors; those buffers live until
+the chosen region is reset or destroyed. `BufWriter` flushes when the buffer is
 full, when `flush()` is called, or as a best-effort cleanup when the writer is
 dropped while bytes remain buffered. Drop cleanup discards the `Result` because
 destructors cannot report recoverable errors, so code that must observe write
@@ -348,23 +370,23 @@ fn main() -> i64 {
 
 ```ari
 fn main() -> i64 {
-  var zone = zone::create(128);
+  var region = region::create(128);
   var input = [65u8, 66u8, 67u8];
   var cursor = io::cursor(input.as_slice());
-  let bytes = io::read_all<io::Cursor>(ref mut zone, ref mut cursor);
+  let bytes = io::read_all_with_region<io::Cursor>(ref mut region, ref mut cursor);
   let count = bytes.len();
-  zone::destroy(zone);
+  region::destroy(region);
   return count;
 }
 ```
 
 ```ari
 fn main() -> i64 {
-  var zone = zone::create(128);
+  var region = region::create(128);
   var input = io::cursor("owned text");
-  let text = io::read_to_string<io::Cursor>(ref mut zone, ref mut input).unwrap();
+  let text = region.io_read_to_string<io::Cursor>(ref mut input).unwrap();
   let count = text.len();
-  zone::destroy(zone);
+  region::destroy(region);
   return count;
 }
 ```
@@ -469,7 +491,8 @@ open because `File` itself does not buffer.
   flush, writer failure behavior, and generated generic helper symbols.
 - `tests/cases/standard-library/ok/io/std-io-result.ari` checks
   `read_exact`, `write_all`, `flush`, and `copy` direct `Error` payloads plus
-  the explicit `_unchecked` compatibility wrappers.
+  the explicit `_unchecked` compatibility wrappers and Region-backed whole-read
+  helpers.
 - `tests/cases/standard-library/ok/fs/std-fs-io-traits.ari` checks the
   filesystem adapter side: `File` as `Reader`/`Writer`, generic
   `read_to_string`, `read_exact`, `try_copy`, `write_all`, `flush`, and

@@ -292,6 +292,76 @@ fn main() -> i64 {
   }
   assert(buffered_reader.read_one().is_eof());
 
+  var region = region::create(512);
+
+  var all_source = [89u8, 90u8];
+  var all_reader = io::cursor(all_source.as_slice());
+  var all_bytes = io::read_all_with_region<io::Cursor>(ref mut region, ref mut all_reader);
+  assert_eq_i64(all_bytes.len(), 2);
+  assert_eq_i64(all_bytes.get(0) as i64, 89);
+  assert_eq_i64(all_bytes.get(1) as i64, 90);
+
+  var string_source = [97u8, 98u8, 99u8];
+  var string_reader = io::cursor(string_source.as_slice());
+  match io::read_to_string_with_region<io::Cursor>(ref mut region, ref mut string_reader) {
+    Ok(text) => {
+      assert_eq_i64(text.len(), 3);
+      assert_eq_i64(text.get(2) as i64, 99);
+    }
+    Err(_) => {
+      panic();
+    }
+  }
+
+  var line_source = [104u8, 105u8, 10u8, 120u8];
+  var line_reader = io::cursor(line_source.as_slice());
+  match io::read_line_from_with_region<io::Cursor>(ref mut region, ref mut line_reader) {
+    Ok(line) => {
+      assert_eq_i64(line.len(), 3);
+      assert_eq_i64(line.get(2) as i64, 10);
+    }
+    Err(_) => {
+      panic();
+    }
+  }
+
+  var method_region_source = [100u8, 101u8];
+  var method_region_reader = io::cursor(method_region_source.as_slice());
+  match method_region_reader.read_to_string_with_region(ref mut region) {
+    Ok(method_text) => {
+      assert_eq_i64(method_text.len(), 2);
+      assert_eq_i64(method_text.get(0) as i64, 100);
+    }
+    Err(_) => {
+      panic();
+    }
+  }
+
+  var facade_source = [102u8, 103u8];
+  var facade_reader = io::cursor(facade_source.as_slice());
+  match region.io_read_to_string<io::Cursor>(ref mut facade_reader) {
+    Ok(facade_text) => {
+      assert_eq_i64(facade_text.len(), 2);
+      assert_eq_i64(facade_text.get(1) as i64, 103);
+    }
+    Err(_) => {
+      panic();
+    }
+  }
+
+  var buffer_source = [104u8, 105u8];
+  var buffer_cursor = io::cursor(buffer_source.as_slice());
+  match io::buf_reader_with_region<io::Cursor>(ref mut region, buffer_cursor, 4) {
+    Ok(buffered_with_region) => {
+      assert_eq_i64(buffered_with_region.capacity(), 4);
+    }
+    Err(_) => {
+      panic();
+    }
+  }
+
+  region::destroy(region);
+
   assert_eq_i64(score, 255);
   return score;
 }

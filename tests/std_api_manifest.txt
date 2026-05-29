@@ -268,30 +268,53 @@ fn std::encoding::decode_base64_in|check-prelude std-encoding-codec Result-retur
 fn std::encoding::decode_base64_mime|check-prelude std-encoding-codec Result-returning MIME base64 zone-backed decoder; docs/stdlib/modules/encoding.md
 fn std::encoding::decode_base64_mime_in|check-prelude std-encoding-codec Result-returning MIME base64 zone-backed decoder; docs/stdlib/modules/encoding.md
 fn std::encoding::decode_base64_mime_optional_in|check-prelude std-encoding-codec Option-returning MIME base64 zone-backed compatibility decoder; docs/stdlib/modules/encoding.md
+fn std::encoding::decode_base64_mime_optional_with_region|check-prelude std-encoding-codec Region-backed Option-returning MIME base64 compatibility decoder; docs/stdlib/modules/encoding.md
 fn std::encoding::decode_base64_mime_unchecked_in|check-prelude std-encoding-codec asserting MIME base64 zone-backed compatibility decoder; docs/stdlib/modules/encoding.md
+fn std::encoding::decode_base64_mime_unchecked_with_region|check-prelude std-encoding-codec asserting MIME base64 Region-backed compatibility decoder; docs/stdlib/modules/encoding.md
+fn std::encoding::decode_base64_mime_with_region|check-prelude std-encoding-codec Result-returning MIME base64 Region-backed decoder; docs/stdlib/modules/encoding.md
 fn std::encoding::decode_base64_optional_in|check-prelude std-encoding-codec Option-returning standard base64 zone-backed compatibility decoder; docs/stdlib/modules/encoding.md
+fn std::encoding::decode_base64_optional_with_region|check-prelude std-encoding-codec Region-backed Option-returning standard base64 compatibility decoder; docs/stdlib/modules/encoding.md
 fn std::encoding::decode_base64_unchecked_in|check-prelude std-encoding-codec asserting standard base64 zone-backed compatibility decoder; docs/stdlib/modules/encoding.md
+fn std::encoding::decode_base64_unchecked_with_region|check-prelude std-encoding-codec asserting standard base64 Region-backed compatibility decoder; docs/stdlib/modules/encoding.md
 fn std::encoding::decode_base64_url|check-prelude std-encoding-codec Result-returning URL-safe base64 zone-backed decoder; docs/stdlib/modules/encoding.md
 fn std::encoding::decode_base64_url_in|check-prelude std-encoding-codec Result-returning URL-safe base64 zone-backed decoder; docs/stdlib/modules/encoding.md
 fn std::encoding::decode_base64_url_optional_in|check-prelude std-encoding-codec Option-returning URL-safe base64 zone-backed compatibility decoder; docs/stdlib/modules/encoding.md
+fn std::encoding::decode_base64_url_optional_with_region|check-prelude std-encoding-codec Region-backed Option-returning URL-safe base64 compatibility decoder; docs/stdlib/modules/encoding.md
 fn std::encoding::decode_base64_url_unchecked_in|check-prelude std-encoding-codec asserting URL-safe base64 zone-backed compatibility decoder; docs/stdlib/modules/encoding.md
+fn std::encoding::decode_base64_url_unchecked_with_region|check-prelude std-encoding-codec asserting URL-safe base64 Region-backed compatibility decoder; docs/stdlib/modules/encoding.md
+fn std::encoding::decode_base64_url_with_region|check-prelude std-encoding-codec Result-returning URL-safe base64 Region-backed decoder; docs/stdlib/modules/encoding.md
+fn std::encoding::decode_base64_with_region|check-prelude std-encoding-codec Result-returning standard base64 Region-backed decoder; docs/stdlib/modules/encoding.md
 fn std::encoding::decode_hex|check-prelude std-encoding-codec Result-returning hexadecimal zone-backed decoder; docs/stdlib/modules/encoding.md
 fn std::encoding::decode_hex_in|check-prelude std-encoding-codec Result-returning hexadecimal zone-backed decoder; docs/stdlib/modules/encoding.md
 fn std::encoding::decode_hex_optional_in|check-prelude std-encoding-codec Option-returning hexadecimal zone-backed compatibility decoder; docs/stdlib/modules/encoding.md
+fn std::encoding::decode_hex_optional_with_region|check-prelude std-encoding-codec Region-backed Option-returning hexadecimal compatibility decoder; docs/stdlib/modules/encoding.md
 fn std::encoding::decode_hex_unchecked_in|check-prelude std-encoding-codec asserting hexadecimal zone-backed compatibility decoder; docs/stdlib/modules/encoding.md
+fn std::encoding::decode_hex_unchecked_with_region|check-prelude std-encoding-codec asserting hexadecimal Region-backed compatibility decoder; docs/stdlib/modules/encoding.md
+fn std::encoding::decode_hex_with_region|check-prelude std-encoding-codec Result-returning hexadecimal Region-backed decoder; docs/stdlib/modules/encoding.md
 fn std::encoding::decode_utf8|check-prelude std-encoding-text Result-returning UTF-8 byte-string decoder with detailed Utf8Error; docs/stdlib/modules/encoding.md
 fn std::encoding::decode_utf8_in|check-prelude std-encoding-text zone-backed compatibility alias for decode_utf8; docs/stdlib/modules/encoding.md
 fn std::encoding::decode_utf8_optional_in|check-prelude std-encoding-text Option-returning UTF-8 byte-string compatibility decoder; docs/stdlib/modules/encoding.md
+fn std::encoding::decode_utf8_optional_with_region|check-prelude std-encoding-text Region-backed Option-returning UTF-8 byte-string compatibility decoder; docs/stdlib/modules/encoding.md
 fn std::encoding::decode_utf8_unchecked_in|check-prelude std-encoding-text asserting UTF-8 byte-string compatibility decoder; docs/stdlib/modules/encoding.md
+fn std::encoding::decode_utf8_unchecked_with_region|check-prelude std-encoding-text asserting UTF-8 byte-string Region-backed compatibility decoder; docs/stdlib/modules/encoding.md
+fn std::encoding::decode_utf8_with_region|check-prelude std-encoding-text Result-returning UTF-8 byte-string Region-backed decoder with detailed Utf8Error; docs/stdlib/modules/encoding.md
 fn std::encoding::encode_base64_in|check-prelude std-encoding-codec standard base64 zone-backed encoder; docs/stdlib/modules/encoding.md
 fn std::encoding::encode_base64_mime_in|check-prelude std-encoding-codec line-wrapped MIME base64 zone-backed encoder; docs/stdlib/modules/encoding.md
+fn std::encoding::encode_base64_mime_with_region|check-prelude std-encoding-codec line-wrapped MIME base64 Region-backed encoder; docs/stdlib/modules/encoding.md
 fn std::encoding::encode_base64_url_in|check-prelude std-encoding-codec padded URL-safe base64 zone-backed encoder; docs/stdlib/modules/encoding.md
 fn std::encoding::encode_base64_url_unpadded_in|check-prelude std-encoding-codec unpadded URL-safe base64 zone-backed encoder; docs/stdlib/modules/encoding.md
+fn std::encoding::encode_base64_url_unpadded_with_region|check-prelude std-encoding-codec unpadded URL-safe base64 Region-backed encoder; docs/stdlib/modules/encoding.md
+fn std::encoding::encode_base64_url_with_region|check-prelude std-encoding-codec padded URL-safe base64 Region-backed encoder; docs/stdlib/modules/encoding.md
+fn std::encoding::encode_base64_with_region|check-prelude std-encoding-codec standard base64 Region-backed encoder; docs/stdlib/modules/encoding.md
 fn std::encoding::encode_hex_in|check-prelude std-encoding-codec lowercase hexadecimal zone-backed encoder; docs/stdlib/modules/encoding.md
+fn std::encoding::encode_hex_with_region|check-prelude std-encoding-codec lowercase hexadecimal Region-backed encoder; docs/stdlib/modules/encoding.md
 fn std::encoding::encode_utf8|check-prelude std-encoding-utf8-codepoints Result-returning UTF-8 scalar encoder with detailed Utf8Error; docs/stdlib/modules/encoding.md
 fn std::encoding::encode_utf8_in|check-prelude std-encoding-utf8-codepoints zone-backed compatibility alias for encode_utf8; docs/stdlib/modules/encoding.md
 fn std::encoding::encode_utf8_optional_in|check-prelude std-encoding-utf8-codepoints Option-returning UTF-8 scalar compatibility encoder; docs/stdlib/modules/encoding.md
+fn std::encoding::encode_utf8_optional_with_region|check-prelude std-encoding-text Region-backed Option-returning UTF-8 scalar compatibility encoder; docs/stdlib/modules/encoding.md
 fn std::encoding::encode_utf8_unchecked_in|check-prelude std-encoding-utf8-codepoints asserting UTF-8 scalar compatibility encoder; docs/stdlib/modules/encoding.md
+fn std::encoding::encode_utf8_unchecked_with_region|check-prelude std-encoding-text asserting UTF-8 scalar Region-backed compatibility encoder; docs/stdlib/modules/encoding.md
+fn std::encoding::encode_utf8_with_region|check-prelude std-encoding-text Result-returning UTF-8 scalar Region-backed encoder with detailed Utf8Error; docs/stdlib/modules/encoding.md
 fn std::encoding::hex_decoded_len|check-prelude std-encoding-codec Result-returning hexadecimal decoded length validator; docs/stdlib/modules/encoding.md
 fn std::encoding::hex_decoded_len_optional|check-prelude std-encoding-codec Option-returning hexadecimal decoded length compatibility validator; docs/stdlib/modules/encoding.md
 fn std::encoding::hex_encoded_len|check-prelude std-encoding-codec hexadecimal encoded length helper; docs/stdlib/modules/encoding.md
@@ -302,9 +325,14 @@ fn std::encoding::is_utf16|check-prelude std-encoding-text UTF-16 boolean valida
 fn std::encoding::is_utf8|check-prelude std-encoding-text UTF-8 boolean validation; docs/stdlib/modules/encoding.md
 fn std::encoding::try_decode_base64_in|check-prelude std-encoding-codec Option-returning standard base64 compatibility decoder; docs/stdlib/modules/encoding.md
 fn std::encoding::try_decode_base64_mime_in|check-prelude std-encoding-codec Option-returning MIME base64 compatibility decoder; docs/stdlib/modules/encoding.md
+fn std::encoding::try_decode_base64_mime_with_region|check-prelude std-encoding-codec Region-backed Option-returning MIME base64 compatibility decoder; docs/stdlib/modules/encoding.md
 fn std::encoding::try_decode_base64_url_in|check-prelude std-encoding-codec Option-returning URL-safe base64 compatibility decoder; docs/stdlib/modules/encoding.md
+fn std::encoding::try_decode_base64_url_with_region|check-prelude std-encoding-codec Region-backed Option-returning URL-safe base64 compatibility decoder; docs/stdlib/modules/encoding.md
+fn std::encoding::try_decode_base64_with_region|check-prelude std-encoding-codec Region-backed Option-returning standard base64 compatibility decoder; docs/stdlib/modules/encoding.md
 fn std::encoding::try_decode_hex_in|check-prelude std-encoding-codec Option-returning hexadecimal compatibility decoder; docs/stdlib/modules/encoding.md
+fn std::encoding::try_decode_hex_with_region|check-prelude std-encoding-codec Region-backed Option-returning hexadecimal compatibility decoder; docs/stdlib/modules/encoding.md
 fn std::encoding::try_encode_utf8_in|check-prelude std-encoding-utf8-codepoints Option-returning UTF-8 scalar compatibility encoder; docs/stdlib/modules/encoding.md
+fn std::encoding::try_encode_utf8_with_region|check-prelude std-encoding-text Region-backed Option-returning UTF-8 scalar compatibility encoder; docs/stdlib/modules/encoding.md
 fn std::encoding::utf16_count|check-prelude std-encoding-text Result-returning UTF-16 code-point count validator; docs/stdlib/modules/encoding.md
 fn std::encoding::utf16_count_optional|check-prelude std-encoding-text Option-returning UTF-16 code-point count compatibility validator; docs/stdlib/modules/encoding.md
 fn std::encoding::utf8_at|check-prelude std-encoding-utf8-codepoints UTF-8 scalar decode at byte offset; docs/stdlib/modules/encoding.md
@@ -724,8 +752,10 @@ fn std::input::read_byte|prelude byte input tests; docs/dev/test-matrix.md Prelu
 fn std::input::try_read_byte|std input byte option tests; docs/stdlib/modules/input.md
 fn std::io::buf_reader[R: Reader]|std io buffered tests; docs/stdlib/modules/io.md
 fn std::io::buf_reader_in[R: Reader]|std io zone-backed buffered tests; docs/stdlib/modules/io.md
+fn std::io::buf_reader_with_region[R: Reader]|check-prelude std-io-result Region-backed buffered reader constructor; docs/stdlib/modules/io.md
 fn std::io::buf_writer[W: Writer]|std io buffered tests; docs/stdlib/modules/io.md
 fn std::io::buf_writer_in[W: Writer]|std io zone-backed buffered tests; docs/stdlib/modules/io.md
+fn std::io::buf_writer_with_region[W: Writer]|check-prelude std-io-result Region-backed buffered writer constructor; docs/stdlib/modules/io.md
 fn std::io::copy[R: Reader, W: Writer]|check-prelude std-io-copy/std-io-result Result-returning Reader-to-Writer byte-count helper; docs/stdlib/modules/io.md
 fn std::io::copy_unchecked[R: Reader, W: Writer]|check-prelude std-io-copy/std-io-result bool compatibility Reader-to-Writer copy wrapper; docs/stdlib/modules/io.md
 fn std::io::cursor|std io trait/cursor tests; docs/stdlib/modules/io.md
@@ -748,15 +778,20 @@ fn std::io::println_string|check-prelude std-io-natural-api Result-returning std
 fn std::io::println_text|check-prelude std-io-natural-api Result-returning stdout line helper; docs/stdlib/modules/io.md
 fn std::io::read[R: Reader]|check-prelude std-io-result Result-returning partial read helper with EOF count semantics; docs/stdlib/modules/io.md
 fn std::io::read_all[R: Reader]|check-prelude std-io-read-all generic Reader whole-stream collector; docs/stdlib/modules/io.md
+fn std::io::read_all_with_region[R: Reader]|check-prelude std-io-result Region-backed generic Reader whole-stream byte collector; docs/stdlib/modules/io.md
 fn std::io::read_byte|prelude byte input tests; docs/dev/test-matrix.md Prelude row
 fn std::io::read_exact[R: Reader]|check-prelude std-io-result/std-io-traits-cursor Result-returning exact-read helper; docs/stdlib/modules/io.md
 fn std::io::read_exact_unchecked[R: Reader]|check-prelude std-io-result bool compatibility exact-read helper; docs/stdlib/modules/io.md
 fn std::io::read_line|prelude read_line/input tests; docs/dev/test-matrix.md Prelude row
 fn std::io::read_line_from[R: Reader]|check-prelude std-io-read-to-string Result-returning generic line reader helper; docs/stdlib/modules/io.md
+fn std::io::read_line_from_with_region[R: Reader]|check-prelude std-io-result Region-backed generic line reader helper; docs/stdlib/modules/io.md
 fn std::io::read_line_owned|prelude owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
+fn std::io::read_line_with_region|check-prelude std-io-result Region-backed stdin line helper; docs/stdlib/modules/io.md
 fn std::io::read_one[R: Reader]|check-prelude std-io-result generic one-byte read status helper; docs/stdlib/modules/io.md
 fn std::io::read_to_string[R: Reader]|check-prelude std-io-read-to-string Result-returning generic Reader whole-stream owned String collector; docs/stdlib/modules/io.md
 fn std::io::read_to_string_unchecked[R: Reader]|check-prelude std-io-read-to-string unchecked generic Reader whole-stream owned String collector; docs/stdlib/modules/io.md
+fn std::io::read_to_string_unchecked_with_region[R: Reader]|check-prelude std-io-result unchecked Region-backed generic Reader whole-stream String collector; docs/stdlib/modules/io.md
+fn std::io::read_to_string_with_region[R: Reader]|check-prelude std-io-result Region-backed generic Reader whole-stream owned String collector; docs/stdlib/modules/io.md
 fn std::io::stderr|std io stderr tests; docs/stdlib/modules/io.md
 fn std::io::stdin|std io trait/cursor tests; docs/stdlib/modules/io.md
 fn std::io::stdout|std io trait/cursor tests; docs/stdlib/modules/io.md
@@ -1153,8 +1188,19 @@ fn std::region::capacity|std region capability tests; docs/stdlib/modules/region
 fn std::region::create|std region capability tests; docs/stdlib/modules/region.md
 fn std::region::cstring|std region capability allocator-backed CString construction test; docs/stdlib/modules/region.md
 fn std::region::current_dir_join|check-prelude std-path-buf Region facade for cwd-relative path join; docs/stdlib/modules/region.md
+fn std::region::decode_base64|check-prelude std-encoding-codec Region facade for standard base64 decoding; docs/stdlib/modules/region.md
+fn std::region::decode_base64_mime|check-prelude std-encoding-codec Region facade for MIME base64 decoding; docs/stdlib/modules/region.md
+fn std::region::decode_base64_url|check-prelude std-encoding-codec Region facade for URL-safe base64 decoding; docs/stdlib/modules/region.md
+fn std::region::decode_hex|check-prelude std-encoding-codec Region facade for hexadecimal decoding; docs/stdlib/modules/region.md
+fn std::region::decode_utf8|check-prelude std-encoding-text Region facade for UTF-8 byte-string decoding; docs/stdlib/modules/region.md
 fn std::region::default_capacity|std region capability tests; docs/stdlib/modules/region.md
 fn std::region::destroy|std region capability tests; docs/stdlib/modules/region.md
+fn std::region::encode_base64|check-prelude std-encoding-codec Region facade for standard base64 encoding; docs/stdlib/modules/region.md
+fn std::region::encode_base64_mime|check-prelude std-encoding-codec Region facade for MIME base64 encoding; docs/stdlib/modules/region.md
+fn std::region::encode_base64_url|check-prelude std-encoding-codec Region facade for padded URL-safe base64 encoding; docs/stdlib/modules/region.md
+fn std::region::encode_base64_url_unpadded|check-prelude std-encoding-codec Region facade for unpadded URL-safe base64 encoding; docs/stdlib/modules/region.md
+fn std::region::encode_hex|check-prelude std-encoding-codec Region facade for hexadecimal encoding; docs/stdlib/modules/region.md
+fn std::region::encode_utf8|check-prelude std-encoding-text Region facade for UTF-8 scalar encoding; docs/stdlib/modules/region.md
 fn std::region::env_arg|check-prelude std-env-args Region facade for owned argument lookup; docs/stdlib/modules/region.md
 fn std::region::env_args|check-prelude std-env-args Region facade for owned argument collection; docs/stdlib/modules/region.md
 fn std::region::env_args_os|check-prelude std-env-args Region facade for OS-string argument collection; docs/stdlib/modules/region.md
@@ -1164,6 +1210,11 @@ fn std::region::env_get|check-prelude std-env-vars Region facade for Result-retu
 fn std::region::env_get_or_default|check-prelude std-env-vars Region facade for environment fallback lookup; docs/stdlib/modules/region.md
 fn std::region::env_program_name|check-prelude std-env-args Region facade for owned program name lookup; docs/stdlib/modules/region.md
 fn std::region::env_var|check-prelude std-env-vars Region facade for optional environment lookup; docs/stdlib/modules/region.md
+fn std::region::io_buf_reader[R: std::io::Reader]|check-prelude std-io-result Region facade for buffered reader construction; docs/stdlib/modules/region.md
+fn std::region::io_buf_writer[W: std::io::Writer]|check-prelude std-io-result Region facade for buffered writer construction; docs/stdlib/modules/region.md
+fn std::region::io_read_all[R: std::io::Reader]|check-prelude std-io-result Region facade for whole-stream byte reads; docs/stdlib/modules/region.md
+fn std::region::io_read_line_from[R: std::io::Reader]|check-prelude std-io-result Region facade for line reads; docs/stdlib/modules/region.md
+fn std::region::io_read_to_string[R: std::io::Reader]|check-prelude std-io-result Region facade for whole-stream String reads; docs/stdlib/modules/region.md
 fn std::region::new[T]|std region capability tests; docs/stdlib/modules/region.md
 fn std::region::path|check-prelude std-path-buf Region facade for owned path construction; docs/stdlib/modules/region.md
 fn std::region::path_from_string|check-prelude std-path-buf Region facade for owned path copy from String; docs/stdlib/modules/region.md
@@ -1996,8 +2047,10 @@ method std::encoding::CodecError::is_invalid_padding|check-prelude std-encoding-
 method std::encoding::CodecError::kind|check-prelude std-encoding-codec codec failure kind accessor; docs/stdlib/modules/encoding.md
 method std::encoding::CodecError::message|check-prelude std-encoding-codec owned codec diagnostic message; docs/stdlib/modules/encoding.md
 method std::encoding::CodecError::message_text|check-prelude std-encoding-codec raw codec diagnostic message; docs/stdlib/modules/encoding.md
+method std::encoding::CodecError::message_with_region|check-prelude std-encoding-codec Region-backed codec diagnostic message; docs/stdlib/modules/encoding.md
 method std::encoding::CodecError::name|check-prelude std-encoding-codec owned codec diagnostic name; docs/stdlib/modules/encoding.md
 method std::encoding::CodecError::name_text|check-prelude std-encoding-codec raw codec diagnostic name; docs/stdlib/modules/encoding.md
+method std::encoding::CodecError::name_with_region|check-prelude std-encoding-codec Region-backed codec diagnostic name; docs/stdlib/modules/encoding.md
 method std::encoding::Utf8Char::len|check-prelude std-encoding-utf8-codepoints decoded UTF-8 byte length accessor; docs/stdlib/modules/encoding.md
 method std::encoding::Utf8Char::next_index|check-prelude std-encoding-utf8-codepoints decoded UTF-8 next byte offset accessor; docs/stdlib/modules/encoding.md
 method std::encoding::Utf8Char::scalar|check-prelude std-encoding-utf8-codepoints decoded Unicode scalar accessor; docs/stdlib/modules/encoding.md
@@ -2012,8 +2065,10 @@ method std::encoding::Utf8Error::is_unexpected_end|check-prelude std-encoding-te
 method std::encoding::Utf8Error::kind|check-prelude std-encoding-text UTF-8 failure kind accessor; docs/stdlib/modules/encoding.md
 method std::encoding::Utf8Error::message|check-prelude std-encoding-text owned UTF-8 diagnostic message; docs/stdlib/modules/encoding.md
 method std::encoding::Utf8Error::message_text|check-prelude std-encoding-text raw UTF-8 diagnostic message; docs/stdlib/modules/encoding.md
+method std::encoding::Utf8Error::message_with_region|check-prelude std-encoding-text Region-backed UTF-8 diagnostic message; docs/stdlib/modules/encoding.md
 method std::encoding::Utf8Error::name|check-prelude std-encoding-text owned UTF-8 diagnostic name; docs/stdlib/modules/encoding.md
 method std::encoding::Utf8Error::name_text|check-prelude std-encoding-text raw UTF-8 diagnostic name; docs/stdlib/modules/encoding.md
+method std::encoding::Utf8Error::name_with_region|check-prelude std-encoding-text Region-backed UTF-8 diagnostic name; docs/stdlib/modules/encoding.md
 method std::error::Error::code|check-prelude std-error-basic error platform code method; docs/stdlib/modules/error.md
 method std::error::Error::is_connection_refused|check-prelude std-error-integration connection-refused predicate method; docs/stdlib/modules/error.md
 method std::error::Error::is_interrupted|check-prelude std-error-basic interrupted predicate method; docs/stdlib/modules/error.md
@@ -2144,18 +2199,24 @@ method std::io::BufReader[R]::is_empty|std io buffered tests; docs/stdlib/module
 method std::io::BufReader[R]::new|std io buffered tests; docs/stdlib/modules/io.md
 method std::io::BufReader[R]::read|check-prelude std-io-result Result-returning buffered partial read method; docs/stdlib/modules/io.md
 method std::io::BufReader[R]::read_line|check-prelude std-io-read-to-string Result-returning buffered reader line helper; docs/stdlib/modules/io.md
+method std::io::BufReader[R]::read_line_with_region|check-prelude std-io-result Region-backed buffered reader line helper; docs/stdlib/modules/io.md
 method std::io::BufReader[R]::read_one|check-prelude std-io-result buffered one-byte status method; docs/stdlib/modules/io.md
 method std::io::BufReader[R]::read_to_string|check-prelude std-io-read-to-string Result-returning buffered reader whole-stream helper; docs/stdlib/modules/io.md
+method std::io::BufReader[R]::read_to_string_with_region|check-prelude std-io-result Region-backed buffered reader whole-stream helper; docs/stdlib/modules/io.md
 method std::io::BufReader[R]::with_capacity|std io zone-backed buffered tests; docs/stdlib/modules/io.md
+method std::io::BufReader[R]::with_capacity_with_region|check-prelude std-io-result Region-backed buffered reader capacity constructor; docs/stdlib/modules/io.md
 method std::io::BufWriter[W]::buffered_len|std io buffered tests; docs/stdlib/modules/io.md
 method std::io::BufWriter[W]::capacity|std io buffered tests; docs/stdlib/modules/io.md
 method std::io::BufWriter[W]::is_empty|std io buffered tests; docs/stdlib/modules/io.md
 method std::io::BufWriter[W]::new|std io buffered tests; docs/stdlib/modules/io.md
 method std::io::BufWriter[W]::with_capacity|std io zone-backed buffered tests; docs/stdlib/modules/io.md
+method std::io::BufWriter[W]::with_capacity_with_region|check-prelude std-io-result Region-backed buffered writer capacity constructor; docs/stdlib/modules/io.md
 method std::io::Cursor::read|check-prelude std-io-result Result-returning cursor partial read method; docs/stdlib/modules/io.md
 method std::io::Cursor::read_line|check-prelude std-io-read-to-string Result-returning cursor line helper; docs/stdlib/modules/io.md
+method std::io::Cursor::read_line_with_region|check-prelude std-io-result Region-backed cursor line helper; docs/stdlib/modules/io.md
 method std::io::Cursor::read_one|check-prelude std-io-result cursor one-byte status method; docs/stdlib/modules/io.md
 method std::io::Cursor::read_to_string|check-prelude std-io-read-to-string Result-returning cursor whole-stream helper; docs/stdlib/modules/io.md
+method std::io::Cursor::read_to_string_with_region|check-prelude std-io-result Region-backed cursor whole-stream helper; docs/stdlib/modules/io.md
 method std::io::Pipe::close|check-prelude std-io-pipe Result-returning close for remaining pipe adapter ends; docs/stdlib/modules/io.md
 method std::io::Pipe::close_bool|check-prelude std-io-pipe bool compatibility close for remaining pipe adapter ends; docs/stdlib/modules/io.md
 method std::io::Pipe::read_end|check-prelude std-io-pipe borrowed pipe adapter read descriptor view; docs/stdlib/modules/io.md
@@ -2168,8 +2229,10 @@ method std::io::PipeReader::close_bool|check-prelude std-io-pipe bool compatibil
 method std::io::PipeReader::is_open|check-prelude std-io-pipe pipe reader open predicate; docs/stdlib/modules/io.md
 method std::io::PipeReader::read|check-prelude std-io-pipe Result-returning pipe reader partial read method; docs/stdlib/modules/io.md
 method std::io::PipeReader::read_line|check-prelude std-io-pipe Result-returning pipe reader line helper; docs/stdlib/modules/io.md
+method std::io::PipeReader::read_line_with_region|check-prelude std-io-result Region-backed pipe reader line helper; docs/stdlib/modules/io.md
 method std::io::PipeReader::read_one|check-prelude std-io-pipe pipe reader one-byte status method with closed-handle error; docs/stdlib/modules/io.md
 method std::io::PipeReader::read_to_string|check-prelude std-io-pipe Result-returning pipe reader whole-stream helper; docs/stdlib/modules/io.md
+method std::io::PipeReader::read_to_string_with_region|check-prelude std-io-result Region-backed pipe reader whole-stream helper; docs/stdlib/modules/io.md
 method std::io::PipeWriter::as_fd|check-prelude std-io-pipe borrowed descriptor view from pipe writer; docs/stdlib/modules/io.md
 method std::io::PipeWriter::close|check-prelude std-io-pipe Result-returning pipe writer close helper; docs/stdlib/modules/io.md
 method std::io::PipeWriter::close_bool|check-prelude std-io-pipe bool compatibility pipe writer close helper; docs/stdlib/modules/io.md
@@ -2185,8 +2248,10 @@ method std::io::ReadByte::is_eof|check-prelude std-io-result byte-read EOF predi
 method std::io::ReadByte::is_error|check-prelude std-io-result byte-read adapter-error predicate; docs/stdlib/modules/io.md
 method std::io::Stdin::read|check-prelude std-io-result Result-returning stdin partial read method; docs/stdlib/modules/io.md
 method std::io::Stdin::read_line|check-prelude std-io-read-to-string Result-returning stdin line method; docs/stdlib/modules/io.md
+method std::io::Stdin::read_line_with_region|check-prelude std-io-result Region-backed stdin line method; docs/stdlib/modules/io.md
 method std::io::Stdin::read_one|check-prelude std-io-result stdin one-byte status method; docs/stdlib/modules/io.md
 method std::io::Stdin::read_to_string|check-prelude std-io-read-to-string Result-returning stdin whole-stream method; docs/stdlib/modules/io.md
+method std::io::Stdin::read_to_string_with_region|check-prelude std-io-result Region-backed stdin whole-stream method; docs/stdlib/modules/io.md
 method std::net::IpAddr::is_loopback|check-prelude std-net-addresses generic IP loopback predicate; docs/stdlib/modules/net.md
 method std::net::IpAddr::is_unspecified|check-prelude std-net-addresses generic IP unspecified predicate; docs/stdlib/modules/net.md
 method std::net::IpAddr::is_v4|check-prelude std-net-addresses generic IPv4 family predicate; docs/stdlib/modules/net.md
@@ -2823,6 +2888,17 @@ method std::region::Region::can_alloc_array[T]|std region capability tests; docs
 method std::region::Region::capacity|std region capability tests; docs/stdlib/modules/region.md
 method std::region::Region::cstring|std region capability allocator-backed CString construction test; docs/stdlib/modules/region.md
 method std::region::Region::current_dir_join|check-prelude std-path-buf Region facade for cwd-relative path join; docs/stdlib/modules/region.md
+method std::region::Region::decode_base64|check-prelude std-encoding-codec Region method for standard base64 decoding; docs/stdlib/modules/region.md
+method std::region::Region::decode_base64_mime|check-prelude std-encoding-codec Region method for MIME base64 decoding; docs/stdlib/modules/region.md
+method std::region::Region::decode_base64_url|check-prelude std-encoding-codec Region method for URL-safe base64 decoding; docs/stdlib/modules/region.md
+method std::region::Region::decode_hex|check-prelude std-encoding-codec Region method for hexadecimal decoding; docs/stdlib/modules/region.md
+method std::region::Region::decode_utf8|check-prelude std-encoding-text Region method for UTF-8 byte-string decoding; docs/stdlib/modules/region.md
+method std::region::Region::encode_base64|check-prelude std-encoding-codec Region method for standard base64 encoding; docs/stdlib/modules/region.md
+method std::region::Region::encode_base64_mime|check-prelude std-encoding-codec Region method for MIME base64 encoding; docs/stdlib/modules/region.md
+method std::region::Region::encode_base64_url|check-prelude std-encoding-codec Region method for padded URL-safe base64 encoding; docs/stdlib/modules/region.md
+method std::region::Region::encode_base64_url_unpadded|check-prelude std-encoding-codec Region method for unpadded URL-safe base64 encoding; docs/stdlib/modules/region.md
+method std::region::Region::encode_hex|check-prelude std-encoding-codec Region method for hexadecimal encoding; docs/stdlib/modules/region.md
+method std::region::Region::encode_utf8|check-prelude std-encoding-text Region method for UTF-8 scalar encoding; docs/stdlib/modules/region.md
 method std::region::Region::env_arg|check-prelude std-env-args Region method for owned argument lookup; docs/stdlib/modules/region.md
 method std::region::Region::env_args|check-prelude std-env-args Region method for owned argument collection; docs/stdlib/modules/region.md
 method std::region::Region::env_args_os|check-prelude std-env-args Region method for OS-string argument collection; docs/stdlib/modules/region.md
@@ -2832,6 +2908,11 @@ method std::region::Region::env_get|check-prelude std-env-vars Region method for
 method std::region::Region::env_get_or_default|check-prelude std-env-vars Region method for environment fallback lookup; docs/stdlib/modules/region.md
 method std::region::Region::env_program_name|check-prelude std-env-args Region method for owned program name lookup; docs/stdlib/modules/region.md
 method std::region::Region::env_var|check-prelude std-env-vars Region method for optional environment lookup; docs/stdlib/modules/region.md
+method std::region::Region::io_buf_reader[R: std::io::Reader]|check-prelude std-io-result Region method for buffered reader construction; docs/stdlib/modules/region.md
+method std::region::Region::io_buf_writer[W: std::io::Writer]|check-prelude std-io-result Region method for buffered writer construction; docs/stdlib/modules/region.md
+method std::region::Region::io_read_all[R: std::io::Reader]|check-prelude std-io-result Region method for whole-stream byte reads; docs/stdlib/modules/region.md
+method std::region::Region::io_read_line_from[R: std::io::Reader]|check-prelude std-io-result Region method for line reads; docs/stdlib/modules/region.md
+method std::region::Region::io_read_to_string[R: std::io::Reader]|check-prelude std-io-result Region method for whole-stream String reads; docs/stdlib/modules/region.md
 method std::region::Region::new[T]|std region capability tests; docs/stdlib/modules/region.md
 method std::region::Region::path|check-prelude std-path-buf Region facade for owned path construction; docs/stdlib/modules/region.md
 method std::region::Region::path_from_string|check-prelude std-path-buf Region facade for owned path copy from String; docs/stdlib/modules/region.md

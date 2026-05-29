@@ -124,6 +124,7 @@ fn check_decode_utf8() -> bool {
   var utf8_text = [65u8, 195u8, 169u8, 240u8, 159u8, 152u8, 128u8];
   var overlong = [192u8, 128u8];
   var zone = zone::create(256);
+  var region = region::create(256);
   var ok = true;
 
   match encoding::decode_utf8(ref mut zone, utf8_text.as_slice()) {
@@ -177,6 +178,97 @@ fn check_decode_utf8() -> bool {
     None => {}
   }
 
+  match encoding::decode_utf8_with_region(ref mut region, utf8_text.as_slice()) {
+    Ok(region_text) => {
+      if region_text.len() != 7 || region_text.get(0) != 65u8 {
+        ok = false;
+      }
+    }
+    Err(_) => {
+      ok = false;
+    }
+  }
+  match encoding::decode_utf8_optional_with_region(ref mut region, utf8_text.as_slice()) {
+    Some(region_optional) => {
+      if region_optional.len() != 7 {
+        ok = false;
+      }
+    }
+    None => {
+      ok = false;
+    }
+  }
+  var region_unchecked = encoding::decode_utf8_unchecked_with_region(ref mut region, utf8_text.as_slice());
+  if region_unchecked.len() != 7 {
+    ok = false;
+  }
+  match region.decode_utf8(utf8_text.as_slice()) {
+    Ok(region_method_text) => {
+      if region_method_text.len() != 7 || region_method_text.get(6) != 128u8 {
+        ok = false;
+      }
+    }
+    Err(_) => {
+      ok = false;
+    }
+  }
+  match encoding::decode_utf8_with_region(ref mut region, overlong.as_slice()) {
+    Ok(_) => {
+      ok = false;
+    }
+    Err(region_reason) => {
+      if !region_reason.is_overlong() {
+        ok = false;
+      }
+      let region_reason_name = region_reason.name_with_region(ref mut region);
+      if !region_reason_name.as_slice().equals("overlong encoding") {
+        ok = false;
+      }
+      let region_reason_message = region_reason.message_with_region(ref mut region);
+      if !region_reason_message.as_slice().equals("UTF-8 sequence uses a longer form than required") {
+        ok = false;
+      }
+    }
+  }
+  match encoding::encode_utf8_with_region(ref mut region, 128512u32) {
+    Ok(encoded_region_scalar) => {
+      if encoded_region_scalar.len() != 4 {
+        ok = false;
+      }
+    }
+    Err(_) => {
+      ok = false;
+    }
+  }
+  match encoding::encode_utf8_optional_with_region(ref mut region, 8364u32) {
+    Some(encoded_region_optional) => {
+      if encoded_region_optional.len() != 3 {
+        ok = false;
+      }
+    }
+    None => {
+      ok = false;
+    }
+  }
+  if encoding::try_encode_utf8_with_region(ref mut region, 55296u32).is_some() {
+    ok = false;
+  }
+  var encoded_region_unchecked = encoding::encode_utf8_unchecked_with_region(ref mut region, 65u32);
+  if encoded_region_unchecked.len() != 1 || encoded_region_unchecked.get(0) != 65u8 {
+    ok = false;
+  }
+  match region.encode_utf8(65u32) {
+    Ok(encoded_region_method) => {
+      if encoded_region_method.len() != 1 || encoded_region_method.get(0) != 65u8 {
+        ok = false;
+      }
+    }
+    Err(_) => {
+      ok = false;
+    }
+  }
+
+  region::destroy(region);
   zone::destroy(zone);
   return ok;
 }

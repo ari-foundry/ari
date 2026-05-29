@@ -165,6 +165,71 @@ fn check_hex(zone: ref mut Zone) -> bool {
       }
     }
   }
+  var region = region::create(512);
+  var region_ok = true;
+  var region_encoded = encoding::encode_hex_with_region(ref mut region, bytes.as_slice());
+  if region_encoded.len() != 6 || region_encoded.get(0) != (52 as u8) {
+    region_ok = false;
+  }
+  var region_decoded_unchecked = encoding::decode_hex_unchecked_with_region(ref mut region, hex_text.as_slice());
+  if region_decoded_unchecked.len() != 3 || region_decoded_unchecked.get(2) != (255 as u8) {
+    region_ok = false;
+  }
+  match encoding::decode_hex_optional_with_region(ref mut region, hex_text.as_slice()) {
+    std::Some(region_optional) => {
+      if region_optional.len() != 3 {
+        region_ok = false;
+      }
+    }
+    std::None => {
+      region_ok = false;
+    }
+  }
+  match encoding::try_decode_hex_with_region(ref mut region, invalid_hex.as_slice()) {
+    std::Some(_) => {
+      region_ok = false;
+    }
+    std::None => {}
+  }
+  match encoding::decode_hex_with_region(ref mut region, hex_text.as_slice()) {
+    std::Ok(region_decoded) => {
+      if region_decoded.len() != 3 || region_decoded.get(1) != (66 as u8) {
+        region_ok = false;
+      }
+    }
+    std::Err(_) => {
+      region_ok = false;
+    }
+  }
+  match region.decode_hex(hex_text.as_slice()) {
+    std::Ok(region_method_decoded) => {
+      if region_method_decoded.len() != 3 || region_method_decoded.get(0) != (65 as u8) {
+        region_ok = false;
+      }
+    }
+    std::Err(_) => {
+      region_ok = false;
+    }
+  }
+  match encoding::hex_error(invalid_hex_byte.as_slice()) {
+    std::Some(region_reason) => {
+      let region_reason_name = region_reason.name_with_region(ref mut region);
+      if !region_reason_name.as_slice().equals("invalid byte") {
+        region_ok = false;
+      }
+      let region_reason_message = region_reason.message_with_region(ref mut region);
+      if !region_reason_message.as_slice().equals("encoded input contains a byte outside the active alphabet") {
+        region_ok = false;
+      }
+    }
+    std::None => {
+      region_ok = false;
+    }
+  }
+  region::destroy(region);
+  if !region_ok {
+    return false;
+  }
   return true;
 }
 
@@ -356,6 +421,56 @@ fn check_base64(zone: ref mut Zone) -> bool {
       }
     }
   }
+  var region = region::create(512);
+  var region_ok = true;
+  var region_encoded = encoding::encode_base64_with_region(ref mut region, man.as_slice());
+  if region_encoded.len() != 4 || region_encoded.get(3) != (117 as u8) {
+    region_ok = false;
+  }
+  var region_decoded_unchecked = encoding::decode_base64_unchecked_with_region(ref mut region, base64_ma.as_slice());
+  if region_decoded_unchecked.len() != 2 || region_decoded_unchecked.get(1) != (97 as u8) {
+    region_ok = false;
+  }
+  match encoding::decode_base64_optional_with_region(ref mut region, base64_ma.as_slice()) {
+    std::Some(region_optional) => {
+      if region_optional.len() != 2 {
+        region_ok = false;
+      }
+    }
+    std::None => {
+      region_ok = false;
+    }
+  }
+  match encoding::try_decode_base64_with_region(ref mut region, invalid_base64.as_slice()) {
+    std::Some(_) => {
+      region_ok = false;
+    }
+    std::None => {}
+  }
+  match encoding::decode_base64_with_region(ref mut region, base64_ma.as_slice()) {
+    std::Ok(region_decoded) => {
+      if region_decoded.len() != 2 || region_decoded.get(0) != (77 as u8) {
+        region_ok = false;
+      }
+    }
+    std::Err(_) => {
+      region_ok = false;
+    }
+  }
+  match region.decode_base64(base64_ma.as_slice()) {
+    std::Ok(region_method_decoded) => {
+      if region_method_decoded.len() != 2 || region_method_decoded.get(1) != (97 as u8) {
+        region_ok = false;
+      }
+    }
+    std::Err(_) => {
+      region_ok = false;
+    }
+  }
+  region::destroy(region);
+  if !region_ok {
+    return false;
+  }
   return true;
 }
 
@@ -499,6 +614,68 @@ fn check_base64_url(zone: ref mut Zone) -> bool {
       }
     }
   }
+  var region = region::create(512);
+  var region_ok = true;
+  var region_encoded = encoding::encode_base64_url_with_region(ref mut region, bytes.as_slice());
+  if region_encoded.len() != 4 || region_encoded.get(0) != (45 as u8) {
+    region_ok = false;
+  }
+  var region_unpadded = encoding::encode_base64_url_unpadded_with_region(ref mut region, two.as_slice());
+  if region_unpadded.len() != 3 {
+    region_ok = false;
+  }
+  var region_decoded_unchecked = encoding::decode_base64_url_unchecked_with_region(ref mut region, url_full.as_slice());
+  if region_decoded_unchecked.len() != 3 || region_decoded_unchecked.get(2) != (255 as u8) {
+    region_ok = false;
+  }
+  match encoding::decode_base64_url_optional_with_region(ref mut region, url_two_unpadded.as_slice()) {
+    std::Some(region_optional) => {
+      if region_optional.len() != 2 {
+        region_ok = false;
+      }
+    }
+    std::None => {
+      region_ok = false;
+    }
+  }
+  match encoding::try_decode_base64_url_with_region(ref mut region, invalid_url.as_slice()) {
+    std::Some(_) => {
+      region_ok = false;
+    }
+    std::None => {}
+  }
+  match encoding::decode_base64_url_with_region(ref mut region, url_one_unpadded.as_slice()) {
+    std::Ok(region_decoded) => {
+      if region_decoded.len() != 1 || region_decoded.get(0) != (251 as u8) {
+        region_ok = false;
+      }
+    }
+    std::Err(_) => {
+      region_ok = false;
+    }
+  }
+  match region.decode_base64_url(url_one_unpadded.as_slice()) {
+    std::Ok(region_method_decoded) => {
+      if region_method_decoded.len() != 1 || region_method_decoded.get(0) != (251 as u8) {
+        region_ok = false;
+      }
+    }
+    std::Err(_) => {
+      region_ok = false;
+    }
+  }
+  var region_method_encoded = region.encode_base64_url(bytes.as_slice());
+  if region_method_encoded.len() != 4 {
+    region_ok = false;
+  }
+  var region_method_unpadded = region.encode_base64_url_unpadded(one.as_slice());
+  if region_method_unpadded.len() != 2 {
+    region_ok = false;
+  }
+  region::destroy(region);
+  if !region_ok {
+    return false;
+  }
   return true;
 }
 
@@ -630,6 +807,60 @@ fn check_base64_mime(zone: ref mut Zone) -> bool {
         return false;
       }
     }
+  }
+  var region = region::create(1024);
+  var region_ok = true;
+  var region_encoded = encoding::encode_base64_mime_with_region(ref mut region, bytes.as_slice());
+  if region_encoded.len() != 82 {
+    region_ok = false;
+  }
+  var region_decoded_unchecked = encoding::decode_base64_mime_unchecked_with_region(ref mut region, spaced_ma.as_slice());
+  if region_decoded_unchecked.len() != 2 || region_decoded_unchecked.get(1) != (97 as u8) {
+    region_ok = false;
+  }
+  match encoding::decode_base64_mime_optional_with_region(ref mut region, spaced_ma.as_slice()) {
+    std::Some(region_optional) => {
+      if region_optional.len() != 2 {
+        region_ok = false;
+      }
+    }
+    std::None => {
+      region_ok = false;
+    }
+  }
+  match encoding::try_decode_base64_mime_with_region(ref mut region, invalid_mime.as_slice()) {
+    std::Some(_) => {
+      region_ok = false;
+    }
+    std::None => {}
+  }
+  match encoding::decode_base64_mime_with_region(ref mut region, spaced_ma.as_slice()) {
+    std::Ok(region_decoded) => {
+      if region_decoded.len() != 2 || region_decoded.get(0) != (77 as u8) {
+        region_ok = false;
+      }
+    }
+    std::Err(_) => {
+      region_ok = false;
+    }
+  }
+  match region.decode_base64_mime(spaced_ma.as_slice()) {
+    std::Ok(region_method_decoded) => {
+      if region_method_decoded.len() != 2 || region_method_decoded.get(1) != (97 as u8) {
+        region_ok = false;
+      }
+    }
+    std::Err(_) => {
+      region_ok = false;
+    }
+  }
+  var region_method_encoded = region.encode_base64_mime(bytes.as_slice());
+  if region_method_encoded.len() != 82 {
+    region_ok = false;
+  }
+  region::destroy(region);
+  if !region_ok {
+    return false;
   }
   return true;
 }

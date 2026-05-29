@@ -54,6 +54,22 @@ region::process_env_var(ref mut Region, name: Slice[u8], value: Slice[u8]) -> Re
 region::process_output(ref mut Region, ref process::Command) -> Result[process::Output, Error]
 region::process_temp_file(ref mut Region) -> Result[process::TempFile, Error]
 region::process_temp_dir(ref mut Region) -> Result[process::TempDir, Error]
+region::io_read_all<R: io::Reader>(ref mut Region, ref mut R) -> Vec[u8]
+region::io_read_line_from<R: io::Reader>(ref mut Region, ref mut R) -> Result[String, Error]
+region::io_read_to_string<R: io::Reader>(ref mut Region, ref mut R) -> Result[String, Error]
+region::io_buf_reader<R: io::Reader>(ref mut Region, inner: R, capacity: i64) -> Result[io::BufReader[R], Error]
+region::io_buf_writer<W: io::Writer>(ref mut Region, inner: W, capacity: i64) -> Result[io::BufWriter[W], Error]
+region::decode_utf8(ref mut Region, bytes: Slice[u8]) -> Result[String, encoding::Utf8Error]
+region::encode_utf8(ref mut Region, scalar: u32) -> Result[String, encoding::Utf8Error]
+region::encode_hex(ref mut Region, bytes: Slice[u8]) -> String
+region::decode_hex(ref mut Region, bytes: Slice[u8]) -> Result[String, Error]
+region::encode_base64(ref mut Region, bytes: Slice[u8]) -> String
+region::decode_base64(ref mut Region, bytes: Slice[u8]) -> Result[String, Error]
+region::encode_base64_mime(ref mut Region, bytes: Slice[u8]) -> String
+region::decode_base64_mime(ref mut Region, bytes: Slice[u8]) -> Result[String, Error]
+region::encode_base64_url(ref mut Region, bytes: Slice[u8]) -> String
+region::encode_base64_url_unpadded(ref mut Region, bytes: Slice[u8]) -> String
+region::decode_base64_url(ref mut Region, bytes: Slice[u8]) -> Result[String, Error]
 region::promote<T>(ref mut target, source: ptr T) -> ptr T
 
 region::capacity(ref mut Region) -> i64
@@ -101,6 +117,22 @@ Region::process_env_var(name: Slice[u8], value: Slice[u8]) -> Result[process::En
 Region::process_output(ref process::Command) -> Result[process::Output, Error]
 Region::process_temp_file() -> Result[process::TempFile, Error]
 Region::process_temp_dir() -> Result[process::TempDir, Error]
+Region::io_read_all<R: io::Reader>(ref mut R) -> Vec[u8]
+Region::io_read_line_from<R: io::Reader>(ref mut R) -> Result[String, Error]
+Region::io_read_to_string<R: io::Reader>(ref mut R) -> Result[String, Error]
+Region::io_buf_reader<R: io::Reader>(inner: R, capacity: i64) -> Result[io::BufReader[R], Error]
+Region::io_buf_writer<W: io::Writer>(inner: W, capacity: i64) -> Result[io::BufWriter[W], Error]
+Region::decode_utf8(bytes: Slice[u8]) -> Result[String, encoding::Utf8Error]
+Region::encode_utf8(scalar: u32) -> Result[String, encoding::Utf8Error]
+Region::encode_hex(bytes: Slice[u8]) -> String
+Region::decode_hex(bytes: Slice[u8]) -> Result[String, Error]
+Region::encode_base64(bytes: Slice[u8]) -> String
+Region::decode_base64(bytes: Slice[u8]) -> Result[String, Error]
+Region::encode_base64_mime(bytes: Slice[u8]) -> String
+Region::decode_base64_mime(bytes: Slice[u8]) -> Result[String, Error]
+Region::encode_base64_url(bytes: Slice[u8]) -> String
+Region::encode_base64_url_unpadded(bytes: Slice[u8]) -> String
+Region::decode_base64_url(bytes: Slice[u8]) -> Result[String, Error]
 Region::promote<T>(source: ptr T) -> ptr T
 Region::capacity() -> i64
 Region::used() -> i64
@@ -127,6 +159,9 @@ let cache = region.path_join("target", "cache");
 let args = region.env_args();
 let compiler = region.env_var("ARI_COMPILER");
 let sh = region.process_command("sh").unwrap();
+var input = io::cursor("hello\n");
+let line = region.io_read_line_from<io::Cursor>(ref mut input).unwrap();
+let encoded = region.encode_base64(line.as_slice());
 region::destroy(region);
 ```
 
@@ -220,8 +255,9 @@ converted. That keeps allocation authority visible while avoiding the old
 
 The convenience methods are deliberately small. They cover the common standard
 handles that otherwise force users to spell `region::as_zone`: owned text,
-vectors, boxes, C strings, owned path buffers, process commands, and owned process environment
-text. Use `string_with_capacity` when a builder-like owned string should start empty,
+vectors, boxes, C strings, owned path buffers, process commands, owned process
+environment text, whole-reader IO results, buffered IO adapters, and encoded
+or decoded protocol text. Use `string_with_capacity` when a builder-like owned string should start empty,
 `string_copy` / `vec_copy` / `boxed_copy` when a value should be copied into a
 chosen region, and `vec_from_slice` when a slice is the source. Use `path`,
 `path_from_string`, `path_join`, `path_join_many`, `path_normalize`, and
@@ -232,6 +268,11 @@ separate `Zone` parameter through every call. Use `process_command`,
 `process_arg`, `process_env_var`, `process_output`, `process_temp_file`, and
 `process_temp_dir` for child-process construction and captured output that
 should share the same region lifetime as the surrounding CLI scratch data.
+Use `io_read_all`, `io_read_line_from`, `io_read_to_string`, `io_buf_reader`,
+and `io_buf_writer` when an IO adapter returns owned buffers or owns its
+buffering storage. Use `decode_utf8`, `encode_utf8`, `encode_hex`,
+`decode_hex`, and the base64 helpers when codec output belongs to the same
+scratch lifetime as the parser, CLI, or protocol operation that asked for it.
 Once a handle is created from a `Region`, its growth methods recover the same allocation source, so
 `values.push(...)` or `text.push(...)` can grow without storing a region field
 in the handle.
@@ -286,8 +327,9 @@ Direction:
 - use `region { ... }` for short-lived scratch work
 - prefer `*_with_region` stdlib helpers or `Region` facade methods when a
   function returns owned text, vectors, boxes, C strings, paths, process
-  environment strings, process command arguments, captured process output, or
-  temporary process paths
+  environment strings, process command arguments, captured process output,
+  temporary process paths, IO read buffers, buffered IO adapters, or encoded
+  and decoded codec text
 - keep `Allocator` as the growth capability for containers and formatters
 - keep `Zone`/`ZoneMetadata` as low-level compatibility names until the
   compiler and stdlib can migrate old APIs without breaking existing programs
@@ -301,6 +343,9 @@ Focused coverage:
 - `tests/cases/standard-library/ok/zone/std-region-zone-bridge.ari`
 - `tests/cases/standard-library/ok/path/std-path-buf.ari`
 - `tests/cases/standard-library/ok/process/std-process-high-level.ari`
+- `tests/cases/standard-library/ok/io/std-io-result.ari`
+- `tests/cases/standard-library/ok/encoding/std-encoding-text.ari`
+- `tests/cases/standard-library/ok/encoding/std-encoding-codec.ari`
 - `tests/cases/memory/ok/region-current-block.ari`
 - `tests/cases/memory/errors/region-current-block-escape.ari`
 - `tests/cases/memory/errors/region-zone-bridge-immutable.ari`
