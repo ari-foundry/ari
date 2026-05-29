@@ -2,6 +2,7 @@
 // to this test executable, so later tests do not inherit the mutation.
 fn main() -> i64 {
   var zone = zone::create(256);
+  var region = region::create(512);
   var name = std::string::from(ref mut zone, "ARI_STD_ENV_TEST_VALUE");
   var first = std::string::from(ref mut zone, "first");
   var second_text = std::string::from(ref mut zone, "second");
@@ -17,7 +18,9 @@ fn main() -> i64 {
   if missing.is_none() {
     score = score + 5;
   }
+  assert(env::try_get_with_region(ref mut region, name).is_none());
   assert(env::var(ref mut zone, name).is_none());
+  assert(env::var_with_region(ref mut region, name).is_none());
   assert(env::var_os(name).is_none());
   match env::get(ref mut zone, name) {
     Ok(_) => {
@@ -27,6 +30,7 @@ fn main() -> i64 {
       assert(reason.is_not_found());
     }
   }
+  assert(env::get_with_region(ref mut region, name).is_err());
 
   assert(env::set_var(name, first).is_ok());
   assert(env::set(name, first).is_ok());
@@ -38,12 +42,23 @@ fn main() -> i64 {
   }
   assert(env::var(ref mut zone, name).is_some());
   assert(env::var_optional(ref mut zone, name).is_some());
+  assert(env::var_optional_with_region(ref mut region, name).is_some());
   assert(env::var_os(name).is_some());
   assert(env::var_os_optional(name).is_some());
+  assert(region.env_var(name).is_some());
 
   match env::var(ref mut zone, name) {
     std::Some(var_value) => {
       assert(var_value.equals_text("first"));
+    }
+    std::None => {
+      panic();
+    }
+  }
+
+  match env::var_with_region(ref mut region, name) {
+    std::Some(var_value_region) => {
+      assert(var_value_region.equals_text("first"));
     }
     std::None => {
       panic();
@@ -72,6 +87,8 @@ fn main() -> i64 {
       panic();
     }
   }
+  assert(env::get_with_region(ref mut region, name).is_ok());
+  assert(region.env_get(name).is_ok());
   match env::get_os(name) {
     Ok(raw_value) => {
       assert(raw_value.len() == 6);
@@ -88,6 +105,12 @@ fn main() -> i64 {
   }
   var var_default = env::var_or_default(ref mut zone, name);
   assert(var_default.equals(second.as_slice()));
+  var updated_region = env::get_or_default_with_region(ref mut region, name);
+  assert(updated_region.equals(second.as_slice()));
+  var var_default_region = env::var_or_default_with_region(ref mut region, name);
+  assert(var_default_region.equals(second.as_slice()));
+  var updated_region_method = region.env_get_or_default(name);
+  assert(updated_region_method.equals(second.as_slice()));
   assert(env::var_os_or_default(name).len() == 6);
 
   if env::remove(name).is_ok() {
@@ -103,7 +126,9 @@ fn main() -> i64 {
   if removed.is_none() {
     score = score + 31;
   }
+  assert(env::try_get_with_region(ref mut region, name).is_none());
 
+  region::destroy(region);
   zone::destroy(zone);
   return score;
 }

@@ -5,6 +5,7 @@ fn consume_arg(value: String) -> i64 {
 
 fn main() -> i64 {
   var zone = zone::create(1024);
+  var region = region::create(1024);
   let count = env::arg_count();
   var score = 0;
 
@@ -25,7 +26,9 @@ fn main() -> i64 {
   if first.is_some() {
     score = score + 13;
   }
+  assert(env::try_arg_with_region(ref mut region, 0).is_some());
   assert(env::arg_optional(ref mut zone, 0).is_some());
+  assert(env::arg_optional_with_region(ref mut region, 0).is_some());
   match env::arg(ref mut zone, 0) {
     Ok(_) => {}
     Err(_) => {
@@ -33,6 +36,7 @@ fn main() -> i64 {
     }
   }
   assert(env::arg(ref mut zone, 0).is_ok());
+  assert(env::arg_with_region(ref mut region, 0).is_ok());
   match env::arg_os(0) {
     Ok(raw_arg) => {
       assert(raw_arg.len() > 0);
@@ -47,7 +51,9 @@ fn main() -> i64 {
   if missing.is_none() {
     score = score + 17;
   }
+  assert(env::try_arg_with_region(ref mut region, count).is_none());
   assert(env::arg_optional(ref mut zone, count).is_none());
+  assert(env::arg_optional_with_region(ref mut region, count).is_none());
   assert(env::arg_os_optional(count).is_none());
   match env::arg(ref mut zone, count) {
     Ok(_) => {
@@ -67,21 +73,37 @@ fn main() -> i64 {
   if count > 0 {
     assert(!collected.get(0).is_empty());
   }
+  let collected_region = env::args_with_region(ref mut region);
+  assert(collected_region.len() == count);
+  if count > 0 {
+    assert(!collected_region.get(0).is_empty());
+  }
+  let collected_region_method = region.env_args();
+  assert(collected_region_method.len() == count);
   let collected_os = env::args_os(ref mut zone);
   assert(collected_os.len() == count);
   if count > 0 {
     assert(!collected_os.get(0).is_empty());
   }
+  let collected_os_region = env::args_os_with_region(ref mut region);
+  assert(collected_os_region.len() == count);
+  let collected_os_region_method = region.env_args_os();
+  assert(collected_os_region_method.len() == count);
   let program = env::program_name(ref mut zone);
   if program.is_ok() {
     score = score + 23;
   }
   assert(env::program_name_optional(ref mut zone).is_some());
+  assert(env::program_name_optional_with_region(ref mut region).is_some());
   assert(env::program_name(ref mut zone).is_ok());
+  assert(env::program_name_with_region(ref mut region).is_ok());
+  assert(region.env_arg(0).is_ok());
+  assert(region.env_program_name().is_ok());
   assert(env::program_name_os().is_ok());
   assert(env::program_name_os_optional().is_some());
   assert(env::program_name_os().is_ok());
 
+  region::destroy(region);
   zone::destroy(zone);
   return score;
 }

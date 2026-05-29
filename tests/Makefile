@@ -946,14 +946,20 @@ check-prelude: $(TARGET)
 	grep -F -q "std3env9arg_count" $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -F -q "std3env3arg" $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -F -q "std3env4args" $(BUILD_DIR)/prelude/std-env-args.ll
+	grep -F -q "args_with_region" $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -F -q "std3env7args_os" $(BUILD_DIR)/prelude/std-env-args.ll
+	grep -F -q "args_os_with_region" $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -F -q "std3env12arg_optional" $(BUILD_DIR)/prelude/std-env-args.ll
+	grep -F -q "arg_optional_with_region" $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -F -q "std3env13arg_unchecked" $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -F -q "std3env7try_arg" $(BUILD_DIR)/prelude/std-env-args.ll
+	grep -F -q "try_arg_with_region" $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -F -q "std3env6arg_os" $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -F -q "std3env15arg_os_optional" $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -F -q "std3env12program_name" $(BUILD_DIR)/prelude/std-env-args.ll
+	grep -F -q "program_name_with_region" $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -F -q "std3env21program_name_optional" $(BUILD_DIR)/prelude/std-env-args.ll
+	grep -F -q "program_name_optional_with_region" $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -F -q "std3env15program_name_os" $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -F -q "std3env24program_name_os_optional" $(BUILD_DIR)/prelude/std-env-args.ll
 	$(TARGET) tests/cases/standard-library/ok/env/std-env-args.ari -o $(BUILD_DIR)/prelude/std-env-args.elf
@@ -968,8 +974,11 @@ check-prelude: $(TARGET)
 	grep -q "@setenv" $(BUILD_DIR)/prelude/std-env-vars.ll
 	grep -q "@unsetenv" $(BUILD_DIR)/prelude/std-env-vars.ll
 	grep -F -q "std3env7try_get" $(BUILD_DIR)/prelude/std-env-vars.ll
+	grep -F -q "try_get_with_region" $(BUILD_DIR)/prelude/std-env-vars.ll
 	grep -F -q "std3env3var" $(BUILD_DIR)/prelude/std-env-vars.ll
+	grep -F -q "var_with_region" $(BUILD_DIR)/prelude/std-env-vars.ll
 	grep -F -q "std3env12var_optional" $(BUILD_DIR)/prelude/std-env-vars.ll
+	grep -F -q "var_optional_with_region" $(BUILD_DIR)/prelude/std-env-vars.ll
 	grep -F -q "std3env6var_os" $(BUILD_DIR)/prelude/std-env-vars.ll
 	grep -F -q "std3env15var_os_optional" $(BUILD_DIR)/prelude/std-env-vars.ll
 	grep -F -q "std3env7set_var" $(BUILD_DIR)/prelude/std-env-vars.ll
@@ -985,13 +994,19 @@ check-prelude: $(TARGET)
 	grep -q "@chdir" $(BUILD_DIR)/prelude/std-env-paths.ll
 	grep -q "@readlink" $(BUILD_DIR)/prelude/std-env-paths.ll
 	grep -F -q "std3env11current_dir" $(BUILD_DIR)/prelude/std-env-paths.ll
+	grep -F -q "current_dir_with_region" $(BUILD_DIR)/prelude/std-env-paths.ll
 	grep -F -q "std3env15executable_path" $(BUILD_DIR)/prelude/std-env-paths.ll
+	grep -F -q "executable_path_with_region" $(BUILD_DIR)/prelude/std-env-paths.ll
 	grep -F -q "std3env15set_current_dir" $(BUILD_DIR)/prelude/std-env-paths.ll
 	grep -F -q "std3env20current_dir_optional" $(BUILD_DIR)/prelude/std-env-paths.ll
+	grep -F -q "current_dir_optional_with_region" $(BUILD_DIR)/prelude/std-env-paths.ll
 	grep -F -q "std3env15try_current_dir" $(BUILD_DIR)/prelude/std-env-paths.ll
+	grep -F -q "try_current_dir_with_region" $(BUILD_DIR)/prelude/std-env-paths.ll
 	grep -F -q "std3env8home_dir" $(BUILD_DIR)/prelude/std-env-paths.ll
 	grep -F -q "std3env24executable_path_optional" $(BUILD_DIR)/prelude/std-env-paths.ll
+	grep -F -q "executable_path_optional_with_region" $(BUILD_DIR)/prelude/std-env-paths.ll
 	grep -F -q "std3env19try_executable_path" $(BUILD_DIR)/prelude/std-env-paths.ll
+	grep -F -q "try_executable_path_with_region" $(BUILD_DIR)/prelude/std-env-paths.ll
 	grep -F -q "std3env20executable_path_path" $(BUILD_DIR)/prelude/std-env-paths.ll
 	grep -F -q "std3env29executable_path_path_optional" $(BUILD_DIR)/prelude/std-env-paths.ll
 	$(TARGET) tests/cases/standard-library/ok/env/std-env-paths.ari -o $(BUILD_DIR)/prelude/std-env-paths.elf

@@ -29,6 +29,14 @@ names opt into information-discarding or explicit boundary behavior. Ordinary
 old result-suffixed migration aliases are retired from `std::env`; use the
 natural names for Result-returning argument and process-path helpers.
 
+New code that allocates owned environment strings should prefer `Region`
+variants, for example `env::args_with_region(ref mut region)`,
+`env::get_with_region(ref mut region, "ARI_COMPILER")`, or the method facade
+`region.env_args()`. The older `ref mut Zone` forms remain compatibility APIs
+for code that has not moved to the public allocation object yet. OS-string and
+path-view helpers do not allocate owned `String` payloads, so they keep their
+zone-free names.
+
 Use `std::env` from application code when you want friendly arguments,
 environment variables, or current process path state. Use `std::context` when
 you specifically need the startup snapshot captured by the runtime context.
@@ -40,31 +48,44 @@ env::Error
 env::ErrorKind
 env::arg_count() -> i64
 env::arg(ref mut zone, index: i64) -> Result[std::string::String, env::Error]
+env::arg_with_region(ref mut Region, index: i64) -> Result[std::string::String, env::Error]
 env::args(ref mut zone) -> std::vec::Vec[std::string::String]
+env::args_with_region(ref mut Region) -> std::vec::Vec[std::string::String]
 env::args_os(ref mut zone) -> std::vec::Vec[std::string::OsStr]
+env::args_os_with_region(ref mut Region) -> std::vec::Vec[std::string::OsStr]
 env::arg_optional(ref mut zone, index: i64) -> Option[std::string::String]
+env::arg_optional_with_region(ref mut Region, index: i64) -> Option[std::string::String]
 env::has_arg(index: i64) -> bool
 env::try_arg(ref mut zone, index: i64) -> Option[std::string::String]
+env::try_arg_with_region(ref mut Region, index: i64) -> Option[std::string::String]
 env::arg_os(index: i64) -> Result[std::string::OsStr, env::Error]
 env::arg_os_optional(index: i64) -> Option[std::string::OsStr]
 env::arg_os_unchecked(index: i64) -> std::string::OsStr
 env::try_arg_os(index: i64) -> Option[std::string::OsStr]
 env::program_name(ref mut zone) -> Result[std::string::String, env::Error]
+env::program_name_with_region(ref mut Region) -> Result[std::string::String, env::Error]
 env::program_name_optional(ref mut zone) -> Option[std::string::String]
+env::program_name_optional_with_region(ref mut Region) -> Option[std::string::String]
 env::program_name_os() -> Result[std::string::OsStr, env::Error]
 env::program_name_os_optional() -> Option[std::string::OsStr]
 env::var(ref mut zone, name: std::Slice[u8]) -> Option[std::string::String]
+env::var_with_region(ref mut Region, name: std::Slice[u8]) -> Option[std::string::String]
 env::var_optional(ref mut zone, name: std::Slice[u8]) -> Option[std::string::String]
+env::var_optional_with_region(ref mut Region, name: std::Slice[u8]) -> Option[std::string::String]
 env::var_or_default(ref mut zone, name: std::Slice[u8]) -> std::string::String
+env::var_or_default_with_region(ref mut Region, name: std::Slice[u8]) -> std::string::String
 env::var_os(name: std::Slice[u8]) -> Option[std::string::OsStr]
 env::var_os_optional(name: std::Slice[u8]) -> Option[std::string::OsStr]
 env::var_os_or_default(name: std::Slice[u8]) -> std::string::OsStr
 env::get(ref mut zone, name: std::Slice[u8]) -> Result[std::string::String, env::Error]
+env::get_with_region(ref mut Region, name: std::Slice[u8]) -> Result[std::string::String, env::Error]
 env::get_os(name: std::Slice[u8]) -> Result[std::string::OsStr, env::Error]
 env::get_or_default(ref mut zone, name: std::Slice[u8]) -> std::string::String
+env::get_or_default_with_region(ref mut Region, name: std::Slice[u8]) -> std::string::String
 env::get_os_or_default(name: std::Slice[u8]) -> std::string::OsStr
 env::has(name: std::Slice[u8]) -> bool
 env::try_get(ref mut zone, name: std::Slice[u8]) -> Option[std::string::String]
+env::try_get_with_region(ref mut Region, name: std::Slice[u8]) -> Option[std::string::String]
 env::try_get_os(name: std::Slice[u8]) -> Option[std::string::OsStr]
 env::set_var(name: std::Slice[u8], value: std::Slice[u8]) -> Result[(), env::Error]
 env::set(name: std::Slice[u8], value: std::Slice[u8]) -> Result[(), env::Error]
@@ -73,9 +94,13 @@ env::remove_var(name: std::Slice[u8]) -> Result[(), env::Error]
 env::remove(name: std::Slice[u8]) -> Result[(), env::Error]
 env::remove_unchecked(name: std::Slice[u8]) -> bool
 env::current_dir(ref mut zone) -> Result[std::string::String, env::Error]
+env::current_dir_with_region(ref mut Region) -> Result[std::string::String, env::Error]
 env::current_dir_or_default(ref mut zone) -> std::string::String
+env::current_dir_or_default_with_region(ref mut Region) -> std::string::String
 env::current_dir_optional(ref mut zone) -> Option[std::string::String]
+env::current_dir_optional_with_region(ref mut Region) -> Option[std::string::String]
 env::try_current_dir(ref mut zone) -> Option[std::string::String]
+env::try_current_dir_with_region(ref mut Region) -> Option[std::string::String]
 env::current_dir_os() -> Result[std::string::OsStr, env::Error]
 env::current_dir_os_or_default() -> std::string::OsStr
 env::current_dir_os_optional() -> Option[std::string::OsStr]
@@ -87,9 +112,13 @@ env::try_current_dir_path() -> Option[std::path::PathBytes]
 env::set_current_dir(path: std::Slice[u8]) -> Result[(), env::Error]
 env::set_current_dir_unchecked(path: std::Slice[u8]) -> bool
 env::executable_path(ref mut zone) -> Result[std::string::String, env::Error]
+env::executable_path_with_region(ref mut Region) -> Result[std::string::String, env::Error]
 env::executable_path_or_default(ref mut zone) -> std::string::String
+env::executable_path_or_default_with_region(ref mut Region) -> std::string::String
 env::executable_path_optional(ref mut zone) -> Option[std::string::String]
+env::executable_path_optional_with_region(ref mut Region) -> Option[std::string::String]
 env::try_executable_path(ref mut zone) -> Option[std::string::String]
+env::try_executable_path_with_region(ref mut Region) -> Option[std::string::String]
 env::executable_path_os() -> Result[std::string::OsStr, env::Error]
 env::executable_path_os_or_default() -> std::string::OsStr
 env::executable_path_os_optional() -> Option[std::string::OsStr]
@@ -108,10 +137,13 @@ Negative indexes are always false.
 
 `arg(ref mut zone, index)` returns `Ok(argument)` for an available argument and
 `Err(Error(NotFound))` for an out-of-range index. The successful argument is an
-owned `String` allocated in the provided zone. `arg_optional(ref mut zone,
-index)` and `try_arg(ref mut zone, index)` keep only the optional success
-payload. Raw startup argument strings are kept behind `std::context` and the
-private stdlib boundary.
+owned `String` allocated in the provided zone. `arg_with_region(ref mut
+region, index)` is the preferred public allocation form and stores the
+successful `String` in that region. `arg_optional(ref mut zone, index)`,
+`arg_optional_with_region(ref mut region, index)`, `try_arg(ref mut zone,
+index)`, and `try_arg_with_region(ref mut region, index)` keep only the
+optional success payload. Raw startup argument strings are kept behind
+`std::context` and the private stdlib boundary.
 
 `arg_os(index)` applies the same `Result` policy to an `std::string::OsStr`
 view. Use it when the argument should stay OS-boundary bytes until the caller
@@ -120,37 +152,47 @@ explicitly validates it as UTF-8. `arg_os_optional(index)` and
 the raw context hook.
 
 `args(ref mut zone)` collects every host argument into owned
-`std::string::String` values in the caller-provided zone. This is the ergonomic
-form for CLI dispatch such as `arix build --release` or `arix run -- arg1`;
-callers can index or iterate the returned `Vec` instead of repeating an
-`arg_count()`/`arg(ref mut zone, index)` loop. `args_os(ref mut zone)` collects the same
-argument list as `OsStr` views when the caller wants to postpone UTF-8 policy.
-The vector allocation is zone-owned; the `args_os` entries still borrow the
-runtime argument byte strings.
+`std::string::String` values in the caller-provided zone.
+`args_with_region(ref mut region)` is the preferred spelling for new code and
+allocates both the vector and the owned strings in that region. This is the
+ergonomic form for CLI dispatch such as `arix build --release` or
+`arix run -- arg1`; callers can index or iterate the returned `Vec` instead of
+repeating an `arg_count()`/`arg_with_region(ref mut region, index)` loop.
+`args_os(ref mut zone)` and `args_os_with_region(ref mut region)` collect the
+same argument list as `OsStr` views when the caller wants to postpone UTF-8
+policy. The vector allocation is zone/region-owned; the `args_os` entries
+still borrow the runtime argument byte strings.
 
 `program_name(ref mut zone)` is `arg(ref mut zone, 0)`, so it returns the
 host-provided executable name when one exists and `NotFound` when the host
-context has no argument 0. `program_name_optional(ref mut zone)` is the
-explicit optional form. `program_name_os()` and `program_name_os_optional()`
+context has no argument 0. `program_name_with_region(ref mut region)` mirrors
+that behavior with public region allocation. `program_name_optional(ref mut
+zone)` and `program_name_optional_with_region(ref mut region)` are the
+explicit optional forms. `program_name_os()` and `program_name_os_optional()`
 mirror that policy for `OsStr`.
 
 `has(name)` returns whether an environment variable is visible to the
-current process. `var(ref mut zone, name)` returns `Some(value)` when the variable
-exists and `None` when it is absent. Missing environment variables are ordinary
-optional state: an arix-style CLI can write
-`env::var(ref mut zone, compiler_name)` without constructing an error. The
-success value is an owned `String` in the provided zone. `var_optional(ref mut
-zone, name)` and `try_get(ref mut zone, name)` are aliases for the same
-optional lookup, while `var_or_default(ref mut zone, name)` /
-`get_or_default(ref mut zone, name)` copy the host fallback into a `String`.
+current process. `var(ref mut zone, name)` returns `Some(value)` when the
+variable exists and `None` when it is absent. Missing environment variables are
+ordinary optional state: an arix-style CLI can write
+`env::var_with_region(ref mut region, compiler_name)` without constructing an
+error. The success value is an owned `String` in the provided zone or region.
+`var_optional(ref mut zone, name)`, `var_optional_with_region(ref mut region,
+name)`, `try_get(ref mut zone, name)`, and `try_get_with_region(ref mut
+region, name)` are aliases for the same optional lookup, while
+`var_or_default(ref mut zone, name)`, `var_or_default_with_region(ref mut
+region, name)`, `get_or_default(ref mut zone, name)`, and
+`get_or_default_with_region(ref mut region, name)` copy the host fallback into
+a `String`.
 Because `var` is also Ari's mutable-binding keyword, call this helper as
 `env::var(...)` or `std::env::var(...)`; do not import it for bare `var(...)`
 calls.
 
 `get(ref mut zone, name)` is the Result-returning environment lookup. It
 returns `Ok(value)` when the variable exists and `Err(Error(NotFound))` when it
-is absent. Use it when the missing-variable reason should compose with other
-fallible hosted helpers.
+is absent. `get_with_region(ref mut region, name)` is the Region-backed form.
+Use the Result shape when the missing-variable reason should compose with
+other fallible hosted helpers.
 
 Environment variable names and values are `Slice[u8]` inputs. String literals
 can be passed directly, immutable literal bindings such as `let name = "HOME"`
@@ -181,10 +223,14 @@ bool hook does not yet expose a platform errno payload.
 
 `current_dir(ref mut zone)` returns the process current working directory as
 `Result[String, Error]`. The success string is copied into the provided zone.
-`current_dir_or_default(ref mut zone)` copies the older empty-string fallback
-into a `String`, and `current_dir_optional(ref mut zone)` /
-`try_current_dir(ref mut zone)` keep only the optional success payload.
-The raw runtime string hook is private to the stdlib boundary.
+`current_dir_with_region(ref mut region)` is the preferred Region-backed
+equivalent. `current_dir_or_default(ref mut zone)` and
+`current_dir_or_default_with_region(ref mut region)` copy the older
+empty-string fallback into a `String`, and `current_dir_optional(ref mut
+zone)`, `current_dir_optional_with_region(ref mut region)`,
+`try_current_dir(ref mut zone)`, and `try_current_dir_with_region(ref mut
+region)` keep only the optional success payload. The raw runtime string hook
+is private to the stdlib boundary.
 
 `current_dir_os()` and `current_dir_path()` use the same `Result` policy for
 `std::string::OsStr` and `std::path::PathBytes` views. `PathBytes` is the
@@ -211,13 +257,18 @@ snapshot taken before source `main` runs, so it stays stable even if
 low-level startup snapshot and should stay at boundary sites.
 
 `executable_path(ref mut zone)` returns the host path to the running executable
-as `Result[String, Error]` when the platform can provide it. On the current
-Linux backend this uses `/proc/self/exe`. If the path cannot be read or does
-not fit the runtime buffer, it returns `Err(Error(Other))`.
-`executable_path_or_default(ref mut zone)` copies the older empty-string
-fallback into a `String`, and `executable_path_optional(ref mut zone)` /
-`try_executable_path(ref mut zone)` keep only the optional success payload.
-The raw executable-path hook is private to the stdlib boundary.
+as `Result[String, Error]` when the platform can provide it.
+`executable_path_with_region(ref mut region)` is the preferred Region-backed
+equivalent. On the current Linux backend this uses `/proc/self/exe`. If the
+path cannot be read or does not fit the runtime buffer, it returns
+`Err(Error(Other))`. `executable_path_or_default(ref mut zone)` and
+`executable_path_or_default_with_region(ref mut region)` copy the older
+empty-string fallback into a `String`, and `executable_path_optional(ref mut
+zone)`, `executable_path_optional_with_region(ref mut region)`,
+`try_executable_path(ref mut zone)`, and
+`try_executable_path_with_region(ref mut region)` keep only the optional
+success payload. The raw executable-path hook is private to the stdlib
+boundary.
 
 `executable_path_os()` exposes the executable path as `Result[OsStr, Error]`.
 Convert the `Ok` value with `std::path::from_os` when the next operation is path
@@ -231,14 +282,14 @@ that wants path operations without first going through `OsStr`; the `_optional`,
 
 ```ari
 fn main() -> i64 {
-  var zone = zone::create(512);
+  var region = region::create(512);
 
-  match env::program_name(ref mut zone) {
+  match env::program_name_with_region(ref mut region) {
     Ok(name) => println("program={}", name),
     Err(_) => {}
   }
 
-  match env::arg(ref mut zone, 1) {
+  match env::arg_with_region(ref mut region, 1) {
     Ok(value) => println("first arg={}", value),
     Err(reason) => {
       if reason.is_not_found() {
@@ -247,14 +298,14 @@ fn main() -> i64 {
     }
   }
 
-  let args = env::args(ref mut zone);
+  let args = env::args_with_region(ref mut region);
   if args.len() > 1 {
     let subcommand = args.get(1);
     if subcommand.equals_text("build") {
       println("building");
     }
   }
-  zone::destroy(zone);
+  region::destroy(region);
 
   let raw_first = env::arg_os_optional(1);
   if raw_first.is_some() {
@@ -273,19 +324,19 @@ Environment variables:
 
 ```ari
 fn main() -> i64 {
-  var zone = zone::create(256);
-  var name = std::string::from(ref mut zone, "ARI_MODE");
-  var value = std::string::from(ref mut zone, "dev");
+  var region = region::create(256);
+  var name = region.string("ARI_MODE");
+  var value = region.string("dev");
 
   if env::set_var(name, value).is_ok() {
-    match env::var(ref mut zone, name) {
+    match env::var_with_region(ref mut region, name) {
       std::Some(value) => println("mode={}", value),
       std::None => {}
     }
   }
 
   env::remove_var(name).unwrap();
-  zone::destroy(zone);
+  region::destroy(region);
   return 0;
 }
 ```
@@ -294,15 +345,15 @@ Small CLI shape:
 
 ```ari
 fn main() -> i64 {
-  var zone = zone::create(1024);
-  let args = env::args(ref mut zone);
+  var region = region::create(1024);
+  let args = region.env_args();
 
   if args.len() > 1 && args.get(1).equals_text("build") {
     let release = args.len() > 2 && args.get(2).equals_text("--release");
 
-    var compiler = std::string::from(ref mut zone, "ari");
-    var compiler_name = std::string::from(ref mut zone, "ARI_COMPILER");
-    match env::var(ref mut zone, compiler_name) {
+    var compiler = region.string("ari");
+    var compiler_name = region.string("ARI_COMPILER");
+    match region.env_var(compiler_name) {
       std::Some(value) => {
         compiler = value;
       }
@@ -310,16 +361,16 @@ fn main() -> i64 {
     }
 
     let cwd = env::current_dir_path().unwrap();
-    let manifest = cwd.join_in(ref mut zone, "Ari.toml");
+    let manifest = cwd.join_with_region(ref mut region, "Ari.toml");
     if !fs::exists("Ari.toml") {
       io::eprintln("error: Ari.toml not found").unwrap();
-      zone::destroy(zone);
+      region::destroy(region);
       return 1;
     }
 
     match env::home_dir() {
       std::Some(home) => {
-        let prefix = home.join_in(ref mut zone, ".ari");
+        let prefix = home.join_with_region(ref mut region, ".ari");
         if release && !manifest.is_empty() && !prefix.is_empty() && !compiler.is_empty() {
           io::println("building release package").unwrap();
         }
@@ -328,7 +379,7 @@ fn main() -> i64 {
     }
   }
 
-  zone::destroy(zone);
+  region::destroy(region);
   return 0;
 }
 ```
@@ -337,9 +388,9 @@ Current directory and executable path:
 
 ```ari
 fn main() -> i64 {
-  var zone = zone::create(512);
+  var region = region::create(512);
 
-  match env::current_dir(ref mut zone) {
+  match region.env_current_dir() {
     Ok(cwd) => {
       println("cwd={}", cwd);
 
@@ -359,20 +410,20 @@ fn main() -> i64 {
     Err(_) => {}
   }
 
-  match env::executable_path(ref mut zone) {
+  match region.env_executable_path() {
     Ok(exe) => println("exe={}", exe),
     Err(_) => println("exe unavailable"),
   }
 
   match env::home_dir() {
     std::Some(home) => {
-      let prefix = home.join_in(ref mut zone, ".ari");
+      let prefix = home.join_with_region(ref mut region, ".ari");
       println("prefix={}", prefix.as_slice());
     }
     std::None => {}
   }
 
-  zone::destroy(zone);
+  region::destroy(region);
   return 0;
 }
 ```
@@ -380,8 +431,9 @@ fn main() -> i64 {
 ## Current Limits
 
 - Natural text helpers such as `arg`, `var`, `current_dir`, and
-  `executable_path` allocate owned `String` values in the caller's zone. Raw
-  builtin strings are private stdlib/runtime details.
+  `executable_path` allocate owned `String` values in the caller's zone or
+  region. Prefer the `*_with_region` helpers and `region.env_*` methods for
+  new code. Raw builtin strings are private stdlib/runtime details.
 - The `*_os` and `*_path` helpers are borrowed views over runtime buffers. They
   clarify API intent but do not extend the lifetime of the underlying bytes.
 - Executable path lookup is currently Linux-specific and reads

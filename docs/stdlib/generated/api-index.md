@@ -24,22 +24,22 @@ platform notes.
 
 ## Summary
 
-- API entries: `3764`
+- API entries: `3803`
 - Modules: `42`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
-| `alloc` | 1043 | usable |
+| `alloc` | 1061 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 959 | stable candidate |
-| `hosted` | 1559 | platform-backed |
+| `hosted` | 1580 | platform-backed |
 | `platform` | 167 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1316 |
-| `method` | 1973 |
+| `fn` | 1346 |
+| `method` | 1982 |
 | `module` | 41 |
 | `struct` | 199 |
 | `trait` | 39 |
@@ -64,7 +64,7 @@ platform notes.
 | `std::context` | `hosted` | 21 |
 | `std::convert` | `core` | 14 |
 | `std::encoding` | `core` | 102 |
-| `std::env` | `hosted` | 64 |
+| `std::env` | `hosted` | 85 |
 | `std::error` | `core` | 39 |
 | `std::fmt` | `core` | 86 |
 | `std::fs` | `hosted` | 325 |
@@ -83,7 +83,7 @@ platform notes.
 | `std::process` | `hosted` | 181 |
 | `std::random` | `alloc/hosted` | 36 |
 | `std::rc` | `alloc` | 32 |
-| `std::region` | `alloc` | 58 |
+| `std::region` | `alloc` | 76 |
 | `std::result` | `core` | 12 |
 | `std::string` | `alloc` | 182 |
 | `std::sync` | `hosted` | 224 |
@@ -1547,40 +1547,54 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::env::arg` | check-prelude std-env-args Result-returning argument helper; docs/stdlib/modules/env.md |
 | `fn std::env::arg_count` | check-prelude std-env-args argument count wrapper; docs/stdlib/modules/env.md |
 | `fn std::env::arg_optional` | check-prelude std-env-args Option-returning argument compatibility helper; docs/stdlib/modules/env.md |
+| `fn std::env::arg_optional_with_region` | check-prelude std-env-args Region-backed Option-returning argument helper; docs/stdlib/modules/env.md |
 | `fn std::env::arg_os` | check-prelude std-env-os-path-views Result-returning OS-string argument view; docs/stdlib/modules/env.md |
 | `fn std::env::arg_os_optional` | check-prelude std-env-os-path-views Option-returning OS-string argument compatibility helper; docs/stdlib/modules/env.md |
 | `fn std::env::arg_os_unchecked` | check-prelude std-env-os-path-views unchecked OS-string argument compatibility helper; docs/stdlib/modules/env.md |
+| `fn std::env::arg_with_region` | check-prelude std-env-args Region-backed Result-returning argument helper; docs/stdlib/modules/env.md |
 | `fn std::env::args` | check-prelude std-env-args full owned argument vector helper; docs/stdlib/modules/env.md |
 | `fn std::env::args_os` | check-prelude std-env-args full OS-string argument vector helper; docs/stdlib/modules/env.md |
+| `fn std::env::args_os_with_region` | check-prelude std-env-args Region-backed full OS-string argument vector helper; docs/stdlib/modules/env.md |
+| `fn std::env::args_with_region` | check-prelude std-env-args Region-backed full owned argument vector helper; docs/stdlib/modules/env.md |
 | `fn std::env::current_dir` | check-prelude std-env-paths Result-returning current directory helper; docs/stdlib/modules/env.md |
 | `fn std::env::current_dir_optional` | check-prelude std-env-paths Option-returning current directory compatibility helper; docs/stdlib/modules/env.md |
+| `fn std::env::current_dir_optional_with_region` | check-prelude std-env-paths Region-backed optional current directory helper; docs/stdlib/modules/env.md |
 | `fn std::env::current_dir_or_default` | check-prelude std-env-paths empty-string current directory compatibility helper; docs/stdlib/modules/env.md |
+| `fn std::env::current_dir_or_default_with_region` | check-prelude std-env-paths Region-backed current directory fallback helper; docs/stdlib/modules/env.md |
 | `fn std::env::current_dir_os` | check-prelude std-env-os-path-views Result-returning OS-string current directory view; docs/stdlib/modules/env.md |
 | `fn std::env::current_dir_os_optional` | check-prelude std-env-os-path-views Option-returning OS-string current directory compatibility helper; docs/stdlib/modules/env.md |
 | `fn std::env::current_dir_os_or_default` | check-prelude std-env-os-path-views OS-string current directory compatibility helper; docs/stdlib/modules/env.md |
 | `fn std::env::current_dir_path` | check-prelude std-env-os-path-views Result-returning path-byte current directory view; docs/stdlib/modules/env.md |
 | `fn std::env::current_dir_path_optional` | check-prelude std-env-os-path-views Option-returning path-byte current directory compatibility helper; docs/stdlib/modules/env.md |
 | `fn std::env::current_dir_path_or_default` | check-prelude std-env-os-path-views path-byte current directory compatibility helper; docs/stdlib/modules/env.md |
+| `fn std::env::current_dir_with_region` | check-prelude std-env-paths Region-backed Result-returning current directory helper; docs/stdlib/modules/env.md |
 | `fn std::env::executable_path` | check-prelude std-env-paths Result-returning executable path helper; docs/stdlib/modules/env.md |
 | `fn std::env::executable_path_optional` | check-prelude std-env-paths Option-returning executable path compatibility helper; docs/stdlib/modules/env.md |
+| `fn std::env::executable_path_optional_with_region` | check-prelude std-env-paths Region-backed optional executable path helper; docs/stdlib/modules/env.md |
 | `fn std::env::executable_path_or_default` | check-prelude std-env-paths empty-string executable path compatibility helper; docs/stdlib/modules/env.md |
+| `fn std::env::executable_path_or_default_with_region` | check-prelude std-env-paths Region-backed executable path fallback helper; docs/stdlib/modules/env.md |
 | `fn std::env::executable_path_os` | check-prelude std-env-os-path-views Result-returning OS-string executable path view; docs/stdlib/modules/env.md |
 | `fn std::env::executable_path_os_optional` | check-prelude std-env-os-path-views Option-returning OS-string executable path compatibility helper; docs/stdlib/modules/env.md |
 | `fn std::env::executable_path_os_or_default` | check-prelude std-env-os-path-views OS-string executable path compatibility helper; docs/stdlib/modules/env.md |
 | `fn std::env::executable_path_path` | check-prelude std-env-paths Result-returning path-byte executable path view; docs/stdlib/modules/env.md |
 | `fn std::env::executable_path_path_optional` | check-prelude std-env-paths Option-returning path-byte executable path compatibility helper; docs/stdlib/modules/env.md |
 | `fn std::env::executable_path_path_or_default` | check-prelude std-env-paths path-byte executable path compatibility helper; docs/stdlib/modules/env.md |
+| `fn std::env::executable_path_with_region` | check-prelude std-env-paths Region-backed Result-returning executable path helper; docs/stdlib/modules/env.md |
 | `fn std::env::get` | check-prelude std-env-vars Result-returning environment variable lookup; docs/stdlib/modules/env.md |
 | `fn std::env::get_or_default` | check-prelude std-env-vars empty-string compatibility environment variable lookup; docs/stdlib/modules/env.md |
+| `fn std::env::get_or_default_with_region` | check-prelude std-env-vars Region-backed environment variable fallback helper; docs/stdlib/modules/env.md |
 | `fn std::env::get_os` | check-prelude std-env-vars/std-env-os-path-views Result-returning OS-string environment variable lookup; docs/stdlib/modules/env.md |
 | `fn std::env::get_os_or_default` | check-prelude std-env-os-path-views OS-string compatibility environment variable lookup; docs/stdlib/modules/env.md |
+| `fn std::env::get_with_region` | check-prelude std-env-vars Region-backed Result-returning environment variable lookup; docs/stdlib/modules/env.md |
 | `fn std::env::has` | check-prelude std-env-vars environment variable presence; docs/stdlib/modules/env.md |
 | `fn std::env::has_arg` | check-prelude std-env-args argument range helper; docs/stdlib/modules/env.md |
 | `fn std::env::home_dir` | check-prelude std-env-paths HOME-backed optional path-byte helper; docs/stdlib/modules/env.md |
 | `fn std::env::program_name` | check-prelude std-env-args Result-returning program name helper; docs/stdlib/modules/env.md |
 | `fn std::env::program_name_optional` | check-prelude std-env-args Option-returning program name compatibility helper; docs/stdlib/modules/env.md |
+| `fn std::env::program_name_optional_with_region` | check-prelude std-env-args Region-backed optional program name helper; docs/stdlib/modules/env.md |
 | `fn std::env::program_name_os` | check-prelude std-env-os-path-views Result-returning OS-string program name helper; docs/stdlib/modules/env.md |
 | `fn std::env::program_name_os_optional` | check-prelude std-env-os-path-views Option-returning OS-string program name compatibility helper; docs/stdlib/modules/env.md |
+| `fn std::env::program_name_with_region` | check-prelude std-env-args Region-backed Result-returning program name helper; docs/stdlib/modules/env.md |
 | `fn std::env::remove` | check-prelude std-env-vars Result-returning environment variable removal; docs/stdlib/modules/env.md |
 | `fn std::env::remove_unchecked` | check-prelude std-env-vars bool compatibility environment variable removal; docs/stdlib/modules/env.md |
 | `fn std::env::remove_var` | check-prelude std-env-vars Result-returning environment variable removal alias; docs/stdlib/modules/env.md |
@@ -1591,20 +1605,27 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::env::set_var` | check-prelude std-env-vars Result-returning environment variable mutation alias; docs/stdlib/modules/env.md |
 | `fn std::env::try_arg` | check-prelude std-env-args optional argument helper; docs/stdlib/modules/env.md |
 | `fn std::env::try_arg_os` | check-prelude std-env-os-path-views optional OS-string argument helper; docs/stdlib/modules/env.md |
+| `fn std::env::try_arg_with_region` | check-prelude std-env-args Region-backed optional argument helper; docs/stdlib/modules/env.md |
 | `fn std::env::try_current_dir` | check-prelude std-env-paths optional current directory helper; docs/stdlib/modules/env.md |
 | `fn std::env::try_current_dir_os` | check-prelude std-env-os-path-views optional OS-string current directory helper; docs/stdlib/modules/env.md |
 | `fn std::env::try_current_dir_path` | check-prelude std-env-os-path-views optional path-byte current directory helper; docs/stdlib/modules/env.md |
+| `fn std::env::try_current_dir_with_region` | check-prelude std-env-paths Region-backed optional current directory helper; docs/stdlib/modules/env.md |
 | `fn std::env::try_executable_path` | check-prelude std-env-paths optional executable path helper; docs/stdlib/modules/env.md |
 | `fn std::env::try_executable_path_os` | check-prelude std-env-os-path-views optional OS-string executable path helper; docs/stdlib/modules/env.md |
 | `fn std::env::try_executable_path_path` | check-prelude std-env-paths optional path-byte executable path helper; docs/stdlib/modules/env.md |
+| `fn std::env::try_executable_path_with_region` | check-prelude std-env-paths Region-backed optional executable path helper; docs/stdlib/modules/env.md |
 | `fn std::env::try_get` | check-prelude std-env-vars optional environment variable helper; docs/stdlib/modules/env.md |
 | `fn std::env::try_get_os` | check-prelude std-env-os-path-views optional OS-string environment variable helper; docs/stdlib/modules/env.md |
+| `fn std::env::try_get_with_region` | check-prelude std-env-vars Region-backed optional environment variable helper; docs/stdlib/modules/env.md |
 | `fn std::env::var` | check-prelude std-env-vars Option-returning environment variable lookup; docs/stdlib/modules/env.md |
 | `fn std::env::var_optional` | check-prelude std-env-vars Option-returning environment variable compatibility helper; docs/stdlib/modules/env.md |
+| `fn std::env::var_optional_with_region` | check-prelude std-env-vars Region-backed optional environment variable helper; docs/stdlib/modules/env.md |
 | `fn std::env::var_or_default` | check-prelude std-env-vars empty-string environment variable compatibility helper; docs/stdlib/modules/env.md |
+| `fn std::env::var_or_default_with_region` | check-prelude std-env-vars Region-backed environment variable fallback helper; docs/stdlib/modules/env.md |
 | `fn std::env::var_os` | check-prelude std-env-vars Option-returning OS-string environment variable lookup; docs/stdlib/modules/env.md |
 | `fn std::env::var_os_optional` | check-prelude std-env-vars Option-returning OS-string environment variable compatibility helper; docs/stdlib/modules/env.md |
 | `fn std::env::var_os_or_default` | check-prelude std-env-vars OS-string environment variable compatibility helper; docs/stdlib/modules/env.md |
+| `fn std::env::var_with_region` | check-prelude std-env-vars Region-backed Option-returning environment variable lookup; docs/stdlib/modules/env.md |
 
 ### module
 
@@ -3802,6 +3823,15 @@ Tier: `alloc`. Stability reading: usable.
 | `fn std::region::current_dir_join` | check-prelude std-path-buf Region facade for cwd-relative path join; docs/stdlib/modules/region.md |
 | `fn std::region::default_capacity` | std region capability tests; docs/stdlib/modules/region.md |
 | `fn std::region::destroy` | std region capability tests; docs/stdlib/modules/region.md |
+| `fn std::region::env_arg` | check-prelude std-env-args Region facade for owned argument lookup; docs/stdlib/modules/region.md |
+| `fn std::region::env_args` | check-prelude std-env-args Region facade for owned argument collection; docs/stdlib/modules/region.md |
+| `fn std::region::env_args_os` | check-prelude std-env-args Region facade for OS-string argument collection; docs/stdlib/modules/region.md |
+| `fn std::region::env_current_dir` | check-prelude std-env-paths Region facade for owned current directory lookup; docs/stdlib/modules/region.md |
+| `fn std::region::env_executable_path` | check-prelude std-env-paths Region facade for owned executable path lookup; docs/stdlib/modules/region.md |
+| `fn std::region::env_get` | check-prelude std-env-vars Region facade for Result-returning environment lookup; docs/stdlib/modules/region.md |
+| `fn std::region::env_get_or_default` | check-prelude std-env-vars Region facade for environment fallback lookup; docs/stdlib/modules/region.md |
+| `fn std::region::env_program_name` | check-prelude std-env-args Region facade for owned program name lookup; docs/stdlib/modules/region.md |
+| `fn std::region::env_var` | check-prelude std-env-vars Region facade for optional environment lookup; docs/stdlib/modules/region.md |
 | `fn std::region::new[T]` | std region capability tests; docs/stdlib/modules/region.md |
 | `fn std::region::path` | check-prelude std-path-buf Region facade for owned path construction; docs/stdlib/modules/region.md |
 | `fn std::region::path_from_string` | check-prelude std-path-buf Region facade for owned path copy from String; docs/stdlib/modules/region.md |
@@ -3833,6 +3863,15 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::region::Region::capacity` | std region capability tests; docs/stdlib/modules/region.md |
 | `method std::region::Region::cstring` | std region capability allocator-backed CString construction test; docs/stdlib/modules/region.md |
 | `method std::region::Region::current_dir_join` | check-prelude std-path-buf Region facade for cwd-relative path join; docs/stdlib/modules/region.md |
+| `method std::region::Region::env_arg` | check-prelude std-env-args Region method for owned argument lookup; docs/stdlib/modules/region.md |
+| `method std::region::Region::env_args` | check-prelude std-env-args Region method for owned argument collection; docs/stdlib/modules/region.md |
+| `method std::region::Region::env_args_os` | check-prelude std-env-args Region method for OS-string argument collection; docs/stdlib/modules/region.md |
+| `method std::region::Region::env_current_dir` | check-prelude std-env-paths Region method for owned current directory lookup; docs/stdlib/modules/region.md |
+| `method std::region::Region::env_executable_path` | check-prelude std-env-paths Region method for owned executable path lookup; docs/stdlib/modules/region.md |
+| `method std::region::Region::env_get` | check-prelude std-env-vars Region method for Result-returning environment lookup; docs/stdlib/modules/region.md |
+| `method std::region::Region::env_get_or_default` | check-prelude std-env-vars Region method for environment fallback lookup; docs/stdlib/modules/region.md |
+| `method std::region::Region::env_program_name` | check-prelude std-env-args Region method for owned program name lookup; docs/stdlib/modules/region.md |
+| `method std::region::Region::env_var` | check-prelude std-env-vars Region method for optional environment lookup; docs/stdlib/modules/region.md |
 | `method std::region::Region::new[T]` | std region capability tests; docs/stdlib/modules/region.md |
 | `method std::region::Region::path` | check-prelude std-path-buf Region facade for owned path construction; docs/stdlib/modules/region.md |
 | `method std::region::Region::path_from_string` | check-prelude std-path-buf Region facade for owned path copy from String; docs/stdlib/modules/region.md |

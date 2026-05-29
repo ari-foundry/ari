@@ -86,6 +86,42 @@ pub impl std::region::Region {
     return std::region::current_dir_join(self, child);
   }
 
+  fn env_get(self: ref mut Self, name: std::Slice[u8]) -> std::Result[std::string::String, std::error::Error] {
+    return std::region::env_get(self, name);
+  }
+
+  fn env_var(self: ref mut Self, name: std::Slice[u8]) -> std::Option[std::string::String] {
+    return std::region::env_var(self, name);
+  }
+
+  fn env_get_or_default(self: ref mut Self, name: std::Slice[u8]) -> std::string::String {
+    return std::region::env_get_or_default(self, name);
+  }
+
+  fn env_arg(self: ref mut Self, index: i64) -> std::Result[std::string::String, std::error::Error] {
+    return std::region::env_arg(self, index);
+  }
+
+  fn env_args(self: ref mut Self) -> std::vec::Vec[std::string::String] {
+    return std::region::env_args(self);
+  }
+
+  fn env_args_os(self: ref mut Self) -> std::vec::Vec[std::string::OsStr] {
+    return std::region::env_args_os(self);
+  }
+
+  fn env_program_name(self: ref mut Self) -> std::Result[std::string::String, std::error::Error] {
+    return std::region::env_program_name(self);
+  }
+
+  fn env_current_dir(self: ref mut Self) -> std::Result[std::string::String, std::error::Error] {
+    return std::region::env_current_dir(self);
+  }
+
+  fn env_executable_path(self: ref mut Self) -> std::Result[std::string::String, std::error::Error] {
+    return std::region::env_executable_path(self);
+  }
+
   fn promote[T](self: ref mut Self, source: ptr T) -> ptr T {
     return std::region::promote<T>(self, source);
   }
@@ -243,6 +279,60 @@ pub fn current_dir_join(
   child: std::path::PathBytes
 ) -> std::Result[std::path::PathBuf, std::error::Error] {
   return std::path::current_dir_join_with_region(region, child);
+}
+
+pub fn env_get(
+  region: ref mut std::region::Region,
+  name: std::Slice[u8]
+) -> std::Result[std::string::String, std::error::Error] {
+  return std::env::get_with_region(region, name);
+}
+
+pub fn env_var(
+  region: ref mut std::region::Region,
+  name: std::Slice[u8]
+) -> std::Option[std::string::String] {
+  return std::env::var_with_region(region, name);
+}
+
+pub fn env_get_or_default(
+  region: ref mut std::region::Region,
+  name: std::Slice[u8]
+) -> std::string::String {
+  return std::env::get_or_default_with_region(region, name);
+}
+
+pub fn env_arg(
+  region: ref mut std::region::Region,
+  index: i64
+) -> std::Result[std::string::String, std::error::Error] {
+  return std::env::arg_with_region(region, index);
+}
+
+pub fn env_args(region: ref mut std::region::Region) -> std::vec::Vec[std::string::String] {
+  return std::env::args_with_region(region);
+}
+
+pub fn env_args_os(region: ref mut std::region::Region) -> std::vec::Vec[std::string::OsStr] {
+  return std::env::args_os_with_region(region);
+}
+
+pub fn env_program_name(
+  region: ref mut std::region::Region
+) -> std::Result[std::string::String, std::error::Error] {
+  return std::env::program_name_with_region(region);
+}
+
+pub fn env_current_dir(
+  region: ref mut std::region::Region
+) -> std::Result[std::string::String, std::error::Error] {
+  return std::env::current_dir_with_region(region);
+}
+
+pub fn env_executable_path(
+  region: ref mut std::region::Region
+) -> std::Result[std::string::String, std::error::Error] {
+  return std::env::executable_path_with_region(region);
 }
 
 pub fn promote[T](target: ref mut std::region::Region, source: ptr T) -> ptr T {

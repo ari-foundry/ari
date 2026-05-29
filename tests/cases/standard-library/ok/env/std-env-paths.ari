@@ -4,10 +4,15 @@
 
 fn main() -> i64 {
   var zone = zone::create(1024);
+  var region = region::create(1024);
   let cwd = env::current_dir_or_default(ref mut zone);
+  let cwd_region = env::current_dir_or_default_with_region(ref mut region);
   let exe = env::executable_path_or_default(ref mut zone);
+  let exe_region = env::executable_path_or_default_with_region(ref mut region);
   let maybe_cwd = env::current_dir_optional(ref mut zone);
+  let maybe_cwd_region = env::current_dir_optional_with_region(ref mut region);
   let maybe_exe = env::executable_path_optional(ref mut zone);
+  let maybe_exe_region = env::executable_path_optional_with_region(ref mut region);
   var home_name = std::string::from(ref mut zone, "HOME");
   var home_value = std::string::from(ref mut zone, "/tmp/ari-home-test");
   var score = 0;
@@ -15,10 +20,13 @@ fn main() -> i64 {
   if !cwd.is_empty() {
     score = score + 3;
   }
+  assert(!cwd_region.is_empty());
   if maybe_cwd.is_some() {
     score = score + 5;
   }
+  assert(maybe_cwd_region.is_some());
   assert(env::try_current_dir(ref mut zone).is_some());
+  assert(env::try_current_dir_with_region(ref mut region).is_some());
   match env::current_dir(ref mut zone) {
     Ok(current_path) => {
       assert(!current_path.is_empty());
@@ -27,6 +35,8 @@ fn main() -> i64 {
       panic();
     }
   }
+  assert(env::current_dir_with_region(ref mut region).is_ok());
+  assert(region.env_current_dir().is_ok());
   assert(env::current_dir_os().is_ok());
   assert(env::current_dir_path().is_ok());
   assert(env::set_var(home_name, home_value).is_ok());
@@ -49,10 +59,13 @@ fn main() -> i64 {
   if !exe.is_empty() {
     score = score + 11;
   }
+  assert(!exe_region.is_empty());
   if maybe_exe.is_some() {
     score = score + 13;
   }
+  assert(maybe_exe_region.is_some());
   assert(env::try_executable_path(ref mut zone).is_some());
+  assert(env::try_executable_path_with_region(ref mut region).is_some());
   match env::executable_path(ref mut zone) {
     Ok(executable_path) => {
       assert(!executable_path.is_empty());
@@ -61,12 +74,15 @@ fn main() -> i64 {
       panic();
     }
   }
+  assert(env::executable_path_with_region(ref mut region).is_ok());
+  assert(region.env_executable_path().is_ok());
   assert(env::executable_path_os().is_ok());
   assert(env::executable_path_path().is_ok());
   assert(env::executable_path_path_optional().is_some());
   assert(env::try_executable_path_path().is_some());
   assert(!env::executable_path_path_or_default().is_empty());
 
+  region::destroy(region);
   zone::destroy(zone);
   return score;
 }

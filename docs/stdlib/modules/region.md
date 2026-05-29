@@ -39,6 +39,15 @@ region::path_join(ref mut Region, base: PathBytes, child: PathBytes) -> PathBuf
 region::path_join_many(ref mut Region, parts: Slice[PathBytes]) -> PathBuf
 region::path_normalize(ref mut Region, path: Slice[u8]) -> PathBuf
 region::current_dir_join(ref mut Region, child: PathBytes) -> Result[PathBuf, Error]
+region::env_get(ref mut Region, name: Slice[u8]) -> Result[String, Error]
+region::env_var(ref mut Region, name: Slice[u8]) -> Option[String]
+region::env_get_or_default(ref mut Region, name: Slice[u8]) -> String
+region::env_arg(ref mut Region, index: i64) -> Result[String, Error]
+region::env_args(ref mut Region) -> Vec[String]
+region::env_args_os(ref mut Region) -> Vec[OsStr]
+region::env_program_name(ref mut Region) -> Result[String, Error]
+region::env_current_dir(ref mut Region) -> Result[String, Error]
+region::env_executable_path(ref mut Region) -> Result[String, Error]
 region::promote<T>(ref mut target, source: ptr T) -> ptr T
 
 region::capacity(ref mut Region) -> i64
@@ -71,6 +80,15 @@ Region::path_join(base: PathBytes, child: PathBytes) -> PathBuf
 Region::path_join_many(parts: Slice[PathBytes]) -> PathBuf
 Region::path_normalize(path: Slice[u8]) -> PathBuf
 Region::current_dir_join(child: PathBytes) -> Result[PathBuf, Error]
+Region::env_get(name: Slice[u8]) -> Result[String, Error]
+Region::env_var(name: Slice[u8]) -> Option[String]
+Region::env_get_or_default(name: Slice[u8]) -> String
+Region::env_arg(index: i64) -> Result[String, Error]
+Region::env_args() -> Vec[String]
+Region::env_args_os() -> Vec[OsStr]
+Region::env_program_name() -> Result[String, Error]
+Region::env_current_dir() -> Result[String, Error]
+Region::env_executable_path() -> Result[String, Error]
 Region::promote<T>(source: ptr T) -> ptr T
 Region::capacity() -> i64
 Region::used() -> i64
@@ -94,6 +112,8 @@ let boxed = region.boxed<i64>(42);
 let saved_box = region.boxed_copy<i64>(ref boxed);
 let manifest = region.path("Ari.toml");
 let cache = region.path_join("target", "cache");
+let args = region.env_args();
+let compiler = region.env_var("ARI_COMPILER");
 region::destroy(region);
 ```
 
@@ -187,15 +207,18 @@ converted. That keeps allocation authority visible while avoiding the old
 
 The convenience methods are deliberately small. They cover the common standard
 handles that otherwise force users to spell `region::as_zone`: owned text,
-vectors, boxes, C strings, and owned path buffers. Use `string_with_capacity`
-when a builder-like owned string should start empty,
+vectors, boxes, C strings, owned path buffers, and owned process environment
+text. Use `string_with_capacity` when a builder-like owned string should start empty,
 `string_copy` / `vec_copy` / `boxed_copy` when a value should be copied into a
 chosen region, and `vec_from_slice` when a slice is the source. Use `path`,
 `path_from_string`, `path_join`, `path_join_many`, `path_normalize`, and
-`current_dir_join` for path buffers whose storage belongs to the region. Once
-a handle is created from a `Region`, its growth methods recover the same
-allocation source, so `values.push(...)` or `text.push(...)` can grow without
-storing a region field in the handle.
+`current_dir_join` for path buffers whose storage belongs to the region. Use
+`env_args`, `env_arg`, `env_get`, `env_var`, `env_current_dir`, and
+`env_executable_path` when a CLI needs owned process text without carrying a
+separate `Zone` parameter through every call. Once a handle is created from a
+`Region`, its growth methods recover the same allocation source, so
+`values.push(...)` or `text.push(...)` can grow without storing a region field
+in the handle.
 
 ## Capacity And Failure
 
@@ -245,6 +268,9 @@ Direction:
 
 - write new user-facing examples with `Region` or `region::*`
 - use `region { ... }` for short-lived scratch work
+- prefer `*_with_region` stdlib helpers or `Region` facade methods when a
+  function returns owned text, vectors, boxes, C strings, paths, or process
+  environment strings
 - keep `Allocator` as the growth capability for containers and formatters
 - keep `Zone`/`ZoneMetadata` as low-level compatibility names until the
   compiler and stdlib can migrate old APIs without breaking existing programs
