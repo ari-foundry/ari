@@ -2357,6 +2357,13 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std4path11from_string' $(BUILD_DIR)/prelude/std-path-buf.ll
 	grep -q '_ARNv3std4path9to_string' $(BUILD_DIR)/prelude/std-path-buf.ll
 	grep -q '_ARNv3std4path16current_dir_join' $(BUILD_DIR)/prelude/std-path-buf.ll
+	grep -q '_ARNv3std4path16from_with_region' $(BUILD_DIR)/prelude/std-path-buf.ll
+	grep -q '_ARNv3std4path16join_with_region' $(BUILD_DIR)/prelude/std-path-buf.ll
+	grep -q '_ARNv3std4path21join_many_with_region' $(BUILD_DIR)/prelude/std-path-buf.ll
+	grep -q '_ARNv3std4path21normalize_with_region' $(BUILD_DIR)/prelude/std-path-buf.ll
+	grep -q '_ARNv3std4path28current_dir_join_with_region' $(BUILD_DIR)/prelude/std-path-buf.ll
+	grep -q '_ARNv3std6region4path' $(BUILD_DIR)/prelude/std-path-buf.ll
+	grep -q '_ARNv3std6region9path_join' $(BUILD_DIR)/prelude/std-path-buf.ll
 	grep -q 'std__path__PathBuf8inherent7as_path' $(BUILD_DIR)/prelude/std-path-buf.ll
 	grep -q 'std__path__PathBuf8inherent8as_bytes' $(BUILD_DIR)/prelude/std-path-buf.ll
 	grep -q 'std__path__PathBuf8inherent9as_string' $(BUILD_DIR)/prelude/std-path-buf.ll

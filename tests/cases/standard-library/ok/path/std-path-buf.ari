@@ -9,6 +9,7 @@ fn expect_buf(value: ref std::path::PathBuf, expected: Slice[u8]) -> void {
 
 fn main() -> i64 {
   var zone = zone::create(512);
+  var region = region::create(512);
 
   let view: std::path::Path = "src/main.ari";
   assert(!std::path::is_empty(view.as_slice()));
@@ -66,6 +67,92 @@ fn main() -> i64 {
   let copied_back = object.to_string(ref mut zone);
   assert(copied_back.equals_text("src/lib.o"));
 
+  let region_owned = std::path::from_with_region(ref mut region, "region/main.ari");
+  expect_buf(ref region_owned, "region/main.ari");
+
+  let region_from_bytes = std::path::from_bytes_with_region(ref mut region, "region/lib.ari");
+  expect_buf(ref region_from_bytes, "region/lib.ari");
+
+  let region_from_string = std::path::from_string_with_region(ref mut region, ref source_text);
+  expect_buf(ref region_from_string, "src/main.ari");
+
+  let region_text = std::path::to_string_with_region(ref mut region, region_owned.as_path());
+  assert(region_text.equals_text("region/main.ari"));
+
+  let region_joined = std::path::join_with_region(ref mut region, "region", "cache");
+  expect_buf(ref region_joined, "region/cache");
+
+  var region_parts: [std::path::PathBytes, 3] = [
+    "region",
+    "build",
+    "out"
+  ];
+  let region_many = std::path::join_many_with_region(ref mut region, region_parts.as_slice());
+  expect_buf(ref region_many, "region/build/out");
+
+  match std::path::current_dir_join_with_region(ref mut region, "Ari.toml") {
+    std::Ok(region_cwd_path) => {
+      assert(region_cwd_path.is_absolute());
+      assert(region_cwd_path.as_path().ends_with("Ari.toml"));
+    }
+    std::Err(_) => {
+      std::panic();
+    }
+  }
+
+  let region_normalized = std::path::normalize_with_region(ref mut region, "/tmp/./ari//");
+  expect_buf(ref region_normalized, "/tmp/ari");
+
+  let region_renamed = region_owned.with_file_name_with_region(ref mut region, "lib.ari");
+  expect_buf(ref region_renamed, "region/lib.ari");
+
+  let region_object = region_renamed.with_extension_with_region(ref mut region, "o");
+  expect_buf(ref region_object, "region/lib.o");
+
+  let view_joined = view.join_with_region(ref mut region, "cache");
+  expect_buf(ref view_joined, "src/main.ari/cache");
+
+  let view_normalized = std::path::bytes("/tmp/./zone//").normalize_with_region(ref mut region);
+  expect_buf(ref view_normalized, "/tmp/zone");
+
+  let view_text = view.to_string_with_region(ref mut region);
+  assert(view_text.equals_text("src/main.ari"));
+
+  let view_renamed = view.with_file_name_with_region(ref mut region, "lib.ari");
+  expect_buf(ref view_renamed, "src/lib.ari");
+
+  let view_object = view.with_extension_with_region(ref mut region, "o");
+  expect_buf(ref view_object, "src/main.o");
+
+  let region_method_owned = region.path("logs/app.log");
+  expect_buf(ref region_method_owned, "logs/app.log");
+
+  let region_method_from_string = region.path_from_string(ref source_text);
+  expect_buf(ref region_method_from_string, "src/main.ari");
+
+  let region_method_joined = region.path_join("logs", "today");
+  expect_buf(ref region_method_joined, "logs/today");
+
+  let region_method_many = region.path_join_many(region_parts.as_slice());
+  expect_buf(ref region_method_many, "region/build/out");
+
+  let region_method_normalized = region.path_normalize("logs/./today//");
+  expect_buf(ref region_method_normalized, "logs/today");
+
+  match region.current_dir_join("Ari.toml") {
+    std::Ok(region_method_cwd_path) => {
+      assert(region_method_cwd_path.is_absolute());
+      assert(region_method_cwd_path.as_path().ends_with("Ari.toml"));
+    }
+    std::Err(_) => {
+      std::panic();
+    }
+  }
+
+  let region_copy_back = region_object.to_string_with_region(ref mut region);
+  assert(region_copy_back.equals_text("region/lib.o"));
+
+  region::destroy(region);
   zone::destroy(zone);
   return 0;
 }

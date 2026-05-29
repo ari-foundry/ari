@@ -46,9 +46,12 @@ validates through `std::string::Utf8` or `std::encoding`. `PathBytes` and
 callers can reject it before `std::fs`, `std::c`, or other hosted boundaries.
 
 Most path helpers are infallible because they only inspect or copy bytes.
-Helpers that allocate take `ref mut Zone`. The only Result-returning helper in
-this module today is `current_dir_join`, because reading the current directory
-can fail before the lexical join happens.
+Helpers that allocate take an explicit allocation lifetime. Prefer
+`std::region::Region` entry points in new code; the older `ref mut Zone`
+entry points remain as compatibility shims while the stdlib migrates. The only
+Result-returning helpers in this module today are `current_dir_join` and
+`current_dir_join_with_region`, because reading the current directory can fail
+before the lexical join happens.
 
 ## Choosing APIs
 
@@ -56,13 +59,13 @@ can fail before the lexical join happens.
 | --- | --- | --- |
 | Treat bytes as a path | `path::bytes(bytes)` or direct literal coercion to `PathBytes` | No allocation; keeps the original bytes borrowed. |
 | Convert from OS boundary data | `path::from_os(os)` | Keeps bytes borrowed from `OsStr`; no UTF-8 validation. |
-| Own a path | `path::from_bytes(ref mut zone, bytes)`, `path::from(ref mut zone, text)`, or `path::from_string(ref mut zone, ref text)` | Copies bytes into the zone and returns `PathBuf`. |
-| Copy a borrowed path to owned text | `path::to_string(ref mut zone, path)` or `path_buf.to_string(ref mut zone)` | Still byte-oriented text, not validated UTF-8. |
+| Own a path | `path::from_with_region(ref mut region, text)`, `path::from_bytes_with_region(ref mut region, bytes)`, or `region.path(bytes)` | Copies bytes into the region and returns `PathBuf`. |
+| Copy a borrowed path to owned text | `path::to_string_with_region(ref mut region, path)` or `path_buf.to_string_with_region(ref mut region)` | Still byte-oriented text, not validated UTF-8. |
 | Inspect components | `components`, `components_with_kinds`, `file_name`, `parent`, `extension`, `stem`, `file_stem` | Borrowed slices point into the original path; kinded components preserve root, `.`, `..`, and Windows drive/UNC prefixes. |
 | Compare path prefixes/suffixes | `starts_with`, `strip_prefix`, `ends_with`, `strip_suffix` | Component-aware: `src` matches `src/main.ari` but not `src2/main.ari`. |
-| Join paths | `path::join(ref mut zone, base, child)`, `base.join(ref mut zone, child)`, or `join_many` | Returns `PathBuf`; absolute children replace the accumulated base. |
-| Join against the process cwd | `path::current_dir_join(ref mut zone, child)` | Returns `Result[PathBuf, Error]` because cwd lookup can fail. |
-| Lexically clean a path | `normalize_in(ref mut zone, path)` or `path.normalize(ref mut zone)` | Collapses repeated separators and `.`, keeps `..`. |
+| Join paths | `path::join_with_region(ref mut region, base, child)`, `base.join_with_region(ref mut region, child)`, `region.path_join(base, child)`, or `join_many_with_region` | Returns `PathBuf`; absolute children replace the accumulated base. |
+| Join against the process cwd | `path::current_dir_join_with_region(ref mut region, child)` or `region.current_dir_join(child)` | Returns `Result[PathBuf, Error]` because cwd lookup can fail. |
+| Lexically clean a path | `path::normalize_with_region(ref mut region, path)` or `path.normalize_with_region(ref mut region)` | Collapses repeated separators and `.`, keeps `..`. |
 | Check OS-boundary safety | `contains_nul` | Lexical helpers allow NUL; hosted boundaries should reject it. |
 | Inspect Windows-shaped bytes | `is_windows_absolute`, `windows_drive`, `windows_unc_prefix`, `components_with_kinds` | Opt-in lexical classifiers; they do not affect POSIX default helpers such as `join` and `normalize_in`. |
 
@@ -77,9 +80,13 @@ path::ComponentKind
 path::bytes(path) -> PathBytes
 path::from_os(os) -> PathBytes
 path::from_bytes(ref mut zone, path) -> PathBuf
+path::from_bytes_with_region(ref mut region, path) -> PathBuf
 path::from(ref mut zone, text) -> PathBuf
+path::from_with_region(ref mut region, text) -> PathBuf
 path::from_string(ref mut zone, ref text) -> PathBuf
+path::from_string_with_region(ref mut region, ref text) -> PathBuf
 path::to_string(ref mut zone, path) -> String
+path::to_string_with_region(ref mut region, path) -> String
 path::is_separator(value: char) -> bool
 path::is_empty(path) -> bool
 path::contains_nul(path) -> bool
@@ -120,16 +127,23 @@ path::strip_prefix(path, prefix) -> Option[Slice[u8]]
 path::ends_with(path, suffix) -> bool
 path::strip_suffix(path, suffix) -> Option[Slice[u8]]
 path::with_file_name_in(ref mut zone, path, new_file_name) -> String
+path::with_file_name_with_region(ref mut region, path, new_file_name) -> PathBuf
 path::with_extension_in(ref mut zone, path, new_extension) -> String
+path::with_extension_with_region(ref mut region, path, new_extension) -> PathBuf
 path::join_in(ref mut zone, base, child) -> String
 path::join(ref mut zone, base, child) -> PathBuf
+path::join_with_region(ref mut region, base, child) -> PathBuf
 path::join_many(ref mut zone, parts) -> PathBuf
+path::join_many_with_region(ref mut region, parts) -> PathBuf
 path::current_dir_join(ref mut zone, child) -> Result[PathBuf, Error]
+path::current_dir_join_with_region(ref mut region, child) -> Result[PathBuf, Error]
 path::normalize_in(ref mut zone, path) -> String
+path::normalize_with_region(ref mut region, path) -> PathBuf
 path_buf.as_string() -> ref String
 path_buf.as_bytes() -> Slice[u8]
 path_buf.as_path() -> PathBytes
 path_buf.to_string(ref mut zone) -> String
+path_buf.to_string_with_region(ref mut region) -> String
 path_buf.len() -> i64
 path_buf.is_empty() -> bool
 ```
@@ -148,6 +162,7 @@ let literal_path: std::path::Path = "/tmp/ari";
 path.as_slice()
 path.as_bytes()
 path.to_string(ref mut zone)
+path.to_string_with_region(ref mut region)
 path.len()
 path.is_empty()
 path.contains_nul()
@@ -176,11 +191,15 @@ path.strip_prefix(prefix)
 path.ends_with(suffix)
 path.strip_suffix(suffix)
 path.with_file_name_in(ref mut zone, new_file_name)
+path.with_file_name_with_region(ref mut region, new_file_name)
 path.with_extension_in(ref mut zone, new_extension)
+path.with_extension_with_region(ref mut region, new_extension)
 path.join_in(ref mut zone, child)
 path.join(ref mut zone, child)
+path.join_with_region(ref mut region, child)
 path.normalize_in(ref mut zone)
 path.normalize(ref mut zone)
+path.normalize_with_region(ref mut region)
 ```
 
 Borrowed helpers return views into the original byte slice; they do not
@@ -232,14 +251,20 @@ owned.extension()
 owned.stem()
 owned.file_stem()
 owned.join(ref mut zone, "cache")
+owned.join_with_region(ref mut region, "cache")
 owned.normalize(ref mut zone)
+owned.normalize_with_region(ref mut region)
 owned.with_file_name(ref mut zone, "lib.ari")
+owned.with_file_name_with_region(ref mut region, "lib.ari")
 owned.with_extension(ref mut zone, "o")
+owned.with_extension_with_region(ref mut region, "o")
 ```
 
-`from_bytes` and `from_string` copy into the caller-provided zone. `to_string`
-copies a borrowed path view into an owned byte string. `as_bytes` returns a
-borrowed view and does not allocate.
+`from_with_region`, `from_bytes_with_region`, and `from_string_with_region`
+are the preferred constructors for new code. `from_bytes`, `from_string`, and
+the other `ref mut Zone` forms are compatibility entry points. `to_string` and
+`to_string_with_region` copy a borrowed path view into an owned byte string.
+`as_bytes` returns a borrowed view and does not allocate.
 
 `trim_trailing_separators` removes trailing `/` bytes while preserving root
 `/`. `file_name` returns the last component after trimming trailing
@@ -287,9 +312,11 @@ into the trimmed input path and return `None` when the affix is absent.
 
 `with_file_name_in`, `with_extension_in`, `join_in`, and `normalize_in` are the
 compatibility/string-returning allocation helpers. The natural owned-path
-wrappers are `PathBytes::join`, `PathBytes::normalize`, `PathBuf::join`,
-`PathBuf::normalize`, `PathBuf::with_file_name`, and
-`PathBuf::with_extension`; they return `PathBuf`.
+wrappers are `PathBytes::join_with_region`, `PathBytes::normalize_with_region`,
+`PathBuf::join_with_region`, `PathBuf::normalize_with_region`,
+`PathBuf::with_file_name_with_region`, and
+`PathBuf::with_extension_with_region`; they return `PathBuf`. Their old
+`ref mut Zone` counterparts remain for existing source.
 
 `join` copies into the caller-provided zone. If `child` is absolute, it returns
 a copy of `child`. Otherwise it inserts one `/` between `base` and `child` when
@@ -327,26 +354,26 @@ source-level parsing.
 Collect arix-style command paths without hand-written byte plumbing:
 
 ```ari
-fn manifest_path(zone: ref mut Zone) -> std::Result[std::path::PathBuf, std::error::Error] {
-  return path::current_dir_join(zone, "Ari.toml");
+fn manifest_path(region: ref mut std::region::Region) -> std::Result[std::path::PathBuf, std::error::Error] {
+  return path::current_dir_join_with_region(region, "Ari.toml");
 }
 
-fn cache_prefix(zone: ref mut Zone, home: std::path::Path) -> std::path::PathBuf {
-  return home.join(zone, ".ari");
+fn cache_prefix(region: ref mut std::region::Region, home: std::path::Path) -> std::path::PathBuf {
+  return home.join_with_region(region, ".ari");
 }
 ```
 
 Build a target path from several path parts:
 
 ```ari
-fn target_binary(zone: ref mut Zone, package: std::path::Path) -> std::path::PathBuf {
+fn target_binary(region: ref mut std::region::Region, package: std::path::Path) -> std::path::PathBuf {
   var parts: [std::path::PathBytes, 4] = [
     "target",
     "debug",
     package,
     "main"
   ];
-  return path::join_many(zone, parts.as_slice());
+  return path::join_many_with_region(region, parts.as_slice());
 }
 ```
 
@@ -376,8 +403,8 @@ fn child_path(zone: ref mut Zone, dir: Slice[u8], name: Slice[u8]) -> String {
   return path::join_in(zone, dir, name);
 }
 
-fn owned_child_path(zone: ref mut Zone, dir: std::path::Path, name: std::path::Path) -> std::path::PathBuf {
-  return path::join(zone, dir, name);
+fn owned_child_path(region: ref mut std::region::Region, dir: std::path::Path, name: std::path::Path) -> std::path::PathBuf {
+  return path::join_with_region(region, dir, name);
 }
 
 fn ari_to_object(zone: ref mut Zone, source: Slice[u8]) -> String {

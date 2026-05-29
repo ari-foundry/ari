@@ -55,6 +55,37 @@ pub impl std::region::Region {
     return std::region::cstring(self, bytes);
   }
 
+  fn path(self: ref mut Self, bytes: std::Slice[u8]) -> std::path::PathBuf {
+    return std::region::path(self, bytes);
+  }
+
+  fn path_from_string(self: ref mut Self, value: ref std::string::String) -> std::path::PathBuf {
+    return std::region::path_from_string(self, value);
+  }
+
+  fn path_join(
+    self: ref mut Self,
+    base: std::path::PathBytes,
+    child: std::path::PathBytes
+  ) -> std::path::PathBuf {
+    return std::region::path_join(self, base, child);
+  }
+
+  fn path_join_many(self: ref mut Self, parts: std::Slice[std::path::PathBytes]) -> std::path::PathBuf {
+    return std::region::path_join_many(self, parts);
+  }
+
+  fn path_normalize(self: ref mut Self, path: std::Slice[u8]) -> std::path::PathBuf {
+    return std::region::path_normalize(self, path);
+  }
+
+  fn current_dir_join(
+    self: ref mut Self,
+    child: std::path::PathBytes
+  ) -> std::Result[std::path::PathBuf, std::error::Error] {
+    return std::region::current_dir_join(self, child);
+  }
+
   fn promote[T](self: ref mut Self, source: ptr T) -> ptr T {
     return std::region::promote<T>(self, source);
   }
@@ -172,6 +203,46 @@ pub fn cstring(
 ) -> std::Result[std::c::CString, std::error::Error] {
   let allocator = std::region::allocator(region);
   return std::c::from_slice_with_allocator(ref allocator, bytes);
+}
+
+pub fn path(region: ref mut std::region::Region, bytes: std::Slice[u8]) -> std::path::PathBuf {
+  return std::path::from_with_region(region, bytes);
+}
+
+pub fn path_from_string(
+  region: ref mut std::region::Region,
+  value: ref std::string::String
+) -> std::path::PathBuf {
+  return std::path::from_string_with_region(region, value);
+}
+
+pub fn path_join(
+  region: ref mut std::region::Region,
+  base: std::path::PathBytes,
+  child: std::path::PathBytes
+) -> std::path::PathBuf {
+  return std::path::join_with_region(region, base, child);
+}
+
+pub fn path_join_many(
+  region: ref mut std::region::Region,
+  parts: std::Slice[std::path::PathBytes]
+) -> std::path::PathBuf {
+  return std::path::join_many_with_region(region, parts);
+}
+
+pub fn path_normalize(
+  region: ref mut std::region::Region,
+  path: std::Slice[u8]
+) -> std::path::PathBuf {
+  return std::path::normalize_with_region(region, path);
+}
+
+pub fn current_dir_join(
+  region: ref mut std::region::Region,
+  child: std::path::PathBytes
+) -> std::Result[std::path::PathBuf, std::error::Error] {
+  return std::path::current_dir_join_with_region(region, child);
 }
 
 pub fn promote[T](target: ref mut std::region::Region, source: ptr T) -> ptr T {

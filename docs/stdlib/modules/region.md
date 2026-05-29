@@ -33,6 +33,12 @@ region::vec_copy<T>(ref mut Region, ref Vec[T]) -> Vec[T]
 region::boxed<T>(ref mut Region, value: T) -> Box[T]
 region::boxed_copy<T>(ref mut Region, ref Box[T]) -> Box[T]
 region::cstring(ref mut Region, bytes: Slice[u8]) -> Result[CString, Error]
+region::path(ref mut Region, bytes: Slice[u8]) -> PathBuf
+region::path_from_string(ref mut Region, ref String) -> PathBuf
+region::path_join(ref mut Region, base: PathBytes, child: PathBytes) -> PathBuf
+region::path_join_many(ref mut Region, parts: Slice[PathBytes]) -> PathBuf
+region::path_normalize(ref mut Region, path: Slice[u8]) -> PathBuf
+region::current_dir_join(ref mut Region, child: PathBytes) -> Result[PathBuf, Error]
 region::promote<T>(ref mut target, source: ptr T) -> ptr T
 
 region::capacity(ref mut Region) -> i64
@@ -59,6 +65,12 @@ Region::vec_copy<T>(ref Vec[T]) -> Vec[T]
 Region::boxed<T>(value: T) -> Box[T]
 Region::boxed_copy<T>(ref Box[T]) -> Box[T]
 Region::cstring(bytes: Slice[u8]) -> Result[CString, Error]
+Region::path(bytes: Slice[u8]) -> PathBuf
+Region::path_from_string(ref String) -> PathBuf
+Region::path_join(base: PathBytes, child: PathBytes) -> PathBuf
+Region::path_join_many(parts: Slice[PathBytes]) -> PathBuf
+Region::path_normalize(path: Slice[u8]) -> PathBuf
+Region::current_dir_join(child: PathBytes) -> Result[PathBuf, Error]
 Region::promote<T>(source: ptr T) -> ptr T
 Region::capacity() -> i64
 Region::used() -> i64
@@ -80,6 +92,8 @@ values.push(10);
 let saved_values = region.vec_copy<i64>(ref values);
 let boxed = region.boxed<i64>(42);
 let saved_box = region.boxed_copy<i64>(ref boxed);
+let manifest = region.path("Ari.toml");
+let cache = region.path_join("target", "cache");
 region::destroy(region);
 ```
 
@@ -173,12 +187,15 @@ converted. That keeps allocation authority visible while avoiding the old
 
 The convenience methods are deliberately small. They cover the common standard
 handles that otherwise force users to spell `region::as_zone`: owned text,
-vectors, boxes, and C strings. Use `string_with_capacity` when a builder-like
-owned string should start empty, `string_copy` / `vec_copy` / `boxed_copy`
-when a value should be copied into a chosen region, and `vec_from_slice` when
-a slice is the source. Once a handle is created from a `Region`, its growth
-methods recover the same allocation source, so `values.push(...)` or
-`text.push(...)` can grow without storing a region field in the handle.
+vectors, boxes, C strings, and owned path buffers. Use `string_with_capacity`
+when a builder-like owned string should start empty,
+`string_copy` / `vec_copy` / `boxed_copy` when a value should be copied into a
+chosen region, and `vec_from_slice` when a slice is the source. Use `path`,
+`path_from_string`, `path_join`, `path_join_many`, `path_normalize`, and
+`current_dir_join` for path buffers whose storage belongs to the region. Once
+a handle is created from a `Region`, its growth methods recover the same
+allocation source, so `values.push(...)` or `text.push(...)` can grow without
+storing a region field in the handle.
 
 ## Capacity And Failure
 
@@ -239,6 +256,7 @@ Focused coverage:
 
 - `tests/cases/standard-library/ok/zone/std-region-capability.ari`
 - `tests/cases/standard-library/ok/zone/std-region-zone-bridge.ari`
+- `tests/cases/standard-library/ok/path/std-path-buf.ari`
 - `tests/cases/memory/ok/region-current-block.ari`
 - `tests/cases/memory/errors/region-current-block-escape.ari`
 - `tests/cases/memory/errors/region-zone-bridge-immutable.ari`

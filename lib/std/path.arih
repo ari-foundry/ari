@@ -153,16 +153,44 @@ pub fn from_bytes(zone: ref mut Zone, path: std::Slice[u8]) -> std::path::PathBu
   return path_buf_from_owned(std::string::from_slice_in(zone, path));
 }
 
+pub fn from_bytes_with_region(
+  region: ref mut std::region::Region,
+  path: std::Slice[u8]
+) -> std::path::PathBuf {
+  return path_buf_from_owned(std::string::from_slice_with_region(region, path));
+}
+
 pub fn from(zone: ref mut Zone, text: std::Slice[u8]) -> std::path::PathBuf {
   return from_bytes(zone, text);
+}
+
+pub fn from_with_region(
+  region: ref mut std::region::Region,
+  text: std::Slice[u8]
+) -> std::path::PathBuf {
+  return from_bytes_with_region(region, text);
 }
 
 pub fn from_string(zone: ref mut Zone, text: ref std::string::String) -> std::path::PathBuf {
   return from_bytes(zone, text.as_slice());
 }
 
+pub fn from_string_with_region(
+  region: ref mut std::region::Region,
+  text: ref std::string::String
+) -> std::path::PathBuf {
+  return from_bytes_with_region(region, text.as_slice());
+}
+
 pub fn to_string(zone: ref mut Zone, path: std::path::PathBytes) -> std::string::String {
   return std::string::from_slice_in(zone, path.as_slice());
+}
+
+pub fn to_string_with_region(
+  region: ref mut std::region::Region,
+  path: std::path::PathBytes
+) -> std::string::String {
+  return std::string::from_slice_with_region(region, path.as_slice());
 }
 
 pub fn is_absolute(path: std::Slice[u8]) -> bool {
@@ -517,6 +545,16 @@ pub fn with_file_name_in(
   }
 }
 
+pub fn with_file_name_with_region(
+  region: ref mut std::region::Region,
+  path: std::path::PathBytes,
+  new_file_name: std::Slice[u8]
+) -> std::path::PathBuf {
+  return path_buf_from_owned(
+    with_file_name_in(std::region::as_zone(region), path.as_slice(), new_file_name)
+  );
+}
+
 pub fn with_extension_in(
   zone: ref mut Zone,
   path: std::Slice[u8],
@@ -551,6 +589,16 @@ pub fn with_extension_in(
   }
 }
 
+pub fn with_extension_with_region(
+  region: ref mut std::region::Region,
+  path: std::path::PathBytes,
+  new_extension: std::Slice[u8]
+) -> std::path::PathBuf {
+  return path_buf_from_owned(
+    with_extension_in(std::region::as_zone(region), path.as_slice(), new_extension)
+  );
+}
+
 pub fn join_in(zone: ref mut Zone, base: std::Slice[u8], child: std::Slice[u8]) -> std::string::String {
   if child.len == 0 {
     return std::string::from_slice_in(zone, base);
@@ -573,6 +621,14 @@ pub fn join_in(zone: ref mut Zone, base: std::Slice[u8], child: std::Slice[u8]) 
 
 pub fn join(zone: ref mut Zone, base: std::path::PathBytes, child: std::path::PathBytes) -> std::path::PathBuf {
   return path_buf_from_owned(join_in(zone, base.as_slice(), child.as_slice()));
+}
+
+pub fn join_with_region(
+  region: ref mut std::region::Region,
+  base: std::path::PathBytes,
+  child: std::path::PathBytes
+) -> std::path::PathBuf {
+  return join(std::region::as_zone(region), base, child);
 }
 
 pub fn join_many(zone: ref mut Zone, parts: std::Slice[std::path::PathBytes]) -> std::path::PathBuf {
@@ -598,6 +654,13 @@ pub fn join_many(zone: ref mut Zone, parts: std::Slice[std::path::PathBytes]) ->
   return path_buf_from_owned(output);
 }
 
+pub fn join_many_with_region(
+  region: ref mut std::region::Region,
+  parts: std::Slice[std::path::PathBytes]
+) -> std::path::PathBuf {
+  return join_many(std::region::as_zone(region), parts);
+}
+
 pub fn current_dir_join(zone: ref mut Zone, child: std::path::PathBytes) -> std::Result[std::path::PathBuf, std::error::Error] {
   match std::env::current_dir_path() {
     std::Ok(base) => {
@@ -607,6 +670,13 @@ pub fn current_dir_join(zone: ref mut Zone, child: std::path::PathBytes) -> std:
       return std::Err<std::path::PathBuf, std::error::Error>(reason);
     }
   }
+}
+
+pub fn current_dir_join_with_region(
+  region: ref mut std::region::Region,
+  child: std::path::PathBytes
+) -> std::Result[std::path::PathBuf, std::error::Error] {
+  return current_dir_join(std::region::as_zone(region), child);
 }
 
 impl std::Iterator[std::Slice[u8]] for std::path::Components {
@@ -848,6 +918,13 @@ pub fn normalize_in(zone: ref mut Zone, path: std::Slice[u8]) -> std::string::St
   return output;
 }
 
+pub fn normalize_with_region(
+  region: ref mut std::region::Region,
+  path: std::Slice[u8]
+) -> std::path::PathBuf {
+  return path_buf_from_owned(normalize_in(std::region::as_zone(region), path));
+}
+
 pub impl std::path::PathBytes {
   fn as_slice(self: ref Self) -> std::Slice[u8] {
     return self.bytes;
@@ -860,6 +937,11 @@ pub impl std::path::PathBytes {
   fn to_string(self: ref Self, zone: ref mut Zone) -> std::string::String {
     let path = std::path::PathBytes { bytes: self.bytes };
     return std::path::to_string(zone, path);
+  }
+
+  fn to_string_with_region(self: ref Self, region: ref mut std::region::Region) -> std::string::String {
+    let path = std::path::PathBytes { bytes: self.bytes };
+    return std::path::to_string_with_region(region, path);
   }
 
   fn len(self: ref Self) -> i64 {
@@ -990,6 +1072,24 @@ pub impl std::path::PathBytes {
     return std::path::with_extension_in(zone, self.bytes, new_extension);
   }
 
+  fn with_file_name_with_region(
+    self: ref Self,
+    region: ref mut std::region::Region,
+    new_file_name: std::Slice[u8]
+  ) -> std::path::PathBuf {
+    let path = std::path::PathBytes { bytes: self.bytes };
+    return std::path::with_file_name_with_region(region, path, new_file_name);
+  }
+
+  fn with_extension_with_region(
+    self: ref Self,
+    region: ref mut std::region::Region,
+    new_extension: std::Slice[u8]
+  ) -> std::path::PathBuf {
+    let path = std::path::PathBytes { bytes: self.bytes };
+    return std::path::with_extension_with_region(region, path, new_extension);
+  }
+
   fn join_in(self: ref Self, zone: ref mut Zone, child: std::path::PathBytes) -> std::string::String {
     return std::path::join_in(zone, self.bytes, child.as_slice());
   }
@@ -999,12 +1099,25 @@ pub impl std::path::PathBytes {
     return std::path::join(zone, path, child);
   }
 
+  fn join_with_region(
+    self: ref Self,
+    region: ref mut std::region::Region,
+    child: std::path::PathBytes
+  ) -> std::path::PathBuf {
+    let path = std::path::PathBytes { bytes: self.bytes };
+    return std::path::join_with_region(region, path, child);
+  }
+
   fn normalize_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
     return std::path::normalize_in(zone, self.bytes);
   }
 
   fn normalize(self: ref Self, zone: ref mut Zone) -> std::path::PathBuf {
     return std::path::path_buf_from_owned(std::path::normalize_in(zone, self.bytes));
+  }
+
+  fn normalize_with_region(self: ref Self, region: ref mut std::region::Region) -> std::path::PathBuf {
+    return std::path::normalize_with_region(region, self.bytes);
   }
 }
 
@@ -1023,6 +1136,10 @@ pub impl std::path::PathBuf {
 
   fn to_string(self: ref Self, zone: ref mut Zone) -> std::string::String {
     return self.bytes_value.copy_to(zone);
+  }
+
+  fn to_string_with_region(self: ref Self, region: ref mut std::region::Region) -> std::string::String {
+    return self.bytes_value.copy_with_region(region);
   }
 
   fn len(self: ref Self) -> i64 {
@@ -1105,16 +1222,44 @@ pub impl std::path::PathBuf {
     return std::path::join(zone, self.as_path(), child);
   }
 
+  fn join_with_region(
+    self: ref Self,
+    region: ref mut std::region::Region,
+    child: std::path::PathBytes
+  ) -> std::path::PathBuf {
+    return std::path::join_with_region(region, self.as_path(), child);
+  }
+
   fn normalize(self: ref Self, zone: ref mut Zone) -> std::path::PathBuf {
     return std::path::path_buf_from_owned(std::path::normalize_in(zone, self.as_bytes()));
+  }
+
+  fn normalize_with_region(self: ref Self, region: ref mut std::region::Region) -> std::path::PathBuf {
+    return std::path::normalize_with_region(region, self.as_bytes());
   }
 
   fn with_file_name(self: ref Self, zone: ref mut Zone, new_file_name: std::Slice[u8]) -> std::path::PathBuf {
     return std::path::path_buf_from_owned(std::path::with_file_name_in(zone, self.as_bytes(), new_file_name));
   }
 
+  fn with_file_name_with_region(
+    self: ref Self,
+    region: ref mut std::region::Region,
+    new_file_name: std::Slice[u8]
+  ) -> std::path::PathBuf {
+    return std::path::with_file_name_with_region(region, self.as_path(), new_file_name);
+  }
+
   fn with_extension(self: ref Self, zone: ref mut Zone, new_extension: std::Slice[u8]) -> std::path::PathBuf {
     return std::path::path_buf_from_owned(std::path::with_extension_in(zone, self.as_bytes(), new_extension));
+  }
+
+  fn with_extension_with_region(
+    self: ref Self,
+    region: ref mut std::region::Region,
+    new_extension: std::Slice[u8]
+  ) -> std::path::PathBuf {
+    return std::path::with_extension_with_region(region, self.as_path(), new_extension);
   }
 }
 

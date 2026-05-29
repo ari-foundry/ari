@@ -24,22 +24,22 @@ platform notes.
 
 ## Summary
 
-- API entries: `3732`
+- API entries: `3764`
 - Modules: `42`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
-| `alloc` | 1031 | usable |
+| `alloc` | 1043 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 939 | stable candidate |
+| `core` | 959 | stable candidate |
 | `hosted` | 1559 | platform-backed |
 | `platform` | 167 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1300 |
-| `method` | 1957 |
+| `fn` | 1316 |
+| `method` | 1973 |
 | `module` | 41 |
 | `struct` | 199 |
 | `trait` | 39 |
@@ -79,11 +79,11 @@ platform notes.
 | `std::option` | `core` | 12 |
 | `std::os` | `platform` | 62 |
 | `std::parse` | `core` | 103 |
-| `std::path` | `core` | 124 |
+| `std::path` | `core` | 144 |
 | `std::process` | `hosted` | 181 |
 | `std::random` | `alloc/hosted` | 36 |
 | `std::rc` | `alloc` | 32 |
-| `std::region` | `alloc` | 46 |
+| `std::region` | `alloc` | 58 |
 | `std::result` | `core` | 12 |
 | `std::string` | `alloc` | 182 |
 | `std::sync` | `hosted` | 224 |
@@ -3296,14 +3296,18 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::path::components_with_kinds` | check-prelude std-path-components kinded lexical path component iterator; docs/stdlib/modules/path.md |
 | `fn std::path::contains_nul` | check-prelude std-path-buf POSIX path NUL-byte predicate; docs/stdlib/modules/path.md |
 | `fn std::path::current_dir_join` | check-prelude std-path-buf Result-returning current-directory path join helper; docs/stdlib/modules/path.md |
+| `fn std::path::current_dir_join_with_region` | check-prelude std-path-buf Region-backed Result-returning current-directory path join helper; docs/stdlib/modules/path.md |
 | `fn std::path::ends_with` | check-prelude std-path-affixes component-aware suffix predicate; docs/stdlib/modules/path.md |
 | `fn std::path::extension` | check-prelude std-path-basic borrowed final-extension view; docs/stdlib/modules/path.md |
 | `fn std::path::file_name` | check-prelude std-path-basic borrowed final-component view; docs/stdlib/modules/path.md |
 | `fn std::path::file_stem` | check-prelude std-path-basic natural alias for borrowed file-stem view; docs/stdlib/modules/path.md |
 | `fn std::path::from` | check-prelude std-path-buf owned path buffer constructor from host string; docs/stdlib/modules/path.md |
 | `fn std::path::from_bytes` | check-prelude std-path-buf owned path buffer constructor from bytes; docs/stdlib/modules/path.md |
+| `fn std::path::from_bytes_with_region` | check-prelude std-path-buf Region-backed owned path buffer constructor from bytes; docs/stdlib/modules/path.md |
 | `fn std::path::from_os` | check-prelude std-path-bytes path-byte view from OS-string bytes; docs/stdlib/modules/path.md |
 | `fn std::path::from_string` | check-prelude std-path-buf owned path buffer constructor from String; docs/stdlib/modules/path.md |
+| `fn std::path::from_string_with_region` | check-prelude std-path-buf Region-backed owned path buffer constructor from String; docs/stdlib/modules/path.md |
+| `fn std::path::from_with_region` | check-prelude std-path-buf Region-backed owned path buffer constructor; docs/stdlib/modules/path.md |
 | `fn std::path::has_extension` | check-prelude std-path-predicates final-extension predicate; docs/stdlib/modules/path.md |
 | `fn std::path::has_file_name` | check-prelude std-path-predicates final-component predicate; docs/stdlib/modules/path.md |
 | `fn std::path::has_file_stem` | check-prelude std-path-predicates natural alias for file-stem predicate; docs/stdlib/modules/path.md |
@@ -3321,18 +3325,24 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::path::join` | check-prelude std-path-buf owned lexical path join helper; docs/stdlib/modules/path.md |
 | `fn std::path::join_in` | check-prelude std-path-basic zone-backed lexical join helper; docs/stdlib/modules/path.md |
 | `fn std::path::join_many` | check-prelude std-path-buf owned lexical multi-part path join helper; docs/stdlib/modules/path.md |
+| `fn std::path::join_many_with_region` | check-prelude std-path-buf Region-backed owned lexical multi-part path join helper; docs/stdlib/modules/path.md |
+| `fn std::path::join_with_region` | check-prelude std-path-buf Region-backed owned lexical path join helper; docs/stdlib/modules/path.md |
 | `fn std::path::normalize_in` | check-prelude std-path-basic lightweight lexical normalization helper; docs/stdlib/modules/path.md |
+| `fn std::path::normalize_with_region` | check-prelude std-path-buf Region-backed owned lexical normalization helper; docs/stdlib/modules/path.md |
 | `fn std::path::parent` | check-prelude std-path-basic borrowed parent path view; docs/stdlib/modules/path.md |
 | `fn std::path::starts_with` | check-prelude std-path-affixes component-aware prefix predicate; docs/stdlib/modules/path.md |
 | `fn std::path::stem` | check-prelude std-path-basic borrowed file-stem view; docs/stdlib/modules/path.md |
 | `fn std::path::strip_prefix` | check-prelude std-path-affixes borrowed component-aware prefix removal; docs/stdlib/modules/path.md |
 | `fn std::path::strip_suffix` | check-prelude std-path-affixes borrowed component-aware suffix removal; docs/stdlib/modules/path.md |
 | `fn std::path::to_string` | check-prelude std-path-buf owned byte-string copy from path view; docs/stdlib/modules/path.md |
+| `fn std::path::to_string_with_region` | check-prelude std-path-buf Region-backed byte-string copy from path view; docs/stdlib/modules/path.md |
 | `fn std::path::trim_trailing_separators` | check-prelude std-path-basic borrowed trailing slash trim helper; docs/stdlib/modules/path.md |
 | `fn std::path::windows_drive` | check-prelude std-path-windows-lexical borrowed Windows drive-prefix byte view helper; docs/stdlib/modules/path.md |
 | `fn std::path::windows_unc_prefix` | check-prelude std-path-windows-lexical borrowed Windows UNC prefix byte view helper; docs/stdlib/modules/path.md |
 | `fn std::path::with_extension_in` | check-prelude std-path-edit zone-backed lexical extension replacement helper; docs/stdlib/modules/path.md |
+| `fn std::path::with_extension_with_region` | check-prelude std-path-buf Region-backed owned lexical extension replacement helper; docs/stdlib/modules/path.md |
 | `fn std::path::with_file_name_in` | check-prelude std-path-edit zone-backed lexical final-component replacement helper; docs/stdlib/modules/path.md |
+| `fn std::path::with_file_name_with_region` | check-prelude std-path-buf Region-backed owned lexical final-component replacement helper; docs/stdlib/modules/path.md |
 
 ### method
 
@@ -3365,15 +3375,20 @@ Tier: `core`. Stability reading: stable candidate.
 | `method std::path::PathBuf::is_windows_drive_relative` | check-prelude std-path-windows-lexical owned path Windows drive-relative wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::is_windows_unc` | check-prelude std-path-windows-lexical owned path Windows UNC wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::join` | check-prelude std-path-buf owned path lexical join method; docs/stdlib/modules/path.md |
+| `method std::path::PathBuf::join_with_region` | check-prelude std-path-buf Region-backed owned path lexical join method; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::len` | check-prelude std-path-buf owned path byte length accessor; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::normalize` | check-prelude std-path-buf owned path normalization method; docs/stdlib/modules/path.md |
+| `method std::path::PathBuf::normalize_with_region` | check-prelude std-path-buf Region-backed owned path normalization method; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::parent` | check-prelude std-path-buf owned path parent wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::stem` | check-prelude std-path-buf owned path stem wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::to_string` | check-prelude std-path-buf owned path byte-string copy helper; docs/stdlib/modules/path.md |
+| `method std::path::PathBuf::to_string_with_region` | check-prelude std-path-buf Region-backed owned path byte-string copy helper; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::windows_drive` | check-prelude std-path-windows-lexical owned path borrowed Windows drive-prefix wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::windows_unc_prefix` | check-prelude std-path-windows-lexical owned path borrowed Windows UNC-prefix wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::with_extension` | check-prelude std-path-buf owned path extension replacement helper; docs/stdlib/modules/path.md |
+| `method std::path::PathBuf::with_extension_with_region` | check-prelude std-path-buf Region-backed owned path extension replacement helper; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::with_file_name` | check-prelude std-path-buf owned path final-component replacement helper; docs/stdlib/modules/path.md |
+| `method std::path::PathBuf::with_file_name_with_region` | check-prelude std-path-buf Region-backed owned path final-component replacement helper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::as_bytes` | check-prelude std-path-buf typed path byte accessor alias; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::as_slice` | check-prelude std-path-bytes borrowed path-byte view accessor; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::components` | check-prelude std-path-bytes typed path component iterator wrapper; docs/stdlib/modules/path.md |
@@ -3397,20 +3412,25 @@ Tier: `core`. Stability reading: stable candidate.
 | `method std::path::PathBytes::is_windows_unc` | check-prelude std-path-windows-lexical typed path Windows UNC wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::join` | check-prelude std-path-buf typed owned lexical join helper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::join_in` | check-prelude std-path-bytes typed path lexical join wrapper; docs/stdlib/modules/path.md |
+| `method std::path::PathBytes::join_with_region` | check-prelude std-path-buf Region-backed typed owned lexical join helper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::len` | check-prelude std-path-bytes typed path length accessor; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::normalize` | check-prelude std-path-buf typed owned normalization helper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::normalize_in` | check-prelude std-path-bytes typed path normalization wrapper; docs/stdlib/modules/path.md |
+| `method std::path::PathBytes::normalize_with_region` | check-prelude std-path-buf Region-backed typed owned normalization helper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::parent` | check-prelude std-path-bytes typed path parent wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::starts_with` | check-prelude std-path-affixes typed path prefix predicate wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::stem` | check-prelude std-path-bytes typed path stem wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::strip_prefix` | check-prelude std-path-affixes typed path prefix stripping wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::strip_suffix` | check-prelude std-path-affixes typed path suffix stripping wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::to_string` | check-prelude std-path-buf typed owned byte-string copy helper; docs/stdlib/modules/path.md |
+| `method std::path::PathBytes::to_string_with_region` | check-prelude std-path-buf Region-backed typed owned byte-string copy helper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::trim_trailing_separators` | check-prelude std-path-bytes typed path trailing separator trim wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::windows_drive` | check-prelude std-path-windows-lexical typed path borrowed Windows drive-prefix wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::windows_unc_prefix` | check-prelude std-path-windows-lexical typed path borrowed Windows UNC-prefix wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::with_extension_in` | check-prelude std-path-edit typed path extension replacement wrapper; docs/stdlib/modules/path.md |
+| `method std::path::PathBytes::with_extension_with_region` | check-prelude std-path-buf Region-backed typed path extension replacement wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBytes::with_file_name_in` | check-prelude std-path-edit typed path final-component replacement wrapper; docs/stdlib/modules/path.md |
+| `method std::path::PathBytes::with_file_name_with_region` | check-prelude std-path-buf Region-backed typed path final-component replacement wrapper; docs/stdlib/modules/path.md |
 
 ### module
 
@@ -3779,9 +3799,15 @@ Tier: `alloc`. Stability reading: usable.
 | `fn std::region::capacity` | std region capability tests; docs/stdlib/modules/region.md |
 | `fn std::region::create` | std region capability tests; docs/stdlib/modules/region.md |
 | `fn std::region::cstring` | std region capability allocator-backed CString construction test; docs/stdlib/modules/region.md |
+| `fn std::region::current_dir_join` | check-prelude std-path-buf Region facade for cwd-relative path join; docs/stdlib/modules/region.md |
 | `fn std::region::default_capacity` | std region capability tests; docs/stdlib/modules/region.md |
 | `fn std::region::destroy` | std region capability tests; docs/stdlib/modules/region.md |
 | `fn std::region::new[T]` | std region capability tests; docs/stdlib/modules/region.md |
+| `fn std::region::path` | check-prelude std-path-buf Region facade for owned path construction; docs/stdlib/modules/region.md |
+| `fn std::region::path_from_string` | check-prelude std-path-buf Region facade for owned path copy from String; docs/stdlib/modules/region.md |
+| `fn std::region::path_join` | check-prelude std-path-buf Region facade for owned path join; docs/stdlib/modules/region.md |
+| `fn std::region::path_join_many` | check-prelude std-path-buf Region facade for owned multi-part path join; docs/stdlib/modules/region.md |
+| `fn std::region::path_normalize` | check-prelude std-path-buf Region facade for owned lexical path normalization; docs/stdlib/modules/region.md |
 | `fn std::region::promote[T]` | std region capability tests; docs/stdlib/modules/region.md |
 | `fn std::region::remaining` | std region capability tests; docs/stdlib/modules/region.md |
 | `fn std::region::reset` | std region capability tests; docs/stdlib/modules/region.md |
@@ -3806,7 +3832,13 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::region::Region::can_alloc_array[T]` | std region capability tests; docs/stdlib/modules/region.md |
 | `method std::region::Region::capacity` | std region capability tests; docs/stdlib/modules/region.md |
 | `method std::region::Region::cstring` | std region capability allocator-backed CString construction test; docs/stdlib/modules/region.md |
+| `method std::region::Region::current_dir_join` | check-prelude std-path-buf Region facade for cwd-relative path join; docs/stdlib/modules/region.md |
 | `method std::region::Region::new[T]` | std region capability tests; docs/stdlib/modules/region.md |
+| `method std::region::Region::path` | check-prelude std-path-buf Region facade for owned path construction; docs/stdlib/modules/region.md |
+| `method std::region::Region::path_from_string` | check-prelude std-path-buf Region facade for owned path copy from String; docs/stdlib/modules/region.md |
+| `method std::region::Region::path_join` | check-prelude std-path-buf Region facade for owned path join; docs/stdlib/modules/region.md |
+| `method std::region::Region::path_join_many` | check-prelude std-path-buf Region facade for owned multi-part path join; docs/stdlib/modules/region.md |
+| `method std::region::Region::path_normalize` | check-prelude std-path-buf Region facade for owned lexical path normalization; docs/stdlib/modules/region.md |
 | `method std::region::Region::promote[T]` | std region capability tests; docs/stdlib/modules/region.md |
 | `method std::region::Region::remaining` | std region capability tests; docs/stdlib/modules/region.md |
 | `method std::region::Region::reset` | std region capability tests; docs/stdlib/modules/region.md |
