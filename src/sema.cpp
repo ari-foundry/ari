@@ -1037,7 +1037,7 @@ private:
             std::string base = unqualified_name(name);
             if (base == "i8" || base == "i16" || base == "i32" || base == "i64" ||
                 base == "u8" || base == "u16" || base == "u32" || base == "u64" ||
-                base == "char" || base == "bool" || base == "string") {
+                base == "char" || base == "bool") {
                 TypeRef type;
                 type.name = name;
                 type.loc = loc;
@@ -6293,8 +6293,9 @@ private:
             reject_type_args(ast_type);
             type.primitive = IrPrimitiveKind::Bool;
         } else if (type.name == "string") {
-            reject_type_args(ast_type);
-            type.primitive = IrPrimitiveKind::String;
+            fail(type.loc,
+                 "builtin string type was removed; use String for owned text, "
+                 "Slice[u8] for byte views, or ptr c_char/std::c::CStr for C ABI text");
         } else if (type.name == "void") {
             reject_type_args(ast_type);
             type.primitive = IrPrimitiveKind::Void;
@@ -8824,7 +8825,7 @@ private:
         local.string_literal_known.reset();
         if (local.mutable_binding ||
             local.type.qualifier != TypeQualifier::Value ||
-            local.type.primitive != IrPrimitiveKind::String ||
+            local.type.primitive != IrPrimitiveKind::StaticStr ||
             source.kind != ExprKind::String) {
             return;
         }
@@ -8838,7 +8839,7 @@ private:
         if (!binding.has_type || !binding.type.nullable) return;
         if (init.type.qualifier == TypeQualifier::Ptr) return;
         if (init.type.qualifier == TypeQualifier::Value &&
-            init.type.primitive == IrPrimitiveKind::String &&
+            init.type.primitive == IrPrimitiveKind::StaticStr &&
             (declared.primitive == IrPrimitiveKind::I8 ||
              declared.primitive == IrPrimitiveKind::U8 ||
              declared.primitive == IrPrimitiveKind::Void)) {
@@ -17819,7 +17820,7 @@ private:
             type.primitive == IrPrimitiveKind::F128) {
             return make_float_literal_expr(loc, type, 0.0);
         }
-        if (type.primitive == IrPrimitiveKind::String) {
+        if (type.primitive == IrPrimitiveKind::StaticStr) {
             return make_string_literal_expr(loc, type);
         }
         if (type.primitive == IrPrimitiveKind::Tuple ||
@@ -20644,7 +20645,7 @@ private:
             loc,
             make_string_literal_expr(
                 loc,
-                primitive_type(IrPrimitiveKind::String, "string", loc),
+                primitive_type(IrPrimitiveKind::StaticStr, "static string literal", loc),
                 value),
             byte_pointer);
         IrExprPtr length = make_integer_literal(
@@ -20765,7 +20766,7 @@ private:
                 loc,
                 make_string_literal_expr(
                     loc,
-                    primitive_type(IrPrimitiveKind::String, "string", loc),
+                    primitive_type(IrPrimitiveKind::StaticStr, "static string literal", loc),
                     value),
                 expected.field_types[0]);
             elements.push_back(std::move(data));
@@ -20849,7 +20850,7 @@ private:
         args.push_back(make_ambient_string_zone_argument(loc, zone_arg_type));
         args.push_back(make_string_literal_expr(
             loc,
-            primitive_type(IrPrimitiveKind::String, "string", loc),
+            primitive_type(IrPrimitiveKind::StaticStr, "static string literal", loc),
             value));
         release_temporary_borrows(borrow_mark);
         return make_builtin_call(loc, "std::string::from_string", std::move(args), expected);
@@ -21200,7 +21201,7 @@ private:
             case IrPrimitiveKind::F64:
             case IrPrimitiveKind::F128:
             case IrPrimitiveKind::Bool:
-            case IrPrimitiveKind::String:
+            case IrPrimitiveKind::StaticStr:
             case IrPrimitiveKind::Function:
                 return true;
             case IrPrimitiveKind::Enum:
@@ -21511,7 +21512,7 @@ private:
             case ExprKind::String:
                 return make_string_literal_expr(
                     expr.loc,
-                    primitive_type(IrPrimitiveKind::String, "string", expr.loc),
+                    primitive_type(IrPrimitiveKind::StaticStr, "static string literal", expr.loc),
                     expr.string_value
                 );
             case ExprKind::Bool:
@@ -25369,7 +25370,8 @@ private:
             }
             bool is_bool = arg->type.qualifier == TypeQualifier::Value && arg->type.primitive == IrPrimitiveKind::Bool;
             bool is_string = (arg->type.qualifier == TypeQualifier::Value &&
-                              arg->type.primitive == IrPrimitiveKind::String) ||
+                              arg->type.primitive == IrPrimitiveKind::StaticStr) ||
+                             is_c_text_pointer_type(arg->type) ||
                              is_std_string_handle_type(arg->type);
             bool is_supported_float =
                 arg->type.qualifier == TypeQualifier::Value &&
@@ -25382,9 +25384,9 @@ private:
             }
             if (!is_value_integer_type(arg->type) && !is_bool && !is_string && !is_supported_float) {
                 if (spec.debug) {
-                    fail(source_arg->loc, "print debug placeholders currently support text literals, String, char, integer, bool, f32, and f64 values; use fmt::println_debug(ref mut zone, value) for Debug types");
+                    fail(source_arg->loc, "print debug placeholders currently support text literals, ptr c_char, String, char, integer, bool, f32, and f64 values; use fmt::println_debug(ref mut zone, value) for Debug types");
                 }
-                fail(source_arg->loc, "format arguments currently support text literals, String, char, integer, bool, f32, and f64 values, got " + type_name(arg->type));
+                fail(source_arg->loc, "format arguments currently support text literals, ptr c_char, String, char, integer, bool, f32, and f64 values, got " + type_name(arg->type));
             }
             args.push_back(std::move(arg));
         }
@@ -25440,8 +25442,11 @@ private:
 
     std::optional<FormatInAppendTarget> format_in_append_target_from_type(SourceLocation loc, const IrType& type, const IrFormatSpec& spec) const {
         if (spec.debug) {
-            if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::String) {
+            if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::StaticStr) {
                 return FormatInAppendTarget{FormatInAppendKind::DebugString, {}};
+            }
+            if (is_c_text_pointer_type(type)) {
+                return FormatInAppendTarget{FormatInAppendKind::DebugCString, {}};
             }
             if (auto debug_trait = format_in_debug_trait_for_type(type)) {
                 return format_in_debug_append_target(*debug_trait);
@@ -27818,7 +27823,7 @@ private:
                 expected);
         }
         if (local->type.qualifier == TypeQualifier::Value &&
-            local->type.primitive == IrPrimitiveKind::String &&
+            local->type.primitive == IrPrimitiveKind::StaticStr &&
             local->string_literal_known &&
             is_prelude_u8_slice_type(expected)) {
             if (local_unavailable_binding_error(name, *local)) {
@@ -30519,7 +30524,7 @@ private:
         if (is_integer_primitive(type.primitive) ||
             is_float_primitive(type.primitive) ||
             type.primitive == IrPrimitiveKind::Bool ||
-            type.primitive == IrPrimitiveKind::String ||
+            type.primitive == IrPrimitiveKind::StaticStr ||
             type.primitive == IrPrimitiveKind::Function) {
             return true;
         }
@@ -31102,7 +31107,7 @@ private:
         if (same_type_or_char_u8_boundary(expected, actual)) return true;
         if (expected.qualifier == TypeQualifier::Ptr &&
             actual.qualifier == TypeQualifier::Value &&
-            actual.primitive == IrPrimitiveKind::String &&
+            actual.primitive == IrPrimitiveKind::StaticStr &&
             (expected.primitive == IrPrimitiveKind::I8 ||
              expected.primitive == IrPrimitiveKind::U8 ||
              expected.primitive == IrPrimitiveKind::Void)) {

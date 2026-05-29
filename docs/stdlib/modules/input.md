@@ -39,8 +39,8 @@ It returns `Some(byte)` for a byte and `None` at EOF.
 `std::string::String`, so the text survives later input reads as long as the
 zone remains valid. `input(ref mut zone)` is the root alias.
 
-`input::line_text()` and `read_line_text()` return a borrowed lowercase
-`string` backed by an internal runtime line buffer. A later line read can
+`input::line_text()` and `read_line_text()` return borrowed `ptr c_char` text
+backed by an internal runtime line buffer. A later line read can
 overwrite that buffer. Keep those names for raw/runtime-boundary code.
 `input::owned_line(ref mut zone)` and `input_owned(ref mut zone)` remain
 compatibility aliases for the owned behavior.

@@ -1,6 +1,6 @@
 diagnostic error code=A0001 family=abi message="C variadic argument type is not supported: (i64, i64)" sources=1 labels=1 notes=1 helps=1
-  Source source_id=0 kind=file path="tests/cases/ffi/errors/extern-varargs-aggregate.ari" display="tests/cases/ffi/errors/extern-varargs-aggregate.ari" bytes=131
-  Label index=0 role=primary source_id=0 source="tests/cases/ffi/errors/extern-varargs-aggregate.ari" line=5 column=18 end_line=5 end_column=22 byte_start=110 byte_end=114 message=""
+  Source source_id=0 kind=file path="tests/cases/ffi/errors/extern-varargs-aggregate.ari" display="tests/cases/ffi/errors/extern-varargs-aggregate.ari" bytes=135
+  Label index=0 role=primary source_id=0 source="tests/cases/ffi/errors/extern-varargs-aggregate.ari" line=5 column=18 end_line=5 end_column=22 byte_start=114 byte_end=118 message=""
   Snippet label=0 text="  --> tests/cases/ffi/errors/extern-varargs-aggregate.ari:5:18\n   |\n 5 |   printf(\"%lld\", pair);\n   |                  ^^^^"
   Note index=0 location=none message="Ari currently promotes only C-compatible scalar and pointer values through variadic extern calls"
   Help index=0 location=none message="pass a supported scalar or pointer value, or wrap aggregate data behind a pointer before the varargs boundary"

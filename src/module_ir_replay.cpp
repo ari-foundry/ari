@@ -290,7 +290,8 @@ IrType replay_type_ref(const TypeRef& ref,
                primitive(IrPrimitiveKind::F64, "f64") ||
                primitive(IrPrimitiveKind::F128, "f128") ||
                primitive(IrPrimitiveKind::Bool, "bool") ||
-               primitive(IrPrimitiveKind::String, "string") ||
+               primitive(IrPrimitiveKind::StaticStr, "static_str") ||
+               primitive(IrPrimitiveKind::StaticStr, "string") ||
                primitive(IrPrimitiveKind::Zone, "Zone") ||
                primitive(IrPrimitiveKind::MetaType, "type")) {
     } else if (ref.name == "Tuple") {
@@ -469,7 +470,9 @@ private:
         if (name == "f64") return primitive(IrPrimitiveKind::F64, "f64");
         if (name == "f128") return primitive(IrPrimitiveKind::F128, "f128");
         if (name == "bool") return primitive(IrPrimitiveKind::Bool, "bool");
-        if (name == "string") return primitive(IrPrimitiveKind::String, "string");
+        if (name == "static_str" || name == "string") {
+            return primitive(IrPrimitiveKind::StaticStr, "static_str");
+        }
         if (name == "Zone") return primitive(IrPrimitiveKind::Zone, "Zone");
         if (name == "type") return primitive(IrPrimitiveKind::MetaType, "type");
 

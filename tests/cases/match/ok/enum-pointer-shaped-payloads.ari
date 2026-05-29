@@ -1,10 +1,10 @@
-extern "C" fn strlen(text: string) -> u64;
+extern "C" fn strlen(text: ptr c_char) -> u64;
 
 enum Payload {
-  Text(string),
+  Text(ptr c_char),
   Raw(ptr i64),
   Call(fn(i64) -> i64),
-  Pair(i64, string),
+  Pair(i64, ptr c_char),
 }
 
 fn add_seven(value: i64) -> i64 {

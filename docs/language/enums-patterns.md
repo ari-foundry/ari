@@ -112,7 +112,7 @@ backend switches that enum to an aggregate layout:
 ```
 
 Aggregate enum payload slots currently accept integer, bool, pointer-shaped
-values such as `string`, `ptr T`, and `fn(...) -> ...`, one-word enum values,
+values such as `ptr c_char`, `ptr T`, and `fn(...) -> ...`, one-word enum values,
 nested aggregate-enum values, owned word payloads written as `own i64` or
 `own u64`, and plain Ari-layout tuple, fixed-array, or struct values.
 Fixed-capacity vector payloads use the explicit `Vec[T; N]` storage spelling

@@ -27,7 +27,7 @@ enum class IrPrimitiveKind {
     F64,
     F128,
     Bool,
-    String,
+    StaticStr,
     Struct,
     Enum,
     Tuple,

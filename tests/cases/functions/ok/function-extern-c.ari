@@ -1,4 +1,4 @@
-extern "C" fn puts(text: string) -> i64 = "puts";
+extern "C" fn puts(text: ptr c_char) -> i64 = "puts";
 
 fn main() -> i64 {
   puts("function-extern-ok");

@@ -55,20 +55,20 @@ pub enum SyscallAbi {
   LinuxRiscv64,
 }
 
-extern "ari" fn triple_text() -> string = "ari_builtin_target_triple";
+extern "ari" fn triple_text() -> ptr c_char = "ari_builtin_target_triple";
 pub extern "ari" fn arch() -> Arch = "ari_builtin_target_arch";
-extern "ari" fn arch_name_text() -> string = "ari_builtin_target_arch_name";
+extern "ari" fn arch_name_text() -> ptr c_char = "ari_builtin_target_arch_name";
 pub extern "ari" fn os() -> Os = "ari_builtin_target_os";
-extern "ari" fn os_name_text() -> string = "ari_builtin_target_os_name";
+extern "ari" fn os_name_text() -> ptr c_char = "ari_builtin_target_os_name";
 pub extern "ari" fn env() -> Env = "ari_builtin_target_env";
-extern "ari" fn env_name_text() -> string = "ari_builtin_target_env_name";
+extern "ari" fn env_name_text() -> ptr c_char = "ari_builtin_target_env_name";
 pub extern "ari" fn object_format() -> ObjectFormat = "ari_builtin_target_object_format";
 pub extern "ari" fn debug_format() -> DebugFormat = "ari_builtin_target_debug_format";
 pub extern "ari" fn errno_abi() -> ErrnoAbi = "ari_builtin_target_errno_abi";
 pub extern "ari" fn pointer_bits() -> i64 = "ari_builtin_target_pointer_bits";
 pub extern "ari" fn long_bits() -> i64 = "ari_builtin_target_long_bits";
 
-fn raw_text_len(value: string) -> i64 {
+fn raw_text_len(value: ptr c_char) -> i64 {
   let data = value as ptr u8;
   var len = 0;
   while std::mem::ptr_load(std::mem::ptr_add(data, len)) != '\x00' {
@@ -77,11 +77,11 @@ fn raw_text_len(value: string) -> i64 {
   return len;
 }
 
-fn raw_text_bytes(value: string) -> std::Slice[u8] {
+fn raw_text_bytes(value: ptr c_char) -> std::Slice[u8] {
   return std::Slice<u8> { data: value as ptr u8, len: std::target::raw_text_len(value) };
 }
 
-fn string_from_raw_text(zone: ref mut Zone, value: string) -> std::string::String {
+fn string_from_raw_text(zone: ref mut Zone, value: ptr c_char) -> std::string::String {
   return std::string::from(zone, std::target::raw_text_bytes(value));
 }
 

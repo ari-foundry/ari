@@ -100,7 +100,7 @@ fn needs_posix_errno_path() -> bool {
 
 Natural text helpers copy target names into the caller's region/zone as owned
 `String` values. The compiler-owned static hooks stay private to the module so
-raw `string` values do not leak into ordinary user APIs.
+raw `ptr c_char` values do not leak into ordinary user APIs.
 
 For architecture-specific code, prefer matching the enum over parsing the
 triple string:

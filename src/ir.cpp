@@ -57,8 +57,8 @@ std::string type_name(const IrType& type) {
         case IrPrimitiveKind::Bool:
             base = "bool";
             break;
-        case IrPrimitiveKind::String:
-            base = "string";
+        case IrPrimitiveKind::StaticStr:
+            base = "static string literal";
             break;
         case IrPrimitiveKind::Struct:
             if (!type.field_names.empty() &&

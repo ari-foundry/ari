@@ -1,16 +1,16 @@
 // Runtime context helpers. Primitive values come from backend hooks; small
 // policy helpers stay in Ari source so their behavior is easy to read and test.
 pub extern "ari" fn argc() -> i64 = "ari_builtin_context_argc";
-extern "ari" fn arg_text(index: i64) -> string = "ari_builtin_context_arg";
+extern "ari" fn arg_text(index: i64) -> ptr c_char = "ari_builtin_context_arg";
 pub extern "ari" fn thread_id() -> i64 = "ari_builtin_context_thread_id";
-extern "ari" fn cwd_text() -> string = "ari_builtin_context_cwd";
-extern "ari" fn executable_path_text() -> string = "ari_builtin_context_executable_path";
+extern "ari" fn cwd_text() -> ptr c_char = "ari_builtin_context_cwd";
+extern "ari" fn executable_path_text() -> ptr c_char = "ari_builtin_context_executable_path";
 
-fn text_is_empty(value: string) -> bool {
+fn text_is_empty(value: ptr c_char) -> bool {
   return std::mem::ptr_load(value as ptr u8) == 0;
 }
 
-fn raw_text_len(value: string) -> i64 {
+fn raw_text_len(value: ptr c_char) -> i64 {
   let data = value as ptr u8;
   var len = 0;
   while std::mem::ptr_load(std::mem::ptr_add(data, len)) != '\x00' {
@@ -19,19 +19,19 @@ fn raw_text_len(value: string) -> i64 {
   return len;
 }
 
-fn raw_text_bytes(value: string) -> std::Slice[u8] {
+fn raw_text_bytes(value: ptr c_char) -> std::Slice[u8] {
   return std::Slice<u8> { data: value as ptr u8, len: std::context::raw_text_len(value) };
 }
 
-fn string_from_raw_text(zone: ref mut Zone, value: string) -> std::string::String {
+fn string_from_raw_text(zone: ref mut Zone, value: ptr c_char) -> std::string::String {
   return std::string::from(zone, std::context::raw_text_bytes(value));
 }
 
-fn os_from_text(value: string) -> std::string::OsStr {
+fn os_from_text(value: ptr c_char) -> std::string::OsStr {
   return std::string::os_str(std::context::raw_text_bytes(value));
 }
 
-fn path_from_text(value: string) -> std::path::PathBytes {
+fn path_from_text(value: ptr c_char) -> std::path::PathBytes {
   return std::path::bytes(std::context::raw_text_bytes(value));
 }
 
@@ -66,11 +66,11 @@ pub fn has_cwd() -> bool {
   return !text_is_empty(cwd_text());
 }
 
-fn try_arg_text(index: i64) -> std::Option[string] {
+fn try_arg_text(index: i64) -> std::Option[ptr c_char] {
   if has_arg(index) {
-    return std::Some<string>(arg_text(index));
+    return std::Some<ptr c_char>(arg_text(index));
   }
-  return std::None<string>();
+  return std::None<ptr c_char>();
 }
 
 pub fn arg(zone: ref mut Zone, index: i64) -> std::string::String {
@@ -88,12 +88,12 @@ pub fn try_arg(zone: ref mut Zone, index: i64) -> std::Option[std::string::Strin
   }
 }
 
-fn try_cwd_text() -> std::Option[string] {
+fn try_cwd_text() -> std::Option[ptr c_char] {
   let path = cwd_text();
   if text_is_empty(path) {
-    return std::None<string>();
+    return std::None<ptr c_char>();
   }
-  return std::Some<string>(path);
+  return std::Some<ptr c_char>(path);
 }
 
 pub fn cwd(zone: ref mut Zone) -> std::string::String {
@@ -131,12 +131,12 @@ pub fn has_executable_path() -> bool {
   return !text_is_empty(executable_path_text());
 }
 
-fn try_executable_path_text() -> std::Option[string] {
+fn try_executable_path_text() -> std::Option[ptr c_char] {
   let path = executable_path_text();
   if text_is_empty(path) {
-    return std::None<string>();
+    return std::None<ptr c_char>();
   }
-  return std::Some<string>(path);
+  return std::Some<ptr c_char>(path);
 }
 
 pub fn executable_path(zone: ref mut Zone) -> std::string::String {

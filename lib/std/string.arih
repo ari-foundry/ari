@@ -37,7 +37,7 @@ pub struct SplitOnce {
 pub extern "ari" fn alloc_buffer(zone: ref mut Zone, capacity: i64) -> ptr u8 = "ari_builtin_string_alloc_buffer";
 pub extern "ari" fn with_capacity(zone: ref mut Zone, capacity: i64) -> RawString = "ari_builtin_string_with_capacity";
 pub extern "ari" fn new(zone: ref mut Zone, capacity: i64) -> std::string::String = "ari_builtin_string_new";
-extern "ari" fn from_literal_raw(zone: ref mut Zone, text: string) -> std::string::String = "ari_builtin_string_from_string";
+extern "ari" fn from_literal_raw(zone: ref mut Zone, text: ptr c_char) -> std::string::String = "ari_builtin_string_from_string";
 pub extern "ari" fn copy_to(value: ref std::string::String, target: ref mut Zone) -> std::string::String = "ari_builtin_string_copy_to";
 
 pub fn with_capacity_with_allocator(
@@ -81,7 +81,7 @@ fn os_string_from_owned(value: std::string::String) -> std::string::OsString {
   return std::string::OsString { text: value };
 }
 
-fn c_string_len(text: string) -> i64 {
+fn c_string_len(text: ptr c_char) -> i64 {
   let data = text as ptr u8;
   var len = 0;
   while ptr_load(ptr_add(data, len)) != '\x00' {
@@ -169,11 +169,11 @@ pub fn c_bytes(text: std::c::CStr) -> std::Slice[u8] {
   return text.as_slice();
 }
 
-fn c_len_literal(text: string) -> i64 {
+fn c_len_literal(text: ptr c_char) -> i64 {
   return c_string_len(text);
 }
 
-fn c_bytes_literal(text: string) -> std::Slice[u8] {
+fn c_bytes_literal(text: ptr c_char) -> std::Slice[u8] {
   return std::Slice<u8> { data: text as ptr u8, len: c_string_len(text) };
 }
 
@@ -181,7 +181,7 @@ pub fn bytes(text: std::Slice[u8]) -> std::Slice[u8] {
   return text;
 }
 
-fn bytes_raw(text: string) -> std::Slice[u8] {
+fn bytes_raw(text: ptr c_char) -> std::Slice[u8] {
   return std::string::c_bytes_literal(text);
 }
 
@@ -216,7 +216,7 @@ pub fn from(zone: ref mut Zone, text: std::Slice[u8]) -> std::string::String {
   return std::string::from_slice_in(zone, text);
 }
 
-fn from_raw(zone: ref mut Zone, text: string) -> std::string::String {
+fn from_raw(zone: ref mut Zone, text: ptr c_char) -> std::string::String {
   return std::string::from_literal_raw(zone, text);
 }
 
@@ -674,7 +674,7 @@ pub impl std::string::String {
     self.append_bytes(zone, value);
   }
 
-  fn append_raw_in(self: ref mut Self, zone: ref mut Zone, value: string) -> void {
+  fn append_raw_in(self: ref mut Self, zone: ref mut Zone, value: ptr c_char) -> void {
     self.append_bytes(zone, std::string::bytes_raw(value));
   }
 
@@ -686,6 +686,10 @@ pub impl std::string::String {
       index = index + 1;
     }
     append_byte_in(self, zone, '"');
+  }
+
+  fn append_debug_raw_in(self: ref mut Self, zone: ref mut Zone, value: ptr c_char) -> void {
+    self.append_debug_bytes_in(zone, std::string::bytes_raw(value));
   }
 
   fn append_i64_in(self: ref mut Self, zone: ref mut Zone, value: i64) -> void {

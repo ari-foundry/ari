@@ -1,6 +1,6 @@
 diagnostic error code=A0001 family=abi message="variadic extern function 'printf' cannot be used as a function pointer value" sources=1 labels=1 notes=1 helps=1
-  Source source_id=0 kind=file path="tests/cases/ffi/errors/extern-varargs-function-pointer.ari" display="tests/cases/ffi/errors/extern-varargs-function-pointer.ari" bytes=110
-  Label index=0 role=primary source_id=0 source="tests/cases/ffi/errors/extern-varargs-function-pointer.ari" line=4 column=17 end_line=4 end_column=23 byte_start=88 byte_end=94 message=""
+  Source source_id=0 kind=file path="tests/cases/ffi/errors/extern-varargs-function-pointer.ari" display="tests/cases/ffi/errors/extern-varargs-function-pointer.ari" bytes=114
+  Label index=0 role=primary source_id=0 source="tests/cases/ffi/errors/extern-varargs-function-pointer.ari" line=4 column=17 end_line=4 end_column=23 byte_start=92 byte_end=98 message=""
   Snippet label=0 text="  --> tests/cases/ffi/errors/extern-varargs-function-pointer.ari:4:17\n   |\n 4 |   let printer = printf;\n   |                 ^^^^^^"
   Note index=0 location=none message="Ari can lower calls to C variadic functions, but the callable value has no fixed function-pointer signature"
   Help index=0 location=none message="wrap the variadic call in a fixed-signature Ari function and take a pointer to that wrapper"

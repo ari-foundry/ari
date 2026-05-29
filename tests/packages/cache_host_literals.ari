@@ -1,6 +1,6 @@
-pub extern "C" fn strlen(text: string) -> u64;
+pub extern "C" fn strlen(text: ptr c_char) -> u64;
 
 pub fn string_score() -> i64 {
-  let text: string = "cache";
+  let text: ptr c_char = "cache";
   return strlen(text) as i64;
 }

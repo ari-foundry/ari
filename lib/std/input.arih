@@ -1,7 +1,7 @@
 // Friendly input helpers. Low-level byte input uses an i64 EOF sentinel;
 // source helpers expose the same result through Ari's Option vocabulary.
 pub extern "ari" fn read_byte() -> i64 = "ari_builtin_read_byte";
-extern "ari" fn line_text() -> string = "ari_builtin_read_line";
+extern "ari" fn line_text() -> ptr c_char = "ari_builtin_read_line";
 pub extern "ari" fn owned_line(zone: ref mut Zone) -> std::string::String = "ari_builtin_read_line_owned";
 
 pub fn line(zone: ref mut Zone) -> std::string::String {

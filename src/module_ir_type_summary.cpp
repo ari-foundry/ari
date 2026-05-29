@@ -30,8 +30,8 @@ std::string module_cache_ir_type_name(const IrType& type) {
         case IrPrimitiveKind::Bool:
             base = type.name;
             break;
-        case IrPrimitiveKind::String:
-            base = "string";
+        case IrPrimitiveKind::StaticStr:
+            base = "static_str";
             break;
         case IrPrimitiveKind::Struct:
         case IrPrimitiveKind::Enum:

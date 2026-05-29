@@ -54,7 +54,7 @@ if log::enabled(log::Debug, minimum) {
 ```
 
 `write(level, bytes)` writes a borrowed `Slice[u8]` as one line. `message`
-writes a null-terminated Ari `string` as one line. The convenience functions
+writes string-literal or C-text bytes as one line. The convenience functions
 `trace`, `debug`, `info`, `warn`, and `error` call `message` with the matching
 level.
 

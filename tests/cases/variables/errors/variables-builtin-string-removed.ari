@@ -1,0 +1,4 @@
+fn main() -> i64 {
+  let text: string = "removed";
+  return 0;
+}

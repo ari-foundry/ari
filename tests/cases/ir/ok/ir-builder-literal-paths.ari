@@ -1,7 +1,7 @@
-extern "C" fn puts(text: string) -> i32;
+extern "C" fn puts(text: ptr c_char) -> i32;
 
 fn main() -> i64 {
-  let text: string = "ir builders";
+  let text: ptr c_char = "ir builders";
   let raw: ptr c_void = null;
   let pair = (1.25f64, raw);
 

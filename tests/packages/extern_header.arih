@@ -1,1 +1,1 @@
-pub extern "C" fn puts(text: string) -> i32 = "puts";
+pub extern "C" fn puts(text: ptr c_char) -> i32 = "puts";

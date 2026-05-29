@@ -432,8 +432,8 @@ zone-backed `Vec[SocketAddr]` and currently collects the first IPv4 address and
 the first IPv6 address exposed by the hosted resolver, preserving `Error` when
 neither family resolves. `to_socket_addrs(zone, endpoint)` is the module-level
 host-port convenience wrapper for code that wants the same `Vec[SocketAddr]`
-shape as the `ToSocketAddrs` trait. `string` implements `ToSocketAddrs`, so
-generic code can ask a host-port string for addresses without spelling the
+shape as the `ToSocketAddrs` trait. String-like host-port values implement
+`ToSocketAddrs`, so generic code can ask a host-port value for addresses without spelling the
 resolver function directly. `resolve_service(zone, host, service)` and
 `to_socket_addrs_service(zone, host, service)` are the service-name variants:
 they first map the service with `service_port`, then call `resolve_all`.

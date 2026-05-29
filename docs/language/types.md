@@ -158,22 +158,20 @@ zone/region source. This keeps everyday calls like
 `std::string::from(...)` boilerplate while still making allocation ownership
 visible.
 
-The lowercase compiler primitive `string` still exists as an internal/raw
-literal boundary. The LLVM backend lowers it as an `i8*`/C string pointer, so it
-remains useful for C FFI, runtime snapshots, static names, and compatibility
-helpers with names such as `_text`, `_raw`, and `_unchecked`. Do not use
-`string` for normal public Ari APIs; use `String`, `Slice[u8]`, `Utf8`,
-`OsStr`, `PathBytes`, or `CStr` depending on the boundary. String literals are
-emitted as NUL-terminated static bytes before any owned `String` copy is made.
+There is no public lowercase `string` type. String literals are compiler-owned
+static bytes that can flow into an expected text boundary: owned `String`,
+borrowed `Slice[u8]`, `Utf8`, `OsStr`, `PathBytes`, `CStr`, or `ptr c_char`.
+The LLVM backend still emits string literals as NUL-terminated static bytes
+before any owned `String` copy is made, but the source type is intentionally
+unnameable. Use `String` for ordinary owned text, `Slice[u8]` for byte views,
+and `ptr c_char` or `std::c::CStr` for C ABI text.
 
 New stdlib APIs that return ordinary text should prefer owned `String` results
 and take `ref mut Zone` or `Region` when allocation is needed.
 Compiler-assisted `print`, `println`, and `eprintln` accept text literals and
-owned `String` text. The raw borrowed boundary type is still accepted where it
-appears in compatibility code, but it is not the public stdlib string model.
-Owned `String` output uses the handle's byte length, so ordinary stdlib results
-such as `env::current_dir(ref mut zone)` can be printed without converting to a
-C string.
+owned `String` text. Owned `String` output uses the handle's byte length, so
+ordinary stdlib results such as `env::current_dir(ref mut zone)` can be printed
+without converting to a C string.
 
 The source prelude already has the allocator-backed seed under `std::string`.
 `std::string::new(ref mut zone, capacity)` creates a tracked

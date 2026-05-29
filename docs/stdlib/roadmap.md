@@ -183,7 +183,7 @@ work. Each one should land in small tested slices with natural API names.
 - Keep `std::string::String` byte-oriented while exposing explicit UTF-8 scalar
   validation/access/append helpers through `std::encoding`.
 - Keep typed string/path boundary views distinct: borrowed C ABI text uses
-  `string` or `std::c::CStr`, owned C-shaped storage uses `std::c::CString`,
+  `ptr c_char` or `std::c::CStr`, owned C-shaped storage uses `std::c::CString`,
   general owned buffers use byte `String`, validated Unicode scalar work uses
   `Utf8`, OS boundary bytes use `OsStr`, and path manipulation uses
   `PathBytes`.

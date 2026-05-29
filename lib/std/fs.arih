@@ -100,36 +100,36 @@ pub struct Metadata {
   group_id_value: i64,
 }
 
-extern "ari" fn exists_host_raw(path: string) -> bool = "ari_builtin_fs_exists";
+extern "ari" fn exists_host_raw(path: ptr c_char) -> bool = "ari_builtin_fs_exists";
 extern "ari" fn exists_bytes_raw(data: ptr u8, len: i64) -> bool = "ari_builtin_fs_exists_bytes";
-extern "ari" fn can_read_host_raw(path: string) -> bool = "ari_builtin_fs_can_read";
-extern "ari" fn can_write_host_raw(path: string) -> bool = "ari_builtin_fs_can_write";
-extern "ari" fn can_execute_host_raw(path: string) -> bool = "ari_builtin_fs_can_execute";
-extern "ari" fn remove_host_raw(path: string) -> bool = "ari_builtin_fs_remove";
-extern "ari" fn rename_host_raw(source: string, target: string) -> bool = "ari_builtin_fs_rename";
+extern "ari" fn can_read_host_raw(path: ptr c_char) -> bool = "ari_builtin_fs_can_read";
+extern "ari" fn can_write_host_raw(path: ptr c_char) -> bool = "ari_builtin_fs_can_write";
+extern "ari" fn can_execute_host_raw(path: ptr c_char) -> bool = "ari_builtin_fs_can_execute";
+extern "ari" fn remove_host_raw(path: ptr c_char) -> bool = "ari_builtin_fs_remove";
+extern "ari" fn rename_host_raw(source: ptr c_char, target: ptr c_char) -> bool = "ari_builtin_fs_rename";
 extern "ari" fn rename_bytes_raw(source_data: ptr u8, source_len: i64, target_data: ptr u8, target_len: i64) -> bool = "ari_builtin_fs_rename_bytes";
 // Relative symbolic-link targets are resolved by the host from the link's
 // parent directory, matching POSIX symlink behavior.
-extern "ari" fn hard_link_host_raw(existing: string, link_path: string) -> bool = "ari_builtin_fs_hard_link";
+extern "ari" fn hard_link_host_raw(existing: ptr c_char, link_path: ptr c_char) -> bool = "ari_builtin_fs_hard_link";
 extern "ari" fn hard_link_bytes_raw(existing_data: ptr u8, existing_len: i64, link_data: ptr u8, link_len: i64) -> bool = "ari_builtin_fs_hard_link_bytes";
-extern "ari" fn symbolic_link_host_raw(target: string, link_path: string) -> bool = "ari_builtin_fs_symbolic_link";
+extern "ari" fn symbolic_link_host_raw(target: ptr c_char, link_path: ptr c_char) -> bool = "ari_builtin_fs_symbolic_link";
 extern "ari" fn symbolic_link_bytes_raw(target_data: ptr u8, target_len: i64, link_data: ptr u8, link_len: i64) -> bool = "ari_builtin_fs_symbolic_link_bytes";
-extern "ari" fn read_link_host_raw(path: string) -> string = "ari_builtin_fs_read_link";
-extern "ari" fn read_link_bytes_raw(data: ptr u8, len: i64) -> string = "ari_builtin_fs_read_link_bytes";
-extern "ari" fn create_dir_host_raw(path: string) -> bool = "ari_builtin_fs_create_dir";
+extern "ari" fn read_link_host_raw(path: ptr c_char) -> ptr c_char = "ari_builtin_fs_read_link";
+extern "ari" fn read_link_bytes_raw(data: ptr u8, len: i64) -> ptr c_char = "ari_builtin_fs_read_link_bytes";
+extern "ari" fn create_dir_host_raw(path: ptr c_char) -> bool = "ari_builtin_fs_create_dir";
 extern "ari" fn create_dir_bytes_raw(data: ptr u8, len: i64) -> bool = "ari_builtin_fs_create_dir_bytes";
-extern "ari" fn create_dir_all_host_raw(path: string) -> bool = "ari_builtin_fs_create_dir_all";
+extern "ari" fn create_dir_all_host_raw(path: ptr c_char) -> bool = "ari_builtin_fs_create_dir_all";
 extern "ari" fn create_dir_all_bytes_raw(data: ptr u8, len: i64) -> bool = "ari_builtin_fs_create_dir_all_bytes";
-extern "ari" fn remove_dir_host_raw(path: string) -> bool = "ari_builtin_fs_remove_dir";
-extern "ari" fn open_dir_handle_raw(path: string) -> Dir = "ari_builtin_fs_open_dir";
+extern "ari" fn remove_dir_host_raw(path: ptr c_char) -> bool = "ari_builtin_fs_remove_dir";
+extern "ari" fn open_dir_handle_raw(path: ptr c_char) -> Dir = "ari_builtin_fs_open_dir";
 pub extern "ari" fn close_dir_unchecked(dir: Dir) -> bool = "ari_builtin_fs_close_dir";
 extern "ari" fn remove_bytes_raw(data: ptr u8, len: i64) -> bool = "ari_builtin_fs_remove_bytes";
 extern "ari" fn remove_dir_bytes_raw(data: ptr u8, len: i64) -> bool = "ari_builtin_fs_remove_dir_bytes";
 extern "ari" fn open_dir_bytes_raw(data: ptr u8, len: i64) -> Dir = "ari_builtin_fs_open_dir_bytes";
 // Modes: "r", "w", "a", "rw", "r+", "w+", and "a+".
-extern "ari" fn open_host_raw(path: string, mode: string) -> File = "ari_builtin_fs_open";
+extern "ari" fn open_host_raw(path: ptr c_char, mode: ptr c_char) -> File = "ari_builtin_fs_open";
 extern "ari" fn open_options_raw(
-  path: string,
+  path: ptr c_char,
   read: bool,
   write: bool,
   append: bool,
@@ -153,21 +153,21 @@ pub extern "ari" fn write_byte_unchecked(file: File, value: u8) -> bool = "ari_b
 extern "ari" fn position_unchecked(file: File) -> i64 = "ari_builtin_fs_position";
 pub extern "ari" fn seek_unchecked(file: File, position: i64) -> bool = "ari_builtin_fs_seek";
 extern "C" fn raw_flock(fd: c_int, operation: c_int) -> c_int = "flock";
-extern "ari" fn metadata_size_raw(path: string) -> i64 = "ari_builtin_fs_metadata_size";
-extern "ari" fn metadata_kind_raw(path: string) -> i64 = "ari_builtin_fs_metadata_kind";
-extern "ari" fn metadata_mode_raw(path: string) -> i64 = "ari_builtin_fs_metadata_mode";
-extern "ari" fn metadata_owner_raw(path: string) -> i64 = "ari_builtin_fs_metadata_uid";
-extern "ari" fn metadata_group_raw(path: string) -> i64 = "ari_builtin_fs_metadata_gid";
-extern "ari" fn metadata_accessed_nanos_raw(path: string) -> i64 = "ari_builtin_fs_metadata_accessed_nanos";
-extern "ari" fn metadata_modified_nanos_raw(path: string) -> i64 = "ari_builtin_fs_metadata_modified_nanos";
-extern "ari" fn metadata_changed_nanos_raw(path: string) -> i64 = "ari_builtin_fs_metadata_changed_nanos";
-extern "ari" fn symlink_metadata_size_raw(path: string) -> i64 = "ari_builtin_fs_symlink_metadata_size";
-extern "ari" fn symlink_metadata_kind_raw(path: string) -> i64 = "ari_builtin_fs_symlink_metadata_kind";
-extern "ari" fn symlink_metadata_owner_raw(path: string) -> i64 = "ari_builtin_fs_symlink_metadata_uid";
-extern "ari" fn symlink_metadata_group_raw(path: string) -> i64 = "ari_builtin_fs_symlink_metadata_gid";
-extern "ari" fn symlink_metadata_accessed_nanos_raw(path: string) -> i64 = "ari_builtin_fs_symlink_metadata_accessed_nanos";
-extern "ari" fn symlink_metadata_modified_nanos_raw(path: string) -> i64 = "ari_builtin_fs_symlink_metadata_modified_nanos";
-extern "ari" fn symlink_metadata_changed_nanos_raw(path: string) -> i64 = "ari_builtin_fs_symlink_metadata_changed_nanos";
+extern "ari" fn metadata_size_raw(path: ptr c_char) -> i64 = "ari_builtin_fs_metadata_size";
+extern "ari" fn metadata_kind_raw(path: ptr c_char) -> i64 = "ari_builtin_fs_metadata_kind";
+extern "ari" fn metadata_mode_raw(path: ptr c_char) -> i64 = "ari_builtin_fs_metadata_mode";
+extern "ari" fn metadata_owner_raw(path: ptr c_char) -> i64 = "ari_builtin_fs_metadata_uid";
+extern "ari" fn metadata_group_raw(path: ptr c_char) -> i64 = "ari_builtin_fs_metadata_gid";
+extern "ari" fn metadata_accessed_nanos_raw(path: ptr c_char) -> i64 = "ari_builtin_fs_metadata_accessed_nanos";
+extern "ari" fn metadata_modified_nanos_raw(path: ptr c_char) -> i64 = "ari_builtin_fs_metadata_modified_nanos";
+extern "ari" fn metadata_changed_nanos_raw(path: ptr c_char) -> i64 = "ari_builtin_fs_metadata_changed_nanos";
+extern "ari" fn symlink_metadata_size_raw(path: ptr c_char) -> i64 = "ari_builtin_fs_symlink_metadata_size";
+extern "ari" fn symlink_metadata_kind_raw(path: ptr c_char) -> i64 = "ari_builtin_fs_symlink_metadata_kind";
+extern "ari" fn symlink_metadata_owner_raw(path: ptr c_char) -> i64 = "ari_builtin_fs_symlink_metadata_uid";
+extern "ari" fn symlink_metadata_group_raw(path: ptr c_char) -> i64 = "ari_builtin_fs_symlink_metadata_gid";
+extern "ari" fn symlink_metadata_accessed_nanos_raw(path: ptr c_char) -> i64 = "ari_builtin_fs_symlink_metadata_accessed_nanos";
+extern "ari" fn symlink_metadata_modified_nanos_raw(path: ptr c_char) -> i64 = "ari_builtin_fs_symlink_metadata_modified_nanos";
+extern "ari" fn symlink_metadata_changed_nanos_raw(path: ptr c_char) -> i64 = "ari_builtin_fs_symlink_metadata_changed_nanos";
 extern "ari" fn metadata_size_bytes_raw(data: ptr u8, len: i64) -> i64 = "ari_builtin_fs_metadata_size_bytes";
 extern "ari" fn metadata_kind_bytes_raw(data: ptr u8, len: i64) -> i64 = "ari_builtin_fs_metadata_kind_bytes";
 extern "ari" fn metadata_mode_bytes_raw(data: ptr u8, len: i64) -> i64 = "ari_builtin_fs_metadata_mode_bytes";
@@ -186,17 +186,17 @@ extern "ari" fn symlink_metadata_changed_nanos_bytes_raw(data: ptr u8, len: i64)
 extern "ari" fn can_read_bytes_raw(data: ptr u8, len: i64) -> bool = "ari_builtin_fs_can_read_bytes";
 extern "ari" fn can_write_bytes_raw(data: ptr u8, len: i64) -> bool = "ari_builtin_fs_can_write_bytes";
 extern "ari" fn can_execute_bytes_raw(data: ptr u8, len: i64) -> bool = "ari_builtin_fs_can_execute_bytes";
-extern "ari" fn set_mode_host_raw(path: string, mode: i64) -> bool = "ari_builtin_fs_set_mode";
+extern "ari" fn set_mode_host_raw(path: ptr c_char, mode: i64) -> bool = "ari_builtin_fs_set_mode";
 extern "ari" fn set_mode_bytes_raw(data: ptr u8, len: i64, mode: i64) -> bool = "ari_builtin_fs_set_mode_bytes";
-extern "ari" fn read_dir_next_raw(dir: Dir) -> string = "ari_builtin_fs_read_dir_next";
-extern "ari" fn canonicalize_host_raw(path: string) -> string = "ari_builtin_fs_canonicalize";
-extern "ari" fn canonicalize_bytes_raw(data: ptr u8, len: i64) -> string = "ari_builtin_fs_canonicalize_bytes";
+extern "ari" fn read_dir_next_raw(dir: Dir) -> ptr c_char = "ari_builtin_fs_read_dir_next";
+extern "ari" fn canonicalize_host_raw(path: ptr c_char) -> ptr c_char = "ari_builtin_fs_canonicalize";
+extern "ari" fn canonicalize_bytes_raw(data: ptr u8, len: i64) -> ptr c_char = "ari_builtin_fs_canonicalize_bytes";
 
 fn bytes(path: std::Slice[u8]) -> std::Slice[u8] {
   return path;
 }
 
-fn source_text_len(value: string) -> i64 {
+fn source_text_len(value: ptr c_char) -> i64 {
   let data = value as ptr u8;
   var len = 0;
   while ptr_load(ptr_add(data, len)) != '\x00' {
@@ -205,15 +205,15 @@ fn source_text_len(value: string) -> i64 {
   return len;
 }
 
-fn source_text_bytes(value: string) -> std::Slice[u8] {
+fn source_text_bytes(value: ptr c_char) -> std::Slice[u8] {
   return std::Slice<u8> { data: value as ptr u8, len: source_text_len(value) };
 }
 
-fn source_text_string(zone: ref mut Zone, value: string) -> std::string::String {
+fn source_text_string(zone: ref mut Zone, value: ptr c_char) -> std::string::String {
   return std::string::from_slice_in(zone, source_text_bytes(value));
 }
 
-fn mode_equals(mode: std::Slice[u8], value: string) -> bool {
+fn mode_equals(mode: std::Slice[u8], value: ptr c_char) -> bool {
   return mode.equals(source_text_bytes(value));
 }
 
@@ -1472,7 +1472,7 @@ fn open_raw_with_mode_bytes(path: std::Slice[u8], mode: std::Slice[u8]) -> std::
   return std::Err<File, i64>(last_errno_error_raw());
 }
 
-fn open_raw_with_mode_literal(path: std::Slice[u8], mode: string) -> std::Result[File, i64] {
+fn open_raw_with_mode_literal(path: std::Slice[u8], mode: ptr c_char) -> std::Result[File, i64] {
   return open_raw_with_mode_bytes(path, source_text_bytes(mode));
 }
 
@@ -1480,7 +1480,7 @@ pub fn open(path: std::Slice[u8], mode: std::Slice[u8]) -> std::Result[File, std
   return std::error::map_raw<File>(open_raw(path, mode));
 }
 
-fn open_with_mode_literal(path: std::Slice[u8], mode: string) -> std::Result[File, std::error::Error] {
+fn open_with_mode_literal(path: std::Slice[u8], mode: ptr c_char) -> std::Result[File, std::error::Error] {
   return std::error::map_raw<File>(open_raw_with_mode_literal(path, mode));
 }
 
@@ -1722,7 +1722,7 @@ pub fn try_read_byte(file: File) -> std::Option[u8] {
   return std::Some<u8>(byte as u8);
 }
 
-fn write_all_raw_with_mode(path: std::Slice[u8], mode: string, values: std::Slice[u8]) -> std::Result[i64, i64] {
+fn write_all_raw_with_mode(path: std::Slice[u8], mode: ptr c_char, values: std::Slice[u8]) -> std::Result[i64, i64] {
   match open_raw_with_mode_literal(path, mode) {
     std::Ok(file) => {
       match write_bytes_raw(file, values) {

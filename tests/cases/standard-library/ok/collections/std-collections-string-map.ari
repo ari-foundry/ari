@@ -1,5 +1,5 @@
 // Covers HashMap[String, String] with content-based hashing and equality.
-// This is the arix-style manifest shape: string keys, string values, duplicate
+// This is the arix-style manifest shape: String keys, String values, duplicate
 // key replacement, lookup with independently allocated keys, removal, and
 // iteration over map entries.
 

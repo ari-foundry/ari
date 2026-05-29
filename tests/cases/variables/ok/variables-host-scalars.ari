@@ -1,6 +1,6 @@
 fn main() -> i64 {
   let inferred_text = "ari";
-  var text: string = "hello";
+  var text: ptr c_char = "hello";
   text = inferred_text;
 
   let inferred_float = 1.0e+1;

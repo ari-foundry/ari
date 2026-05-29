@@ -156,7 +156,7 @@ most 8-byte alignment. Larger or target-specific cases should use an explicit
 pointer ABI. The classifier also covers tuples, fixed-capacity vector storage
 values, and aggregate-layout enums, but header generation still rejects those
 Ari-only value spellings until their C wrapper surface is explicit. Header
-generation rejects values such as `string`, owned values, and aggregate values
+generation rejects values such as static string-literal values, owned values, and aggregate values
 whose C ABI policy is not explicit.
 LLVM object and shared-library output record explicit export/no-mangle names in
 their symbol tables. Imported `extern "C"` calls are resolved through the LLVM

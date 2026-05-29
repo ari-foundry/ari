@@ -269,8 +269,8 @@ log::error(text)
 ```
 
 `log::write(level, bytes)` writes a `Slice[u8]` to `stderr` as
-`[level] bytes\n`. `log::message(level, text)` writes a null-terminated Ari
-`string` the same way, and the level convenience functions call `message`.
+`[level] bytes\n`. `log::message(level, text)` writes string-literal or C-text
+bytes the same way, and the level convenience functions call `message`.
 `enabled(level, minimum)` is an explicit threshold predicate; there is no
 global logging filter today.
 
@@ -399,7 +399,7 @@ has_arg(index)
 preferred guard before reading optional host arguments. Natural context APIs
 copy host text into a zone-backed `std::string::String` so callers can keep the
 value after later runtime calls. The `_text` variants expose the raw borrowed
-runtime `string` buffer for compatibility and low-level bridge code.
+runtime `ptr c_char` buffer for compatibility and low-level bridge code.
 Out-of-range raw argument access returns an empty string, while
 `try_arg(ref mut zone, index)` returns `None`.
 
@@ -2263,7 +2263,7 @@ to absence.
 `to_socket_addrs_service(zone, host, service)` return zone-backed
 `Vec[SocketAddr]` values; the hosted implementation currently collects the
 first IPv4 and first IPv6 address exposed by the resolver.
-`string` implements the matching `ToSocketAddrs` trait shape.
+String-like host-port values implement the matching `ToSocketAddrs` trait shape.
 Matching `*_raw` helpers are compatibility-only bridges for
 low-level callers that still need raw integer errors.
 `net::listen`/`net::connect` are TCP-focused module-level `Result` helpers;
@@ -3695,7 +3695,7 @@ for non-overlapping byte replacement; an empty needle is a no-op copy.
 Owned `String` helpers such as `find`, `contains_slice`, `slice`, `split_at`,
 `chunks`, `windows`, and delimiter `split` use the same byte offsets and
 borrowed views. `find_text`, `contains_text`, `starts_with_text`,
-`ends_with_text`, and `equals_text` accept Ari `string` values directly by
+`ends_with_text`, and `equals_text` accept string literals directly by
 using `std::string::bytes` internally. `eq` and the `==` / `!=` operators
 compare owned `String` values by byte contents, so independently allocated
 strings can act as hash-map keys. `join_in` joins `Slice[Slice[u8]]` parts with
@@ -3980,8 +3980,8 @@ fmt::print_debug<T: Debug>(ref mut zone, value)
 fmt::println_debug<T: Debug>(ref mut zone, value)
 ```
 
-Built-in `Display` impls cover `char`, `i64`, `u64`, `bool`, `f32`, `f64`,
-lowercase `string`, and `std::string::String`. Use explicit impls for domain
+Built-in `Display` impls cover string literals, `char`, `i64`, `u64`, `bool`,
+`f32`, `f64`, and `std::string::String`. Use explicit impls for domain
 structs and enums. Float `Display` uses six fractional digits; call
 `fmt::float_in` to pick a precision explicitly. Prefer `fmt::write_value` for
 generic Writer-backed display output and `fmt::print_value`/`fmt::println_value`
@@ -3992,8 +3992,8 @@ that intentionally discard the failure reason. `char` is a byte-character alias,
 so `fmt::char_in`,
 `String.append_value('A')`, and `format_in!(..., "{}", 'A')` write the byte as
 text rather than as the number `65`.
-Built-in `Debug` impls cover the same initial scalar/text set. `string` and
-`String` debug output are quoted; `char` debug output is single-quoted. Use
+Built-in `Debug` impls cover the same initial scalar/text set. String literals
+and `String` debug output are quoted; `char` debug output is single-quoted. Use
 `fmt::debug_value`, `fmt::write_debug`, or `fmt::println_debug` when diagnostic
 output should use that policy.
 `fmt::format_value` is the named source helper for the common one-value

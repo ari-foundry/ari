@@ -1,5 +1,5 @@
 mod libc {
-  pub extern "C" fn puts(text: string) -> i32;
+  pub extern "C" fn puts(text: ptr c_char) -> i32;
 }
 
 fn main() -> i64 {

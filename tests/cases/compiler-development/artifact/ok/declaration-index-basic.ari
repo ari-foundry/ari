@@ -20,7 +20,7 @@ pub impl Named for Span {
   }
 }
 
-extern "C" fn puts(text: string) -> i32;
+extern "C" fn puts(text: ptr c_char) -> i32;
 
 fn main() -> i64 {
   return 0;

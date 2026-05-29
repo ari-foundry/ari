@@ -77,6 +77,11 @@ static bool is_void_value_type(const IrType& type) {
            type.primitive == IrPrimitiveKind::Void;
 }
 
+static bool is_c_text_pointer_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Ptr &&
+           type.primitive == IrPrimitiveKind::I8;
+}
+
 static int float_bits(const IrType& type) {
     switch (type.primitive) {
         case IrPrimitiveKind::F32: return 32;
@@ -392,7 +397,7 @@ private:
             case IrPrimitiveKind::F32: return "float";
             case IrPrimitiveKind::F64: return "double";
             case IrPrimitiveKind::F128: return "fp128";
-            case IrPrimitiveKind::String: return "ptr";
+            case IrPrimitiveKind::StaticStr: return "ptr";
             case IrPrimitiveKind::Function: return "ptr";
             case IrPrimitiveKind::Zone: return "ptr";
             case IrPrimitiveKind::TraitObject:
@@ -562,7 +567,7 @@ private:
             symbol == "ari_builtin_fs_read_link_bytes" ||
             symbol == "ari_builtin_fs_read_dir_next" ||
             symbol == "ari_builtin_read_line") {
-            return IrType{TypeQualifier::Value, IrPrimitiveKind::String, "string", {}, {}, {}, {}, loc};
+            return IrType{TypeQualifier::Ptr, IrPrimitiveKind::I8, "c_char", {}, {}, {}, {}, loc};
         }
         if (symbol == "ari_builtin_env_has" ||
             symbol == "ari_builtin_env_has_bytes" ||
@@ -8044,7 +8049,8 @@ private:
             if (i < expr.args.size()) {
                 Value arg = emit_expr(*expr.args[i]);
                 const IrFormatSpec& spec = i < format_specs.size() ? format_specs[i] : IrFormatSpec{};
-                if (arg.ir_type.primitive == IrPrimitiveKind::String) {
+                if (arg.ir_type.primitive == IrPrimitiveKind::StaticStr ||
+                    is_c_text_pointer_type(arg.ir_type)) {
                     if (spec.debug) {
                         emit_c_string(string_ptr("\""));
                     }

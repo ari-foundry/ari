@@ -434,7 +434,7 @@ Use `output_in_with_region`, `output_with_region`,
 `stdout_string_with_region`, and `stderr_string_with_region` when that caller
 chosen lifetime is represented by a public `Region`.
 
-Arguments use `process::arg("...")` rather than raw `string` slices so the
+Arguments use `process::arg("...")` rather than raw pointer text so the
 builder can keep an executable-friendly C argv representation. Environment
 entries use `process::env_var(name, value)`. The ergonomic rule is: call sites
 still look like command construction, while the stdlib owns the pointer-level

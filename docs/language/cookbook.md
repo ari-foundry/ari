@@ -523,7 +523,7 @@ child module in `math.ari` or `math.arih` on the module path.
 ## Call C
 
 ```ari
-extern "C" fn puts(text: string) -> i32 = "puts";
+extern "C" fn puts(text: ptr c_char) -> i32 = "puts";
 
 fn main() -> i64 {
   puts("hello from libc");
@@ -586,7 +586,7 @@ generated runner with that process status.
 | borrowed view into local/source collection | `Slice[T]` |
 | growable source collection | `std::vec::Vec[T]` with `Zone` |
 | owned byte text | `std::string::String` with `Zone` |
-| borrowed C-style text | `string` |
+| borrowed C-style text | `ptr c_char` or `CStr` |
 | single value placed in a zone | `std::boxed::Box[T]` |
 | raw placement pointer | `zone::new<T>(ref mut zone, value)` |
 

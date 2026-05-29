@@ -84,7 +84,7 @@ Omit the semicolon only for the final value expression in a function, block,
 | module | `mod Math { pub fn value() -> i64 { 7 } }` |
 | import | `use Math::value; use Math::value as answer;` |
 | file module | `mod math;` with `math.ari` or `math.arih` on the module path |
-| C import | `extern "C" fn puts(text: string) -> i32 = "puts";` |
+| C import | `extern "C" fn puts(text: ptr c_char) -> i32 = "puts";` |
 | shared export | `@export("ari_add") pub fn add(a: i64, b: i64) -> i64 { a + b }` |
 | test | `@test fn adds() { assert_eq!(add(1, 2), 3); return; }` |
 
@@ -99,7 +99,7 @@ Omit the semicolon only for the final value expression in a function, block,
 | floats | `f32`, `f64`, `f128` | `f32`/`f64` arithmetic lowers today; `f128` storage is limited. |
 | bool | `bool` | Used by logical operators and normal conditions. |
 | public owned text | `String`, `std::string::String` | Zone-backed explicit byte-string handle for normal Ari APIs. |
-| raw text boundary | `string` | Internal/FFI NUL-terminated literal boundary; avoid it in ordinary public APIs. |
+| C text pointer | `ptr c_char` | Raw NUL-terminated C ABI pointer; use `CStr`/`CString` for named stdlib C-string boundaries. |
 | validated UTF-8 view | `std::string::Utf8` | Borrowed bytes that passed UTF-8 validation. |
 | OS string byte view | `std::string::OsStr` | Borrowed OS boundary bytes; not necessarily UTF-8. |
 | C string view | `std::c::CStr`, `CStr` | Borrowed wrapper around NUL-terminated bytes or `ptr c_char`; `std::string::c_str(cstr)` passes this same type through. |
@@ -272,8 +272,8 @@ Or-pattern alternatives must bind the same names with compatible types.
 Use uppercase `String`/`std::string::String` for ordinary text that needs owned
 zone-backed storage. String literals copy into expected `String` values when a
 `region { ... }`, `zone { ... }`, mutable local named `region`/`zone`, or one
-unambiguous mutable region/zone source is visible. The lowercase raw text type
-is only for borrowed literal/FFI/runtime boundary code.
+unambiguous mutable region/zone source is visible. Ari has no public lowercase
+`string` type; C-facing text uses `ptr c_char`, `CStr`, or `CString`.
 Use bare `Vec<T>` for local compiler-known vectors and `std::vec::Vec<T>` for
 the source standard-library growable handle. Use `Set<T>` or
 `std::collections::Set<T>` when you need insertion-order uniqueness; it is
@@ -312,7 +312,7 @@ growth methods keep the source zone explicit.
 ## FFI And Libraries
 
 ```ari
-extern "C" fn puts(text: string) -> i32 = "puts";
+extern "C" fn puts(text: ptr c_char) -> i32 = "puts";
 
 @export("ari_add")
 pub fn add(left: i64, right: i64) -> i64 {

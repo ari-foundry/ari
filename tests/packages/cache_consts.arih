@@ -3,4 +3,4 @@ pub const SMALL: u8 = 3u8;
 pub const READY: bool = BASE + 3 == 10 && !false;
 pub const PICK: i64 = BASE * 2 - 4;
 
-pub extern "C" fn puts(text: string) -> i32 = "puts";
+pub extern "C" fn puts(text: ptr c_char) -> i32 = "puts";

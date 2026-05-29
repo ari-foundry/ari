@@ -91,7 +91,7 @@ Symbol
 ## CStr And CString
 
 `CStr` is a borrowed view of a NUL-terminated C string. It does not own bytes.
-It can wrap an Ari `string` literal or a non-null `ptr c_char` from C.
+It can wrap an Ari string literal or a non-null `ptr c_char` from C.
 
 `CString` owns a NUL-terminated copy in an explicit allocation lifetime. Use
 `region.cstring(bytes)` in ordinary region-first code, or the allocator

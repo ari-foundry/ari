@@ -1,4 +1,4 @@
-extern "C" fn puts(text: string) -> i32;
+extern "C" fn puts(text: ptr c_char) -> i32;
 
 struct Box {
   value: i64,
@@ -6,7 +6,7 @@ struct Box {
 }
 
 fn main() -> i64 {
-  let text: string = "builder";
+  let text: ptr c_char = "builder";
   let raw: ptr c_void = null;
   let box = Box { value: 3, ok: true };
   let items = [1, 2, 3];

@@ -57,7 +57,7 @@ bool scalar_layout_size_bytes(const IrType& type, std::uint64_t& out) {
         case IrPrimitiveKind::I64:
         case IrPrimitiveKind::U64:
         case IrPrimitiveKind::F64:
-        case IrPrimitiveKind::String:
+        case IrPrimitiveKind::StaticStr:
         case IrPrimitiveKind::Function:
         case IrPrimitiveKind::Zone:
             out = 8;
@@ -101,7 +101,7 @@ bool scalar_layout_align_bytes(const IrType& type, std::uint64_t& out) {
         case IrPrimitiveKind::I64:
         case IrPrimitiveKind::U64:
         case IrPrimitiveKind::F64:
-        case IrPrimitiveKind::String:
+        case IrPrimitiveKind::StaticStr:
         case IrPrimitiveKind::Function:
         case IrPrimitiveKind::Zone:
         case IrPrimitiveKind::Enum:

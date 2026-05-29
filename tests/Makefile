@@ -3971,9 +3971,9 @@ check-prelude: $(TARGET)
 	if $(TARGET) tests/cases/standard-library/errors/format/prelude-macro-format-qualified-no-default-zone.ari -o $(BUILD_DIR)/prelude/prelude-macro-format-qualified-no-default-zone.elf >$(BUILD_DIR)/prelude/prelude-macro-format-qualified-no-default-zone.err 2>&1; then exit 1; fi
 	grep -q "prelude macro 'format!' has no implicit allocation source; use format_in!(ref mut zone, ...) or call it inside a region or zone block" $(BUILD_DIR)/prelude/prelude-macro-format-qualified-no-default-zone.err
 	if $(TARGET) tests/cases/standard-library/errors/format/prelude-format-in-f128.ari -o $(BUILD_DIR)/prelude/prelude-format-in-f128.elf >$(BUILD_DIR)/prelude/prelude-format-in-f128.err 2>&1; then exit 1; fi
-	grep -q "format_in! currently supports string, char, integer, bool, f32, f64, and Display values, got f128" $(BUILD_DIR)/prelude/prelude-format-in-f128.err
+	grep -q "format_in! currently supports string literals, ptr c_char, String, char, integer, bool, f32, f64, and Display values, got f128" $(BUILD_DIR)/prelude/prelude-format-in-f128.err
 	if $(TARGET) tests/cases/standard-library/errors/format/prelude-format-in-no-display.ari -o $(BUILD_DIR)/prelude/prelude-format-in-no-display.elf >$(BUILD_DIR)/prelude/prelude-format-in-no-display.err 2>&1; then exit 1; fi
-	grep -q "format_in! currently supports string, char, integer, bool, f32, f64, and Display values, got Point" $(BUILD_DIR)/prelude/prelude-format-in-no-display.err
+	grep -q "format_in! currently supports string literals, ptr c_char, String, char, integer, bool, f32, f64, and Display values, got Point" $(BUILD_DIR)/prelude/prelude-format-in-no-display.err
 	if $(TARGET) tests/cases/standard-library/errors/prelude/prelude-macro-nonprelude-qualified.ari -o $(BUILD_DIR)/prelude/prelude-macro-nonprelude-qualified.elf >$(BUILD_DIR)/prelude/prelude-macro-nonprelude-qualified.err 2>&1; then exit 1; fi
 	grep -q "unknown macro 'other::format!'" $(BUILD_DIR)/prelude/prelude-macro-nonprelude-qualified.err
 	if $(TARGET) tests/cases/standard-library/errors/prelude/prelude-macro-nonprelude-matches.ari -o $(BUILD_DIR)/prelude/prelude-macro-nonprelude-matches.elf >$(BUILD_DIR)/prelude/prelude-macro-nonprelude-matches.err 2>&1; then exit 1; fi
@@ -6615,6 +6615,8 @@ check-variables: $(TARGET)
 	grep -q "local name 'value' shadows or redeclares an existing local" $(BUILD_DIR)/variables/variables-local-shadowing-block.err
 	if $(TARGET) tests/cases/variables/errors/variables-assign-type-mismatch.ari -o $(BUILD_DIR)/variables/variables-assign-type-mismatch.elf >$(BUILD_DIR)/variables/variables-assign-type-mismatch.err 2>&1; then exit 1; fi
 	grep -q "type mismatch: expected i32, got bool" $(BUILD_DIR)/variables/variables-assign-type-mismatch.err
+	if $(TARGET) tests/cases/variables/errors/variables-builtin-string-removed.ari -o $(BUILD_DIR)/variables/variables-builtin-string-removed.elf >$(BUILD_DIR)/variables/variables-builtin-string-removed.err 2>&1; then exit 1; fi
+	grep -q "builtin string type was removed; use String for owned text" $(BUILD_DIR)/variables/variables-builtin-string-removed.err
 	if $(TARGET) tests/cases/borrowing/errors/aggregate-borrow-source-assign.ari -o $(BUILD_DIR)/variables/aggregate-borrow-source-assign.elf >$(BUILD_DIR)/variables/aggregate-borrow-source-assign.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to borrowed binding 'number'" $(BUILD_DIR)/variables/aggregate-borrow-source-assign.err
 	if $(TARGET) tests/cases/borrowing/errors/aggregate-borrow-reassigned-source.ari -o $(BUILD_DIR)/variables/aggregate-borrow-reassigned-source.elf >$(BUILD_DIR)/variables/aggregate-borrow-reassigned-source.err 2>&1; then exit 1; fi
@@ -7252,7 +7254,7 @@ check-errors: $(TARGET) check-function-errors
 	if $(TARGET) tests/cases/control-flow/errors/loop-continue-live-owner.ari -o $(BUILD_DIR)/errors/loop-continue-live-owner.elf >$(BUILD_DIR)/errors/loop-continue-live-owner.err 2>&1; then exit 1; fi
 	grep -q "owning binding 'token' must be moved or dropped before continue" $(BUILD_DIR)/errors/loop-continue-live-owner.err
 	if $(TARGET) tests/cases/control-flow/errors/while-non-bool.ari -o $(BUILD_DIR)/errors/while-non-bool.elf >$(BUILD_DIR)/errors/while-non-bool.err 2>&1; then exit 1; fi
-	grep -q "condition must be bool or integer-convertible, got string" $(BUILD_DIR)/errors/while-non-bool.err
+	grep -q "condition must be bool or integer-convertible, got static string literal" $(BUILD_DIR)/errors/while-non-bool.err
 	if $(TARGET) tests/cases/control-flow/errors/break-outside-loop.ari -o $(BUILD_DIR)/errors/break-outside-loop.elf >$(BUILD_DIR)/errors/break-outside-loop.err 2>&1; then exit 1; fi
 	grep -q "break used outside a loop" $(BUILD_DIR)/errors/break-outside-loop.err
 	if $(TARGET) tests/cases/control-flow/errors/continue-outside-loop.ari -o $(BUILD_DIR)/errors/continue-outside-loop.elf >$(BUILD_DIR)/errors/continue-outside-loop.err 2>&1; then exit 1; fi
@@ -7456,7 +7458,7 @@ check-errors: $(TARGET) check-function-errors
 	if $(TARGET) tests/cases/match/errors/match-wrong-enum-case.ari -o $(BUILD_DIR)/errors/match-wrong-enum-case.elf >$(BUILD_DIR)/errors/match-wrong-enum-case.err 2>&1; then exit 1; fi
 	grep -q "enum case 'B' does not belong to Left" $(BUILD_DIR)/errors/match-wrong-enum-case.err
 	if $(TARGET) tests/cases/match/errors/match-non-enum.ari -o $(BUILD_DIR)/errors/match-non-enum.elf >$(BUILD_DIR)/errors/match-non-enum.err 2>&1; then exit 1; fi
-	grep -q "match value must be an enum, integer, bool, tuple, array, or struct, got string" $(BUILD_DIR)/errors/match-non-enum.err
+	grep -q "match value must be an enum, integer, bool, tuple, array, or struct, got static string literal" $(BUILD_DIR)/errors/match-non-enum.err
 	if $(TARGET) tests/cases/match/errors/match-branch-state-mismatch.ari -o $(BUILD_DIR)/errors/match-branch-state-mismatch.elf >$(BUILD_DIR)/errors/match-branch-state-mismatch.err 2>&1; then exit 1; fi
 	grep -q "has incompatible ownership states after match arms" $(BUILD_DIR)/errors/match-branch-state-mismatch.err
 	if $(TARGET) tests/cases/modules/errors/private-module-function.ari -o $(BUILD_DIR)/errors/private-module-function.elf >$(BUILD_DIR)/errors/private-module-function.err 2>&1; then exit 1; fi

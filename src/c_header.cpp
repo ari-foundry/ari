@@ -300,8 +300,8 @@ std::string c_type_name(const IrType& type,
         return c_pointer_type_name(c_scalar_type_name(pointee), const_pointee);
     }
 
-    if (type.primitive == IrPrimitiveKind::String) {
-        throw CompileError("C header emission does not support Ari string values; use ptr c_char");
+    if (type.primitive == IrPrimitiveKind::StaticStr) {
+        throw CompileError("C header emission does not support static string literal values; use ptr c_char");
     }
     if (type.primitive == IrPrimitiveKind::Enum) {
         const CEnumInfo* enum_info = c_enum_info_for_type(type, c_enum_names);

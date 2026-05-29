@@ -192,19 +192,19 @@ extern "ari" fn nodelay_raw(raw: i64) -> i64 = "ari_builtin_net_nodelay";
 extern "ari" fn set_nodelay_raw(raw: i64, enabled: bool) -> bool =
   "ari_builtin_net_set_nodelay";
 extern "ari" fn shutdown_socket_raw(raw: i64, mode: i64) -> bool = "ari_builtin_net_shutdown";
-extern "ari" fn unix_listen_host_raw(path: string) -> i64 = "ari_builtin_net_unix_listen";
+extern "ari" fn unix_listen_host_raw(path: ptr c_char) -> i64 = "ari_builtin_net_unix_listen";
 extern "ari" fn unix_listen_bytes_host_raw(path: ptr u8, len: i64) -> i64 = "ari_builtin_net_unix_listen_bytes";
-extern "ari" fn unix_connect_host_raw(path: string) -> i64 = "ari_builtin_net_unix_connect";
+extern "ari" fn unix_connect_host_raw(path: ptr c_char) -> i64 = "ari_builtin_net_unix_connect";
 extern "ari" fn unix_connect_bytes_host_raw(path: ptr u8, len: i64) -> i64 = "ari_builtin_net_unix_connect_bytes";
 extern "ari" fn unix_datagram_unbound_host_raw() -> i64 = "ari_builtin_net_unix_datagram_unbound";
-extern "ari" fn unix_datagram_bind_host_raw(path: string) -> i64 = "ari_builtin_net_unix_datagram_bind";
+extern "ari" fn unix_datagram_bind_host_raw(path: ptr c_char) -> i64 = "ari_builtin_net_unix_datagram_bind";
 extern "ari" fn unix_datagram_bind_bytes_host_raw(path: ptr u8, len: i64) -> i64 =
   "ari_builtin_net_unix_datagram_bind_bytes";
-extern "ari" fn unix_datagram_connect_host_raw(raw: i64, path: string) -> bool =
+extern "ari" fn unix_datagram_connect_host_raw(raw: i64, path: ptr c_char) -> bool =
   "ari_builtin_net_unix_datagram_connect";
 extern "ari" fn unix_datagram_connect_bytes_host_raw(raw: i64, path: ptr u8, len: i64) -> bool =
   "ari_builtin_net_unix_datagram_connect_bytes";
-extern "ari" fn unix_datagram_send_to_host_raw(raw: i64, values: ptr u8, len: i64, path: string) -> i64 =
+extern "ari" fn unix_datagram_send_to_host_raw(raw: i64, values: ptr u8, len: i64, path: ptr c_char) -> i64 =
   "ari_builtin_net_unix_datagram_send_to";
 extern "ari" fn unix_datagram_send_to_bytes_host_raw(
   raw: i64,
@@ -216,16 +216,16 @@ extern "ari" fn unix_datagram_send_to_bytes_host_raw(
 extern "ari" fn unix_peer_pid_raw(raw: i64) -> i64 = "ari_builtin_net_unix_peer_pid";
 extern "ari" fn unix_peer_uid_raw(raw: i64) -> i64 = "ari_builtin_net_unix_peer_uid";
 extern "ari" fn unix_peer_gid_raw(raw: i64) -> i64 = "ari_builtin_net_unix_peer_gid";
-extern "ari" fn lookup_v4_host_raw(host: string, port: i64) -> i64 = "ari_builtin_net_lookup_v4";
+extern "ari" fn lookup_v4_host_raw(host: ptr c_char, port: i64) -> i64 = "ari_builtin_net_lookup_v4";
 extern "ari" fn lookup_v4_bytes_host_raw(host: ptr u8, len: i64, port: i64) -> i64 =
   "ari_builtin_net_lookup_v4_bytes";
-extern "ari" fn lookup_v4_endpoint_host_raw(endpoint: string) -> i64 = "ari_builtin_net_lookup_v4_endpoint";
+extern "ari" fn lookup_v4_endpoint_host_raw(endpoint: ptr c_char) -> i64 = "ari_builtin_net_lookup_v4_endpoint";
 extern "ari" fn lookup_v4_endpoint_bytes_host_raw(endpoint: ptr u8, len: i64) -> i64 =
   "ari_builtin_net_lookup_v4_endpoint_bytes";
-extern "ari" fn lookup_v6_host_raw(host: string, port: i64, output: ptr u16) -> i64 = "ari_builtin_net_lookup_v6";
+extern "ari" fn lookup_v6_host_raw(host: ptr c_char, port: i64, output: ptr u16) -> i64 = "ari_builtin_net_lookup_v6";
 extern "ari" fn lookup_v6_bytes_host_raw(host: ptr u8, len: i64, port: i64, output: ptr u16) -> i64 =
   "ari_builtin_net_lookup_v6_bytes";
-extern "ari" fn lookup_v6_endpoint_host_raw(endpoint: string, output: ptr u16) -> i64 =
+extern "ari" fn lookup_v6_endpoint_host_raw(endpoint: ptr c_char, output: ptr u16) -> i64 =
   "ari_builtin_net_lookup_v6_endpoint";
 extern "ari" fn lookup_v6_endpoint_bytes_host_raw(endpoint: ptr u8, len: i64, output: ptr u16) -> i64 =
   "ari_builtin_net_lookup_v6_endpoint_bytes";

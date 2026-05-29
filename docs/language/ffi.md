@@ -5,7 +5,7 @@
 Declare external C functions with `extern "C"`:
 
 ```ari
-extern "C" fn puts(text: string) -> i32;
+extern "C" fn puts(text: ptr c_char) -> i32;
 
 fn main() -> i64 {
   puts("hello from libc")
@@ -20,7 +20,7 @@ Use an explicit link name when the Ari name should differ from the external
 symbol:
 
 ```ari
-extern "C" fn c_puts(text: string) -> i32 = "puts";
+extern "C" fn c_puts(text: ptr c_char) -> i32 = "puts";
 ```
 
 Explicit link names must be ordinary external symbol identifiers. Ari rejects
@@ -30,7 +30,7 @@ through to the linker.
 `extern fn` without an ABI string is also treated as C:
 
 ```ari
-extern fn puts(text: string) -> i32;
+extern fn puts(text: ptr c_char) -> i32;
 ```
 
 Other foreign ABI strings, including `extern "C++"`, are rejected. C++ interop
@@ -93,7 +93,7 @@ C variadic functions use a final `...` marker after at least one fixed
 parameter:
 
 ```ari
-extern "C" fn printf(format: string, ...) -> c_int;
+extern "C" fn printf(format: ptr c_char, ...) -> c_int;
 
 fn main() -> i64 {
   printf("answer = %lld\n", 42i64);
@@ -102,7 +102,7 @@ fn main() -> i64 {
 ```
 
 The fixed parameters are checked normally. Extra variadic arguments may be
-integer, float, bool, string, compact enum, pointer, or borrow-shaped values.
+integer, float, bool, string-literal-to-`ptr c_char`, compact enum, pointer, or borrow-shaped values.
 Ari applies C's default argument promotions at variadic call sites: `bool`,
 `i8`, `u8`, `i16`, and `u16` become `i32`, and `f32` becomes `f64`. Wider
 integer and float values keep their declared width, so pass `42i64` for `%lld`.
@@ -200,7 +200,7 @@ the final path segment is used as the C symbol:
 
 ```ari
 mod libc {
-  pub extern "C" fn puts(text: string) -> i32;
+  pub extern "C" fn puts(text: ptr c_char) -> i32;
 }
 
 fn main() -> i64 {
@@ -305,17 +305,17 @@ ptrdiff_t         -> i64
 c_float/c_double  -> float/double
 c_void            -> void
 bool              -> i1
-string            -> ptr to NUL-terminated bytes
+ptr c_char        -> ptr to NUL-terminated bytes
 ref T             -> ptr (C headers spell this as const T*)
 ref mut T         -> ptr
 ptr T             -> ptr
 compact enum      -> i64 tagged union word
 ```
 
-`string` values can be passed to `ptr c_char`, `ptr c_uchar`, or `ptr c_void`
-parameters, and can be explicitly cast to raw pointer types when low-level
-byte access is needed. Use `ptr c_void` for C `void*`; a by-value `c_void`
-parameter is rejected.
+String literals can be passed to `ptr c_char`, `ptr c_uchar`, or `ptr c_void`
+parameters, and can be explicitly cast to raw pointer types when low-level byte
+access is needed. Use `ptr c_char` for C text pointers and `ptr c_void` for C
+`void*`; a by-value `c_void` parameter is rejected.
 
 The standard `std::c` module gives these raw pieces names that read naturally
 at the boundary. Use `c::from("name")` for borrowed literal-backed
@@ -494,8 +494,9 @@ storage values use generated `AriVec_*` wrappers with the current `len` plus
 generated-wrapper `payloadN` storage slots.
 Larger records, larger arrays/vectors/tuples/enums, and non-Unix targets should
 expose an explicit pointer ABI. Header generation still rejects Ari-only values
-such as `string`, ownership-qualified values, and non-`repr(C)` structs that do
-not have an explicit generated wrapper surface; expose `ptr c_char`,
+such as static string literal values, ownership-qualified values, and
+non-`repr(C)` structs that do not have an explicit generated wrapper surface;
+expose `ptr c_char`,
 `ptr c_void`, or another scalar/raw pointer C ABI type until those layouts are
 defined. These C-header ABI rejections are also available through
 `--emit-diagnostics` with source labels, without running LLVM or linking.

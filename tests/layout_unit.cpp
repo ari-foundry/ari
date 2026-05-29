@@ -124,7 +124,8 @@ void test_primitive_layout() {
     expect_size_align(ty(ari::IrPrimitiveKind::U64, "u64"), 8, 8, "u64");
     expect_size_align(ty(ari::IrPrimitiveKind::F64, "f64"), 8, 8, "f64");
     expect_size_align(ty(ari::IrPrimitiveKind::F128, "f128"), 16, 16, "f128");
-    expect_size_align(ty(ari::IrPrimitiveKind::String, "String"), 8, 8, "host string handle");
+    expect_size_align(ty(ari::IrPrimitiveKind::StaticStr, "static string literal"),
+                      8, 8, "static string literal handle");
     expect_size_align(ty(ari::IrPrimitiveKind::Function, "fn"), 8, 8, "function pointer");
     expect_size_align(ty(ari::IrPrimitiveKind::Enum, "Kind"), 8, 8, "fieldless enum tag");
     expect_size_align(qualified(ari::TypeQualifier::Ptr, ari::IrPrimitiveKind::I64, "i64"),

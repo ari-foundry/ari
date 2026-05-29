@@ -92,7 +92,8 @@ ParsedPlaceholder parse_format_placeholder(SourceLocation loc, const std::string
 } // namespace
 
 std::optional<FormatInAppendTarget> builtin_format_in_append_target_from_type(const IrType& type) {
-    if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::String) {
+    if ((type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::StaticStr) ||
+        is_c_text_pointer_type(type)) {
         return FormatInAppendTarget{FormatInAppendKind::String, {}};
     }
     if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Bool) {
@@ -143,6 +144,7 @@ const char* format_in_builtin_append_method_name(const FormatInAppendTarget& tar
     switch (target.kind) {
         case FormatInAppendKind::String: return "append_raw_in";
         case FormatInAppendKind::DebugString: return "append_debug_bytes_in";
+        case FormatInAppendKind::DebugCString: return "append_debug_raw_in";
         case FormatInAppendKind::Char: return "append_byte";
         case FormatInAppendKind::I64: return "append_i64_in";
         case FormatInAppendKind::U64: return "append_u64_in";
@@ -156,7 +158,7 @@ const char* format_in_builtin_append_method_name(const FormatInAppendTarget& tar
 }
 
 std::string unsupported_format_in_value_message(const IrType& type) {
-    return "format_in! currently supports string, char, integer, bool, f32, f64, and Display values, got " +
+    return "format_in! currently supports string literals, ptr c_char, String, char, integer, bool, f32, f64, and Display values, got " +
            type_name(type);
 }
 

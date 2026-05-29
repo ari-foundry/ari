@@ -23,6 +23,7 @@ bool is_value_trait_object_type(const IrType& type);
 bool is_void_value_type(const IrType& type);
 
 bool is_raw_pointer_type(const IrType& type);
+bool is_c_text_pointer_type(const IrType& type);
 bool is_raw_pointer_cast(const IrType& from, const IrType& to);
 IrType raw_pointer_pointee_type(IrType type);
 bool is_raw_memory_value_type(const IrType& type);

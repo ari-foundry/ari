@@ -1,5 +1,5 @@
 extern "C" fn ari_test_add_i64(left: i64, right: i64) -> i64;
-extern "C" fn ari_test_strlen(text: string) -> i64;
+extern "C" fn ari_test_strlen(text: ptr c_char) -> i64;
 
 fn main() -> i64 {
   return ari_test_add_i64(20, 11) + ari_test_strlen("abcd");

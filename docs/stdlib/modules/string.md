@@ -310,6 +310,7 @@ Appending formatted primitive values also grows through the explicit zone:
 ```ari
 text.append_string_in(ref mut zone, "text")
 text.append_raw_in(ref mut zone, raw_text)
+text.append_debug_raw_in(ref mut zone, raw_text)
 text.append_i64_in(ref mut zone, value)
 text.append_u64_in(ref mut zone, value)
 text.append_bool_in(ref mut zone, value)
@@ -321,9 +322,9 @@ text.push_codepoint_in(ref mut zone, scalar)
 ```
 
 These helpers are the current source-side building blocks used by owned
-formatting paths. `append_string_in` takes borrowed bytes; `append_raw_in` is a
-raw compatibility bridge reserved for compiler-generated `format_in!` primitive
-string captures. `append_value_in[T: std::fmt::Display]` calls
+formatting paths. `append_string_in` takes borrowed bytes; `append_raw_in` and
+`append_debug_raw_in` are raw compatibility bridges reserved for
+compiler-generated `format_in!` `ptr c_char` captures. `append_value_in[T: std::fmt::Display]` calls
 `value.format_in(ref mut zone)` and appends the rendered bytes, so standard
 display values and user-defined types can participate without adding names such
 as `append_point_in`. `append_debug_in[T: std::fmt::Debug]` mirrors that shape
@@ -383,7 +384,7 @@ text.contains_text("text")
 `index_of`, `contains`, and `count` operate on one byte. `find` searches for a
 borrowed byte slice and returns the first byte offset or `-1`; an empty search
 slice matches at `0`. `contains_slice` is the boolean wrapper. The `_text`
-forms accept Ari `string` values directly, so callers do not have to spell
+forms accept string literals directly, so callers do not have to spell
 `std::string::bytes("literal")` at every search site.
 
 Slice comparison and view helpers operate on borrowed `Slice[u8]` values:
@@ -407,7 +408,7 @@ text == other_owned_string
 `slice` and `split_at` return borrowed byte views. `chunks`, `windows`, and
 delimiter `split` are lazy iterators over borrowed byte views and do not
 allocate. They compare exact byte values and do not perform case folding or
-decoding. The `_text` variants are exact byte comparisons against Ari `string`
+decoding. The `_text` variants are exact byte comparisons against string literal
 values without the trailing NUL. `eq` and the `==` / `!=` operators compare
 owned `String` values by byte contents, which makes `String` usable as a
 `HashMap` key alongside `std::hash::Hash[String]`.

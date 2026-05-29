@@ -74,7 +74,7 @@ bool is_copy_type(const IrType& type) {
     return is_integer_primitive(type.primitive) ||
            is_float_primitive(type.primitive) ||
            type.primitive == IrPrimitiveKind::Bool ||
-           type.primitive == IrPrimitiveKind::String ||
+           type.primitive == IrPrimitiveKind::StaticStr ||
            type.primitive == IrPrimitiveKind::Function;
 }
 
@@ -142,6 +142,11 @@ bool is_raw_pointer_type(const IrType& type) {
     return type.qualifier == TypeQualifier::Ptr;
 }
 
+bool is_c_text_pointer_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Ptr &&
+           type.primitive == IrPrimitiveKind::I8;
+}
+
 bool is_raw_pointer_cast(const IrType& from, const IrType& to) {
     return (is_raw_pointer_type(from) && is_raw_pointer_type(to)) ||
            (is_raw_pointer_type(from) && is_value_integer_type(to)) ||
@@ -153,7 +158,7 @@ bool is_raw_pointer_cast(const IrType& from, const IrType& to) {
             from.primitive == IrPrimitiveKind::Function &&
             is_raw_pointer_type(to)) ||
            (from.qualifier == TypeQualifier::Value &&
-            from.primitive == IrPrimitiveKind::String &&
+            from.primitive == IrPrimitiveKind::StaticStr &&
             is_raw_pointer_type(to)) ||
            (is_borrow_type(from) && is_raw_pointer_type(to));
 }
@@ -168,7 +173,7 @@ bool is_raw_memory_value_type(const IrType& type) {
     if (is_integer_primitive(type.primitive) ||
         is_float_primitive(type.primitive) ||
         type.primitive == IrPrimitiveKind::Bool ||
-        type.primitive == IrPrimitiveKind::String ||
+        type.primitive == IrPrimitiveKind::StaticStr ||
         type.primitive == IrPrimitiveKind::Function) {
         return true;
     }
@@ -215,7 +220,7 @@ bool is_owned_executable_primitive(IrPrimitiveKind primitive) {
     return is_integer_primitive(primitive) ||
            is_float_primitive(primitive) ||
            primitive == IrPrimitiveKind::Bool ||
-           primitive == IrPrimitiveKind::String ||
+           primitive == IrPrimitiveKind::StaticStr ||
            primitive == IrPrimitiveKind::Zone ||
            primitive == IrPrimitiveKind::Struct ||
            primitive == IrPrimitiveKind::TraitObject;
@@ -261,7 +266,7 @@ bool is_aggregate_enum_payload_type(const IrType& type) {
     if (type.primitive == IrPrimitiveKind::Bool) return true;
     if (is_integer_primitive(type.primitive)) return true;
     if (is_float_primitive(type.primitive)) return true;
-    if (type.primitive == IrPrimitiveKind::String ||
+    if (type.primitive == IrPrimitiveKind::StaticStr ||
         type.primitive == IrPrimitiveKind::Function) {
         return true;
     }
@@ -654,7 +659,7 @@ void require_assignable(SourceLocation loc, const IrType& expected, const IrType
     }
     if (expected.qualifier == TypeQualifier::Ptr &&
         actual.qualifier == TypeQualifier::Value &&
-        actual.primitive == IrPrimitiveKind::String &&
+        actual.primitive == IrPrimitiveKind::StaticStr &&
         (expected.primitive == IrPrimitiveKind::I8 ||
          expected.primitive == IrPrimitiveKind::U8 ||
          expected.primitive == IrPrimitiveKind::Void)) {

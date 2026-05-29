@@ -12,7 +12,7 @@ Environment variable lookup treats absence as ordinary optional state:
 the most convenient shape for CLI configuration such as `ARI_COMPILER`. Public
 environment names and values are borrowed byte text (`Slice[u8]`) so literals,
 owned `String` locals, and explicit `ref String` borrows can all be used at the
-call site; raw builtin `string` pointers stay inside the stdlib/runtime
+call site; raw `ptr c_char` runtime hooks stay inside the stdlib/runtime
 boundary. Use `get(ref mut zone, name)` and `get_os(name)` when the
 caller needs a `Result` and wants missing variables reported as
 `Error(NotFound)`. Mutating helpers still use the fallible shape: `set_var` and
@@ -198,7 +198,7 @@ Environment variable names and values are `Slice[u8]` inputs. String literals
 can be passed directly, immutable literal bindings such as `let name = "HOME"`
 keep enough length information for these calls, and owned `String` locals are
 borrowed as byte slices automatically. If code already has `ref text`, that
-borrow is accepted as the same read-only byte view. That keeps raw `string` out
+borrow is accepted as the same read-only byte view. That keeps raw pointer text out
 of the public environment API while still making CLI code terse.
 
 `var_os(name)` applies the optional lookup policy to an

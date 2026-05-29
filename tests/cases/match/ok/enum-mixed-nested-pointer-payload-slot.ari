@@ -1,4 +1,4 @@
-extern "C" fn strlen(text: string) -> u64;
+extern "C" fn strlen(text: ptr c_char) -> u64;
 
 enum Inner {
   Empty,
@@ -8,7 +8,7 @@ enum Inner {
 
 enum Mixed {
   Number(i64),
-  Text(string),
+  Text(ptr c_char),
   Raw(ptr i64),
   Call(fn(i64) -> i64),
   Wrapped(Inner),

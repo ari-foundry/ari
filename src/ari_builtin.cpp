@@ -348,7 +348,7 @@ const std::unordered_map<std::string, AriBuiltinSignatureExpectation>& ari_built
         const AriBuiltinTypeExpectation u8 = builtin_type("u8");
         const AriBuiltinTypeExpectation boolean = builtin_type("bool");
         const AriBuiltinTypeExpectation void_type = builtin_type("void");
-        const AriBuiltinTypeExpectation source_string = builtin_type("string");
+        const AriBuiltinTypeExpectation source_string = builtin_type("ptr c_char", {"ptr i8"});
         const AriBuiltinTypeExpectation thread_entry = builtin_type("fn() -> i64");
         const AriBuiltinTypeExpectation thread_raw_entry = builtin_type("fn(ptr u8) -> i64");
         const AriBuiltinTypeExpectation thread_handle = builtin_type("std::thread::Thread");

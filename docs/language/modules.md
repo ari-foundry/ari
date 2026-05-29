@@ -172,7 +172,7 @@ to a public inline sibling through `super::Sibling::item`.
 Example header module:
 
 ```ari
-pub extern "C" fn puts(text: string) -> i64 = "puts";
+pub extern "C" fn puts(text: ptr c_char) -> i64 = "puts";
 ```
 
 Then:

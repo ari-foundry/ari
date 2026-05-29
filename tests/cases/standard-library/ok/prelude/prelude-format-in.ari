@@ -6,7 +6,7 @@ fn ready(value: i64) -> bool {
   return value == 9;
 }
 
-fn label() -> string {
+fn label() -> ptr c_char {
   return "done";
 }
 
