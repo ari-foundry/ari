@@ -1,9 +1,9 @@
 # std::vec
 
 `std::vec` contains Ari's source growable sequence handle. It exists to give
-programs an explicit-zone collection that can grow, copy, expose borrowed
+programs an explicit-lifetime collection that can grow, copy, expose borrowed
 views, and participate in Ari's iterator surface while keeping the allocation
-zone attached to the handle.
+source attached to the handle.
 
 There are two vector-shaped surfaces today:
 
@@ -12,11 +12,27 @@ There are two vector-shaped surfaces today:
   their owning `Zone` pointer internally.
 
 Use the source handle when a collection must grow or outlive local literal
-storage under an explicit allocation capability.
+storage under an explicit allocation capability. New code should choose that
+lifetime with `std::region::Region` or pass a recovered `Allocator`; older
+`ref mut Zone` entry points remain for compatibility.
 
 ## Constructors And Copies
 
-Constructors allocate in an explicit zone:
+Preferred constructors allocate in an explicit region:
+
+```ari
+std::vec::new_with_region<T>(ref mut region, capacity)
+std::vec::from_slice_with_region<T>(ref mut region, values)
+std::vec::collect_with_region<T, I>(ref mut region, iter)
+vec.copy_with_region(ref mut region)
+```
+
+`new_with_region` creates an empty vector in the selected region.
+`from_slice_with_region` copies a borrowed slice into that region.
+`collect_with_region` consumes an iterator into a new region-backed vector.
+The method form copies an existing vector into another chosen region.
+
+Compatibility constructors allocate in an explicit zone:
 
 ```ari
 std::vec::new<T>(ref mut zone, capacity)
@@ -30,15 +46,18 @@ the associated-constructor spelling for the same operation, and `Vec!` is the
 macro shorthand. `from_slice_in` copies a borrowed `Slice[T]` into a new
 target-zone vector.
 
-For new region-first code, prefer the `Region` facade or allocator variants:
+For new region-first code, the `Region` facade is the shortest spelling and
+the allocator variants are the lower-level growth-capability spelling:
 
 ```ari
 var region = region::create(2048);
 var values = region.vec<i64>(4);
 values.push(10);
 
+var copied_by_region = std::vec::from_slice_with_region<i64>(ref mut region, values.as_slice());
+
 let allocator = region.allocator();
-var copied = std::vec::from_slice_with_allocator<i64>(ref allocator, values.as_slice());
+var copied_by_allocator = std::vec::from_slice_with_allocator<i64>(ref allocator, values.as_slice());
 region::destroy(region);
 ```
 

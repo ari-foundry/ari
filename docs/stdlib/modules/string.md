@@ -2,8 +2,9 @@
 
 `std::string` contains Ari's current owned byte-string handle. It exists so
 programs can copy text literals, formatted output, raw boundary text, or byte
-slices into an explicit allocation `Zone` without introducing a hidden global
-heap.
+slices into an explicit allocation lifetime without introducing a hidden global
+heap. New code should name that lifetime as `std::region::Region`; older
+`ref mut Zone` functions remain as compatibility entry points.
 
 Today's `String` is intentionally a byte string. It is useful for compiler
 tests, CLI-style output, simple parser buffers, and ASCII-oriented text work.
@@ -14,13 +15,16 @@ For public stdlib APIs, `String` is the normal owned text shape. The raw
 text-boundary type is reserved for borrowed literals, static compiler/runtime
 strings, C/OS boundaries, and compatibility helpers that say so explicitly,
 such as `_text`, `_raw`, or `_unchecked`. Because Ari does not have a hidden
-global heap, helpers that return owned text take `ref mut Zone` and copy into
-that zone. New region-oriented code can also use `Region` convenience methods
-or `Allocator` helpers, which keep the zone runtime behind the memory model:
+global heap, helpers that return owned text take an allocation capability and
+copy into that lifetime. Prefer `Region` methods or `*_with_region` module
+helpers in new code; use `Allocator` helpers inside lower-level containers and
+formatters. `ref mut Zone` constructors are kept so older source continues to
+compile while the library migrates:
 
 ```ari
 var region = region::create(1024);
 let text = region.string("hello");
+let copy = std::string::from_slice_with_region(ref mut region, "copy");
 let allocator = region.allocator();
 let copied = std::string::from_slice_with_allocator(ref allocator, "world");
 region::destroy(region);
@@ -29,7 +33,7 @@ region::destroy(region);
 ## When To Use It
 
 Use `std::string::String` when bytes must outlive a borrowed literal or input
-buffer and you can name the `Zone` that owns the storage. The same `String`
+buffer and you can name the `Region` that owns the storage. The same `String`
 handle is also the standard appendable buffer for diagnostics, command output,
 and small manifest/parser strings. Use `Slice[u8]` when you only need a
 borrowed view. Use `std::ascii` or the `String` ASCII helpers for byte
@@ -123,7 +127,22 @@ work.
 
 ## Constructors And Copies
 
-Constructors allocate in an explicit zone:
+Preferred constructors allocate in an explicit region:
+
+```ari
+std::string::new_with_region(ref mut region, capacity)
+std::string::empty_with_region(ref mut region)
+std::string::from_slice_with_region(ref mut region, bytes)
+std::string::copy_with_region(ref mut region, bytes)
+text.copy_with_region(ref mut region)
+```
+
+`new_with_region` creates an empty buffer in the selected region, while
+`empty_with_region` is the zero-capacity spelling. `from_slice_with_region`
+and `copy_with_region` copy borrowed bytes into that region. The method form
+copies an existing owned `String` into another chosen region.
+
+Compatibility constructors allocate in an explicit zone:
 
 ```ari
 std::string::new(ref mut zone, capacity)
@@ -140,8 +159,8 @@ std::string::replace(ref mut zone, bytes, needle, replacement)
 `from` is the natural constructor for any borrowed `Slice[u8]`, including
 string literals at call sites. `copy` is the same byte-copy policy with a name
 that reads better in some parser and container code; both copy into the target
-zone. `from_slice_in` remains the explicit low-level spelling used by library
-internals.
+zone. `from_slice_in` remains the explicit compatibility spelling used by
+library internals.
 `join_in` joins a `Slice[Slice[u8]]` with a byte separator and returns an owned
 `String` in the provided zone.
 `replace` copies `bytes` into the provided zone while replacing non-overlapping

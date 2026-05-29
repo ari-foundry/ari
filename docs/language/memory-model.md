@@ -94,7 +94,10 @@ User-facing allocation APIs should follow these rules:
 - convenience constructors may live on `Region` when they are the clearest
   user-facing path to a standard handle, including copy constructors that move
   data into an explicitly chosen region
-- `_in` means "allocate into this explicit region"
+- module-level `*_with_region` functions are the migration spelling for public
+  APIs whose older names still take `ref mut Zone`
+- final-form `_in` means "allocate into this explicit region"; during the
+  migration, old `_in(ref mut Zone, ...)` APIs remain compatibility shims
 - `_to` means "copy into this destination"
 - `Zone`, `ZoneMetadata`, and allocation-header recovery stay in low-level
   modules and compatibility bridges

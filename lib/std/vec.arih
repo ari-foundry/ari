@@ -64,6 +64,14 @@ pub fn new_with_allocator[T](
   };
 }
 
+pub fn new_with_region[T](
+  region: ref mut std::region::Region,
+  capacity: i64
+) -> std::vec::Vec[T] {
+  let allocator = std::region::allocator(region);
+  return std::vec::new_with_allocator<T>(ref allocator, capacity);
+}
+
 pub fn from_slice_in[T](zone: ref mut Zone, values: std::Slice[T]) -> std::vec::Vec[T] {
   var output = std::vec::new<T>(zone, values.len);
   output.extend_from_slice(values);
@@ -79,9 +87,31 @@ pub fn from_slice_with_allocator[T](
   return output;
 }
 
+pub fn from_slice_with_region[T](
+  region: ref mut std::region::Region,
+  values: std::Slice[T]
+) -> std::vec::Vec[T] {
+  let allocator = std::region::allocator(region);
+  return std::vec::from_slice_with_allocator<T>(ref allocator, values);
+}
+
 pub fn collect[T, I: std::Iterator[T]](zone: ref mut Zone, iter: I) -> std::vec::Vec[T] {
   var cursor = iter;
   var output = std::vec::new<T>(zone, 4);
+  var item = cursor.next();
+  while item.is_some() {
+    output.push(item.unwrap());
+    item = cursor.next();
+  }
+  return output;
+}
+
+pub fn collect_with_region[T, I: std::Iterator[T]](
+  region: ref mut std::region::Region,
+  iter: I
+) -> std::vec::Vec[T] {
+  var cursor = iter;
+  var output = std::vec::new_with_region<T>(region, 4);
   var item = cursor.next();
   while item.is_some() {
     output.push(item.unwrap());
@@ -712,6 +742,10 @@ pub impl[T] std::vec::Vec[T] {
       index = index + 1;
     }
     return copied;
+  }
+
+  fn copy_with_region(self: ref Self, region: ref mut std::region::Region) -> std::vec::Vec[T] {
+    return std::vec::from_slice_with_region<T>(region, self.slice(0, self.raw.len));
   }
 
   fn as_ptr(self: ref Self) -> ptr T {

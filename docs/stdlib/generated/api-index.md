@@ -24,12 +24,12 @@ platform notes.
 
 ## Summary
 
-- API entries: `3723`
+- API entries: `3732`
 - Modules: `42`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
-| `alloc` | 1022 | usable |
+| `alloc` | 1031 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 939 | stable candidate |
 | `hosted` | 1559 | platform-backed |
@@ -38,8 +38,8 @@ platform notes.
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
-| `fn` | 1293 |
-| `method` | 1955 |
+| `fn` | 1300 |
+| `method` | 1957 |
 | `module` | 41 |
 | `struct` | 199 |
 | `trait` | 39 |
@@ -85,13 +85,13 @@ platform notes.
 | `std::rc` | `alloc` | 32 |
 | `std::region` | `alloc` | 46 |
 | `std::result` | `core` | 12 |
-| `std::string` | `alloc` | 177 |
+| `std::string` | `alloc` | 182 |
 | `std::sync` | `hosted` | 224 |
 | `std::target` | `platform` | 52 |
 | `std::test` | `hosted` | 32 |
 | `std::thread` | `hosted` | 126 |
 | `std::time` | `hosted` | 74 |
-| `std::vec` | `alloc` | 120 |
+| `std::vec` | `alloc` | 124 |
 | `std::zone` | `alloc` | 32 |
 
 ## `std`
@@ -3879,16 +3879,20 @@ Tier: `alloc`. Stability reading: usable.
 | `fn std::string::copy` | check-prelude std-string-natural-api natural borrowed byte copy constructor; docs/stdlib/modules/string.md |
 | `fn std::string::copy_to` | check-prelude std-string-from-copy borrowed source and target reset tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `fn std::string::copy_with_allocator` | std region capability allocator-backed string copy constructor; docs/stdlib/modules/string.md |
+| `fn std::string::copy_with_region` | std region capability region-backed string copy constructor; docs/stdlib/modules/string.md |
 | `fn std::string::empty` | check-prelude std-string-natural-api natural empty owned string constructor; docs/stdlib/modules/string.md |
+| `fn std::string::empty_with_region` | std region capability region-backed empty string constructor; docs/stdlib/modules/string.md |
 | `fn std::string::ends_with` | check-prelude std-string-module-views borrowed byte-slice suffix predicate; docs/stdlib/modules/string.md |
 | `fn std::string::find` | check-prelude std-string-module-views borrowed byte-slice search helper; docs/stdlib/modules/string.md |
 | `fn std::string::from` | check-prelude std-string-natural-api natural Ari string copy constructor; docs/stdlib/modules/string.md |
 | `fn std::string::from_slice_in` | std string from-slice target-zone copy tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `fn std::string::from_slice_with_allocator` | std region capability allocator-backed string copy constructor; docs/stdlib/modules/string.md |
+| `fn std::string::from_slice_with_region` | std region capability region-backed string copy constructor; docs/stdlib/modules/string.md |
 | `fn std::string::join_in` | check-prelude std-string-split-join allocator-backed byte-slice join helper; docs/stdlib/modules/string.md |
 | `fn std::string::lines` | check-prelude std-string-module-views borrowed newline split helper for parser-style code; docs/stdlib/modules/string.md |
 | `fn std::string::new` | std string handle tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `fn std::string::new_with_allocator` | std region capability allocator-backed string constructor; docs/stdlib/modules/string.md |
+| `fn std::string::new_with_region` | std region capability region-backed string constructor; docs/stdlib/modules/string.md |
 | `fn std::string::os_str` | check-prelude std-string-text-kinds typed borrowed OS-string byte view constructor; docs/stdlib/modules/string.md |
 | `fn std::string::os_string` | check-prelude std-string-text-kinds owned OS-string byte constructor; docs/stdlib/modules/string.md |
 | `fn std::string::os_string_from_slice` | check-prelude std-string-text-kinds owned OS-string text constructor; docs/stdlib/modules/string.md |
@@ -3959,6 +3963,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::string::String::contains_text_ignore_case` | check-prelude std-string-natural-api natural ASCII-insensitive text search predicate; docs/stdlib/modules/string.md |
 | `method std::string::String::copy_to` | check-prelude std-string-copy-to-method borrowed receiver and target reset tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `method std::string::String::copy_with_allocator` | std region capability allocator-backed String copy method; docs/stdlib/modules/string.md |
+| `method std::string::String::copy_with_region` | std region capability region-backed String copy method; docs/stdlib/modules/string.md |
 | `method std::string::String::count` | check-prelude std-string-search borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `method std::string::String::ends_with` | check-prelude std-string-prefix-suffix borrowed receiver Slice[u8] tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `method std::string::String::ends_with_ignore_case` | check-prelude std-string-ascii-case-helpers borrowed receiver ASCII-only comparison; docs/stdlib/api-reference.md String section |
@@ -4710,10 +4715,13 @@ Tier: `alloc`. Stability reading: usable.
 | --- | --- |
 | `fn std::vec::alloc_buffer[T]` | std vec allocation tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `fn std::vec::collect[T, I: std::Iterator[T]` | check-prelude std-iter-adapters zone-backed iterator collection; docs/stdlib/modules/iter.md |
+| `fn std::vec::collect_with_region[T, I: std::Iterator[T]` | std region capability region-backed iterator collection test; docs/stdlib/modules/vec.md |
 | `fn std::vec::from_slice_in[T]` | std vec from-slice target-zone copy tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `fn std::vec::from_slice_with_allocator[T]` | std region capability allocator-backed Vec copy constructor; docs/stdlib/modules/vec.md |
+| `fn std::vec::from_slice_with_region[T]` | std region capability region-backed Vec slice copy constructor; docs/stdlib/modules/vec.md |
 | `fn std::vec::new[T]` | std vec handle tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `fn std::vec::new_with_allocator[T]` | std region capability allocator-backed Vec constructor; docs/stdlib/modules/vec.md |
+| `fn std::vec::new_with_region[T]` | std region capability region-backed Vec constructor; docs/stdlib/modules/vec.md |
 | `fn std::vec::with_capacity[T]` | std RawVec tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `fn std::vec::with_capacity_with_allocator[T]` | std region capability allocator-backed RawVec constructor; docs/stdlib/modules/vec.md |
 
@@ -4736,6 +4744,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::vec::Vec[T]::copy_from` | check-prelude std-vec-sequence owned target prefix copy wrapper; docs/stdlib/modules/vec.md |
 | `method std::vec::Vec[T]::copy_to` | check-prelude std-vec-copy-to borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row |
 | `method std::vec::Vec[T]::copy_with_allocator` | std region capability allocator-backed Vec copy method; docs/stdlib/modules/vec.md |
+| `method std::vec::Vec[T]::copy_with_region` | std region capability region-backed Vec copy method; docs/stdlib/modules/vec.md |
 | `method std::vec::Vec[T]::copy_within` | check-prelude std-vec-range-mutation owned vector overlap-safe in-place range copy; docs/stdlib/modules/vec.md |
 | `method std::vec::Vec[T]::count` | check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row |
 | `method std::vec::Vec[T]::dedup` | check-prelude std-vec-sequence owned consecutive duplicate compaction and truncation; docs/stdlib/modules/vec.md |

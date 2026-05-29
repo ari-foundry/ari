@@ -44,6 +44,17 @@ fn main() -> i64 {
   let copied_text = region.string_copy(ref text);
   score = score + copied_text.len();
 
+  let module_text = std::string::from_slice_with_region(ref mut region, "api");
+  score = score + module_text.len();
+
+  let module_empty = std::string::empty_with_region(ref mut region);
+  if module_empty.is_empty() {
+    score = score + 1;
+  }
+
+  let module_copy = module_text.copy_with_region(ref mut region);
+  score = score + module_copy.len();
+
   var mutable_text = region.string("a");
   mutable_text.push('b');
   score = score + mutable_text.len();
@@ -66,6 +77,19 @@ fn main() -> i64 {
 
   let copied_vec = region.vec_copy<i64>(ref source);
   score = score + copied_vec.len();
+
+  let collected_vec = std::vec::collect_with_region<i64, std::vec::Iter[i64]>(ref mut region, source.iter());
+  score = score + collected_vec.len();
+
+  var module_numbers = std::vec::new_with_region<i64>(ref mut region, 1);
+  module_numbers.push(9);
+  score = score + module_numbers.first();
+
+  let module_numbers_copy = std::vec::from_slice_with_region<i64>(ref mut region, module_numbers.as_slice());
+  score = score + module_numbers_copy.first();
+
+  let method_numbers_copy = module_numbers.copy_with_region(ref mut region);
+  score = score + method_numbers_copy.len();
 
   let boxed = region.boxed<i64>(13);
   score = score + boxed.get();

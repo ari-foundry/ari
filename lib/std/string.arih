@@ -65,6 +65,14 @@ pub fn new_with_allocator(
   };
 }
 
+pub fn new_with_region(
+  region: ref mut std::region::Region,
+  capacity: i64
+) -> std::string::String {
+  let allocator = std::region::allocator(region);
+  return std::string::new_with_allocator(ref allocator, capacity);
+}
+
 fn utf8_string_from_owned(value: std::string::String) -> std::string::Utf8String {
   return std::string::Utf8String { text: value };
 }
@@ -196,6 +204,14 @@ pub fn from_slice_with_allocator(
   return output;
 }
 
+pub fn from_slice_with_region(
+  region: ref mut std::region::Region,
+  values: std::Slice[u8]
+) -> std::string::String {
+  let allocator = std::region::allocator(region);
+  return std::string::from_slice_with_allocator(ref allocator, values);
+}
+
 pub fn from(zone: ref mut Zone, text: std::Slice[u8]) -> std::string::String {
   return std::string::from_slice_in(zone, text);
 }
@@ -215,8 +231,19 @@ pub fn copy_with_allocator(
   return std::string::from_slice_with_allocator(allocator, values);
 }
 
+pub fn copy_with_region(
+  region: ref mut std::region::Region,
+  values: std::Slice[u8]
+) -> std::string::String {
+  return std::string::from_slice_with_region(region, values);
+}
+
 pub fn empty(zone: ref mut Zone) -> std::string::String {
   return std::string::new(zone, 0);
+}
+
+pub fn empty_with_region(region: ref mut std::region::Region) -> std::string::String {
+  return std::string::new_with_region(region, 0);
 }
 
 pub fn join_in(
@@ -1218,6 +1245,10 @@ pub impl std::string::String {
 
   fn copy_with_allocator(self: ref Self, allocator: ref std::allocator::Allocator) -> std::string::String {
     return std::string::copy_with_allocator(allocator, self.as_slice());
+  }
+
+  fn copy_with_region(self: ref Self, region: ref mut std::region::Region) -> std::string::String {
+    return std::string::copy_with_region(region, self.as_slice());
   }
 
   fn as_ptr(self: ref Self) -> ptr u8 {
