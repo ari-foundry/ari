@@ -2743,6 +2743,11 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/string/std-string-literal-sequence.ari -o $(BUILD_DIR)/prelude/std-string-literal-sequence.elf
 	$(BUILD_DIR)/prelude/std-string-literal-sequence.elf; code=$$?; test $$code -eq 0
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-literal-sequence.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-literal-sequence.elf; $(BUILD_DIR)/prelude/std-string-literal-sequence.elf; code=$$?; test $$code -eq 0; fi
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-literal-owned.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-literal-owned.ll
+	grep -q 'ari_builtin_string_from_string' $(BUILD_DIR)/prelude/std-string-literal-owned.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-literal-owned.ari -o $(BUILD_DIR)/prelude/std-string-literal-owned.elf
+	$(BUILD_DIR)/prelude/std-string-literal-owned.elf; code=$$?; test $$code -eq 0
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-literal-owned.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-literal-owned.elf; $(BUILD_DIR)/prelude/std-string-literal-owned.elf; code=$$?; test $$code -eq 0; fi
 	$(TARGET) tests/cases/standard-library/ok/string/std-string-natural-api.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-natural-api.ll
 	grep -q '_ARNv3std6string4from' $(BUILD_DIR)/prelude/std-string-natural-api.ll
 	grep -q 'String8inherent6append' $(BUILD_DIR)/prelude/std-string-natural-api.ll

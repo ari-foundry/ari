@@ -96,6 +96,31 @@ let fixed: [u8, 3] = "lib";
 ascii::parse_decimal("123");
 ```
 
+When a call or initializer expects owned `String`, the compiler copies the
+literal into the visible allocation lifetime. That lifetime may be a
+`region { ... }` block, a compatibility `zone { ... }` block, a mutable local
+named `region` or `zone`, or the only visible mutable region/zone source:
+
+```ari
+region {
+  let prompt: String = "arish> ";
+  io::print(prompt).unwrap();
+}
+
+fn show(prefix: String, arg: Slice[u8]) -> void {
+  io::eprintln(prefix).unwrap();
+}
+
+fn run(zone: ref mut Zone, command: Slice[u8]) -> void {
+  show("unknown command", command);
+}
+```
+
+This is still an owned copy, not a hidden global allocation. If the compiler
+cannot find an allocation source, introduce a `region`/`zone` block, keep a
+mutable `zone` or `region` binding in scope, or call an explicit constructor
+such as `std::string::from(ref mut zone, "literal")`.
+
 String literals also act as borrowed `Slice[u8]` receivers for read-only slice
 helpers. This keeps everyday byte checks close to other modern standard
 libraries without forcing `std::string::bytes(...)` noise:

@@ -136,31 +136,38 @@ floating-point work is implemented.
 
 ## Strings
 
-The front end recognizes `string` and string literals:
+The public source string type is `String`, the prelude alias for
+`std::string::String`. A string literal can initialize or be passed to `String`
+when the compiler has an allocation source:
 
 ```ari
-let label: string = "count"
+region {
+  let label: String = "count"
+  log(label)
+}
+
+fn log(prefix: String) -> void {
+  println("{}", prefix)
+}
 ```
 
-The LLVM backend lowers `string` as an `i8*`/C string pointer, which makes
-string literals useful for C FFI, context arguments, and host `read_line`
-helpers. String literals are emitted as NUL-terminated static bytes, and
-raw borrowed text values lower as pointers to that storage. Those literal
-pointers can be passed through Ari calls, returned, stored in locals, cast to
-`ptr u8` or `ptr c_char`, and read with raw-pointer helpers. Plain host line
-input returns a
-pointer into one internal reusable buffer, while `read_line_owned(ref mut Zone)`,
-`io::read_line_owned(ref mut Zone)`, `input::owned_line(ref mut Zone)`, and
-`input_owned(ref mut Zone)` copy that line into a tracked source
-`std::string::String` handle. The LLVM backend still rejects line
-input until it has a native input-buffer and owned-line allocation policy.
+The allocation source is either a lexical `region { ... }` or `zone { ... }`
+block, a mutable local named `region` or `zone`, or exactly one visible mutable
+zone/region source. This keeps everyday calls like
+`show_error("unknown command", command)` from forcing manual
+`std::string::from(...)` boilerplate while still making allocation ownership
+visible.
 
-The uppercase root type `String` is the public prelude alias for
-`std::string::String`; `std::String` names the same handle. New stdlib APIs that
-return ordinary text should prefer owned `String` results and take
-`ref mut Zone` when allocation is needed. The raw text-boundary type remains a
-borrowed/literal boundary for C strings, runtime snapshots, static names, and
-compatibility helpers with names such as `_text`, `_raw`, and `_unchecked`.
+The lowercase compiler primitive `string` still exists as an internal/raw
+literal boundary. The LLVM backend lowers it as an `i8*`/C string pointer, so it
+remains useful for C FFI, runtime snapshots, static names, and compatibility
+helpers with names such as `_text`, `_raw`, and `_unchecked`. Do not use
+`string` for normal public Ari APIs; use `String`, `Slice[u8]`, `Utf8`,
+`OsStr`, `PathBytes`, or `CStr` depending on the boundary. String literals are
+emitted as NUL-terminated static bytes before any owned `String` copy is made.
+
+New stdlib APIs that return ordinary text should prefer owned `String` results
+and take `ref mut Zone` or `Region` when allocation is needed.
 Compiler-assisted `print`, `println`, and `eprintln` accept text literals and
 owned `String` text. The raw borrowed boundary type is still accepted where it
 appears in compatibility code, but it is not the public stdlib string model.

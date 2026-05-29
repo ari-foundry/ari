@@ -98,8 +98,8 @@ Omit the semicolon only for the final value expression in a function, block,
 | type alias | `type Letter = char;`, `type PairOf[T] = Pair[T];` | Aliases are source names for existing types and may be generic. |
 | floats | `f32`, `f64`, `f128` | `f32`/`f64` arithmetic lowers today; `f128` storage is limited. |
 | bool | `bool` | Used by logical operators and normal conditions. |
-| borrowed string pointer | `string` | NUL-terminated pointer-shaped string for literals and C-style text. |
-| owned byte string handle | `String`, `std::string::String` | Zone-backed explicit allocation handle. |
+| public owned text | `String`, `std::string::String` | Zone-backed explicit byte-string handle for normal Ari APIs. |
+| raw text boundary | `string` | Internal/FFI NUL-terminated literal boundary; avoid it in ordinary public APIs. |
 | validated UTF-8 view | `std::string::Utf8` | Borrowed bytes that passed UTF-8 validation. |
 | OS string byte view | `std::string::OsStr` | Borrowed OS boundary bytes; not necessarily UTF-8. |
 | C string view | `std::c::CStr`, `CStr` | Borrowed wrapper around NUL-terminated bytes or `ptr c_char`; `std::string::c_str(cstr)` passes this same type through. |
@@ -258,7 +258,7 @@ Or-pattern alternatives must bind the same names with compatible types.
 | explicit allocation | `zone::create`, `zone::alloc<T>`, `zone::alloc_array<T>`, `zone::new<T>`, `zone::reset`, `zone::destroy` |
 | temporary allocation | `region { ... }`, `region(capacity) { ... }`, compatibility `zone { ... }`, `zone::scratch<T>`, `zone::temp`, `zone::promote<T>` |
 | single-value handle | `std::boxed::Box<T>`, `Box!(T, &mut zone, value)` |
-| owned byte string | `std::string::String`, direct `"text"` to `Slice[u8]` / `Vec[u8]` / `[u8, N]` coercion, `std::string::bytes("text")`, `std::string::from(&mut zone, "text")`, `std::string::join_in(&mut zone, parts, separator)`, parser helpers `std::string::lines(bytes)`, `trim(bytes)`, `split_once(bytes, "=")`, `strip_prefix(bytes, "\"")`, allocating `replace(&mut zone, bytes, needle, replacement)`, `.push_str(&mut zone, bytes)`, `.try_get(index)`, `.find(bytes)`, `.split(delimiter)`, `.chunks(size)`, `.windows(size)`, `.is_utf8()`, `.codepoint_at(byte_index)`, `.push_codepoint_in(&mut zone, scalar)`, `.index_of_ignore_case(bytes)`, `.parse_decimal_prefix()`, `.parse_signed_decimal_prefix()`, `.trim_to(&mut zone)` |
+| owned byte string | `std::string::String`, direct `"text"` to expected `String` when a current/named region or zone is in scope, direct `"text"` to `Slice[u8]` / `Vec[u8]` / `[u8, N]` coercion, `std::string::bytes("text")`, `std::string::from(&mut zone, "text")`, `std::string::join_in(&mut zone, parts, separator)`, parser helpers `std::string::lines(bytes)`, `trim(bytes)`, `split_once(bytes, "=")`, `strip_prefix(bytes, "\"")`, allocating `replace(&mut zone, bytes, needle, replacement)`, `.push_str(&mut zone, bytes)`, `.try_get(index)`, `.find(bytes)`, `.split(delimiter)`, `.chunks(size)`, `.windows(size)`, `.is_utf8()`, `.codepoint_at(byte_index)`, `.push_codepoint_in(&mut zone, scalar)`, `.index_of_ignore_case(bytes)`, `.parse_decimal_prefix()`, `.parse_signed_decimal_prefix()`, `.trim_to(&mut zone)` |
 | unique linear set | `collections::new<T>(&mut zone, capacity)`, `Set::new<T>(&mut zone, capacity)`, `.insert(&mut zone, value)`, `.replace(&mut zone, value)`, `.try_get(index)`, `.try_pop()`, `.reserve(&mut zone, capacity)`, `.iter()`, `.contains(value)` |
 | ASCII byte helpers | `ascii::is_digit`, `ascii::equals_ignore_case`, `ascii::index_of_ignore_case`, `ascii::trim`, `ascii::parse_decimal`, `ascii::parse_signed_decimal`, `ascii::parse_decimal_prefix`, `ascii::parse_signed_decimal_prefix` |
 | integer math helpers | `math::abs`, `math::is_positive`, `math::is_zero`, `math::div_floor`, `math::div_ceil`, `math::mod_floor`, `math::gcd` |
@@ -270,8 +270,10 @@ Or-pattern alternatives must bind the same names with compatible types.
 | iteration traits | `Iterator[T]`, `IntoIterator[T]`, `iter::range`, `iter::range_inclusive` |
 
 Use uppercase `String`/`std::string::String` for ordinary text that needs owned
-zone-backed storage. The lowercase raw text type is only for borrowed
-literal/FFI/runtime boundary code.
+zone-backed storage. String literals copy into expected `String` values when a
+`region { ... }`, `zone { ... }`, mutable local named `region`/`zone`, or one
+unambiguous mutable region/zone source is visible. The lowercase raw text type
+is only for borrowed literal/FFI/runtime boundary code.
 Use bare `Vec<T>` for local compiler-known vectors and `std::vec::Vec<T>` for
 the source standard-library growable handle. Use `Set<T>` or
 `std::collections::Set<T>` when you need insertion-order uniqueness; it is

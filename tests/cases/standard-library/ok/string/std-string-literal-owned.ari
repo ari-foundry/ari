@@ -1,0 +1,49 @@
+fn take_owned(prefix: String, arg: Slice[u8]) -> i64 {
+  if !prefix.equals_text(arg) {
+    return 100;
+  }
+  return prefix.len();
+}
+
+fn from_param_zone(zone: ref mut Zone) -> String {
+  let text: String = "param-zone";
+  return text;
+}
+
+fn main() -> i64 {
+  var total = 0;
+
+  zone {
+    let direct: String = "zone-owned";
+    if !direct.equals_text("zone-owned") {
+      return 1;
+    }
+    total = total + take_owned("call-owned", "call-owned");
+  }
+
+  region {
+    let region_direct: String = "region-owned";
+    if !region_direct.equals_text("region-owned") {
+      return 2;
+    }
+    total = total + take_owned("region-call", "region-call");
+  }
+
+  var zone = zone::create(256);
+  let named: String = "named-zone";
+  if !named.equals_text("named-zone") {
+    zone::destroy(zone);
+    return 3;
+  }
+  total = total + named.len();
+
+  let param_owned = from_param_zone(ref mut zone);
+  if !param_owned.equals_text("param-zone") {
+    zone::destroy(zone);
+    return 4;
+  }
+  total = total + param_owned.len();
+  zone::destroy(zone);
+
+  return total - 41;
+}

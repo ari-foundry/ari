@@ -20780,6 +20780,81 @@ private:
         return make_ir_tuple_expr(loc, expected, std::move(elements));
     }
 
+    static bool can_use_as_ambient_string_zone_source(const LocalInfo& local) {
+        if (!local_is_alive(local) || !is_zone_source_type(local.type)) return false;
+        if (is_zone_borrow_type(local.type) || is_region_borrow_type(local.type)) {
+            return local.type.qualifier == TypeQualifier::MutRef;
+        }
+        return local.mutable_binding;
+    }
+
+    std::optional<std::string> ambient_string_zone_source_name() const {
+        if (has_current_zone()) return current_zone_name();
+        if (const LocalInfo* zone = local_scopes_.find("zone")) {
+            if (can_use_as_ambient_string_zone_source(*zone)) return std::string("zone");
+        }
+        if (const LocalInfo* region = local_scopes_.find("region")) {
+            if (can_use_as_ambient_string_zone_source(*region)) return std::string("region");
+        }
+
+        std::optional<std::string> candidate;
+        bool ambiguous = false;
+        local_scopes_.for_each_local_from(
+            0,
+            [&](const std::string& name, const LocalInfo& local) {
+                if (ambiguous || !can_use_as_ambient_string_zone_source(local)) return;
+                if (candidate) {
+                    ambiguous = true;
+                    candidate.reset();
+                    return;
+                }
+                candidate = name;
+            });
+        return ambiguous ? std::nullopt : candidate;
+    }
+
+    IrExprPtr make_ambient_string_zone_argument(SourceLocation loc, const IrType& expected) {
+        std::optional<std::string> source_name = ambient_string_zone_source_name();
+        if (!source_name) {
+            fail(loc,
+                 "string literal needs owned String allocation; use a region or zone block, "
+                 "or keep a mutable local named 'zone' or 'region' in scope");
+        }
+        if (has_current_zone() && *source_name == current_zone_name()) {
+            return make_current_zone_argument(loc, expected);
+        }
+
+        ExprPtr source_arg = make_zone_argument_expr_from_source(
+            loc,
+            *source_name,
+            "string literal to String");
+        IrExprPtr zone_arg = check_expr_with_expected(*source_arg, expected);
+        if (IrExprPtr bridged = try_bridge_region_borrow_to_zone(loc, zone_arg, expected)) {
+            return bridged;
+        }
+        coerce_expr_to_expected(*zone_arg, expected);
+        require_assignable(loc, expected, zone_arg->type);
+        return zone_arg;
+    }
+
+    IrExprPtr make_string_literal_owned_expr(SourceLocation loc,
+                                             const std::string& value,
+                                             const IrType& expected) {
+        IrType zone_arg_type = primitive_type(IrPrimitiveKind::Zone, "Zone", loc);
+        zone_arg_type.qualifier = TypeQualifier::MutRef;
+
+        std::size_t borrow_mark = temporary_borrow_mark();
+        std::vector<IrExprPtr> args;
+        args.reserve(2);
+        args.push_back(make_ambient_string_zone_argument(loc, zone_arg_type));
+        args.push_back(make_string_literal_expr(
+            loc,
+            primitive_type(IrPrimitiveKind::String, "string", loc),
+            value));
+        release_temporary_borrows(borrow_mark);
+        return make_builtin_call(loc, "std::string::from_string", std::move(args), expected);
+    }
+
     IrExprPtr make_typed_empty_vector_expr(SourceLocation loc, const IrType& expected) const {
         IrType element = require_typed_empty_vector_element_type(loc, expected);
         require_plain_prelude_aggregate_element(loc, element, "vector");
@@ -21339,6 +21414,9 @@ private:
         if (expr.kind == ExprKind::String &&
             (is_u8_vector_storage_type(expected) || is_u8_array_type(expected))) {
             return make_string_literal_byte_sequence_expr(expr.loc, expr.string_value, expected);
+        }
+        if (expr.kind == ExprKind::String && is_std_string_handle_type(expected)) {
+            return make_string_literal_owned_expr(expr.loc, expr.string_value, expected);
         }
         if (expr.kind == ExprKind::String && is_string_literal_boundary_type(expected)) {
             return make_string_literal_boundary_expr(expr.loc, expr.string_value, expected);
