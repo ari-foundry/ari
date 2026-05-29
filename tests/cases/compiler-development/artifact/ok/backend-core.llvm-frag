@@ -82,18 +82,26 @@ LLVMFunctionExtract source=build/compiler-development/artifact/backend-core.ll f
       store i64 %t2, ptr %flags.addr.1
       %t3 = load i64, ptr %flags.addr.1
       %t4 = icmp eq i64 %t3, 10
-      %t5 = or i1 0, 0
+      br i1 %t4, label %and.rhs.0, label %and.end.1
+    and.rhs.0:
+      br i1 0, label %or.end.3, label %or.rhs.2
+    or.rhs.2:
+      br label %or.end.3
+    or.end.3:
+      %t5 = phi i1 [ true, %and.rhs.0 ], [ 0, %or.rhs.2 ]
       %t6 = xor i1 %t5, true
-      %t7 = and i1 %t4, %t6
-      br i1 %t7, label %if.then.0, label %if.else.1
-    if.then.0:
+      br label %and.end.1
+    and.end.1:
+      %t7 = phi i1 [ false, %entry ], [ %t6, %or.end.3 ]
+      br i1 %t7, label %if.then.4, label %if.else.5
+    if.then.4:
       %t8 = call i64 @"_ARNv7compute"(i64 3)
       %t9 = load i8, ptr %byte.addr.0
       %t10 = zext i8 %t9 to i64
       %t11 = call i64 @"_ARNv3add"(i64 %t8, i64 %t10)
       ret i64 %t11
-    if.else.1:
-      br label %if.end.2
-    if.end.2:
+    if.else.5:
+      br label %if.end.6
+    if.end.6:
       ret i64 0
     }
