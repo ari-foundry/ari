@@ -332,13 +332,13 @@ ModuleFileSearch find_module_file(const ModuleImport& import,
 
 std::optional<std::string> find_standard_header_file() {
     std::vector<std::string> candidates;
-    if (const char* env = std::getenv("ARI_STDLIB_PATH")) {
-        add_standard_header_candidates(candidates, env);
-    }
     candidates.push_back("lib/std.arih");
     if (std::optional<std::string> exe = current_executable_path()) {
         const std::string exe_dir = dirname(*exe);
         candidates.push_back(path_join(path_join(exe_dir, ".."), "share/ari/lib/std.arih"));
+    }
+    if (const char* env = std::getenv("ARI_STDLIB_PATH")) {
+        add_standard_header_candidates(candidates, env);
     }
     for (const auto& path : candidates) {
         if (file_exists(path)) return path;
