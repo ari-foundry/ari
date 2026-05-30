@@ -24,7 +24,11 @@
 #include <vector>
 
 #if defined(__unix__) || defined(__APPLE__)
+#include <sys/stat.h>
 #include <unistd.h>
+#endif
+#if defined(_WIN32)
+#include <sys/stat.h>
 #endif
 
 namespace ari {
@@ -62,8 +66,8 @@ std::string read_file(const std::string& path) {
 }
 
 bool file_exists(const std::string& path) {
-    std::ifstream in(path, std::ios::binary);
-    return static_cast<bool>(in);
+    struct stat st;
+    return stat(path.c_str(), &st) == 0 && S_ISREG(st.st_mode);
 }
 
 std::string dirname(const std::string& path) {
