@@ -65,6 +65,10 @@ compiler feature in the normal focused-test workflow.
   diagnostic failure.
 - `compiler/main.ari` imports the sibling modules and exercises their public
   surfaces with a minimal smoke path.
+- `make check-ari-compiler-bootstrap` checks each `compiler/*.ari` module,
+  checks a small `tests/cases/ari-compiler-bootstrap/` fixture with
+  `-Icompiler`, and, when an LLVM driver is available, builds and runs the
+  source-root smokes.
 - Each module is kept small enough to check directly with the stage0 compiler.
 - No Ari-written AST, semantic checker, IR, codegen, driver, or file loader
   exists yet.
@@ -171,6 +175,8 @@ policy in ad hoc compiler files.
 - Added a tiny one-token `TokenCursor` shape as a checked lexer handoff model.
 - Added a minimal `parser.ari` phase-boundary skeleton with success and
   diagnostic failure paths.
+- Added a focused Ari compiler bootstrap test target and
+  `tests/cases/ari-compiler-bootstrap/` source-root smoke fixture.
 
 ## Small Task Queue
 
@@ -194,6 +200,8 @@ make
 ./build/ari compiler/token.ari --check
 ./build/ari compiler/diagnostic.ari --check
 ./build/ari compiler/lexer.ari --check
+./build/ari compiler/parser.ari --check
+make check-ari-compiler-bootstrap
 make check-compiler-docs
 make check-bootstrap-readiness
 ```
@@ -204,6 +212,7 @@ For a later Ari source-only change under `compiler/`, prefer:
 make
 ./build/ari compiler/<changed-file>.ari --check
 ./build/ari compiler/main.ari --check
+make check-ari-compiler-bootstrap
 make check-bootstrap-readiness
 ```
 
@@ -231,8 +240,8 @@ Do not run full `make check` for ordinary bootstrap slices.
 ## Stage0 Host Compiler Follow-Ups
 
 Confirmed host compiler bugs from this bootstrap slice: none. The `LexResult`,
-shared diagnostic payload, one-token cursor, and parser skeleton slices checked
-without requiring a hosted compiler fix.
+shared diagnostic payload, one-token cursor, parser skeleton, and focused Ari
+compiler bootstrap test target checked without requiring a hosted compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.

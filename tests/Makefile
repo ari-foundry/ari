@@ -1,5 +1,5 @@
 # Test targets are included by the repository-root Makefile.
-.PHONY: check check-debug check-sanitize check-sanitize-run check-language-docs check-std-api check-stdlib-docs check-compiler-artifacts check-source-map-unit check-layout-unit check-compiler-docs check-bootstrap-readiness check-cli check-tools check-prelude check-core-language check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ownership check-ffi check-functions check-function-errors check-errors
+.PHONY: check check-debug check-sanitize check-sanitize-run check-language-docs check-std-api check-stdlib-docs check-compiler-artifacts check-source-map-unit check-layout-unit check-compiler-docs check-ari-compiler-bootstrap check-bootstrap-readiness check-cli check-tools check-prelude check-core-language check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ownership check-ffi check-functions check-function-errors check-errors
 
 check-debug: TARGET := $(DEBUG_TARGET)
 check-debug: $(DEBUG_TARGET) check
@@ -19,7 +19,7 @@ check-sanitize-run: TOOL_ENV := env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=ha
 check-sanitize-run: TOOL_ARI := $(SANITIZE_TARGET)
 check-sanitize-run: check
 
-check: check-language-docs check-std-api check-stdlib-docs check-compiler-artifacts check-compiler-docs check-bootstrap-readiness $(TARGET) check-cli check-tools check-prelude check-core-language check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ownership check-ffi check-functions check-errors
+check: check-language-docs check-std-api check-stdlib-docs check-compiler-artifacts check-compiler-docs check-ari-compiler-bootstrap check-bootstrap-readiness $(TARGET) check-cli check-tools check-prelude check-core-language check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ownership check-ffi check-functions check-errors
 	mkdir -p $(BUILD_DIR)/ir
 	$(TARGET) examples/count.ari --emit-llvm $(BUILD_DIR)/ir/count.ll
 	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/ir/count.ll
@@ -621,6 +621,18 @@ check-ownership: $(TARGET)
 
 check-compiler-docs:
 	python3 tests/check_compiler_docs.py
+
+check-ari-compiler-bootstrap: $(TARGET)
+	mkdir -p $(BUILD_DIR)/ari-compiler-bootstrap
+	$(TARGET) compiler/source.ari --check
+	$(TARGET) compiler/token.ari --check
+	$(TARGET) compiler/diagnostic.ari --check
+	$(TARGET) compiler/lexer.ari --check
+	$(TARGET) compiler/parser.ari --check
+	$(TARGET) compiler/main.ari --check
+	$(TARGET) -Icompiler tests/cases/ari-compiler-bootstrap/ok/source-root-smoke.ari --check
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) compiler/main.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ari-compiler-bootstrap/compiler-main.elf; $(BUILD_DIR)/ari-compiler-bootstrap/compiler-main.elf; code=$$?; test $$code -eq 3; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) -Icompiler tests/cases/ari-compiler-bootstrap/ok/source-root-smoke.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ari-compiler-bootstrap/source-root-smoke.elf; $(BUILD_DIR)/ari-compiler-bootstrap/source-root-smoke.elf; code=$$?; test $$code -eq 0; fi
 
 check-bootstrap-readiness: $(TARGET)
 	mkdir -p $(BUILD_DIR)/bootstrap-readiness

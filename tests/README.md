@@ -8,6 +8,7 @@ The test suite is grouped by feature first, then by expected outcome.
 | `tests/cases/<feature>/errors/` | Invalid Ari programs. Makefile targets assert the expected diagnostic text. |
 | `tests/cases/compiler-development/artifact/ok/` | Golden text artifacts and source fixtures that should compare cleanly. |
 | `tests/cases/compiler-development/artifact/errors/` | Expected diagnostic artifacts and text-comparator mismatch reports. |
+| `tests/cases/ari-compiler-bootstrap/` | Source-root smoke tests for the Ari-written compiler under `compiler/`. |
 | `tests/cases/bootstrap-readiness/` | Small compiler-shaped Ari fixtures for hosted-compiler readiness; the Ari-written compiler implementation tree is `compiler/`. |
 | `tests/packages/` | File-backed module and module-cache fixtures. |
 | `tests/ffi/` | C helper sources used by FFI and object-linking tests. |
@@ -21,6 +22,7 @@ The test suite is grouped by feature first, then by expected outcome.
 Feature case directories:
 
 - `attributes`
+- `ari-compiler-bootstrap`
 - `bootstrap-readiness`
 - `borrowing`
 - `constants`
@@ -70,6 +72,7 @@ Use the narrowest target that matches the changed surface:
 | `make check-traits` | Minimum static trait subset plus trait objects, impl conformance, generic trait dispatch, compiler-shaped Eq/Hash/Debug/Ord fixtures, and trait diagnostics. |
 | `make check-ownership` | Fast ownership/borrow/drop smoke for aggregate moves, reborrowing, compiler-shaped owner flow, active enum payload drop lowering, and representative ownership diagnostics. |
 | `make check-compiler-docs` | Current compiler developer docs, roadmap, and readiness inventory. |
+| `make check-ari-compiler-bootstrap` | Actual Ari-written compiler source-root checks under `compiler/` plus a small module-path smoke fixture. |
 | `make check-bootstrap-readiness` | Small compiler-shaped Ari fixtures under `tests/cases/bootstrap-readiness/`. |
 
 Use `python3 tests/check_compiler_artifact_cli.py` when changing artifact CLI
@@ -93,11 +96,14 @@ Documentation checks are intentionally small. For example,
 roadmap, readiness inventory, test matrix, and docs index still point at the
 current C++ hosted compiler workflow instead of stale self-host planning pages.
 
+`make check-ari-compiler-bootstrap` checks the actual Ari-written compiler
+source root under `compiler/` and compiles a tiny fixture against it with
+`-Icompiler`.
+
 `make check-bootstrap-readiness` compiles only the small compiler-shaped Ari
 fixtures under `tests/cases/bootstrap-readiness/`. It is meant to stay fast and
-focused; it should prove one compiler-shaped pressure point at a time, not run
-the whole test suite. Ari-written compiler source lives separately in
-`compiler/`.
+focused; it should prove one hosted-compiler pressure point at a time, not run
+the whole test suite.
 
 ## README Placement
 

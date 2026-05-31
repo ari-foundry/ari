@@ -1,0 +1,18 @@
+mod source;
+mod lexer;
+mod parser;
+
+fn main() -> i64 {
+  let file = source::source_file(3, 12);
+  let span = source::span(3, 2, 5);
+
+  if !source::contains(file, span.end) {
+    return 1;
+  }
+
+  return source::span_len(span) +
+    lexer::scan_result_score(lexer::scan_one_result('!', 4)) +
+    parser::parse_score(parser::parse_one('q', 1)) +
+    parser::parse_score(parser::parse_empty()) -
+    3017;
+}

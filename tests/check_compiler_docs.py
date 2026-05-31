@@ -120,6 +120,8 @@ def main() -> int:
         "## Local Validation",
         "## Known Blockers",
         "## Stage0 Host Compiler Follow-Ups",
+        "make check-ari-compiler-bootstrap",
+        "`tests/cases/ari-compiler-bootstrap/`",
         "Confirmed host compiler bugs from this bootstrap slice: none.",
     ]:
         require(ari_written, needle, ari_written_path)
