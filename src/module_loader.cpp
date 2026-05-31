@@ -8,13 +8,13 @@
 #include "module_metadata.hpp"
 #include "module_path.hpp"
 #include "parser.hpp"
+#include "platform.hpp"
 #include "type_semantics.hpp"
 
 #include <cctype>
 #include <cstdlib>
 #include <fstream>
 #include <iterator>
-#include <limits.h>
 #include <map>
 #include <optional>
 #include <set>
@@ -22,14 +22,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
-#if defined(__unix__) || defined(__APPLE__)
-#include <sys/stat.h>
-#include <unistd.h>
-#endif
-#if defined(_WIN32)
-#include <sys/stat.h>
-#endif
 
 namespace ari {
 
@@ -65,54 +57,21 @@ std::string read_file(const std::string& path) {
     return ss.str();
 }
 
-bool file_exists(const std::string& path) {
-    struct stat st;
-    return stat(path.c_str(), &st) == 0 && S_ISREG(st.st_mode);
-}
-
-std::string dirname(const std::string& path) {
-    std::size_t split = path.find_last_of("/\\");
-    if (split == std::string::npos) return ".";
-    if (split == 0) return path.substr(0, 1);
-    return path.substr(0, split);
-}
-
-std::string path_join(const std::string& left, const std::string& right) {
-    if (left.empty() || left == ".") return right;
-    char back = left[left.size() - 1];
-    if (back == '/' || back == '\\') return left + right;
-    return left + "/" + right;
-}
-
 void add_standard_header_candidates(std::vector<std::string>& candidates,
                                     const std::string& path) {
     if (path.empty()) return;
     candidates.push_back(path);
-    candidates.push_back(path_join(path, "std.arih"));
-    candidates.push_back(path_join(path_join(path, "lib"), "std.arih"));
-}
-
-std::optional<std::string> current_executable_path() {
-#if defined(__linux__)
-    std::vector<char> buffer(PATH_MAX + 1, '\0');
-    ssize_t len = readlink("/proc/self/exe", buffer.data(), buffer.size() - 1);
-    if (len <= 0) return std::nullopt;
-    buffer[static_cast<std::size_t>(len)] = '\0';
-    return std::string(buffer.data());
-#elif defined(__APPLE__)
-    return std::nullopt;
-#else
-    return std::nullopt;
-#endif
+    candidates.push_back(platform::path_join(path, "std.arih"));
+    candidates.push_back(platform::path_join(platform::path_join(path, "lib"), "std.arih"));
 }
 
 void add_module_candidates(const std::string& dir,
                            const std::string& local_name,
                            std::vector<std::string>& candidates) {
-    candidates.push_back(path_join(dir, local_name + ".ari"));
-    candidates.push_back(path_join(dir, local_name + ".arih"));
-    candidates.push_back(path_join(path_join(dir, local_name), "mod.ari"));
-    candidates.push_back(path_join(path_join(dir, local_name), "mod.arih"));
+    candidates.push_back(platform::path_join(dir, local_name + ".ari"));
+    candidates.push_back(platform::path_join(dir, local_name + ".arih"));
+    candidates.push_back(platform::path_join(platform::path_join(dir, local_name), "mod.ari"));
+    candidates.push_back(platform::path_join(platform::path_join(dir, local_name), "mod.arih"));
 }
 
 void add_module_candidate_group(const std::string& dir,
@@ -244,7 +203,7 @@ ModuleFileSearch find_module_file(const ModuleImport& import,
     add_module_candidate_group(base_dir, import.local_name, result, candidate_groups);
     if (!import.module_name.empty()) {
         add_module_candidate_group(
-            path_join(base_dir, qualified_basename(import.module_name)),
+            platform::path_join(base_dir, qualified_basename(import.module_name)),
             import.local_name,
             result,
             candidate_groups);
@@ -258,7 +217,7 @@ ModuleFileSearch find_module_file(const ModuleImport& import,
     for (const auto& group : candidate_groups) {
         std::vector<std::string> matches;
         for (const auto& candidate : group.paths) {
-            if (file_exists(candidate)) matches.push_back(candidate);
+            if (platform::regular_file_exists(candidate)) matches.push_back(candidate);
         }
         if (matches.size() > 1) {
             CompileError error(import.loc,
@@ -333,15 +292,15 @@ ModuleFileSearch find_module_file(const ModuleImport& import,
 std::optional<std::string> find_standard_header_file() {
     std::vector<std::string> candidates;
     candidates.push_back("lib/std.arih");
-    if (std::optional<std::string> exe = current_executable_path()) {
-        const std::string exe_dir = dirname(*exe);
-        candidates.push_back(path_join(path_join(exe_dir, ".."), "share/ari/lib/std.arih"));
+    if (std::optional<std::string> exe = platform::current_executable_path()) {
+        const std::string exe_dir = platform::dirname(*exe);
+        candidates.push_back(platform::path_join(platform::path_join(exe_dir, ".."), "share/ari/lib/std.arih"));
     }
     if (const char* env = std::getenv("ARI_STDLIB_PATH")) {
         add_standard_header_candidates(candidates, env);
     }
     for (const auto& path : candidates) {
-        if (file_exists(path)) return path;
+        if (platform::regular_file_exists(path)) return path;
     }
     return std::nullopt;
 }
@@ -830,7 +789,7 @@ public:
         Program program = std::move(root.program);
         collect_source(input, root, {}, program, true);
         if (options_.implicit_std) load_standard_module(program);
-        resolve_imports(program, dirname(input));
+        resolve_imports(program, platform::dirname(input));
         ModuleCache cache;
         cache.metadata = metadata_;
         cache.sources = std::move(cache_sources_);
@@ -901,7 +860,7 @@ private:
         collect_source(*path, standard_file, module_path, standard, false);
         move_append(cached_ir_functions_, standard_file.cached_ir_functions);
         loaded_modules_.emplace(name, *path);
-        resolve_imports(standard, dirname(*path));
+        resolve_imports(standard, platform::dirname(*path));
         append_program(program, std::move(standard));
     }
 
@@ -946,7 +905,7 @@ private:
             Program child = std::move(child_file.program);
             collect_source(source_path, child_file, module_path, child, false);
             move_append(cached_ir_functions_, child_file.cached_ir_functions);
-            resolve_imports(child, dirname(source_path));
+            resolve_imports(child, platform::dirname(source_path));
             loading_source_paths_.erase(source_path);
             loading_modules_.erase(import.name);
             loaded_modules_.emplace(import.name, source_path);

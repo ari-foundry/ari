@@ -15,6 +15,7 @@
 #include "module_loader.hpp"
 #include "module_metadata.hpp"
 #include "parser.hpp"
+#include "platform.hpp"
 #include "resolved_index_dump.hpp"
 #include "sema.hpp"
 #include "source_map_dump.hpp"
@@ -23,30 +24,24 @@
 #include "token_dump.hpp"
 #include "toolchain.hpp"
 
-#include <cerrno>
-#include <array>
 #include <cstdio>
-#include <cstdlib>
-#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <iterator>
 #include <map>
+#include <optional>
 #include <sstream>
 #include <set>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include <limits.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
 namespace ari {
 
 static void make_executable(const std::string& path) {
-    if (chmod(path.c_str(), 0755) != 0) {
-        throw CompileError("cannot set executable permissions on '" + path + "': " + std::strerror(errno));
+    platform::OperationResult result = platform::set_executable_permission(path);
+    if (!result.ok) {
+        throw CompileError("cannot set executable permissions on '" + path + "': " + result.error);
     }
 }
 
@@ -60,16 +55,6 @@ static std::string read_text_file(const std::string& path) {
     std::ifstream in(path, std::ios::binary);
     if (!in) throw CompileError("cannot open input file '" + path + "'");
     return std::string(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
-}
-
-static std::string shell_quote(const std::string& text) {
-    std::string quoted = "'";
-    for (char c : text) {
-        if (c == '\'') quoted += "'\\''";
-        else quoted.push_back(c);
-    }
-    quoted += "'";
-    return quoted;
 }
 
 static CompileError external_tool_error(const std::string& message,
@@ -99,16 +84,10 @@ static CompileError external_tool_error(const std::string& message,
 }
 
 static std::string run_command_capture(const std::string& command, const std::string& description) {
-    std::array<char, 4096> buffer{};
-    std::string output;
-    FILE* pipe = popen(command.c_str(), "r");
-    if (pipe == nullptr) throw external_tool_error("cannot run " + description, description, command);
-    while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe) != nullptr) {
-        output += buffer.data();
-    }
-    int status = pclose(pipe);
-    if (status != 0) throw external_tool_error(description + " failed", description, command);
-    return output;
+    platform::CommandResult result = platform::run_shell_command_capture(command);
+    if (!result.launched) throw external_tool_error("cannot run " + description, description, command);
+    if (result.status != 0) throw external_tool_error(description + " failed", description, command);
+    return result.output;
 }
 
 static std::string join_option_names(const std::vector<std::string>& options) {
@@ -121,16 +100,15 @@ static std::string join_option_names(const std::vector<std::string>& options) {
 }
 
 static std::string display_output_path(const std::string& path) {
-    if (path.empty() || path.front() != '/') return path;
+    if (!platform::is_absolute_path(path)) return path;
 
-    char cwd_buffer[PATH_MAX];
-    if (!getcwd(cwd_buffer, sizeof(cwd_buffer))) return path;
-    std::string cwd = cwd_buffer;
-    if (path == cwd) return ".";
-    if (path.size() > cwd.size() &&
-        path.compare(0, cwd.size(), cwd) == 0 &&
-        path[cwd.size()] == '/') {
-        return path.substr(cwd.size() + 1);
+    std::optional<std::string> cwd = platform::current_working_directory();
+    if (!cwd) return path;
+    if (path == *cwd) return ".";
+    if (path.size() > cwd->size() &&
+        path.compare(0, cwd->size(), *cwd) == 0 &&
+        platform::is_path_separator(path[cwd->size()])) {
+        return path.substr(cwd->size() + 1);
     }
     return path;
 }
@@ -138,7 +116,7 @@ static std::string display_output_path(const std::string& path) {
 static std::map<std::string, std::string> collect_symbol_states(const std::string& path, bool dynamic) {
     std::string command = "nm ";
     if (dynamic) command += "-D ";
-    command += "-g " + shell_quote(path);
+    command += "-g " + platform::shell_quote(path);
     std::string nm_output = run_command_capture(command, "symbol inventory extraction with nm");
     std::map<std::string, std::string> symbols;
     std::istringstream lines(nm_output);
@@ -972,19 +950,19 @@ int run(int argc, char** argv) {
         return 0;
     }
 
-    std::string command = shell_quote(llvm_compiler) + " ";
+    std::string command = platform::shell_quote(llvm_compiler) + " ";
     if (object_library_output) {
         command += "-c -fPIC ";
     } else if (shared_library) {
         command += "-shared -fPIC ";
     }
-    if (!target_triple.empty()) command += shell_quote("--target=" + target.triple) + " ";
-    command += shell_quote(llvm_path) + " -o " + shell_quote(backend_output_path);
+    if (!target_triple.empty()) command += platform::shell_quote("--target=" + target.triple) + " ";
+    command += platform::shell_quote(llvm_path) + " -o " + platform::shell_quote(backend_output_path);
     if (object_output.empty()) {
         if (target.unix) command += " -pthread";
-        for (const auto& arg : link_args) command += " " + shell_quote(arg);
+        for (const auto& arg : link_args) command += " " + platform::shell_quote(arg);
     }
-    int status = std::system(command.c_str());
+    int status = platform::run_shell_command(command);
     if (llvm_output.empty()) {
         std::remove(llvm_path.c_str());
     }

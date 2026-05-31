@@ -31,7 +31,7 @@ Do not make LLVM codegen re-resolve Ari source-level names.
 
 | Layer | First Files | Owns | First Artifact |
 | --- | --- | --- | --- |
-| Driver | `src/driver.cpp`, `src/toolchain.cpp` | CLI flags, file IO, target options, artifact paths, LLVM driver calls, capability inventory. | capability inventory, source map, pass summary, linked output |
+| Driver | `src/driver.cpp`, `src/toolchain.cpp`, `src/platform.hpp`, `src/platform.cpp` | CLI flags, file IO, target options, artifact paths, host platform boundaries, LLVM driver calls, capability inventory. | capability inventory, source map, pass summary, linked output |
 | Lexer | `src/lexer.cpp`, `src/token.hpp`, `src/literal.cpp` | token kinds, spelling classes, comments, escapes, lexical byte spans. | token dump |
 | Parser | `src/parser.cpp`, `src/ast.hpp`, `src/ast_builders.cpp` | grammar, AST shape, parser recovery, source-shaped syntax. | syntax dump |
 | Module loading | `src/module_loader.cpp`, `src/module_path.cpp`, `src/module_metadata.cpp` | file-backed modules, search paths, `.ari`/`.arih`, imports, metadata, cache inputs. | module graph |
@@ -49,7 +49,7 @@ toward explicit helper files and forward-flowing data.
 
 | Layer | Should Do | Should Not Do |
 | --- | --- | --- |
-| Driver | Normalize input paths, choose target options, request artifacts, and invoke the LLVM driver. | Decide whether a name is a type, value, or module item. |
+| Driver | Normalize input paths, choose target options, request artifacts, call `ari::platform` for host path/process/tool lookup behavior, and invoke the LLVM driver. | Decide whether a name is a type, value, or module item, or scatter host-specific `#ifdef` checks outside `src/platform.cpp`. |
 | Lexer | Produce tokens with deterministic spans and lexical diagnostics. | Peek into declarations, imports, types, or traits. |
 | Parser | Preserve source shape in AST and reject malformed grammar early. | Ask type, visibility, ownership, or layout questions. |
 | Module loading | Resolve file-backed modules and build deterministic module inputs. | Type-check function bodies. |

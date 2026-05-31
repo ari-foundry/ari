@@ -6,6 +6,7 @@
 #include "module_ir_summary.hpp"
 #include "module_loader.hpp"
 #include "module_path.hpp"
+#include "platform.hpp"
 
 #include <algorithm>
 #include <fstream>
@@ -97,32 +98,13 @@ std::string read_file_for_cache_validation(const std::string& path,
     return ss.str();
 }
 
-bool file_exists(const std::string& path) {
-    std::ifstream in(path, std::ios::binary);
-    return static_cast<bool>(in);
-}
-
-std::string dirname(const std::string& path) {
-    std::size_t split = path.find_last_of("/\\");
-    if (split == std::string::npos) return ".";
-    if (split == 0) return path.substr(0, 1);
-    return path.substr(0, split);
-}
-
-std::string path_join(const std::string& left, const std::string& right) {
-    if (left.empty() || left == ".") return right;
-    char back = left[left.size() - 1];
-    if (back == '/' || back == '\\') return left + right;
-    return left + "/" + right;
-}
-
 void add_module_candidates(const std::string& dir,
                            const std::string& local_name,
                            std::vector<std::string>& candidates) {
-    candidates.push_back(path_join(dir, local_name + ".ari"));
-    candidates.push_back(path_join(dir, local_name + ".arih"));
-    candidates.push_back(path_join(path_join(dir, local_name), "mod.ari"));
-    candidates.push_back(path_join(path_join(dir, local_name), "mod.arih"));
+    candidates.push_back(platform::path_join(dir, local_name + ".ari"));
+    candidates.push_back(platform::path_join(dir, local_name + ".arih"));
+    candidates.push_back(platform::path_join(platform::path_join(dir, local_name), "mod.ari"));
+    candidates.push_back(platform::path_join(platform::path_join(dir, local_name), "mod.arih"));
 }
 
 std::string find_module_file_for_cache(const ModuleMetadataImport& import,
@@ -132,7 +114,7 @@ std::string find_module_file_for_cache(const ModuleMetadataImport& import,
     add_module_candidates(base_dir, import.local_name, candidates);
     if (!import.owner_module.empty()) {
         add_module_candidates(
-            path_join(base_dir, qualified_basename(import.owner_module)),
+            platform::path_join(base_dir, qualified_basename(import.owner_module)),
             import.local_name,
             candidates);
     }
@@ -140,7 +122,7 @@ std::string find_module_file_for_cache(const ModuleMetadataImport& import,
         if (!search_path.empty()) add_module_candidates(search_path, import.local_name, candidates);
     }
     for (const auto& candidate : candidates) {
-        if (file_exists(candidate)) return candidate;
+        if (platform::regular_file_exists(candidate)) return candidate;
     }
     return "";
 }
@@ -731,7 +713,7 @@ void require_matching_module_cache_inputs(const ModuleCache& cache,
         }
         std::string resolved = find_module_file_for_cache(
             import,
-            dirname(owner_it->second),
+            platform::dirname(owner_it->second),
             options.module_search_paths
         );
         if (resolved.empty()) {

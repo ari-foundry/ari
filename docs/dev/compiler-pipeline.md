@@ -105,6 +105,27 @@ details.
 If an IR kind is front-end only, codegen should reject it with a clear message
 until runtime lowering exists.
 
+## Host Platform Boundary
+
+Files:
+
+```text
+src/platform.hpp
+src/platform.cpp
+```
+
+The hosted compiler uses `ari::platform` for host-specific filesystem and
+process boundaries: path joining and parent directory extraction, `PATH`
+splitting, executable lookup, current executable and working directory
+discovery, regular-file and executable checks, executable permission updates,
+shell quoting, and shell command execution.
+
+Keep new host conditionals inside `src/platform.cpp` when possible. Driver,
+module loading, module cache validation, and toolchain code should call the
+platform API instead of adding direct `_WIN32`, `unistd`, `chmod`, `readlink`,
+or PATH-separator logic. This boundary only describes the compiler host; it
+does not mean Windows target or native-host support is complete.
+
 ## Output Writing
 
 The driver writes text IR directly for `--emit-llvm`. For executables, shared
