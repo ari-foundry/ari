@@ -79,6 +79,9 @@ compiler feature in the normal focused-test workflow.
 - `compiler/parser.ari` only treats identifier and number handoff tokens as
   statement skeletons; EOF, whitespace, and unknown tokens now stay on
   diagnostic paths.
+- `compiler/parser.ari` exposes a `parse_is_success` helper so downstream
+  phases can distinguish `Parsed` from diagnostic `Failed` without using
+  smoke-test score values.
 - `compiler/driver.ari` owns the current bootstrap entry flow and returns a
   standard-library `std::Result[i64, i64]` instead of embedding smoke arithmetic
   in `main`.
@@ -89,6 +92,12 @@ compiler feature in the normal focused-test workflow.
   current file-input smoke, not a real source table or text buffer.
 - `compiler/driver.ari` routes file and text input through the loaded-source
   summary before creating the current one-token parser handoff.
+- `compiler/driver.ari` now uses the parser success helper before returning
+  success, so diagnostic parse results no longer count as successful driver
+  runs only because they have positive smoke scores.
+- File-input smoke paths use explicit `zone(16384)` allocation blocks because
+  the source-root fixture is now large enough to exceed the default zone
+  capacity when read into an owned string.
 - The bootstrap source-root smoke now covers both valid loaded-source handoff
   and an out-of-range first-byte offset error from the driver path.
 - `compiler/main.ari` is now a thin entrypoint that delegates to the driver and
@@ -225,21 +234,27 @@ policy in ad hoc compiler files.
   driver text/file path through it before creating the current parser handoff.
 - Added an invalid loaded-source summary smoke that checks the driver's
   out-of-range first-byte offset error payload.
+- Added an explicit parser success helper and routed the driver through it, with
+  source-root smoke coverage for a parse failure that returns driver error
+  `1003`.
+- Switched file-input smoke allocation blocks to explicit `zone(16384)` after
+  the growing source-root fixture exceeded the default zone capacity at
+  runtime.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add an explicit parser success helper so the driver can distinguish
-  `Parsed` from diagnostic `Failed` results instead of treating all positive
-  `parse_score` values as success.
+- Add a diagnostic-code accessor and a small parser failure-code helper so the
+  driver can eventually preserve parser failure diagnostics instead of using
+  only generic driver error `1003`.
 
 ## Next Recommended Task
 
-Add an explicit parser success helper and route the driver through it before
-using `parse_score`. Keep this limited to distinguishing `Parsed` from
-diagnostic `Failed`; do not implement expression parsing or a broader parse
-tree yet.
+Add a diagnostic-code accessor and a small parser failure-code helper. Keep it
+focused on exposing the existing diagnostic code through phase boundaries; do
+not implement expression parsing, diagnostic rendering, or a broader parse tree
+yet.
 
 ## Local Validation
 
@@ -282,6 +297,9 @@ Do not run full `make check` for ordinary bootstrap slices.
 
 - Runtime strings and richer text/slice operations are still not enough for real
   compiler source input.
+- Default `zone { ... }` capacity is small for self-host-style file smokes;
+  current file-input paths use explicit `zone(capacity)` until source loading
+  owns allocation policy deliberately.
 - File-backed module and project flow exists in stage0, but the Ari-written
   compiler only has a minimal file-reading driver path and loaded-source
   summary, not a real source loader, source table, or diagnostics over loaded
@@ -299,12 +317,16 @@ Confirmed host compiler bugs from this bootstrap slice: none. The `LexResult`,
 shared diagnostic payload, one-token cursor, cursor token accessors, parser
 skeleton, minimal token handoff, token-kind query helpers, unknown-token query
 helpers, minimal AST node, statement output node, parser non-statement
-diagnostic paths, loaded-source summary, `std::Result`-based driver entry flow,
-and focused Ari compiler bootstrap test target checked without requiring a
-hosted compiler fix. The file-input smoke path also checked with `std::fs` and
-`std::context` argv without requiring a hosted compiler fix. The invalid
-loaded-source summary smoke also checked `std::Result` matching in the fixture
-without requiring a hosted compiler fix.
+diagnostic paths, parser success helper, loaded-source summary,
+`std::Result`-based driver entry flow, and focused Ari compiler bootstrap test
+target checked without requiring a hosted compiler fix. The file-input smoke
+path also checked with `std::fs` and `std::context` argv without requiring a
+hosted compiler fix. The invalid loaded-source summary smoke and parse-failure
+driver smoke also checked `std::Result` matching in the fixture without
+requiring a hosted compiler fix. The growing source-root fixture did expose a
+default-zone capacity runtime trap while reading the file smoke; this was fixed
+locally with explicit `zone(16384)` allocation blocks and is recorded as
+allocation-policy pressure rather than a confirmed hosted compiler bug.
 
 This slice also reconfirmed the existing cross-module type identity pressure:
 a value constructed as root `source::LoadedSourceSummary` is not the same type
@@ -328,3 +350,6 @@ Desired stage0 pressure that is not yet classified as a bug:
   across nested import paths.
 - Clearer ownership-phase ergonomics for checked trees and payload movement.
 - More general iterator support beyond compiler-known `range`.
+- Clearer allocation-policy ergonomics for self-host file reads; default
+  `zone { ... }` capacity can be too small for growing compiler fixtures, so
+  explicit `zone(capacity)` is currently required.

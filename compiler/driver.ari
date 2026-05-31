@@ -36,7 +36,7 @@ pub fn run_input(input: DriverInput) -> std::Result[i64, i64] {
   }
 
   let parsed = parser::parse_one(input.entry, input.offset);
-  if parser::parse_score(parsed) > 0 {
+  if parser::parse_is_success(parsed) {
     return std::Ok<i64, i64>(0);
   }
 
@@ -85,7 +85,7 @@ pub fn run() -> std::Result[i64, i64] {
 
 pub fn run_from_context() -> std::Result[i64, i64] {
   if std::context::has_arg(1) {
-    zone {
+    zone(16384) {
       let path = std::context::arg(1);
       return run_file(path.as_slice());
     }

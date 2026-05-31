@@ -109,6 +109,13 @@ pub fn parse_empty() -> ParseResult {
   return Failed(diagnostic::error(2002, 0, 0));
 }
 
+pub fn parse_is_success(result: ParseResult) -> bool {
+  match result {
+    Parsed(_) => true,
+    Failed(_) => false,
+  }
+}
+
 pub fn parse_score(result: ParseResult) -> i64 {
   match result {
     Parsed(node) => ast::node_score(node),
