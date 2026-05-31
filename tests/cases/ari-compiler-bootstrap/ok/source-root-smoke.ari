@@ -10,6 +10,18 @@ fn file_driver_score() -> i64 {
   }
 }
 
+fn loaded_source_score() -> i64 {
+  let loaded = source::loaded_source_summary(7, 5, 'm', 0);
+  if !source::loaded_source_has_first(loaded) {
+    return 1;
+  }
+  return source::loaded_source_score(source::loaded_source_summary(7, 5, 'm', 0));
+}
+
+fn loaded_driver_score() -> i64 {
+  return driver::exit_code(driver::run_loaded_source_summary(1, 16, 'p', 2));
+}
+
 fn main() -> i64 {
   let file = source::source_file(3, 12);
   let span = source::span(3, 2, 5);
@@ -31,6 +43,9 @@ fn main() -> i64 {
     parser::parse_one_kind_score('9', 2) -
     42 +
     driver::exit_code(driver::run()) +
+    loaded_source_score() -
+    121 +
+    loaded_driver_score() +
     file_driver_score() +
     parser::parse_score(parser::parse_empty()) -
     3018;

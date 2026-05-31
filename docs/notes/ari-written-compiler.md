@@ -84,6 +84,11 @@ compiler feature in the normal focused-test workflow.
   in `main`.
 - `compiler/driver.ari` can read a source file path through `std::fs` and can
   use `std::context` argv when the executable is invoked with a file argument.
+- `compiler/source.ari` has a minimal `LoadedSourceSummary` for source id,
+  byte length, first byte, and first-byte offset. It is metadata for the
+  current file-input smoke, not a real source table or text buffer.
+- `compiler/driver.ari` routes file and text input through the loaded-source
+  summary before creating the current one-token parser handoff.
 - `compiler/main.ari` is now a thin entrypoint that delegates to the driver and
   maps the driver's result to an exit code.
 - `make check-ari-compiler-bootstrap` checks each `compiler/*.ari` module,
@@ -91,9 +96,9 @@ compiler feature in the normal focused-test workflow.
   `-Icompiler`, and, when an LLVM driver is available, builds and runs the
   source-root smokes.
 - Each module is kept small enough to check directly with the stage0 compiler.
-- No full Ari-written parse tree, semantic checker, IR, codegen, or source
-  loader exists yet beyond the minimal parser-output node model and file-input
-  driver smoke.
+- No full Ari-written parse tree, semantic checker, IR, codegen, source table,
+  or real source loader exists yet beyond the minimal parser-output node model
+  and file-input driver smoke.
 
 ## Incremental Roadmap
 
@@ -214,20 +219,22 @@ policy in ad hoc compiler files.
   source fixture path.
 - Added parser non-statement diagnostic branches for whitespace and unknown
   handoff tokens, with bootstrap smoke coverage for both paths.
+- Added a minimal loaded-source summary shape for file input and routed the
+  driver text/file path through it before creating the current parser handoff.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a minimal loaded-source summary shape so file input can carry source id,
-  byte length, and first-byte handoff metadata before a real source loader
-  exists.
+- Add one invalid loaded-source summary smoke for out-of-range first-byte
+  offsets before building a fuller source loader.
 
 ## Next Recommended Task
 
-Add a minimal loaded-source summary shape around the current file-input driver
-path. Keep it to source id, byte length, and first-byte handoff metadata; do not
-implement full source text scanning, a source table, or expression parsing yet.
+Add one invalid loaded-source summary smoke for out-of-range first-byte offsets.
+Keep it focused on the existing `LoadedSourceSummary` and driver error path; do
+not implement full source text scanning, a source table, or expression parsing
+yet.
 
 ## Local Validation
 
@@ -271,8 +278,9 @@ Do not run full `make check` for ordinary bootstrap slices.
 - Runtime strings and richer text/slice operations are still not enough for real
   compiler source input.
 - File-backed module and project flow exists in stage0, but the Ari-written
-  compiler only has a minimal file-reading driver path, not a real source
-  loader, source table, or diagnostics over loaded text.
+  compiler only has a minimal file-reading driver path and loaded-source
+  summary, not a real source loader, source table, or diagnostics over loaded
+  text.
 - Generic aggregate/type monomorphization and trait dispatch are still growing,
   so keep data models simple and checked.
 - General iterator support beyond compiler-known `range` is not ready.
@@ -286,10 +294,16 @@ Confirmed host compiler bugs from this bootstrap slice: none. The `LexResult`,
 shared diagnostic payload, one-token cursor, cursor token accessors, parser
 skeleton, minimal token handoff, token-kind query helpers, unknown-token query
 helpers, minimal AST node, statement output node, parser non-statement
-diagnostic paths, `std::Result`-based driver entry flow, and focused Ari
-compiler bootstrap test target checked without requiring a hosted compiler fix.
-The file-input smoke path also checked with `std::fs` and `std::context` argv
-without requiring a hosted compiler fix.
+diagnostic paths, loaded-source summary, `std::Result`-based driver entry flow,
+and focused Ari compiler bootstrap test target checked without requiring a
+hosted compiler fix. The file-input smoke path also checked with `std::fs` and
+`std::context` argv without requiring a hosted compiler fix.
+
+This slice also reconfirmed the existing cross-module type identity pressure:
+a value constructed as root `source::LoadedSourceSummary` is not the same type
+as `driver::source::LoadedSourceSummary`. That is not classified as a hosted
+compiler bug in this slice; the public driver helper uses scalar fields while
+the nested summary remains an internal driver handoff.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
@@ -301,8 +315,9 @@ Desired stage0 pressure that is not yet classified as a bug:
 
 - Better runtime strings, slices, and file IO for real source input.
 - Stronger aggregate/type monomorphization for compiler-shaped models.
-- Clearer cross-module type identity ergonomics for shared phase models; this
-  slice keeps AST constructors scalar at module boundaries instead of passing a
-  `source::Span` across nested import paths.
+- Clearer cross-module type identity ergonomics for shared phase models; these
+  slices keep AST constructors and public driver helpers scalar at module
+  boundaries instead of passing `source::Span` or `LoadedSourceSummary` values
+  across nested import paths.
 - Clearer ownership-phase ergonomics for checked trees and payload movement.
 - More general iterator support beyond compiler-known `range`.

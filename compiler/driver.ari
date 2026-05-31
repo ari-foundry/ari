@@ -17,6 +17,15 @@ pub fn default_input() -> DriverInput {
   };
 }
 
+fn input_from_loaded_source(summary: source::LoadedSourceSummary) -> DriverInput {
+  return DriverInput {
+    source_id: source::loaded_source_id(summary),
+    byte_len: source::loaded_source_byte_len(summary),
+    entry: source::loaded_source_first(summary),
+    offset: source::loaded_source_first_offset(summary),
+  };
+}
+
 pub fn run_input(input: DriverInput) -> std::Result[i64, i64] {
   let file = source::source_file(input.source_id, input.byte_len);
   if !source::contains(file, input.offset) {
@@ -34,17 +43,29 @@ pub fn run_input(input: DriverInput) -> std::Result[i64, i64] {
   return std::Err<i64, i64>(1003);
 }
 
+fn run_loaded_source(summary: source::LoadedSourceSummary) -> std::Result[i64, i64] {
+  if !source::loaded_source_has_first(summary) {
+    return std::Err<i64, i64>(1103);
+  }
+
+  return run_input(input_from_loaded_source(summary));
+}
+
+pub fn run_loaded_source_summary(
+  source_id: i64,
+  byte_len: i64,
+  first: char,
+  first_offset: i64
+) -> std::Result[i64, i64] {
+  return run_loaded_source(source::loaded_source_summary(source_id, byte_len, first, first_offset));
+}
+
 pub fn run_source_text(text: std::string::String) -> std::Result[i64, i64] {
   if text.is_empty() {
     return std::Err<i64, i64>(1101);
   }
 
-  return run_input(DriverInput {
-    source_id: 1,
-    byte_len: text.len(),
-    entry: text.get(0),
-    offset: 0,
-  });
+  return run_loaded_source(source::loaded_source_summary(1, text.len(), text.get(0), 0));
 }
 
 pub fn run_file(zone: ref mut Zone, path: std::Slice[u8]) -> std::Result[i64, i64] {
