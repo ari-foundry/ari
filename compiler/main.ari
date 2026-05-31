@@ -2,6 +2,7 @@ mod source;
 mod token;
 mod diagnostic;
 mod lexer;
+mod ast;
 mod parser;
 
 fn main() -> i64 {
@@ -24,7 +25,9 @@ fn main() -> i64 {
     lexer::cursor_score(lexer::cursor_from_one('a', 7)) +
     lexer::cursor_score(lexer::cursor_advance(lexer::cursor_from_one('a', 7))) -
     18 +
+    ast::node_score(ast::error_node(1, 0, 4, 6)) -
+    12 +
     parser::parse_score(parser::parse_one('p', 2)) +
     parser::parse_score(parser::parse_empty()) -
-    2009;
+    2013;
 }

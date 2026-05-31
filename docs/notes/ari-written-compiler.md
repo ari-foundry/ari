@@ -26,6 +26,7 @@ compiler/
   token.ari
   diagnostic.ari
   lexer.ari
+  ast.ari
   parser.ari
 ```
 
@@ -60,8 +61,9 @@ compiler feature in the normal focused-test workflow.
 - `compiler/lexer.ari` has a tiny `TokenCursor` shape over one scanned token
   and an EOF advance path. It is a placeholder for phase handoff, not a real
   source-text stream.
+- `compiler/ast.ari` now models a minimal span-carrying parser output node.
 - `compiler/parser.ari` exists as a phase-boundary skeleton that consumes the
-  lexer cursor shape and returns either a parser-shaped node or a shared
+  lexer cursor shape and returns either an `ast::Node` or a shared
   diagnostic failure.
 - `compiler/main.ari` imports the sibling modules and exercises their public
   surfaces with a minimal smoke path.
@@ -71,7 +73,7 @@ compiler feature in the normal focused-test workflow.
   source-root smokes.
 - Each module is kept small enough to check directly with the stage0 compiler.
 - No Ari-written AST, semantic checker, IR, codegen, driver, or file loader
-  exists yet.
+  exists yet beyond the minimal parser-output node model.
 
 ## Incremental Roadmap
 
@@ -177,17 +179,20 @@ policy in ad hoc compiler files.
   diagnostic failure paths.
 - Added a focused Ari compiler bootstrap test target and
   `tests/cases/ari-compiler-bootstrap/` source-root smoke fixture.
+- Added a minimal `ast.ari` node model and connected parser success results to
+  it.
 
 ## Small Task Queue
 
-- Add a minimal `ast.ari` node model that can become parser output later.
+- Add a minimal parser statement node shape once token handoff has more real
+  parser input.
 - Keep `compiler/main.ari` as a small integration smoke, not a real driver.
 
 ## Next Recommended Task
 
-Add a minimal `compiler/ast.ari` node model and keep `parser.ari` as a phase
-boundary stub. Do not implement expression parsing yet; the next useful step is
-only to separate parser output shape from parser control flow.
+Add a minimal parser statement node shape after the lexer cursor can expose a
+little more token information. Do not implement expression parsing yet; keep
+the next parser step focused on phase output shape rather than full grammar.
 
 ## Local Validation
 
@@ -200,6 +205,7 @@ make
 ./build/ari compiler/token.ari --check
 ./build/ari compiler/diagnostic.ari --check
 ./build/ari compiler/lexer.ari --check
+./build/ari compiler/ast.ari --check
 ./build/ari compiler/parser.ari --check
 make check-ari-compiler-bootstrap
 make check-compiler-docs
@@ -235,13 +241,14 @@ Do not run full `make check` for ordinary bootstrap slices.
 - General iterator support beyond compiler-known `range` is not ready.
 - Raw pointer operations, allocation-zone diagnostics, and explicit allocation
   policies are still hosted-compiler roadmap work.
-- There is no AST, HIR, ownership model, IR, or LLVM backend in Ari yet.
+- There is no full AST, HIR, ownership model, IR, or LLVM backend in Ari yet.
 
 ## Stage0 Host Compiler Follow-Ups
 
 Confirmed host compiler bugs from this bootstrap slice: none. The `LexResult`,
-shared diagnostic payload, one-token cursor, parser skeleton, and focused Ari
-compiler bootstrap test target checked without requiring a hosted compiler fix.
+shared diagnostic payload, one-token cursor, parser skeleton, minimal AST node,
+and focused Ari compiler bootstrap test target checked without requiring a
+hosted compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
@@ -253,5 +260,8 @@ Desired stage0 pressure that is not yet classified as a bug:
 
 - Better runtime strings, slices, and file IO for real source input.
 - Stronger aggregate/type monomorphization for compiler-shaped models.
+- Clearer cross-module type identity ergonomics for shared phase models; this
+  slice keeps AST constructors scalar at module boundaries instead of passing a
+  `source::Span` across nested import paths.
 - Clearer ownership-phase ergonomics for checked trees and payload movement.
 - More general iterator support beyond compiler-known `range`.

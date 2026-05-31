@@ -1,0 +1,47 @@
+mod source;
+
+pub enum NodeKind {
+  Missing,
+  Token,
+  Error,
+}
+
+pub struct Node {
+  kind: NodeKind,
+  span: source::Span,
+  value: i64,
+}
+
+pub fn make_node(kind: NodeKind, source_id: i64, start: i64, end: i64, value: i64) -> Node {
+  return Node {
+    kind: kind,
+    span: source::span(source_id, start, end),
+    value: value,
+  };
+}
+
+pub fn missing_node(source_id: i64, start: i64, end: i64) -> Node {
+  return make_node(Missing, source_id, start, end, 0);
+}
+
+pub fn token_node(source_id: i64, start: i64, end: i64, value: i64) -> Node {
+  return make_node(Token, source_id, start, end, value);
+}
+
+pub fn error_node(source_id: i64, start: i64, end: i64, code: i64) -> Node {
+  return make_node(Error, source_id, start, end, code);
+}
+
+pub fn kind_score(kind: NodeKind) -> i64 {
+  match kind {
+    Missing => 0,
+    Token => 1,
+    Error => 2,
+  }
+}
+
+pub fn node_score(node: Node) -> i64 {
+  return kind_score(node.kind) +
+    source::span_len(node.span) +
+    node.value;
+}

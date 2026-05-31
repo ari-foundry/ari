@@ -1,20 +1,16 @@
 mod diagnostic;
 mod lexer;
-
-pub struct ParseNode {
-  kind: i64,
-  token_score: i64,
-}
+mod ast;
 
 pub enum ParseResult {
-  Parsed(ParseNode),
+  Parsed(ast::Node),
   Failed(diagnostic::Diagnostic),
 }
 
 pub fn parse_cursor(cursor: lexer::TokenCursor) -> ParseResult {
   let score = lexer::cursor_score(cursor);
   if score > 0 {
-    return Parsed(ParseNode { kind: 1, token_score: score });
+    return Parsed(ast::token_node(0, 0, score, score));
   }
   return Failed(diagnostic::error(2001, 0, 0));
 }
@@ -29,7 +25,7 @@ pub fn parse_empty() -> ParseResult {
 
 pub fn parse_score(result: ParseResult) -> i64 {
   match result {
-    Parsed(node) => node.kind + node.token_score,
+    Parsed(node) => ast::node_score(node),
     Failed(failure) => diagnostic::diagnostic_score(failure),
   }
 }

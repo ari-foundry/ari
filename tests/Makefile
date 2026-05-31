@@ -628,6 +628,7 @@ check-ari-compiler-bootstrap: $(TARGET)
 	$(TARGET) compiler/token.ari --check
 	$(TARGET) compiler/diagnostic.ari --check
 	$(TARGET) compiler/lexer.ari --check
+	$(TARGET) compiler/ast.ari --check
 	$(TARGET) compiler/parser.ari --check
 	$(TARGET) compiler/main.ari --check
 	$(TARGET) -Icompiler tests/cases/ari-compiler-bootstrap/ok/source-root-smoke.ari --check
