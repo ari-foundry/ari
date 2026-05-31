@@ -98,6 +98,9 @@ compiler feature in the normal focused-test workflow.
 - `compiler/driver.ari` now uses the parser success helper before returning
   success, so diagnostic parse results no longer count as successful driver
   runs only because they have positive smoke scores.
+- `compiler/driver.ari` now preserves parser failure diagnostic codes for the
+  current one-token handoff path instead of collapsing them to generic driver
+  error `1003`.
 - File-input smoke paths use explicit `zone(16384)` allocation blocks because
   the source-root fixture is now large enough to exceed the default zone
   capacity when read into an owned string.
@@ -238,11 +241,12 @@ policy in ad hoc compiler files.
 - Added an invalid loaded-source summary smoke that checks the driver's
   out-of-range first-byte offset error payload.
 - Added an explicit parser success helper and routed the driver through it, with
-  source-root smoke coverage for a parse failure that returns driver error
-  `1003`.
+  source-root smoke coverage for a parse failure path.
 - Added a diagnostic-code accessor and parser failure-code helper, with
   source-root smoke coverage for both the raw diagnostic accessor and a parser
   whitespace failure code.
+- Routed driver parse failures through the parser failure-code helper, with
+  source-root smoke coverage for whitespace and unknown-token diagnostic codes.
 - Switched file-input smoke allocation blocks to explicit `zone(16384)` after
   the growing source-root fixture exceeded the default zone capacity at
   runtime.
@@ -251,16 +255,15 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Route driver parse failures through the parser failure-code helper so
-  whitespace and unknown-token parser diagnostics are not collapsed to generic
-  driver error `1003`.
+- Add a small driver result-code helper for tests and later CLI plumbing so
+  bootstrap fixtures do not need to repeat `std::Result` matching whenever they
+  inspect internal driver errors.
 
 ## Next Recommended Task
 
-Route driver parse failures through the parser failure-code helper. Keep this
-limited to preserving the existing parser diagnostic code in the driver's
-`std::Result`; do not implement expression parsing, diagnostic rendering, or a
-broader parse tree yet.
+Add a small driver result-code helper that returns the contained `Ok` code or
+`Err` code as an integer for bootstrap inspection. Keep `exit_code` as the CLI
+mapping helper, and do not add diagnostic rendering or option parsing yet.
 
 ## Local Validation
 
@@ -328,7 +331,7 @@ failure-code helper, loaded-source summary, `std::Result`-based driver entry
 flow, and focused Ari compiler bootstrap test target checked without requiring
 a hosted compiler fix. The file-input smoke path also checked with `std::fs`
 and `std::context` argv without requiring a hosted compiler fix. The invalid
-loaded-source summary smoke and parse-failure driver smoke also checked
+loaded-source summary smoke and parse-failure driver smokes also checked
 `std::Result` matching in the fixture without requiring a hosted compiler fix.
 The growing source-root fixture did expose a default-zone capacity runtime trap
 while reading the file smoke; this was fixed locally with explicit

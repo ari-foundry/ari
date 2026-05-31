@@ -40,6 +40,11 @@ pub fn run_input(input: DriverInput) -> std::Result[i64, i64] {
     return std::Ok<i64, i64>(0);
   }
 
+  let code = parser::parse_failure_code(parsed);
+  if code > 0 {
+    return std::Err<i64, i64>(code);
+  }
+
   return std::Err<i64, i64>(1003);
 }
 

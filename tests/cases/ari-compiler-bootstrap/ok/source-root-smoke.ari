@@ -55,6 +55,17 @@ fn failed_parse_driver_score() -> i64 {
   }
 }
 
+fn failed_unknown_driver_score() -> i64 {
+  match driver::run_loaded_source_summary(1, 3, '!', 0) {
+    std::Ok(_) => {
+      return 1;
+    }
+    std::Err(code) => {
+      return code;
+    }
+  }
+}
+
 fn diagnostic_code_score() -> i64 {
   return diagnostic::diagnostic_code(diagnostic::error(77, 1, 2));
 }
@@ -94,7 +105,9 @@ fn main() -> i64 {
     1103 +
     parse_success_score() +
     failed_parse_driver_score() -
-    1003 +
+    2004 +
+    failed_unknown_driver_score() -
+    2005 +
     diagnostic_code_score() -
     77 +
     parse_failure_code_score() -
