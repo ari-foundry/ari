@@ -1,14 +1,9 @@
+mod diagnostic;
 mod token;
-
-pub struct LexDiagnostic {
-  code: i64,
-  offset: i64,
-  found: char,
-}
 
 pub enum LexResult {
   Scanned(token::Token),
-  Failed(LexDiagnostic),
+  Failed(diagnostic::Diagnostic),
 }
 
 pub fn is_ascii_alpha(value: char) -> bool {
@@ -36,8 +31,8 @@ pub fn scan_one(value: char, offset: i64) -> token::Token {
   return token::make_token(classify_one(value), offset, offset + 1);
 }
 
-pub fn invalid_character(offset: i64, found: char) -> LexDiagnostic {
-  return LexDiagnostic { code: 1001, offset: offset, found: found };
+pub fn invalid_character(offset: i64) -> diagnostic::Diagnostic {
+  return diagnostic::error(1001, offset, offset + 1);
 }
 
 pub fn scan_one_result(value: char, offset: i64) -> LexResult {
@@ -54,20 +49,16 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
     EndOfFile => {
       return Scanned(token::make_token(token::EndOfFile, offset, offset));
     }
-    Unknown(found) => {
-      return Failed(invalid_character(offset, found));
+    Unknown(_) => {
+      return Failed(invalid_character(offset));
     }
   }
-}
-
-pub fn lex_diagnostic_score(diagnostic: LexDiagnostic) -> i64 {
-  return diagnostic.code + diagnostic.offset;
 }
 
 pub fn scan_result_score(result: LexResult) -> i64 {
   match result {
     Scanned(scanned) => token::token_score(scanned),
-    Failed(diagnostic) => lex_diagnostic_score(diagnostic),
+    Failed(failure) => diagnostic::diagnostic_score(failure),
   }
 }
 

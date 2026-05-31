@@ -54,8 +54,8 @@ compiler feature in the normal focused-test workflow.
 - The initial files model source spans, token kinds, diagnostics, and a tiny
   one-character lexer classification path.
 - `compiler/lexer.ari` now has a small `LexResult` flow for one-character scans
-  that can return either a token or a diagnostic-shaped invalid-character
-  failure.
+  that can return either a token or a shared `diagnostic::Diagnostic`
+  invalid-character failure.
 - `compiler/main.ari` imports the sibling modules and exercises their public
   surfaces with a minimal smoke path.
 - Each module is kept small enough to check directly with the stage0 compiler.
@@ -153,18 +153,15 @@ policy in ad hoc compiler files.
 
 ## Small Task Queue
 
-- Decide the first shared diagnostic payload that can be used without making
-  standalone module checks fragile.
 - Add a tiny token cursor once Ari has a source text representation suitable for
   compiler input.
 - Keep `compiler/main.ari` as a small integration smoke, not a real driver.
 
 ## Next Recommended Task
 
-Decide whether lexer failures should keep a local `LexDiagnostic` payload for
-now or import a shared diagnostic type from `compiler/diagnostic.ari`. Keep the
-change small enough that `compiler/lexer.ari` and `compiler/main.ari` still pass
-direct `--check` runs.
+Add a tiny token cursor shape once Ari has a source text representation suitable
+for compiler input. Until then, keep `compiler/main.ari` as a small integration
+smoke and avoid pretending there is a real driver.
 
 ## Local Validation
 
@@ -214,7 +211,8 @@ Do not run full `make check` for ordinary bootstrap slices.
 ## Stage0 Host Compiler Follow-Ups
 
 Confirmed host compiler bugs from this bootstrap slice: none. The `LexResult`
-slice checked without requiring a hosted compiler fix.
+slice and shared diagnostic payload checked without requiring a hosted compiler
+fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
