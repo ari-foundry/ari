@@ -65,11 +65,88 @@ compiler feature in the normal focused-test workflow.
 2. Grow `lexer.ari` from one-character classification into a small result-based
    scanner over the source representation Ari can support today.
 3. Add parser-shaped enums and structs only after token flow is stable.
-4. Add source loading and real text buffers after runtime strings, slices, and
+4. Add `parser.ari`, `ast.ari`, and phase-shaped model files only when the
+   previous phase has checked output worth passing forward.
+5. Add source loading and real text buffers after runtime strings, slices, and
    file IO are strong enough for compiler input.
-5. Add semantic model stubs before any lowering or backend work.
-6. Continue to use the C++ hosted compiler as stage0 until the Ari-written
+6. Add semantic model stubs before any lowering or backend work.
+7. Continue to use the C++ hosted compiler as stage0 until the Ari-written
    compiler can check meaningful multi-file inputs itself.
+
+## Phase Architecture
+
+Do not blindly copy the current C++ hosted compiler architecture. In
+particular, do not recreate a giant `sema`-style module that owns module
+loading, name lookup, type inference, type checking, ownership, lowering, and
+IR generation together.
+
+Prefer compiler phase and responsibility boundaries:
+
+- `source` / `span` / source identity
+- `diagnostic`
+- `token`
+- `lexer`
+- `parser`
+- `ast`
+- `module_loader`
+- `name_resolve`
+- `type_infer`
+- `type_check`
+- `ownership`
+- `hir` or another checked tree
+- `lower`
+- `ir`
+- `codegen`
+- `driver`
+- later package/build integration
+
+The early files can stay flat under `compiler/` while the project is tiny.
+When the file count grows, organize by Ari module structure and phase ownership,
+not by recreating the C++ source layout.
+
+Keep these phase boundaries explicit:
+
+- `module_loader` should load and identify source units, not perform type
+  checking.
+- `name_resolve` should resolve names and imports, not silently become the whole
+  semantic pipeline.
+- `type_infer` should be separate from final `type_check` validation where the
+  language can express that cleanly.
+- `ownership` should become an explicit phase boundary once checked trees can
+  carry enough ownership facts.
+- `lower` should translate checked forms to IR so codegen does not re-resolve
+  source-level names.
+- `codegen` should consume lowered/typed forms instead of owning frontend
+  decisions.
+- `driver` should orchestrate phases, options, and artifacts, not contain core
+  compiler logic.
+
+Also avoid the opposite mistake: do not split the compiler around tiny
+container or utility concepts such as `vec`, `box`, or `map`. Those are library
+and data-structure details, not compiler phase boundaries.
+
+Phase outputs should be explicit enough that future tooling, LSP support,
+package-manager integration, and self-host debugging can inspect them.
+
+## Future Package Manager Transition
+
+The current `compiler/` layout is an early bootstrap source-root layout. It is
+not pretending to be the final package-manager-era project shape.
+
+A future Ari package manager or build tool may reorganize:
+
+- compiler module layout and package boundaries
+- build metadata and target selection
+- test discovery and fixture grouping
+- dependency resolution and module search paths
+- artifact naming, cache locations, and generated-output policy
+- integration points for LSP, formatting, and self-host debugging
+
+Do not design or add a cargo-like tool in this bootstrap slice. Keep the current
+work compatible with the existing stage0 compiler, normal file-backed modules,
+and focused Make targets. When a package manager exists, migrate from the flat
+`compiler/*.ari` source root deliberately instead of growing hidden package
+policy in ad hoc compiler files.
 
 ## Small Task Queue
 
@@ -132,3 +209,20 @@ Do not run full `make check` for ordinary bootstrap slices.
 - Raw pointer operations, allocation-zone diagnostics, and explicit allocation
   policies are still hosted-compiler roadmap work.
 - There is no parser, AST, HIR, ownership model, IR, or LLVM backend in Ari yet.
+
+## Stage0 Host Compiler Follow-Ups
+
+Confirmed host compiler bugs from this bootstrap slice: none.
+
+When Ari-written compiler work exposes behavior that looks wrong in the current
+C++ hosted compiler, keep it separate from the Ari-written compiler task list.
+Record the smallest Ari repro, expected behavior, actual behavior, focused
+check target, and whether it belongs in parser, modules, generics, ownership,
+codegen, diagnostics, or another hosted compiler area.
+
+Desired stage0 pressure that is not yet classified as a bug:
+
+- Better runtime strings, slices, and file IO for real source input.
+- Stronger aggregate/type monomorphization for compiler-shaped models.
+- Clearer ownership-phase ergonomics for checked trees and payload movement.
+- More general iterator support beyond compiler-known `range`.

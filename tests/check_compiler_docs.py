@@ -112,10 +112,15 @@ def main() -> int:
         "The existing C++ compiler remains stage0.",
         "## Current Status",
         "## Incremental Roadmap",
+        "## Phase Architecture",
+        "Do not blindly copy the current C++ hosted compiler architecture.",
+        "## Future Package Manager Transition",
         "## Small Task Queue",
         "## Next Recommended Task",
         "## Local Validation",
         "## Known Blockers",
+        "## Stage0 Host Compiler Follow-Ups",
+        "Confirmed host compiler bugs from this bootstrap slice: none.",
     ]:
         require(ari_written, needle, ari_written_path)
 
