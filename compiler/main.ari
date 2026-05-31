@@ -29,5 +29,5 @@ fn main() -> i64 {
     12 +
     parser::parse_score(parser::parse_one('p', 2)) +
     parser::parse_score(parser::parse_empty()) -
-    2013;
+    2010;
 }

@@ -17,5 +17,5 @@ fn main() -> i64 {
     12 +
     parser::parse_score(parser::parse_one('q', 1)) +
     parser::parse_score(parser::parse_empty()) -
-    3020;
+    3018;
 }

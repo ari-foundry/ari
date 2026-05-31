@@ -7,12 +7,21 @@ pub enum ParseResult {
   Failed(diagnostic::Diagnostic),
 }
 
-pub fn parse_cursor(cursor: lexer::TokenCursor) -> ParseResult {
-  let score = lexer::cursor_score(cursor);
-  if score > 0 {
-    return Parsed(ast::token_node(0, 0, score, score));
+pub fn parse_statement(cursor: lexer::TokenCursor) -> ParseResult {
+  let score = lexer::cursor_token_score(cursor);
+  if score > 0 && !lexer::cursor_is_done(cursor) {
+    return Parsed(ast::statement_node(
+      0,
+      lexer::cursor_token_start(cursor),
+      lexer::cursor_token_end(cursor),
+      score
+    ));
   }
   return Failed(diagnostic::error(2001, 0, 0));
+}
+
+pub fn parse_cursor(cursor: lexer::TokenCursor) -> ParseResult {
+  return parse_statement(cursor);
 }
 
 pub fn parse_one(value: char, offset: i64) -> ParseResult {

@@ -78,6 +78,22 @@ pub fn cursor_advance(cursor: TokenCursor) -> TokenCursor {
   };
 }
 
+pub fn cursor_is_done(cursor: TokenCursor) -> bool {
+  return cursor.done;
+}
+
+pub fn cursor_token_start(cursor: TokenCursor) -> i64 {
+  return cursor.current.start;
+}
+
+pub fn cursor_token_end(cursor: TokenCursor) -> i64 {
+  return cursor.current.end;
+}
+
+pub fn cursor_token_score(cursor: TokenCursor) -> i64 {
+  return token::token_score(cursor.current);
+}
+
 pub fn cursor_score(cursor: TokenCursor) -> i64 {
   if cursor.done {
     return token::token_score(cursor.current) + cursor.offset + 1;

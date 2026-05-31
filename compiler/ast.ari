@@ -3,6 +3,7 @@ mod source;
 pub enum NodeKind {
   Missing,
   Token,
+  Statement,
   Error,
 }
 
@@ -28,6 +29,10 @@ pub fn token_node(source_id: i64, start: i64, end: i64, value: i64) -> Node {
   return make_node(Token, source_id, start, end, value);
 }
 
+pub fn statement_node(source_id: i64, start: i64, end: i64, value: i64) -> Node {
+  return make_node(Statement, source_id, start, end, value);
+}
+
 pub fn error_node(source_id: i64, start: i64, end: i64, code: i64) -> Node {
   return make_node(Error, source_id, start, end, code);
 }
@@ -36,7 +41,8 @@ pub fn kind_score(kind: NodeKind) -> i64 {
   match kind {
     Missing => 0,
     Token => 1,
-    Error => 2,
+    Statement => 2,
+    Error => 3,
   }
 }
 
