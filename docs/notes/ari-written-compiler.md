@@ -101,6 +101,9 @@ compiler feature in the normal focused-test workflow.
 - `compiler/driver.ari` now preserves parser failure diagnostic codes for the
   current one-token handoff path instead of collapsing them to generic driver
   error `1003`.
+- `compiler/driver.ari` exposes a `result_code` helper for bootstrap tests and
+  later internal plumbing that need to inspect either `Ok` or `Err` payloads
+  without using CLI exit-code mapping.
 - File-input smoke paths use explicit `zone(16384)` allocation blocks because
   the source-root fixture is now large enough to exceed the default zone
   capacity when read into an owned string.
@@ -247,6 +250,8 @@ policy in ad hoc compiler files.
   whitespace failure code.
 - Routed driver parse failures through the parser failure-code helper, with
   source-root smoke coverage for whitespace and unknown-token diagnostic codes.
+- Added a driver result-code helper and simplified bootstrap smokes that inspect
+  internal driver error payloads.
 - Switched file-input smoke allocation blocks to explicit `zone(16384)` after
   the growing source-root fixture exceeded the default zone capacity at
   runtime.
@@ -255,15 +260,15 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a small driver result-code helper for tests and later CLI plumbing so
-  bootstrap fixtures do not need to repeat `std::Result` matching whenever they
-  inspect internal driver errors.
+- Add focused driver input-bound smokes for the existing `1001` and `1002`
+  offset validation errors using the new result-code helper.
 
 ## Next Recommended Task
 
-Add a small driver result-code helper that returns the contained `Ok` code or
-`Err` code as an integer for bootstrap inspection. Keep `exit_code` as the CLI
-mapping helper, and do not add diagnostic rendering or option parsing yet.
+Add focused driver input-bound smokes for the existing `1001` and `1002` offset
+validation errors using `driver::result_code`. Keep this limited to validating
+current driver guard behavior; do not add option parsing, diagnostic rendering,
+or a source table yet.
 
 ## Local Validation
 
@@ -328,15 +333,21 @@ skeleton, minimal token handoff, token-kind query helpers, unknown-token query
 helpers, minimal AST node, statement output node, parser non-statement
 diagnostic paths, parser success helper, diagnostic-code accessor, parser
 failure-code helper, loaded-source summary, `std::Result`-based driver entry
-flow, and focused Ari compiler bootstrap test target checked without requiring
-a hosted compiler fix. The file-input smoke path also checked with `std::fs`
-and `std::context` argv without requiring a hosted compiler fix. The invalid
-loaded-source summary smoke and parse-failure driver smokes also checked
-`std::Result` matching in the fixture without requiring a hosted compiler fix.
+flow, driver result-code helper, and focused Ari compiler bootstrap test target
+checked without requiring a hosted compiler fix. The file-input smoke path also
+checked with `std::fs` and `std::context` argv without requiring a hosted
+compiler fix. The invalid loaded-source summary smoke and parse-failure driver
+smokes also checked `std::Result` payload inspection without requiring a hosted
+compiler fix.
 The growing source-root fixture did expose a default-zone capacity runtime trap
 while reading the file smoke; this was fixed locally with explicit
 `zone(16384)` allocation blocks and is recorded as allocation-policy pressure
 rather than a confirmed hosted compiler bug.
+
+This slice also showed that reusing the same payload binding name across
+`std::Result` match arms is rejected as local shadowing/redeclaration. The
+helper uses distinct binding names; this is recorded as match-arm scoping
+ergonomics pressure, not a confirmed hosted compiler bug.
 
 This slice also reconfirmed the existing cross-module type identity pressure:
 a value constructed as root `source::LoadedSourceSummary` is not the same type
@@ -363,3 +374,5 @@ Desired stage0 pressure that is not yet classified as a bug:
 - Clearer allocation-policy ergonomics for self-host file reads; default
   `zone { ... }` capacity can be too small for growing compiler fixtures, so
   explicit `zone(capacity)` is currently required.
+- Clearer match-arm binding scoping ergonomics; today a helper that matches
+  both `std::Ok(code)` and `std::Err(code)` must use distinct payload names.

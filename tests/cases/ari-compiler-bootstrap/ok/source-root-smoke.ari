@@ -24,14 +24,7 @@ fn loaded_driver_score() -> i64 {
 }
 
 fn invalid_loaded_driver_score() -> i64 {
-  match driver::run_loaded_source_summary(1, 3, 'p', 3) {
-    std::Ok(_) => {
-      return 1;
-    }
-    std::Err(code) => {
-      return code;
-    }
-  }
+  return driver::result_code(driver::run_loaded_source_summary(1, 3, 'p', 3));
 }
 
 fn parse_success_score() -> i64 {
@@ -45,25 +38,11 @@ fn parse_success_score() -> i64 {
 }
 
 fn failed_parse_driver_score() -> i64 {
-  match driver::run_loaded_source_summary(1, 3, ' ', 0) {
-    std::Ok(_) => {
-      return 1;
-    }
-    std::Err(code) => {
-      return code;
-    }
-  }
+  return driver::result_code(driver::run_loaded_source_summary(1, 3, ' ', 0));
 }
 
 fn failed_unknown_driver_score() -> i64 {
-  match driver::run_loaded_source_summary(1, 3, '!', 0) {
-    std::Ok(_) => {
-      return 1;
-    }
-    std::Err(code) => {
-      return code;
-    }
-  }
+  return driver::result_code(driver::run_loaded_source_summary(1, 3, '!', 0));
 }
 
 fn diagnostic_code_score() -> i64 {
