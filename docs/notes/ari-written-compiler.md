@@ -82,6 +82,9 @@ compiler feature in the normal focused-test workflow.
 - `compiler/parser.ari` exposes a `parse_is_success` helper so downstream
   phases can distinguish `Parsed` from diagnostic `Failed` without using
   smoke-test score values.
+- `compiler/diagnostic.ari` exposes a diagnostic-code accessor, and
+  `compiler/parser.ari` exposes a parser failure-code helper for phase
+  boundaries that need diagnostic identity without rendering diagnostics.
 - `compiler/driver.ari` owns the current bootstrap entry flow and returns a
   standard-library `std::Result[i64, i64]` instead of embedding smoke arithmetic
   in `main`.
@@ -237,6 +240,9 @@ policy in ad hoc compiler files.
 - Added an explicit parser success helper and routed the driver through it, with
   source-root smoke coverage for a parse failure that returns driver error
   `1003`.
+- Added a diagnostic-code accessor and parser failure-code helper, with
+  source-root smoke coverage for both the raw diagnostic accessor and a parser
+  whitespace failure code.
 - Switched file-input smoke allocation blocks to explicit `zone(16384)` after
   the growing source-root fixture exceeded the default zone capacity at
   runtime.
@@ -245,16 +251,16 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a diagnostic-code accessor and a small parser failure-code helper so the
-  driver can eventually preserve parser failure diagnostics instead of using
-  only generic driver error `1003`.
+- Route driver parse failures through the parser failure-code helper so
+  whitespace and unknown-token parser diagnostics are not collapsed to generic
+  driver error `1003`.
 
 ## Next Recommended Task
 
-Add a diagnostic-code accessor and a small parser failure-code helper. Keep it
-focused on exposing the existing diagnostic code through phase boundaries; do
-not implement expression parsing, diagnostic rendering, or a broader parse tree
-yet.
+Route driver parse failures through the parser failure-code helper. Keep this
+limited to preserving the existing parser diagnostic code in the driver's
+`std::Result`; do not implement expression parsing, diagnostic rendering, or a
+broader parse tree yet.
 
 ## Local Validation
 
@@ -317,16 +323,17 @@ Confirmed host compiler bugs from this bootstrap slice: none. The `LexResult`,
 shared diagnostic payload, one-token cursor, cursor token accessors, parser
 skeleton, minimal token handoff, token-kind query helpers, unknown-token query
 helpers, minimal AST node, statement output node, parser non-statement
-diagnostic paths, parser success helper, loaded-source summary,
-`std::Result`-based driver entry flow, and focused Ari compiler bootstrap test
-target checked without requiring a hosted compiler fix. The file-input smoke
-path also checked with `std::fs` and `std::context` argv without requiring a
-hosted compiler fix. The invalid loaded-source summary smoke and parse-failure
-driver smoke also checked `std::Result` matching in the fixture without
-requiring a hosted compiler fix. The growing source-root fixture did expose a
-default-zone capacity runtime trap while reading the file smoke; this was fixed
-locally with explicit `zone(16384)` allocation blocks and is recorded as
-allocation-policy pressure rather than a confirmed hosted compiler bug.
+diagnostic paths, parser success helper, diagnostic-code accessor, parser
+failure-code helper, loaded-source summary, `std::Result`-based driver entry
+flow, and focused Ari compiler bootstrap test target checked without requiring
+a hosted compiler fix. The file-input smoke path also checked with `std::fs`
+and `std::context` argv without requiring a hosted compiler fix. The invalid
+loaded-source summary smoke and parse-failure driver smoke also checked
+`std::Result` matching in the fixture without requiring a hosted compiler fix.
+The growing source-root fixture did expose a default-zone capacity runtime trap
+while reading the file smoke; this was fixed locally with explicit
+`zone(16384)` allocation blocks and is recorded as allocation-policy pressure
+rather than a confirmed hosted compiler bug.
 
 This slice also reconfirmed the existing cross-module type identity pressure:
 a value constructed as root `source::LoadedSourceSummary` is not the same type

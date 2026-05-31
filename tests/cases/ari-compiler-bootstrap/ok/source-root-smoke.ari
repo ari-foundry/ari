@@ -1,4 +1,5 @@
 mod source;
+mod diagnostic;
 mod lexer;
 mod ast;
 mod parser;
@@ -54,6 +55,17 @@ fn failed_parse_driver_score() -> i64 {
   }
 }
 
+fn diagnostic_code_score() -> i64 {
+  return diagnostic::diagnostic_code(diagnostic::error(77, 1, 2));
+}
+
+fn parse_failure_code_score() -> i64 {
+  if parser::parse_failure_code(parser::parse_one('q', 1)) != 0 {
+    return 1;
+  }
+  return parser::parse_failure_code(parser::parse_one(' ', 4));
+}
+
 fn main() -> i64 {
   let file = source::source_file(3, 12);
   let span = source::span(3, 2, 5);
@@ -83,6 +95,10 @@ fn main() -> i64 {
     parse_success_score() +
     failed_parse_driver_score() -
     1003 +
+    diagnostic_code_score() -
+    77 +
+    parse_failure_code_score() -
+    2004 +
     file_driver_score() +
     parser::parse_score(parser::parse_empty()) -
     3018;

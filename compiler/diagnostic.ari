@@ -27,6 +27,10 @@ pub fn severity_score(severity: Severity) -> i64 {
   }
 }
 
+pub fn diagnostic_code(diagnostic: Diagnostic) -> i64 {
+  return diagnostic.code;
+}
+
 pub fn diagnostic_score(diagnostic: Diagnostic) -> i64 {
   return diagnostic.code +
     diagnostic.end -
