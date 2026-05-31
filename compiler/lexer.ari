@@ -12,6 +12,11 @@ pub struct TokenCursor {
   done: bool,
 }
 
+pub struct TokenHandoff {
+  first: TokenCursor,
+  eof: TokenCursor,
+}
+
 pub fn is_ascii_alpha(value: char) -> bool {
   return (value >= 'a' && value <= 'z') || (value >= 'A' && value <= 'Z') || value == '_';
 }
@@ -94,11 +99,34 @@ pub fn cursor_token_score(cursor: TokenCursor) -> i64 {
   return token::token_score(cursor.current);
 }
 
+pub fn handoff_from_one(value: char, offset: i64) -> TokenHandoff {
+  return TokenHandoff {
+    first: cursor_from_one(value, offset),
+    eof: cursor_advance(cursor_from_one(value, offset)),
+  };
+}
+
+pub fn handoff_first(handoff: TokenHandoff) -> TokenCursor {
+  return handoff.first;
+}
+
+pub fn handoff_eof(handoff: TokenHandoff) -> TokenCursor {
+  return handoff.eof;
+}
+
+pub fn handoff_has_eof(handoff: TokenHandoff) -> bool {
+  return cursor_is_done(handoff.eof) && cursor_token_score(handoff.eof) == 0;
+}
+
 pub fn cursor_score(cursor: TokenCursor) -> i64 {
   if cursor.done {
     return token::token_score(cursor.current) + cursor.offset + 1;
   }
   return token::token_score(cursor.current) + cursor.offset;
+}
+
+pub fn handoff_score(handoff: TokenHandoff) -> i64 {
+  return cursor_score(handoff.first) + cursor_score(handoff.eof);
 }
 
 pub fn scan_result_score(result: LexResult) -> i64 {

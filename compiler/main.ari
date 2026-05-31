@@ -25,6 +25,8 @@ fn main() -> i64 {
     lexer::cursor_score(lexer::cursor_from_one('a', 7)) +
     lexer::cursor_score(lexer::cursor_advance(lexer::cursor_from_one('a', 7))) -
     18 +
+    lexer::handoff_score(lexer::handoff_from_one('b', 9)) -
+    22 +
     ast::node_score(ast::error_node(1, 0, 4, 6)) -
     12 +
     parser::parse_score(parser::parse_one('p', 2)) +

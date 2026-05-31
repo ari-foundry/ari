@@ -13,6 +13,8 @@ fn main() -> i64 {
 
   return source::span_len(span) +
     lexer::scan_result_score(lexer::scan_one_result('!', 4)) +
+    lexer::handoff_score(lexer::handoff_from_one('x', 6)) -
+    16 +
     ast::node_score(ast::token_node(3, 2, 5, 8)) -
     12 +
     parser::parse_score(parser::parse_one('q', 1)) +

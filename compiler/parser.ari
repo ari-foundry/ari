@@ -24,8 +24,16 @@ pub fn parse_cursor(cursor: lexer::TokenCursor) -> ParseResult {
   return parse_statement(cursor);
 }
 
+pub fn parse_handoff(handoff: lexer::TokenHandoff) -> ParseResult {
+  if !lexer::handoff_has_eof(handoff) {
+    return Failed(diagnostic::error(2003, 0, 0));
+  }
+
+  return parse_statement(lexer::handoff_first(handoff));
+}
+
 pub fn parse_one(value: char, offset: i64) -> ParseResult {
-  return parse_cursor(lexer::cursor_from_one(value, offset));
+  return parse_handoff(lexer::handoff_from_one(value, offset));
 }
 
 pub fn parse_empty() -> ParseResult {

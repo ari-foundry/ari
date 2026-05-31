@@ -63,11 +63,13 @@ compiler feature in the normal focused-test workflow.
   source-text stream.
 - `compiler/lexer.ari` exposes small cursor accessors for the current token
   span, token score, and done state.
+- `compiler/lexer.ari` has a minimal `TokenHandoff` shape that carries one real
+  token cursor plus an explicit EOF observation.
 - `compiler/ast.ari` now models minimal span-carrying token, statement, error,
   and missing output nodes.
 - `compiler/parser.ari` exists as a phase-boundary skeleton that consumes the
-  lexer cursor shape and returns either a statement-shaped `ast::Node` over the
-  current token span or a shared diagnostic failure.
+  lexer handoff shape and returns either a statement-shaped `ast::Node` over
+  the current token span or a shared diagnostic failure.
 - `compiler/main.ari` imports the sibling modules and exercises their public
   surfaces with a minimal smoke path.
 - `make check-ari-compiler-bootstrap` checks each `compiler/*.ari` module,
@@ -186,19 +188,21 @@ policy in ad hoc compiler files.
   it.
 - Added cursor token accessors and a minimal statement-shaped parser output
   node.
+- Added a minimal `TokenHandoff` carrying one real token plus EOF, and routed
+  `parser::parse_one` through that handoff.
 
 ## Small Task Queue
 
-- Grow `lexer.ari` from a one-token cursor into a tiny token handoff with one
-  real token plus an explicit EOF observation.
+- Add tiny token-kind query helpers so parser skeletons can distinguish
+  identifier, number, whitespace, and EOF handoff cases without full grammar.
 - Keep `compiler/main.ari` as a small integration smoke, not a real driver.
 
 ## Next Recommended Task
 
-Grow `lexer.ari` from the current one-token cursor into a tiny two-step token
-handoff that can expose one real token and an explicit EOF observation. Do not
-implement source text scanning or expression parsing yet; keep the next step
-limited to phase handoff shape.
+Add tiny token-kind query helpers for the lexer/parser boundary so the parser
+can distinguish identifier, number, whitespace, and EOF cases. Do not implement
+source text scanning or expression parsing yet; keep the next step limited to
+classification at the phase boundary.
 
 ## Local Validation
 
@@ -253,8 +257,9 @@ Do not run full `make check` for ordinary bootstrap slices.
 
 Confirmed host compiler bugs from this bootstrap slice: none. The `LexResult`,
 shared diagnostic payload, one-token cursor, cursor token accessors, parser
-skeleton, minimal AST node, statement output node, and focused Ari compiler
-bootstrap test target checked without requiring a hosted compiler fix.
+skeleton, minimal token handoff, minimal AST node, statement output node, and
+focused Ari compiler bootstrap test target checked without requiring a hosted
+compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
