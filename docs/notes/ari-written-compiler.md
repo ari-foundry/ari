@@ -77,6 +77,8 @@ compiler feature in the normal focused-test workflow.
 - `compiler/driver.ari` owns the current bootstrap entry flow and returns a
   standard-library `std::Result[i64, i64]` instead of embedding smoke arithmetic
   in `main`.
+- `compiler/driver.ari` can read a source file path through `std::fs` and can
+  use `std::context` argv when the executable is invoked with a file argument.
 - `compiler/main.ari` is now a thin entrypoint that delegates to the driver and
   maps the driver's result to an exit code.
 - `make check-ari-compiler-bootstrap` checks each `compiler/*.ari` module,
@@ -201,6 +203,9 @@ policy in ad hoc compiler files.
   handoff classification score.
 - Moved the test-like entry arithmetic out of `compiler/main.ari` into a
   `driver.ari` bootstrap entry flow that uses `std::Result`.
+- Added a file-input driver path using `std::fs::read_to_string` and
+  `std::context` argv, and wired the bootstrap target to execute `main` with a
+  source fixture path.
 
 ## Small Task Queue
 
@@ -258,7 +263,8 @@ Do not run full `make check` for ordinary bootstrap slices.
 - Runtime strings and richer text/slice operations are still not enough for real
   compiler source input.
 - File-backed module and project flow exists in stage0, but the Ari-written
-  compiler has no own source loader or driver.
+  compiler only has a minimal file-reading driver path, not a real source
+  loader, source table, or diagnostics over loaded text.
 - Generic aggregate/type monomorphization and trait dispatch are still growing,
   so keep data models simple and checked.
 - General iterator support beyond compiler-known `range` is not ready.
@@ -273,6 +279,8 @@ shared diagnostic payload, one-token cursor, cursor token accessors, parser
 skeleton, minimal token handoff, token-kind query helpers, minimal AST node,
 statement output node, `std::Result`-based driver entry flow, and focused Ari
 compiler bootstrap test target checked without requiring a hosted compiler fix.
+The file-input smoke path also checked with `std::fs` and `std::context` argv
+without requiring a hosted compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.

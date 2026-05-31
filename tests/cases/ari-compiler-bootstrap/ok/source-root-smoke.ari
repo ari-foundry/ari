@@ -4,6 +4,12 @@ mod ast;
 mod parser;
 mod driver;
 
+fn file_driver_score() -> i64 {
+  zone {
+    return driver::exit_code(driver::run_file("tests/cases/ari-compiler-bootstrap/ok/source-root-smoke.ari"));
+  }
+}
+
 fn main() -> i64 {
   let file = source::source_file(3, 12);
   let span = source::span(3, 2, 5);
@@ -22,6 +28,7 @@ fn main() -> i64 {
     parser::parse_one_kind_score('9', 2) -
     42 +
     driver::exit_code(driver::run()) +
+    file_driver_score() +
     parser::parse_score(parser::parse_empty()) -
     3018;
 }

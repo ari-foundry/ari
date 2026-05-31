@@ -1,5 +1,5 @@
 mod driver;
 
 fn main() -> i64 {
-  return driver::exit_code(driver::run());
+  return driver::exit_code(driver::run_from_context());
 }

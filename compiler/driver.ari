@@ -34,8 +34,43 @@ pub fn run_input(input: DriverInput) -> std::Result[i64, i64] {
   return std::Err<i64, i64>(1003);
 }
 
+pub fn run_source_text(text: std::string::String) -> std::Result[i64, i64] {
+  if text.is_empty() {
+    return std::Err<i64, i64>(1101);
+  }
+
+  return run_input(DriverInput {
+    source_id: 1,
+    byte_len: text.len(),
+    entry: text.get(0),
+    offset: 0,
+  });
+}
+
+pub fn run_file(zone: ref mut Zone, path: std::Slice[u8]) -> std::Result[i64, i64] {
+  match std::fs::read_to_string(zone, path) {
+    std::Ok(text) => {
+      return run_source_text(text);
+    }
+    std::Err(_) => {
+      return std::Err<i64, i64>(1102);
+    }
+  }
+}
+
 pub fn run() -> std::Result[i64, i64] {
   return run_input(default_input());
+}
+
+pub fn run_from_context() -> std::Result[i64, i64] {
+  if std::context::has_arg(1) {
+    zone {
+      let path = std::context::arg(1);
+      return run_file(path.as_slice());
+    }
+  }
+
+  return run();
 }
 
 pub fn exit_code(result: std::Result[i64, i64]) -> i64 {

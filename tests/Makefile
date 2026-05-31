@@ -633,7 +633,7 @@ check-ari-compiler-bootstrap: $(TARGET)
 	$(TARGET) compiler/driver.ari --check
 	$(TARGET) compiler/main.ari --check
 	$(TARGET) -Icompiler tests/cases/ari-compiler-bootstrap/ok/source-root-smoke.ari --check
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) compiler/main.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ari-compiler-bootstrap/compiler-main.elf; $(BUILD_DIR)/ari-compiler-bootstrap/compiler-main.elf; code=$$?; test $$code -eq 0; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) compiler/main.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ari-compiler-bootstrap/compiler-main.elf; $(BUILD_DIR)/ari-compiler-bootstrap/compiler-main.elf; code=$$?; test $$code -eq 0; $(BUILD_DIR)/ari-compiler-bootstrap/compiler-main.elf tests/cases/ari-compiler-bootstrap/ok/source-root-smoke.ari; code=$$?; test $$code -eq 0; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) -Icompiler tests/cases/ari-compiler-bootstrap/ok/source-root-smoke.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ari-compiler-bootstrap/source-root-smoke.elf; $(BUILD_DIR)/ari-compiler-bootstrap/source-root-smoke.elf; code=$$?; test $$code -eq 0; fi
 
 check-bootstrap-readiness: $(TARGET)
