@@ -26,6 +26,7 @@ compiler/
   token.ari
   diagnostic.ari
   lexer.ari
+  parser.ari
 ```
 
 The directory is source-only. It should contain Ari source files, not Markdown
@@ -59,10 +60,13 @@ compiler feature in the normal focused-test workflow.
 - `compiler/lexer.ari` has a tiny `TokenCursor` shape over one scanned token
   and an EOF advance path. It is a placeholder for phase handoff, not a real
   source-text stream.
+- `compiler/parser.ari` exists as a phase-boundary skeleton that consumes the
+  lexer cursor shape and returns either a parser-shaped node or a shared
+  diagnostic failure.
 - `compiler/main.ari` imports the sibling modules and exercises their public
   surfaces with a minimal smoke path.
 - Each module is kept small enough to check directly with the stage0 compiler.
-- No Ari-written parser, semantic checker, IR, codegen, driver, or file loader
+- No Ari-written AST, semantic checker, IR, codegen, driver, or file loader
   exists yet.
 
 ## Incremental Roadmap
@@ -70,8 +74,8 @@ compiler feature in the normal focused-test workflow.
 1. Keep the five-file source skeleton checking with stage0.
 2. Grow `lexer.ari` from a one-token cursor into a small token stream over the
    source representation Ari can support today.
-3. Add parser-shaped enums and structs only after token flow is stable.
-4. Add `parser.ari`, `ast.ari`, and phase-shaped model files only when the
+3. Grow `parser.ari` only as token handoff proves more parser-shaped data.
+4. Add `ast.ari` and later phase-shaped model files only when the
    previous phase has checked output worth passing forward.
 5. Add source loading and real text buffers after runtime strings, slices, and
    file IO are strong enough for compiler input.
@@ -165,17 +169,19 @@ policy in ad hoc compiler files.
 - Added one-character `LexResult` scanning and switched lexer failures to the
   shared `diagnostic::Diagnostic` payload.
 - Added a tiny one-token `TokenCursor` shape as a checked lexer handoff model.
+- Added a minimal `parser.ari` phase-boundary skeleton with success and
+  diagnostic failure paths.
 
 ## Small Task Queue
 
-- Add a minimal `parser.ari` skeleton once token handoff has one checked shape.
+- Add a minimal `ast.ari` node model that can become parser output later.
 - Keep `compiler/main.ari` as a small integration smoke, not a real driver.
 
 ## Next Recommended Task
 
-Add a minimal `compiler/parser.ari` skeleton that consumes the existing
-token/cursor shape and returns a parser-shaped success or diagnostic failure.
-Keep it as a phase boundary stub only; do not implement expression parsing yet.
+Add a minimal `compiler/ast.ari` node model and keep `parser.ari` as a phase
+boundary stub. Do not implement expression parsing yet; the next useful step is
+only to separate parser output shape from parser control flow.
 
 ## Local Validation
 
@@ -220,13 +226,13 @@ Do not run full `make check` for ordinary bootstrap slices.
 - General iterator support beyond compiler-known `range` is not ready.
 - Raw pointer operations, allocation-zone diagnostics, and explicit allocation
   policies are still hosted-compiler roadmap work.
-- There is no parser, AST, HIR, ownership model, IR, or LLVM backend in Ari yet.
+- There is no AST, HIR, ownership model, IR, or LLVM backend in Ari yet.
 
 ## Stage0 Host Compiler Follow-Ups
 
 Confirmed host compiler bugs from this bootstrap slice: none. The `LexResult`,
-shared diagnostic payload, and one-token cursor slices checked without requiring
-a hosted compiler fix.
+shared diagnostic payload, one-token cursor, and parser skeleton slices checked
+without requiring a hosted compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.

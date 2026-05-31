@@ -1,0 +1,35 @@
+mod diagnostic;
+mod lexer;
+
+pub struct ParseNode {
+  kind: i64,
+  token_score: i64,
+}
+
+pub enum ParseResult {
+  Parsed(ParseNode),
+  Failed(diagnostic::Diagnostic),
+}
+
+pub fn parse_cursor(cursor: lexer::TokenCursor) -> ParseResult {
+  let score = lexer::cursor_score(cursor);
+  if score > 0 {
+    return Parsed(ParseNode { kind: 1, token_score: score });
+  }
+  return Failed(diagnostic::error(2001, 0, 0));
+}
+
+pub fn parse_one(value: char, offset: i64) -> ParseResult {
+  return parse_cursor(lexer::cursor_from_one(value, offset));
+}
+
+pub fn parse_empty() -> ParseResult {
+  return Failed(diagnostic::error(2002, 0, 0));
+}
+
+pub fn parse_score(result: ParseResult) -> i64 {
+  match result {
+    Parsed(node) => node.kind + node.token_score,
+    Failed(failure) => diagnostic::diagnostic_score(failure),
+  }
+}

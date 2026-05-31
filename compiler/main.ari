@@ -2,6 +2,7 @@ mod source;
 mod token;
 mod diagnostic;
 mod lexer;
+mod parser;
 
 fn main() -> i64 {
   let file = source::source_file(1, 16);
@@ -22,5 +23,8 @@ fn main() -> i64 {
     1005 +
     lexer::cursor_score(lexer::cursor_from_one('a', 7)) +
     lexer::cursor_score(lexer::cursor_advance(lexer::cursor_from_one('a', 7))) -
-    18;
+    18 +
+    parser::parse_score(parser::parse_one('p', 2)) +
+    parser::parse_score(parser::parse_empty()) -
+    2009;
 }
