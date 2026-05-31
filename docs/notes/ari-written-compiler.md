@@ -53,6 +53,9 @@ compiler feature in the normal focused-test workflow.
 - `compiler/` has been started as a direct Ari source root.
 - The initial files model source spans, token kinds, diagnostics, and a tiny
   one-character lexer classification path.
+- `compiler/lexer.ari` now has a small `LexResult` flow for one-character scans
+  that can return either a token or a diagnostic-shaped invalid-character
+  failure.
 - `compiler/main.ari` imports the sibling modules and exercises their public
   surfaces with a minimal smoke path.
 - Each module is kept small enough to check directly with the stage0 compiler.
@@ -62,8 +65,8 @@ compiler feature in the normal focused-test workflow.
 ## Incremental Roadmap
 
 1. Keep the five-file source skeleton checking with stage0.
-2. Grow `lexer.ari` from one-character classification into a small result-based
-   scanner over the source representation Ari can support today.
+2. Grow `lexer.ari` from one-character result scanning into a small token stream
+   over the source representation Ari can support today.
 3. Add parser-shaped enums and structs only after token flow is stable.
 4. Add `parser.ari`, `ast.ari`, and phase-shaped model files only when the
    previous phase has checked output worth passing forward.
@@ -150,8 +153,6 @@ policy in ad hoc compiler files.
 
 ## Small Task Queue
 
-- Add a `LexResult` enum in `lexer.ari` for one-character scans that can return
-  either a token or a diagnostic-shaped failure.
 - Decide the first shared diagnostic payload that can be used without making
   standalone module checks fragile.
 - Add a tiny token cursor once Ari has a source text representation suitable for
@@ -160,10 +161,10 @@ policy in ad hoc compiler files.
 
 ## Next Recommended Task
 
-Add a `LexResult` enum to `compiler/lexer.ari` for one-character scans, with an
-invalid-character path carrying a diagnostic code and byte offset. Keep the
-change small and verify `compiler/lexer.ari` and `compiler/main.ari` with
-`--check`.
+Decide whether lexer failures should keep a local `LexDiagnostic` payload for
+now or import a shared diagnostic type from `compiler/diagnostic.ari`. Keep the
+change small enough that `compiler/lexer.ari` and `compiler/main.ari` still pass
+direct `--check` runs.
 
 ## Local Validation
 
@@ -212,7 +213,8 @@ Do not run full `make check` for ordinary bootstrap slices.
 
 ## Stage0 Host Compiler Follow-Ups
 
-Confirmed host compiler bugs from this bootstrap slice: none.
+Confirmed host compiler bugs from this bootstrap slice: none. The `LexResult`
+slice checked without requiring a hosted compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
