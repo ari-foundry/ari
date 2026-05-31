@@ -139,6 +139,16 @@ pub fn cursor_is_eof(cursor: TokenCursor) -> bool {
   }
 }
 
+pub fn cursor_is_unknown(cursor: TokenCursor) -> bool {
+  match cursor.current.kind {
+    Identifier => false,
+    Number => false,
+    Whitespace => false,
+    EndOfFile => false,
+    Unknown(_) => true,
+  }
+}
+
 pub fn handoff_from_one(value: char, offset: i64) -> TokenHandoff {
   return TokenHandoff {
     first: cursor_from_one(value, offset),
@@ -168,6 +178,10 @@ pub fn handoff_starts_with_number(handoff: TokenHandoff) -> bool {
 
 pub fn handoff_starts_with_whitespace(handoff: TokenHandoff) -> bool {
   return cursor_is_whitespace(handoff.first);
+}
+
+pub fn handoff_starts_with_unknown(handoff: TokenHandoff) -> bool {
+  return cursor_is_unknown(handoff.first);
 }
 
 pub fn cursor_score(cursor: TokenCursor) -> i64 {

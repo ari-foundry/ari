@@ -25,6 +25,9 @@ fn main() -> i64 {
     ast::node_score(ast::token_node(3, 2, 5, 8)) -
     12 +
     parser::parse_score(parser::parse_one('q', 1)) +
+    parser::parse_score(parser::parse_one(' ', 4)) +
+    parser::parse_score(parser::parse_one('!', 5)) -
+    4017 +
     parser::parse_one_kind_score('9', 2) -
     42 +
     driver::exit_code(driver::run()) +

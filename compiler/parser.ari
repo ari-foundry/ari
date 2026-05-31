@@ -8,8 +8,24 @@ pub enum ParseResult {
 }
 
 pub fn parse_statement(cursor: lexer::TokenCursor) -> ParseResult {
+  if lexer::cursor_is_done(cursor) || lexer::cursor_is_eof(cursor) {
+    return Failed(diagnostic::error(
+      2001,
+      lexer::cursor_token_start(cursor),
+      lexer::cursor_token_end(cursor)
+    ));
+  }
+
+  if lexer::cursor_is_whitespace(cursor) {
+    return Failed(diagnostic::error(
+      2004,
+      lexer::cursor_token_start(cursor),
+      lexer::cursor_token_end(cursor)
+    ));
+  }
+
   let score = lexer::cursor_token_score(cursor);
-  if score > 0 && !lexer::cursor_is_done(cursor) {
+  if lexer::cursor_is_identifier(cursor) || lexer::cursor_is_number(cursor) {
     return Parsed(ast::statement_node(
       0,
       lexer::cursor_token_start(cursor),
@@ -17,7 +33,20 @@ pub fn parse_statement(cursor: lexer::TokenCursor) -> ParseResult {
       score
     ));
   }
-  return Failed(diagnostic::error(2001, 0, 0));
+
+  if lexer::cursor_is_unknown(cursor) {
+    return Failed(diagnostic::error(
+      2005,
+      lexer::cursor_token_start(cursor),
+      lexer::cursor_token_end(cursor)
+    ));
+  }
+
+  return Failed(diagnostic::error(
+    2006,
+    lexer::cursor_token_start(cursor),
+    lexer::cursor_token_end(cursor)
+  ));
 }
 
 pub fn parse_cursor(cursor: lexer::TokenCursor) -> ParseResult {
@@ -37,7 +66,10 @@ pub fn parse_cursor_kind_score(cursor: lexer::TokenCursor) -> i64 {
   if lexer::cursor_is_eof(cursor) {
     return 4;
   }
-  return 9;
+  if lexer::cursor_is_unknown(cursor) {
+    return 9;
+  }
+  return 8;
 }
 
 pub fn parse_handoff_kind_score(handoff: lexer::TokenHandoff) -> i64 {
@@ -51,7 +83,10 @@ pub fn parse_handoff_kind_score(handoff: lexer::TokenHandoff) -> i64 {
   if lexer::handoff_starts_with_whitespace(handoff) {
     return 3 + eof_score * 10;
   }
-  return 9 + eof_score * 10;
+  if lexer::handoff_starts_with_unknown(handoff) {
+    return 9 + eof_score * 10;
+  }
+  return 8 + eof_score * 10;
 }
 
 pub fn parse_handoff(handoff: lexer::TokenHandoff) -> ParseResult {

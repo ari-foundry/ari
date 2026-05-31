@@ -68,12 +68,17 @@ compiler feature in the normal focused-test workflow.
   token cursor plus an explicit EOF observation.
 - `compiler/lexer.ari` exposes token-kind query helpers at the cursor and
   handoff boundary so later parser work does not need to import token internals.
+- `compiler/lexer.ari` exposes an explicit unknown-token query at the cursor
+  and handoff boundary.
 - `compiler/ast.ari` now models minimal span-carrying token, statement, error,
   and missing output nodes.
 - `compiler/parser.ari` exists as a phase-boundary skeleton that consumes the
   lexer handoff shape, can classify the current handoff token, and returns
   either a statement-shaped `ast::Node` over the current token span or a shared
   diagnostic failure.
+- `compiler/parser.ari` only treats identifier and number handoff tokens as
+  statement skeletons; EOF, whitespace, and unknown tokens now stay on
+  diagnostic paths.
 - `compiler/driver.ari` owns the current bootstrap entry flow and returns a
   standard-library `std::Result[i64, i64]` instead of embedding smoke arithmetic
   in `main`.
@@ -86,8 +91,9 @@ compiler feature in the normal focused-test workflow.
   `-Icompiler`, and, when an LLVM driver is available, builds and runs the
   source-root smokes.
 - Each module is kept small enough to check directly with the stage0 compiler.
-- No Ari-written AST, semantic checker, IR, codegen, driver, or file loader
-  exists yet beyond the minimal parser-output node model.
+- No full Ari-written parse tree, semantic checker, IR, codegen, or source
+  loader exists yet beyond the minimal parser-output node model and file-input
+  driver smoke.
 
 ## Incremental Roadmap
 
@@ -206,20 +212,22 @@ policy in ad hoc compiler files.
 - Added a file-input driver path using `std::fs::read_to_string` and
   `std::context` argv, and wired the bootstrap target to execute `main` with a
   source fixture path.
+- Added parser non-statement diagnostic branches for whitespace and unknown
+  handoff tokens, with bootstrap smoke coverage for both paths.
 
 ## Small Task Queue
 
-- Use the token-kind query helpers to give parser skeletons a small
-  non-statement diagnostic branch for whitespace or unknown inputs.
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
+- Add a minimal loaded-source summary shape so file input can carry source id,
+  byte length, and first-byte handoff metadata before a real source loader
+  exists.
 
 ## Next Recommended Task
 
-Use the token-kind query helpers to give `parser.ari` a small diagnostic branch
-for whitespace or unknown handoff inputs. Do not implement source text scanning
-or expression parsing yet; keep the next step limited to one parser boundary
-decision.
+Add a minimal loaded-source summary shape around the current file-input driver
+path. Keep it to source id, byte length, and first-byte handoff metadata; do not
+implement full source text scanning, a source table, or expression parsing yet.
 
 ## Local Validation
 
@@ -276,8 +284,9 @@ Do not run full `make check` for ordinary bootstrap slices.
 
 Confirmed host compiler bugs from this bootstrap slice: none. The `LexResult`,
 shared diagnostic payload, one-token cursor, cursor token accessors, parser
-skeleton, minimal token handoff, token-kind query helpers, minimal AST node,
-statement output node, `std::Result`-based driver entry flow, and focused Ari
+skeleton, minimal token handoff, token-kind query helpers, unknown-token query
+helpers, minimal AST node, statement output node, parser non-statement
+diagnostic paths, `std::Result`-based driver entry flow, and focused Ari
 compiler bootstrap test target checked without requiring a hosted compiler fix.
 The file-input smoke path also checked with `std::fs` and `std::context` argv
 without requiring a hosted compiler fix.
