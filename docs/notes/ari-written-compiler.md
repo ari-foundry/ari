@@ -65,11 +65,14 @@ compiler feature in the normal focused-test workflow.
   span, token score, and done state.
 - `compiler/lexer.ari` has a minimal `TokenHandoff` shape that carries one real
   token cursor plus an explicit EOF observation.
+- `compiler/lexer.ari` exposes token-kind query helpers at the cursor and
+  handoff boundary so later parser work does not need to import token internals.
 - `compiler/ast.ari` now models minimal span-carrying token, statement, error,
   and missing output nodes.
 - `compiler/parser.ari` exists as a phase-boundary skeleton that consumes the
-  lexer handoff shape and returns either a statement-shaped `ast::Node` over
-  the current token span or a shared diagnostic failure.
+  lexer handoff shape, can classify the current handoff token, and returns
+  either a statement-shaped `ast::Node` over the current token span or a shared
+  diagnostic failure.
 - `compiler/main.ari` imports the sibling modules and exercises their public
   surfaces with a minimal smoke path.
 - `make check-ari-compiler-bootstrap` checks each `compiler/*.ari` module,
@@ -190,19 +193,21 @@ policy in ad hoc compiler files.
   node.
 - Added a minimal `TokenHandoff` carrying one real token plus EOF, and routed
   `parser::parse_one` through that handoff.
+- Added token-kind query helpers for the lexer/parser boundary and a tiny parser
+  handoff classification score.
 
 ## Small Task Queue
 
-- Add tiny token-kind query helpers so parser skeletons can distinguish
-  identifier, number, whitespace, and EOF handoff cases without full grammar.
+- Use the token-kind query helpers to give parser skeletons a small
+  non-statement diagnostic branch for whitespace or unknown inputs.
 - Keep `compiler/main.ari` as a small integration smoke, not a real driver.
 
 ## Next Recommended Task
 
-Add tiny token-kind query helpers for the lexer/parser boundary so the parser
-can distinguish identifier, number, whitespace, and EOF cases. Do not implement
-source text scanning or expression parsing yet; keep the next step limited to
-classification at the phase boundary.
+Use the token-kind query helpers to give `parser.ari` a small diagnostic branch
+for whitespace or unknown handoff inputs. Do not implement source text scanning
+or expression parsing yet; keep the next step limited to one parser boundary
+decision.
 
 ## Local Validation
 
@@ -257,9 +262,9 @@ Do not run full `make check` for ordinary bootstrap slices.
 
 Confirmed host compiler bugs from this bootstrap slice: none. The `LexResult`,
 shared diagnostic payload, one-token cursor, cursor token accessors, parser
-skeleton, minimal token handoff, minimal AST node, statement output node, and
-focused Ari compiler bootstrap test target checked without requiring a hosted
-compiler fix.
+skeleton, minimal token handoff, token-kind query helpers, minimal AST node,
+statement output node, and focused Ari compiler bootstrap test target checked
+without requiring a hosted compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.

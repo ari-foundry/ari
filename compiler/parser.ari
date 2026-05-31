@@ -24,6 +24,36 @@ pub fn parse_cursor(cursor: lexer::TokenCursor) -> ParseResult {
   return parse_statement(cursor);
 }
 
+pub fn parse_cursor_kind_score(cursor: lexer::TokenCursor) -> i64 {
+  if lexer::cursor_is_identifier(cursor) {
+    return 1;
+  }
+  if lexer::cursor_is_number(cursor) {
+    return 2;
+  }
+  if lexer::cursor_is_whitespace(cursor) {
+    return 3;
+  }
+  if lexer::cursor_is_eof(cursor) {
+    return 4;
+  }
+  return 9;
+}
+
+pub fn parse_handoff_kind_score(handoff: lexer::TokenHandoff) -> i64 {
+  let eof_score = parse_cursor_kind_score(lexer::handoff_eof(handoff));
+  if lexer::handoff_starts_with_identifier(handoff) {
+    return 1 + eof_score * 10;
+  }
+  if lexer::handoff_starts_with_number(handoff) {
+    return 2 + eof_score * 10;
+  }
+  if lexer::handoff_starts_with_whitespace(handoff) {
+    return 3 + eof_score * 10;
+  }
+  return 9 + eof_score * 10;
+}
+
 pub fn parse_handoff(handoff: lexer::TokenHandoff) -> ParseResult {
   if !lexer::handoff_has_eof(handoff) {
     return Failed(diagnostic::error(2003, 0, 0));
@@ -34,6 +64,10 @@ pub fn parse_handoff(handoff: lexer::TokenHandoff) -> ParseResult {
 
 pub fn parse_one(value: char, offset: i64) -> ParseResult {
   return parse_handoff(lexer::handoff_from_one(value, offset));
+}
+
+pub fn parse_one_kind_score(value: char, offset: i64) -> i64 {
+  return parse_handoff_kind_score(lexer::handoff_from_one(value, offset));
 }
 
 pub fn parse_empty() -> ParseResult {

@@ -99,6 +99,46 @@ pub fn cursor_token_score(cursor: TokenCursor) -> i64 {
   return token::token_score(cursor.current);
 }
 
+pub fn cursor_is_identifier(cursor: TokenCursor) -> bool {
+  match cursor.current.kind {
+    Identifier => true,
+    Number => false,
+    Whitespace => false,
+    EndOfFile => false,
+    Unknown(_) => false,
+  }
+}
+
+pub fn cursor_is_number(cursor: TokenCursor) -> bool {
+  match cursor.current.kind {
+    Identifier => false,
+    Number => true,
+    Whitespace => false,
+    EndOfFile => false,
+    Unknown(_) => false,
+  }
+}
+
+pub fn cursor_is_whitespace(cursor: TokenCursor) -> bool {
+  match cursor.current.kind {
+    Identifier => false,
+    Number => false,
+    Whitespace => true,
+    EndOfFile => false,
+    Unknown(_) => false,
+  }
+}
+
+pub fn cursor_is_eof(cursor: TokenCursor) -> bool {
+  match cursor.current.kind {
+    Identifier => false,
+    Number => false,
+    Whitespace => false,
+    EndOfFile => true,
+    Unknown(_) => false,
+  }
+}
+
 pub fn handoff_from_one(value: char, offset: i64) -> TokenHandoff {
   return TokenHandoff {
     first: cursor_from_one(value, offset),
@@ -115,7 +155,19 @@ pub fn handoff_eof(handoff: TokenHandoff) -> TokenCursor {
 }
 
 pub fn handoff_has_eof(handoff: TokenHandoff) -> bool {
-  return cursor_is_done(handoff.eof) && cursor_token_score(handoff.eof) == 0;
+  return cursor_is_done(handoff.eof) && cursor_is_eof(handoff.eof);
+}
+
+pub fn handoff_starts_with_identifier(handoff: TokenHandoff) -> bool {
+  return cursor_is_identifier(handoff.first);
+}
+
+pub fn handoff_starts_with_number(handoff: TokenHandoff) -> bool {
+  return cursor_is_number(handoff.first);
+}
+
+pub fn handoff_starts_with_whitespace(handoff: TokenHandoff) -> bool {
+  return cursor_is_whitespace(handoff.first);
 }
 
 pub fn cursor_score(cursor: TokenCursor) -> i64 {
