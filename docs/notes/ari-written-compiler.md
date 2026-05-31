@@ -89,6 +89,8 @@ compiler feature in the normal focused-test workflow.
   current file-input smoke, not a real source table or text buffer.
 - `compiler/driver.ari` routes file and text input through the loaded-source
   summary before creating the current one-token parser handoff.
+- The bootstrap source-root smoke now covers both valid loaded-source handoff
+  and an out-of-range first-byte offset error from the driver path.
 - `compiler/main.ari` is now a thin entrypoint that delegates to the driver and
   maps the driver's result to an exit code.
 - `make check-ari-compiler-bootstrap` checks each `compiler/*.ari` module,
@@ -221,20 +223,23 @@ policy in ad hoc compiler files.
   handoff tokens, with bootstrap smoke coverage for both paths.
 - Added a minimal loaded-source summary shape for file input and routed the
   driver text/file path through it before creating the current parser handoff.
+- Added an invalid loaded-source summary smoke that checks the driver's
+  out-of-range first-byte offset error payload.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add one invalid loaded-source summary smoke for out-of-range first-byte
-  offsets before building a fuller source loader.
+- Add an explicit parser success helper so the driver can distinguish
+  `Parsed` from diagnostic `Failed` results instead of treating all positive
+  `parse_score` values as success.
 
 ## Next Recommended Task
 
-Add one invalid loaded-source summary smoke for out-of-range first-byte offsets.
-Keep it focused on the existing `LoadedSourceSummary` and driver error path; do
-not implement full source text scanning, a source table, or expression parsing
-yet.
+Add an explicit parser success helper and route the driver through it before
+using `parse_score`. Keep this limited to distinguishing `Parsed` from
+diagnostic `Failed`; do not implement expression parsing or a broader parse
+tree yet.
 
 ## Local Validation
 
@@ -297,7 +302,9 @@ helpers, minimal AST node, statement output node, parser non-statement
 diagnostic paths, loaded-source summary, `std::Result`-based driver entry flow,
 and focused Ari compiler bootstrap test target checked without requiring a
 hosted compiler fix. The file-input smoke path also checked with `std::fs` and
-`std::context` argv without requiring a hosted compiler fix.
+`std::context` argv without requiring a hosted compiler fix. The invalid
+loaded-source summary smoke also checked `std::Result` matching in the fixture
+without requiring a hosted compiler fix.
 
 This slice also reconfirmed the existing cross-module type identity pressure:
 a value constructed as root `source::LoadedSourceSummary` is not the same type
