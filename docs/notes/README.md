@@ -9,6 +9,6 @@ the way it does.
 
 ## Notes
 
+- [Ari-Written Compiler](ari-written-compiler.md)
 - [Codex Project Notes](codex-notes.md)
 - [Memory Direction Notes](memory-direction.md)
-

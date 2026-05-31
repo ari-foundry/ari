@@ -1,13 +1,17 @@
 # Compiler Readiness Inventory
 
-This page tracks whether the current C++ hosted Ari compiler is becoming
-mature enough that a future Ari-written compiler could be started later.
+This page tracks whether the current C++ hosted Ari compiler is mature enough
+to support compiler-shaped Ari programs and the separate Ari-written compiler
+source root.
 
-It is not a self-host plan. Do not use this inventory to add bootstrap
-scaffolding, an Ari compiler rewrite, a package manager, or stdlib/library
-work. The only question here is whether today's hosted compiler has reliable
-source identity, diagnostics, modules, frontend behavior, compiler-shaped data,
-traits/generics, and artifacts.
+It is not the Ari-written compiler source roadmap. Do not use this inventory to
+put Ari-written compiler implementation under `src/`, add `bootstrap/`,
+`stage1/`, or `compiler/src/`, design a package manager, or track
+stdlib/library work. The Ari-written compiler source lives in `compiler/`, with
+planning in [Ari-Written Compiler](../notes/ari-written-compiler.md). The
+question here is whether today's hosted compiler has reliable source identity,
+diagnostics, modules, frontend behavior, compiler-shaped data, traits/generics,
+and artifacts.
 
 ## How To Read This Page
 
@@ -52,8 +56,9 @@ Use this priority order when deciding the next small compiler task.
 
 - Do not recreate deleted source-model fixture buckets.
 - Do not recreate deleted compiler-development source-error buckets.
-- Do not start writing the Ari compiler in Ari.
-- Do not add bootstrap/stage1 directories.
+- Do not start writing the Ari compiler in Ari inside `src/` or this roadmap;
+  use `compiler/`.
+- Do not add bootstrap/stage1 directories or `compiler/src/`.
 - Do not count stdlib/library work toward this inventory.
 - Do not count an Ari-written package/build tool as a start gate.
 - Do not claim readiness improved when only tests were added for an

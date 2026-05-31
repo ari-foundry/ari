@@ -132,10 +132,13 @@ provenance hooks live under `tests/cases/memory/`. See
 
 ## Compiler Documentation Coverage Note
 
-Compiler development is tracked for the current C++ hosted compiler. The
-general language-docs entry path is checked by `make check-language-docs`, the
-compiler developer docs are checked by `make check-compiler-docs`, and the
-small compiler-shaped Ari source fixtures are checked by
+Compiler development in `docs/dev/` is tracked for the current C++ hosted
+compiler. The Ari-written compiler source root lives directly under
+`compiler/`, with planning in
+[Ari-Written Compiler](../notes/ari-written-compiler.md). The general
+language-docs entry path is checked by `make check-language-docs`, the compiler
+developer docs are checked by `make check-compiler-docs`, and the small
+compiler-shaped Ari source fixtures are checked by
 `make check-bootstrap-readiness`. The docs targets run
 `tests/check_language_docs.py` and `tests/check_compiler_docs.py` and verify
 that [Getting Started](../language/getting-started.md),
@@ -146,9 +149,9 @@ that [Getting Started](../language/getting-started.md),
 [Compiler Test Authoring](compiler-test-authoring.md),
 [Compiler Pass Contracts](compiler-pass-contracts.md),
 [Compiler Readiness Inventory](compiler-readiness-inventory.md), [Roadmap](roadmap.md),
-and the docs indexes stay linked. Self-host implementation plans, bootstrap
-stage layouts, and package-manager work are intentionally outside this
-compiler-doc path.
+and the docs indexes stay linked. Ari-written compiler implementation belongs
+in `compiler/`, not in `src/` or this hosted compiler-doc path; bootstrap stage
+layouts and package-manager work remain outside this path.
 
 ## Feature Plan
 

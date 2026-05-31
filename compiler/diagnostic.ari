@@ -1,0 +1,35 @@
+pub enum Severity {
+  Note,
+  Warning,
+  Error,
+}
+
+pub struct Diagnostic {
+  code: i64,
+  start: i64,
+  end: i64,
+  severity: Severity,
+}
+
+pub fn diagnostic(code: i64, start: i64, end: i64, severity: Severity) -> Diagnostic {
+  return Diagnostic { code: code, start: start, end: end, severity: severity };
+}
+
+pub fn error(code: i64, start: i64, end: i64) -> Diagnostic {
+  return diagnostic(code, start, end, Error);
+}
+
+pub fn severity_score(severity: Severity) -> i64 {
+  match severity {
+    Note => 1,
+    Warning => 2,
+    Error => 3,
+  }
+}
+
+pub fn diagnostic_score(diagnostic: Diagnostic) -> i64 {
+  return diagnostic.code +
+    diagnostic.end -
+    diagnostic.start +
+    severity_score(diagnostic.severity);
+}

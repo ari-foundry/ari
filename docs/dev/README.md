@@ -1,9 +1,11 @@
 # Ari Compiler Developer Overview
 
-This directory documents the current C++ hosted Ari compiler. It is not a plan
-to start the Ari-written compiler yet, and it is not a standard-library
-readiness scorecard. Use it to understand where compiler behavior lives, how to
-change it safely, and which narrow check proves the change.
+This directory documents the current C++ hosted Ari compiler. It is not the
+Ari-written compiler source roadmap, and it is not a standard-library readiness
+scorecard. Use it to understand where hosted compiler behavior lives, how to
+change it safely, and which narrow check proves the change. Ari-written compiler
+source lives directly under `compiler/`; its bootstrap note is
+[Ari-Written Compiler](../notes/ari-written-compiler.md).
 
 ## First-Hour Path
 
@@ -78,8 +80,10 @@ checks.
 
 ## Non-Goals
 
-- Do not start writing the Ari compiler in Ari here.
-- Do not add `bootstrap/`, `stage1/`, or self-host implementation scaffolding.
+- Do not start writing the Ari compiler in Ari here; use the separate
+  `compiler/` source root.
+- Do not add `bootstrap/`, `stage1/`, `compiler/src/`, or self-host
+  implementation scaffolding to the hosted compiler tree.
 - Do not count standard-library maturity as compiler-writing readiness.
 - Do not add an Ari-written package/build tool as a prerequisite for current
   compiler readiness.

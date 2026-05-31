@@ -1,0 +1,35 @@
+pub enum TokenKind {
+  Identifier,
+  Number,
+  Whitespace,
+  EndOfFile,
+  Unknown(char),
+}
+
+pub struct Token {
+  kind: TokenKind,
+  start: i64,
+  end: i64,
+}
+
+pub fn make_token(kind: TokenKind, start: i64, end: i64) -> Token {
+  return Token { kind: kind, start: start, end: end };
+}
+
+pub fn token_width(token: Token) -> i64 {
+  return token.end - token.start;
+}
+
+pub fn kind_score(kind: TokenKind) -> i64 {
+  match kind {
+    Identifier => 1,
+    Number => 2,
+    Whitespace => 3,
+    EndOfFile => 0,
+    Unknown(value) => value as i64,
+  }
+}
+
+pub fn token_score(token: Token) -> i64 {
+  return kind_score(token.kind) + token_width(token);
+}

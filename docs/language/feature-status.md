@@ -75,7 +75,7 @@ Status meanings:
 | --- | --- | --- | --- |
 | token, syntax, diagnostic, source-map artifact dumps | implemented seed | [Compiler Artifact Authoring](../dev/compiler-artifact-authoring.md) | `make check-compiler-artifacts` |
 | current compiler developer workflow | implemented docs | [Developer Overview](../dev/README.md), [Roadmap](../dev/roadmap.md) | `make check-compiler-docs` |
-| future Ari-written compiler implementation | not started and intentionally out of scope | [Compiler Readiness Inventory](../dev/compiler-readiness-inventory.md) | no implementation tree |
+| Ari-written compiler implementation | initial source root started, intentionally separate from hosted compiler docs | [Ari-Written Compiler](../notes/ari-written-compiler.md), [Compiler Readiness Inventory](../dev/compiler-readiness-inventory.md) | `compiler/*.ari`, `make check-bootstrap-readiness` |
 
 ## How To Use This Page
 

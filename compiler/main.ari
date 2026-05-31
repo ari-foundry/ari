@@ -1,0 +1,21 @@
+mod source;
+mod token;
+mod diagnostic;
+mod lexer;
+
+fn main() -> i64 {
+  let file = source::source_file(1, 16);
+  let span = source::span(1, 0, 4);
+  let first = token::make_token(token::Identifier, 0, 4);
+  let problem = diagnostic::error(100, 4, 5);
+
+  if !source::contains(file, span.end) {
+    return 1;
+  }
+
+  return source::span_len(span) +
+    token::token_score(first) +
+    diagnostic::diagnostic_score(problem) +
+    lexer::scan_score('7') -
+    114;
+}

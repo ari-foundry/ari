@@ -22,6 +22,9 @@ you are doing, then follow links only when you need deeper detail.
   [Build And Test](dev/build-test.md), then
   [Compiler Readiness Inventory](dev/compiler-readiness-inventory.md), then
   [Roadmap](dev/roadmap.md).
+- Ari-written compiler source work:
+  [Ari-Written Compiler](notes/ari-written-compiler.md), then the source files
+  directly under `compiler/`.
 
 ## Language Docs
 
@@ -124,6 +127,7 @@ Use these when changing editor and lint tooling:
 Use these for design direction and handoff context:
 
 - [Notes Overview](notes/README.md)
+- [Ari-Written Compiler](notes/ari-written-compiler.md)
 - [Codex Project Notes](notes/codex-notes.md)
 - [Memory Direction Notes](notes/memory-direction.md)
 

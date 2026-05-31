@@ -1,0 +1,30 @@
+mod token;
+
+pub fn is_ascii_alpha(value: char) -> bool {
+  return (value >= 'a' && value <= 'z') || (value >= 'A' && value <= 'Z') || value == '_';
+}
+
+pub fn is_ascii_digit(value: char) -> bool {
+  return value >= '0' && value <= '9';
+}
+
+pub fn classify_one(value: char) -> token::TokenKind {
+  if is_ascii_alpha(value) {
+    return token::Identifier;
+  }
+  if is_ascii_digit(value) {
+    return token::Number;
+  }
+  if value == ' ' || value == '\n' || value == '\t' {
+    return token::Whitespace;
+  }
+  return token::Unknown(value);
+}
+
+pub fn scan_one(value: char, offset: i64) -> token::Token {
+  return token::make_token(classify_one(value), offset, offset + 1);
+}
+
+pub fn scan_score(value: char) -> i64 {
+  return token::token_score(scan_one(value, 0));
+}

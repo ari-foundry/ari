@@ -2,7 +2,8 @@
 """Keep compiler-development docs focused and navigable.
 
 This check is intentionally small. It protects the current C++ hosted compiler
-documentation path, not a future self-host implementation plan.
+documentation path while keeping the separate Ari-written compiler source root
+discoverable.
 """
 
 from pathlib import Path
@@ -44,6 +45,7 @@ def main() -> int:
         "[Build And Test](dev/build-test.md)",
         "[Compiler Readiness Inventory](dev/compiler-readiness-inventory.md)",
         "[Roadmap](dev/roadmap.md)",
+        "[Ari-Written Compiler](notes/ari-written-compiler.md)",
     ]:
         require(docs_index, needle, docs_index_path)
 
@@ -58,8 +60,9 @@ def main() -> int:
         "## Focused Checks",
         "## Non-Goals",
         "make check-compiler-docs",
-        "Do not start writing the Ari compiler in Ari here.",
-        "Do not add `bootstrap/`, `stage1/`, or self-host implementation scaffolding.",
+        "source lives directly under `compiler/`",
+        "Do not start writing the Ari compiler in Ari here; use the separate",
+        "Do not add `bootstrap/`, `stage1/`, `compiler/src/`",
     ]:
         require(dev_index, needle, dev_index_path)
 
@@ -76,7 +79,8 @@ def main() -> int:
         "Capability requirement extensions",
         "`union by` extensions",
         "## What Not To Track Here",
-        "Ari compiler rewrite tasks",
+        "Ari-written compiler source root now lives directly under `compiler/`",
+        "Ari compiler rewrite tasks inside the hosted compiler roadmap",
         "package manager or cargo-like tool work",
         "standard-library maturity",
     ]:
@@ -86,7 +90,8 @@ def main() -> int:
     readiness = read(readiness_path)
     for needle in [
         "# Compiler Readiness Inventory",
-        "It is not a self-host plan.",
+        "It is not the Ari-written compiler source roadmap.",
+        "The Ari-written compiler source lives in `compiler/`",
         "Source identity / source-map / span",
         "Diagnostics",
         "Module/project flow",
@@ -97,6 +102,22 @@ def main() -> int:
         "make check-compiler-docs",
     ]:
         require(readiness, needle, readiness_path)
+
+    ari_written_path = "docs/notes/ari-written-compiler.md"
+    ari_written = read(ari_written_path)
+    for needle in [
+        "# Ari-Written Compiler",
+        "`compiler/` is the Ari-written compiler source root",
+        "There is no `compiler/src/`",
+        "The existing C++ compiler remains stage0.",
+        "## Current Status",
+        "## Incremental Roadmap",
+        "## Small Task Queue",
+        "## Next Recommended Task",
+        "## Local Validation",
+        "## Known Blockers",
+    ]:
+        require(ari_written, needle, ari_written_path)
 
     for path in [
         docs_index_path,

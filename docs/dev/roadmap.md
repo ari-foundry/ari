@@ -13,9 +13,12 @@ The roadmap is for production compiler behavior:
 - semantic diagnostics, module flow, traits, generics, ownership, and ABI
 - deterministic artifacts that make compiler regressions reviewable
 
-This page is not a self-host implementation plan. Do not use it to create an
-Ari-written compiler tree, bootstrap/stage directories, or a cargo-like build
-tool. Standard-library/library maturity is tracked separately.
+This page is not the Ari-written compiler source roadmap. Do not use it to put
+Ari-written compiler implementation under `src/`, create `bootstrap/` or
+`stage1/` directories, add `compiler/src/`, or design a cargo-like build tool.
+The Ari-written compiler source root now lives directly under `compiler/`, with
+planning in [Ari-Written Compiler](../notes/ari-written-compiler.md).
+Standard-library/library maturity is tracked separately.
 The few stdlib polish items that are blocked by compiler features are mapped in
 [Compiler-Bound Standard Library Gaps](compiler-bound-stdlib-gaps.md).
 
@@ -50,9 +53,9 @@ The few stdlib polish items that are blocked by compiler features are mapped in
 
 ## What Not To Track Here
 
-- Ari compiler rewrite tasks
+- Ari compiler rewrite tasks inside the hosted compiler roadmap
 - self-host stage plans
-- bootstrap/stage1 directory layouts
+- bootstrap/stage1 directory layouts or `compiler/src/`
 - package manager or cargo-like tool work
 - standard-library maturity
 - broad kernel/freestanding roadmaps unless a narrow compiler ABI/backend fix is
