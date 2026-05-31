@@ -37,6 +37,7 @@ Read these in order when you are new to compiler work in this repository:
 | Name lookup, modules, types, ownership, IR lowering | `src/sema.cpp` and helper semantics files | owning feature target |
 | Typed IR shape | `src/ir.hpp`, `src/sema.cpp` | typed IR artifact or owning feature target |
 | LLVM IR, object, shared library, runtime boundary | `src/llvm_codegen.cpp`, `src/driver.cpp` | backend/artifact target |
+| Compiler host paths, executable lookup, permissions, or shell/process calls | `src/platform.hpp`, `src/platform.cpp` | one direct CLI smoke command near the changed boundary |
 | Source ids, line/column, snippets | `src/source_map.hpp`, `src/source_map.cpp` | `make check-source-map-unit` |
 | Diagnostic rendering or catalog output | `src/common.hpp`, `src/common.cpp`, `src/diagnostic_dump.cpp` | `python3 tests/check_compiler_diagnostic_cli.py` plus focused artifact |
 | Compiler summaries, artifacts, pass listings | `src/compiler_summary_dump.cpp`, `src/driver.cpp` | `make check-compiler-artifacts` |
@@ -52,6 +53,7 @@ Read these in order when you are new to compiler work in this repository:
 | Work on current-zone allocation syntax | [Current-Zone Blocks](current-zone-blocks.md) |
 | Pick the right focused test bucket | [Compiler Test Authoring](compiler-test-authoring.md), [Feature Test Matrix](test-matrix.md) |
 | Understand semantic pass boundaries | [Compiler Pass Contracts](compiler-pass-contracts.md), [Semantic Checker Decomposition](sema-decomposition.md) |
+| Work on compiler host platform boundaries | [Compiler Pipeline](compiler-pipeline.md#host-platform-boundary), [Compiler Layer Map](compiler-layer-map.md) |
 | Work on traits, operators, generics, ownership, or ABI | [Minimum Trait Readiness](trait-minimum-readiness.md), [Trait-Backed Operators](operator-trait-design.md), [Generic Aggregate Monomorphization](generic-aggregate-monomorphization.md), [Ownership Drop Readiness](ownership-drop-readiness.md), [Aggregate ABI Classification](aggregate-abi.md) |
 | Understand runtime/backend output | [Runtime And Backend](runtime-backend.md), [Runtime Support Roadmap](runtime-support.md), [Symbol Mangling](symbol-mangling.md) |
 
