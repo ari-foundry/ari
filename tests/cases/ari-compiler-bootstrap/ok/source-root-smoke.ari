@@ -2,6 +2,7 @@ mod source;
 mod lexer;
 mod ast;
 mod parser;
+mod driver;
 
 fn main() -> i64 {
   let file = source::source_file(3, 12);
@@ -20,6 +21,7 @@ fn main() -> i64 {
     parser::parse_score(parser::parse_one('q', 1)) +
     parser::parse_one_kind_score('9', 2) -
     42 +
+    driver::exit_code(driver::run()) +
     parser::parse_score(parser::parse_empty()) -
     3018;
 }

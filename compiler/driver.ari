@@ -1,0 +1,50 @@
+mod source;
+mod parser;
+
+pub struct DriverInput {
+  source_id: i64,
+  byte_len: i64,
+  entry: char,
+  offset: i64,
+}
+
+pub fn default_input() -> DriverInput {
+  return DriverInput {
+    source_id: 1,
+    byte_len: 16,
+    entry: 'p',
+    offset: 2,
+  };
+}
+
+pub fn run_input(input: DriverInput) -> std::Result[i64, i64] {
+  let file = source::source_file(input.source_id, input.byte_len);
+  if !source::contains(file, input.offset) {
+    return std::Err<i64, i64>(1001);
+  }
+  if !source::contains(file, input.offset + 1) {
+    return std::Err<i64, i64>(1002);
+  }
+
+  let parsed = parser::parse_one(input.entry, input.offset);
+  if parser::parse_score(parsed) > 0 {
+    return std::Ok<i64, i64>(0);
+  }
+
+  return std::Err<i64, i64>(1003);
+}
+
+pub fn run() -> std::Result[i64, i64] {
+  return run_input(default_input());
+}
+
+pub fn exit_code(result: std::Result[i64, i64]) -> i64 {
+  match result {
+    std::Ok(code) => {
+      return code;
+    }
+    std::Err(_) => {
+      return 1;
+    }
+  }
+}

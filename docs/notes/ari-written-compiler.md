@@ -28,6 +28,7 @@ compiler/
   lexer.ari
   ast.ari
   parser.ari
+  driver.ari
 ```
 
 The directory is source-only. It should contain Ari source files, not Markdown
@@ -73,8 +74,11 @@ compiler feature in the normal focused-test workflow.
   lexer handoff shape, can classify the current handoff token, and returns
   either a statement-shaped `ast::Node` over the current token span or a shared
   diagnostic failure.
-- `compiler/main.ari` imports the sibling modules and exercises their public
-  surfaces with a minimal smoke path.
+- `compiler/driver.ari` owns the current bootstrap entry flow and returns a
+  standard-library `std::Result[i64, i64]` instead of embedding smoke arithmetic
+  in `main`.
+- `compiler/main.ari` is now a thin entrypoint that delegates to the driver and
+  maps the driver's result to an exit code.
 - `make check-ari-compiler-bootstrap` checks each `compiler/*.ari` module,
   checks a small `tests/cases/ari-compiler-bootstrap/` fixture with
   `-Icompiler`, and, when an LLVM driver is available, builds and runs the
@@ -195,12 +199,15 @@ policy in ad hoc compiler files.
   `parser::parse_one` through that handoff.
 - Added token-kind query helpers for the lexer/parser boundary and a tiny parser
   handoff classification score.
+- Moved the test-like entry arithmetic out of `compiler/main.ari` into a
+  `driver.ari` bootstrap entry flow that uses `std::Result`.
 
 ## Small Task Queue
 
 - Use the token-kind query helpers to give parser skeletons a small
   non-statement diagnostic branch for whitespace or unknown inputs.
-- Keep `compiler/main.ari` as a small integration smoke, not a real driver.
+- Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
+  when the underlying phases have checked handoff data.
 
 ## Next Recommended Task
 
@@ -222,6 +229,7 @@ make
 ./build/ari compiler/lexer.ari --check
 ./build/ari compiler/ast.ari --check
 ./build/ari compiler/parser.ari --check
+./build/ari compiler/driver.ari --check
 make check-ari-compiler-bootstrap
 make check-compiler-docs
 make check-bootstrap-readiness
@@ -263,8 +271,8 @@ Do not run full `make check` for ordinary bootstrap slices.
 Confirmed host compiler bugs from this bootstrap slice: none. The `LexResult`,
 shared diagnostic payload, one-token cursor, cursor token accessors, parser
 skeleton, minimal token handoff, token-kind query helpers, minimal AST node,
-statement output node, and focused Ari compiler bootstrap test target checked
-without requiring a hosted compiler fix.
+statement output node, `std::Result`-based driver entry flow, and focused Ari
+compiler bootstrap test target checked without requiring a hosted compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
