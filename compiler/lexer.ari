@@ -6,6 +6,12 @@ pub enum LexResult {
   Failed(diagnostic::Diagnostic),
 }
 
+pub struct TokenCursor {
+  current: token::Token,
+  offset: i64,
+  done: bool,
+}
+
 pub fn is_ascii_alpha(value: char) -> bool {
   return (value >= 'a' && value <= 'z') || (value >= 'A' && value <= 'Z') || value == '_';
 }
@@ -53,6 +59,30 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
       return Failed(invalid_character(offset));
     }
   }
+}
+
+pub fn cursor_from_one(value: char, offset: i64) -> TokenCursor {
+  return TokenCursor { current: scan_one(value, offset), offset: offset, done: false };
+}
+
+pub fn cursor_advance(cursor: TokenCursor) -> TokenCursor {
+  if cursor.done {
+    return cursor;
+  }
+
+  let next_offset = cursor.current.end;
+  return TokenCursor {
+    current: token::make_token(token::EndOfFile, next_offset, next_offset),
+    offset: next_offset,
+    done: true,
+  };
+}
+
+pub fn cursor_score(cursor: TokenCursor) -> i64 {
+  if cursor.done {
+    return token::token_score(cursor.current) + cursor.offset + 1;
+  }
+  return token::token_score(cursor.current) + cursor.offset;
 }
 
 pub fn scan_result_score(result: LexResult) -> i64 {
