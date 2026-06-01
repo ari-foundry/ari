@@ -1373,6 +1373,17 @@ fn lexer_keyword_score() -> i64 {
       6,
       "drop",
       'd'
+    ) +
+    lexer_keyword_case_with_base_score(
+      1600,
+      "forget name",
+      6,
+      102,
+      "forget1",
+      7,
+      8,
+      "forget",
+      'f'
     );
 }
 
