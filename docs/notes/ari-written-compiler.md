@@ -154,6 +154,8 @@ compiler feature in the normal focused-test workflow.
   without relying on `ast::node_score` arithmetic.
 - The bootstrap source-root smoke checks successful parser payload values
   without relying on `ast::node_score` arithmetic.
+- The bootstrap source-root smoke checks number parser payload values without
+  relying on parser score arithmetic.
 - The bootstrap source-root smoke checks successful parser payload start offsets
   without relying on `ast::node_score` arithmetic.
 - The bootstrap source-root smoke checks successful parser payload end offsets
@@ -375,6 +377,8 @@ policy in ad hoc compiler files.
 - Added source span-source, AST node source-id, and parser payload-source
   helpers with a smoke that checks successful parser output source ids without
   `ast::node_score` arithmetic.
+- Added a focused parser number payload-value smoke using the existing parser
+  statement value helper without parser score arithmetic.
 - Routed driver parse failures through the parser failure-code helper, with
   source-root smoke coverage for whitespace and unknown-token diagnostic codes.
 - Added a driver result-code helper and simplified bootstrap smokes that inspect
@@ -405,15 +409,15 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a focused parser number payload-value smoke using the existing
-  `parser::parse_statement_value(parser::parse_one('9', ...))` helper so the
-  number statement payload is checked without parser score arithmetic.
+- Add a focused parser number payload span-length smoke using the existing
+  `parser::parse_statement_span_len(parser::parse_one('9', ...))` helper so
+  the number statement span is checked without parser score arithmetic.
 
 ## Next Recommended Task
 
-Add a focused parser number payload-value smoke using the existing
-`parser::parse_statement_value(parser::parse_one('9', ...))` helper so the
-number statement payload is checked without parser score arithmetic. Keep it
+Add a focused parser number payload span-length smoke using the existing
+`parser::parse_statement_span_len(parser::parse_one('9', ...))` helper so the
+number statement span is checked without parser score arithmetic. Keep it
 inside the bootstrap source-root smoke and do not add parser recovery,
 diagnostic rendering, or a source table yet.
 
@@ -523,7 +527,8 @@ span-end, AST node end-offset, and parser payload-end helpers checked
 successful statement end offsets without requiring a hosted compiler fix. The
 source span-source, AST node source-id, and parser payload-source helpers
 checked successful statement source ids without requiring a hosted compiler
-fix.
+fix. The parser number payload-value smoke checked number statement values
+without requiring a hosted compiler fix.
 The growing source-root fixture did expose a default-zone capacity runtime trap
 while reading the file smoke; this was fixed locally with explicit
 `zone(16384)` allocation blocks and is recorded as allocation-policy pressure
