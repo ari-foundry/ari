@@ -159,6 +159,18 @@ fn source_text_leading_comment_operator_driver_score() -> i64 {
   return 0;
 }
 
+fn source_text_leading_comment_string_literal_driver_score() -> i64 {
+  let line_code = source_text_driver_result("// skip\n\"ari\"");
+  if line_code != 2006 {
+    return 1;
+  }
+  let block_code = source_text_driver_result("/* skip */\"ari\"");
+  if block_code != 2006 {
+    return 2;
+  }
+  return 0;
+}
+
 fn source_text_trailing_comment_driver_score() -> i64 {
   let line_code = source_text_driver_result("p// skip");
   if line_code != 0 {
@@ -3025,22 +3037,34 @@ fn lexer_leading_comment_unknown_handoff_case_score(
   if !lexer::handoff_starts_with_unknown(handoff) {
     return 1;
   }
+  let span_score = lexer_leading_comment_handoff_span_score(handoff, expected_start, expected_end);
+  if span_score != 0 {
+    return 1 + span_score;
+  }
+  return 0;
+}
+
+fn lexer_leading_comment_handoff_span_score(
+  handoff: lexer::TokenHandoff,
+  expected_start: i64,
+  expected_end: i64
+) -> i64 {
   let first = lexer::handoff_first(handoff);
   if lexer::cursor_token_start(first) != expected_start {
-    return 2;
+    return 1;
   }
   if lexer::cursor_token_end(first) != expected_end {
-    return 3;
+    return 2;
   }
   if !lexer::handoff_has_eof(handoff) {
-    return 4;
+    return 3;
   }
   let eof = lexer::handoff_eof(handoff);
   if lexer::cursor_token_start(eof) != expected_end {
-    return 5;
+    return 4;
   }
   if lexer::cursor_token_end(eof) != expected_end {
-    return 6;
+    return 5;
   }
   return 0;
 }
@@ -3073,22 +3097,9 @@ fn lexer_leading_comment_unsupported_handoff_case_score(
       return 1;
     }
   }
-  let first = lexer::handoff_first(handoff);
-  if lexer::cursor_token_start(first) != expected_start {
-    return 2;
-  }
-  if lexer::cursor_token_end(first) != expected_end {
-    return 3;
-  }
-  if !lexer::handoff_has_eof(handoff) {
-    return 4;
-  }
-  let eof = lexer::handoff_eof(handoff);
-  if lexer::cursor_token_start(eof) != expected_end {
-    return 5;
-  }
-  if lexer::cursor_token_end(eof) != expected_end {
-    return 6;
+  let span_score = lexer_leading_comment_handoff_span_score(handoff, expected_start, expected_end);
+  if span_score != 0 {
+    return 1 + span_score;
   }
   return 0;
 }
@@ -3137,6 +3148,34 @@ fn lexer_leading_comment_operator_handoff_score() -> i64 {
     return score;
   }
   score = lexer_leading_comment_operator_handoff_case_score("/* skip */+", 10, 11);
+  if score != 0 {
+    return 10 + score;
+  }
+  return 0;
+}
+
+fn lexer_leading_comment_string_literal_handoff_case_score(
+  text: Slice[u8],
+  expected_start: i64,
+  expected_end: i64
+) -> i64 {
+  let handoff = lexer::handoff_from_text(text);
+  if !lexer::cursor_is_string_literal(lexer::handoff_first(handoff)) {
+    return 1;
+  }
+  let span_score = lexer_leading_comment_handoff_span_score(handoff, expected_start, expected_end);
+  if span_score != 0 {
+    return 1 + span_score;
+  }
+  return 0;
+}
+
+fn lexer_leading_comment_string_literal_handoff_score() -> i64 {
+  var score = lexer_leading_comment_string_literal_handoff_case_score("// skip\n\"ari\"", 8, 13);
+  if score != 0 {
+    return score;
+  }
+  score = lexer_leading_comment_string_literal_handoff_case_score("/* skip */\"ari\"", 10, 15);
   if score != 0 {
     return 10 + score;
   }
@@ -3409,6 +3448,18 @@ fn parse_leading_comment_operator_failure_score() -> i64 {
     return score;
   }
   score = parse_unsupported_case_score("/* skip */+", 10, 11);
+  if score != 0 {
+    return 10 + score;
+  }
+  return 0;
+}
+
+fn parse_leading_comment_string_literal_failure_score() -> i64 {
+  var score = parse_unsupported_case_score("// skip\n\"ari\"", 8, 13);
+  if score != 0 {
+    return score;
+  }
+  score = parse_unsupported_case_score("/* skip */\"ari\"", 10, 15);
   if score != 0 {
     return 10 + score;
   }
@@ -3931,6 +3982,7 @@ fn main() -> i64 {
     source_text_leading_comment_unknown_driver_score() +
     source_text_leading_comment_punctuation_driver_score() +
     source_text_leading_comment_operator_driver_score() +
+    source_text_leading_comment_string_literal_driver_score() +
     source_text_trailing_comment_driver_score() +
     source_text_trailing_unterminated_block_driver_score() +
     source_text_post_comment_extra_token_driver_score() +
@@ -3995,6 +4047,8 @@ fn main() -> i64 {
     lexer_leading_comment_punctuation_handoff_score() +
     parse_leading_comment_operator_failure_score() +
     lexer_leading_comment_operator_handoff_score() +
+    parse_leading_comment_string_literal_failure_score() +
+    lexer_leading_comment_string_literal_handoff_score() +
     parse_leading_comment_lexer_failure_score() +
     lexer_leading_comment_lexer_failure_handoff_score() +
     parse_leading_comment_extra_token_failure_score() +
