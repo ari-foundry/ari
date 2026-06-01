@@ -47,7 +47,7 @@ fn source_text_extra_token_driver_score() -> i64 {
 
 fn source_text_keyword_driver_score() -> i64 {
   zone(65536) {
-    return driver::result_code(driver::run_source_text(std::string::from("trait")));
+    return driver::result_code(driver::run_source_text(std::string::from("dyn")));
   }
 }
 
@@ -1567,6 +1567,25 @@ fn lexer_keyword_table_score() -> i64 {
     score = 26;
   }
 
+  let dyn_keyword = lexer::cursor_from_text_with_keywords(ref table, "dyn", 0);
+  if score == 0 && !lexer::cursor_is_keyword(dyn_keyword) {
+    score = 27;
+  }
+  if score == 0 && lexer::cursor_token_score(dyn_keyword) != 110 {
+    score = 28;
+  }
+  if score == 0 && lexer::cursor_token_end(dyn_keyword) != 3 {
+    score = 29;
+  }
+
+  let dyn_longer = lexer::cursor_from_text_with_keywords(ref table, "dynamic", 0);
+  if score == 0 && !lexer::cursor_is_identifier(dyn_longer) {
+    score = 30;
+  }
+  if score == 0 && lexer::cursor_is_keyword(dyn_longer) {
+    score = 31;
+  }
+
   std::zone::destroy(zone);
   return score;
 }
@@ -1608,6 +1627,9 @@ fn parse_text_score() -> i64 {
     }
     if parser::parse_failure_code(parser::parse_text_with_keywords("trait")) != 2006 {
       return 12;
+    }
+    if parser::parse_failure_code(parser::parse_text_with_keywords("dyn")) != 2006 {
+      return 13;
     }
   }
   return 0;
