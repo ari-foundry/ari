@@ -8,22 +8,31 @@ pub struct DriverInput {
   offset: i64,
 }
 
-pub fn default_input() -> DriverInput {
+pub fn driver_input(
+  source_id: i64,
+  byte_len: i64,
+  entry: char,
+  offset: i64
+) -> DriverInput {
   return DriverInput {
-    source_id: 1,
-    byte_len: 16,
-    entry: 'p',
-    offset: 2,
+    source_id: source_id,
+    byte_len: byte_len,
+    entry: entry,
+    offset: offset,
   };
 }
 
+pub fn default_input() -> DriverInput {
+  return driver_input(1, 16, 'p', 2);
+}
+
 fn input_from_loaded_source(summary: source::LoadedSourceSummary) -> DriverInput {
-  return DriverInput {
-    source_id: source::loaded_source_id(summary),
-    byte_len: source::loaded_source_byte_len(summary),
-    entry: source::loaded_source_first(summary),
-    offset: source::loaded_source_first_offset(summary),
-  };
+  return driver_input(
+    source::loaded_source_id(summary),
+    source::loaded_source_byte_len(summary),
+    source::loaded_source_first(summary),
+    source::loaded_source_first_offset(summary)
+  );
 }
 
 pub fn run_input(input: DriverInput) -> std::Result[i64, i64] {

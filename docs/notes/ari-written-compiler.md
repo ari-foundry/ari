@@ -104,8 +104,12 @@ compiler feature in the normal focused-test workflow.
 - `compiler/driver.ari` exposes a `result_code` helper for bootstrap tests and
   later internal plumbing that need to inspect either `Ok` or `Err` payloads
   without using CLI exit-code mapping.
+- `compiler/driver.ari` exposes a scalar `DriverInput` constructor helper so
+  bootstrap callers do not need to construct the public input shape with
+  module-qualified aggregate literals.
 - The bootstrap source-root smoke covers the current `DriverInput` offset guard
-  errors for both invalid start offsets and invalid one-byte end bounds.
+  errors for both invalid start offsets and invalid one-byte end bounds through
+  the scalar constructor helper.
 - File-input smoke paths use explicit `zone(16384)` allocation blocks because
   the source-root fixture is now large enough to exceed the default zone
   capacity when read into an owned string.
@@ -256,6 +260,8 @@ policy in ad hoc compiler files.
   internal driver error payloads.
 - Added focused driver input-bound smokes for the existing `1001` and `1002`
   offset validation errors.
+- Added a scalar `DriverInput` constructor helper and routed the current
+  input-bound smokes through it instead of public aggregate literals.
 - Switched file-input smoke allocation blocks to explicit `zone(16384)` after
   the growing source-root fixture exceeded the default zone capacity at
   runtime.
@@ -264,14 +270,15 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a small scalar `DriverInput` constructor helper so future bootstrap code
-  does not need to rely on public aggregate literals across module boundaries.
+- Add a focused missing-file smoke for the existing driver file-read error
+  `1102`, using `result_code` rather than CLI exit-code mapping.
 
 ## Next Recommended Task
 
-Add a small scalar `DriverInput` constructor helper. Keep it limited to
-constructing the existing input shape for tests and later driver plumbing; do
-not add option parsing, diagnostic rendering, or a source table yet.
+Add a focused missing-file smoke for the existing driver file-read error
+`1102`. Keep it inside the bootstrap source-root smoke with an explicit
+`zone(16384)` block, and do not add option parsing, diagnostic rendering, or a
+source table yet.
 
 ## Local Validation
 
@@ -336,14 +343,14 @@ skeleton, minimal token handoff, token-kind query helpers, unknown-token query
 helpers, minimal AST node, statement output node, parser non-statement
 diagnostic paths, parser success helper, diagnostic-code accessor, parser
 failure-code helper, loaded-source summary, `std::Result`-based driver entry
-flow, driver result-code helper, and focused Ari compiler bootstrap test target
-checked without requiring a hosted compiler fix. The file-input smoke path also
-checked with `std::fs` and `std::context` argv without requiring a hosted
-compiler fix. The invalid loaded-source summary smoke and parse-failure driver
-smokes also checked `std::Result` payload inspection without requiring a hosted
-compiler fix. The driver input-bound smokes checked module-qualified
-`DriverInput` aggregate literals and negative integer offsets without requiring
-a hosted compiler fix.
+flow, driver result-code helper, scalar `DriverInput` constructor helper, and
+focused Ari compiler bootstrap test target checked without requiring a hosted
+compiler fix. The file-input smoke path also checked with `std::fs` and
+`std::context` argv without requiring a hosted compiler fix. The invalid
+loaded-source summary smoke and parse-failure driver smokes also checked
+`std::Result` payload inspection without requiring a hosted compiler fix. The
+driver input-bound smokes checked negative integer offsets through the scalar
+constructor helper without requiring a hosted compiler fix.
 The growing source-root fixture did expose a default-zone capacity runtime trap
 while reading the file smoke; this was fixed locally with explicit
 `zone(16384)` allocation blocks and is recorded as allocation-policy pressure
