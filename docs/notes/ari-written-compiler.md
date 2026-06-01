@@ -140,9 +140,15 @@ compiler feature in the normal focused-test workflow.
   `true1`, and `false1` as identifiers.
 - Ari-written compiler code assumes `lib/std` is available and should use it
   directly. `HashMap` and byte-slice string lookup helpers are available in
-  `lib/std/collections.arih`; the current stateless lexer path keeps width
-  buckets plus a shared slice matcher only to avoid rebuilding a keyword map per
-  token before there is a reusable lexer-owned keyword table.
+  `lib/std/collections.arih`.
+- `compiler/lexer.ari` now exposes `KeywordTable` as a public alias for
+  `std::collections::HashMap[String, TokenKind]`, builds it once with
+  `std::collections::string_hash_map`, and uses `get_or_bytes` for borrowed
+  source-slice keyword lookup.
+- `compiler/lexer.ari` exposes table-aware source-text scanning, cursor
+  advance, significant-token advance, and handoff helpers so later parser and
+  driver work can reuse one keyword table instead of rebuilding lookup state
+  per token. The older stateless text helpers remain as compatibility wrappers.
 - `compiler/lexer.ari` classifies `?` and `??` as operators so
   result-propagation and null-coalescing tokens match the stage0 spellings.
 - `compiler/lexer.ari` exposes one `scan_two`/`cursor_from_two` path for all
@@ -591,10 +597,15 @@ policy in ad hoc compiler files.
   Ari source, tests, stdlib APIs, and stage0 behavior before judging design or
   host-compiler bugs.
 - Recorded the bootstrap policy that Ari-written compiler code assumes
-  `lib/std` is available and should use it first; current keyword lookup avoids
-  a hash map only because the lexer API does not yet own a reusable table.
+  `lib/std` is available and should use it first.
 - Corrected the earlier keyword lookup note so `HashMap` availability is not
   treated as a bootstrap blocker.
+- Added a reusable `KeywordTable` alias over std `HashMap[String, TokenKind]`
+  and table-aware lexer source-text, cursor, significant-advance, and handoff
+  helpers.
+- Added source-root smoke coverage for the HashMap-backed keyword table,
+  checking exact `meta`, longer `metadata`, significant cursor advance, and
+  handoff EOF behavior.
 - Replaced the raw per-character keyword comparison chain with one slice matcher
   helper while keeping width buckets, so adding keywords no longer duplicates
   manual indexing logic.
@@ -716,13 +727,15 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add text-backed keyword classification for stage0 `struct`, preserving longer
-  identifiers such as `structure` as identifiers.
+- Route parser and driver source-text handoff through a reusable lexer
+  `KeywordTable` so real compiler input uses the HashMap-backed path.
+- Add `struct` to the reusable keyword table once the parser/driver path uses
+  table-backed lookup, preserving longer identifiers such as `structure`.
 
 ## Next Recommended Task
 
-Add text-backed keyword classification for stage0 `struct`, preserving longer
-identifiers such as `structure` as identifiers.
+Route parser and driver source-text handoff through a reusable lexer
+`KeywordTable` so real compiler input uses the HashMap-backed path.
 
 ## Local Validation
 
@@ -946,8 +959,13 @@ The working-rule update recorded that bootstrap decisions must come from
 inspecting actual repo structure, stdlib APIs, tests, and stage0 behavior
 rather than inference; this required no hosted compiler fix.
 The keyword lookup review now records that `lib/std` is assumed available and
-should be used first, and that std `HashMap` exists, while this stateless lexer
-slice kept the allocation-free matcher without requiring a hosted compiler fix.
+should be used first, and that std `HashMap` exists, while the compatibility
+stateless lexer path still keeps the allocation-free matcher without requiring
+a hosted compiler fix.
+The HashMap-backed keyword table checked through `KeywordTable` as a type alias
+over `std::collections::HashMap[String, TokenKind]`, plus table-aware scanner,
+cursor, significant-advance, and handoff helpers, without requiring a hosted
+compiler fix.
 The keyword matcher helper refactor kept the width-bucket keyword path checked
 through the source-root smoke without requiring a hosted compiler fix.
 The token-kind class helper refactor checked through the bootstrap source root
@@ -990,10 +1008,16 @@ codegen, diagnostics, or another hosted compiler area.
 
 Desired stage0 pressure that is not yet classified as a bug:
 
-- The current keyword lookup lives in stateless `identifier_kind_from_text`
-  without a lexer-owned context or zone-backed keyword table. Once the lexer
-  grows that actual state, replacing width buckets with a reusable std
-  `HashMap` keyword table should be revisited.
+- The compatibility keyword lookup still lives in stateless
+  `identifier_kind_from_text`; parser and driver source-text paths should be
+  routed through the reusable `KeywordTable` so future keywords only need the
+  HashMap-backed table path.
+- Wrapping a zone-backed `HashMap` in a new Ari struct was awkward in this
+  slice: mutating a `HashMap` through a helper/field lost tracked-zone receiver
+  information, and returning a wrapper with a raw zone pointer or embedded map
+  triggered zone-escape diagnostics. The accepted implementation uses a public
+  type alias instead. This is recorded as zone-backed wrapper ergonomics
+  pressure, not a confirmed hosted compiler bug.
 - More polished source-table ergonomics over the usable runtime string, slice,
   and file-IO primitives.
 - Stronger aggregate/type monomorphization for compiler-shaped models.

@@ -24,6 +24,8 @@ pub struct TokenStream {
   length: i64,
 }
 
+pub type KeywordTable = std::collections::HashMap[std::string::String, token::TokenKind];
+
 pub fn is_ascii_alpha(value: char) -> bool {
   return (value >= 'a' && value <= 'z') || (value >= 'A' && value <= 'Z') || value == '_';
 }
@@ -67,6 +69,44 @@ fn identifier_text_matches(
     index = index + 1;
   }
   return true;
+}
+
+pub fn keyword_table(zone: ref mut Zone) -> KeywordTable {
+  var entries = std::collections::string_hash_map<token::TokenKind>(zone, 32);
+  entries.insert(std::string::from(zone, "fn"), token::KwFn);
+  entries.insert(std::string::from(zone, "const"), token::KwConst);
+  entries.insert(std::string::from(zone, "as"), token::KwAs);
+  entries.insert(std::string::from(zone, "meta"), token::KwMeta);
+  entries.insert(std::string::from(zone, "let"), token::KwLet);
+  entries.insert(std::string::from(zone, "var"), token::KwVar);
+  entries.insert(std::string::from(zone, "own"), token::KwOwn);
+  entries.insert(std::string::from(zone, "ref"), token::KwRef);
+  entries.insert(std::string::from(zone, "mut"), token::KwMut);
+  entries.insert(std::string::from(zone, "ptr"), token::KwPtr);
+  entries.insert(std::string::from(zone, "return"), token::KwReturn);
+  entries.insert(std::string::from(zone, "if"), token::KwIf);
+  entries.insert(std::string::from(zone, "else"), token::KwElse);
+  entries.insert(std::string::from(zone, "while"), token::KwWhile);
+  entries.insert(std::string::from(zone, "init"), token::KwInit);
+  entries.insert(std::string::from(zone, "next"), token::KwNext);
+  entries.insert(std::string::from(zone, "continue"), token::KwContinue);
+  entries.insert(std::string::from(zone, "break"), token::KwBreak);
+  entries.insert(std::string::from(zone, "drop"), token::KwDrop);
+  entries.insert(std::string::from(zone, "forget"), token::KwForget);
+  entries.insert(std::string::from(zone, "null"), token::KwNull);
+  entries.insert(std::string::from(zone, "true"), token::KwTrue);
+  entries.insert(std::string::from(zone, "false"), token::KwFalse);
+  return entries;
+}
+
+fn identifier_kind_from_keywords(
+  table: ref KeywordTable,
+  text: std::Slice[u8],
+  start: i64,
+  end: i64
+) -> token::TokenKind {
+  let spelling = text.slice(start, end);
+  return table.get_or_bytes(spelling, token::Identifier);
 }
 
 fn identifier_kind_from_text(text: std::Slice[u8], start: i64, end: i64) -> token::TokenKind {
@@ -355,20 +395,16 @@ fn scan_shift_run(text: std::Slice[u8], offset: i64) -> token::Token {
   return token::make_token(token::GreaterGreater, offset, offset + 2);
 }
 
-pub fn scan_text(text: std::Slice[u8], offset: i64) -> token::Token {
-  if offset >= text.len {
-    return token::make_token(token::EndOfFile, offset, offset);
+fn identifier_end_from_text(text: std::Slice[u8], offset: i64) -> i64 {
+  var end = offset + 1;
+  while end < text.len && is_identifier_continue(text[end]) {
+    end = end + 1;
   }
+  return end;
+}
 
+fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
   let first = text[offset];
-  if is_identifier_start(first) {
-    var identifier_end = offset + 1;
-    while identifier_end < text.len && is_identifier_continue(text[identifier_end]) {
-      identifier_end = identifier_end + 1;
-    }
-    let kind = identifier_kind_from_text(text, offset, identifier_end);
-    return token::make_token(kind, offset, identifier_end);
-  }
   if is_number_start(first) {
     var number_end = offset + 1;
     while number_end < text.len && is_number_continue(text[number_end]) {
@@ -400,6 +436,39 @@ pub fn scan_text(text: std::Slice[u8], offset: i64) -> token::Token {
   }
 
   return scan_one(first, offset);
+}
+
+pub fn scan_text_with_keywords(
+  table: ref KeywordTable,
+  text: std::Slice[u8],
+  offset: i64
+) -> token::Token {
+  if offset >= text.len {
+    return token::make_token(token::EndOfFile, offset, offset);
+  }
+
+  if is_identifier_start(text[offset]) {
+    let identifier_end = identifier_end_from_text(text, offset);
+    let kind = identifier_kind_from_keywords(table, text, offset, identifier_end);
+    return token::make_token(kind, offset, identifier_end);
+  }
+
+  return scan_non_identifier_text(text, offset);
+}
+
+pub fn scan_text(text: std::Slice[u8], offset: i64) -> token::Token {
+  if offset >= text.len {
+    return token::make_token(token::EndOfFile, offset, offset);
+  }
+
+  let first = text[offset];
+  if is_identifier_start(first) {
+    let identifier_end = identifier_end_from_text(text, offset);
+    let kind = identifier_kind_from_text(text, offset, identifier_end);
+    return token::make_token(kind, offset, identifier_end);
+  }
+
+  return scan_non_identifier_text(text, offset);
 }
 
 pub fn invalid_character(offset: i64) -> diagnostic::Diagnostic {
@@ -678,6 +747,20 @@ pub fn cursor_from_text(text: std::Slice[u8], offset: i64) -> TokenCursor {
   };
 }
 
+pub fn cursor_from_text_with_keywords(
+  table: ref KeywordTable,
+  text: std::Slice[u8],
+  offset: i64
+) -> TokenCursor {
+  let scanned = scan_text_with_keywords(table, text, offset);
+  let done = token::kind_is_eof(scanned.kind);
+  return TokenCursor {
+    current: scanned,
+    offset: offset,
+    done: done,
+  };
+}
+
 pub fn cursor_advance(cursor: TokenCursor) -> TokenCursor {
   if cursor.done {
     return cursor;
@@ -695,6 +778,18 @@ pub fn cursor_advance_in_text(cursor: TokenCursor, text: std::Slice[u8]) -> Toke
   return cursor_from_text(text, cursor.current.end);
 }
 
+pub fn cursor_advance_in_text_with_keywords(
+  table: ref KeywordTable,
+  cursor: TokenCursor,
+  text: std::Slice[u8]
+) -> TokenCursor {
+  if cursor.done {
+    return cursor;
+  }
+
+  return cursor_from_text_with_keywords(table, text, cursor.current.end);
+}
+
 pub fn cursor_advance_significant_in_text(
   cursor: TokenCursor,
   text: std::Slice[u8]
@@ -702,6 +797,18 @@ pub fn cursor_advance_significant_in_text(
   var advanced = cursor_advance_in_text(cursor, text);
   while cursor_is_whitespace(advanced) {
     advanced = cursor_advance_in_text(advanced, text);
+  }
+  return advanced;
+}
+
+pub fn cursor_advance_significant_in_text_with_keywords(
+  table: ref KeywordTable,
+  cursor: TokenCursor,
+  text: std::Slice[u8]
+) -> TokenCursor {
+  var advanced = cursor_advance_in_text_with_keywords(table, cursor, text);
+  while cursor_is_whitespace(advanced) {
+    advanced = cursor_advance_in_text_with_keywords(table, advanced, text);
   }
   return advanced;
 }
@@ -812,6 +919,20 @@ pub fn handoff_from_text(text: std::Slice[u8]) -> TokenHandoff {
   return TokenHandoff {
     first: first,
     eof: cursor_advance_significant_in_text(first, text),
+  };
+}
+
+pub fn handoff_from_text_with_keywords(
+  table: ref KeywordTable,
+  text: std::Slice[u8]
+) -> TokenHandoff {
+  var first = cursor_from_text_with_keywords(table, text, 0);
+  while cursor_is_whitespace(first) {
+    first = cursor_advance_in_text_with_keywords(table, first, text);
+  }
+  return TokenHandoff {
+    first: first,
+    eof: cursor_advance_significant_in_text_with_keywords(table, first, text),
   };
 }
 

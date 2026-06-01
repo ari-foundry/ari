@@ -1453,6 +1453,48 @@ fn lexer_keyword_score() -> i64 {
     );
 }
 
+fn lexer_keyword_table_score() -> i64 {
+  var zone = std::zone::create(65536);
+  var table = lexer::keyword_table(ref mut zone);
+  var score = 0;
+
+  let text = "meta name";
+  let keyword = lexer::cursor_from_text_with_keywords(ref table, text, 0);
+  if score == 0 && !lexer::cursor_is_keyword(keyword) {
+    score = 1;
+  }
+  if score == 0 && lexer::cursor_token_score(keyword) != 106 {
+    score = 2;
+  }
+
+  let name = lexer::cursor_advance_significant_in_text_with_keywords(ref table, keyword, text);
+  if score == 0 && !lexer::cursor_is_identifier(name) {
+    score = 3;
+  }
+  if score == 0 && lexer::cursor_token_start(name) != 5 {
+    score = 4;
+  }
+
+  let longer = lexer::cursor_from_text_with_keywords(ref table, "metadata", 0);
+  if score == 0 && !lexer::cursor_is_identifier(longer) {
+    score = 5;
+  }
+  if score == 0 && lexer::cursor_is_keyword(longer) {
+    score = 6;
+  }
+
+  let handoff = lexer::handoff_from_text_with_keywords(ref table, "as");
+  if score == 0 && !lexer::handoff_starts_with_keyword(handoff) {
+    score = 7;
+  }
+  if score == 0 && !lexer::handoff_has_eof(handoff) {
+    score = 8;
+  }
+
+  std::zone::destroy(zone);
+  return score;
+}
+
 fn parse_text_score() -> i64 {
   if !parser::parse_is_success(parser::parse_text("name9")) {
     return 1;
@@ -1704,6 +1746,7 @@ fn main() -> i64 {
     lexer_shift_compound_assignment_score() +
     lexer_text_cursor_score() +
     lexer_keyword_score() +
+    lexer_keyword_table_score() +
     parse_text_score() +
     ast::node_score(ast::token_node(3, 2, 5, 8)) -
     12 +
