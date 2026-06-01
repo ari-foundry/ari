@@ -35,6 +35,7 @@ pub type KeywordTable = std::collections::HashMap[std::string::String, token::To
 enum StringLiteralScan {
   Closed(i64),
   Unterminated(i64),
+  UnsupportedEscape(i64, i64),
 }
 
 pub fn is_ascii_alpha(value: char) -> bool {
@@ -59,6 +60,29 @@ pub fn is_number_start(value: char) -> bool {
 
 pub fn is_number_continue(value: char) -> bool {
   return is_ascii_digit(value);
+}
+
+fn is_octal_digit(value: char) -> bool {
+  return value >= '0' && value <= '7';
+}
+
+fn is_supported_string_escape(value: char) -> bool {
+  return value == 'a' ||
+    value == 'b' ||
+    value == 'e' ||
+    value == 'f' ||
+    value == 'n' ||
+    value == 'r' ||
+    value == 't' ||
+    value == 'v' ||
+    value == '\\' ||
+    value == '"' ||
+    value == '\'' ||
+    value == '?' ||
+    value == 'x' ||
+    value == 'u' ||
+    value == 'U' ||
+    is_octal_digit(value);
 }
 
 fn identifier_text_matches(
@@ -436,6 +460,9 @@ fn string_literal_scan_from_text(text: std::Slice[u8], offset: i64) -> StringLit
       if text[end + 1] == '\n' {
         return Unterminated(end + 2);
       }
+      if !is_supported_string_escape(text[end + 1]) {
+        return UnsupportedEscape(end + 1, end + 2);
+      }
       end = end + 2;
       continue;
     }
@@ -472,6 +499,7 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
         return token::make_token(token::StringLiteral, offset, string_end);
       }
       Unterminated(_) => {}
+      UnsupportedEscape(_, _) => {}
     }
   }
   if first == '.' {
@@ -499,8 +527,11 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
       Closed(string_end) => {
         return Scanned(token::make_token(token::StringLiteral, offset, string_end));
       }
-      Unterminated(error_end) => {
-        return Failed(unterminated_string_literal(offset, error_end));
+      Unterminated(unterminated_end) => {
+        return Failed(unterminated_string_literal(offset, unterminated_end));
+      }
+      UnsupportedEscape(escape_start, escape_end) => {
+        return Failed(unsupported_string_escape(escape_start, escape_end));
       }
     }
   }
@@ -580,6 +611,10 @@ pub fn invalid_character(offset: i64) -> diagnostic::Diagnostic {
 
 pub fn unterminated_string_literal(start: i64, end: i64) -> diagnostic::Diagnostic {
   return diagnostic::error(1004, start, end);
+}
+
+pub fn unsupported_string_escape(start: i64, end: i64) -> diagnostic::Diagnostic {
+  return diagnostic::error(1005, start, end);
 }
 
 fn lex_failure_from_diagnostic(failure: diagnostic::Diagnostic) -> LexFailure {

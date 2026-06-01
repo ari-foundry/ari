@@ -118,7 +118,9 @@ source-text parser/driver keyword path without requiring a hosted compiler fix.
 The source-text string literal span smoke checked closed quoted spans, escaped
 quote bytes, empty quoted strings, and unterminated EOF/newline lexer
 diagnostics preserved through parser and driver source-text paths without
-requiring a hosted compiler fix.
+requiring a hosted compiler fix. The same string-literal smoke now checks
+unsupported `\q` escape diagnostics preserved through parser and driver
+source-text paths without requiring a hosted compiler fix.
 The AST statement-kind query and parser payload-shape smoke checked successful
 statement output without requiring a hosted compiler fix. The AST node
 span-length query and parser payload-span smoke checked successful statement
@@ -341,3 +343,6 @@ Desired stage0 pressure that is not yet classified as a bug:
   diagnostics can carry stage0-style stable string codes such as `L0001`; this
   slice keeps numeric bootstrap codes and does not classify that as a hosted
   compiler bug.
+- Ari-written string escape scanning now distinguishes supported
+  single-character escape heads from unsupported ones, but full digit-shape
+  validation for `\x`, `\u`, `\U`, and octal spellings is still pending.

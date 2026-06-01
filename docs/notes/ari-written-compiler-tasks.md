@@ -398,6 +398,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Replaced source-text string literal unterminated EOF/newline fallback with
   lexer diagnostics, preserving the diagnostic through parser and driver
   source-text paths.
+- Added source-text unsupported string escape diagnostics for `\q`, preserving
+  the diagnostic through parser and driver source-text paths.
 - Added a one-token file-input fixture for the compiled `compiler/main.ari`
   bootstrap run, so file input uses real loaded text without pretending the
   larger source-root smoke fixture is already parseable as a full Ari program.
@@ -409,10 +411,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add source-text unsupported string escape diagnostics after the existing
-  escaped-quote and unterminated-string paths.
+- Add source-text string escape digit-shape diagnostics for `\x`, `\u`, `\U`,
+  and octal escape spellings.
 
 ## Next Recommended Task
 
-Add source-text unsupported string escape diagnostics after the existing
-escaped-quote and unterminated-string paths.
+Add source-text string escape digit-shape diagnostics for `\x`, `\u`, `\U`, and
+octal escape spellings.

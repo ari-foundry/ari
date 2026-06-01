@@ -170,7 +170,7 @@ def main() -> int:
         "## Completed Tasks",
         "## Small Task Queue",
         "## Next Recommended Task",
-        "Add source-text unsupported string escape diagnostics",
+        "Add source-text string escape digit-shape diagnostics",
     ]:
         require(ari_tasks, needle, ari_tasks_path)
 

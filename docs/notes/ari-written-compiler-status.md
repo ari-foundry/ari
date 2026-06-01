@@ -59,6 +59,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/lexer.ari` returns source-text lexer diagnostics for unterminated
   string literals at EOF or newline, and the parser/driver source-text paths
   preserve that diagnostic instead of falling back to `DoubleQuote`.
+- `compiler/lexer.ari` returns source-text lexer diagnostics for unsupported
+  single-character string escapes such as `\q`, while preserving supported
+  common escapes, quote/backslash escapes, `\x`, `\u`, `\U`, and octal-leading
+  escape spellings as string-literal spans for now.
 - `compiler/lexer.ari` classifies `@` as punctuation so attribute and alias
   marker tokenization no longer falls through the unknown-token path.
 - `compiler/lexer.ari` classifies simple one-character operators separately

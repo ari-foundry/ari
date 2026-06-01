@@ -57,6 +57,12 @@ fn source_text_unterminated_string_driver_score() -> i64 {
   }
 }
 
+fn source_text_unsupported_string_escape_driver_score() -> i64 {
+  zone(65536) {
+    return driver::result_code(driver::run_source_text(std::string::from("\"\\q\"")));
+  }
+}
+
 fn default_driver_result_score() -> i64 {
   return driver::result_code(driver::run());
 }
@@ -594,6 +600,30 @@ fn lexer_string_literal_span_score() -> i64 {
   }
   if parser::parse_failure_end_offset(parser::parse_text(unclosed_newline_text)) != 6 {
     return 32;
+  }
+
+  let unsupported_escape_text: Slice[u8] = "\"\\q\"";
+  let unsupported_escape = lexer::scan_text_result(unsupported_escape_text, 0);
+  if !lexer::scan_result_is_failure(unsupported_escape) {
+    return 33;
+  }
+  if lexer::scan_result_failure_code(unsupported_escape) != 1005 {
+    return 34;
+  }
+  if lexer::scan_result_failure_start_offset(unsupported_escape) != 2 {
+    return 35;
+  }
+  if lexer::scan_result_failure_end_offset(unsupported_escape) != 3 {
+    return 36;
+  }
+  if parser::parse_failure_code(parser::parse_text(unsupported_escape_text)) != 1005 {
+    return 37;
+  }
+  if parser::parse_failure_start_offset(parser::parse_text(unsupported_escape_text)) != 2 {
+    return 38;
+  }
+  if parser::parse_failure_end_offset(parser::parse_text(unsupported_escape_text)) != 3 {
+    return 39;
   }
   return 0;
 }
@@ -2171,6 +2201,8 @@ fn main() -> i64 {
     2006 +
     source_text_unterminated_string_driver_score() -
     1004 +
+    source_text_unsupported_string_escape_driver_score() -
+    1005 +
     parser::parse_score(parser::parse_empty()) -
     3018;
 }
