@@ -117,10 +117,10 @@ compiler feature in the normal focused-test workflow.
   and `>>=` with source-text longest-match behavior while preserving `<<`,
   `>>`, `<=`, and `>=`.
 - `compiler/lexer.ari` classifies exact source-text `fn`, `let`, `var`, `own`,
-  `ref`, `mut`, `ptr`, `return`, `if`, and `else` as keywords while preserving
-  longer identifier runs such as `fn1`, `letter`, `variant`, `owner`,
-  `reference`, `mutable`, `ptrace`, `returning`, `iffy`, and `elsewhere` as
-  identifiers.
+  `ref`, `mut`, `ptr`, `return`, `if`, `else`, and `while` as keywords while
+  preserving longer identifier runs such as `fn1`, `letter`, `variant`,
+  `owner`, `reference`, `mutable`, `ptrace`, `returning`, `iffy`, `elsewhere`,
+  and `while1` as identifiers.
 - `compiler/lexer.ari` classifies `?` and `??` as operators so
   result-propagation and null-coalescing tokens match the stage0 spellings.
 - `compiler/lexer.ari` exposes one `scan_two`/`cursor_from_two` path for all
@@ -526,6 +526,9 @@ policy in ad hoc compiler files.
 - Added the tenth text-backed keyword token, `else`, with source-root smoke
   coverage that exact `else` is a keyword and longer `elsewhere` remains an
   identifier.
+- Added the eleventh text-backed keyword token, `while`, with source-root smoke
+  coverage that exact `while` is a keyword and longer `while1` remains an
+  identifier.
 - Consolidated the repeated keyword source-root smoke checks behind one helper
   so each keyword case adds data instead of another full copy of the same
   cursor checks.
@@ -644,13 +647,13 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add text-backed keyword classification for stage0 `while`, preserving longer
-  identifiers such as `while1` as identifiers.
+- Add text-backed keyword classification for stage0 `init`, preserving longer
+  identifiers such as `initial` as identifiers.
 
 ## Next Recommended Task
 
-Add text-backed keyword classification for stage0 `while`, preserving longer
-identifiers such as `while1` as identifiers.
+Add text-backed keyword classification for stage0 `init`, preserving longer
+identifiers such as `initial` as identifiers.
 
 ## Local Validation
 
@@ -844,6 +847,8 @@ The lexer keyword smoke checked exact `if` source-text classification and
 preserved `iffy` as an identifier without requiring a hosted compiler fix.
 The lexer keyword smoke checked exact `else` source-text classification and
 preserved `elsewhere` as an identifier without requiring a hosted compiler fix.
+The lexer keyword smoke checked exact `while` source-text classification and
+preserved `while1` as an identifier without requiring a hosted compiler fix.
 The token-kind class helper refactor checked through the bootstrap source root
 without requiring a hosted compiler fix. The lexer double-quote delimiter smoke
 checked `"` tokenization as punctuation without requiring a hosted compiler

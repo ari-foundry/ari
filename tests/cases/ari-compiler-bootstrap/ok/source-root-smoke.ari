@@ -1307,6 +1307,17 @@ fn lexer_keyword_score() -> i64 {
       10,
       "else",
       'e'
+    ) +
+    lexer_keyword_case_with_base_score(
+      1000,
+      "while name",
+      5,
+      95,
+      "while1",
+      6,
+      7,
+      "while",
+      'w'
     );
 }
 
