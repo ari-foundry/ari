@@ -450,15 +450,18 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   Ari token model.
 - Added source-text empty byte character diagnostics for spellings such as
   `''`, preserving those failures through parser and driver source-text paths.
+- Added source-text unterminated byte character diagnostics for direct
+  EOF/newline and escaped EOF/newline spellings, preserving those failures
+  through parser and driver source-text paths.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add source-text unterminated byte character diagnostics for EOF/newline
-  spellings such as a lone opening quote.
+- Add source-text unsupported byte character escape diagnostics for spellings
+  such as `'\q'`.
 
 ## Next Recommended Task
 
-Add source-text unterminated byte character diagnostics for EOF/newline
-spellings such as a lone opening quote.
+Add source-text unsupported byte character escape diagnostics for spellings
+such as `'\q'`.

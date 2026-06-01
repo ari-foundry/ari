@@ -105,6 +105,12 @@ fn source_text_empty_byte_char_driver_score() -> i64 {
   }
 }
 
+fn source_text_unterminated_byte_char_driver_score() -> i64 {
+  zone(65536) {
+    return driver::result_code(driver::run_source_text(std::string::from("'")));
+  }
+}
+
 fn source_text_missing_base_digit_driver_score() -> i64 {
   zone(65536) {
     return driver::result_code(driver::run_source_text(std::string::from("0x")));
@@ -649,7 +655,35 @@ fn lexer_byte_char_span_score() -> i64 {
 }
 
 fn lexer_byte_char_diagnostic_score() -> i64 {
-  return lexer_failure_case_score("''", 1014, 0, 2);
+  var failure_score = lexer_failure_case_score("''", 1014, 0, 2);
+  if failure_score != 0 {
+    return failure_score;
+  }
+
+  failure_score = lexer_failure_case_score("'", 1015, 0, 1);
+  if failure_score != 0 {
+    return 7 + failure_score;
+  }
+
+  let newline_text: Slice[u8] = "'\nname";
+  failure_score = lexer_failure_case_score(newline_text, 1015, 0, 2);
+  if failure_score != 0 {
+    return 14 + failure_score;
+  }
+
+  let escape_eof_text: Slice[u8] = "'\\";
+  failure_score = lexer_failure_case_score(escape_eof_text, 1015, 0, 2);
+  if failure_score != 0 {
+    return 21 + failure_score;
+  }
+
+  let escape_newline_text: Slice[u8] = "'\\\nname";
+  failure_score = lexer_failure_case_score(escape_newline_text, 1015, 0, 3);
+  if failure_score != 0 {
+    return 28 + failure_score;
+  }
+
+  return 0;
 }
 
 fn lexer_number_base_diagnostic_score() -> i64 {
@@ -2831,6 +2865,8 @@ fn main() -> i64 {
     source_text_byte_char_braced_unicode_escape_driver_score() +
     source_text_empty_byte_char_driver_score() -
     1014 +
+    source_text_unterminated_byte_char_driver_score() -
+    1015 +
     source_text_missing_base_digit_driver_score() -
     1009 +
     source_text_invalid_base_digit_driver_score() -

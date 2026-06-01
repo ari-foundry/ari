@@ -299,6 +299,10 @@ The text-backed lexer scan also had to use distinct branch-local names such as
 `identifier_end`, `number_end`, and `whitespace_end`; reusing `end` across
 branches hit the same local redeclaration rule and remains ergonomics pressure,
 not a confirmed hosted compiler bug.
+The unterminated byte-character diagnostic slice re-hit the same rule inside
+`scan_non_identifier_text_result`; it uses a distinct
+`byte_char_unterminated_end` binding. This is the same ergonomics pressure, not
+a confirmed hosted compiler bug.
 
 This slice also reconfirmed the existing cross-module type identity pressure:
 a value constructed as root `source::LoadedSourceSummary` is not the same type
@@ -316,6 +320,9 @@ hosted compiler bug.
 The source-text empty byte character diagnostic for `''` now preserves code
 `1014` through lexer, parser, and driver paths without requiring a hosted
 compiler fix.
+The source-text unterminated byte character diagnostic now preserves code
+`1015` for direct EOF/newline and escaped EOF/newline spellings through lexer,
+parser, and driver paths without requiring a hosted compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
@@ -384,4 +391,6 @@ Desired stage0 pressure that is not yet classified as a bug:
   escape spans now cover ASCII-valued spellings such as `'\u0041'` and
   `'\U00000041'`. Braced Unicode byte character escape spans now cover
   ASCII-valued spellings such as `'\u{41}'`. Empty byte character diagnostics
-  now cover `''`; broader byte-character diagnostics are still pending.
+  now cover `''`, and unterminated byte character diagnostics now cover direct
+  EOF/newline plus escaped EOF/newline spellings. Broader byte-character
+  diagnostics are still pending.
