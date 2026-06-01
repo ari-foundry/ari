@@ -982,6 +982,29 @@ fn is_simple_byte_char_escape(value: char) -> bool {
     value == '\\';
 }
 
+fn byte_char_fixed_unicode_escape_end_from_text(
+  text: std::Slice[u8],
+  slash_start: i64,
+  escape_start: i64,
+  required_digits: i64
+) -> i64 {
+  var end = escape_start + 1;
+  var count = 0;
+  var value = 0;
+  while count < required_digits {
+    if end >= text.len || !is_hex_digit(text[end]) {
+      return slash_start;
+    }
+    value = append_escape_digit_capped(value, 16, hex_digit_value(text[end]), 127);
+    end = end + 1;
+    count = count + 1;
+  }
+  if value > 127 {
+    return slash_start;
+  }
+  return end;
+}
+
 fn byte_char_escape_end_from_text(text: std::Slice[u8], slash_start: i64) -> i64 {
   let escape_start = slash_start + 1;
   if escape_start >= text.len {
@@ -1001,6 +1024,12 @@ fn byte_char_escape_end_from_text(text: std::Slice[u8], slash_start: i64) -> i64
       EscapeInvalidValue(_, _) => {}
     }
     return slash_start;
+  }
+  if escaped == 'u' {
+    return byte_char_fixed_unicode_escape_end_from_text(text, slash_start, escape_start, 4);
+  }
+  if escaped == 'U' {
+    return byte_char_fixed_unicode_escape_end_from_text(text, slash_start, escape_start, 8);
   }
   if is_octal_digit(escaped) {
     match octal_escape_scan_from_text(text, escape_start) {

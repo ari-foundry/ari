@@ -377,5 +377,7 @@ Desired stage0 pressure that is not yet classified as a bug:
   Simple byte character literal spans now cover ASCII spellings such as `'a'`,
   and simple byte character escape spans now cover spellings such as `'\n'`
   and `'\\'`. Numeric byte character escape spans now cover hex and octal
-  spellings such as `'\x41'` and `'\101'`. Unicode byte character escape spans
-  and byte-character diagnostics are still pending.
+  spellings such as `'\x41'` and `'\101'`. Fixed-width byte character Unicode
+  escape spans now cover ASCII-valued spellings such as `'\u0041'` and
+  `'\U00000041'`. Braced Unicode byte character escape spans and
+  byte-character diagnostics are still pending.
