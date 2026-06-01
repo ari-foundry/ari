@@ -95,6 +95,9 @@ pub fn classify_one(value: char) -> token::TokenKind {
   if value == '"' {
     return token::DoubleQuote;
   }
+  if value == '@' {
+    return token::At;
+  }
   if value == '?' {
     return token::Question;
   }
@@ -269,6 +272,9 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
     }
     DoubleQuote => {
       return Scanned(token::make_token(token::DoubleQuote, offset, offset + 1));
+    }
+    At => {
+      return Scanned(token::make_token(token::At, offset, offset + 1));
     }
     Question => {
       return Scanned(token::make_token(token::Question, offset, offset + 1));

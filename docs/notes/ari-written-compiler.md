@@ -100,6 +100,8 @@ compiler feature in the normal focused-test workflow.
 - `compiler/lexer.ari` classifies `"` as punctuation so string-literal
   delimiter tokenization can start without falling through the unknown-token
   path.
+- `compiler/lexer.ari` classifies `@` as punctuation so attribute and alias
+  marker tokenization no longer falls through the unknown-token path.
 - `compiler/lexer.ari` classifies simple one-character operators separately
   from unknown characters and exposes operator queries at the cursor and
   handoff boundary.
@@ -428,6 +430,9 @@ policy in ad hoc compiler files.
   of repeating full token-kind matches in `compiler/lexer.ari`.
 - Added a focused `"` delimiter token and source-root smoke coverage that it is
   punctuation, not an operator or unknown token.
+- Added a focused `@` punctuation token and source-root smoke coverage that it
+  is punctuation, not an operator or unknown token, while unknown-token smokes
+  now use `$` as a still-unknown character.
 - Added a focused `::` path separator token and source-root smoke coverage that
   it falls back to the one-character colon token when the second character does
   not match.
@@ -576,15 +581,13 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add the stage0 `@` punctuation token and move unknown-token smokes to a
-  still-unknown character, so annotation-style tokenization no longer falls
-  through the unknown path.
+- Add the stage0 dot-run token family (`..`, `..=`, and `...`) so range and
+  ellipsis spellings no longer fall through repeated one-character `.` tokens.
 
 ## Next Recommended Task
 
-Add the stage0 `@` punctuation token and move unknown-token smokes to a
-still-unknown character, so annotation-style tokenization no longer falls
-through the unknown path.
+Add the stage0 dot-run token family (`..`, `..=`, and `...`) so range and
+ellipsis spellings no longer fall through repeated one-character `.` tokens.
 
 ## Local Validation
 
@@ -743,6 +746,8 @@ path checked the same two-character token spans and fallback cases without
 requiring a hosted compiler fix.
 The lexer question-operator smoke checked `?` and `??` tokenization plus the
 one-character `?` fallback path without requiring a hosted compiler fix.
+The lexer at-punctuation smoke checked `@` tokenization as punctuation and the
+unknown-token smokes moved to `$` without requiring a hosted compiler fix.
 The token-kind class helper refactor checked through the bootstrap source root
 without requiring a hosted compiler fix. The lexer double-quote delimiter smoke
 checked `"` tokenization as punctuation without requiring a hosted compiler
