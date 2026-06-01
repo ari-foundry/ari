@@ -129,6 +129,9 @@ fn parse_statement_end_score() -> i64 {
   if parser::parse_statement_end_offset(parser::parse_one('q', 1)) != 2 {
     return 1;
   }
+  if parser::parse_statement_end_offset(parser::parse_one('9', 2)) != 3 {
+    return 3;
+  }
   if parser::parse_statement_end_offset(parser::parse_one(' ', 4)) != -1 {
     return 2;
   }
