@@ -231,6 +231,18 @@ fn source_text_leading_comment_non_decimal_float_dot_driver_score() -> i64 {
   return 0;
 }
 
+fn source_text_leading_comment_byte_char_driver_score() -> i64 {
+  let line_code = source_text_driver_result("// skip\n'a'");
+  if line_code != 0 {
+    return 1;
+  }
+  let block_code = source_text_driver_result("/* skip */'a'");
+  if block_code != 0 {
+    return 2;
+  }
+  return 0;
+}
+
 fn source_text_trailing_comment_driver_score() -> i64 {
   let line_code = source_text_driver_result("p// skip");
   if line_code != 0 {
@@ -1754,6 +1766,51 @@ fn lexer_trailing_comment_handoff_score() -> i64 {
     return score;
   }
   score = lexer_trailing_comment_handoff_case_score("name/* skip */", 4, 14);
+  if score != 0 {
+    return 10 + score;
+  }
+  return 0;
+}
+
+fn lexer_leading_comment_number_handoff_case_score(
+  text: Slice[u8],
+  expected_start: i64,
+  expected_end: i64,
+  expected_eof_offset: i64
+) -> i64 {
+  let handoff = lexer::handoff_from_text(text);
+  let first = lexer::handoff_first(handoff);
+  if !lexer::cursor_is_number(first) {
+    return 1;
+  }
+  if lexer::cursor_token_start(first) != expected_start {
+    return 2;
+  }
+  if lexer::cursor_token_end(first) != expected_end {
+    return 3;
+  }
+  if !lexer::handoff_has_eof(handoff) {
+    return 4;
+  }
+  let eof = lexer::handoff_eof(handoff);
+  if !lexer::cursor_is_eof(eof) {
+    return 5;
+  }
+  if lexer::cursor_token_start(eof) != expected_eof_offset {
+    return 6;
+  }
+  if lexer::cursor_token_end(eof) != expected_eof_offset {
+    return 7;
+  }
+  return 0;
+}
+
+fn lexer_leading_comment_byte_char_handoff_score() -> i64 {
+  var score = lexer_leading_comment_number_handoff_case_score("// skip\n'a'", 8, 11, 11);
+  if score != 0 {
+    return score;
+  }
+  score = lexer_leading_comment_number_handoff_case_score("/* skip */'a'", 10, 13, 13);
   if score != 0 {
     return 10 + score;
   }
@@ -3402,6 +3459,18 @@ fn parse_leading_comment_success_score() -> i64 {
   return 0;
 }
 
+fn parse_leading_comment_byte_char_success_score() -> i64 {
+  var score = parse_leading_comment_case_score("// skip\n'a'", 8, 11);
+  if score != 0 {
+    return score;
+  }
+  score = parse_leading_comment_case_score("/* skip */'a'", 10, 13);
+  if score != 0 {
+    return 10 + score;
+  }
+  return 0;
+}
+
 fn parse_trailing_comment_case_score(text: Slice[u8], expected_statement_end: i64) -> i64 {
   let parsed = parser::parse_text(text);
   if !parser::parse_is_success(parsed) {
@@ -4177,6 +4246,7 @@ fn main() -> i64 {
     source_text_leading_comment_unsupported_number_suffix_driver_score() +
     source_text_leading_comment_non_decimal_float_suffix_driver_score() +
     source_text_leading_comment_non_decimal_float_dot_driver_score() +
+    source_text_leading_comment_byte_char_driver_score() +
     source_text_trailing_comment_driver_score() +
     source_text_trailing_unterminated_block_driver_score() +
     source_text_post_comment_extra_token_driver_score() +
@@ -4227,8 +4297,10 @@ fn main() -> i64 {
     1008 +
     parse_comment_only_failure_score() +
     parse_leading_comment_success_score() +
+    parse_leading_comment_byte_char_success_score() +
     parse_trailing_comment_success_score() +
     lexer_trailing_comment_handoff_score() +
+    lexer_leading_comment_byte_char_handoff_score() +
     parse_trailing_unterminated_block_failure_score() +
     lexer_trailing_unterminated_block_handoff_score() +
     parse_leading_comment_unterminated_block_failure_score() +
