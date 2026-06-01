@@ -400,6 +400,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - The bootstrap source-root smoke checks the source-text driver
   leading-comment unterminated block-comment path and verifies skipped comments
   before an unterminated block comment preserve lexer diagnostic code `1008`.
+- The bootstrap source-root smoke checks the source-text driver
+  leading-comment keyword path and verifies skipped comments before `false`
+  preserve parser unsupported-token diagnostic code `2006`.
 - The bootstrap source-root smoke covers the current `DriverInput` offset guard
   errors for both invalid start offsets and invalid one-byte end bounds through
   the scalar constructor helper.

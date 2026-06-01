@@ -381,6 +381,10 @@ The source-text leading-comment unterminated block-comment smoke now checks
 line and block comments before an unterminated block comment through lexer
 handoff, parser, and driver paths, preserving lexer diagnostic code `1008` and
 failure spans without requiring a hosted compiler fix.
+The source-text leading-comment keyword smoke now checks line and block
+comments before `false` through HashMap-backed keyword-table handoff, parser,
+and driver paths, preserving parser unsupported-token diagnostic code `2006`
+and keyword spans without requiring a hosted compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
