@@ -334,6 +334,10 @@ The source-text byte character escape value-range diagnostic now preserves code
 `1018` for spellings such as `'\x100'`, `'\777'`, `'\u0080'`,
 `'\U00000080'`, and `'\u{80}'` through lexer, parser, and driver paths without
 requiring a hosted compiler fix.
+The source-text byte character exactly-one-byte diagnostic now preserves code
+`1019` for too-long spellings such as `'ab'` and `'\nA'`, plus EOF after one
+direct byte payload, through lexer, parser, and driver paths without requiring
+a hosted compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
@@ -429,4 +433,6 @@ Desired stage0 pressure that is not yet classified as a bug:
   escape digit-shape diagnostics now cover missing/invalid `\x`, fixed-width
   Unicode, and braced Unicode digits. Byte character escape value-range
   diagnostics now cover oversized hex/octal byte escapes and non-ASCII Unicode
-  escapes. Broader byte-character diagnostics are still pending.
+  escapes. Byte character exactly-one-byte diagnostics now cover too-long
+  direct and escaped byte spellings plus EOF after one direct byte payload.
+  Direct non-ASCII byte character diagnostics are still pending.

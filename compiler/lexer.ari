@@ -59,6 +59,7 @@ enum ByteCharScan {
   ByteCharUnsupportedEscape(i64, i64),
   ByteCharInvalidEscapeDigits(i64, i64),
   ByteCharInvalidEscapeValue(i64, i64),
+  ByteCharTooLong(i64, i64),
   ByteCharFallback,
 }
 
@@ -1070,6 +1071,20 @@ fn byte_char_escape_scan_from_text(text: std::Slice[u8], slash_start: i64) -> St
   return EscapeUnsupported(escape_start, escape_start + 1);
 }
 
+fn byte_char_too_long_end_from_text(text: std::Slice[u8], offset: i64) -> i64 {
+  var end = offset + 1;
+  while end < text.len {
+    if text[end] == '\'' {
+      return end + 1;
+    }
+    if text[end] == '\n' {
+      return end + 1;
+    }
+    end = end + 1;
+  }
+  return text.len;
+}
+
 fn byte_char_scan_from_text(text: std::Slice[u8], offset: i64) -> ByteCharScan {
   if offset + 1 >= text.len {
     return ByteCharUnterminated(text.len);
@@ -1092,7 +1107,7 @@ fn byte_char_scan_from_text(text: std::Slice[u8], offset: i64) -> ByteCharScan {
         if byte_char_escaped_end < text.len && text[byte_char_escaped_end] == '\'' {
           return ByteCharClosed(byte_char_escaped_end + 1);
         }
-        return ByteCharFallback;
+        return ByteCharTooLong(offset, byte_char_too_long_end_from_text(text, offset));
       }
       EscapeUnsupported(byte_char_unsupported_start, byte_char_unsupported_end) => {
         return ByteCharUnsupportedEscape(byte_char_unsupported_start, byte_char_unsupported_end);
@@ -1106,7 +1121,7 @@ fn byte_char_scan_from_text(text: std::Slice[u8], offset: i64) -> ByteCharScan {
     }
   }
   if offset + 2 >= text.len {
-    return ByteCharFallback;
+    return ByteCharTooLong(offset, byte_char_too_long_end_from_text(text, offset));
   }
   if text[offset + 1] == '\'' || text[offset + 1] == '\n' {
     return ByteCharFallback;
@@ -1114,7 +1129,7 @@ fn byte_char_scan_from_text(text: std::Slice[u8], offset: i64) -> ByteCharScan {
   if text[offset + 2] == '\'' {
     return ByteCharClosed(offset + 3);
   }
-  return ByteCharFallback;
+  return ByteCharTooLong(offset, byte_char_too_long_end_from_text(text, offset));
 }
 
 fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
@@ -1165,6 +1180,7 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
       ByteCharUnsupportedEscape(_, _) => {}
       ByteCharInvalidEscapeDigits(_, _) => {}
       ByteCharInvalidEscapeValue(_, _) => {}
+      ByteCharTooLong(_, _) => {}
       ByteCharFallback => {}
     }
   }
@@ -1273,6 +1289,12 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
         return Failed(invalid_byte_character_escape_value(
           byte_char_value_start,
           byte_char_value_end
+        ));
+      }
+      ByteCharTooLong(byte_char_too_long_start, byte_char_too_long_end) => {
+        return Failed(byte_character_literal_too_long(
+          byte_char_too_long_start,
+          byte_char_too_long_end
         ));
       }
       ByteCharFallback => {}
@@ -1390,6 +1412,10 @@ pub fn invalid_byte_character_escape_digits(start: i64, end: i64) -> diagnostic:
 
 pub fn invalid_byte_character_escape_value(start: i64, end: i64) -> diagnostic::Diagnostic {
   return diagnostic::error(1018, start, end);
+}
+
+pub fn byte_character_literal_too_long(start: i64, end: i64) -> diagnostic::Diagnostic {
+  return diagnostic::error(1019, start, end);
 }
 
 pub fn unterminated_string_literal(start: i64, end: i64) -> diagnostic::Diagnostic {

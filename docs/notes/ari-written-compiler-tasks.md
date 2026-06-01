@@ -463,15 +463,18 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Added source-text byte character escape value-range diagnostics for spellings
   such as `'\x100'`, `'\777'`, `'\u0080'`, `'\U00000080'`, and `'\u{80}'`,
   preserving those failures through parser and driver source-text paths.
+- Added source-text byte character exactly-one-byte diagnostics for too-long
+  spellings such as `'ab'` and `'\nA'`, plus EOF after one direct byte payload,
+  preserving those failures through parser and driver source-text paths.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add source-text byte character exactly-one-byte diagnostics for too-long
-  spellings such as `'ab'`.
+- Add source-text direct non-ASCII byte character diagnostics for UTF-8 byte
+  spellings, matching stage0's ASCII-only byte character literal rule.
 
 ## Next Recommended Task
 
-Add source-text byte character exactly-one-byte diagnostics for too-long
-spellings such as `'ab'`.
+Add source-text direct non-ASCII byte character diagnostics for UTF-8 byte
+spellings, matching stage0's ASCII-only byte character literal rule.

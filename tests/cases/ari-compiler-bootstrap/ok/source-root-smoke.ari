@@ -129,6 +129,12 @@ fn source_text_invalid_byte_char_escape_value_driver_score() -> i64 {
   }
 }
 
+fn source_text_too_long_byte_char_driver_score() -> i64 {
+  zone(65536) {
+    return driver::result_code(driver::run_source_text(std::string::from("'ab'")));
+  }
+}
+
 fn source_text_missing_base_digit_driver_score() -> i64 {
   zone(65536) {
     return driver::result_code(driver::run_source_text(std::string::from("0x")));
@@ -769,6 +775,21 @@ fn lexer_byte_char_diagnostic_score() -> i64 {
   failure_score = lexer_failure_case_score("'\\u{80}'", 1018, 2, 7);
   if failure_score != 0 {
     return 126 + failure_score;
+  }
+
+  failure_score = lexer_failure_case_score("'ab'", 1019, 0, 4);
+  if failure_score != 0 {
+    return 133 + failure_score;
+  }
+
+  failure_score = lexer_failure_case_score("'a", 1019, 0, 2);
+  if failure_score != 0 {
+    return 140 + failure_score;
+  }
+
+  failure_score = lexer_failure_case_score("'\\nA'", 1019, 0, 5);
+  if failure_score != 0 {
+    return 147 + failure_score;
   }
 
   return 0;
@@ -2961,6 +2982,8 @@ fn main() -> i64 {
     1017 +
     source_text_invalid_byte_char_escape_value_driver_score() -
     1018 +
+    source_text_too_long_byte_char_driver_score() -
+    1019 +
     source_text_missing_base_digit_driver_score() -
     1009 +
     source_text_invalid_base_digit_driver_score() -
