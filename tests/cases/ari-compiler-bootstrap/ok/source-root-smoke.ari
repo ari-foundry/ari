@@ -75,6 +75,12 @@ fn source_text_invalid_string_escape_value_driver_score() -> i64 {
   }
 }
 
+fn source_text_unterminated_block_comment_driver_score() -> i64 {
+  zone(65536) {
+    return driver::result_code(driver::run_source_text(std::string::from("/* open")));
+  }
+}
+
 fn default_driver_result_score() -> i64 {
   return driver::result_code(driver::run());
 }
@@ -495,7 +501,7 @@ fn lexer_double_quote_delimiter_score() -> i64 {
   return 0;
 }
 
-fn lexer_string_failure_case_score(
+fn lexer_failure_case_score(
   text: Slice[u8],
   expected_code: i64,
   expected_start: i64,
@@ -599,43 +605,43 @@ fn lexer_string_literal_span_score() -> i64 {
   }
 
   let unclosed_eof_text: Slice[u8] = "\"open";
-  var failure_score = lexer_string_failure_case_score(unclosed_eof_text, 1004, 0, 5);
+  var failure_score = lexer_failure_case_score(unclosed_eof_text, 1004, 0, 5);
   if failure_score != 0 {
     return 18 + failure_score;
   }
 
   let unclosed_newline_text: Slice[u8] = "\"open\nname";
-  failure_score = lexer_string_failure_case_score(unclosed_newline_text, 1004, 0, 6);
+  failure_score = lexer_failure_case_score(unclosed_newline_text, 1004, 0, 6);
   if failure_score != 0 {
     return 25 + failure_score;
   }
 
   let unsupported_escape_text: Slice[u8] = "\"\\q\"";
-  failure_score = lexer_string_failure_case_score(unsupported_escape_text, 1005, 2, 3);
+  failure_score = lexer_failure_case_score(unsupported_escape_text, 1005, 2, 3);
   if failure_score != 0 {
     return 32 + failure_score;
   }
 
   let invalid_hex_escape_text: Slice[u8] = "\"\\x\"";
-  failure_score = lexer_string_failure_case_score(invalid_hex_escape_text, 1006, 2, 3);
+  failure_score = lexer_failure_case_score(invalid_hex_escape_text, 1006, 2, 3);
   if failure_score != 0 {
     return 39 + failure_score;
   }
 
   let invalid_hex_digit_escape_text: Slice[u8] = "\"\\xG\"";
-  failure_score = lexer_string_failure_case_score(invalid_hex_digit_escape_text, 1006, 2, 3);
+  failure_score = lexer_failure_case_score(invalid_hex_digit_escape_text, 1006, 2, 3);
   if failure_score != 0 {
     return 46 + failure_score;
   }
 
   let invalid_unicode_escape_text: Slice[u8] = "\"\\u12\"";
-  failure_score = lexer_string_failure_case_score(invalid_unicode_escape_text, 1006, 2, 5);
+  failure_score = lexer_failure_case_score(invalid_unicode_escape_text, 1006, 2, 5);
   if failure_score != 0 {
     return 53 + failure_score;
   }
 
   let invalid_wide_unicode_escape_text: Slice[u8] = "\"\\U1234\"";
-  failure_score = lexer_string_failure_case_score(
+  failure_score = lexer_failure_case_score(
     invalid_wide_unicode_escape_text,
     1006,
     2,
@@ -646,7 +652,7 @@ fn lexer_string_literal_span_score() -> i64 {
   }
 
   let invalid_braced_unicode_digit_text: Slice[u8] = "\"\\u{Q}\"";
-  failure_score = lexer_string_failure_case_score(
+  failure_score = lexer_failure_case_score(
     invalid_braced_unicode_digit_text,
     1006,
     4,
@@ -657,7 +663,7 @@ fn lexer_string_literal_span_score() -> i64 {
   }
 
   let empty_braced_unicode_escape_text: Slice[u8] = "\"\\u{}\"";
-  failure_score = lexer_string_failure_case_score(
+  failure_score = lexer_failure_case_score(
     empty_braced_unicode_escape_text,
     1006,
     2,
@@ -668,25 +674,25 @@ fn lexer_string_literal_span_score() -> i64 {
   }
 
   let invalid_hex_value_escape_text: Slice[u8] = "\"\\x100\"";
-  failure_score = lexer_string_failure_case_score(invalid_hex_value_escape_text, 1007, 2, 6);
+  failure_score = lexer_failure_case_score(invalid_hex_value_escape_text, 1007, 2, 6);
   if failure_score != 0 {
     return 82 + failure_score;
   }
 
   let invalid_octal_value_escape_text: Slice[u8] = "\"\\777\"";
-  failure_score = lexer_string_failure_case_score(invalid_octal_value_escape_text, 1007, 2, 5);
+  failure_score = lexer_failure_case_score(invalid_octal_value_escape_text, 1007, 2, 5);
   if failure_score != 0 {
     return 89 + failure_score;
   }
 
   let invalid_fixed_unicode_value_text: Slice[u8] = "\"\\uD800\"";
-  failure_score = lexer_string_failure_case_score(invalid_fixed_unicode_value_text, 1007, 2, 7);
+  failure_score = lexer_failure_case_score(invalid_fixed_unicode_value_text, 1007, 2, 7);
   if failure_score != 0 {
     return 96 + failure_score;
   }
 
   let invalid_wide_unicode_value_text: Slice[u8] = "\"\\U00110000\"";
-  failure_score = lexer_string_failure_case_score(
+  failure_score = lexer_failure_case_score(
     invalid_wide_unicode_value_text,
     1007,
     2,
@@ -697,7 +703,7 @@ fn lexer_string_literal_span_score() -> i64 {
   }
 
   let invalid_braced_unicode_value_text: Slice[u8] = "\"\\u{110000}\"";
-  failure_score = lexer_string_failure_case_score(
+  failure_score = lexer_failure_case_score(
     invalid_braced_unicode_value_text,
     1007,
     2,
@@ -721,6 +727,78 @@ fn lexer_string_literal_span_score() -> i64 {
   let after_digit_escape = lexer::cursor_advance_in_text(digit_escape, digit_escape_text);
   if !lexer::cursor_is_whitespace(after_digit_escape) {
     return 121;
+  }
+  return 0;
+}
+
+fn lexer_comment_span_score() -> i64 {
+  let line_text: Slice[u8] = "// skip\nname";
+  let line = lexer::cursor_from_text(line_text, 0);
+  if !lexer::cursor_is_whitespace(line) {
+    return 1;
+  }
+  if lexer::cursor_token_start(line) != 0 {
+    return 2;
+  }
+  if lexer::cursor_token_end(line) != 7 {
+    return 3;
+  }
+  if lexer::cursor_token_score(line) != 10 {
+    return 4;
+  }
+  let line_newline = lexer::cursor_advance_in_text(line, line_text);
+  if !lexer::cursor_is_whitespace(line_newline) {
+    return 5;
+  }
+  if lexer::cursor_token_start(line_newline) != 7 {
+    return 6;
+  }
+  let line_name = lexer::cursor_advance_significant_in_text(line, line_text);
+  if !lexer::cursor_is_identifier(line_name) {
+    return 7;
+  }
+  if lexer::cursor_token_start(line_name) != 8 {
+    return 8;
+  }
+  if lexer::cursor_token_end(line_name) != 12 {
+    return 9;
+  }
+  if !parser::parse_is_success(parser::parse_text(line_text)) {
+    return 10;
+  }
+
+  let block_text: Slice[u8] = "/* outer /* inner */ still */name";
+  let block = lexer::cursor_from_text(block_text, 0);
+  if !lexer::cursor_is_whitespace(block) {
+    return 11;
+  }
+  if lexer::cursor_token_start(block) != 0 {
+    return 12;
+  }
+  if lexer::cursor_token_end(block) != 29 {
+    return 13;
+  }
+  if lexer::cursor_token_score(block) != 32 {
+    return 14;
+  }
+  let block_name = lexer::cursor_advance_significant_in_text(block, block_text);
+  if !lexer::cursor_is_identifier(block_name) {
+    return 15;
+  }
+  if lexer::cursor_token_start(block_name) != 29 {
+    return 16;
+  }
+  if lexer::cursor_token_end(block_name) != 33 {
+    return 17;
+  }
+  if !parser::parse_is_success(parser::parse_text(block_text)) {
+    return 18;
+  }
+
+  let unterminated_block_text: Slice[u8] = "/* open";
+  let failure_score = lexer_failure_case_score(unterminated_block_text, 1008, 0, 7);
+  if failure_score != 0 {
+    return 18 + failure_score;
   }
   return 0;
 }
@@ -2222,6 +2300,7 @@ fn main() -> i64 {
     lexer_bracket_punctuation_score() +
     lexer_double_quote_delimiter_score() +
     lexer_string_literal_span_score() +
+    lexer_comment_span_score() +
     lexer_at_punctuation_score() +
     lexer_question_operator_score() +
     lexer_equality_operator_score() +
@@ -2304,6 +2383,8 @@ fn main() -> i64 {
     1006 +
     source_text_invalid_string_escape_value_driver_score() -
     1007 +
+    source_text_unterminated_block_comment_driver_score() -
+    1008 +
     parser::parse_score(parser::parse_empty()) -
     3018;
 }

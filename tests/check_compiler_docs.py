@@ -170,7 +170,7 @@ def main() -> int:
         "## Completed Tasks",
         "## Small Task Queue",
         "## Next Recommended Task",
-        "Add source-text line/block comment skipping",
+        "Add source-text numeric base-prefix literal spans",
     ]:
         require(ari_tasks, needle, ari_tasks_path)
 

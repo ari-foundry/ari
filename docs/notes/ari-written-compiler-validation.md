@@ -127,7 +127,10 @@ spellings, plus a valid digit-escape span covering `\x`, `\u`, `\U`, braced
 `\u{...}`, and octal-leading escape spellings, without requiring a hosted
 compiler fix. It now also checks source-text string escape value-range
 diagnostics for byte `\x`, octal, fixed-width Unicode, and braced Unicode
-spellings without requiring a hosted compiler fix.
+spellings without requiring a hosted compiler fix. It now also checks
+source-text line comment and nested block comment skipping as whitespace spans,
+plus unterminated block comment diagnostics preserved through parser and driver
+source-text paths, without requiring a hosted compiler fix.
 The AST statement-kind query and parser payload-shape smoke checked successful
 statement output without requiring a hosted compiler fix. The AST node
 span-length query and parser payload-span smoke checked successful statement
@@ -345,7 +348,8 @@ Desired stage0 pressure that is not yet classified as a bug:
   `zone { ... }` capacity can be too small for growing compiler fixtures, so
   explicit `zone(capacity)` is currently required.
 - Clearer match-arm binding scoping ergonomics; today a helper that matches
-  both `std::Ok(code)` and `std::Err(code)` must use distinct payload names.
+  both `std::Ok(code)` and `std::Err(code)`, or sibling enum cases with the
+  same payload spelling, must use distinct payload names.
 - Richer Ari-written diagnostic identity is still needed before these
   diagnostics can carry stage0-style stable string codes such as `L0001`; this
   slice keeps numeric bootstrap codes and does not classify that as a hosted
@@ -354,5 +358,6 @@ Desired stage0 pressure that is not yet classified as a bug:
   single-character escape heads from unsupported ones and validates the digit
   shape of `\x`, fixed-width `\u`, fixed-width `\U`, and braced `\u{...}`
   spellings plus byte, Unicode scalar, and octal value ranges. Source-text
-  line/block comment skipping and unterminated block comment diagnostics are
+  comment skipping now covers line comments, nested block comments, and
+  unterminated block comment diagnostics. Numeric base-prefix literal spans are
   still pending.
