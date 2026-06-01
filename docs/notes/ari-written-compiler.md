@@ -90,6 +90,8 @@ compiler feature in the normal focused-test workflow.
 - `compiler/lexer.ari` classifies simple delimiter punctuation separately from
   unknown characters and exposes punctuation queries at the cursor and handoff
   boundary.
+- `compiler/lexer.ari` classifies `.` as punctuation so field-access tokens no
+  longer fall through the unknown-token path.
 - `compiler/lexer.ari` exposes a two-character path separator helper so early
   smokes can distinguish `::` from the one-character colon fallback token.
 - `compiler/lexer.ari` classifies simple one-character operators separately
@@ -418,6 +420,8 @@ policy in ad hoc compiler files.
 - Added lexer classification for simple delimiter punctuation tokens and
   source-root smoke coverage that they are scanned, scored, and exposed through
   punctuation queries instead of unknown-token paths.
+- Added a focused `.` punctuation token and source-root smoke coverage that it
+  is punctuation, not an operator or unknown token.
 - Added a focused `::` path separator token and source-root smoke coverage that
   it falls back to the one-character colon token when the second character does
   not match.
@@ -552,13 +556,14 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a focused lexer one-character dot punctuation token and smoke for `.`, so
-  field-access tokenization can start.
+- Add focused lexer one-character square bracket punctuation tokens and smoke
+  for `[` and `]`, so generic argument and future indexing tokenization can
+  start.
 
 ## Next Recommended Task
 
-Add a focused lexer one-character dot punctuation token and smoke for `.`, so
-field-access tokenization can start.
+Add focused lexer one-character square bracket punctuation tokens and smoke for
+`[` and `]`, so generic argument and future indexing tokenization can start.
 
 ## Local Validation
 
@@ -688,7 +693,9 @@ smoke checked fixed stream cursors and EOF placement without requiring a hosted
 compiler fix. The lexer punctuation smoke checked delimiter token
 classification without requiring a hosted compiler fix. The lexer operator
 smoke checked one-character operator token classification without requiring a
-hosted compiler fix. The lexer two-character path separator smoke checked `::`
+hosted compiler fix. The lexer dot punctuation smoke checked `.` tokenization
+as punctuation without requiring a hosted compiler fix. The lexer two-character
+path separator smoke checked `::`
 tokenization plus the one-character colon fallback path without requiring a
 hosted compiler fix. The lexer identifier span smoke checked two-character
 identifier token boundaries without requiring a hosted compiler fix. The lexer

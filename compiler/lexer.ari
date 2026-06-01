@@ -83,6 +83,9 @@ pub fn classify_one(value: char) -> token::TokenKind {
   if value == ';' {
     return token::Semicolon;
   }
+  if value == '.' {
+    return token::Dot;
+  }
   if value == '=' {
     return token::Equal;
   }
@@ -256,6 +259,9 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
     }
     Semicolon => {
       return Scanned(token::make_token(token::Semicolon, offset, offset + 1));
+    }
+    Dot => {
+      return Scanned(token::make_token(token::Dot, offset, offset + 1));
     }
     Equal => {
       return Scanned(token::make_token(token::Equal, offset, offset + 1));
@@ -462,6 +468,7 @@ pub fn cursor_is_identifier(cursor: TokenCursor) -> bool {
     Colon => false,
     ColonColon => false,
     Semicolon => false,
+    Dot => false,
     Equal => false,
     EqualEqual => false,
     Bang => false,
@@ -502,6 +509,7 @@ pub fn cursor_is_number(cursor: TokenCursor) -> bool {
     Colon => false,
     ColonColon => false,
     Semicolon => false,
+    Dot => false,
     Equal => false,
     EqualEqual => false,
     Bang => false,
@@ -542,6 +550,7 @@ pub fn cursor_is_whitespace(cursor: TokenCursor) -> bool {
     Colon => false,
     ColonColon => false,
     Semicolon => false,
+    Dot => false,
     Equal => false,
     EqualEqual => false,
     Bang => false,
@@ -582,6 +591,7 @@ pub fn cursor_is_eof(cursor: TokenCursor) -> bool {
     Colon => false,
     ColonColon => false,
     Semicolon => false,
+    Dot => false,
     Equal => false,
     EqualEqual => false,
     Bang => false,
@@ -622,6 +632,7 @@ pub fn cursor_is_unknown(cursor: TokenCursor) -> bool {
     Colon => false,
     ColonColon => false,
     Semicolon => false,
+    Dot => false,
     Equal => false,
     EqualEqual => false,
     Bang => false,
@@ -662,6 +673,7 @@ pub fn cursor_is_punctuation(cursor: TokenCursor) -> bool {
     Colon => true,
     ColonColon => true,
     Semicolon => true,
+    Dot => true,
     Equal => false,
     EqualEqual => false,
     Bang => false,
@@ -702,6 +714,7 @@ pub fn cursor_is_operator(cursor: TokenCursor) -> bool {
     Colon => false,
     ColonColon => false,
     Semicolon => false,
+    Dot => false,
     Equal => true,
     EqualEqual => true,
     Bang => true,
