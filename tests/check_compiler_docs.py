@@ -170,7 +170,7 @@ def main() -> int:
         "## Completed Tasks",
         "## Small Task Queue",
         "## Next Recommended Task",
-        "Replace source-text string literal unterminated EOF/newline fallback",
+        "Add source-text unsupported string escape diagnostics",
     ]:
         require(ari_tasks, needle, ari_tasks_path)
 

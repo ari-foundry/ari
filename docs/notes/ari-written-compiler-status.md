@@ -19,8 +19,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/source.ari` exposes small span query helpers for downstream phase
   payload smokes.
 - `compiler/lexer.ari` now has a small `LexResult` flow for one-character scans
-  that can return either a token or a shared `diagnostic::Diagnostic`
-  invalid-character failure.
+  and source-text scans that can return either a token or a shared
+  `diagnostic::Diagnostic` invalid-character/string-literal failure.
 - `compiler/lexer.ari` has a tiny `TokenCursor` shape over one scanned token
   and an EOF advance path. It is a placeholder for phase handoff, not a real
   source-text stream.
@@ -55,9 +55,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   path.
 - `compiler/lexer.ari` scans closed source-text quoted spans as
   `StringLiteral` tokens, including escaped quote bytes, while preserving the
-  one-character `DoubleQuote` delimiter path for one-character scans and
-  currently falling back to `DoubleQuote` for unterminated EOF/newline text
-  until lexer diagnostics replace that temporary path.
+  one-character `DoubleQuote` delimiter path for one-character scans.
+- `compiler/lexer.ari` returns source-text lexer diagnostics for unterminated
+  string literals at EOF or newline, and the parser/driver source-text paths
+  preserve that diagnostic instead of falling back to `DoubleQuote`.
 - `compiler/lexer.ari` classifies `@` as punctuation so attribute and alias
   marker tokenization no longer falls through the unknown-token path.
 - `compiler/lexer.ari` classifies simple one-character operators separately

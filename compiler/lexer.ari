@@ -24,7 +24,18 @@ pub struct TokenStream {
   length: i64,
 }
 
+pub struct LexFailure {
+  code: i64,
+  start: i64,
+  end: i64,
+}
+
 pub type KeywordTable = std::collections::HashMap[std::string::String, token::TokenKind];
+
+enum StringLiteralScan {
+  Closed(i64),
+  Unterminated(i64),
+}
 
 pub fn is_ascii_alpha(value: char) -> bool {
   return (value >= 'a' && value <= 'z') || (value >= 'A' && value <= 'Z') || value == '_';
@@ -415,28 +426,28 @@ fn identifier_end_from_text(text: std::Slice[u8], offset: i64) -> i64 {
   return end;
 }
 
-fn string_literal_end_from_text(text: std::Slice[u8], offset: i64) -> i64 {
+fn string_literal_scan_from_text(text: std::Slice[u8], offset: i64) -> StringLiteralScan {
   var end = offset + 1;
   while end < text.len {
     if text[end] == '\\' {
       if end + 1 >= text.len {
-        return offset + 1;
+        return Unterminated(text.len);
       }
       if text[end + 1] == '\n' {
-        return offset + 1;
+        return Unterminated(end + 2);
       }
       end = end + 2;
       continue;
     }
     if text[end] == '"' {
-      return end + 1;
+      return Closed(end + 1);
     }
     if text[end] == '\n' {
-      return offset + 1;
+      return Unterminated(end + 1);
     }
     end = end + 1;
   }
-  return offset + 1;
+  return Unterminated(text.len);
 }
 
 fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
@@ -456,9 +467,11 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
     return token::make_token(token::Whitespace, offset, whitespace_end);
   }
   if first == '"' {
-    let string_end = string_literal_end_from_text(text, offset);
-    if string_end > offset + 1 {
-      return token::make_token(token::StringLiteral, offset, string_end);
+    match string_literal_scan_from_text(text, offset) {
+      Closed(string_end) => {
+        return token::make_token(token::StringLiteral, offset, string_end);
+      }
+      Unterminated(_) => {}
     }
   }
   if first == '.' {
@@ -480,6 +493,21 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
   return scan_one(first, offset);
 }
 
+fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResult {
+  if text[offset] == '"' {
+    match string_literal_scan_from_text(text, offset) {
+      Closed(string_end) => {
+        return Scanned(token::make_token(token::StringLiteral, offset, string_end));
+      }
+      Unterminated(error_end) => {
+        return Failed(unterminated_string_literal(offset, error_end));
+      }
+    }
+  }
+
+  return Scanned(scan_non_identifier_text(text, offset));
+}
+
 pub fn scan_text_with_keywords(
   table: ref KeywordTable,
   text: std::Slice[u8],
@@ -498,6 +526,24 @@ pub fn scan_text_with_keywords(
   return scan_non_identifier_text(text, offset);
 }
 
+pub fn scan_text_with_keywords_result(
+  table: ref KeywordTable,
+  text: std::Slice[u8],
+  offset: i64
+) -> LexResult {
+  if offset >= text.len {
+    return Scanned(token::make_token(token::EndOfFile, offset, offset));
+  }
+
+  if is_identifier_start(text[offset]) {
+    let identifier_end = identifier_end_from_text(text, offset);
+    let kind = identifier_kind_from_keywords(table, text, offset, identifier_end);
+    return Scanned(token::make_token(kind, offset, identifier_end));
+  }
+
+  return scan_non_identifier_text_result(text, offset);
+}
+
 pub fn scan_text(text: std::Slice[u8], offset: i64) -> token::Token {
   if offset >= text.len {
     return token::make_token(token::EndOfFile, offset, offset);
@@ -513,8 +559,47 @@ pub fn scan_text(text: std::Slice[u8], offset: i64) -> token::Token {
   return scan_non_identifier_text(text, offset);
 }
 
+pub fn scan_text_result(text: std::Slice[u8], offset: i64) -> LexResult {
+  if offset >= text.len {
+    return Scanned(token::make_token(token::EndOfFile, offset, offset));
+  }
+
+  let first = text[offset];
+  if is_identifier_start(first) {
+    let identifier_end = identifier_end_from_text(text, offset);
+    let kind = identifier_kind_from_text(text, offset, identifier_end);
+    return Scanned(token::make_token(kind, offset, identifier_end));
+  }
+
+  return scan_non_identifier_text_result(text, offset);
+}
+
 pub fn invalid_character(offset: i64) -> diagnostic::Diagnostic {
   return diagnostic::error(1001, offset, offset + 1);
+}
+
+pub fn unterminated_string_literal(start: i64, end: i64) -> diagnostic::Diagnostic {
+  return diagnostic::error(1004, start, end);
+}
+
+fn lex_failure_from_diagnostic(failure: diagnostic::Diagnostic) -> LexFailure {
+  return LexFailure {
+    code: diagnostic::diagnostic_code(failure),
+    start: diagnostic::diagnostic_start_offset(failure),
+    end: diagnostic::diagnostic_end_offset(failure),
+  };
+}
+
+pub fn lex_failure_code(failure: LexFailure) -> i64 {
+  return failure.code;
+}
+
+pub fn lex_failure_start_offset(failure: LexFailure) -> i64 {
+  return failure.start;
+}
+
+pub fn lex_failure_end_offset(failure: LexFailure) -> i64 {
+  return failure.end;
 }
 
 pub fn scan_one_result(value: char, offset: i64) -> LexResult {
@@ -806,6 +891,14 @@ pub fn cursor_eof(offset: i64) -> TokenCursor {
   };
 }
 
+fn cursor_from_token(scanned: token::Token) -> TokenCursor {
+  return TokenCursor {
+    current: scanned,
+    offset: scanned.start,
+    done: token::kind_is_eof(scanned.kind),
+  };
+}
+
 pub fn cursor_from_one(value: char, offset: i64) -> TokenCursor {
   return TokenCursor { current: scan_one(value, offset), offset: offset, done: false };
 }
@@ -819,13 +912,7 @@ pub fn cursor_from_two(first: char, offset: i64, second: char) -> TokenCursor {
 }
 
 pub fn cursor_from_text(text: std::Slice[u8], offset: i64) -> TokenCursor {
-  let scanned = scan_text(text, offset);
-  let done = token::kind_is_eof(scanned.kind);
-  return TokenCursor {
-    current: scanned,
-    offset: offset,
-    done: done,
-  };
+  return cursor_from_token(scan_text(text, offset));
 }
 
 pub fn cursor_from_text_with_keywords(
@@ -833,13 +920,7 @@ pub fn cursor_from_text_with_keywords(
   text: std::Slice[u8],
   offset: i64
 ) -> TokenCursor {
-  let scanned = scan_text_with_keywords(table, text, offset);
-  let done = token::kind_is_eof(scanned.kind);
-  return TokenCursor {
-    current: scanned,
-    offset: offset,
-    done: done,
-  };
+  return cursor_from_token(scan_text_with_keywords(table, text, offset));
 }
 
 pub fn cursor_advance(cursor: TokenCursor) -> TokenCursor {
@@ -1007,6 +1088,52 @@ pub fn handoff_from_text(text: std::Slice[u8]) -> TokenHandoff {
   };
 }
 
+pub fn handoff_from_text_result(
+  text: std::Slice[u8]
+) -> std::Result[TokenHandoff, LexFailure] {
+  match scan_text_result(text, 0) {
+    Failed(first_scan_failure) => {
+      return std::Err<TokenHandoff, LexFailure>(lex_failure_from_diagnostic(first_scan_failure));
+    }
+    Scanned(first_token) => {
+      var first = first_token;
+      while token::kind_is_whitespace(first.kind) {
+        match scan_text_result(text, first.end) {
+          Failed(leading_ws_failure) => {
+            return std::Err<TokenHandoff, LexFailure>(lex_failure_from_diagnostic(leading_ws_failure));
+          }
+          Scanned(leading_ws_token) => {
+            first = leading_ws_token;
+          }
+        }
+      }
+
+      match scan_text_result(text, first.end) {
+        Failed(eof_scan_failure) => {
+          return std::Err<TokenHandoff, LexFailure>(lex_failure_from_diagnostic(eof_scan_failure));
+        }
+        Scanned(eof_token_start) => {
+          var eof_token = eof_token_start;
+          while token::kind_is_whitespace(eof_token.kind) {
+            match scan_text_result(text, eof_token.end) {
+              Failed(trailing_ws_failure) => {
+                return std::Err<TokenHandoff, LexFailure>(lex_failure_from_diagnostic(trailing_ws_failure));
+              }
+              Scanned(trailing_ws_token) => {
+                eof_token = trailing_ws_token;
+              }
+            }
+          }
+          return std::Ok<TokenHandoff, LexFailure>(TokenHandoff {
+            first: cursor_from_token(first),
+            eof: cursor_from_token(eof_token),
+          });
+        }
+      }
+    }
+  }
+}
+
 pub fn handoff_from_text_with_keywords(
   table: ref KeywordTable,
   text: std::Slice[u8]
@@ -1019,6 +1146,53 @@ pub fn handoff_from_text_with_keywords(
     first: first,
     eof: cursor_advance_significant_in_text_with_keywords(table, first, text),
   };
+}
+
+pub fn handoff_from_text_with_keywords_result(
+  table: ref KeywordTable,
+  text: std::Slice[u8]
+) -> std::Result[TokenHandoff, LexFailure] {
+  match scan_text_with_keywords_result(table, text, 0) {
+    Failed(first_scan_failure) => {
+      return std::Err<TokenHandoff, LexFailure>(lex_failure_from_diagnostic(first_scan_failure));
+    }
+    Scanned(first_token) => {
+      var first = first_token;
+      while token::kind_is_whitespace(first.kind) {
+        match scan_text_with_keywords_result(table, text, first.end) {
+          Failed(leading_ws_failure) => {
+            return std::Err<TokenHandoff, LexFailure>(lex_failure_from_diagnostic(leading_ws_failure));
+          }
+          Scanned(leading_ws_token) => {
+            first = leading_ws_token;
+          }
+        }
+      }
+
+      match scan_text_with_keywords_result(table, text, first.end) {
+        Failed(eof_scan_failure) => {
+          return std::Err<TokenHandoff, LexFailure>(lex_failure_from_diagnostic(eof_scan_failure));
+        }
+        Scanned(eof_token_start) => {
+          var eof_token = eof_token_start;
+          while token::kind_is_whitespace(eof_token.kind) {
+            match scan_text_with_keywords_result(table, text, eof_token.end) {
+              Failed(trailing_ws_failure) => {
+                return std::Err<TokenHandoff, LexFailure>(lex_failure_from_diagnostic(trailing_ws_failure));
+              }
+              Scanned(trailing_ws_token) => {
+                eof_token = trailing_ws_token;
+              }
+            }
+          }
+          return std::Ok<TokenHandoff, LexFailure>(TokenHandoff {
+            first: cursor_from_token(first),
+            eof: cursor_from_token(eof_token),
+          });
+        }
+      }
+    }
+  }
 }
 
 pub fn handoff_without_eof_from_one(value: char, offset: i64) -> TokenHandoff {
@@ -1083,6 +1257,34 @@ pub fn scan_result_score(result: LexResult) -> i64 {
   match result {
     Scanned(scanned) => token::token_score(scanned),
     Failed(failure) => diagnostic::diagnostic_score(failure),
+  }
+}
+
+pub fn scan_result_is_failure(result: LexResult) -> bool {
+  match result {
+    Scanned(_) => false,
+    Failed(_) => true,
+  }
+}
+
+pub fn scan_result_failure_code(result: LexResult) -> i64 {
+  match result {
+    Scanned(_) => 0,
+    Failed(failure) => diagnostic::diagnostic_code(failure),
+  }
+}
+
+pub fn scan_result_failure_start_offset(result: LexResult) -> i64 {
+  match result {
+    Scanned(_) => -1,
+    Failed(failure) => diagnostic::diagnostic_start_offset(failure),
+  }
+}
+
+pub fn scan_result_failure_end_offset(result: LexResult) -> i64 {
+  match result {
+    Scanned(_) => -1,
+    Failed(failure) => diagnostic::diagnostic_end_offset(failure),
   }
 }
 

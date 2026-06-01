@@ -103,12 +103,29 @@ pub fn parse_handoff(handoff: lexer::TokenHandoff) -> ParseResult {
   return parse_statement(lexer::handoff_first(handoff));
 }
 
+fn parse_handoff_result(
+  result: std::Result[lexer::TokenHandoff, lexer::LexFailure]
+) -> ParseResult {
+  match result {
+    std::Ok(handoff) => {
+      return parse_handoff(handoff);
+    }
+    std::Err(lex_failure) => {
+      return Failed(diagnostic::error(
+        lexer::lex_failure_code(lex_failure),
+        lexer::lex_failure_start_offset(lex_failure),
+        lexer::lex_failure_end_offset(lex_failure)
+      ));
+    }
+  }
+}
+
 pub fn parse_text(text: std::Slice[u8]) -> ParseResult {
   if text.is_empty() {
     return parse_empty();
   }
 
-  return parse_handoff(lexer::handoff_from_text(text));
+  return parse_handoff_result(lexer::handoff_from_text_result(text));
 }
 
 fn parse_text_with_keyword_table(
@@ -119,7 +136,7 @@ fn parse_text_with_keyword_table(
     return parse_empty();
   }
 
-  return parse_handoff(lexer::handoff_from_text_with_keywords(table, text));
+  return parse_handoff_result(lexer::handoff_from_text_with_keywords_result(table, text));
 }
 
 pub fn parse_text_with_keywords(zone: ref mut Zone, text: std::Slice[u8]) -> ParseResult {

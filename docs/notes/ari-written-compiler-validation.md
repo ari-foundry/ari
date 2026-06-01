@@ -116,8 +116,9 @@ a hosted compiler fix. The reusable keyword-table smoke checked `KwStruct`,
 `break1`, `drop1`, `forget1`, `null1`, `true1`, and `false1`, and the
 source-text parser/driver keyword path without requiring a hosted compiler fix.
 The source-text string literal span smoke checked closed quoted spans, escaped
-quote bytes, empty quoted strings, and current unterminated EOF/newline
-`DoubleQuote` fallback behavior without requiring a hosted compiler fix.
+quote bytes, empty quoted strings, and unterminated EOF/newline lexer
+diagnostics preserved through parser and driver source-text paths without
+requiring a hosted compiler fix.
 The AST statement-kind query and parser payload-shape smoke checked successful
 statement output without requiring a hosted compiler fix. The AST node
 span-length query and parser payload-span smoke checked successful statement
@@ -295,6 +296,11 @@ hosted compiler bug in this slice; public driver helpers use scalar fields
 while the nested summary remains an internal driver handoff, and the parser EOF
 smoke uses a parser-local helper so it does not pass nested lexer cursor values
 across module paths.
+The lexer diagnostic handoff also avoids passing `lexer::diagnostic::Diagnostic`
+directly into `parser::diagnostic::Diagnostic`; it uses a lexer-owned
+`LexFailure` code/span payload and lets parser reconstruct its local diagnostic
+value. This is the same cross-module type identity pressure, not a confirmed
+hosted compiler bug.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
@@ -331,3 +337,7 @@ Desired stage0 pressure that is not yet classified as a bug:
   explicit `zone(capacity)` is currently required.
 - Clearer match-arm binding scoping ergonomics; today a helper that matches
   both `std::Ok(code)` and `std::Err(code)` must use distinct payload names.
+- Richer Ari-written diagnostic identity is still needed before these
+  diagnostics can carry stage0-style stable string codes such as `L0001`; this
+  slice keeps numeric bootstrap codes and does not classify that as a hosted
+  compiler bug.
