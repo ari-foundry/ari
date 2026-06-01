@@ -388,6 +388,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   string preserve lexer diagnostic code `1004`.
 - The bootstrap source-root smoke checks the source-text driver leading-comment
   path and verifies skipped comments before a statement token preserve `Ok(0)`.
+- The bootstrap source-root smoke checks the source-text driver
+  leading-comment lexer-failure path and verifies skipped comments before an
+  unterminated string preserve lexer diagnostic code `1004`.
 - The bootstrap source-root smoke covers the current `DriverInput` offset guard
   errors for both invalid start offsets and invalid one-byte end bounds through
   the scalar constructor helper.

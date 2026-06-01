@@ -491,15 +491,18 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Added source-text leading-comment parser and driver handoff coverage before a
   statement token, checking line and block comments followed by a valid
   identifier through parser and driver paths.
+- Added source-text leading-comment lexer-failure diagnostics before a
+  statement token, checking line and block comments followed by an unterminated
+  string through lexer handoff, parser, and driver paths.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add source-text leading-comment lexer-failure diagnostics before a statement
+- Add source-text leading-comment extra-token diagnostics after a statement
   token.
 
 ## Next Recommended Task
 
-Add source-text leading-comment lexer-failure diagnostics before a statement
+Add source-text leading-comment extra-token diagnostics after a statement
 token.

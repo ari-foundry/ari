@@ -75,6 +75,18 @@ fn source_text_leading_comment_driver_score() -> i64 {
   return 0;
 }
 
+fn source_text_leading_comment_lexer_failure_driver_score() -> i64 {
+  let line_code = source_text_driver_result("// skip\n\"open");
+  if line_code != 1004 {
+    return 1;
+  }
+  let block_code = source_text_driver_result("/* skip */\"open");
+  if block_code != 1004 {
+    return 2;
+  }
+  return 0;
+}
+
 fn source_text_trailing_comment_driver_score() -> i64 {
   let line_code = source_text_driver_result("p// skip");
   if line_code != 0 {
@@ -1671,6 +1683,18 @@ fn lexer_trailing_unterminated_block_handoff_score() -> i64 {
   return 0;
 }
 
+fn lexer_leading_comment_lexer_failure_handoff_score() -> i64 {
+  var score = lexer_handoff_failure_case_score("// skip\n\"open", 1004, 8, 13);
+  if score != 0 {
+    return score;
+  }
+  score = lexer_handoff_failure_case_score("/* skip */\"open", 1004, 10, 15);
+  if score != 0 {
+    return 10 + score;
+  }
+  return 0;
+}
+
 fn lexer_post_comment_lexer_failure_handoff_score() -> i64 {
   var score = lexer_handoff_failure_case_score("name// skip\n\"open", 1004, 12, 17);
   if score != 0 {
@@ -3034,7 +3058,7 @@ fn parse_post_comment_extra_token_failure_score() -> i64 {
   return 0;
 }
 
-fn parse_post_comment_lexer_failure_case_score(
+fn parse_lexer_failure_case_score(
   text: Slice[u8],
   expected_start: i64,
   expected_end: i64
@@ -3056,12 +3080,24 @@ fn parse_post_comment_lexer_failure_case_score(
   return 0;
 }
 
-fn parse_post_comment_lexer_failure_score() -> i64 {
-  var score = parse_post_comment_lexer_failure_case_score("name// skip\n\"open", 12, 17);
+fn parse_leading_comment_lexer_failure_score() -> i64 {
+  var score = parse_lexer_failure_case_score("// skip\n\"open", 8, 13);
   if score != 0 {
     return score;
   }
-  score = parse_post_comment_lexer_failure_case_score("name/* skip */\"open", 14, 19);
+  score = parse_lexer_failure_case_score("/* skip */\"open", 10, 15);
+  if score != 0 {
+    return 10 + score;
+  }
+  return 0;
+}
+
+fn parse_post_comment_lexer_failure_score() -> i64 {
+  var score = parse_lexer_failure_case_score("name// skip\n\"open", 12, 17);
+  if score != 0 {
+    return score;
+  }
+  score = parse_lexer_failure_case_score("name/* skip */\"open", 14, 19);
   if score != 0 {
     return 10 + score;
   }
@@ -3485,6 +3521,7 @@ fn main() -> i64 {
     2003 +
     source_text_comment_only_driver_score() +
     source_text_leading_comment_driver_score() +
+    source_text_leading_comment_lexer_failure_driver_score() +
     source_text_trailing_comment_driver_score() +
     source_text_trailing_unterminated_block_driver_score() +
     source_text_post_comment_extra_token_driver_score() +
@@ -3539,6 +3576,8 @@ fn main() -> i64 {
     lexer_trailing_comment_handoff_score() +
     parse_trailing_unterminated_block_failure_score() +
     lexer_trailing_unterminated_block_handoff_score() +
+    parse_leading_comment_lexer_failure_score() +
+    lexer_leading_comment_lexer_failure_handoff_score() +
     parse_post_comment_extra_token_failure_score() +
     lexer_post_comment_extra_token_handoff_score() +
     parse_post_comment_lexer_failure_score() +
