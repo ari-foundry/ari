@@ -47,7 +47,7 @@ fn source_text_extra_token_driver_score() -> i64 {
 
 fn source_text_keyword_driver_score() -> i64 {
   zone(65536) {
-    return driver::result_code(driver::run_source_text(std::string::from("break")));
+    return driver::result_code(driver::run_source_text(std::string::from("drop")));
   }
 }
 
@@ -1608,6 +1608,9 @@ fn lexer_keyword_table_score() -> i64 {
   if score == 0 {
     score = lexer_keyword_table_case_score(ref table, 340, "break", 99, 5, "break1", 6);
   }
+  if score == 0 {
+    score = lexer_keyword_table_case_score(ref table, 350, "drop", 99, 4, "drop1", 5);
+  }
 
   std::zone::destroy(zone);
   return score;
@@ -1721,6 +1724,9 @@ fn parse_text_score() -> i64 {
   }
   if parser_keyword_failure_code("break") != 2006 {
     return 34;
+  }
+  if parser_keyword_failure_code("drop") != 2006 {
+    return 35;
   }
   return 0;
 }
