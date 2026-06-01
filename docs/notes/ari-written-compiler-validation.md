@@ -293,6 +293,10 @@ Desired stage0 pressure that is not yet classified as a bug:
 - The compatibility keyword lookup still lives in stateless
   `identifier_kind_from_text`; keep it only for focused legacy smokes while
   adding future source-text keywords to the reusable `KeywordTable` path.
+- The reusable keyword-table source-root smoke is now mostly repeated
+  per-keyword checks; once a few more backfills land, replace those blocks with
+  a small table-case helper so exact-keyword, longer-identifier, score, and
+  parser/driver checks stay data-driven.
 - Wrapping a zone-backed `HashMap` in a new Ari struct was awkward in this
   slice: mutating a `HashMap` through a helper/field lost tracked-zone receiver
   information, and returning a wrapper with a raw zone pointer or embedded map
