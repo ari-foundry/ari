@@ -67,6 +67,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   `\x`, fixed-width `\u`, fixed-width `\U`, braced `\u{...}`, and octal digit
   runs before accepting a string-literal span, including invalid digit offsets
   inside braced Unicode escapes.
+- `compiler/lexer.ari` validates source-text string escape value ranges for
+  byte `\x`, octal, fixed-width Unicode, and braced Unicode escapes before
+  accepting a string-literal span.
 - `compiler/lexer.ari` classifies `@` as punctuation so attribute and alias
   marker tokenization no longer falls through the unknown-token path.
 - `compiler/lexer.ari` classifies simple one-character operators separately

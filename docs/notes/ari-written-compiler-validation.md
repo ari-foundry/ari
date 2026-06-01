@@ -125,7 +125,9 @@ source-text string escape digit-shape diagnostics for `\x`, fixed-width `\u`,
 fixed-width `\U`, invalid braced `\u{...}` digits, and empty braced `\u{}`
 spellings, plus a valid digit-escape span covering `\x`, `\u`, `\U`, braced
 `\u{...}`, and octal-leading escape spellings, without requiring a hosted
-compiler fix.
+compiler fix. It now also checks source-text string escape value-range
+diagnostics for byte `\x`, octal, fixed-width Unicode, and braced Unicode
+spellings without requiring a hosted compiler fix.
 The AST statement-kind query and parser payload-shape smoke checked successful
 statement output without requiring a hosted compiler fix. The AST node
 span-length query and parser payload-span smoke checked successful statement
@@ -351,5 +353,6 @@ Desired stage0 pressure that is not yet classified as a bug:
 - Ari-written string escape scanning now distinguishes supported
   single-character escape heads from unsupported ones and validates the digit
   shape of `\x`, fixed-width `\u`, fixed-width `\U`, and braced `\u{...}`
-  spellings. Numeric value-range checks for byte, Unicode scalar, and octal
-  escapes are still pending.
+  spellings plus byte, Unicode scalar, and octal value ranges. Source-text
+  line/block comment skipping and unterminated block comment diagnostics are
+  still pending.

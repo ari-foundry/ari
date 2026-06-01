@@ -404,6 +404,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   `\u`, fixed-width `\U`, invalid braced `\u{...}` digits, and empty braced
   `\u{}` spellings, while preserving a valid digit-escape span covering `\x`,
   `\u`, `\U`, braced `\u{...}`, and octal-leading escape spellings.
+- Added source-text string escape value-range diagnostics for byte `\x`, octal,
+  fixed-width Unicode, and braced Unicode spellings, preserving the diagnostic
+  through parser and driver source-text paths.
 - Added a one-token file-input fixture for the compiled `compiler/main.ari`
   bootstrap run, so file input uses real loaded text without pretending the
   larger source-root smoke fixture is already parseable as a full Ari program.
@@ -415,10 +418,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add source-text string escape value-range diagnostics for byte, Unicode, and
-  octal escape spellings.
+- Add source-text line/block comment skipping and unterminated block comment
+  diagnostics.
 
 ## Next Recommended Task
 
-Add source-text string escape value-range diagnostics for byte, Unicode, and
-octal escape spellings.
+Add source-text line/block comment skipping and unterminated block comment
+diagnostics.

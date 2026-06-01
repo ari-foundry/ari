@@ -170,7 +170,7 @@ def main() -> int:
         "## Completed Tasks",
         "## Small Task Queue",
         "## Next Recommended Task",
-        "Add source-text string escape value-range diagnostics",
+        "Add source-text line/block comment skipping",
     ]:
         require(ari_tasks, needle, ari_tasks_path)
 
