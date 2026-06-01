@@ -434,15 +434,17 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Added source-text non-decimal float dot diagnostics for base-prefixed
   literals such as `0x2.0`, preserving the parser and driver source-text
   failure path.
+- Added source-text byte character literal spans for simple ASCII spellings
+  such as `'a'`, treating them as number tokens in the current Ari token model.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add source-text byte character literal spans for simple ASCII spellings such
-  as `'a'`.
+- Add source-text byte character escape spans for supported escape spellings
+  such as `'\n'`.
 
 ## Next Recommended Task
 
-Add source-text byte character literal spans for simple ASCII spellings such as
-`'a'`.
+Add source-text byte character escape spans for supported escape spellings such
+as `'\n'`.

@@ -962,6 +962,19 @@ fn string_literal_scan_from_text(text: std::Slice[u8], offset: i64) -> StringLit
   return Unterminated(text.len);
 }
 
+fn byte_char_end_from_text(text: std::Slice[u8], offset: i64) -> i64 {
+  if offset + 2 >= text.len {
+    return offset + 1;
+  }
+  if text[offset + 1] == '\'' || text[offset + 1] == '\\' || text[offset + 1] == '\n' {
+    return offset + 1;
+  }
+  if text[offset + 2] == '\'' {
+    return offset + 3;
+  }
+  return offset + 1;
+}
+
 fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
   let first = text[offset];
   if is_number_start(first) {
@@ -998,6 +1011,12 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
       UnsupportedEscape(_, _) => {}
       InvalidEscapeDigits(_, _) => {}
       InvalidEscapeValue(_, _) => {}
+    }
+  }
+  if first == '\'' {
+    let byte_char_end = byte_char_end_from_text(text, offset);
+    if byte_char_end != offset + 1 {
+      return token::make_token(token::Number, offset, byte_char_end);
     }
   }
   if first == '.' {
@@ -1076,6 +1095,12 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
       InvalidEscapeValue(value_start, value_end) => {
         return Failed(invalid_string_escape_value(value_start, value_end));
       }
+    }
+  }
+  if text[offset] == '\'' {
+    let byte_char_end = byte_char_end_from_text(text, offset);
+    if byte_char_end != offset + 1 {
+      return Scanned(token::make_token(token::Number, offset, byte_char_end));
     }
   }
 

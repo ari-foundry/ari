@@ -354,6 +354,11 @@ Desired stage0 pressure that is not yet classified as a bug:
   diagnostics can carry stage0-style stable string codes such as `L0001`; this
   slice keeps numeric bootstrap codes and does not classify that as a hosted
   compiler bug.
+- The Ari-written token model still has a single `Number` token without
+  stage0-style integer/float value payloads or literal suffix metadata. Simple
+  byte character literal spans are therefore modeled as number tokens for now;
+  this is Ari-written compiler model pressure, not a confirmed hosted compiler
+  bug.
 - Ari-written string escape scanning now distinguishes supported
   single-character escape heads from unsupported ones and validates the digit
   shape of `\x`, fixed-width `\u`, fixed-width `\U`, and braced `\u{...}`
@@ -366,4 +371,5 @@ Desired stage0 pressure that is not yet classified as a bug:
   binary/octal digits, and non-decimal float dot spellings. Numeric suffix
   diagnostics now cover unsupported suffixes and non-decimal float suffixes.
   Decimal floating literal spans now cover fractional and exponent spellings.
-  Byte character literal spans are still pending.
+  Simple byte character literal spans now cover ASCII spellings such as `'a'`.
+  Byte character escape spans are still pending.

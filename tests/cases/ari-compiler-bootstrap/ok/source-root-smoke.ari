@@ -69,6 +69,12 @@ fn source_text_decimal_float_driver_score() -> i64 {
   }
 }
 
+fn source_text_byte_char_driver_score() -> i64 {
+  zone(65536) {
+    return driver::result_code(driver::run_source_text(std::string::from("'a'")));
+  }
+}
+
 fn source_text_missing_base_digit_driver_score() -> i64 {
   zone(65536) {
     return driver::result_code(driver::run_source_text(std::string::from("0x")));
@@ -490,6 +496,32 @@ fn lexer_decimal_float_span_score() -> i64 {
   }
   if !parser::parse_is_success(parser::parse_text("1.0f32")) {
     return 44;
+  }
+  return 0;
+}
+
+fn lexer_byte_char_span_score() -> i64 {
+  let text: Slice[u8] = "'a'+";
+  var score = lexer_number_case_score(text, 3, 5);
+  if score != 0 {
+    return score;
+  }
+  let after_byte_char = lexer::cursor_advance_in_text(
+    lexer::cursor_from_text(text, 0),
+    text
+  );
+  if !lexer::cursor_is_operator(after_byte_char) {
+    return 5;
+  }
+  if lexer::cursor_token_start(after_byte_char) != 3 {
+    return 6;
+  }
+  score = lexer_number_case_score("'Z' ", 3, 5);
+  if score != 0 {
+    return 7 + score;
+  }
+  if !parser::parse_is_success(parser::parse_text("'a'")) {
+    return 12;
   }
   return 0;
 }
@@ -2576,6 +2608,7 @@ fn main() -> i64 {
     lexer_number_base_span_score() +
     lexer_number_suffix_span_score() +
     lexer_decimal_float_span_score() +
+    lexer_byte_char_span_score() +
     lexer_number_base_diagnostic_score() +
     lexer_number_base_float_dot_diagnostic_score() +
     lexer_number_suffix_diagnostic_score() +
@@ -2664,6 +2697,7 @@ fn main() -> i64 {
     source_text_base_number_driver_score() +
     source_text_number_suffix_driver_score() +
     source_text_decimal_float_driver_score() +
+    source_text_byte_char_driver_score() +
     source_text_missing_base_digit_driver_score() -
     1009 +
     source_text_invalid_base_digit_driver_score() -
