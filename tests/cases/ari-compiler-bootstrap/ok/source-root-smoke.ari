@@ -75,6 +75,18 @@ fn source_text_trailing_comment_driver_score() -> i64 {
   return 0;
 }
 
+fn source_text_trailing_unterminated_block_driver_score() -> i64 {
+  let direct_code = source_text_driver_result("p/* open");
+  if direct_code != 1008 {
+    return 1;
+  }
+  let spaced_code = source_text_driver_result("p /* open");
+  if spaced_code != 1008 {
+    return 2;
+  }
+  return 0;
+}
+
 fn source_text_keyword_driver_score() -> i64 {
   zone(65536) {
     return driver::result_code(driver::run_source_text(std::string::from("false")));
@@ -1159,6 +1171,31 @@ fn lexer_failure_case_score(
   return 0;
 }
 
+fn lexer_handoff_failure_case_score(
+  text: Slice[u8],
+  expected_code: i64,
+  expected_start: i64,
+  expected_end: i64
+) -> i64 {
+  match lexer::handoff_from_text_result(text) {
+    std::Ok(_) => {
+      return 1;
+    }
+    std::Err(failure) => {
+      if lexer::lex_failure_code(failure) != expected_code {
+        return 2;
+      }
+      if lexer::lex_failure_start_offset(failure) != expected_start {
+        return 3;
+      }
+      if lexer::lex_failure_end_offset(failure) != expected_end {
+        return 4;
+      }
+      return 0;
+    }
+  }
+}
+
 fn lexer_string_literal_span_score() -> i64 {
   let text: Slice[u8] = "\"ari\" name";
   let literal = lexer::cursor_from_text(text, 0);
@@ -1525,6 +1562,18 @@ fn lexer_trailing_comment_handoff_score() -> i64 {
     return score;
   }
   score = lexer_trailing_comment_handoff_case_score("name/* skip */", 4, 14);
+  if score != 0 {
+    return 10 + score;
+  }
+  return 0;
+}
+
+fn lexer_trailing_unterminated_block_handoff_score() -> i64 {
+  var score = lexer_handoff_failure_case_score("name/* open", 1008, 4, 11);
+  if score != 0 {
+    return score;
+  }
+  score = lexer_handoff_failure_case_score("name /* open", 1008, 5, 12);
   if score != 0 {
     return 10 + score;
   }
@@ -2694,6 +2743,27 @@ fn parser_keyword_failure_code(text: Slice[u8]) -> i64 {
   }
 }
 
+fn parser_keyword_failure_case_score(
+  text: Slice[u8],
+  expected_code: i64,
+  expected_start: i64,
+  expected_end: i64
+) -> i64 {
+  zone(65536) {
+    let parsed = parser::parse_text_with_keywords(text);
+    if parser::parse_failure_code(parsed) != expected_code {
+      return 1;
+    }
+    if parser::parse_failure_start_offset(parsed) != expected_start {
+      return 2;
+    }
+    if parser::parse_failure_end_offset(parsed) != expected_end {
+      return 3;
+    }
+  }
+  return 0;
+}
+
 fn parse_comment_only_case_score(text: Slice[u8], expected_offset: i64) -> i64 {
   if parser::parse_failure_code(parser::parse_text(text)) != 2001 {
     return 1;
@@ -2754,6 +2824,40 @@ fn parse_trailing_comment_success_score() -> i64 {
     return score;
   }
   score = parse_trailing_comment_case_score("name/* skip */", 4);
+  if score != 0 {
+    return 10 + score;
+  }
+  return 0;
+}
+
+fn parse_trailing_unterminated_block_case_score(
+  text: Slice[u8],
+  expected_start: i64,
+  expected_end: i64
+) -> i64 {
+  let parsed = parser::parse_text(text);
+  if parser::parse_failure_code(parsed) != 1008 {
+    return 1;
+  }
+  if parser::parse_failure_start_offset(parsed) != expected_start {
+    return 2;
+  }
+  if parser::parse_failure_end_offset(parsed) != expected_end {
+    return 3;
+  }
+  let keyword_score = parser_keyword_failure_case_score(text, 1008, expected_start, expected_end);
+  if keyword_score != 0 {
+    return 3 + keyword_score;
+  }
+  return 0;
+}
+
+fn parse_trailing_unterminated_block_failure_score() -> i64 {
+  var score = parse_trailing_unterminated_block_case_score("name/* open", 4, 11);
+  if score != 0 {
+    return score;
+  }
+  score = parse_trailing_unterminated_block_case_score("name /* open", 5, 12);
   if score != 0 {
     return 10 + score;
   }
@@ -3177,6 +3281,7 @@ fn main() -> i64 {
     2003 +
     source_text_comment_only_driver_score() +
     source_text_trailing_comment_driver_score() +
+    source_text_trailing_unterminated_block_driver_score() +
     source_text_keyword_driver_score() -
     2006 +
     source_text_base_number_driver_score() +
@@ -3224,6 +3329,8 @@ fn main() -> i64 {
     parse_comment_only_failure_score() +
     parse_trailing_comment_success_score() +
     lexer_trailing_comment_handoff_score() +
+    parse_trailing_unterminated_block_failure_score() +
+    lexer_trailing_unterminated_block_handoff_score() +
     parser::parse_score(parser::parse_empty()) -
     3018;
 }

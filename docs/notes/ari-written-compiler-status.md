@@ -270,6 +270,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - The bootstrap source-root smoke checks source-text parser success with
   trailing line and block comments after a statement token, preserving the
   statement span while skipping comments to EOF.
+- The bootstrap source-root smoke checks source-text parser trailing
+  unterminated block-comment diagnostics after a statement token, including
+  both immediate `name/* open` and whitespace-separated `name /* open`
+  spellings.
 - The bootstrap source-root smoke checks the parser unknown-token diagnostic
   code through `parser::parse_failure_code` instead of relying only on driver
   indirection or diagnostic smoke-score arithmetic.
@@ -361,6 +365,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - The bootstrap source-root smoke checks the source-text driver trailing
   comment path and verifies line and block comments after a statement token
   preserve `Ok(0)`.
+- The bootstrap source-root smoke checks the source-text driver trailing
+  unterminated block-comment path and verifies those failures preserve lexer
+  diagnostic code `1008` after an initial statement token.
 - The bootstrap source-root smoke covers the current `DriverInput` offset guard
   errors for both invalid start offsets and invalid one-byte end bounds through
   the scalar constructor helper.

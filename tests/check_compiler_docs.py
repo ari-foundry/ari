@@ -170,7 +170,7 @@ def main() -> int:
         "## Completed Tasks",
         "## Small Task Queue",
         "## Next Recommended Task",
-        "Add source-text trailing unterminated block-comment diagnostics",
+        "Add source-text post-comment extra-token diagnostics",
     ]:
         require(ari_tasks, needle, ari_tasks_path)
 
