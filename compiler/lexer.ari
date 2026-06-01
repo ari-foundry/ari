@@ -78,6 +78,7 @@ pub fn keyword_table(zone: ref mut Zone) -> KeywordTable {
   entries.insert(std::string::from(zone, "as"), token::KwAs);
   entries.insert(std::string::from(zone, "meta"), token::KwMeta);
   entries.insert(std::string::from(zone, "struct"), token::KwStruct);
+  entries.insert(std::string::from(zone, "extern"), token::KwExtern);
   entries.insert(std::string::from(zone, "let"), token::KwLet);
   entries.insert(std::string::from(zone, "var"), token::KwVar);
   entries.insert(std::string::from(zone, "own"), token::KwOwn);
@@ -654,6 +655,9 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
     }
     KwStruct => {
       return Scanned(token::make_token(token::KwStruct, offset, offset + 6));
+    }
+    KwExtern => {
+      return Scanned(token::make_token(token::KwExtern, offset, offset + 6));
     }
     KwLet => {
       return Scanned(token::make_token(token::KwLet, offset, offset + 3));

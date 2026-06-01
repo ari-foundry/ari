@@ -47,7 +47,7 @@ fn source_text_extra_token_driver_score() -> i64 {
 
 fn source_text_keyword_driver_score() -> i64 {
   zone(65536) {
-    return driver::result_code(driver::run_source_text(std::string::from("struct")));
+    return driver::result_code(driver::run_source_text(std::string::from("extern")));
   }
 }
 
@@ -1513,6 +1513,22 @@ fn lexer_keyword_table_score() -> i64 {
     score = 12;
   }
 
+  let extern_keyword = lexer::cursor_from_text_with_keywords(ref table, "extern", 0);
+  if score == 0 && !lexer::cursor_is_keyword(extern_keyword) {
+    score = 13;
+  }
+  if score == 0 && lexer::cursor_token_score(extern_keyword) != 110 {
+    score = 14;
+  }
+
+  let extern_longer = lexer::cursor_from_text_with_keywords(ref table, "external", 0);
+  if score == 0 && !lexer::cursor_is_identifier(extern_longer) {
+    score = 15;
+  }
+  if score == 0 && lexer::cursor_is_keyword(extern_longer) {
+    score = 16;
+  }
+
   std::zone::destroy(zone);
   return score;
 }
@@ -1545,6 +1561,9 @@ fn parse_text_score() -> i64 {
     }
     if parser::parse_failure_code(parser::parse_text_with_keywords("struct")) != 2006 {
       return 9;
+    }
+    if parser::parse_failure_code(parser::parse_text_with_keywords("extern")) != 2006 {
+      return 10;
     }
   }
   return 0;
