@@ -1091,8 +1091,16 @@ fn lexer_text_cursor_score() -> i64 {
   return 0;
 }
 
-fn lexer_keyword_fn_score() -> i64 {
-  let text: Slice[u8] = "fn name";
+fn lexer_keyword_case_score(
+  text: Slice[u8],
+  keyword_width: i64,
+  expected_keyword_score: i64,
+  longer: Slice[u8],
+  longer_width: i64,
+  expected_longer_score: i64,
+  keyword_text: Slice[u8],
+  single: char
+) -> i64 {
   let keyword = lexer::cursor_from_text(text, 0);
   if !lexer::cursor_is_keyword(keyword) {
     return 1;
@@ -1106,10 +1114,10 @@ fn lexer_keyword_fn_score() -> i64 {
   if lexer::cursor_token_start(keyword) != 0 {
     return 4;
   }
-  if lexer::cursor_token_end(keyword) != 2 {
+  if lexer::cursor_token_end(keyword) != keyword_width {
     return 5;
   }
-  if lexer::cursor_token_score(keyword) != 82 {
+  if lexer::cursor_token_score(keyword) != expected_keyword_score {
     return 6;
   }
   let after_keyword = lexer::cursor_advance_in_text(keyword, text);
@@ -1120,14 +1128,13 @@ fn lexer_keyword_fn_score() -> i64 {
   if !lexer::cursor_is_identifier(name) {
     return 8;
   }
-  if lexer::cursor_token_start(name) != 3 {
+  if lexer::cursor_token_start(name) != keyword_width + 1 {
     return 9;
   }
-  if lexer::cursor_token_end(name) != 7 {
+  if lexer::cursor_token_end(name) != keyword_width + 5 {
     return 10;
   }
 
-  let longer: Slice[u8] = "fn1";
   let identifier = lexer::cursor_from_text(longer, 0);
   if !lexer::cursor_is_identifier(identifier) {
     return 11;
@@ -1135,310 +1142,128 @@ fn lexer_keyword_fn_score() -> i64 {
   if lexer::cursor_is_keyword(identifier) {
     return 12;
   }
-  if lexer::cursor_token_end(identifier) != 3 {
+  if lexer::cursor_token_end(identifier) != longer_width {
     return 13;
   }
-  if lexer::cursor_token_score(identifier) != 4 {
+  if lexer::cursor_token_score(identifier) != expected_longer_score {
     return 14;
   }
 
-  if !lexer::handoff_starts_with_keyword(lexer::handoff_from_text("fn")) {
+  let handoff = lexer::handoff_from_text(keyword_text);
+  if !lexer::handoff_starts_with_keyword(handoff) {
     return 15;
   }
-  if parser::parse_text_kind_score("fn") != 45 {
+  if parser::parse_text_kind_score(keyword_text) != 45 {
     return 16;
   }
-  if parser::parse_failure_code(parser::parse_text("fn")) != 2006 {
+  if parser::parse_failure_code(parser::parse_text(keyword_text)) != 2006 {
     return 17;
   }
-  let single = lexer::cursor_from_one('f', 0);
-  if !lexer::cursor_is_identifier(single) {
+  let single_cursor = lexer::cursor_from_one(single, 0);
+  if !lexer::cursor_is_identifier(single_cursor) {
     return 18;
   }
-  if lexer::cursor_is_keyword(single) {
+  if lexer::cursor_is_keyword(single_cursor) {
     return 19;
   }
   return 0;
 }
 
-fn lexer_keyword_let_score() -> i64 {
-  let text: Slice[u8] = "let name";
-  let keyword = lexer::cursor_from_text(text, 0);
-  if !lexer::cursor_is_keyword(keyword) {
-    return 1;
-  }
-  if lexer::cursor_is_identifier(keyword) {
-    return 2;
-  }
-  if lexer::cursor_is_unknown(keyword) {
-    return 3;
-  }
-  if lexer::cursor_token_start(keyword) != 0 {
-    return 4;
-  }
-  if lexer::cursor_token_end(keyword) != 3 {
-    return 5;
-  }
-  if lexer::cursor_token_score(keyword) != 84 {
-    return 6;
-  }
-  let after_keyword = lexer::cursor_advance_in_text(keyword, text);
-  if !lexer::cursor_is_whitespace(after_keyword) {
-    return 7;
-  }
-  let name = lexer::cursor_advance_significant_in_text(keyword, text);
-  if !lexer::cursor_is_identifier(name) {
-    return 8;
-  }
-  if lexer::cursor_token_start(name) != 4 {
-    return 9;
-  }
-  if lexer::cursor_token_end(name) != 8 {
-    return 10;
-  }
-
-  let longer: Slice[u8] = "letter";
-  let identifier = lexer::cursor_from_text(longer, 0);
-  if !lexer::cursor_is_identifier(identifier) {
-    return 11;
-  }
-  if lexer::cursor_is_keyword(identifier) {
-    return 12;
-  }
-  if lexer::cursor_token_end(identifier) != 6 {
-    return 13;
-  }
-  if lexer::cursor_token_score(identifier) != 7 {
-    return 14;
-  }
-
-  if !lexer::handoff_starts_with_keyword(lexer::handoff_from_text("let")) {
-    return 15;
-  }
-  if parser::parse_text_kind_score("let") != 45 {
-    return 16;
-  }
-  if parser::parse_failure_code(parser::parse_text("let")) != 2006 {
-    return 17;
-  }
-  let single = lexer::cursor_from_one('l', 0);
-  if !lexer::cursor_is_identifier(single) {
-    return 18;
-  }
-  if lexer::cursor_is_keyword(single) {
-    return 19;
+fn lexer_keyword_case_with_base_score(
+  base: i64,
+  text: Slice[u8],
+  keyword_width: i64,
+  expected_keyword_score: i64,
+  longer: Slice[u8],
+  longer_width: i64,
+  expected_longer_score: i64,
+  keyword_text: Slice[u8],
+  single: char
+) -> i64 {
+  let score = lexer_keyword_case_score(
+    text,
+    keyword_width,
+    expected_keyword_score,
+    longer,
+    longer_width,
+    expected_longer_score,
+    keyword_text,
+    single
+  );
+  if score != 0 {
+    return base + score;
   }
   return 0;
 }
 
-fn lexer_keyword_var_score() -> i64 {
-  let text: Slice[u8] = "var name";
-  let keyword = lexer::cursor_from_text(text, 0);
-  if !lexer::cursor_is_keyword(keyword) {
-    return 1;
-  }
-  if lexer::cursor_is_identifier(keyword) {
-    return 2;
-  }
-  if lexer::cursor_is_unknown(keyword) {
-    return 3;
-  }
-  if lexer::cursor_token_start(keyword) != 0 {
-    return 4;
-  }
-  if lexer::cursor_token_end(keyword) != 3 {
-    return 5;
-  }
-  if lexer::cursor_token_score(keyword) != 85 {
-    return 6;
-  }
-  let after_keyword = lexer::cursor_advance_in_text(keyword, text);
-  if !lexer::cursor_is_whitespace(after_keyword) {
-    return 7;
-  }
-  let name = lexer::cursor_advance_significant_in_text(keyword, text);
-  if !lexer::cursor_is_identifier(name) {
-    return 8;
-  }
-  if lexer::cursor_token_start(name) != 4 {
-    return 9;
-  }
-  if lexer::cursor_token_end(name) != 8 {
-    return 10;
-  }
-
-  let longer: Slice[u8] = "variant";
-  let identifier = lexer::cursor_from_text(longer, 0);
-  if !lexer::cursor_is_identifier(identifier) {
-    return 11;
-  }
-  if lexer::cursor_is_keyword(identifier) {
-    return 12;
-  }
-  if lexer::cursor_token_end(identifier) != 7 {
-    return 13;
-  }
-  if lexer::cursor_token_score(identifier) != 8 {
-    return 14;
-  }
-
-  if !lexer::handoff_starts_with_keyword(lexer::handoff_from_text("var")) {
-    return 15;
-  }
-  if parser::parse_text_kind_score("var") != 45 {
-    return 16;
-  }
-  if parser::parse_failure_code(parser::parse_text("var")) != 2006 {
-    return 17;
-  }
-  let single = lexer::cursor_from_one('v', 0);
-  if !lexer::cursor_is_identifier(single) {
-    return 18;
-  }
-  if lexer::cursor_is_keyword(single) {
-    return 19;
-  }
-  return 0;
-}
-
-fn lexer_keyword_own_score() -> i64 {
-  let text: Slice[u8] = "own name";
-  let keyword = lexer::cursor_from_text(text, 0);
-  if !lexer::cursor_is_keyword(keyword) {
-    return 1;
-  }
-  if lexer::cursor_is_identifier(keyword) {
-    return 2;
-  }
-  if lexer::cursor_is_unknown(keyword) {
-    return 3;
-  }
-  if lexer::cursor_token_start(keyword) != 0 {
-    return 4;
-  }
-  if lexer::cursor_token_end(keyword) != 3 {
-    return 5;
-  }
-  if lexer::cursor_token_score(keyword) != 86 {
-    return 6;
-  }
-  let after_keyword = lexer::cursor_advance_in_text(keyword, text);
-  if !lexer::cursor_is_whitespace(after_keyword) {
-    return 7;
-  }
-  let name = lexer::cursor_advance_significant_in_text(keyword, text);
-  if !lexer::cursor_is_identifier(name) {
-    return 8;
-  }
-  if lexer::cursor_token_start(name) != 4 {
-    return 9;
-  }
-  if lexer::cursor_token_end(name) != 8 {
-    return 10;
-  }
-
-  let longer: Slice[u8] = "owner";
-  let identifier = lexer::cursor_from_text(longer, 0);
-  if !lexer::cursor_is_identifier(identifier) {
-    return 11;
-  }
-  if lexer::cursor_is_keyword(identifier) {
-    return 12;
-  }
-  if lexer::cursor_token_end(identifier) != 5 {
-    return 13;
-  }
-  if lexer::cursor_token_score(identifier) != 6 {
-    return 14;
-  }
-
-  if !lexer::handoff_starts_with_keyword(lexer::handoff_from_text("own")) {
-    return 15;
-  }
-  if parser::parse_text_kind_score("own") != 45 {
-    return 16;
-  }
-  if parser::parse_failure_code(parser::parse_text("own")) != 2006 {
-    return 17;
-  }
-  let single = lexer::cursor_from_one('o', 0);
-  if !lexer::cursor_is_identifier(single) {
-    return 18;
-  }
-  if lexer::cursor_is_keyword(single) {
-    return 19;
-  }
-  return 0;
-}
-
-fn lexer_keyword_ref_score() -> i64 {
-  let text: Slice[u8] = "ref name";
-  let keyword = lexer::cursor_from_text(text, 0);
-  if !lexer::cursor_is_keyword(keyword) {
-    return 1;
-  }
-  if lexer::cursor_is_identifier(keyword) {
-    return 2;
-  }
-  if lexer::cursor_is_unknown(keyword) {
-    return 3;
-  }
-  if lexer::cursor_token_start(keyword) != 0 {
-    return 4;
-  }
-  if lexer::cursor_token_end(keyword) != 3 {
-    return 5;
-  }
-  if lexer::cursor_token_score(keyword) != 87 {
-    return 6;
-  }
-  let after_keyword = lexer::cursor_advance_in_text(keyword, text);
-  if !lexer::cursor_is_whitespace(after_keyword) {
-    return 7;
-  }
-  let name = lexer::cursor_advance_significant_in_text(keyword, text);
-  if !lexer::cursor_is_identifier(name) {
-    return 8;
-  }
-  if lexer::cursor_token_start(name) != 4 {
-    return 9;
-  }
-  if lexer::cursor_token_end(name) != 8 {
-    return 10;
-  }
-
-  let longer: Slice[u8] = "reference";
-  let identifier = lexer::cursor_from_text(longer, 0);
-  if !lexer::cursor_is_identifier(identifier) {
-    return 11;
-  }
-  if lexer::cursor_is_keyword(identifier) {
-    return 12;
-  }
-  if lexer::cursor_token_end(identifier) != 9 {
-    return 13;
-  }
-  if lexer::cursor_token_score(identifier) != 10 {
-    return 14;
-  }
-
-  if !lexer::handoff_starts_with_keyword(lexer::handoff_from_text("ref")) {
-    return 15;
-  }
-  if parser::parse_text_kind_score("ref") != 45 {
-    return 16;
-  }
-  if parser::parse_failure_code(parser::parse_text("ref")) != 2006 {
-    return 17;
-  }
-  let single = lexer::cursor_from_one('r', 0);
-  if !lexer::cursor_is_identifier(single) {
-    return 18;
-  }
-  if lexer::cursor_is_keyword(single) {
-    return 19;
-  }
-  return 0;
+fn lexer_keyword_score() -> i64 {
+  return
+    lexer_keyword_case_with_base_score(
+      0,
+      "fn name",
+      2,
+      82,
+      "fn1",
+      3,
+      4,
+      "fn",
+      'f'
+    ) +
+    lexer_keyword_case_with_base_score(
+      100,
+      "let name",
+      3,
+      84,
+      "letter",
+      6,
+      7,
+      "let",
+      'l'
+    ) +
+    lexer_keyword_case_with_base_score(
+      200,
+      "var name",
+      3,
+      85,
+      "variant",
+      7,
+      8,
+      "var",
+      'v'
+    ) +
+    lexer_keyword_case_with_base_score(
+      300,
+      "own name",
+      3,
+      86,
+      "owner",
+      5,
+      6,
+      "own",
+      'o'
+    ) +
+    lexer_keyword_case_with_base_score(
+      400,
+      "ref name",
+      3,
+      87,
+      "reference",
+      9,
+      10,
+      "ref",
+      'r'
+    ) +
+    lexer_keyword_case_with_base_score(
+      500,
+      "mut name",
+      3,
+      88,
+      "mutable",
+      7,
+      8,
+      "mut",
+      'm'
+    );
 }
 
 fn parse_text_score() -> i64 {
@@ -1691,11 +1516,7 @@ fn main() -> i64 {
     lexer_bitwise_compound_assignment_score() +
     lexer_shift_compound_assignment_score() +
     lexer_text_cursor_score() +
-    lexer_keyword_fn_score() +
-    lexer_keyword_let_score() +
-    lexer_keyword_var_score() +
-    lexer_keyword_own_score() +
-    lexer_keyword_ref_score() +
+    lexer_keyword_score() +
     parse_text_score() +
     ast::node_score(ast::token_node(3, 2, 5, 8)) -
     12 +
