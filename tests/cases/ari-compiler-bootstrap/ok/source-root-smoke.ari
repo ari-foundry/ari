@@ -1439,6 +1439,17 @@ fn lexer_keyword_score() -> i64 {
       4,
       "as",
       'a'
+    ) +
+    lexer_keyword_case_with_base_score(
+      2200,
+      "meta name",
+      4,
+      106,
+      "metadata",
+      8,
+      9,
+      "meta",
+      'm'
     );
 }
 

@@ -103,6 +103,9 @@ fn identifier_kind_from_text(text: std::Slice[u8], start: i64, end: i64) -> toke
     }
   }
   if width == 4 {
+    if identifier_text_matches(text, start, end, "meta") {
+      return token::KwMeta;
+    }
     if identifier_text_matches(text, start, end, "else") {
       return token::KwElse;
     }
@@ -575,6 +578,9 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
     }
     KwAs => {
       return Scanned(token::make_token(token::KwAs, offset, offset + 2));
+    }
+    KwMeta => {
+      return Scanned(token::make_token(token::KwMeta, offset, offset + 4));
     }
     KwLet => {
       return Scanned(token::make_token(token::KwLet, offset, offset + 3));

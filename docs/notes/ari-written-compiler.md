@@ -131,13 +131,13 @@ compiler feature in the normal focused-test workflow.
   and `>>=` with source-text longest-match behavior while preserving `<<`,
   `>>`, `<=`, and `>=`.
 - `compiler/lexer.ari` classifies exact source-text `fn`, `const`, `as`,
-  `let`, `var`, `own`, `ref`, `mut`, `ptr`, `return`, `if`, `else`, `while`,
-  `init`, `next`, `continue`, `break`, `drop`, `forget`, `null`, `true`, and
-  `false` as keywords while preserving longer identifier runs such as `fn1`,
-  `constant`, `ask`, `letter`, `variant`, `owner`, `reference`, `mutable`,
-  `ptrace`, `returning`, `iffy`, `elsewhere`, `while1`, `initial`, `next1`,
-  `continue1`, `break1`, `drop1`, `forget1`, `null1`, `true1`, and `false1` as
-  identifiers.
+  `meta`, `let`, `var`, `own`, `ref`, `mut`, `ptr`, `return`, `if`, `else`,
+  `while`, `init`, `next`, `continue`, `break`, `drop`, `forget`, `null`,
+  `true`, and `false` as keywords while preserving longer identifier runs such
+  as `fn1`, `constant`, `ask`, `metadata`, `letter`, `variant`, `owner`,
+  `reference`, `mutable`, `ptrace`, `returning`, `iffy`, `elsewhere`, `while1`,
+  `initial`, `next1`, `continue1`, `break1`, `drop1`, `forget1`, `null1`,
+  `true1`, and `false1` as identifiers.
 - Ari-written compiler code assumes `lib/std` is available and should use it
   directly. `HashMap` and byte-slice string lookup helpers are available in
   `lib/std/collections.arih`; the current stateless lexer path keeps width
@@ -584,6 +584,9 @@ policy in ad hoc compiler files.
 - Added the twenty-second text-backed keyword token, `as`, with source-root
   smoke coverage that exact `as` is a keyword and longer `ask` remains an
   identifier.
+- Added the twenty-third text-backed keyword token, `meta`, with source-root
+  smoke coverage that exact `meta` is a keyword and longer `metadata` remains
+  an identifier.
 - Recorded the no-assumption working rule: inspect actual repo structure,
   Ari source, tests, stdlib APIs, and stage0 behavior before judging design or
   host-compiler bugs.
@@ -713,13 +716,13 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add text-backed keyword classification for stage0 `meta`, preserving longer
-  identifiers such as `metadata` as identifiers.
+- Add text-backed keyword classification for stage0 `struct`, preserving longer
+  identifiers such as `structure` as identifiers.
 
 ## Next Recommended Task
 
-Add text-backed keyword classification for stage0 `meta`, preserving longer
-identifiers such as `metadata` as identifiers.
+Add text-backed keyword classification for stage0 `struct`, preserving longer
+identifiers such as `structure` as identifiers.
 
 ## Local Validation
 
@@ -937,6 +940,8 @@ The lexer keyword smoke checked exact `const` source-text classification and
 preserved `constant` as an identifier without requiring a hosted compiler fix.
 The lexer keyword smoke checked exact `as` source-text classification and
 preserved `ask` as an identifier without requiring a hosted compiler fix.
+The lexer keyword smoke checked exact `meta` source-text classification and
+preserved `metadata` as an identifier without requiring a hosted compiler fix.
 The working-rule update recorded that bootstrap decisions must come from
 inspecting actual repo structure, stdlib APIs, tests, and stage0 behavior
 rather than inference; this required no hosted compiler fix.
