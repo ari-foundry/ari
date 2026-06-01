@@ -162,6 +162,13 @@ pub fn parse_statement_end_offset(result: ParseResult) -> i64 {
   }
 }
 
+pub fn parse_statement_source_id(result: ParseResult) -> i64 {
+  match result {
+    Parsed(node) => ast::node_source_id(node),
+    Failed(_) => -1,
+  }
+}
+
 pub fn parse_failure_code(result: ParseResult) -> i64 {
   match result {
     Parsed(_) => 0,
