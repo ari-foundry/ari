@@ -419,15 +419,18 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Added source-text numeric base-prefix literal spans for valid `0x`/`0X`,
   `0o`/`0O`, and `0b`/`0B` integer spellings, preserving the parser and driver
   source-text success path.
+- Added source-text exact-width integer suffix spans such as `i64` and `u8`
+  for decimal and base-prefixed number tokens, preserving the parser and driver
+  source-text success path.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add source-text exact-width integer suffix spans such as `i64` and `u8` on
-  decimal and base-prefixed number tokens.
+- Add source-text numeric base-prefix diagnostics for missing prefix digits
+  and invalid binary/octal digits.
 
 ## Next Recommended Task
 
-Add source-text exact-width integer suffix spans such as `i64` and `u8` on
-decimal and base-prefixed number tokens.
+Add source-text numeric base-prefix diagnostics for missing prefix digits and
+invalid binary/octal digits.

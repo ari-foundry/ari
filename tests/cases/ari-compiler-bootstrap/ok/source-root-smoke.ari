@@ -57,6 +57,12 @@ fn source_text_base_number_driver_score() -> i64 {
   }
 }
 
+fn source_text_number_suffix_driver_score() -> i64 {
+  zone(65536) {
+    return driver::result_code(driver::run_source_text(std::string::from("0x2au8")));
+  }
+}
+
 fn source_text_unterminated_string_driver_score() -> i64 {
   zone(65536) {
     return driver::result_code(driver::run_source_text(std::string::from("\"open")));
@@ -288,7 +294,7 @@ fn lexer_number_span_score() -> i64 {
   return 0;
 }
 
-fn lexer_number_base_case_score(text: Slice[u8], expected_end: i64, expected_score: i64) -> i64 {
+fn lexer_number_case_score(text: Slice[u8], expected_end: i64, expected_score: i64) -> i64 {
   let cursor = lexer::cursor_from_text(text, 0);
   if !lexer::cursor_is_number(cursor) {
     return 1;
@@ -307,7 +313,7 @@ fn lexer_number_base_case_score(text: Slice[u8], expected_end: i64, expected_sco
 
 fn lexer_number_base_span_score() -> i64 {
   let hex_text: Slice[u8] = "0xff+";
-  var score = lexer_number_base_case_score(hex_text, 4, 6);
+  var score = lexer_number_case_score(hex_text, 4, 6);
   if score != 0 {
     return score;
   }
@@ -322,28 +328,67 @@ fn lexer_number_base_span_score() -> i64 {
     return 6;
   }
 
-  score = lexer_number_base_case_score("0XCAFE ", 6, 8);
+  score = lexer_number_case_score("0XCAFE ", 6, 8);
   if score != 0 {
     return 6 + score;
   }
-  score = lexer_number_base_case_score("0o755 ", 5, 7);
+  score = lexer_number_case_score("0o755 ", 5, 7);
   if score != 0 {
     return 12 + score;
   }
-  score = lexer_number_base_case_score("0O10 ", 4, 6);
+  score = lexer_number_case_score("0O10 ", 4, 6);
   if score != 0 {
     return 18 + score;
   }
-  score = lexer_number_base_case_score("0b1010 ", 6, 8);
+  score = lexer_number_case_score("0b1010 ", 6, 8);
   if score != 0 {
     return 24 + score;
   }
-  score = lexer_number_base_case_score("0B11;", 4, 6);
+  score = lexer_number_case_score("0B11;", 4, 6);
   if score != 0 {
     return 30 + score;
   }
   if !parser::parse_is_success(parser::parse_text("0b1010")) {
     return 35;
+  }
+  return 0;
+}
+
+fn lexer_number_suffix_span_score() -> i64 {
+  let decimal_text: Slice[u8] = "123i64+";
+  var score = lexer_number_case_score(decimal_text, 6, 8);
+  if score != 0 {
+    return score;
+  }
+  let after_decimal = lexer::cursor_advance_in_text(
+    lexer::cursor_from_text(decimal_text, 0),
+    decimal_text
+  );
+  if !lexer::cursor_is_operator(after_decimal) {
+    return 5;
+  }
+  if lexer::cursor_token_start(after_decimal) != 6 {
+    return 6;
+  }
+
+  score = lexer_number_case_score("42u8 ", 4, 6);
+  if score != 0 {
+    return 6 + score;
+  }
+  score = lexer_number_case_score("0xffu8 ", 6, 8);
+  if score != 0 {
+    return 12 + score;
+  }
+  score = lexer_number_case_score("0b1010i16;", 9, 11);
+  if score != 0 {
+    return 18 + score;
+  }
+  score = lexer_number_case_score("0o755u64 ", 8, 10);
+  if score != 0 {
+    return 24 + score;
+  }
+  if !parser::parse_is_success(parser::parse_text("42u8")) {
+    return 29;
   }
   return 0;
 }
@@ -2360,6 +2405,7 @@ fn main() -> i64 {
     lexer_identifier_span_score() +
     lexer_number_span_score() +
     lexer_number_base_span_score() +
+    lexer_number_suffix_span_score() +
     lexer_whitespace_span_score() +
     lexer_path_separator_span_score() +
     lexer_dot_punctuation_score() +
@@ -2443,6 +2489,7 @@ fn main() -> i64 {
     source_text_keyword_driver_score() -
     2006 +
     source_text_base_number_driver_score() +
+    source_text_number_suffix_driver_score() +
     source_text_unterminated_string_driver_score() -
     1004 +
     source_text_unsupported_string_escape_driver_score() -

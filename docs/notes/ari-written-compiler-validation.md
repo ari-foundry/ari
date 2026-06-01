@@ -360,5 +360,7 @@ Desired stage0 pressure that is not yet classified as a bug:
   spellings plus byte, Unicode scalar, and octal value ranges. Source-text
   comment skipping now covers line comments, nested block comments, and
   unterminated block comment diagnostics. Numeric base-prefix literal spans now
-  cover valid lowercase and uppercase `0x`, `0o`, and `0b` prefixes. Numeric
-  suffix spans and invalid base-prefix diagnostics are still pending.
+  cover valid lowercase and uppercase `0x`, `0o`, and `0b` prefixes, and
+  exact-width integer suffix spans cover decimal and base-prefixed integers.
+  Invalid numeric suffix diagnostics and invalid base-prefix diagnostics are
+  still pending.
