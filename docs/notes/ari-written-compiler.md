@@ -103,11 +103,13 @@ compiler feature in the normal focused-test workflow.
 - `compiler/lexer.ari` classifies simple one-character operators separately
   from unknown characters and exposes operator queries at the cursor and
   handoff boundary.
+- `compiler/lexer.ari` classifies `?` and `??` as operators so
+  result-propagation and null-coalescing tokens match the stage0 spellings.
 - `compiler/lexer.ari` exposes one `scan_two`/`cursor_from_two` path for all
   current two-character scans instead of one public helper per token spelling.
 - The two-character lexer path covers fixed-width two-character spellings:
-  `::`, `==`, `=>`, `!=`, `<=`, `>=`, `&&`, `||`, `<<`, `>>`, and `->` with
-  one-character fallback behavior.
+  `::`, `??`, `==`, `=>`, `!=`, `<=`, `>=`, `&&`, `||`, `<<`, `>>`, and `->`
+  with one-character fallback behavior.
 - `compiler/lexer.ari` can scan a real `Slice[u8]` source text from an offset,
   including multi-byte identifier, number, and whitespace runs, two-character
   tokens, one-character fallback tokens, and EOF at the source end.
@@ -432,6 +434,9 @@ policy in ad hoc compiler files.
 - Added lexer classification for simple one-character operator tokens and
   source-root smoke coverage that they are scanned, scored, and exposed through
   operator queries instead of unknown-token paths.
+- Added focused `?` and `??` operator tokens and source-root smoke coverage
+  that `??` is a fixed-width two-character spelling while `?` remains the
+  one-character fallback.
 - Added focused text-backed identifier, number, and whitespace span smokes so
   variable-width token runs are checked through `Slice[u8]` source input rather
   than through the fixed-width two-character spelling helper.
@@ -571,13 +576,15 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a focused lexer one-character question-mark operator token and smoke for
-  `?`, so result-propagation tokenization can start.
+- Add the stage0 `@` punctuation token and move unknown-token smokes to a
+  still-unknown character, so annotation-style tokenization no longer falls
+  through the unknown path.
 
 ## Next Recommended Task
 
-Add a focused lexer one-character question-mark operator token and smoke for
-`?`, so result-propagation tokenization can start.
+Add the stage0 `@` punctuation token and move unknown-token smokes to a
+still-unknown character, so annotation-style tokenization no longer falls
+through the unknown path.
 
 ## Local Validation
 
@@ -734,6 +741,8 @@ smoke checked `->` tokenization plus the one-character minus fallback path
 without requiring a hosted compiler fix. The consolidated `scan_two` smoke
 path checked the same two-character token spans and fallback cases without
 requiring a hosted compiler fix.
+The lexer question-operator smoke checked `?` and `??` tokenization plus the
+one-character `?` fallback path without requiring a hosted compiler fix.
 The token-kind class helper refactor checked through the bootstrap source root
 without requiring a hosted compiler fix. The lexer double-quote delimiter smoke
 checked `"` tokenization as punctuation without requiring a hosted compiler

@@ -380,6 +380,71 @@ fn lexer_double_quote_delimiter_score() -> i64 {
   return 0;
 }
 
+fn lexer_question_operator_score() -> i64 {
+  let question = lexer::cursor_from_one('?', 74);
+  if !lexer::cursor_is_operator(question) {
+    return 1;
+  }
+  if lexer::cursor_is_punctuation(question) {
+    return 2;
+  }
+  if lexer::cursor_is_unknown(question) {
+    return 3;
+  }
+  if lexer::cursor_token_start(question) != 74 {
+    return 4;
+  }
+  if lexer::cursor_token_end(question) != 75 {
+    return 5;
+  }
+  if lexer::cursor_token_score(question) != 34 {
+    return 6;
+  }
+
+  let coalescing = lexer::cursor_from_two('?', 76, '?');
+  if !lexer::cursor_is_operator(coalescing) {
+    return 7;
+  }
+  if lexer::cursor_token_end(coalescing) != 78 {
+    return 8;
+  }
+  if lexer::cursor_token_score(coalescing) != 49 {
+    return 9;
+  }
+
+  let fallback = lexer::cursor_from_two('?', 80, '+');
+  if lexer::cursor_token_end(fallback) != 81 {
+    return 10;
+  }
+  if lexer::cursor_token_score(fallback) != 34 {
+    return 11;
+  }
+
+  let text: Slice[u8] = "??name";
+  let text_cursor = lexer::cursor_from_text(text, 0);
+  if !lexer::cursor_is_operator(text_cursor) {
+    return 12;
+  }
+  if lexer::cursor_token_start(text_cursor) != 0 {
+    return 13;
+  }
+  if lexer::cursor_token_end(text_cursor) != 2 {
+    return 14;
+  }
+  if lexer::cursor_token_score(text_cursor) != 49 {
+    return 15;
+  }
+
+  let after_text = lexer::cursor_advance_in_text(text_cursor, text);
+  if !lexer::cursor_is_identifier(after_text) {
+    return 16;
+  }
+  if lexer::cursor_token_start(after_text) != 2 {
+    return 17;
+  }
+  return 0;
+}
+
 fn lexer_equality_operator_score() -> i64 {
   let cursor = lexer::cursor_from_two('=', 70, '=');
   if !lexer::cursor_is_operator(cursor) {
@@ -845,6 +910,7 @@ fn main() -> i64 {
     lexer_dot_punctuation_score() +
     lexer_bracket_punctuation_score() +
     lexer_double_quote_delimiter_score() +
+    lexer_question_operator_score() +
     lexer_equality_operator_score() +
     lexer_fat_arrow_operator_span_score() +
     lexer_comparison_operator_span_score() +
