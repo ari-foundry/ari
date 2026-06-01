@@ -25,6 +25,10 @@ fn empty_source_text_driver_score() -> i64 {
   }
 }
 
+fn default_driver_result_score() -> i64 {
+  return driver::result_code(driver::run());
+}
+
 fn loaded_source_score() -> i64 {
   let loaded = source::loaded_source_summary(7, 5, 'm', 0);
   if !source::loaded_source_has_first(loaded) {
@@ -109,6 +113,7 @@ fn main() -> i64 {
     parser::parse_one_kind_score('9', 2) -
     42 +
     driver::exit_code(driver::run()) +
+    default_driver_result_score() +
     loaded_source_score() -
     121 +
     loaded_driver_score() +
