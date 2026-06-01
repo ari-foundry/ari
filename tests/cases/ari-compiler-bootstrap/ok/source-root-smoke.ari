@@ -47,7 +47,7 @@ fn source_text_extra_token_driver_score() -> i64 {
 
 fn source_text_keyword_driver_score() -> i64 {
   zone(65536) {
-    return driver::result_code(driver::run_source_text(std::string::from("pub")));
+    return driver::result_code(driver::run_source_text(std::string::from("use")));
   }
 }
 
@@ -1643,6 +1643,25 @@ fn lexer_keyword_table_score() -> i64 {
     score = 46;
   }
 
+  let use_keyword = lexer::cursor_from_text_with_keywords(ref table, "use", 0);
+  if score == 0 && !lexer::cursor_is_keyword(use_keyword) {
+    score = 47;
+  }
+  if score == 0 && lexer::cursor_token_score(use_keyword) != 114 {
+    score = 48;
+  }
+  if score == 0 && lexer::cursor_token_end(use_keyword) != 3 {
+    score = 49;
+  }
+
+  let use_longer = lexer::cursor_from_text_with_keywords(ref table, "user", 0);
+  if score == 0 && !lexer::cursor_is_identifier(use_longer) {
+    score = 50;
+  }
+  if score == 0 && lexer::cursor_is_keyword(use_longer) {
+    score = 51;
+  }
+
   std::zone::destroy(zone);
   return score;
 }
@@ -1696,6 +1715,9 @@ fn parse_text_score() -> i64 {
     }
     if parser::parse_failure_code(parser::parse_text_with_keywords("pub")) != 2006 {
       return 16;
+    }
+    if parser::parse_failure_code(parser::parse_text_with_keywords("use")) != 2006 {
+      return 17;
     }
   }
   return 0;

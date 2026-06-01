@@ -85,6 +85,7 @@ pub fn keyword_table(zone: ref mut Zone) -> KeywordTable {
   entries.insert(std::string::from(zone, "match"), token::KwMatch);
   entries.insert(std::string::from(zone, "mod"), token::KwMod);
   entries.insert(std::string::from(zone, "pub"), token::KwPub);
+  entries.insert(std::string::from(zone, "use"), token::KwUse);
   entries.insert(std::string::from(zone, "let"), token::KwLet);
   entries.insert(std::string::from(zone, "var"), token::KwVar);
   entries.insert(std::string::from(zone, "own"), token::KwOwn);
@@ -682,6 +683,9 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
     }
     KwPub => {
       return Scanned(token::make_token(token::KwPub, offset, offset + 3));
+    }
+    KwUse => {
+      return Scanned(token::make_token(token::KwUse, offset, offset + 3));
     }
     KwLet => {
       return Scanned(token::make_token(token::KwLet, offset, offset + 3));
