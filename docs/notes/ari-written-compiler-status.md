@@ -132,6 +132,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/lexer.ari` reports source-text numeric base-prefix diagnostics for
   missing prefix digits and invalid binary/octal digits, preserving those
   failures through parser and driver source-text paths.
+- `compiler/lexer.ari` reports source-text numeric suffix diagnostics for
+  unsupported suffixes and non-decimal float suffixes, while accepting decimal
+  float suffix spans as number tokens for the current bootstrap parser.
 - `compiler/lexer.ari` exposes text-backed cursor advance and handoff helpers,
   including significant-token advance that skips leading and trailing
   whitespace around the current single-statement parser handoff.

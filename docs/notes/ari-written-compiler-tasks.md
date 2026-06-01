@@ -425,15 +425,19 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Added source-text numeric base-prefix diagnostics for missing prefix digits
   and invalid binary/octal digits, preserving the parser and driver source-text
   failure path.
+- Added source-text numeric suffix diagnostics for unsupported suffixes and
+  non-decimal float suffixes, preserving the parser and driver source-text
+  failure path, while accepting decimal float suffix spans as number tokens for
+  the current bootstrap parser.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add source-text numeric suffix diagnostics for unsupported integer suffixes
-  and non-decimal float suffixes.
+- Add source-text decimal floating literal spans for fractional and exponent
+  spellings.
 
 ## Next Recommended Task
 
-Add source-text numeric suffix diagnostics for unsupported integer suffixes and
-non-decimal float suffixes.
+Add source-text decimal floating literal spans for fractional and exponent
+spellings.
