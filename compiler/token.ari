@@ -17,6 +17,7 @@ pub enum TokenKind {
   DotDotEqual,
   Ellipsis,
   DoubleQuote,
+  StringLiteral,
   At,
   Question,
   QuestionQuestion,
@@ -126,6 +127,7 @@ pub fn kind_score(kind: TokenKind) -> i64 {
     DotDotEqual => 49,
     Ellipsis => 50,
     DoubleQuote => 29,
+    StringLiteral => 51,
     At => 34,
     Question => 33,
     QuestionQuestion => 47,
@@ -226,6 +228,7 @@ pub fn kind_class_score(kind: TokenKind) -> i64 {
     DotDotEqual => 4,
     Ellipsis => 4,
     DoubleQuote => 4,
+    StringLiteral => 9,
     At => 4,
     Question => 5,
     QuestionQuestion => 5,
@@ -332,4 +335,8 @@ pub fn kind_is_eof(kind: TokenKind) -> bool {
 
 pub fn kind_is_unknown(kind: TokenKind) -> bool {
   return kind_class_score(kind) == 7;
+}
+
+pub fn kind_is_string_literal(kind: TokenKind) -> bool {
+  return kind_class_score(kind) == 9;
 }

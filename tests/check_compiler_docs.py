@@ -170,7 +170,7 @@ def main() -> int:
         "## Completed Tasks",
         "## Small Task Queue",
         "## Next Recommended Task",
-        "Add the smallest source-text string literal token model",
+        "Extend source-text string literal scanning to skip escaped quote bytes",
     ]:
         require(ari_tasks, needle, ari_tasks_path)
 

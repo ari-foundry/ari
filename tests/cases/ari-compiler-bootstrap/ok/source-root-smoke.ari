@@ -471,6 +471,57 @@ fn lexer_double_quote_delimiter_score() -> i64 {
   return 0;
 }
 
+fn lexer_string_literal_span_score() -> i64 {
+  let text: Slice[u8] = "\"ari\" name";
+  let literal = lexer::cursor_from_text(text, 0);
+  if !lexer::cursor_is_string_literal(literal) {
+    return 1;
+  }
+  if lexer::cursor_is_punctuation(literal) {
+    return 2;
+  }
+  if lexer::cursor_token_start(literal) != 0 {
+    return 3;
+  }
+  if lexer::cursor_token_end(literal) != 5 {
+    return 4;
+  }
+  if lexer::cursor_token_score(literal) != 56 {
+    return 5;
+  }
+
+  let after_literal = lexer::cursor_advance_in_text(literal, text);
+  if !lexer::cursor_is_whitespace(after_literal) {
+    return 6;
+  }
+  if lexer::cursor_token_start(after_literal) != 5 {
+    return 7;
+  }
+  if lexer::cursor_token_end(after_literal) != 6 {
+    return 8;
+  }
+
+  let empty_text: Slice[u8] = "\"\"+";
+  let empty = lexer::cursor_from_text(empty_text, 0);
+  if !lexer::cursor_is_string_literal(empty) {
+    return 9;
+  }
+  if lexer::cursor_token_end(empty) != 2 {
+    return 10;
+  }
+  if lexer::cursor_token_score(empty) != 53 {
+    return 11;
+  }
+  let after_empty = lexer::cursor_advance_in_text(empty, empty_text);
+  if !lexer::cursor_is_operator(after_empty) {
+    return 12;
+  }
+  if lexer::cursor_token_start(after_empty) != 2 {
+    return 13;
+  }
+  return 0;
+}
+
 fn lexer_at_punctuation_score() -> i64 {
   let at = lexer::cursor_from_one('@', 73);
   if !lexer::cursor_is_punctuation(at) {
@@ -1967,6 +2018,7 @@ fn main() -> i64 {
     lexer_dot_run_punctuation_score() +
     lexer_bracket_punctuation_score() +
     lexer_double_quote_delimiter_score() +
+    lexer_string_literal_span_score() +
     lexer_at_punctuation_score() +
     lexer_question_operator_score() +
     lexer_equality_operator_score() +

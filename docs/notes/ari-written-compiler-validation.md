@@ -115,13 +115,15 @@ a hosted compiler fix. The reusable keyword-table smoke checked `KwStruct`,
 `returning`, `iffy`, `elsewhere`, `while1`, `initial`, `next1`, `continue1`,
 `break1`, `drop1`, `forget1`, `null1`, `true1`, and `false1`, and the
 source-text parser/driver keyword path without requiring a hosted compiler fix.
-The AST statement-kind query and parser payload-shape smoke checked successful
-statement output without requiring a hosted compiler fix. The AST node
-span-length query and parser payload-span smoke checked successful statement
-spans without requiring a hosted compiler fix. The AST node value query and
-parser payload-value smoke checked successful statement values without
-requiring a hosted compiler fix. The source span-start, AST node start-offset,
-and parser payload-start helpers checked successful
+The source-text string literal span smoke checked closed no-escape quoted spans
+and empty quoted strings without requiring a hosted compiler fix. The AST
+statement-kind query and parser payload-shape smoke checked successful statement
+output without requiring a hosted compiler fix. The AST node span-length query
+and parser payload-span smoke checked successful statement spans without
+requiring a hosted compiler fix. The AST node value query and parser
+payload-value smoke checked successful statement values without requiring a
+hosted compiler fix. The source span-start, AST node start-offset, and parser
+payload-start helpers checked successful
 statement start offsets without requiring a hosted compiler fix. The source
 span-end, AST node end-offset, and parser payload-end helpers checked
 successful statement end offsets without requiring a hosted compiler fix. The

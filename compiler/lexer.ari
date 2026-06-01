@@ -415,6 +415,20 @@ fn identifier_end_from_text(text: std::Slice[u8], offset: i64) -> i64 {
   return end;
 }
 
+fn string_literal_end_from_text(text: std::Slice[u8], offset: i64) -> i64 {
+  var end = offset + 1;
+  while end < text.len {
+    if text[end] == '"' {
+      return end + 1;
+    }
+    if text[end] == '\n' {
+      return offset + 1;
+    }
+    end = end + 1;
+  }
+  return offset + 1;
+}
+
 fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
   let first = text[offset];
   if is_number_start(first) {
@@ -430,6 +444,12 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
       whitespace_end = whitespace_end + 1;
     }
     return token::make_token(token::Whitespace, offset, whitespace_end);
+  }
+  if first == '"' {
+    let string_end = string_literal_end_from_text(text, offset);
+    if string_end > offset + 1 {
+      return token::make_token(token::StringLiteral, offset, string_end);
+    }
   }
   if first == '.' {
     return scan_dot_run(text, offset);
@@ -542,6 +562,9 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
     }
     DoubleQuote => {
       return Scanned(token::make_token(token::DoubleQuote, offset, offset + 1));
+    }
+    StringLiteral => {
+      return Failed(invalid_character(offset));
     }
     At => {
       return Scanned(token::make_token(token::At, offset, offset + 1));
@@ -907,6 +930,10 @@ pub fn cursor_is_operator(cursor: TokenCursor) -> bool {
 
 pub fn cursor_is_keyword(cursor: TokenCursor) -> bool {
   return token::kind_is_keyword(cursor.current.kind);
+}
+
+pub fn cursor_is_string_literal(cursor: TokenCursor) -> bool {
+  return token::kind_is_string_literal(cursor.current.kind);
 }
 
 pub fn stream_from_one(value: char, offset: i64) -> TokenStream {
