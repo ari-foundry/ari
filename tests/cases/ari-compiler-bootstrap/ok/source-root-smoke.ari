@@ -63,6 +63,18 @@ fn source_text_comment_only_driver_score() -> i64 {
   return 0;
 }
 
+fn source_text_leading_comment_driver_score() -> i64 {
+  let line_code = source_text_driver_result("// skip\np");
+  if line_code != 0 {
+    return 1;
+  }
+  let block_code = source_text_driver_result("/* skip */p");
+  if block_code != 0 {
+    return 2;
+  }
+  return 0;
+}
+
 fn source_text_trailing_comment_driver_score() -> i64 {
   let line_code = source_text_driver_result("p// skip");
   if line_code != 0 {
@@ -2883,6 +2895,51 @@ fn parse_comment_only_failure_score() -> i64 {
   return 0;
 }
 
+fn parse_leading_comment_case_score(
+  text: Slice[u8],
+  expected_statement_start: i64,
+  expected_statement_end: i64
+) -> i64 {
+  let parsed = parser::parse_text(text);
+  if !parser::parse_is_success(parsed) {
+    return 1;
+  }
+  if parser::parse_statement_start_offset(parsed) != expected_statement_start {
+    return 2;
+  }
+  if parser::parse_statement_end_offset(parsed) != expected_statement_end {
+    return 3;
+  }
+  if parser::parse_statement_span_len(parsed) != expected_statement_end - expected_statement_start {
+    return 4;
+  }
+  zone(65536) {
+    let keyword_parsed = parser::parse_text_with_keywords(text);
+    if !parser::parse_is_success(keyword_parsed) {
+      return 5;
+    }
+    if parser::parse_statement_start_offset(keyword_parsed) != expected_statement_start {
+      return 6;
+    }
+    if parser::parse_statement_end_offset(keyword_parsed) != expected_statement_end {
+      return 7;
+    }
+  }
+  return 0;
+}
+
+fn parse_leading_comment_success_score() -> i64 {
+  var score = parse_leading_comment_case_score("// skip\nname", 8, 12);
+  if score != 0 {
+    return score;
+  }
+  score = parse_leading_comment_case_score("/* skip */name", 10, 14);
+  if score != 0 {
+    return 10 + score;
+  }
+  return 0;
+}
+
 fn parse_trailing_comment_case_score(text: Slice[u8], expected_statement_end: i64) -> i64 {
   let parsed = parser::parse_text(text);
   if !parser::parse_is_success(parsed) {
@@ -3427,6 +3484,7 @@ fn main() -> i64 {
     source_text_extra_token_driver_score() -
     2003 +
     source_text_comment_only_driver_score() +
+    source_text_leading_comment_driver_score() +
     source_text_trailing_comment_driver_score() +
     source_text_trailing_unterminated_block_driver_score() +
     source_text_post_comment_extra_token_driver_score() +
@@ -3476,6 +3534,7 @@ fn main() -> i64 {
     source_text_unterminated_block_comment_driver_score() -
     1008 +
     parse_comment_only_failure_score() +
+    parse_leading_comment_success_score() +
     parse_trailing_comment_success_score() +
     lexer_trailing_comment_handoff_score() +
     parse_trailing_unterminated_block_failure_score() +
