@@ -47,7 +47,7 @@ fn source_text_extra_token_driver_score() -> i64 {
 
 fn source_text_keyword_driver_score() -> i64 {
   zone(65536) {
-    return driver::result_code(driver::run_source_text(std::string::from("let")));
+    return driver::result_code(driver::run_source_text(std::string::from("var")));
   }
 }
 
@@ -1738,6 +1738,25 @@ fn lexer_keyword_table_score() -> i64 {
     score = 71;
   }
 
+  let var_keyword = lexer::cursor_from_text_with_keywords(ref table, "var", 0);
+  if score == 0 && !lexer::cursor_is_keyword(var_keyword) {
+    score = 72;
+  }
+  if score == 0 && lexer::cursor_token_score(var_keyword) != 85 {
+    score = 73;
+  }
+  if score == 0 && lexer::cursor_token_end(var_keyword) != 3 {
+    score = 74;
+  }
+
+  let var_longer = lexer::cursor_from_text_with_keywords(ref table, "variant", 0);
+  if score == 0 && !lexer::cursor_is_identifier(var_longer) {
+    score = 75;
+  }
+  if score == 0 && lexer::cursor_is_keyword(var_longer) {
+    score = 76;
+  }
+
   std::zone::destroy(zone);
   return score;
 }
@@ -1806,6 +1825,9 @@ fn parse_text_score() -> i64 {
     }
     if parser::parse_failure_code(parser::parse_text_with_keywords("let")) != 2006 {
       return 21;
+    }
+    if parser::parse_failure_code(parser::parse_text_with_keywords("var")) != 2006 {
+      return 22;
     }
   }
   return 0;
