@@ -369,6 +369,11 @@ Desired stage0 pressure that is not yet classified as a bug:
   byte character literal spans are therefore modeled as number tokens for now;
   this is Ari-written compiler model pressure, not a confirmed hosted compiler
   bug.
+- Numeric base-prefix handling such as `0x`, `0o`, and `0b` should stay
+  separated from decimal floating literal handling. Decimal float scanning
+  should not accidentally inherit octal/binary/hex prefix behavior; keep this
+  as lexer design pressure until the Ari-written numeric literal model is
+  richer.
 - The byte-character span helper now uses an enum-shaped scan result instead
   of a sentinel fallback end. Malformed byte-character diagnostics can grow on
   that shape later without adding more sentinel meanings.
