@@ -170,7 +170,7 @@ def main() -> int:
         "## Completed Tasks",
         "## Small Task Queue",
         "## Next Recommended Task",
-        "Add source-text carriage-return whitespace spans",
+        "Add source-text CRLF line-comment span coverage",
     ]:
         require(ari_tasks, needle, ari_tasks_path)
 

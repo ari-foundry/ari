@@ -341,6 +341,8 @@ a hosted compiler fix.
 The source-text direct non-ASCII byte character diagnostic now preserves code
 `1020` for UTF-8 byte spellings through lexer, parser, and driver paths without
 requiring a hosted compiler fix.
+The source-text carriage-return whitespace span now matches stage0's whitespace
+skipper without requiring a hosted compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
@@ -443,4 +445,5 @@ Desired stage0 pressure that is not yet classified as a bug:
   escapes. Byte character exactly-one-byte diagnostics now cover too-long
   direct and escaped byte spellings plus EOF after one direct byte payload.
   Direct non-ASCII byte character diagnostics now cover UTF-8 byte spellings.
-  Carriage-return whitespace parity is still pending.
+  Carriage-return whitespace spans now match stage0's whitespace skipper.
+  CRLF line-comment span coverage is still pending.

@@ -177,6 +177,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/lexer.ari` reports source-text direct non-ASCII byte character
   diagnostics for UTF-8 byte spellings, preserving those failures through
   parser and driver source-text paths.
+- `compiler/lexer.ari` treats carriage return as source-text whitespace,
+  matching stage0's whitespace skipper.
 - `compiler/lexer.ari` exposes text-backed cursor advance and handoff helpers,
   including significant-token advance that skips leading and trailing
   whitespace around the current single-statement parser handoff.

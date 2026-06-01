@@ -586,7 +586,7 @@ fn identifier_kind_from_text(text: std::Slice[u8], start: i64, end: i64) -> toke
 }
 
 pub fn is_whitespace(value: char) -> bool {
-  return value == ' ' || value == '\n' || value == '\t';
+  return value == ' ' || value == '\n' || value == '\t' || value == '\r';
 }
 
 pub fn classify_one(value: char) -> token::TokenKind {

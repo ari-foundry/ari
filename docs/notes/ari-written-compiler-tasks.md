@@ -469,15 +469,17 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Added source-text direct non-ASCII byte character diagnostics for UTF-8 byte
   spellings, preserving those failures through parser and driver source-text
   paths.
+- Added source-text carriage-return whitespace spans, matching stage0's
+  whitespace skipper.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add source-text carriage-return whitespace spans, matching stage0's
-  whitespace skipper.
+- Add source-text CRLF line-comment span coverage, matching stage0's line
+  comment scan through carriage return before newline.
 
 ## Next Recommended Task
 
-Add source-text carriage-return whitespace spans, matching stage0's whitespace
-skipper.
+Add source-text CRLF line-comment span coverage, matching stage0's line comment
+scan through carriage return before newline.

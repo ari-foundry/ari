@@ -876,7 +876,7 @@ fn lexer_number_suffix_diagnostic_score() -> i64 {
 }
 
 fn lexer_whitespace_span_score() -> i64 {
-  let text: Slice[u8] = " \n\t+";
+  let text: Slice[u8] = " \r\n\t+";
   let cursor = lexer::cursor_from_text(text, 0);
   if !lexer::cursor_is_whitespace(cursor) {
     return 1;
@@ -884,18 +884,21 @@ fn lexer_whitespace_span_score() -> i64 {
   if lexer::cursor_token_start(cursor) != 0 {
     return 2;
   }
-  if lexer::cursor_token_end(cursor) != 3 {
+  if lexer::cursor_token_end(cursor) != 4 {
     return 3;
   }
-  if lexer::cursor_token_score(cursor) != 6 {
+  if lexer::cursor_token_score(cursor) != 7 {
     return 4;
   }
   let after_whitespace = lexer::cursor_advance_in_text(cursor, text);
   if !lexer::cursor_is_operator(after_whitespace) {
     return 5;
   }
-  if lexer::cursor_token_start(after_whitespace) != 3 {
+  if lexer::cursor_token_start(after_whitespace) != 4 {
     return 6;
+  }
+  if lexer::scan_score('\r') != 4 {
+    return 7;
   }
   return 0;
 }
