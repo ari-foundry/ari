@@ -362,8 +362,8 @@ Desired stage0 pressure that is not yet classified as a bug:
   unterminated block comment diagnostics. Numeric base-prefix literal spans now
   cover valid lowercase and uppercase `0x`, `0o`, and `0b` prefixes, and
   exact-width integer suffix spans cover decimal and base-prefixed integers.
-  Numeric base-prefix diagnostics now cover missing prefix digits and invalid
-  binary/octal digits. Numeric suffix diagnostics now cover unsupported suffixes
-  and non-decimal float suffixes. Decimal floating literal spans now cover
-  fractional and exponent spellings. Non-decimal float dot diagnostics are still
-  pending for base-prefixed literals.
+  Numeric base-prefix diagnostics now cover missing prefix digits, invalid
+  binary/octal digits, and non-decimal float dot spellings. Numeric suffix
+  diagnostics now cover unsupported suffixes and non-decimal float suffixes.
+  Decimal floating literal spans now cover fractional and exponent spellings.
+  Byte character literal spans are still pending.

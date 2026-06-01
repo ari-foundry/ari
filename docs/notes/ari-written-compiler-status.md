@@ -138,6 +138,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/lexer.ari` scans source-text decimal floating literal spans for
   fractional forms such as `1.5` and exponent forms such as `1e3`, including
   valid decimal float suffixes.
+- `compiler/lexer.ari` reports source-text non-decimal float dot diagnostics
+  for base-prefixed spellings such as `0x2.0`, preserving those failures
+  through parser and driver source-text paths.
 - `compiler/lexer.ari` exposes text-backed cursor advance and handoff helpers,
   including significant-token advance that skips leading and trailing
   whitespace around the current single-statement parser handoff.

@@ -58,6 +58,7 @@ enum NumberScan {
   NumberInvalidBaseDigit(i64, i64),
   NumberUnsupportedSuffix(i64, i64),
   NumberNonDecimalFloatSuffix(i64, i64),
+  NumberNonDecimalFloatDot(i64, i64),
 }
 
 enum NumberSuffixScan {
@@ -325,6 +326,9 @@ fn base_prefixed_number_scan_from_text(
   if is_binary_or_octal_number_marker(marker) && end < text.len && is_ascii_digit(text[end]) {
     return NumberInvalidBaseDigit(end, end + 1);
   }
+  if end < text.len && text[end] == '.' {
+    return NumberNonDecimalFloatDot(end, end + 1);
+  }
   return number_scan_with_suffix(text, end, true, false);
 }
 
@@ -355,6 +359,9 @@ fn number_end_from_text(text: std::Slice[u8], offset: i64) -> i64 {
     }
     NumberNonDecimalFloatSuffix(float_suffix_start, _) => {
       return float_suffix_start;
+    }
+    NumberNonDecimalFloatDot(dot_start, _) => {
+      return dot_start;
     }
   }
 }
@@ -1030,6 +1037,9 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
       NumberNonDecimalFloatSuffix(non_decimal_suffix_start, non_decimal_suffix_end) => {
         return Failed(non_decimal_float_suffix(non_decimal_suffix_start, non_decimal_suffix_end));
       }
+      NumberNonDecimalFloatDot(non_decimal_dot_start, non_decimal_dot_end) => {
+        return Failed(non_decimal_float_dot(non_decimal_dot_start, non_decimal_dot_end));
+      }
     }
   }
   if offset + 1 < text.len && text[offset] == '/' && text[offset + 1] == '/' {
@@ -1156,6 +1166,10 @@ pub fn unsupported_number_suffix(start: i64, end: i64) -> diagnostic::Diagnostic
 
 pub fn non_decimal_float_suffix(start: i64, end: i64) -> diagnostic::Diagnostic {
   return diagnostic::error(1012, start, end);
+}
+
+pub fn non_decimal_float_dot(start: i64, end: i64) -> diagnostic::Diagnostic {
+  return diagnostic::error(1013, start, end);
 }
 
 pub fn unterminated_string_literal(start: i64, end: i64) -> diagnostic::Diagnostic {

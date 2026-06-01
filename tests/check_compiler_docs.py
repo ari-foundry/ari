@@ -170,7 +170,7 @@ def main() -> int:
         "## Completed Tasks",
         "## Small Task Queue",
         "## Next Recommended Task",
-        "Add source-text non-decimal float dot diagnostics",
+        "Add source-text byte character literal spans",
     ]:
         require(ari_tasks, needle, ari_tasks_path)
 
