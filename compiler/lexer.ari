@@ -230,6 +230,21 @@ fn scan_dot_run(text: std::Slice[u8], offset: i64) -> token::Token {
   return token::make_token(token::DotDot, offset, offset + 2);
 }
 
+fn scan_shift_run(text: std::Slice[u8], offset: i64) -> token::Token {
+  let first = text[offset];
+  if offset + 2 < text.len && text[offset + 2] == '=' {
+    if first == '<' {
+      return token::make_token(token::LessLessEqual, offset, offset + 3);
+    }
+    return token::make_token(token::GreaterGreaterEqual, offset, offset + 3);
+  }
+
+  if first == '<' {
+    return token::make_token(token::LessLess, offset, offset + 2);
+  }
+  return token::make_token(token::GreaterGreater, offset, offset + 2);
+}
+
 pub fn scan_text(text: std::Slice[u8], offset: i64) -> token::Token {
   if offset >= text.len {
     return token::make_token(token::EndOfFile, offset, offset);
@@ -259,6 +274,12 @@ pub fn scan_text(text: std::Slice[u8], offset: i64) -> token::Token {
   }
   if first == '.' {
     return scan_dot_run(text, offset);
+  }
+  if offset + 1 < text.len && first == '<' && text[offset + 1] == '<' {
+    return scan_shift_run(text, offset);
+  }
+  if offset + 1 < text.len && first == '>' && text[offset + 1] == '>' {
+    return scan_shift_run(text, offset);
   }
   if offset + 1 < text.len {
     let combined = scan_two(first, offset, text[offset + 1]);
@@ -390,8 +411,14 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
     LessLess => {
       return Scanned(token::make_token(token::LessLess, offset, offset + 2));
     }
+    LessLessEqual => {
+      return Scanned(token::make_token(token::LessLessEqual, offset, offset + 3));
+    }
     GreaterGreater => {
       return Scanned(token::make_token(token::GreaterGreater, offset, offset + 2));
+    }
+    GreaterGreaterEqual => {
+      return Scanned(token::make_token(token::GreaterGreaterEqual, offset, offset + 3));
     }
     Arrow => {
       return Scanned(token::make_token(token::Arrow, offset, offset + 2));
