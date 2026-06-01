@@ -47,7 +47,7 @@ fn source_text_extra_token_driver_score() -> i64 {
 
 fn source_text_keyword_driver_score() -> i64 {
   zone(65536) {
-    return driver::result_code(driver::run_source_text(std::string::from("extern")));
+    return driver::result_code(driver::run_source_text(std::string::from("enum")));
   }
 }
 
@@ -1529,6 +1529,25 @@ fn lexer_keyword_table_score() -> i64 {
     score = 16;
   }
 
+  let enum_keyword = lexer::cursor_from_text_with_keywords(ref table, "enum", 0);
+  if score == 0 && !lexer::cursor_is_keyword(enum_keyword) {
+    score = 17;
+  }
+  if score == 0 && lexer::cursor_token_score(enum_keyword) != 109 {
+    score = 18;
+  }
+  if score == 0 && lexer::cursor_token_end(enum_keyword) != 4 {
+    score = 19;
+  }
+
+  let enum_longer = lexer::cursor_from_text_with_keywords(ref table, "enumerate", 0);
+  if score == 0 && !lexer::cursor_is_identifier(enum_longer) {
+    score = 20;
+  }
+  if score == 0 && lexer::cursor_is_keyword(enum_longer) {
+    score = 21;
+  }
+
   std::zone::destroy(zone);
   return score;
 }
@@ -1564,6 +1583,9 @@ fn parse_text_score() -> i64 {
     }
     if parser::parse_failure_code(parser::parse_text_with_keywords("extern")) != 2006 {
       return 10;
+    }
+    if parser::parse_failure_code(parser::parse_text_with_keywords("enum")) != 2006 {
+      return 11;
     }
   }
   return 0;

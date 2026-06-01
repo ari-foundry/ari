@@ -734,6 +734,9 @@ policy in ad hoc compiler files.
 - Added `KwExtern` to the Ari-written token model and reusable keyword table,
   with focused smokes for exact `extern`, longer `external`, and the
   table-backed parser/driver keyword path.
+- Added `KwEnum` to the Ari-written token model and reusable keyword table,
+  with focused smokes for exact `enum`, longer `enumerate`, and the
+  table-backed parser/driver keyword path.
 - Added a one-token file-input fixture for the compiled `compiler/main.ari`
   bootstrap run, so file input uses real loaded text without pretending the
   larger source-root smoke fixture is already parseable as a full Ari program.
@@ -745,13 +748,13 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add `enum` to the reusable keyword table and token model, preserving longer
-  identifiers such as `enumerate`.
+- Add `trait` to the reusable keyword table and token model, preserving longer
+  identifiers such as `traitor`.
 
 ## Next Recommended Task
 
-Add `enum` to the reusable keyword table and token model, preserving longer
-identifiers such as `enumerate`.
+Add `trait` to the reusable keyword table and token model, preserving longer
+identifiers such as `traitor`.
 
 ## Local Validation
 
@@ -849,11 +852,11 @@ smoke checked diagnostic code `2003` through `parser::parse_failure_code`
 without requiring a hosted compiler fix. The parser number-success smoke checked
 the number statement path through `parser::parse_is_success` without requiring
 a hosted compiler fix. The reusable keyword-table smoke checked `KwStruct`,
-`KwExtern`, longer `structure`/`external`, and the source-text parser/driver
-keyword path without requiring a hosted compiler fix. The AST statement-kind
-query and parser payload-shape smoke checked successful statement output
-without requiring a hosted compiler fix. The AST node span-length query and
-parser payload-span smoke checked
+`KwExtern`, `KwEnum`, longer `structure`/`external`/`enumerate`, and the
+source-text parser/driver keyword path without requiring a hosted compiler fix.
+The AST statement-kind query and parser payload-shape smoke checked successful
+statement output without requiring a hosted compiler fix. The AST node
+span-length query and parser payload-span smoke checked
 successful statement spans without requiring a hosted compiler fix. The AST
 node value query and parser payload-value smoke checked successful statement
 values without requiring a hosted compiler fix. The source span-start, AST
