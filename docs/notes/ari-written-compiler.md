@@ -102,6 +102,9 @@ compiler feature in the normal focused-test workflow.
 - `compiler/lexer.ari` exposes a two-character whitespace scan helper so early
   smokes can prove multi-byte whitespace token spans before a real source table
   exists.
+- `compiler/lexer.ari` exposes a two-character equality operator helper so
+  early smokes can distinguish `==` from one-character assignment before a real
+  source table exists.
 - `compiler/ast.ari` now models minimal span-carrying token, statement, error,
   and missing output nodes.
 - `compiler/ast.ari` exposes a statement-kind query helper so parser payload
@@ -404,6 +407,8 @@ policy in ad hoc compiler files.
   coverage for lexer number token boundaries.
 - Added a focused two-character whitespace span helper and source-root smoke
   coverage for lexer whitespace token boundaries.
+- Added a focused `==` equality operator helper and source-root smoke coverage
+  that distinguishes it from one-character assignment.
 - Added token-kind query helpers for the lexer/parser boundary and a tiny parser
   handoff classification score.
 - Moved the test-like entry arithmetic out of `compiler/main.ari` into a
@@ -505,15 +510,15 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a focused lexer two-character equality operator helper and smoke so the
-  lexer can start distinguishing `==` from assignment without adding a source
-  table yet.
+- Add focused lexer one-character comparison operator tokens for `!`, `<`, and
+  `>`, with smoke coverage, before adding the remaining two-character
+  comparison operators.
 
 ## Next Recommended Task
 
-Add a focused lexer two-character equality operator helper and smoke so the
-lexer can start distinguishing `==` from assignment without adding a source
-table yet.
+Add focused lexer one-character comparison operator tokens for `!`, `<`, and
+`>`, with smoke coverage, before adding the remaining two-character comparison
+operators.
 
 ## Local Validation
 
@@ -648,7 +653,8 @@ identifier token boundaries without requiring a hosted compiler fix. The lexer
 number span smoke checked two-character number token boundaries without
 requiring a hosted compiler fix. The lexer whitespace span smoke checked
 two-character whitespace token boundaries without requiring a hosted compiler
-fix.
+fix. The lexer equality operator smoke checked `==` tokenization and assignment
+fallback without requiring a hosted compiler fix.
 The growing source-root fixture did expose a default-zone capacity runtime trap
 while reading the file smoke; this was fixed locally with explicit
 `zone(32768)` allocation blocks and is recorded as allocation-policy pressure

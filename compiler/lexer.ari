@@ -132,6 +132,14 @@ pub fn scan_whitespace_two(first: char, offset: i64, second: char) -> token::Tok
   return scan_one(first, offset);
 }
 
+pub fn scan_equality_two(first: char, offset: i64, second: char) -> token::Token {
+  if first == '=' && second == '=' {
+    return token::make_token(token::EqualEqual, offset, offset + 2);
+  }
+
+  return scan_one(first, offset);
+}
+
 pub fn invalid_character(offset: i64) -> diagnostic::Diagnostic {
   return diagnostic::error(1001, offset, offset + 1);
 }
@@ -170,6 +178,9 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
     }
     Equal => {
       return Scanned(token::make_token(token::Equal, offset, offset + 1));
+    }
+    EqualEqual => {
+      return Scanned(token::make_token(token::EqualEqual, offset, offset + 2));
     }
     Plus => {
       return Scanned(token::make_token(token::Plus, offset, offset + 1));
@@ -231,6 +242,14 @@ pub fn cursor_from_whitespace_two(first: char, offset: i64, second: char) -> Tok
   };
 }
 
+pub fn cursor_from_equality_two(first: char, offset: i64, second: char) -> TokenCursor {
+  return TokenCursor {
+    current: scan_equality_two(first, offset, second),
+    offset: offset,
+    done: false,
+  };
+}
+
 pub fn cursor_advance(cursor: TokenCursor) -> TokenCursor {
   if cursor.done {
     return cursor;
@@ -269,6 +288,7 @@ pub fn cursor_is_identifier(cursor: TokenCursor) -> bool {
     Colon => false,
     Semicolon => false,
     Equal => false,
+    EqualEqual => false,
     Plus => false,
     Minus => false,
     Star => false,
@@ -292,6 +312,7 @@ pub fn cursor_is_number(cursor: TokenCursor) -> bool {
     Colon => false,
     Semicolon => false,
     Equal => false,
+    EqualEqual => false,
     Plus => false,
     Minus => false,
     Star => false,
@@ -315,6 +336,7 @@ pub fn cursor_is_whitespace(cursor: TokenCursor) -> bool {
     Colon => false,
     Semicolon => false,
     Equal => false,
+    EqualEqual => false,
     Plus => false,
     Minus => false,
     Star => false,
@@ -338,6 +360,7 @@ pub fn cursor_is_eof(cursor: TokenCursor) -> bool {
     Colon => false,
     Semicolon => false,
     Equal => false,
+    EqualEqual => false,
     Plus => false,
     Minus => false,
     Star => false,
@@ -361,6 +384,7 @@ pub fn cursor_is_unknown(cursor: TokenCursor) -> bool {
     Colon => false,
     Semicolon => false,
     Equal => false,
+    EqualEqual => false,
     Plus => false,
     Minus => false,
     Star => false,
@@ -384,6 +408,7 @@ pub fn cursor_is_punctuation(cursor: TokenCursor) -> bool {
     Colon => true,
     Semicolon => true,
     Equal => false,
+    EqualEqual => false,
     Plus => false,
     Minus => false,
     Star => false,
@@ -407,6 +432,7 @@ pub fn cursor_is_operator(cursor: TokenCursor) -> bool {
     Colon => false,
     Semicolon => false,
     Equal => true,
+    EqualEqual => true,
     Plus => true,
     Minus => true,
     Star => true,

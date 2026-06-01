@@ -220,6 +220,30 @@ fn lexer_whitespace_span_score() -> i64 {
   return 0;
 }
 
+fn lexer_equality_operator_score() -> i64 {
+  let cursor = lexer::cursor_from_equality_two('=', 70, '=');
+  if !lexer::cursor_is_operator(cursor) {
+    return 1;
+  }
+  if lexer::cursor_token_start(cursor) != 70 {
+    return 2;
+  }
+  if lexer::cursor_token_end(cursor) != 72 {
+    return 3;
+  }
+  if lexer::cursor_token_score(cursor) != 19 {
+    return 4;
+  }
+  let fallback = lexer::cursor_from_equality_two('=', 80, '+');
+  if lexer::cursor_token_end(fallback) != 81 {
+    return 5;
+  }
+  if lexer::cursor_token_score(fallback) != 12 {
+    return 6;
+  }
+  return 0;
+}
+
 fn parse_success_score() -> i64 {
   if !parser::parse_is_success(parser::parse_one('q', 1)) {
     return 1;
@@ -427,6 +451,7 @@ fn main() -> i64 {
     lexer_identifier_span_score() +
     lexer_number_span_score() +
     lexer_whitespace_span_score() +
+    lexer_equality_operator_score() +
     ast::node_score(ast::token_node(3, 2, 5, 8)) -
     12 +
     parser::parse_score(parser::parse_one('q', 1)) +
