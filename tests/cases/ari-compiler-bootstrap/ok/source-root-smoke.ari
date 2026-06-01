@@ -672,6 +672,54 @@ fn lexer_comparison_operator_span_score() -> i64 {
   return 0;
 }
 
+fn lexer_tilde_operator_score() -> i64 {
+  let tilde = lexer::cursor_from_one('~', 145);
+  if !lexer::cursor_is_operator(tilde) {
+    return 1;
+  }
+  if lexer::cursor_is_punctuation(tilde) {
+    return 2;
+  }
+  if lexer::cursor_is_unknown(tilde) {
+    return 3;
+  }
+  if lexer::cursor_token_start(tilde) != 145 {
+    return 4;
+  }
+  if lexer::cursor_token_end(tilde) != 146 {
+    return 5;
+  }
+  if lexer::cursor_token_score(tilde) != 73 {
+    return 6;
+  }
+  if lexer::scan_score('~') != 73 {
+    return 7;
+  }
+
+  let text: Slice[u8] = "~name";
+  let text_cursor = lexer::cursor_from_text(text, 0);
+  if !lexer::cursor_is_operator(text_cursor) {
+    return 8;
+  }
+  if lexer::cursor_token_end(text_cursor) != 1 {
+    return 9;
+  }
+  if lexer::cursor_token_score(text_cursor) != 73 {
+    return 10;
+  }
+  let after_text = lexer::cursor_advance_in_text(text_cursor, text);
+  if !lexer::cursor_is_identifier(after_text) {
+    return 11;
+  }
+  if lexer::cursor_token_start(after_text) != 1 {
+    return 12;
+  }
+  if lexer::cursor_token_end(after_text) != 5 {
+    return 13;
+  }
+  return 0;
+}
+
 fn lexer_logical_operator_span_score() -> i64 {
   let and_cursor = lexer::cursor_from_two('&', 150, '&');
   if !lexer::cursor_is_operator(and_cursor) {
@@ -1285,6 +1333,7 @@ fn main() -> i64 {
     lexer_equality_operator_score() +
     lexer_fat_arrow_operator_span_score() +
     lexer_comparison_operator_span_score() +
+    lexer_tilde_operator_score() +
     lexer_logical_operator_span_score() +
     lexer_shift_operator_span_score() +
     lexer_arrow_operator_span_score() +

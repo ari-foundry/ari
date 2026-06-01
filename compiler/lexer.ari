@@ -107,6 +107,9 @@ pub fn classify_one(value: char) -> token::TokenKind {
   if value == '!' {
     return token::Bang;
   }
+  if value == '~' {
+    return token::Tilde;
+  }
   if value == '<' {
     return token::Less;
   }
@@ -368,6 +371,9 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
     }
     Bang => {
       return Scanned(token::make_token(token::Bang, offset, offset + 1));
+    }
+    Tilde => {
+      return Scanned(token::make_token(token::Tilde, offset, offset + 1));
     }
     Less => {
       return Scanned(token::make_token(token::Less, offset, offset + 1));

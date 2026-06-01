@@ -107,6 +107,8 @@ compiler feature in the normal focused-test workflow.
 - `compiler/lexer.ari` classifies simple one-character operators separately
   from unknown characters and exposes operator queries at the cursor and
   handoff boundary.
+- `compiler/lexer.ari` classifies `~` as a one-character operator so
+  bitwise-not tokenization no longer falls through the unknown-token path.
 - `compiler/lexer.ari` classifies simple compound-assignment operators `+=`,
   `-=`, `*=`, `/=`, and `%=` as fixed-width two-character operators.
 - `compiler/lexer.ari` classifies bitwise compound-assignment operators `&=`,
@@ -465,6 +467,8 @@ policy in ad hoc compiler files.
   character does not match.
 - Added one-character comparison operator tokens for `!`, `<`, and `>`, with
   source-root smoke coverage that they are scanned and exposed as operators.
+- Added a focused `~` bitwise-not operator token and source-root smoke coverage
+  that it is an operator, not punctuation or unknown.
 - Added focused `!=`, `<=`, and `>=` comparison operator tokens and source-root
   smoke coverage that they fall back to one-character comparison tokens when
   the second character is not `=`.
@@ -603,13 +607,13 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add the stage0 `~` one-character operator token so bitwise-not spellings no
-  longer fall through the unknown-token path.
+- Add the first text-backed keyword classification for stage0 `fn`, preserving
+  longer identifiers such as `fn1` as identifiers.
 
 ## Next Recommended Task
 
-Add the stage0 `~` one-character operator token so bitwise-not spellings no
-longer fall through the unknown-token path.
+Add the first text-backed keyword classification for stage0 `fn`, preserving
+longer identifiers such as `fn1` as identifiers.
 
 ## Local Validation
 
@@ -781,6 +785,8 @@ tokenization, preserved `&&` / `||` priority, and checked the one-character
 The lexer shift compound-assignment smoke checked `<<=` and `>>=` source-text
 longest-match behavior while preserving `<<` and `<=` paths without requiring
 a hosted compiler fix.
+The lexer tilde-operator smoke checked `~` tokenization as an operator without
+requiring a hosted compiler fix.
 The token-kind class helper refactor checked through the bootstrap source root
 without requiring a hosted compiler fix. The lexer double-quote delimiter smoke
 checked `"` tokenization as punctuation without requiring a hosted compiler
