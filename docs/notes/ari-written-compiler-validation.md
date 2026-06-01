@@ -409,6 +409,10 @@ The source-text leading-comment invalid base-digit smoke now checks line and
 block comments before `0b102` through lexer handoff, parser, keyword-table
 parser, and driver paths, preserving lexer diagnostic code `1010` and failure
 spans without requiring a hosted compiler fix.
+The source-text leading-comment unsupported number-suffix smoke now checks line
+and block comments before `42abc` through lexer handoff, parser, keyword-table
+parser, and driver paths, preserving lexer diagnostic code `1011` and failure
+spans without requiring a hosted compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
