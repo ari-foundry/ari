@@ -69,6 +69,9 @@ pub fn parse_cursor_kind_score(cursor: lexer::TokenCursor) -> i64 {
   if lexer::cursor_is_unknown(cursor) {
     return 9;
   }
+  if lexer::cursor_is_keyword(cursor) {
+    return 5;
+  }
   return 8;
 }
 
@@ -85,6 +88,9 @@ pub fn parse_handoff_kind_score(handoff: lexer::TokenHandoff) -> i64 {
   }
   if lexer::handoff_starts_with_unknown(handoff) {
     return 9 + eof_score * 10;
+  }
+  if lexer::handoff_starts_with_keyword(handoff) {
+    return 5 + eof_score * 10;
   }
   return 8 + eof_score * 10;
 }
@@ -122,6 +128,10 @@ pub fn parse_one_eof(value: char, offset: i64) -> ParseResult {
 
 pub fn parse_one_kind_score(value: char, offset: i64) -> i64 {
   return parse_handoff_kind_score(lexer::handoff_from_one(value, offset));
+}
+
+pub fn parse_text_kind_score(text: std::Slice[u8]) -> i64 {
+  return parse_handoff_kind_score(lexer::handoff_from_text(text));
 }
 
 pub fn parse_empty() -> ParseResult {

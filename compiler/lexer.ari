@@ -48,6 +48,16 @@ pub fn is_number_continue(value: char) -> bool {
   return is_ascii_digit(value);
 }
 
+fn identifier_kind_from_text(text: std::Slice[u8], start: i64, end: i64) -> token::TokenKind {
+  let width = end - start;
+  if width == 2 {
+    if text[start] == 'f' && text[start + 1] == 'n' {
+      return token::KwFn;
+    }
+  }
+  return token::Identifier;
+}
+
 pub fn is_whitespace(value: char) -> bool {
   return value == ' ' || value == '\n' || value == '\t';
 }
@@ -259,7 +269,8 @@ pub fn scan_text(text: std::Slice[u8], offset: i64) -> token::Token {
     while identifier_end < text.len && is_identifier_continue(text[identifier_end]) {
       identifier_end = identifier_end + 1;
     }
-    return token::make_token(token::Identifier, offset, identifier_end);
+    let kind = identifier_kind_from_text(text, offset, identifier_end);
+    return token::make_token(kind, offset, identifier_end);
   }
   if is_number_start(first) {
     var number_end = offset + 1;
@@ -462,6 +473,9 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
     PercentEqual => {
       return Scanned(token::make_token(token::PercentEqual, offset, offset + 2));
     }
+    KwFn => {
+      return Scanned(token::make_token(token::KwFn, offset, offset + 2));
+    }
     EndOfFile => {
       return Scanned(token::make_token(token::EndOfFile, offset, offset));
     }
@@ -573,6 +587,10 @@ pub fn cursor_is_operator(cursor: TokenCursor) -> bool {
   return token::kind_is_operator(cursor.current.kind);
 }
 
+pub fn cursor_is_keyword(cursor: TokenCursor) -> bool {
+  return token::kind_is_keyword(cursor.current.kind);
+}
+
 pub fn stream_from_one(value: char, offset: i64) -> TokenStream {
   return TokenStream {
     first: cursor_from_one(value, offset),
@@ -675,6 +693,10 @@ pub fn handoff_starts_with_punctuation(handoff: TokenHandoff) -> bool {
 
 pub fn handoff_starts_with_operator(handoff: TokenHandoff) -> bool {
   return cursor_is_operator(handoff.first);
+}
+
+pub fn handoff_starts_with_keyword(handoff: TokenHandoff) -> bool {
+  return cursor_is_keyword(handoff.first);
 }
 
 pub fn cursor_score(cursor: TokenCursor) -> i64 {

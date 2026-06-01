@@ -53,6 +53,7 @@ pub enum TokenKind {
   SlashEqual,
   Percent,
   PercentEqual,
+  KwFn,
   EndOfFile,
   Unknown(char),
 }
@@ -127,6 +128,7 @@ pub fn kind_score(kind: TokenKind) -> i64 {
     SlashEqual => 63,
     Percent => 16,
     PercentEqual => 64,
+    KwFn => 80,
     EndOfFile => 0,
     Unknown(value) => value as i64,
   }
@@ -192,6 +194,7 @@ pub fn kind_class_score(kind: TokenKind) -> i64 {
     SlashEqual => 5,
     Percent => 5,
     PercentEqual => 5,
+    KwFn => 8,
     EndOfFile => 6,
     Unknown(_) => 7,
   }
@@ -215,6 +218,10 @@ pub fn kind_is_punctuation(kind: TokenKind) -> bool {
 
 pub fn kind_is_operator(kind: TokenKind) -> bool {
   return kind_class_score(kind) == 5;
+}
+
+pub fn kind_is_keyword(kind: TokenKind) -> bool {
+  return kind_class_score(kind) == 8;
 }
 
 pub fn kind_is_eof(kind: TokenKind) -> bool {

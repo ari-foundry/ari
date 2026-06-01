@@ -116,6 +116,8 @@ compiler feature in the normal focused-test workflow.
 - `compiler/lexer.ari` classifies shift compound-assignment operators `<<=`
   and `>>=` with source-text longest-match behavior while preserving `<<`,
   `>>`, `<=`, and `>=`.
+- `compiler/lexer.ari` classifies exact source-text `fn` as a keyword while
+  preserving longer identifier runs such as `fn1` as identifiers.
 - `compiler/lexer.ari` classifies `?` and `??` as operators so
   result-propagation and null-coalescing tokens match the stage0 spellings.
 - `compiler/lexer.ari` exposes one `scan_two`/`cursor_from_two` path for all
@@ -492,6 +494,8 @@ policy in ad hoc compiler files.
 - Added focused `<<=` and `>>=` shift compound-assignment operator tokens and
   source-root smoke coverage for source-text longest-match behavior while
   preserving `<<` and `<=` fallbacks.
+- Added the first text-backed keyword token, `fn`, with source-root smoke
+  coverage that exact `fn` is a keyword and longer `fn1` remains an identifier.
 - Consolidated the public two-character lexer helpers into one
   `scan_two`/`cursor_from_two` path while preserving the existing source-root
   smokes for spans, operators, punctuation, and fallback behavior.
@@ -607,13 +611,13 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add the first text-backed keyword classification for stage0 `fn`, preserving
-  longer identifiers such as `fn1` as identifiers.
+- Add text-backed keyword classification for stage0 `let`, preserving longer
+  identifiers such as `letter` as identifiers.
 
 ## Next Recommended Task
 
-Add the first text-backed keyword classification for stage0 `fn`, preserving
-longer identifiers such as `fn1` as identifiers.
+Add text-backed keyword classification for stage0 `let`, preserving longer
+identifiers such as `letter` as identifiers.
 
 ## Local Validation
 
@@ -787,6 +791,8 @@ longest-match behavior while preserving `<<` and `<=` paths without requiring
 a hosted compiler fix.
 The lexer tilde-operator smoke checked `~` tokenization as an operator without
 requiring a hosted compiler fix.
+The lexer keyword smoke checked exact `fn` source-text classification and
+preserved `fn1` as an identifier without requiring a hosted compiler fix.
 The token-kind class helper refactor checked through the bootstrap source root
 without requiring a hosted compiler fix. The lexer double-quote delimiter smoke
 checked `"` tokenization as punctuation without requiring a hosted compiler
