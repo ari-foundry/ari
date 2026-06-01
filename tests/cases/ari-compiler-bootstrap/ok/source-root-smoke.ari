@@ -194,64 +194,79 @@ fn lexer_operator_score() -> i64 {
 }
 
 fn lexer_identifier_span_score() -> i64 {
-  let cursor = lexer::cursor_from_two('a', 14, '9');
+  let text: Slice[u8] = "alpha9+";
+  let cursor = lexer::cursor_from_text(text, 0);
   if !lexer::cursor_is_identifier(cursor) {
     return 1;
   }
-  if lexer::cursor_token_start(cursor) != 14 {
+  if lexer::cursor_token_start(cursor) != 0 {
     return 2;
   }
-  if lexer::cursor_token_end(cursor) != 16 {
+  if lexer::cursor_token_end(cursor) != 6 {
     return 3;
   }
-  if lexer::cursor_token_score(cursor) != 3 {
+  if lexer::cursor_token_score(cursor) != 7 {
     return 4;
   }
-  let fallback = lexer::cursor_from_two('a', 20, '+');
-  if lexer::cursor_token_end(fallback) != 21 {
+  let after_identifier = lexer::cursor_advance_in_text(cursor, text);
+  if !lexer::cursor_is_operator(after_identifier) {
     return 5;
+  }
+  if lexer::cursor_token_start(after_identifier) != 6 {
+    return 6;
   }
   return 0;
 }
 
 fn lexer_number_span_score() -> i64 {
-  let cursor = lexer::cursor_from_two('4', 30, '2');
+  let text: Slice[u8] = "12345+";
+  let cursor = lexer::cursor_from_text(text, 0);
   if !lexer::cursor_is_number(cursor) {
     return 1;
   }
-  if lexer::cursor_token_start(cursor) != 30 {
+  if lexer::cursor_token_start(cursor) != 0 {
     return 2;
   }
-  if lexer::cursor_token_end(cursor) != 32 {
+  if lexer::cursor_token_end(cursor) != 5 {
     return 3;
   }
-  if lexer::cursor_token_score(cursor) != 4 {
+  if lexer::cursor_token_score(cursor) != 7 {
     return 4;
   }
-  let fallback = lexer::cursor_from_two('4', 40, 'a');
-  if lexer::cursor_token_end(fallback) != 41 {
+  let after_number = lexer::cursor_advance_in_text(cursor, text);
+  if !lexer::cursor_is_operator(after_number) {
     return 5;
+  }
+  if lexer::cursor_token_start(after_number) != 5 {
+    return 6;
+  }
+  if lexer::cursor_token_score(after_number) != 13 {
+    return 7;
   }
   return 0;
 }
 
 fn lexer_whitespace_span_score() -> i64 {
-  let cursor = lexer::cursor_from_two(' ', 50, '\n');
+  let text: Slice[u8] = " \n\t+";
+  let cursor = lexer::cursor_from_text(text, 0);
   if !lexer::cursor_is_whitespace(cursor) {
     return 1;
   }
-  if lexer::cursor_token_start(cursor) != 50 {
+  if lexer::cursor_token_start(cursor) != 0 {
     return 2;
   }
-  if lexer::cursor_token_end(cursor) != 52 {
+  if lexer::cursor_token_end(cursor) != 3 {
     return 3;
   }
-  if lexer::cursor_token_score(cursor) != 5 {
+  if lexer::cursor_token_score(cursor) != 6 {
     return 4;
   }
-  let fallback = lexer::cursor_from_two(' ', 60, 'a');
-  if lexer::cursor_token_end(fallback) != 61 {
+  let after_whitespace = lexer::cursor_advance_in_text(cursor, text);
+  if !lexer::cursor_is_operator(after_whitespace) {
     return 5;
+  }
+  if lexer::cursor_token_start(after_whitespace) != 3 {
+    return 6;
   }
   return 0;
 }
@@ -609,6 +624,12 @@ fn parse_text_score() -> i64 {
   }
   if parser::parse_failure_code(parser::parse_text("p+")) != 2003 {
     return 5;
+  }
+  if !parser::parse_is_success(parser::parse_text("12345")) {
+    return 6;
+  }
+  if parser::parse_statement_span_len(parser::parse_text("12345")) != 5 {
+    return 7;
   }
   return 0;
 }

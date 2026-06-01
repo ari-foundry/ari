@@ -105,9 +105,9 @@ compiler feature in the normal focused-test workflow.
   handoff boundary.
 - `compiler/lexer.ari` exposes one `scan_two`/`cursor_from_two` path for all
   current two-character scans instead of one public helper per token spelling.
-- The two-character lexer path covers identifier, number, and whitespace spans
-  plus `::`, `==`, `=>`, `!=`, `<=`, `>=`, `&&`, `||`, `<<`, `>>`, and `->`
-  with one-character fallback behavior.
+- The two-character lexer path covers fixed-width two-character spellings:
+  `::`, `==`, `=>`, `!=`, `<=`, `>=`, `&&`, `||`, `<<`, `>>`, and `->` with
+  one-character fallback behavior.
 - `compiler/lexer.ari` can scan a real `Slice[u8]` source text from an offset,
   including multi-byte identifier, number, and whitespace runs, two-character
   tokens, one-character fallback tokens, and EOF at the source end.
@@ -432,12 +432,9 @@ policy in ad hoc compiler files.
 - Added lexer classification for simple one-character operator tokens and
   source-root smoke coverage that they are scanned, scored, and exposed through
   operator queries instead of unknown-token paths.
-- Added a focused two-character identifier span helper and source-root smoke
-  coverage for lexer identifier token boundaries.
-- Added a focused two-character number span helper and source-root smoke
-  coverage for lexer number token boundaries.
-- Added a focused two-character whitespace span helper and source-root smoke
-  coverage for lexer whitespace token boundaries.
+- Added focused text-backed identifier, number, and whitespace span smokes so
+  variable-width token runs are checked through `Slice[u8]` source input rather
+  than through the fixed-width two-character spelling helper.
 - Added a focused `==` equality operator helper and source-root smoke coverage
   that distinguishes it from one-character assignment.
 - Added a focused `=>` fat-arrow operator token and source-root smoke coverage
@@ -556,8 +553,8 @@ policy in ad hoc compiler files.
 - Added a focused source-text driver success smoke that checks the internal
   `Ok(0)` payload through `result_code(driver::run_source_text(...))`.
 - Added a text-backed lexer cursor over `Slice[u8]`, source-root smoke coverage
-  for multi-byte identifier spans, text cursor advance, whitespace skipping,
-  and EOF placement.
+  for multi-byte identifier and number spans, text cursor advance, whitespace
+  skipping, and EOF placement.
 - Added `parser::parse_text` and routed `driver::run_source_text` through the
   text-backed lexer handoff instead of first-byte summary input.
 - Added a focused source-text extra-token driver smoke that checks `p+`
@@ -717,13 +714,10 @@ bracket punctuation smoke checked `[` and `]` tokenization as punctuation
 without requiring a hosted compiler fix. The lexer two-character
 path separator smoke checked `::`
 tokenization plus the one-character colon fallback path without requiring a
-hosted compiler fix. The lexer identifier span smoke checked two-character
-identifier token boundaries without requiring a hosted compiler fix. The lexer
-number span smoke checked two-character number token boundaries without
-requiring a hosted compiler fix. The lexer whitespace span smoke checked
-two-character whitespace token boundaries without requiring a hosted compiler
-fix. The lexer equality operator smoke checked `==` tokenization and assignment
-fallback without requiring a hosted compiler fix. The lexer two-character
+hosted compiler fix. The lexer identifier, number, and whitespace span smokes
+checked variable-width `Slice[u8]` text runs without requiring a hosted
+compiler fix. The lexer equality operator smoke checked `==` tokenization and
+assignment fallback without requiring a hosted compiler fix. The lexer two-character
 fat-arrow smoke checked `=>` tokenization plus the one-character assignment
 fallback path without requiring a hosted compiler fix. The lexer one-character
 comparison operator smoke checked `!`, `<`, and `>` tokenization without
