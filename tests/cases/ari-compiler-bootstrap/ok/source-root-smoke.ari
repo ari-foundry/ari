@@ -154,6 +154,21 @@ fn lexer_operator_score() -> i64 {
   if !lexer::handoff_starts_with_operator(lexer::handoff_from_one('+', 3)) {
     return 9;
   }
+  if lexer::scan_score('!') != 22 {
+    return 10;
+  }
+  if lexer::scan_score('<') != 23 {
+    return 11;
+  }
+  if lexer::scan_score('>') != 24 {
+    return 12;
+  }
+  if !lexer::cursor_is_operator(lexer::cursor_from_one('!', 18)) {
+    return 13;
+  }
+  if !lexer::handoff_starts_with_operator(lexer::handoff_from_one('<', 19)) {
+    return 14;
+  }
   return 0;
 }
 
@@ -340,7 +355,7 @@ fn failed_parse_driver_score() -> i64 {
 }
 
 fn failed_unknown_driver_score() -> i64 {
-  return driver::result_code(driver::run_loaded_source_summary(1, 3, '!', 0));
+  return driver::result_code(driver::run_loaded_source_summary(1, 3, '@', 0));
 }
 
 fn input_success_score() -> i64 {
@@ -388,7 +403,7 @@ fn parse_failure_start_score() -> i64 {
   if parser::parse_failure_start_offset(parser::parse_one(' ', 4)) != 4 {
     return 2;
   }
-  if parser::parse_failure_start_offset(parser::parse_one('!', 5)) != 5 {
+  if parser::parse_failure_start_offset(parser::parse_one('@', 5)) != 5 {
     return 3;
   }
   return 0;
@@ -401,7 +416,7 @@ fn parse_failure_end_score() -> i64 {
   if parser::parse_failure_end_offset(parser::parse_one(' ', 4)) != 5 {
     return 2;
   }
-  if parser::parse_failure_end_offset(parser::parse_one('!', 5)) != 6 {
+  if parser::parse_failure_end_offset(parser::parse_one('@', 5)) != 6 {
     return 3;
   }
   return 0;
@@ -426,7 +441,7 @@ fn parse_eof_cursor_failure_code_score() -> i64 {
 }
 
 fn parse_unknown_failure_code_score() -> i64 {
-  return parser::parse_failure_code(parser::parse_one('!', 5));
+  return parser::parse_failure_code(parser::parse_one('@', 5));
 }
 
 fn parse_missing_eof_failure_code_score() -> i64 {
@@ -442,7 +457,7 @@ fn main() -> i64 {
   }
 
   return source::span_len(span) +
-    lexer::scan_result_score(lexer::scan_one_result('!', 4)) +
+    lexer::scan_result_score(lexer::scan_one_result('@', 4)) +
     lexer::handoff_score(lexer::handoff_from_one('x', 6)) -
     16 +
     lexer_stream_score() +
@@ -456,7 +471,7 @@ fn main() -> i64 {
     12 +
     parser::parse_score(parser::parse_one('q', 1)) +
     parser::parse_score(parser::parse_one(' ', 4)) +
-    parser::parse_score(parser::parse_one('!', 5)) -
+    parser::parse_score(parser::parse_one('@', 5)) -
     4017 +
     parser::parse_one_kind_score('9', 2) -
     42 +
