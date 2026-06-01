@@ -117,10 +117,10 @@ compiler feature in the normal focused-test workflow.
   and `>>=` with source-text longest-match behavior while preserving `<<`,
   `>>`, `<=`, and `>=`.
 - `compiler/lexer.ari` classifies exact source-text `fn`, `let`, `var`, `own`,
-  `ref`, `mut`, `ptr`, `return`, `if`, `else`, `while`, and `init` as keywords
-  while preserving longer identifier runs such as `fn1`, `letter`, `variant`,
-  `owner`, `reference`, `mutable`, `ptrace`, `returning`, `iffy`, `elsewhere`,
-  `while1`, and `initial` as identifiers.
+  `ref`, `mut`, `ptr`, `return`, `if`, `else`, `while`, `init`, and `next` as
+  keywords while preserving longer identifier runs such as `fn1`, `letter`,
+  `variant`, `owner`, `reference`, `mutable`, `ptrace`, `returning`, `iffy`,
+  `elsewhere`, `while1`, `initial`, and `next1` as identifiers.
 - `compiler/lexer.ari` classifies `?` and `??` as operators so
   result-propagation and null-coalescing tokens match the stage0 spellings.
 - `compiler/lexer.ari` exposes one `scan_two`/`cursor_from_two` path for all
@@ -532,6 +532,9 @@ policy in ad hoc compiler files.
 - Added the twelfth text-backed keyword token, `init`, with source-root smoke
   coverage that exact `init` is a keyword and longer `initial` remains an
   identifier.
+- Added the thirteenth text-backed keyword token, `next`, with source-root smoke
+  coverage that exact `next` is a keyword and longer `next1` remains an
+  identifier.
 - Consolidated the repeated keyword source-root smoke checks behind one helper
   so each keyword case adds data instead of another full copy of the same
   cursor checks.
@@ -650,13 +653,13 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add text-backed keyword classification for stage0 `next`, preserving longer
-  identifiers such as `next1` as identifiers.
+- Add text-backed keyword classification for stage0 `continue`, preserving
+  longer identifiers such as `continue1` as identifiers.
 
 ## Next Recommended Task
 
-Add text-backed keyword classification for stage0 `next`, preserving longer
-identifiers such as `next1` as identifiers.
+Add text-backed keyword classification for stage0 `continue`, preserving longer
+identifiers such as `continue1` as identifiers.
 
 ## Local Validation
 
@@ -854,6 +857,8 @@ The lexer keyword smoke checked exact `while` source-text classification and
 preserved `while1` as an identifier without requiring a hosted compiler fix.
 The lexer keyword smoke checked exact `init` source-text classification and
 preserved `initial` as an identifier without requiring a hosted compiler fix.
+The lexer keyword smoke checked exact `next` source-text classification and
+preserved `next1` as an identifier without requiring a hosted compiler fix.
 The token-kind class helper refactor checked through the bootstrap source root
 without requiring a hosted compiler fix. The lexer double-quote delimiter smoke
 checked `"` tokenization as punctuation without requiring a hosted compiler
