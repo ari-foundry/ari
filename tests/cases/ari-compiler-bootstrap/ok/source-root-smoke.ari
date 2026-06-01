@@ -45,6 +45,24 @@ fn failed_unknown_driver_score() -> i64 {
   return driver::result_code(driver::run_loaded_source_summary(1, 3, '!', 0));
 }
 
+fn input_start_bound_score() -> i64 {
+  return driver::result_code(driver::run_input(driver::DriverInput {
+    source_id: 1,
+    byte_len: 3,
+    entry: 'p',
+    offset: -1,
+  }));
+}
+
+fn input_end_bound_score() -> i64 {
+  return driver::result_code(driver::run_input(driver::DriverInput {
+    source_id: 1,
+    byte_len: 3,
+    entry: 'p',
+    offset: 3,
+  }));
+}
+
 fn diagnostic_code_score() -> i64 {
   return diagnostic::diagnostic_code(diagnostic::error(77, 1, 2));
 }
@@ -87,6 +105,10 @@ fn main() -> i64 {
     2004 +
     failed_unknown_driver_score() -
     2005 +
+    input_start_bound_score() -
+    1001 +
+    input_end_bound_score() -
+    1002 +
     diagnostic_code_score() -
     77 +
     parse_failure_code_score() -

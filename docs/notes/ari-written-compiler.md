@@ -104,6 +104,8 @@ compiler feature in the normal focused-test workflow.
 - `compiler/driver.ari` exposes a `result_code` helper for bootstrap tests and
   later internal plumbing that need to inspect either `Ok` or `Err` payloads
   without using CLI exit-code mapping.
+- The bootstrap source-root smoke covers the current `DriverInput` offset guard
+  errors for both invalid start offsets and invalid one-byte end bounds.
 - File-input smoke paths use explicit `zone(16384)` allocation blocks because
   the source-root fixture is now large enough to exceed the default zone
   capacity when read into an owned string.
@@ -252,6 +254,8 @@ policy in ad hoc compiler files.
   source-root smoke coverage for whitespace and unknown-token diagnostic codes.
 - Added a driver result-code helper and simplified bootstrap smokes that inspect
   internal driver error payloads.
+- Added focused driver input-bound smokes for the existing `1001` and `1002`
+  offset validation errors.
 - Switched file-input smoke allocation blocks to explicit `zone(16384)` after
   the growing source-root fixture exceeded the default zone capacity at
   runtime.
@@ -260,15 +264,14 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add focused driver input-bound smokes for the existing `1001` and `1002`
-  offset validation errors using the new result-code helper.
+- Add a small scalar `DriverInput` constructor helper so future bootstrap code
+  does not need to rely on public aggregate literals across module boundaries.
 
 ## Next Recommended Task
 
-Add focused driver input-bound smokes for the existing `1001` and `1002` offset
-validation errors using `driver::result_code`. Keep this limited to validating
-current driver guard behavior; do not add option parsing, diagnostic rendering,
-or a source table yet.
+Add a small scalar `DriverInput` constructor helper. Keep it limited to
+constructing the existing input shape for tests and later driver plumbing; do
+not add option parsing, diagnostic rendering, or a source table yet.
 
 ## Local Validation
 
@@ -338,7 +341,9 @@ checked without requiring a hosted compiler fix. The file-input smoke path also
 checked with `std::fs` and `std::context` argv without requiring a hosted
 compiler fix. The invalid loaded-source summary smoke and parse-failure driver
 smokes also checked `std::Result` payload inspection without requiring a hosted
-compiler fix.
+compiler fix. The driver input-bound smokes checked module-qualified
+`DriverInput` aggregate literals and negative integer offsets without requiring
+a hosted compiler fix.
 The growing source-root fixture did expose a default-zone capacity runtime trap
 while reading the file smoke; this was fixed locally with explicit
 `zone(16384)` allocation blocks and is recorded as allocation-policy pressure
