@@ -184,6 +184,21 @@ pub fn scan_two(first: char, offset: i64, second: char) -> token::Token {
   if first == '-' && second == '>' {
     return token::make_token(token::Arrow, offset, offset + 2);
   }
+  if first == '+' && second == '=' {
+    return token::make_token(token::PlusEqual, offset, offset + 2);
+  }
+  if first == '-' && second == '=' {
+    return token::make_token(token::MinusEqual, offset, offset + 2);
+  }
+  if first == '*' && second == '=' {
+    return token::make_token(token::StarEqual, offset, offset + 2);
+  }
+  if first == '/' && second == '=' {
+    return token::make_token(token::SlashEqual, offset, offset + 2);
+  }
+  if first == '%' && second == '=' {
+    return token::make_token(token::PercentEqual, offset, offset + 2);
+  }
 
   return scan_one(first, offset);
 }
@@ -369,17 +384,32 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
     Plus => {
       return Scanned(token::make_token(token::Plus, offset, offset + 1));
     }
+    PlusEqual => {
+      return Scanned(token::make_token(token::PlusEqual, offset, offset + 2));
+    }
     Minus => {
       return Scanned(token::make_token(token::Minus, offset, offset + 1));
+    }
+    MinusEqual => {
+      return Scanned(token::make_token(token::MinusEqual, offset, offset + 2));
     }
     Star => {
       return Scanned(token::make_token(token::Star, offset, offset + 1));
     }
+    StarEqual => {
+      return Scanned(token::make_token(token::StarEqual, offset, offset + 2));
+    }
     Slash => {
       return Scanned(token::make_token(token::Slash, offset, offset + 1));
     }
+    SlashEqual => {
+      return Scanned(token::make_token(token::SlashEqual, offset, offset + 2));
+    }
     Percent => {
       return Scanned(token::make_token(token::Percent, offset, offset + 1));
+    }
+    PercentEqual => {
+      return Scanned(token::make_token(token::PercentEqual, offset, offset + 2));
     }
     EndOfFile => {
       return Scanned(token::make_token(token::EndOfFile, offset, offset));

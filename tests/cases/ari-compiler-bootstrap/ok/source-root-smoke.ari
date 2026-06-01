@@ -766,6 +766,83 @@ fn lexer_arrow_operator_span_score() -> i64 {
   return 0;
 }
 
+fn lexer_compound_assignment_operator_score() -> i64 {
+  let plus = lexer::cursor_from_two('+', 250, '=');
+  if !lexer::cursor_is_operator(plus) {
+    return 1;
+  }
+  if lexer::cursor_is_punctuation(plus) {
+    return 2;
+  }
+  if lexer::cursor_is_unknown(plus) {
+    return 3;
+  }
+  if lexer::cursor_token_start(plus) != 250 {
+    return 4;
+  }
+  if lexer::cursor_token_end(plus) != 252 {
+    return 5;
+  }
+  if lexer::cursor_token_score(plus) != 62 {
+    return 6;
+  }
+
+  let minus = lexer::cursor_from_two('-', 260, '=');
+  if !lexer::cursor_is_operator(minus) {
+    return 7;
+  }
+  if lexer::cursor_token_end(minus) != 262 {
+    return 8;
+  }
+  if lexer::cursor_token_score(minus) != 63 {
+    return 9;
+  }
+
+  let star = lexer::cursor_from_two('*', 270, '=');
+  if lexer::cursor_token_score(star) != 64 {
+    return 10;
+  }
+  let slash = lexer::cursor_from_two('/', 280, '=');
+  if lexer::cursor_token_score(slash) != 65 {
+    return 11;
+  }
+  let percent = lexer::cursor_from_two('%', 290, '=');
+  if lexer::cursor_token_score(percent) != 66 {
+    return 12;
+  }
+
+  let fallback = lexer::cursor_from_two('+', 300, '?');
+  if lexer::cursor_token_end(fallback) != 301 {
+    return 13;
+  }
+  if lexer::cursor_token_score(fallback) != 13 {
+    return 14;
+  }
+
+  let text: Slice[u8] = "+=name";
+  let text_cursor = lexer::cursor_from_text(text, 0);
+  if !lexer::cursor_is_operator(text_cursor) {
+    return 15;
+  }
+  if lexer::cursor_token_end(text_cursor) != 2 {
+    return 16;
+  }
+  if lexer::cursor_token_score(text_cursor) != 62 {
+    return 17;
+  }
+  let after_text = lexer::cursor_advance_in_text(text_cursor, text);
+  if !lexer::cursor_is_identifier(after_text) {
+    return 18;
+  }
+  if lexer::cursor_token_start(after_text) != 2 {
+    return 19;
+  }
+  if lexer::cursor_token_end(after_text) != 6 {
+    return 20;
+  }
+  return 0;
+}
+
 fn lexer_text_cursor_score() -> i64 {
   let text: Slice[u8] = "alpha9+";
   let first = lexer::cursor_from_text(text, 0);
@@ -1049,6 +1126,7 @@ fn main() -> i64 {
     lexer_logical_operator_span_score() +
     lexer_shift_operator_span_score() +
     lexer_arrow_operator_span_score() +
+    lexer_compound_assignment_operator_score() +
     lexer_text_cursor_score() +
     parse_text_score() +
     ast::node_score(ast::token_node(3, 2, 5, 8)) -
