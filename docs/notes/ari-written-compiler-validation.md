@@ -360,8 +360,8 @@ and driver paths, preserving diagnostic code `1008` and failure spans without
 requiring a hosted compiler fix.
 The source-text post-comment extra-token smoke now checks line and block
 comments followed by another identifier through lexer handoff, parser, and
-driver paths, preserving parser missing-EOF diagnostic code `2003` without
-requiring a hosted compiler fix.
+driver paths, preserving parser missing-EOF diagnostic code `2003` and the
+extra-token span without requiring a hosted compiler fix.
 The source-text post-comment lexer-failure smoke now checks line and block
 comments followed by an unterminated string through lexer handoff, parser, and
 driver paths, preserving lexer diagnostic code `1004` and failure spans without
@@ -373,6 +373,10 @@ The source-text leading-comment lexer-failure smoke now checks line and block
 comments before an unterminated string through lexer handoff, parser, and
 driver paths, preserving lexer diagnostic code `1004` and failure spans without
 requiring a hosted compiler fix.
+The source-text leading-comment extra-token smoke now checks line and block
+comments before a statement followed by another identifier through lexer
+handoff, parser, and driver paths, preserving parser missing-EOF diagnostic
+code `2003` and the extra-token span without requiring a hosted compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
@@ -439,11 +443,6 @@ Desired stage0 pressure that is not yet classified as a bug:
   byte character literal spans are therefore modeled as number tokens for now;
   this is Ari-written compiler model pressure, not a confirmed hosted compiler
   bug.
-- The Ari-written parser's current missing-EOF diagnostic still reports a
-  placeholder span instead of the extra token's span. Post-comment extra-token
-  smokes therefore check the `2003` code at parser/driver boundaries while the
-  lexer handoff smoke checks the actual extra-token offset. This is
-  Ari-written diagnostic-quality pressure, not a confirmed hosted compiler bug.
 - Numeric base-prefix handling such as `0x`, `0o`, and `0b` should stay
   separated from decimal floating literal handling. Decimal float scanning
   should not accidentally inherit octal/binary/hex prefix behavior; keep this

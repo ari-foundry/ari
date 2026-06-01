@@ -87,6 +87,18 @@ fn source_text_leading_comment_lexer_failure_driver_score() -> i64 {
   return 0;
 }
 
+fn source_text_leading_comment_extra_token_driver_score() -> i64 {
+  let line_code = source_text_driver_result("// skip\nname other");
+  if line_code != 2003 {
+    return 1;
+  }
+  let block_code = source_text_driver_result("/* skip */name other");
+  if block_code != 2003 {
+    return 2;
+  }
+  return 0;
+}
+
 fn source_text_trailing_comment_driver_score() -> i64 {
   let line_code = source_text_driver_result("p// skip");
   if line_code != 0 {
@@ -1616,8 +1628,9 @@ fn lexer_trailing_comment_handoff_score() -> i64 {
   return 0;
 }
 
-fn lexer_post_comment_extra_token_handoff_case_score(
+fn lexer_extra_token_handoff_case_score(
   text: Slice[u8],
+  expected_first_start: i64,
   expected_first_end: i64,
   expected_extra_start: i64,
   expected_extra_end: i64
@@ -1627,7 +1640,7 @@ fn lexer_post_comment_extra_token_handoff_case_score(
   if !lexer::cursor_is_identifier(first) {
     return 1;
   }
-  if lexer::cursor_token_start(first) != 0 {
+  if lexer::cursor_token_start(first) != expected_first_start {
     return 2;
   }
   if lexer::cursor_token_end(first) != expected_first_end {
@@ -1649,9 +1662,34 @@ fn lexer_post_comment_extra_token_handoff_case_score(
   return 0;
 }
 
+fn lexer_leading_comment_extra_token_handoff_score() -> i64 {
+  var score = lexer_extra_token_handoff_case_score(
+    "// skip\nname other",
+    8,
+    12,
+    13,
+    18
+  );
+  if score != 0 {
+    return score;
+  }
+  score = lexer_extra_token_handoff_case_score(
+    "/* skip */name other",
+    10,
+    14,
+    15,
+    20
+  );
+  if score != 0 {
+    return 10 + score;
+  }
+  return 0;
+}
+
 fn lexer_post_comment_extra_token_handoff_score() -> i64 {
-  var score = lexer_post_comment_extra_token_handoff_case_score(
+  var score = lexer_extra_token_handoff_case_score(
     "name// skip\nother",
+    0,
     4,
     12,
     17
@@ -1659,8 +1697,9 @@ fn lexer_post_comment_extra_token_handoff_score() -> i64 {
   if score != 0 {
     return score;
   }
-  score = lexer_post_comment_extra_token_handoff_case_score(
+  score = lexer_extra_token_handoff_case_score(
     "name/* skip */other",
+    0,
     4,
     14,
     19
@@ -3036,22 +3075,46 @@ fn parse_trailing_unterminated_block_failure_score() -> i64 {
   return 0;
 }
 
-fn parse_post_comment_extra_token_case_score(text: Slice[u8]) -> i64 {
-  if parser::parse_failure_code(parser::parse_text(text)) != 2003 {
+fn parse_extra_token_case_score(
+  text: Slice[u8],
+  expected_start: i64,
+  expected_end: i64
+) -> i64 {
+  let parsed = parser::parse_text(text);
+  if parser::parse_failure_code(parsed) != 2003 {
     return 1;
   }
-  if parser_keyword_failure_code(text) != 2003 {
+  if parser::parse_failure_start_offset(parsed) != expected_start {
     return 2;
+  }
+  if parser::parse_failure_end_offset(parsed) != expected_end {
+    return 3;
+  }
+  let keyword_score = parser_keyword_failure_case_score(text, 2003, expected_start, expected_end);
+  if keyword_score != 0 {
+    return 3 + keyword_score;
+  }
+  return 0;
+}
+
+fn parse_leading_comment_extra_token_failure_score() -> i64 {
+  var score = parse_extra_token_case_score("// skip\nname other", 13, 18);
+  if score != 0 {
+    return score;
+  }
+  score = parse_extra_token_case_score("/* skip */name other", 15, 20);
+  if score != 0 {
+    return 10 + score;
   }
   return 0;
 }
 
 fn parse_post_comment_extra_token_failure_score() -> i64 {
-  var score = parse_post_comment_extra_token_case_score("name// skip\nother");
+  var score = parse_extra_token_case_score("name// skip\nother", 12, 17);
   if score != 0 {
     return score;
   }
-  score = parse_post_comment_extra_token_case_score("name/* skip */other");
+  score = parse_extra_token_case_score("name/* skip */other", 14, 19);
   if score != 0 {
     return 10 + score;
   }
@@ -3522,6 +3585,7 @@ fn main() -> i64 {
     source_text_comment_only_driver_score() +
     source_text_leading_comment_driver_score() +
     source_text_leading_comment_lexer_failure_driver_score() +
+    source_text_leading_comment_extra_token_driver_score() +
     source_text_trailing_comment_driver_score() +
     source_text_trailing_unterminated_block_driver_score() +
     source_text_post_comment_extra_token_driver_score() +
@@ -3578,6 +3642,8 @@ fn main() -> i64 {
     lexer_trailing_unterminated_block_handoff_score() +
     parse_leading_comment_lexer_failure_score() +
     lexer_leading_comment_lexer_failure_handoff_score() +
+    parse_leading_comment_extra_token_failure_score() +
+    lexer_leading_comment_extra_token_handoff_score() +
     parse_post_comment_extra_token_failure_score() +
     lexer_post_comment_extra_token_handoff_score() +
     parse_post_comment_lexer_failure_score() +

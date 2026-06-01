@@ -261,6 +261,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/parser.ari` exposes a tiny `parse_one_without_eof` helper so
   malformed handoff diagnostics can be tested without exposing handoff internals
   to the bootstrap fixture.
+- `compiler/parser.ari` reports missing-EOF diagnostic code `2003` at the
+  handoff extra token span instead of using a placeholder `0..0` location.
 - The bootstrap source-root smoke checks the parser empty-input diagnostic code
   through `parser::parse_failure_code` instead of relying only on diagnostic
   smoke-score arithmetic.
@@ -391,6 +393,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - The bootstrap source-root smoke checks the source-text driver
   leading-comment lexer-failure path and verifies skipped comments before an
   unterminated string preserve lexer diagnostic code `1004`.
+- The bootstrap source-root smoke checks the source-text driver
+  leading-comment extra-token path and verifies skipped comments before a
+  statement followed by another identifier preserve parser missing-EOF
+  diagnostic code `2003`.
 - The bootstrap source-root smoke covers the current `DriverInput` offset guard
   errors for both invalid start offsets and invalid one-byte end bounds through
   the scalar constructor helper.

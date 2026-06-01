@@ -97,7 +97,12 @@ pub fn parse_handoff_kind_score(handoff: lexer::TokenHandoff) -> i64 {
 
 pub fn parse_handoff(handoff: lexer::TokenHandoff) -> ParseResult {
   if !lexer::handoff_has_eof(handoff) {
-    return Failed(diagnostic::error(2003, 0, 0));
+    let extra = lexer::handoff_eof(handoff);
+    return Failed(diagnostic::error(
+      2003,
+      lexer::cursor_token_start(extra),
+      lexer::cursor_token_end(extra)
+    ));
   }
 
   return parse_statement(lexer::handoff_first(handoff));
