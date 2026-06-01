@@ -149,6 +149,13 @@ compiler feature in the normal focused-test workflow.
   advance, significant-token advance, and handoff helpers so later parser and
   driver work can reuse one keyword table instead of rebuilding lookup state
   per token. The older stateless text helpers remain as compatibility wrappers.
+- `compiler/parser.ari` exposes a zone-backed `parse_text_with_keywords`
+  helper that builds one reusable lexer `KeywordTable` for a source-text parse
+  and consumes the lexer table-aware handoff path.
+- `compiler/driver.ari` routes source-text and file-input parsing through the
+  parser keyword-table helper, so real compiler text input now uses the
+  HashMap-backed keyword path. The older parser `parse_text` helper remains as
+  a stateless compatibility path for focused smokes.
 - `compiler/lexer.ari` classifies `?` and `??` as operators so
   result-propagation and null-coalescing tokens match the stage0 spellings.
 - `compiler/lexer.ari` exposes one `scan_two`/`cursor_from_two` path for all
@@ -606,6 +613,11 @@ policy in ad hoc compiler files.
 - Added source-root smoke coverage for the HashMap-backed keyword table,
   checking exact `meta`, longer `metadata`, significant cursor advance, and
   handoff EOF behavior.
+- Routed parser source-text parsing through a reusable lexer `KeywordTable`
+  helper and routed driver source-text/file-input parsing through that parser
+  helper.
+- Added source-root smoke coverage that checks table-backed parser keyword
+  diagnostics and driver source-text keyword diagnostics.
 - Replaced the raw per-character keyword comparison chain with one slice matcher
   helper while keeping width buckets, so adding keywords no longer duplicates
   manual indexing logic.
@@ -727,15 +739,13 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Route parser and driver source-text handoff through a reusable lexer
-  `KeywordTable` so real compiler input uses the HashMap-backed path.
-- Add `struct` to the reusable keyword table once the parser/driver path uses
-  table-backed lookup, preserving longer identifiers such as `structure`.
+- Add `struct` to the reusable keyword table and token model, preserving longer
+  identifiers such as `structure`.
 
 ## Next Recommended Task
 
-Route parser and driver source-text handoff through a reusable lexer
-`KeywordTable` so real compiler input uses the HashMap-backed path.
+Add `struct` to the reusable keyword table and token model, preserving longer
+identifiers such as `structure`.
 
 ## Local Validation
 
@@ -966,6 +976,10 @@ The HashMap-backed keyword table checked through `KeywordTable` as a type alias
 over `std::collections::HashMap[String, TokenKind]`, plus table-aware scanner,
 cursor, significant-advance, and handoff helpers, without requiring a hosted
 compiler fix.
+The parser and driver source-text paths now check through the HashMap-backed
+keyword table path without requiring a hosted compiler fix. `driver::run_source_text`
+uses a small explicit current-zone block for the transient keyword table; this
+is allocation-policy pressure only, not a confirmed hosted compiler bug.
 The keyword matcher helper refactor kept the width-bucket keyword path checked
 through the source-root smoke without requiring a hosted compiler fix.
 The token-kind class helper refactor checked through the bootstrap source root
@@ -1009,9 +1023,8 @@ codegen, diagnostics, or another hosted compiler area.
 Desired stage0 pressure that is not yet classified as a bug:
 
 - The compatibility keyword lookup still lives in stateless
-  `identifier_kind_from_text`; parser and driver source-text paths should be
-  routed through the reusable `KeywordTable` so future keywords only need the
-  HashMap-backed table path.
+  `identifier_kind_from_text`; keep it only for focused legacy smokes while
+  adding future source-text keywords to the reusable `KeywordTable` path.
 - Wrapping a zone-backed `HashMap` in a new Ari struct was awkward in this
   slice: mutating a `HashMap` through a helper/field lost tracked-zone receiver
   information, and returning a wrapper with a raw zone pointer or embedded map

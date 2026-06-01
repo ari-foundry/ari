@@ -111,6 +111,15 @@ pub fn parse_text(text: std::Slice[u8]) -> ParseResult {
   return parse_handoff(lexer::handoff_from_text(text));
 }
 
+pub fn parse_text_with_keywords(zone: ref mut Zone, text: std::Slice[u8]) -> ParseResult {
+  if text.is_empty() {
+    return parse_empty();
+  }
+
+  var table = lexer::keyword_table(zone);
+  return parse_handoff(lexer::handoff_from_text_with_keywords(ref table, text));
+}
+
 pub fn parse_one(value: char, offset: i64) -> ParseResult {
   return parse_handoff(lexer::handoff_from_one(value, offset));
 }

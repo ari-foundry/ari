@@ -45,6 +45,12 @@ fn source_text_extra_token_driver_score() -> i64 {
   }
 }
 
+fn source_text_keyword_driver_score() -> i64 {
+  zone(65536) {
+    return driver::result_code(driver::run_source_text(std::string::from("meta")));
+  }
+}
+
 fn default_driver_result_score() -> i64 {
   return driver::result_code(driver::run());
 }
@@ -1517,6 +1523,11 @@ fn parse_text_score() -> i64 {
   if parser::parse_statement_span_len(parser::parse_text("12345")) != 5 {
     return 7;
   }
+  zone(65536) {
+    if parser::parse_failure_code(parser::parse_text_with_keywords("meta")) != 2006 {
+      return 8;
+    }
+  }
   return 0;
 }
 
@@ -1804,6 +1815,8 @@ fn main() -> i64 {
     source_text_driver_score() +
     source_text_extra_token_driver_score() -
     2003 +
+    source_text_keyword_driver_score() -
+    2006 +
     parser::parse_score(parser::parse_empty()) -
     3018;
 }

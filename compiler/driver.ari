@@ -79,14 +79,16 @@ pub fn run_source_text(text: std::string::String) -> std::Result[i64, i64] {
     return std::Err<i64, i64>(1101);
   }
 
-  let parsed = parser::parse_text(text.as_slice());
-  if parser::parse_is_success(parsed) {
-    return std::Ok<i64, i64>(0);
-  }
+  zone(8192) {
+    let parsed = parser::parse_text_with_keywords(text.as_slice());
+    if parser::parse_is_success(parsed) {
+      return std::Ok<i64, i64>(0);
+    }
 
-  let code = parser::parse_failure_code(parsed);
-  if code > 0 {
-    return std::Err<i64, i64>(code);
+    let code = parser::parse_failure_code(parsed);
+    if code > 0 {
+      return std::Err<i64, i64>(code);
+    }
   }
 
   return std::Err<i64, i64>(1003);
