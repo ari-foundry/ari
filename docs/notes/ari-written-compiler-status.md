@@ -144,6 +144,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/lexer.ari` scans simple ASCII byte character spellings such as
   `'a'` as number spans, matching stage0's integer-literal treatment for byte
   character literals at the current Ari token-model level.
+- `compiler/lexer.ari` scans simple byte character escape spellings such as
+  `'\n'` and `'\\'` as number spans, while leaving numeric byte-character
+  escape value handling for a later slice.
 - `compiler/lexer.ari` exposes text-backed cursor advance and handoff helpers,
   including significant-token advance that skips leading and trailing
   whitespace around the current single-statement parser handoff.

@@ -75,6 +75,12 @@ fn source_text_byte_char_driver_score() -> i64 {
   }
 }
 
+fn source_text_byte_char_escape_driver_score() -> i64 {
+  zone(65536) {
+    return driver::result_code(driver::run_source_text(std::string::from("'\\n'")));
+  }
+}
+
 fn source_text_missing_base_digit_driver_score() -> i64 {
   zone(65536) {
     return driver::result_code(driver::run_source_text(std::string::from("0x")));
@@ -520,8 +526,29 @@ fn lexer_byte_char_span_score() -> i64 {
   if score != 0 {
     return 7 + score;
   }
+  score = lexer_number_case_score("'\\n'+", 4, 6);
+  if score != 0 {
+    return 13 + score;
+  }
+  let after_escape_byte_char = lexer::cursor_advance_in_text(
+    lexer::cursor_from_text("'\\n'+", 0),
+    "'\\n'+"
+  );
+  if !lexer::cursor_is_operator(after_escape_byte_char) {
+    return 18;
+  }
+  if lexer::cursor_token_start(after_escape_byte_char) != 4 {
+    return 19;
+  }
+  score = lexer_number_case_score("'\\\\' ", 4, 6);
+  if score != 0 {
+    return 20 + score;
+  }
   if !parser::parse_is_success(parser::parse_text("'a'")) {
     return 12;
+  }
+  if !parser::parse_is_success(parser::parse_text("'\\n'")) {
+    return 26;
   }
   return 0;
 }
@@ -2698,6 +2725,7 @@ fn main() -> i64 {
     source_text_number_suffix_driver_score() +
     source_text_decimal_float_driver_score() +
     source_text_byte_char_driver_score() +
+    source_text_byte_char_escape_driver_score() +
     source_text_missing_base_digit_driver_score() -
     1009 +
     source_text_invalid_base_digit_driver_score() -

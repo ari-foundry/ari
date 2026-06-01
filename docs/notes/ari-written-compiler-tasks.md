@@ -436,15 +436,18 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   failure path.
 - Added source-text byte character literal spans for simple ASCII spellings
   such as `'a'`, treating them as number tokens in the current Ari token model.
+- Added source-text byte character escape spans for simple supported escape
+  spellings such as `'\n'` and `'\\'`, treating them as number tokens in the
+  current Ari token model.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add source-text byte character escape spans for supported escape spellings
-  such as `'\n'`.
+- Add source-text byte character numeric escape spans for spellings such as
+  `'\x41'` and `'\101'`.
 
 ## Next Recommended Task
 
-Add source-text byte character escape spans for supported escape spellings such
-as `'\n'`.
+Add source-text byte character numeric escape spans for spellings such as
+`'\x41'` and `'\101'`.

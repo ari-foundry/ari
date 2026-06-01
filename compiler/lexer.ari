@@ -962,11 +962,37 @@ fn string_literal_scan_from_text(text: std::Slice[u8], offset: i64) -> StringLit
   return Unterminated(text.len);
 }
 
+fn is_simple_byte_char_escape(value: char) -> bool {
+  return value == 'a' ||
+    value == 'b' ||
+    value == 'e' ||
+    value == 'f' ||
+    value == 'n' ||
+    value == 'r' ||
+    value == 't' ||
+    value == 'v' ||
+    value == '"' ||
+    value == '\'' ||
+    value == '?' ||
+    value == '\\';
+}
+
 fn byte_char_end_from_text(text: std::Slice[u8], offset: i64) -> i64 {
+  if offset + 1 >= text.len {
+    return offset + 1;
+  }
+  if text[offset + 1] == '\\' {
+    if offset + 3 < text.len &&
+      is_simple_byte_char_escape(text[offset + 2]) &&
+      text[offset + 3] == '\'' {
+      return offset + 4;
+    }
+    return offset + 1;
+  }
   if offset + 2 >= text.len {
     return offset + 1;
   }
-  if text[offset + 1] == '\'' || text[offset + 1] == '\\' || text[offset + 1] == '\n' {
+  if text[offset + 1] == '\'' || text[offset + 1] == '\n' {
     return offset + 1;
   }
   if text[offset + 2] == '\'' {
