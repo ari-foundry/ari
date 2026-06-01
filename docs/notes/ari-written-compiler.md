@@ -85,6 +85,9 @@ compiler feature in the normal focused-test workflow.
 - `compiler/diagnostic.ari` exposes a diagnostic-code accessor, and
   `compiler/parser.ari` exposes a parser failure-code helper for phase
   boundaries that need diagnostic identity without rendering diagnostics.
+- The bootstrap source-root smoke checks the parser empty-input diagnostic code
+  through `parser::parse_failure_code` instead of relying only on diagnostic
+  smoke-score arithmetic.
 - `compiler/driver.ari` owns the current bootstrap entry flow and returns a
   standard-library `std::Result[i64, i64]` instead of embedding smoke arithmetic
   in `main`.
@@ -271,6 +274,8 @@ policy in ad hoc compiler files.
 - Added a diagnostic-code accessor and parser failure-code helper, with
   source-root smoke coverage for both the raw diagnostic accessor and a parser
   whitespace failure code.
+- Added a focused parser empty-input failure-code smoke that checks diagnostic
+  code `2002` through `parser::parse_failure_code(parser::parse_empty())`.
 - Routed driver parse failures through the parser failure-code helper, with
   source-root smoke coverage for whitespace and unknown-token diagnostic codes.
 - Added a driver result-code helper and simplified bootstrap smokes that inspect
@@ -301,17 +306,18 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a focused parser empty-input failure-code smoke using
-  `parser::parse_failure_code(parser::parse_empty())` so the EOF/empty parser
-  diagnostic identity is checked without smoke-score arithmetic.
+- Add a focused parser EOF-cursor failure-code smoke using
+  `parser::parse_failure_code(parser::parse_cursor(lexer::handoff_eof(...)))`
+  so the parser statement EOF diagnostic identity is checked without
+  smoke-score arithmetic.
 
 ## Next Recommended Task
 
-Add a focused parser empty-input failure-code smoke using
-`parser::parse_failure_code(parser::parse_empty())` so the EOF/empty parser
-diagnostic identity is checked without smoke-score arithmetic. Keep it inside
-the bootstrap source-root smoke and do not add parser recovery, diagnostic
-rendering, or a source table yet.
+Add a focused parser EOF-cursor failure-code smoke using
+`parser::parse_failure_code(parser::parse_cursor(lexer::handoff_eof(...)))`
+so the parser statement EOF diagnostic identity is checked without smoke-score
+arithmetic. Keep it inside the bootstrap source-root smoke and do not add
+parser recovery, diagnostic rendering, or a source table yet.
 
 ## Local Validation
 
@@ -397,6 +403,8 @@ requiring a hosted compiler fix. The raw `DriverInput` success smoke checked
 the input-path `Ok(0)` payload through `result_code` without requiring a hosted
 compiler fix. The source-text success smoke checked `std::string::from()`
 construction and the text-input `Ok(0)` payload through `result_code` without
+requiring a hosted compiler fix. The parser empty-input failure-code smoke
+checked diagnostic code `2002` through `parser::parse_failure_code` without
 requiring a hosted compiler fix.
 The growing source-root fixture did expose a default-zone capacity runtime trap
 while reading the file smoke; this was fixed locally with explicit
