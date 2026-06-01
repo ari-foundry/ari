@@ -368,6 +368,22 @@ Desired stage0 pressure that is not yet classified as a bug:
 - Clearer allocation-policy ergonomics for self-host file reads; default
   `zone { ... }` capacity can be too small for growing compiler fixtures, so
   explicit `zone(capacity)` is currently required.
+- Zone ergonomics are now a major bootstrap pressure point. The source-root
+  smoke has many tiny helper functions that each open their own `zone(65536)`
+  only so they can build a `String`, read a file, or construct a keyword table.
+  `compiler/driver.ari` also opens nested zones for `run_source_text` and
+  `run_from_context`, even though those calls are conceptually part of one
+  short-lived compilation request. The upside of the current explicit spelling
+  is that lifetime and allocation capacity stay visible, and tests do not hide
+  allocation behind a process-global heap. The downside is real: the repeated
+  zone blocks are noisy, magic-capacity-driven, easy to cargo-cult into every
+  small helper, and make otherwise simple source-text tests look worse than the
+  compiler logic being tested. Prefer future work that lets allocation-backed
+  stdlib calls derive a lexical current zone/region when exactly one allocation
+  lifetime is in scope, while still requiring explicit zone arguments when
+  multiple regions or escaping ownership would make inference ambiguous. Avoid
+  a runtime-global heap/current-zone API as the default model; the goal is a
+  compiler-checkable lexical allocation context, not hidden ambient state.
 - Clearer match-arm binding scoping ergonomics; today a helper that matches
   both `std::Ok(code)` and `std::Err(code)`, or sibling enum cases with the
   same payload spelling, must use distinct payload names.

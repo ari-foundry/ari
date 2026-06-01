@@ -121,6 +121,20 @@ Avoid a runtime-global `region::current()` API for ordinary library code. A
 lexical current region is readable and checkable; an ambient global allocator
 would make lifetime and reset behavior much harder to reason about.
 
+Current bootstrap review: repeated `zone(65536)` blocks in small helpers are a
+sign that the model is still too raw at call sites. They are useful because the
+allocation lifetime is explicit and the checker has a concrete capability to
+track, but they are not a good final user or compiler-authoring experience.
+The better shape is lexical current-region inference: `String` constructors,
+hash-map builders, file-read helpers, and similar allocation-backed APIs should
+be able to use the current region when there is exactly one obvious candidate.
+That keeps the deterministic region story while removing boilerplate from
+straight-line code. The compiler should still force an explicit region when
+there are multiple candidates, when a value may escape the current region, or
+when an API is deliberately choosing a long-lived allocator. This should be
+reviewed case by case; not every explicit zone is bad, but the current pattern
+of one zone block per tiny helper is a design smell.
+
 Likely explicit memory operations:
 
 - raw pointer dereference
