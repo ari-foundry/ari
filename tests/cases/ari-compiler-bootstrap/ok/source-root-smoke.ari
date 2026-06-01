@@ -207,6 +207,9 @@ fn parse_failure_start_score() -> i64 {
   if parser::parse_failure_start_offset(parser::parse_one(' ', 4)) != 4 {
     return 2;
   }
+  if parser::parse_failure_start_offset(parser::parse_one('!', 5)) != 5 {
+    return 3;
+  }
   return 0;
 }
 

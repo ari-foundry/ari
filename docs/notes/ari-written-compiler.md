@@ -160,6 +160,9 @@ compiler feature in the normal focused-test workflow.
 - The bootstrap source-root smoke checks the parser whitespace diagnostic start
   offset through `parser::parse_failure_start_offset` instead of relying only
   on diagnostic smoke-score arithmetic.
+- The bootstrap source-root smoke checks the parser unknown-token diagnostic
+  start offset through `parser::parse_failure_start_offset` instead of relying
+  only on diagnostic smoke-score arithmetic.
 - The bootstrap source-root smoke checks the parser whitespace diagnostic end
   offset through `parser::parse_failure_end_offset` instead of relying only on
   diagnostic smoke-score arithmetic.
@@ -428,6 +431,8 @@ policy in ad hoc compiler files.
 - Added a diagnostic severity-score accessor and a parser failure
   severity-score helper, with source-root smoke coverage for the whitespace
   diagnostic severity.
+- Added a focused parser unknown-token failure start-offset smoke using the
+  existing parser failure start-offset helper without diagnostic rendering.
 - Routed driver parse failures through the parser failure-code helper, with
   source-root smoke coverage for whitespace and unknown-token diagnostic codes.
 - Added a driver result-code helper and simplified bootstrap smokes that inspect
@@ -458,14 +463,14 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a focused parser unknown-token failure start-offset smoke using the
-  existing `parser::parse_failure_start_offset(parser::parse_one('!', ...))`
+- Add a focused parser unknown-token failure end-offset smoke using the
+  existing `parser::parse_failure_end_offset(parser::parse_one('!', ...))`
   helper without adding recovery or diagnostic rendering.
 
 ## Next Recommended Task
 
-Add a focused parser unknown-token failure start-offset smoke using the existing
-`parser::parse_failure_start_offset(parser::parse_one('!', ...))` helper
+Add a focused parser unknown-token failure end-offset smoke using the existing
+`parser::parse_failure_end_offset(parser::parse_one('!', ...))` helper
 without adding recovery, diagnostic rendering, or a source table yet.
 
 ## Local Validation
@@ -588,7 +593,8 @@ diagnostic start metadata without requiring a hosted compiler fix. The parser
 failure end-offset smoke checked whitespace diagnostic end metadata without
 requiring a hosted compiler fix. The parser failure severity smoke checked
 whitespace diagnostic severity metadata without requiring a hosted compiler
-fix.
+fix. The parser unknown-token failure start-offset smoke checked unknown-token
+diagnostic start metadata without requiring a hosted compiler fix.
 The growing source-root fixture did expose a default-zone capacity runtime trap
 while reading the file smoke; this was fixed locally with explicit
 `zone(16384)` allocation blocks and is recorded as allocation-policy pressure
