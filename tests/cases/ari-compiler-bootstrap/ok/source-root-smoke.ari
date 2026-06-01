@@ -210,6 +210,16 @@ fn parse_failure_start_score() -> i64 {
   return 0;
 }
 
+fn parse_failure_end_score() -> i64 {
+  if parser::parse_failure_end_offset(parser::parse_one('q', 1)) != -1 {
+    return 1;
+  }
+  if parser::parse_failure_end_offset(parser::parse_one(' ', 4)) != 5 {
+    return 2;
+  }
+  return 0;
+}
+
 fn parse_empty_failure_code_score() -> i64 {
   return parser::parse_failure_code(parser::parse_empty());
 }
@@ -275,6 +285,7 @@ fn main() -> i64 {
     parse_failure_code_score() -
     2004 +
     parse_failure_start_score() +
+    parse_failure_end_score() +
     parse_empty_failure_code_score() -
     2002 +
     parse_eof_cursor_failure_code_score() -

@@ -183,6 +183,13 @@ pub fn parse_failure_start_offset(result: ParseResult) -> i64 {
   }
 }
 
+pub fn parse_failure_end_offset(result: ParseResult) -> i64 {
+  match result {
+    Parsed(_) => -1,
+    Failed(failure) => diagnostic::diagnostic_end_offset(failure),
+  }
+}
+
 pub fn parse_score(result: ParseResult) -> i64 {
   match result {
     Parsed(node) => ast::node_score(node),
