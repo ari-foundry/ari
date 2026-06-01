@@ -1274,6 +1274,17 @@ fn lexer_keyword_score() -> i64 {
       7,
       "ptr",
       'p'
+    ) +
+    lexer_keyword_case_with_base_score(
+      700,
+      "return name",
+      6,
+      93,
+      "returning",
+      9,
+      10,
+      "return",
+      'r'
     );
 }
 
