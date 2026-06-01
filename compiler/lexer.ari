@@ -60,6 +60,7 @@ enum ByteCharScan {
   ByteCharInvalidEscapeDigits(i64, i64),
   ByteCharInvalidEscapeValue(i64, i64),
   ByteCharTooLong(i64, i64),
+  ByteCharNonAscii(i64, i64),
   ByteCharFallback,
 }
 
@@ -113,6 +114,10 @@ fn is_octal_digit(value: char) -> bool {
 
 fn is_hex_digit(value: char) -> bool {
   return std::ascii::is_hex_digit(value);
+}
+
+fn is_non_ascii_byte(value: char) -> bool {
+  return (value as i64) > 127;
 }
 
 fn is_supported_string_escape(value: char) -> bool {
@@ -1095,6 +1100,9 @@ fn byte_char_scan_from_text(text: std::Slice[u8], offset: i64) -> ByteCharScan {
   if text[offset + 1] == '\'' {
     return ByteCharEmpty(offset, offset + 2);
   }
+  if is_non_ascii_byte(text[offset + 1]) {
+    return ByteCharNonAscii(offset + 1, offset + 2);
+  }
   if text[offset + 1] == '\\' {
     if offset + 2 >= text.len {
       return ByteCharUnterminated(text.len);
@@ -1181,6 +1189,7 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
       ByteCharInvalidEscapeDigits(_, _) => {}
       ByteCharInvalidEscapeValue(_, _) => {}
       ByteCharTooLong(_, _) => {}
+      ByteCharNonAscii(_, _) => {}
       ByteCharFallback => {}
     }
   }
@@ -1295,6 +1304,12 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
         return Failed(byte_character_literal_too_long(
           byte_char_too_long_start,
           byte_char_too_long_end
+        ));
+      }
+      ByteCharNonAscii(byte_char_non_ascii_start, byte_char_non_ascii_end) => {
+        return Failed(non_ascii_byte_character_literal(
+          byte_char_non_ascii_start,
+          byte_char_non_ascii_end
         ));
       }
       ByteCharFallback => {}
@@ -1416,6 +1431,10 @@ pub fn invalid_byte_character_escape_value(start: i64, end: i64) -> diagnostic::
 
 pub fn byte_character_literal_too_long(start: i64, end: i64) -> diagnostic::Diagnostic {
   return diagnostic::error(1019, start, end);
+}
+
+pub fn non_ascii_byte_character_literal(start: i64, end: i64) -> diagnostic::Diagnostic {
+  return diagnostic::error(1020, start, end);
 }
 
 pub fn unterminated_string_literal(start: i64, end: i64) -> diagnostic::Diagnostic {

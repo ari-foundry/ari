@@ -338,6 +338,9 @@ The source-text byte character exactly-one-byte diagnostic now preserves code
 `1019` for too-long spellings such as `'ab'` and `'\nA'`, plus EOF after one
 direct byte payload, through lexer, parser, and driver paths without requiring
 a hosted compiler fix.
+The source-text direct non-ASCII byte character diagnostic now preserves code
+`1020` for UTF-8 byte spellings through lexer, parser, and driver paths without
+requiring a hosted compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
@@ -388,6 +391,10 @@ Desired stage0 pressure that is not yet classified as a bug:
   multiple regions or escaping ownership would make inference ambiguous. Avoid
   a runtime-global heap/current-zone API as the default model; the goal is a
   compiler-checkable lexical allocation context, not hidden ambient state.
+- `std::ascii` has many useful byte classification helpers, but no direct
+  `is_ascii` or `is_non_ascii` helper. The Ari-written lexer currently keeps a
+  local `is_non_ascii_byte` helper for direct byte-character literal checks.
+  This is stdlib ergonomics pressure, not a confirmed hosted compiler bug.
 - Clearer match-arm binding scoping ergonomics; today a helper that matches
   both `std::Ok(code)` and `std::Err(code)`, or sibling enum cases with the
   same payload spelling, must use distinct payload names.
@@ -435,4 +442,5 @@ Desired stage0 pressure that is not yet classified as a bug:
   diagnostics now cover oversized hex/octal byte escapes and non-ASCII Unicode
   escapes. Byte character exactly-one-byte diagnostics now cover too-long
   direct and escaped byte spellings plus EOF after one direct byte payload.
-  Direct non-ASCII byte character diagnostics are still pending.
+  Direct non-ASCII byte character diagnostics now cover UTF-8 byte spellings.
+  Carriage-return whitespace parity is still pending.

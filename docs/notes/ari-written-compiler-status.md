@@ -174,6 +174,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   diagnostics for too-long spellings such as `'ab'` and `'\nA'`, plus EOF after
   one direct byte payload, preserving those failures through parser and driver
   source-text paths.
+- `compiler/lexer.ari` reports source-text direct non-ASCII byte character
+  diagnostics for UTF-8 byte spellings, preserving those failures through
+  parser and driver source-text paths.
 - `compiler/lexer.ari` exposes text-backed cursor advance and handoff helpers,
   including significant-token advance that skips leading and trailing
   whitespace around the current single-statement parser handoff.

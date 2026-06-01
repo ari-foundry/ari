@@ -135,6 +135,12 @@ fn source_text_too_long_byte_char_driver_score() -> i64 {
   }
 }
 
+fn source_text_non_ascii_byte_char_driver_score() -> i64 {
+  zone(65536) {
+    return driver::result_code(driver::run_source_text(std::string::from("'\xC3\xA9'")));
+  }
+}
+
 fn source_text_missing_base_digit_driver_score() -> i64 {
   zone(65536) {
     return driver::result_code(driver::run_source_text(std::string::from("0x")));
@@ -790,6 +796,12 @@ fn lexer_byte_char_diagnostic_score() -> i64 {
   failure_score = lexer_failure_case_score("'\\nA'", 1019, 0, 5);
   if failure_score != 0 {
     return 147 + failure_score;
+  }
+
+  let non_ascii_text: Slice[u8] = "'\xC3\xA9'";
+  failure_score = lexer_failure_case_score(non_ascii_text, 1020, 1, 2);
+  if failure_score != 0 {
+    return 154 + failure_score;
   }
 
   return 0;
@@ -2984,6 +2996,8 @@ fn main() -> i64 {
     1018 +
     source_text_too_long_byte_char_driver_score() -
     1019 +
+    source_text_non_ascii_byte_char_driver_score() -
+    1020 +
     source_text_missing_base_digit_driver_score() -
     1009 +
     source_text_invalid_base_digit_driver_score() -
