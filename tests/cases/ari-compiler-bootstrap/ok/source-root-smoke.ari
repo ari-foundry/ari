@@ -47,7 +47,7 @@ fn source_text_extra_token_driver_score() -> i64 {
 
 fn source_text_keyword_driver_score() -> i64 {
   zone(65536) {
-    return driver::result_code(driver::run_source_text(std::string::from("ref")));
+    return driver::result_code(driver::run_source_text(std::string::from("mut")));
   }
 }
 
@@ -1459,6 +1459,39 @@ fn lexer_keyword_score() -> i64 {
     );
 }
 
+fn lexer_keyword_table_case_score(
+  table: ref lexer::KeywordTable,
+  base: i64,
+  keyword_text: Slice[u8],
+  expected_keyword_score: i64,
+  keyword_width: i64,
+  longer_text: Slice[u8],
+  longer_width: i64
+) -> i64 {
+  let keyword = lexer::cursor_from_text_with_keywords(table, keyword_text, 0);
+  if !lexer::cursor_is_keyword(keyword) {
+    return base + 1;
+  }
+  if lexer::cursor_token_score(keyword) != expected_keyword_score {
+    return base + 2;
+  }
+  if lexer::cursor_token_end(keyword) != keyword_width {
+    return base + 3;
+  }
+
+  let longer = lexer::cursor_from_text_with_keywords(table, longer_text, 0);
+  if !lexer::cursor_is_identifier(longer) {
+    return base + 4;
+  }
+  if lexer::cursor_is_keyword(longer) {
+    return base + 5;
+  }
+  if lexer::cursor_token_end(longer) != longer_width {
+    return base + 6;
+  }
+  return 0;
+}
+
 fn lexer_keyword_table_score() -> i64 {
   var zone = std::zone::create(65536);
   var table = lexer::keyword_table(ref mut zone);
@@ -1497,302 +1530,56 @@ fn lexer_keyword_table_score() -> i64 {
     score = 8;
   }
 
-  let struct_keyword = lexer::cursor_from_text_with_keywords(ref table, "struct", 0);
-  if score == 0 && !lexer::cursor_is_keyword(struct_keyword) {
-    score = 9;
+  if score == 0 {
+    score = lexer_keyword_table_case_score(ref table, 90, "struct", 109, 6, "structure", 9);
   }
-  if score == 0 && lexer::cursor_token_score(struct_keyword) != 109 {
-    score = 10;
+  if score == 0 {
+    score = lexer_keyword_table_case_score(ref table, 100, "extern", 110, 6, "external", 8);
   }
-
-  let struct_longer = lexer::cursor_from_text_with_keywords(ref table, "structure", 0);
-  if score == 0 && !lexer::cursor_is_identifier(struct_longer) {
-    score = 11;
+  if score == 0 {
+    score = lexer_keyword_table_case_score(ref table, 110, "enum", 109, 4, "enumerate", 9);
   }
-  if score == 0 && lexer::cursor_is_keyword(struct_longer) {
-    score = 12;
+  if score == 0 {
+    score = lexer_keyword_table_case_score(ref table, 120, "trait", 111, 5, "traitor", 7);
   }
-
-  let extern_keyword = lexer::cursor_from_text_with_keywords(ref table, "extern", 0);
-  if score == 0 && !lexer::cursor_is_keyword(extern_keyword) {
-    score = 13;
+  if score == 0 {
+    score = lexer_keyword_table_case_score(ref table, 130, "dyn", 110, 3, "dynamic", 7);
   }
-  if score == 0 && lexer::cursor_token_score(extern_keyword) != 110 {
-    score = 14;
+  if score == 0 {
+    score = lexer_keyword_table_case_score(ref table, 140, "match", 113, 5, "matches", 7);
   }
-
-  let extern_longer = lexer::cursor_from_text_with_keywords(ref table, "external", 0);
-  if score == 0 && !lexer::cursor_is_identifier(extern_longer) {
-    score = 15;
+  if score == 0 {
+    score = lexer_keyword_table_case_score(ref table, 150, "mod", 112, 3, "module", 6);
   }
-  if score == 0 && lexer::cursor_is_keyword(extern_longer) {
-    score = 16;
+  if score == 0 {
+    score = lexer_keyword_table_case_score(ref table, 160, "pub", 113, 3, "public", 6);
   }
-
-  let enum_keyword = lexer::cursor_from_text_with_keywords(ref table, "enum", 0);
-  if score == 0 && !lexer::cursor_is_keyword(enum_keyword) {
-    score = 17;
+  if score == 0 {
+    score = lexer_keyword_table_case_score(ref table, 170, "use", 114, 3, "user", 4);
   }
-  if score == 0 && lexer::cursor_token_score(enum_keyword) != 109 {
-    score = 18;
+  if score == 0 {
+    score = lexer_keyword_table_case_score(ref table, 180, "impl", 116, 4, "implicit", 8);
   }
-  if score == 0 && lexer::cursor_token_end(enum_keyword) != 4 {
-    score = 19;
+  if score == 0 {
+    score = lexer_keyword_table_case_score(ref table, 190, "for", 116, 3, "forest", 6);
   }
-
-  let enum_longer = lexer::cursor_from_text_with_keywords(ref table, "enumerate", 0);
-  if score == 0 && !lexer::cursor_is_identifier(enum_longer) {
-    score = 20;
+  if score == 0 {
+    score = lexer_keyword_table_case_score(ref table, 200, "in", 116, 2, "inside", 6);
   }
-  if score == 0 && lexer::cursor_is_keyword(enum_longer) {
-    score = 21;
+  if score == 0 {
+    score = lexer_keyword_table_case_score(ref table, 210, "let", 84, 3, "letter", 6);
   }
-
-  let trait_keyword = lexer::cursor_from_text_with_keywords(ref table, "trait", 0);
-  if score == 0 && !lexer::cursor_is_keyword(trait_keyword) {
-    score = 22;
+  if score == 0 {
+    score = lexer_keyword_table_case_score(ref table, 220, "var", 85, 3, "variant", 7);
   }
-  if score == 0 && lexer::cursor_token_score(trait_keyword) != 111 {
-    score = 23;
+  if score == 0 {
+    score = lexer_keyword_table_case_score(ref table, 230, "own", 86, 3, "owner", 5);
   }
-  if score == 0 && lexer::cursor_token_end(trait_keyword) != 5 {
-    score = 24;
+  if score == 0 {
+    score = lexer_keyword_table_case_score(ref table, 240, "ref", 87, 3, "reference", 9);
   }
-
-  let trait_longer = lexer::cursor_from_text_with_keywords(ref table, "traitor", 0);
-  if score == 0 && !lexer::cursor_is_identifier(trait_longer) {
-    score = 25;
-  }
-  if score == 0 && lexer::cursor_is_keyword(trait_longer) {
-    score = 26;
-  }
-
-  let dyn_keyword = lexer::cursor_from_text_with_keywords(ref table, "dyn", 0);
-  if score == 0 && !lexer::cursor_is_keyword(dyn_keyword) {
-    score = 27;
-  }
-  if score == 0 && lexer::cursor_token_score(dyn_keyword) != 110 {
-    score = 28;
-  }
-  if score == 0 && lexer::cursor_token_end(dyn_keyword) != 3 {
-    score = 29;
-  }
-
-  let dyn_longer = lexer::cursor_from_text_with_keywords(ref table, "dynamic", 0);
-  if score == 0 && !lexer::cursor_is_identifier(dyn_longer) {
-    score = 30;
-  }
-  if score == 0 && lexer::cursor_is_keyword(dyn_longer) {
-    score = 31;
-  }
-
-  let match_keyword = lexer::cursor_from_text_with_keywords(ref table, "match", 0);
-  if score == 0 && !lexer::cursor_is_keyword(match_keyword) {
-    score = 32;
-  }
-  if score == 0 && lexer::cursor_token_score(match_keyword) != 113 {
-    score = 33;
-  }
-  if score == 0 && lexer::cursor_token_end(match_keyword) != 5 {
-    score = 34;
-  }
-
-  let match_longer = lexer::cursor_from_text_with_keywords(ref table, "matches", 0);
-  if score == 0 && !lexer::cursor_is_identifier(match_longer) {
-    score = 35;
-  }
-  if score == 0 && lexer::cursor_is_keyword(match_longer) {
-    score = 36;
-  }
-
-  let mod_keyword = lexer::cursor_from_text_with_keywords(ref table, "mod", 0);
-  if score == 0 && !lexer::cursor_is_keyword(mod_keyword) {
-    score = 37;
-  }
-  if score == 0 && lexer::cursor_token_score(mod_keyword) != 112 {
-    score = 38;
-  }
-  if score == 0 && lexer::cursor_token_end(mod_keyword) != 3 {
-    score = 39;
-  }
-
-  let mod_longer = lexer::cursor_from_text_with_keywords(ref table, "module", 0);
-  if score == 0 && !lexer::cursor_is_identifier(mod_longer) {
-    score = 40;
-  }
-  if score == 0 && lexer::cursor_is_keyword(mod_longer) {
-    score = 41;
-  }
-
-  let pub_keyword = lexer::cursor_from_text_with_keywords(ref table, "pub", 0);
-  if score == 0 && !lexer::cursor_is_keyword(pub_keyword) {
-    score = 42;
-  }
-  if score == 0 && lexer::cursor_token_score(pub_keyword) != 113 {
-    score = 43;
-  }
-  if score == 0 && lexer::cursor_token_end(pub_keyword) != 3 {
-    score = 44;
-  }
-
-  let pub_longer = lexer::cursor_from_text_with_keywords(ref table, "public", 0);
-  if score == 0 && !lexer::cursor_is_identifier(pub_longer) {
-    score = 45;
-  }
-  if score == 0 && lexer::cursor_is_keyword(pub_longer) {
-    score = 46;
-  }
-
-  let use_keyword = lexer::cursor_from_text_with_keywords(ref table, "use", 0);
-  if score == 0 && !lexer::cursor_is_keyword(use_keyword) {
-    score = 47;
-  }
-  if score == 0 && lexer::cursor_token_score(use_keyword) != 114 {
-    score = 48;
-  }
-  if score == 0 && lexer::cursor_token_end(use_keyword) != 3 {
-    score = 49;
-  }
-
-  let use_longer = lexer::cursor_from_text_with_keywords(ref table, "user", 0);
-  if score == 0 && !lexer::cursor_is_identifier(use_longer) {
-    score = 50;
-  }
-  if score == 0 && lexer::cursor_is_keyword(use_longer) {
-    score = 51;
-  }
-
-  let impl_keyword = lexer::cursor_from_text_with_keywords(ref table, "impl", 0);
-  if score == 0 && !lexer::cursor_is_keyword(impl_keyword) {
-    score = 52;
-  }
-  if score == 0 && lexer::cursor_token_score(impl_keyword) != 116 {
-    score = 53;
-  }
-  if score == 0 && lexer::cursor_token_end(impl_keyword) != 4 {
-    score = 54;
-  }
-
-  let impl_longer = lexer::cursor_from_text_with_keywords(ref table, "implicit", 0);
-  if score == 0 && !lexer::cursor_is_identifier(impl_longer) {
-    score = 55;
-  }
-  if score == 0 && lexer::cursor_is_keyword(impl_longer) {
-    score = 56;
-  }
-
-  let for_keyword = lexer::cursor_from_text_with_keywords(ref table, "for", 0);
-  if score == 0 && !lexer::cursor_is_keyword(for_keyword) {
-    score = 57;
-  }
-  if score == 0 && lexer::cursor_token_score(for_keyword) != 116 {
-    score = 58;
-  }
-  if score == 0 && lexer::cursor_token_end(for_keyword) != 3 {
-    score = 59;
-  }
-
-  let for_longer = lexer::cursor_from_text_with_keywords(ref table, "forest", 0);
-  if score == 0 && !lexer::cursor_is_identifier(for_longer) {
-    score = 60;
-  }
-  if score == 0 && lexer::cursor_is_keyword(for_longer) {
-    score = 61;
-  }
-
-  let in_keyword = lexer::cursor_from_text_with_keywords(ref table, "in", 0);
-  if score == 0 && !lexer::cursor_is_keyword(in_keyword) {
-    score = 62;
-  }
-  if score == 0 && lexer::cursor_token_score(in_keyword) != 116 {
-    score = 63;
-  }
-  if score == 0 && lexer::cursor_token_end(in_keyword) != 2 {
-    score = 64;
-  }
-
-  let in_longer = lexer::cursor_from_text_with_keywords(ref table, "inside", 0);
-  if score == 0 && !lexer::cursor_is_identifier(in_longer) {
-    score = 65;
-  }
-  if score == 0 && lexer::cursor_is_keyword(in_longer) {
-    score = 66;
-  }
-
-  let let_keyword = lexer::cursor_from_text_with_keywords(ref table, "let", 0);
-  if score == 0 && !lexer::cursor_is_keyword(let_keyword) {
-    score = 67;
-  }
-  if score == 0 && lexer::cursor_token_score(let_keyword) != 84 {
-    score = 68;
-  }
-  if score == 0 && lexer::cursor_token_end(let_keyword) != 3 {
-    score = 69;
-  }
-
-  let let_longer = lexer::cursor_from_text_with_keywords(ref table, "letter", 0);
-  if score == 0 && !lexer::cursor_is_identifier(let_longer) {
-    score = 70;
-  }
-  if score == 0 && lexer::cursor_is_keyword(let_longer) {
-    score = 71;
-  }
-
-  let var_keyword = lexer::cursor_from_text_with_keywords(ref table, "var", 0);
-  if score == 0 && !lexer::cursor_is_keyword(var_keyword) {
-    score = 72;
-  }
-  if score == 0 && lexer::cursor_token_score(var_keyword) != 85 {
-    score = 73;
-  }
-  if score == 0 && lexer::cursor_token_end(var_keyword) != 3 {
-    score = 74;
-  }
-
-  let var_longer = lexer::cursor_from_text_with_keywords(ref table, "variant", 0);
-  if score == 0 && !lexer::cursor_is_identifier(var_longer) {
-    score = 75;
-  }
-  if score == 0 && lexer::cursor_is_keyword(var_longer) {
-    score = 76;
-  }
-
-  let own_keyword = lexer::cursor_from_text_with_keywords(ref table, "own", 0);
-  if score == 0 && !lexer::cursor_is_keyword(own_keyword) {
-    score = 77;
-  }
-  if score == 0 && lexer::cursor_token_score(own_keyword) != 86 {
-    score = 78;
-  }
-  if score == 0 && lexer::cursor_token_end(own_keyword) != 3 {
-    score = 79;
-  }
-
-  let own_longer = lexer::cursor_from_text_with_keywords(ref table, "owner", 0);
-  if score == 0 && !lexer::cursor_is_identifier(own_longer) {
-    score = 80;
-  }
-  if score == 0 && lexer::cursor_is_keyword(own_longer) {
-    score = 81;
-  }
-
-  let ref_keyword = lexer::cursor_from_text_with_keywords(ref table, "ref", 0);
-  if score == 0 && !lexer::cursor_is_keyword(ref_keyword) {
-    score = 82;
-  }
-  if score == 0 && lexer::cursor_token_score(ref_keyword) != 87 {
-    score = 83;
-  }
-  if score == 0 && lexer::cursor_token_end(ref_keyword) != 3 {
-    score = 84;
-  }
-
-  let ref_longer = lexer::cursor_from_text_with_keywords(ref table, "reference", 0);
-  if score == 0 && !lexer::cursor_is_identifier(ref_longer) {
-    score = 85;
-  }
-  if score == 0 && lexer::cursor_is_keyword(ref_longer) {
-    score = 86;
+  if score == 0 {
+    score = lexer_keyword_table_case_score(ref table, 250, "mut", 88, 3, "mutable", 7);
   }
 
   std::zone::destroy(zone);
@@ -1877,6 +1664,9 @@ fn parse_text_score() -> i64 {
   }
   if parser_keyword_failure_code("ref") != 2006 {
     return 24;
+  }
+  if parser_keyword_failure_code("mut") != 2006 {
+    return 25;
   }
   return 0;
 }

@@ -106,9 +106,9 @@ without requiring a hosted compiler fix. The parser number-success smoke checked
 the number statement path through `parser::parse_is_success` without requiring
 a hosted compiler fix. The reusable keyword-table smoke checked `KwStruct`,
 `KwExtern`, `KwEnum`, `KwTrait`, `KwDyn`, `KwMatch`, `KwMod`, `KwPub`, `KwUse`,
-`KwImpl`, `KwFor`, `KwIn`, `KwLet`, `KwVar`, `KwOwn`, and `KwRef`, plus longer `structure`, `external`,
+`KwImpl`, `KwFor`, `KwIn`, `KwLet`, `KwVar`, `KwOwn`, `KwRef`, and `KwMut`, plus longer `structure`, `external`,
 `enumerate`, `traitor`, `dynamic`, `matches`, `module`, `public`, `user`,
-`implicit`, `forest`, `inside`, `letter`, `variant`, `owner`, and `reference`, and the source-text parser/driver
+`implicit`, `forest`, `inside`, `letter`, `variant`, `owner`, `reference`, and `mutable`, and the source-text parser/driver
 keyword path without requiring a hosted compiler fix. The AST statement-kind
 query and parser payload-shape smoke checked successful statement output without
 requiring a hosted compiler fix. The AST node span-length query and
@@ -299,10 +299,9 @@ Desired stage0 pressure that is not yet classified as a bug:
 - The compatibility keyword lookup still lives in stateless
   `identifier_kind_from_text`; keep it only for focused legacy smokes while
   adding future source-text keywords to the reusable `KeywordTable` path.
-- The reusable keyword-table source-root smoke is now mostly repeated
-  per-keyword checks; once a few more backfills land, replace those blocks with
-  a small table-case helper so exact-keyword, longer-identifier, score, and
-  parser/driver checks stay data-driven.
+- Keep the reusable keyword-table source-root smoke data-driven through its
+  table-case helper as future keywords are backfilled; new cases should add one
+  helper call rather than another copied cursor-check block.
 - Wrapping a zone-backed `HashMap` in a new Ari struct was awkward in this
   slice: mutating a `HashMap` through a helper/field lost tracked-zone receiver
   information, and returning a wrapper with a raw zone pointer or embedded map

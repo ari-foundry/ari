@@ -182,6 +182,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   parser module.
 - Added source-root smoke coverage that checks table-backed parser keyword
   diagnostics and driver source-text keyword diagnostics.
+- Consolidated the repeated reusable keyword-table source-root smoke checks
+  behind one helper so new table-backed keyword cases add data instead of full
+  cursor-check copies.
 - Replaced the raw per-character keyword comparison chain with one slice matcher
   helper while keeping width buckets, so adding keywords no longer duplicates
   manual indexing logic.
@@ -340,6 +343,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Backfilled reusable keyword-table smoke coverage for existing `KwRef`, with
   focused smokes for exact `ref`, longer `reference`, and the table-backed
   parser/driver keyword path.
+- Backfilled reusable keyword-table smoke coverage for existing `KwMut`, with
+  focused smokes for exact `mut`, longer `mutable`, and the table-backed
+  parser/driver keyword path.
 - Added a one-token file-input fixture for the compiled `compiler/main.ari`
   bootstrap run, so file input uses real loaded text without pretending the
   larger source-root smoke fixture is already parseable as a full Ari program.
@@ -351,10 +357,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Backfill reusable keyword-table smoke coverage for existing `mut`, preserving
-  longer identifiers such as `mutable`.
+- Backfill reusable keyword-table smoke coverage for existing `ptr`, preserving
+  longer identifiers such as `ptrace`.
 
 ## Next Recommended Task
 
-Backfill reusable keyword-table smoke coverage for existing `mut`, preserving
-longer identifiers such as `mutable`.
+Backfill reusable keyword-table smoke coverage for existing `ptr`, preserving
+longer identifiers such as `ptrace`.
