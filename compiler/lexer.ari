@@ -32,8 +32,16 @@ pub fn is_ascii_digit(value: char) -> bool {
   return value >= '0' && value <= '9';
 }
 
+pub fn is_identifier_start(value: char) -> bool {
+  return is_ascii_alpha(value);
+}
+
+pub fn is_identifier_continue(value: char) -> bool {
+  return is_ascii_alpha(value) || is_ascii_digit(value);
+}
+
 pub fn classify_one(value: char) -> token::TokenKind {
-  if is_ascii_alpha(value) {
+  if is_identifier_start(value) {
     return token::Identifier;
   }
   if is_ascii_digit(value) {
@@ -86,6 +94,14 @@ pub fn classify_one(value: char) -> token::TokenKind {
 
 pub fn scan_one(value: char, offset: i64) -> token::Token {
   return token::make_token(classify_one(value), offset, offset + 1);
+}
+
+pub fn scan_identifier_two(first: char, offset: i64, second: char) -> token::Token {
+  if is_identifier_start(first) && is_identifier_continue(second) {
+    return token::make_token(token::Identifier, offset, offset + 2);
+  }
+
+  return scan_one(first, offset);
 }
 
 pub fn invalid_character(offset: i64) -> diagnostic::Diagnostic {
@@ -161,6 +177,14 @@ pub fn cursor_eof(offset: i64) -> TokenCursor {
 
 pub fn cursor_from_one(value: char, offset: i64) -> TokenCursor {
   return TokenCursor { current: scan_one(value, offset), offset: offset, done: false };
+}
+
+pub fn cursor_from_identifier_two(first: char, offset: i64, second: char) -> TokenCursor {
+  return TokenCursor {
+    current: scan_identifier_two(first, offset, second),
+    offset: offset,
+    done: false,
+  };
 }
 
 pub fn cursor_advance(cursor: TokenCursor) -> TokenCursor {

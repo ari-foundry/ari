@@ -93,6 +93,9 @@ compiler feature in the normal focused-test workflow.
 - `compiler/lexer.ari` classifies simple one-character operators separately
   from unknown characters and exposes operator queries at the cursor and
   handoff boundary.
+- `compiler/lexer.ari` exposes a two-character identifier scan helper so early
+  smokes can prove multi-byte identifier token spans before a real source
+  table exists.
 - `compiler/ast.ari` now models minimal span-carrying token, statement, error,
   and missing output nodes.
 - `compiler/ast.ari` exposes a statement-kind query helper so parser payload
@@ -389,6 +392,8 @@ policy in ad hoc compiler files.
 - Added lexer classification for simple one-character operator tokens and
   source-root smoke coverage that they are scanned, scored, and exposed through
   operator queries instead of unknown-token paths.
+- Added a focused two-character identifier span helper and source-root smoke
+  coverage for lexer identifier token boundaries.
 - Added token-kind query helpers for the lexer/parser boundary and a tiny parser
   handoff classification score.
 - Moved the test-like entry arithmetic out of `compiler/main.ari` into a
@@ -490,15 +495,14 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a focused lexer two-character identifier span helper and smoke so the
-  lexer can prove a multi-byte identifier token boundary without adding a
-  source table yet.
+- Add a focused lexer two-character number span helper and smoke so the lexer
+  can prove a multi-byte number token boundary without adding a source table
+  yet.
 
 ## Next Recommended Task
 
-Add a focused lexer two-character identifier span helper and smoke so the lexer
-can prove a multi-byte identifier token boundary without adding a source table
-yet.
+Add a focused lexer two-character number span helper and smoke so the lexer can
+prove a multi-byte number token boundary without adding a source table yet.
 
 ## Local Validation
 
@@ -628,7 +632,8 @@ smoke checked fixed stream cursors and EOF placement without requiring a hosted
 compiler fix. The lexer punctuation smoke checked delimiter token
 classification without requiring a hosted compiler fix. The lexer operator
 smoke checked one-character operator token classification without requiring a
-hosted compiler fix.
+hosted compiler fix. The lexer identifier span smoke checked two-character
+identifier token boundaries without requiring a hosted compiler fix.
 The growing source-root fixture did expose a default-zone capacity runtime trap
 while reading the file smoke; this was fixed locally with explicit
 `zone(32768)` allocation blocks and is recorded as allocation-policy pressure
