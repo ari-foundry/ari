@@ -15,6 +15,11 @@ The existing C++ compiler remains stage0. It builds `build/ari`, checks the new
 Ari source, and remains the production compiler while the Ari-written compiler
 grows.
 
+The early compatibility target is behavior parity with the C++ stage0 compiler
+for the currently supported language surface. Ari-written compiler phases should
+match stage0 success/failure decisions, result codes, and diagnostic identity
+unless a stage0 behavior is isolated and recorded as a hosted compiler bug.
+
 ## Source Layout
 
 `compiler/` is the Ari-written compiler source root:
@@ -94,6 +99,9 @@ compiler feature in the normal focused-test workflow.
 - The bootstrap source-root smoke checks the parser EOF-cursor diagnostic code
   through `parser::parse_failure_code` instead of relying only on diagnostic
   smoke-score arithmetic.
+- The bootstrap source-root smoke checks the parser unknown-token diagnostic
+  code through `parser::parse_failure_code` instead of relying only on driver
+  indirection or diagnostic smoke-score arithmetic.
 - `compiler/driver.ari` owns the current bootstrap entry flow and returns a
   standard-library `std::Result[i64, i64]` instead of embedding smoke arithmetic
   in `main`.
@@ -284,6 +292,8 @@ policy in ad hoc compiler files.
   code `2002` through `parser::parse_failure_code(parser::parse_empty())`.
 - Added a tiny parser EOF helper and a focused parser EOF-cursor failure-code
   smoke that checks diagnostic code `2001` through `parser::parse_failure_code`.
+- Added a focused parser unknown-token failure-code smoke that checks
+  diagnostic code `2005` through `parser::parse_failure_code(parser::parse_one(...))`.
 - Routed driver parse failures through the parser failure-code helper, with
   source-root smoke coverage for whitespace and unknown-token diagnostic codes.
 - Added a driver result-code helper and simplified bootstrap smokes that inspect
@@ -314,18 +324,17 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a focused parser unknown-token failure-code smoke using
-  `parser::parse_failure_code(parser::parse_one('!', ...))` so the parser
-  unknown-token diagnostic identity is checked without driver indirection or
-  smoke-score arithmetic.
+- Add a focused parser missing-EOF handoff failure-code smoke so diagnostic
+  code `2003` is checked through `parser::parse_failure_code` without relying
+  on parser score arithmetic.
 
 ## Next Recommended Task
 
-Add a focused parser unknown-token failure-code smoke using
-`parser::parse_failure_code(parser::parse_one('!', ...))` so the parser
-unknown-token diagnostic identity is checked without driver indirection or
-smoke-score arithmetic. Keep it inside the bootstrap source-root smoke and do
-not add parser recovery, diagnostic rendering, or a source table yet.
+Add a focused parser missing-EOF handoff failure-code smoke so diagnostic code
+`2003` is checked through `parser::parse_failure_code` without relying on
+parser score arithmetic. Keep it tiny, add only the smallest parser or lexer
+helper needed to construct the malformed handoff, and do not add parser
+recovery, diagnostic rendering, or a source table yet.
 
 ## Local Validation
 
@@ -415,6 +424,8 @@ requiring a hosted compiler fix. The parser empty-input failure-code smoke
 checked diagnostic code `2002` through `parser::parse_failure_code` without
 requiring a hosted compiler fix. The parser EOF-cursor failure-code smoke
 checked diagnostic code `2001` through `parser::parse_failure_code` without
+requiring a hosted compiler fix. The parser unknown-token failure-code smoke
+checked diagnostic code `2005` through `parser::parse_failure_code` without
 requiring a hosted compiler fix.
 The growing source-root fixture did expose a default-zone capacity runtime trap
 while reading the file smoke; this was fixed locally with explicit
