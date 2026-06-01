@@ -92,6 +92,8 @@ compiler feature in the normal focused-test workflow.
   boundary.
 - `compiler/lexer.ari` classifies `.` as punctuation so field-access tokens no
   longer fall through the unknown-token path.
+- `compiler/lexer.ari` classifies the stage0 dot-run punctuation family
+  `..`, `..=`, and `...` with source-text longest-match behavior.
 - `compiler/lexer.ari` classifies `[` and `]` as punctuation so generic
   argument and future indexing tokens no longer fall through the unknown-token
   path.
@@ -423,6 +425,9 @@ policy in ad hoc compiler files.
   punctuation queries instead of unknown-token paths.
 - Added a focused `.` punctuation token and source-root smoke coverage that it
   is punctuation, not an operator or unknown token.
+- Added the stage0 dot-run punctuation family (`..`, `..=`, and `...`) with
+  source-root smoke coverage for source-text longest-match behavior, cursor
+  advance, and the existing `..` two-character helper path.
 - Added focused `[` and `]` punctuation tokens and source-root smoke coverage
   that they are punctuation, not operators or unknown tokens.
 - Centralized token-kind class queries in `compiler/token.ari` and routed
@@ -581,13 +586,15 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add the stage0 dot-run token family (`..`, `..=`, and `...`) so range and
-  ellipsis spellings no longer fall through repeated one-character `.` tokens.
+- Add the stage0 simple compound-assignment token family (`+=`, `-=`, `*=`,
+  `/=`, and `%=`) so assignment operator spellings no longer fall through as
+  separate operator tokens.
 
 ## Next Recommended Task
 
-Add the stage0 dot-run token family (`..`, `..=`, and `...`) so range and
-ellipsis spellings no longer fall through repeated one-character `.` tokens.
+Add the stage0 simple compound-assignment token family (`+=`, `-=`, `*=`, `/=`,
+and `%=`) so assignment operator spellings no longer fall through as separate
+operator tokens.
 
 ## Local Validation
 
@@ -748,6 +755,8 @@ The lexer question-operator smoke checked `?` and `??` tokenization plus the
 one-character `?` fallback path without requiring a hosted compiler fix.
 The lexer at-punctuation smoke checked `@` tokenization as punctuation and the
 unknown-token smokes moved to `$` without requiring a hosted compiler fix.
+The lexer dot-run punctuation smoke checked `..`, `..=`, and `...` source-text
+longest-match behavior without requiring a hosted compiler fix.
 The token-kind class helper refactor checked through the bootstrap source root
 without requiring a hosted compiler fix. The lexer double-quote delimiter smoke
 checked `"` tokenization as punctuation without requiring a hosted compiler

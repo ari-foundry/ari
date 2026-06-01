@@ -321,6 +321,91 @@ fn lexer_dot_punctuation_score() -> i64 {
   return 0;
 }
 
+fn lexer_dot_run_punctuation_score() -> i64 {
+  let range_text: Slice[u8] = "..end";
+  let range = lexer::cursor_from_text(range_text, 0);
+  if !lexer::cursor_is_punctuation(range) {
+    return 1;
+  }
+  if lexer::cursor_is_operator(range) {
+    return 2;
+  }
+  if lexer::cursor_is_unknown(range) {
+    return 3;
+  }
+  if lexer::cursor_token_end(range) != 2 {
+    return 4;
+  }
+  if lexer::cursor_token_score(range) != 50 {
+    return 5;
+  }
+  let after_range = lexer::cursor_advance_in_text(range, range_text);
+  if !lexer::cursor_is_identifier(after_range) {
+    return 6;
+  }
+  if lexer::cursor_token_start(after_range) != 2 {
+    return 7;
+  }
+
+  let inclusive_text: Slice[u8] = "..=end";
+  let inclusive = lexer::cursor_from_text(inclusive_text, 0);
+  if !lexer::cursor_is_punctuation(inclusive) {
+    return 8;
+  }
+  if lexer::cursor_token_end(inclusive) != 3 {
+    return 9;
+  }
+  if lexer::cursor_token_score(inclusive) != 52 {
+    return 10;
+  }
+  let after_inclusive = lexer::cursor_advance_in_text(inclusive, inclusive_text);
+  if !lexer::cursor_is_identifier(after_inclusive) {
+    return 11;
+  }
+  if lexer::cursor_token_start(after_inclusive) != 3 {
+    return 12;
+  }
+
+  let ellipsis_text: Slice[u8] = "...end";
+  let ellipsis = lexer::cursor_from_text(ellipsis_text, 0);
+  if !lexer::cursor_is_punctuation(ellipsis) {
+    return 13;
+  }
+  if lexer::cursor_token_end(ellipsis) != 3 {
+    return 14;
+  }
+  if lexer::cursor_token_score(ellipsis) != 53 {
+    return 15;
+  }
+  let after_ellipsis = lexer::cursor_advance_in_text(ellipsis, ellipsis_text);
+  if !lexer::cursor_is_identifier(after_ellipsis) {
+    return 16;
+  }
+  if lexer::cursor_token_start(after_ellipsis) != 3 {
+    return 17;
+  }
+
+  let two = lexer::cursor_from_two('.', 88, '.');
+  if !lexer::cursor_is_punctuation(two) {
+    return 18;
+  }
+  if lexer::cursor_token_end(two) != 90 {
+    return 19;
+  }
+  if lexer::cursor_token_score(two) != 50 {
+    return 20;
+  }
+  let fallback_text: Slice[u8] = ".end";
+  let fallback = lexer::cursor_from_text(fallback_text, 0);
+  if lexer::cursor_token_end(fallback) != 1 {
+    return 21;
+  }
+  if lexer::cursor_token_score(fallback) != 21 {
+    return 22;
+  }
+  return 0;
+}
+
 fn lexer_bracket_punctuation_score() -> i64 {
   let left = lexer::cursor_from_one('[', 67);
   if !lexer::cursor_is_punctuation(left) {
@@ -953,6 +1038,7 @@ fn main() -> i64 {
     lexer_whitespace_span_score() +
     lexer_path_separator_span_score() +
     lexer_dot_punctuation_score() +
+    lexer_dot_run_punctuation_score() +
     lexer_bracket_punctuation_score() +
     lexer_double_quote_delimiter_score() +
     lexer_at_punctuation_score() +

@@ -148,6 +148,9 @@ pub fn scan_two(first: char, offset: i64, second: char) -> token::Token {
   if first == ':' && second == ':' {
     return token::make_token(token::ColonColon, offset, offset + 2);
   }
+  if first == '.' && second == '.' {
+    return token::make_token(token::DotDot, offset, offset + 2);
+  }
   if first == '?' && second == '?' {
     return token::make_token(token::QuestionQuestion, offset, offset + 2);
   }
@@ -185,6 +188,24 @@ pub fn scan_two(first: char, offset: i64, second: char) -> token::Token {
   return scan_one(first, offset);
 }
 
+fn scan_dot_run(text: std::Slice[u8], offset: i64) -> token::Token {
+  if offset + 1 >= text.len || text[offset + 1] != '.' {
+    return token::make_token(token::Dot, offset, offset + 1);
+  }
+
+  if offset + 2 < text.len {
+    let third = text[offset + 2];
+    if third == '=' {
+      return token::make_token(token::DotDotEqual, offset, offset + 3);
+    }
+    if third == '.' {
+      return token::make_token(token::Ellipsis, offset, offset + 3);
+    }
+  }
+
+  return token::make_token(token::DotDot, offset, offset + 2);
+}
+
 pub fn scan_text(text: std::Slice[u8], offset: i64) -> token::Token {
   if offset >= text.len {
     return token::make_token(token::EndOfFile, offset, offset);
@@ -211,6 +232,9 @@ pub fn scan_text(text: std::Slice[u8], offset: i64) -> token::Token {
       whitespace_end = whitespace_end + 1;
     }
     return token::make_token(token::Whitespace, offset, whitespace_end);
+  }
+  if first == '.' {
+    return scan_dot_run(text, offset);
   }
   if offset + 1 < text.len {
     let combined = scan_two(first, offset, text[offset + 1]);
@@ -269,6 +293,15 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
     }
     Dot => {
       return Scanned(token::make_token(token::Dot, offset, offset + 1));
+    }
+    DotDot => {
+      return Scanned(token::make_token(token::DotDot, offset, offset + 2));
+    }
+    DotDotEqual => {
+      return Scanned(token::make_token(token::DotDotEqual, offset, offset + 3));
+    }
+    Ellipsis => {
+      return Scanned(token::make_token(token::Ellipsis, offset, offset + 3));
     }
     DoubleQuote => {
       return Scanned(token::make_token(token::DoubleQuote, offset, offset + 1));
