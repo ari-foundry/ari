@@ -473,15 +473,17 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   whitespace skipper.
 - Added source-text CRLF line-comment span coverage, matching stage0's line
   comment scan through carriage return before newline.
+- Added source-text EOF line-comment span coverage, matching stage0's line
+  comment scan through end of input.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add source-text EOF line-comment span coverage, matching stage0's line
-  comment scan through end of input.
+- Add source-text comment-only parser/driver EOF diagnostic coverage after
+  skipped comments.
 
 ## Next Recommended Task
 
-Add source-text EOF line-comment span coverage, matching stage0's line comment
-scan through end of input.
+Add source-text comment-only parser/driver EOF diagnostic coverage after
+skipped comments.

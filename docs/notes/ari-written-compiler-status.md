@@ -181,6 +181,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   parser and driver source-text paths.
 - `compiler/lexer.ari` treats carriage return as source-text whitespace,
   matching stage0's whitespace skipper.
+- `compiler/lexer.ari` keeps EOF-only line-comment spans as whitespace through
+  the end of source text, matching stage0's line comment scanner.
 - `compiler/lexer.ari` exposes text-backed cursor advance and handoff helpers,
   including significant-token advance that skips leading and trailing
   whitespace around the current single-statement parser handoff.

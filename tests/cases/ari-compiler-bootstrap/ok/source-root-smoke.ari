@@ -1327,12 +1327,7 @@ fn lexer_string_literal_span_score() -> i64 {
   return 0;
 }
 
-fn lexer_line_comment_case_score(
-  text: Slice[u8],
-  expected_comment_end: i64,
-  expected_name_start: i64,
-  expected_name_end: i64
-) -> i64 {
+fn lexer_line_comment_span_score(text: Slice[u8], expected_comment_end: i64) -> i64 {
   let line = lexer::cursor_from_text(text, 0);
   if !lexer::cursor_is_whitespace(line) {
     return 1;
@@ -1346,6 +1341,20 @@ fn lexer_line_comment_case_score(
   if lexer::cursor_token_score(line) != expected_comment_end + 3 {
     return 4;
   }
+  return 0;
+}
+
+fn lexer_line_comment_named_case_score(
+  text: Slice[u8],
+  expected_comment_end: i64,
+  expected_name_start: i64,
+  expected_name_end: i64
+) -> i64 {
+  let span_score = lexer_line_comment_span_score(text, expected_comment_end);
+  if span_score != 0 {
+    return span_score;
+  }
+  let line = lexer::cursor_from_text(text, 0);
   let line_newline = lexer::cursor_advance_in_text(line, text);
   if !lexer::cursor_is_whitespace(line_newline) {
     return 5;
@@ -1369,50 +1378,81 @@ fn lexer_line_comment_case_score(
   return 0;
 }
 
+fn lexer_line_comment_eof_case_score(text: Slice[u8], expected_comment_end: i64) -> i64 {
+  let span_score = lexer_line_comment_span_score(text, expected_comment_end);
+  if span_score != 0 {
+    return span_score;
+  }
+  let line = lexer::cursor_from_text(text, 0);
+  let line_eof = lexer::cursor_advance_in_text(line, text);
+  if !lexer::cursor_is_eof(line_eof) {
+    return 5;
+  }
+  if lexer::cursor_token_start(line_eof) != expected_comment_end {
+    return 6;
+  }
+  if lexer::cursor_token_end(line_eof) != expected_comment_end {
+    return 7;
+  }
+  let significant_eof = lexer::cursor_advance_significant_in_text(line, text);
+  if !lexer::cursor_is_eof(significant_eof) {
+    return 8;
+  }
+  if lexer::cursor_token_start(significant_eof) != expected_comment_end {
+    return 9;
+  }
+  return 0;
+}
+
 fn lexer_comment_span_score() -> i64 {
   let line_text: Slice[u8] = "// skip\nname";
-  var line_score = lexer_line_comment_case_score(line_text, 7, 8, 12);
+  var line_score = lexer_line_comment_named_case_score(line_text, 7, 8, 12);
   if line_score != 0 {
     return line_score;
   }
   let crlf_line_text: Slice[u8] = "// skip\r\nname";
-  line_score = lexer_line_comment_case_score(crlf_line_text, 8, 9, 13);
+  line_score = lexer_line_comment_named_case_score(crlf_line_text, 8, 9, 13);
   if line_score != 0 {
     return 10 + line_score;
+  }
+  let eof_line_text: Slice[u8] = "// skip";
+  line_score = lexer_line_comment_eof_case_score(eof_line_text, 7);
+  if line_score != 0 {
+    return 20 + line_score;
   }
 
   let block_text: Slice[u8] = "/* outer /* inner */ still */name";
   let block = lexer::cursor_from_text(block_text, 0);
   if !lexer::cursor_is_whitespace(block) {
-    return 21;
+    return 31;
   }
   if lexer::cursor_token_start(block) != 0 {
-    return 22;
+    return 32;
   }
   if lexer::cursor_token_end(block) != 29 {
-    return 23;
+    return 33;
   }
   if lexer::cursor_token_score(block) != 32 {
-    return 24;
+    return 34;
   }
   let block_name = lexer::cursor_advance_significant_in_text(block, block_text);
   if !lexer::cursor_is_identifier(block_name) {
-    return 25;
+    return 35;
   }
   if lexer::cursor_token_start(block_name) != 29 {
-    return 26;
+    return 36;
   }
   if lexer::cursor_token_end(block_name) != 33 {
-    return 27;
+    return 37;
   }
   if !parser::parse_is_success(parser::parse_text(block_text)) {
-    return 28;
+    return 38;
   }
 
   let unterminated_block_text: Slice[u8] = "/* open";
   let failure_score = lexer_failure_case_score(unterminated_block_text, 1008, 0, 7);
   if failure_score != 0 {
-    return 29 + failure_score;
+    return 39 + failure_score;
   }
   return 0;
 }
