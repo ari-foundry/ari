@@ -55,6 +55,7 @@ pub enum TokenKind {
   PercentEqual,
   KwFn,
   KwLet,
+  KwVar,
   EndOfFile,
   Unknown(char),
 }
@@ -131,6 +132,7 @@ pub fn kind_score(kind: TokenKind) -> i64 {
     PercentEqual => 64,
     KwFn => 80,
     KwLet => 81,
+    KwVar => 82,
     EndOfFile => 0,
     Unknown(value) => value as i64,
   }
@@ -198,6 +200,7 @@ pub fn kind_class_score(kind: TokenKind) -> i64 {
     PercentEqual => 5,
     KwFn => 8,
     KwLet => 8,
+    KwVar => 8,
     EndOfFile => 6,
     Unknown(_) => 7,
   }
