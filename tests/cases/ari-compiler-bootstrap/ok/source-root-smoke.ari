@@ -47,7 +47,7 @@ fn source_text_extra_token_driver_score() -> i64 {
 
 fn source_text_keyword_driver_score() -> i64 {
   zone(65536) {
-    return driver::result_code(driver::run_source_text(std::string::from("else")));
+    return driver::result_code(driver::run_source_text(std::string::from("while")));
   }
 }
 
@@ -1593,6 +1593,9 @@ fn lexer_keyword_table_score() -> i64 {
   if score == 0 {
     score = lexer_keyword_table_case_score(ref table, 290, "else", 93, 4, "elsewhere", 9);
   }
+  if score == 0 {
+    score = lexer_keyword_table_case_score(ref table, 300, "while", 95, 5, "while1", 6);
+  }
 
   std::zone::destroy(zone);
   return score;
@@ -1691,6 +1694,9 @@ fn parse_text_score() -> i64 {
   }
   if parser_keyword_failure_code("else") != 2006 {
     return 29;
+  }
+  if parser_keyword_failure_code("while") != 2006 {
+    return 30;
   }
   return 0;
 }
