@@ -49,6 +49,10 @@ fn loaded_driver_score() -> i64 {
   return driver::exit_code(driver::run_loaded_source_summary(1, 16, 'p', 2));
 }
 
+fn loaded_driver_result_score() -> i64 {
+  return driver::result_code(driver::run_loaded_source_summary(1, 16, 'p', 2));
+}
+
 fn invalid_loaded_driver_score() -> i64 {
   return driver::result_code(driver::run_loaded_source_summary(1, 3, 'p', 3));
 }
@@ -125,6 +129,7 @@ fn main() -> i64 {
     loaded_source_score() -
     121 +
     loaded_driver_score() +
+    loaded_driver_result_score() +
     invalid_loaded_driver_score() -
     1103 +
     parse_success_score() +

@@ -112,6 +112,9 @@ compiler feature in the normal focused-test workflow.
 - The bootstrap source-root smoke checks the file-input driver success path
   with both CLI-style `exit_code` mapping and raw `result_code` payload
   inspection.
+- The bootstrap source-root smoke checks the loaded-source driver success path
+  with both CLI-style `exit_code` mapping and raw `result_code` payload
+  inspection.
 - The bootstrap source-root smoke covers the current `DriverInput` offset guard
   errors for both invalid start offsets and invalid one-byte end bounds through
   the scalar constructor helper.
@@ -280,6 +283,8 @@ policy in ad hoc compiler files.
   `Ok(0)` payload through `result_code(driver::run())`.
 - Added a focused file-driver success smoke that checks the internal file-input
   `Ok(0)` payload through `result_code(driver::run_file(...))`.
+- Added a focused loaded-source driver success smoke that checks the internal
+  `Ok(0)` payload through `result_code(driver::run_loaded_source_summary(...))`.
 - Switched file-input smoke allocation blocks to explicit `zone(16384)` after
   the growing source-root fixture exceeded the default zone capacity at
   runtime.
@@ -288,15 +293,15 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a focused loaded-source success smoke using
-  `result_code(driver::run_loaded_source_summary(...))` so the internal
-  loaded-source `Ok(0)` payload is checked without CLI exit-code mapping.
+- Add a focused raw `DriverInput` success smoke using
+  `result_code(driver::run_input(driver::driver_input(...)))` so the internal
+  input-path `Ok(0)` payload is checked without CLI exit-code mapping.
 
 ## Next Recommended Task
 
-Add a focused loaded-source success smoke using
-`result_code(driver::run_loaded_source_summary(...))` so the internal
-loaded-source `Ok(0)` payload is checked without CLI exit-code mapping. Keep it
+Add a focused raw `DriverInput` success smoke using
+`result_code(driver::run_input(driver::driver_input(...)))` so the internal
+input-path `Ok(0)` payload is checked without CLI exit-code mapping. Keep it
 inside the bootstrap source-root smoke and do not add option parsing,
 diagnostic rendering, or a source table yet.
 
@@ -378,7 +383,9 @@ through `result_code` without requiring a hosted compiler fix. The default
 driver success smoke checked the `Ok(0)` payload through `result_code` without
 requiring a hosted compiler fix. The file-driver success smoke checked the
 file-input `Ok(0)` payload through `std::fs::read_to_string` and `result_code`
-without requiring a hosted compiler fix.
+without requiring a hosted compiler fix. The loaded-source success smoke
+checked the loaded-source `Ok(0)` payload through `result_code` without
+requiring a hosted compiler fix.
 The growing source-root fixture did expose a default-zone capacity runtime trap
 while reading the file smoke; this was fixed locally with explicit
 `zone(16384)` allocation blocks and is recorded as allocation-policy pressure
