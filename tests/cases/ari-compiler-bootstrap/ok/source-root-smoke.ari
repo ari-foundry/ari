@@ -1263,6 +1263,17 @@ fn lexer_keyword_score() -> i64 {
       8,
       "mut",
       'm'
+    ) +
+    lexer_keyword_case_with_base_score(
+      600,
+      "ptr name",
+      3,
+      89,
+      "ptrace",
+      6,
+      7,
+      "ptr",
+      'p'
     );
 }
 

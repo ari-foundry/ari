@@ -117,9 +117,9 @@ compiler feature in the normal focused-test workflow.
   and `>>=` with source-text longest-match behavior while preserving `<<`,
   `>>`, `<=`, and `>=`.
 - `compiler/lexer.ari` classifies exact source-text `fn`, `let`, `var`, `own`,
-  `ref`, and `mut` as keywords while preserving longer identifier runs such
-  as `fn1`, `letter`, `variant`, `owner`, `reference`, and `mutable` as
-  identifiers.
+  `ref`, `mut`, and `ptr` as keywords while preserving longer identifier runs
+  such as `fn1`, `letter`, `variant`, `owner`, `reference`, `mutable`, and
+  `ptrace` as identifiers.
 - `compiler/lexer.ari` classifies `?` and `??` as operators so
   result-propagation and null-coalescing tokens match the stage0 spellings.
 - `compiler/lexer.ari` exposes one `scan_two`/`cursor_from_two` path for all
@@ -513,6 +513,9 @@ policy in ad hoc compiler files.
 - Added the sixth text-backed keyword token, `mut`, with source-root smoke
   coverage that exact `mut` is a keyword and longer `mutable` remains an
   identifier.
+- Added the seventh text-backed keyword token, `ptr`, with source-root smoke
+  coverage that exact `ptr` is a keyword and longer `ptrace` remains an
+  identifier.
 - Consolidated the repeated keyword source-root smoke checks behind one helper
   so each keyword case adds data instead of another full copy of the same
   cursor checks.
@@ -631,13 +634,13 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add text-backed keyword classification for stage0 `ptr`, preserving longer
-  identifiers such as `ptrace` as identifiers.
+- Add text-backed keyword classification for stage0 `return`, preserving
+  longer identifiers such as `returning` as identifiers.
 
 ## Next Recommended Task
 
-Add text-backed keyword classification for stage0 `ptr`, preserving longer
-identifiers such as `ptrace` as identifiers.
+Add text-backed keyword classification for stage0 `return`, preserving longer
+identifiers such as `returning` as identifiers.
 
 ## Local Validation
 
@@ -823,6 +826,8 @@ The lexer keyword smoke checked exact `ref` source-text classification and
 preserved `reference` as an identifier without requiring a hosted compiler fix.
 The lexer keyword smoke checked exact `mut` source-text classification and
 preserved `mutable` as an identifier without requiring a hosted compiler fix.
+The lexer keyword smoke checked exact `ptr` source-text classification and
+preserved `ptrace` as an identifier without requiring a hosted compiler fix.
 The token-kind class helper refactor checked through the bootstrap source root
 without requiring a hosted compiler fix. The lexer double-quote delimiter smoke
 checked `"` tokenization as punctuation without requiring a hosted compiler

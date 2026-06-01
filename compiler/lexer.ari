@@ -71,6 +71,9 @@ fn identifier_kind_from_text(text: std::Slice[u8], start: i64, end: i64) -> toke
     if text[start] == 'm' && text[start + 1] == 'u' && text[start + 2] == 't' {
       return token::KwMut;
     }
+    if text[start] == 'p' && text[start + 1] == 't' && text[start + 2] == 'r' {
+      return token::KwPtr;
+    }
   }
   return token::Identifier;
 }
@@ -507,6 +510,9 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
     }
     KwMut => {
       return Scanned(token::make_token(token::KwMut, offset, offset + 3));
+    }
+    KwPtr => {
+      return Scanned(token::make_token(token::KwPtr, offset, offset + 3));
     }
     EndOfFile => {
       return Scanned(token::make_token(token::EndOfFile, offset, offset));
