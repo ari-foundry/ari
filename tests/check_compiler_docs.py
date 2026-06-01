@@ -170,7 +170,7 @@ def main() -> int:
         "## Completed Tasks",
         "## Small Task Queue",
         "## Next Recommended Task",
-        "Add source-text leading-comment operator diagnostics",
+        "Add source-text leading-comment string-literal diagnostics",
     ]:
         require(ari_tasks, needle, ari_tasks_path)
 
