@@ -171,6 +171,18 @@ fn source_text_leading_comment_string_literal_driver_score() -> i64 {
   return 0;
 }
 
+fn source_text_leading_comment_missing_base_digit_driver_score() -> i64 {
+  let line_code = source_text_driver_result("// skip\n0x");
+  if line_code != 1009 {
+    return 1;
+  }
+  let block_code = source_text_driver_result("/* skip */0x");
+  if block_code != 1009 {
+    return 2;
+  }
+  return 0;
+}
+
 fn source_text_trailing_comment_driver_score() -> i64 {
   let line_code = source_text_driver_result("p// skip");
   if line_code != 0 {
@@ -1812,6 +1824,18 @@ fn lexer_leading_comment_lexer_failure_handoff_score() -> i64 {
     return score;
   }
   score = lexer_handoff_failure_case_score("/* skip */\"open", 1004, 10, 15);
+  if score != 0 {
+    return 10 + score;
+  }
+  return 0;
+}
+
+fn lexer_leading_comment_missing_base_digit_handoff_score() -> i64 {
+  var score = lexer_handoff_failure_case_score("// skip\n0x", 1009, 8, 10);
+  if score != 0 {
+    return score;
+  }
+  score = lexer_handoff_failure_case_score("/* skip */0x", 1009, 10, 12);
   if score != 0 {
     return 10 + score;
   }
@@ -3512,13 +3536,14 @@ fn parse_post_comment_extra_token_failure_score() -> i64 {
   return 0;
 }
 
-fn parse_lexer_failure_case_score(
+fn parse_lexer_failure_code_case_score(
   text: Slice[u8],
+  expected_code: i64,
   expected_start: i64,
   expected_end: i64
 ) -> i64 {
   let parsed = parser::parse_text(text);
-  if parser::parse_failure_code(parsed) != 1004 {
+  if parser::parse_failure_code(parsed) != expected_code {
     return 1;
   }
   if parser::parse_failure_start_offset(parsed) != expected_start {
@@ -3527,11 +3552,19 @@ fn parse_lexer_failure_case_score(
   if parser::parse_failure_end_offset(parsed) != expected_end {
     return 3;
   }
-  let keyword_score = parser_keyword_failure_case_score(text, 1004, expected_start, expected_end);
+  let keyword_score = parser_keyword_failure_case_score(text, expected_code, expected_start, expected_end);
   if keyword_score != 0 {
     return 3 + keyword_score;
   }
   return 0;
+}
+
+fn parse_lexer_failure_case_score(
+  text: Slice[u8],
+  expected_start: i64,
+  expected_end: i64
+) -> i64 {
+  return parse_lexer_failure_code_case_score(text, 1004, expected_start, expected_end);
 }
 
 fn parse_leading_comment_lexer_failure_score() -> i64 {
@@ -3540,6 +3573,18 @@ fn parse_leading_comment_lexer_failure_score() -> i64 {
     return score;
   }
   score = parse_lexer_failure_case_score("/* skip */\"open", 10, 15);
+  if score != 0 {
+    return 10 + score;
+  }
+  return 0;
+}
+
+fn parse_leading_comment_missing_base_digit_failure_score() -> i64 {
+  var score = parse_lexer_failure_code_case_score("// skip\n0x", 1009, 8, 10);
+  if score != 0 {
+    return score;
+  }
+  score = parse_lexer_failure_code_case_score("/* skip */0x", 1009, 10, 12);
   if score != 0 {
     return 10 + score;
   }
@@ -3983,6 +4028,7 @@ fn main() -> i64 {
     source_text_leading_comment_punctuation_driver_score() +
     source_text_leading_comment_operator_driver_score() +
     source_text_leading_comment_string_literal_driver_score() +
+    source_text_leading_comment_missing_base_digit_driver_score() +
     source_text_trailing_comment_driver_score() +
     source_text_trailing_unterminated_block_driver_score() +
     source_text_post_comment_extra_token_driver_score() +
@@ -4051,6 +4097,8 @@ fn main() -> i64 {
     lexer_leading_comment_string_literal_handoff_score() +
     parse_leading_comment_lexer_failure_score() +
     lexer_leading_comment_lexer_failure_handoff_score() +
+    parse_leading_comment_missing_base_digit_failure_score() +
+    lexer_leading_comment_missing_base_digit_handoff_score() +
     parse_leading_comment_extra_token_failure_score() +
     lexer_leading_comment_extra_token_handoff_score() +
     parse_post_comment_extra_token_failure_score() +
