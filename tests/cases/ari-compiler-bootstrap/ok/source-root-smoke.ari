@@ -1395,6 +1395,17 @@ fn lexer_keyword_score() -> i64 {
       6,
       "null",
       'n'
+    ) +
+    lexer_keyword_case_with_base_score(
+      1800,
+      "true name",
+      4,
+      102,
+      "true1",
+      5,
+      6,
+      "true",
+      't'
     );
 }
 
