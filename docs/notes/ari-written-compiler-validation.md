@@ -347,6 +347,10 @@ skipper without requiring a hosted compiler fix.
 The source-text EOF line-comment span smoke now matches stage0's scanner by
 treating `//` through end of input as one whitespace token and advancing to EOF
 without requiring a hosted compiler fix.
+The source-text comment-only parser and driver smokes now check that skipped
+line and block comments preserve parser EOF diagnostic code `2001`, with
+parser failure offsets at the end of the skipped comment, without requiring a
+hosted compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
@@ -418,9 +422,6 @@ Desired stage0 pressure that is not yet classified as a bug:
   should not accidentally inherit octal/binary/hex prefix behavior; keep this
   as lexer design pressure until the Ari-written numeric literal model is
   richer.
-- Comment-only source-text parser/driver EOF diagnostics should be checked
-  separately from the lexer EOF line-comment span smoke, so the lexer test does
-  not grow into a parser policy test by accident.
 - The byte-character span helper now uses an enum-shaped scan result instead
   of a sentinel fallback end. Malformed byte-character diagnostics can grow on
   that shape later without adding more sentinel meanings.

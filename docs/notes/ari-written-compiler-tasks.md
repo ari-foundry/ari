@@ -475,15 +475,15 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   comment scan through carriage return before newline.
 - Added source-text EOF line-comment span coverage, matching stage0's line
   comment scan through end of input.
+- Added source-text comment-only parser and driver EOF diagnostic coverage
+  after skipped line and block comments.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add source-text comment-only parser/driver EOF diagnostic coverage after
-  skipped comments.
+- Add source-text trailing-comment handoff coverage after a statement token.
 
 ## Next Recommended Task
 
-Add source-text comment-only parser/driver EOF diagnostic coverage after
-skipped comments.
+Add source-text trailing-comment handoff coverage after a statement token.

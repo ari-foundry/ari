@@ -33,6 +33,12 @@ fn empty_source_text_driver_score() -> i64 {
   }
 }
 
+fn source_text_driver_result(text: Slice[u8]) -> i64 {
+  zone(65536) {
+    return driver::result_code(driver::run_source_text(std::string::from(text)));
+  }
+}
+
 fn source_text_driver_score() -> i64 {
   zone(65536) {
     return driver::result_code(driver::run_source_text(std::string::from("p")));
@@ -43,6 +49,18 @@ fn source_text_extra_token_driver_score() -> i64 {
   zone(65536) {
     return driver::result_code(driver::run_source_text(std::string::from("p+")));
   }
+}
+
+fn source_text_comment_only_driver_score() -> i64 {
+  let line_code = source_text_driver_result("// skip");
+  if line_code != 2001 {
+    return 1;
+  }
+  let block_code = source_text_driver_result("/* skip */");
+  if block_code != 2001 {
+    return 2;
+  }
+  return 0;
 }
 
 fn source_text_keyword_driver_score() -> i64 {
@@ -2620,6 +2638,34 @@ fn parser_keyword_failure_code(text: Slice[u8]) -> i64 {
   }
 }
 
+fn parse_comment_only_case_score(text: Slice[u8], expected_offset: i64) -> i64 {
+  if parser::parse_failure_code(parser::parse_text(text)) != 2001 {
+    return 1;
+  }
+  if parser::parse_failure_start_offset(parser::parse_text(text)) != expected_offset {
+    return 2;
+  }
+  if parser::parse_failure_end_offset(parser::parse_text(text)) != expected_offset {
+    return 3;
+  }
+  if parser_keyword_failure_code(text) != 2001 {
+    return 4;
+  }
+  return 0;
+}
+
+fn parse_comment_only_failure_score() -> i64 {
+  var score = parse_comment_only_case_score("// skip", 7);
+  if score != 0 {
+    return score;
+  }
+  score = parse_comment_only_case_score("/* skip */", 10);
+  if score != 0 {
+    return 10 + score;
+  }
+  return 0;
+}
+
 fn parse_text_score() -> i64 {
   if !parser::parse_is_success(parser::parse_text("name9")) {
     return 1;
@@ -3035,6 +3081,7 @@ fn main() -> i64 {
     source_text_driver_score() +
     source_text_extra_token_driver_score() -
     2003 +
+    source_text_comment_only_driver_score() +
     source_text_keyword_driver_score() -
     2006 +
     source_text_base_number_driver_score() +
@@ -3079,6 +3126,7 @@ fn main() -> i64 {
     1007 +
     source_text_unterminated_block_comment_driver_score() -
     1008 +
+    parse_comment_only_failure_score() +
     parser::parse_score(parser::parse_empty()) -
     3018;
 }
