@@ -40,11 +40,19 @@ pub fn is_identifier_continue(value: char) -> bool {
   return is_ascii_alpha(value) || is_ascii_digit(value);
 }
 
+pub fn is_number_start(value: char) -> bool {
+  return is_ascii_digit(value);
+}
+
+pub fn is_number_continue(value: char) -> bool {
+  return is_ascii_digit(value);
+}
+
 pub fn classify_one(value: char) -> token::TokenKind {
   if is_identifier_start(value) {
     return token::Identifier;
   }
-  if is_ascii_digit(value) {
+  if is_number_start(value) {
     return token::Number;
   }
   if value == ' ' || value == '\n' || value == '\t' {
@@ -99,6 +107,14 @@ pub fn scan_one(value: char, offset: i64) -> token::Token {
 pub fn scan_identifier_two(first: char, offset: i64, second: char) -> token::Token {
   if is_identifier_start(first) && is_identifier_continue(second) {
     return token::make_token(token::Identifier, offset, offset + 2);
+  }
+
+  return scan_one(first, offset);
+}
+
+pub fn scan_number_two(first: char, offset: i64, second: char) -> token::Token {
+  if is_number_start(first) && is_number_continue(second) {
+    return token::make_token(token::Number, offset, offset + 2);
   }
 
   return scan_one(first, offset);
@@ -182,6 +198,14 @@ pub fn cursor_from_one(value: char, offset: i64) -> TokenCursor {
 pub fn cursor_from_identifier_two(first: char, offset: i64, second: char) -> TokenCursor {
   return TokenCursor {
     current: scan_identifier_two(first, offset, second),
+    offset: offset,
+    done: false,
+  };
+}
+
+pub fn cursor_from_number_two(first: char, offset: i64, second: char) -> TokenCursor {
+  return TokenCursor {
+    current: scan_number_two(first, offset, second),
     offset: offset,
     done: false,
   };
