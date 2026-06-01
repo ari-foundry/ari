@@ -47,7 +47,7 @@ fn source_text_extra_token_driver_score() -> i64 {
 
 fn source_text_keyword_driver_score() -> i64 {
   zone(65536) {
-    return driver::result_code(driver::run_source_text(std::string::from("enum")));
+    return driver::result_code(driver::run_source_text(std::string::from("trait")));
   }
 }
 
@@ -1548,6 +1548,25 @@ fn lexer_keyword_table_score() -> i64 {
     score = 21;
   }
 
+  let trait_keyword = lexer::cursor_from_text_with_keywords(ref table, "trait", 0);
+  if score == 0 && !lexer::cursor_is_keyword(trait_keyword) {
+    score = 22;
+  }
+  if score == 0 && lexer::cursor_token_score(trait_keyword) != 111 {
+    score = 23;
+  }
+  if score == 0 && lexer::cursor_token_end(trait_keyword) != 5 {
+    score = 24;
+  }
+
+  let trait_longer = lexer::cursor_from_text_with_keywords(ref table, "traitor", 0);
+  if score == 0 && !lexer::cursor_is_identifier(trait_longer) {
+    score = 25;
+  }
+  if score == 0 && lexer::cursor_is_keyword(trait_longer) {
+    score = 26;
+  }
+
   std::zone::destroy(zone);
   return score;
 }
@@ -1586,6 +1605,9 @@ fn parse_text_score() -> i64 {
     }
     if parser::parse_failure_code(parser::parse_text_with_keywords("enum")) != 2006 {
       return 11;
+    }
+    if parser::parse_failure_code(parser::parse_text_with_keywords("trait")) != 2006 {
+      return 12;
     }
   }
   return 0;
