@@ -150,6 +150,8 @@ compiler feature in the normal focused-test workflow.
   smoke-score arithmetic.
 - The bootstrap source-root smoke checks successful parser payloads are
   statement nodes without relying on `ast::node_score` arithmetic.
+- The bootstrap source-root smoke checks number parser payloads are statement
+  nodes without relying on parser score arithmetic.
 - The bootstrap source-root smoke checks successful parser payload span length
   without relying on `ast::node_score` arithmetic.
 - The bootstrap source-root smoke checks number parser payload span length
@@ -395,6 +397,8 @@ policy in ad hoc compiler files.
   parser statement end-offset helper without parser score arithmetic.
 - Added a focused parser number payload source-id smoke using the existing
   parser statement source-id helper without parser score arithmetic.
+- Added a focused parser number payload statement-node smoke using the existing
+  parser statement-node helper without parser score arithmetic.
 - Routed driver parse failures through the parser failure-code helper, with
   source-root smoke coverage for whitespace and unknown-token diagnostic codes.
 - Added a driver result-code helper and simplified bootstrap smokes that inspect
@@ -425,17 +429,15 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a focused parser number payload statement-node smoke using the existing
-  `parser::parse_is_statement_node(parser::parse_one('9', ...))` helper so the
-  number statement shape is checked without parser score arithmetic.
+- Add a focused parser failure start-offset helper and smoke for whitespace
+  input, using diagnostic start metadata without adding recovery or diagnostic
+  rendering.
 
 ## Next Recommended Task
 
-Add a focused parser number payload statement-node smoke using the existing
-`parser::parse_is_statement_node(parser::parse_one('9', ...))` helper so the
-number statement shape is checked without parser score arithmetic. Keep it
-inside the bootstrap source-root smoke and do not add parser recovery,
-diagnostic rendering, or a source table yet.
+Add a focused parser failure start-offset helper and smoke for whitespace input,
+using diagnostic start metadata without adding recovery, diagnostic rendering,
+or a source table yet.
 
 ## Local Validation
 
@@ -550,7 +552,9 @@ The parser number payload start-offset smoke checked number statement start
 offsets without requiring a hosted compiler fix. The parser number payload
 end-offset smoke checked number statement end offsets without requiring a
 hosted compiler fix. The parser number payload source-id smoke checked number
-statement source ids without requiring a hosted compiler fix.
+statement source ids without requiring a hosted compiler fix. The parser number
+payload statement-node smoke checked number statement shape without requiring a
+hosted compiler fix.
 The growing source-root fixture did expose a default-zone capacity runtime trap
 while reading the file smoke; this was fixed locally with explicit
 `zone(16384)` allocation blocks and is recorded as allocation-policy pressure

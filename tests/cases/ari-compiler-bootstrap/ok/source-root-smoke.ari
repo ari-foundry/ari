@@ -80,6 +80,9 @@ fn parse_statement_node_score() -> i64 {
   if !parser::parse_is_statement_node(parser::parse_one('q', 1)) {
     return 1;
   }
+  if !parser::parse_is_statement_node(parser::parse_one('9', 2)) {
+    return 3;
+  }
   if parser::parse_is_statement_node(parser::parse_one(' ', 4)) {
     return 2;
   }
