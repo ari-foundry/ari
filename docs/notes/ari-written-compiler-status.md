@@ -147,6 +147,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/lexer.ari` scans simple byte character escape spellings such as
   `'\n'` and `'\\'` as number spans, while leaving numeric byte-character
   escape value handling for a later slice.
+- `compiler/lexer.ari` scans byte character hex and octal numeric escape
+  spellings such as `'\x41'` and `'\101'` as number spans.
 - `compiler/lexer.ari` exposes text-backed cursor advance and handoff helpers,
   including significant-token advance that skips leading and trailing
   whitespace around the current single-statement parser handoff.

@@ -81,6 +81,12 @@ fn source_text_byte_char_escape_driver_score() -> i64 {
   }
 }
 
+fn source_text_byte_char_numeric_escape_driver_score() -> i64 {
+  zone(65536) {
+    return driver::result_code(driver::run_source_text(std::string::from("'\\x41'")));
+  }
+}
+
 fn source_text_missing_base_digit_driver_score() -> i64 {
   zone(65536) {
     return driver::result_code(driver::run_source_text(std::string::from("0x")));
@@ -544,11 +550,35 @@ fn lexer_byte_char_span_score() -> i64 {
   if score != 0 {
     return 20 + score;
   }
+  score = lexer_number_case_score("'\\x41'+", 6, 8);
+  if score != 0 {
+    return 27 + score;
+  }
+  let after_hex_escape_byte_char = lexer::cursor_advance_in_text(
+    lexer::cursor_from_text("'\\x41'+", 0),
+    "'\\x41'+"
+  );
+  if !lexer::cursor_is_operator(after_hex_escape_byte_char) {
+    return 32;
+  }
+  if lexer::cursor_token_start(after_hex_escape_byte_char) != 6 {
+    return 33;
+  }
+  score = lexer_number_case_score("'\\101' ", 6, 8);
+  if score != 0 {
+    return 34 + score;
+  }
   if !parser::parse_is_success(parser::parse_text("'a'")) {
     return 12;
   }
   if !parser::parse_is_success(parser::parse_text("'\\n'")) {
     return 26;
+  }
+  if !parser::parse_is_success(parser::parse_text("'\\x41'")) {
+    return 40;
+  }
+  if !parser::parse_is_success(parser::parse_text("'\\101'")) {
+    return 41;
   }
   return 0;
 }
@@ -2726,6 +2756,7 @@ fn main() -> i64 {
     source_text_decimal_float_driver_score() +
     source_text_byte_char_driver_score() +
     source_text_byte_char_escape_driver_score() +
+    source_text_byte_char_numeric_escape_driver_score() +
     source_text_missing_base_digit_driver_score() -
     1009 +
     source_text_invalid_base_digit_driver_score() -

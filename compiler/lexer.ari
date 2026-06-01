@@ -52,6 +52,11 @@ enum CommentScan {
   CommentUnterminated(i64),
 }
 
+enum ByteCharScan {
+  ByteCharClosed(i64),
+  ByteCharFallback,
+}
+
 enum NumberScan {
   NumberClosed(i64),
   NumberMissingBaseDigits(i64, i64),
@@ -977,28 +982,61 @@ fn is_simple_byte_char_escape(value: char) -> bool {
     value == '\\';
 }
 
-fn byte_char_end_from_text(text: std::Slice[u8], offset: i64) -> i64 {
+fn byte_char_escape_end_from_text(text: std::Slice[u8], slash_start: i64) -> i64 {
+  let escape_start = slash_start + 1;
+  if escape_start >= text.len {
+    return slash_start;
+  }
+  let escaped = text[escape_start];
+  if is_simple_byte_char_escape(escaped) {
+    return slash_start + 2;
+  }
+  if escaped == 'x' {
+    match hex_escape_scan_from_text(text, escape_start) {
+      Advanced(hex_escape_end) => {
+        return hex_escape_end;
+      }
+      EscapeUnsupported(_, _) => {}
+      EscapeInvalidDigits(_, _) => {}
+      EscapeInvalidValue(_, _) => {}
+    }
+    return slash_start;
+  }
+  if is_octal_digit(escaped) {
+    match octal_escape_scan_from_text(text, escape_start) {
+      Advanced(octal_escape_end) => {
+        return octal_escape_end;
+      }
+      EscapeUnsupported(_, _) => {}
+      EscapeInvalidDigits(_, _) => {}
+      EscapeInvalidValue(_, _) => {}
+    }
+    return slash_start;
+  }
+  return slash_start;
+}
+
+fn byte_char_scan_from_text(text: std::Slice[u8], offset: i64) -> ByteCharScan {
   if offset + 1 >= text.len {
-    return offset + 1;
+    return ByteCharFallback;
   }
   if text[offset + 1] == '\\' {
-    if offset + 3 < text.len &&
-      is_simple_byte_char_escape(text[offset + 2]) &&
-      text[offset + 3] == '\'' {
-      return offset + 4;
+    let escaped_end = byte_char_escape_end_from_text(text, offset + 1);
+    if escaped_end > offset + 1 && escaped_end < text.len && text[escaped_end] == '\'' {
+      return ByteCharClosed(escaped_end + 1);
     }
-    return offset + 1;
+    return ByteCharFallback;
   }
   if offset + 2 >= text.len {
-    return offset + 1;
+    return ByteCharFallback;
   }
   if text[offset + 1] == '\'' || text[offset + 1] == '\n' {
-    return offset + 1;
+    return ByteCharFallback;
   }
   if text[offset + 2] == '\'' {
-    return offset + 3;
+    return ByteCharClosed(offset + 3);
   }
-  return offset + 1;
+  return ByteCharFallback;
 }
 
 fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
@@ -1040,9 +1078,11 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
     }
   }
   if first == '\'' {
-    let byte_char_end = byte_char_end_from_text(text, offset);
-    if byte_char_end != offset + 1 {
-      return token::make_token(token::Number, offset, byte_char_end);
+    match byte_char_scan_from_text(text, offset) {
+      ByteCharClosed(byte_char_end) => {
+        return token::make_token(token::Number, offset, byte_char_end);
+      }
+      ByteCharFallback => {}
     }
   }
   if first == '.' {
@@ -1124,9 +1164,11 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
     }
   }
   if text[offset] == '\'' {
-    let byte_char_end = byte_char_end_from_text(text, offset);
-    if byte_char_end != offset + 1 {
-      return Scanned(token::make_token(token::Number, offset, byte_char_end));
+    match byte_char_scan_from_text(text, offset) {
+      ByteCharClosed(byte_char_end_result) => {
+        return Scanned(token::make_token(token::Number, offset, byte_char_end_result));
+      }
+      ByteCharFallback => {}
     }
   }
 

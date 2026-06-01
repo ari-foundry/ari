@@ -359,11 +359,9 @@ Desired stage0 pressure that is not yet classified as a bug:
   byte character literal spans are therefore modeled as number tokens for now;
   this is Ari-written compiler model pressure, not a confirmed hosted compiler
   bug.
-- The byte-character span helper currently returns a span end or the
-  one-byte fallback end. Once numeric byte-character escapes and malformed
-  byte-character diagnostics are added, this should become an enum-shaped scan
-  result like the string and number scanners instead of growing sentinel return
-  meanings.
+- The byte-character span helper now uses an enum-shaped scan result instead
+  of a sentinel fallback end. Malformed byte-character diagnostics can grow on
+  that shape later without adding more sentinel meanings.
 - Ari-written string escape scanning now distinguishes supported
   single-character escape heads from unsupported ones and validates the digit
   shape of `\x`, fixed-width `\u`, fixed-width `\U`, and braced `\u{...}`
@@ -378,5 +376,6 @@ Desired stage0 pressure that is not yet classified as a bug:
   Decimal floating literal spans now cover fractional and exponent spellings.
   Simple byte character literal spans now cover ASCII spellings such as `'a'`,
   and simple byte character escape spans now cover spellings such as `'\n'`
-  and `'\\'`. Numeric byte character escape spans and byte-character
-  diagnostics are still pending.
+  and `'\\'`. Numeric byte character escape spans now cover hex and octal
+  spellings such as `'\x41'` and `'\101'`. Unicode byte character escape spans
+  and byte-character diagnostics are still pending.

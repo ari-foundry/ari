@@ -170,7 +170,7 @@ def main() -> int:
         "## Completed Tasks",
         "## Small Task Queue",
         "## Next Recommended Task",
-        "Add source-text byte character numeric escape spans",
+        "Add source-text byte character Unicode escape spans",
     ]:
         require(ari_tasks, needle, ari_tasks_path)
 
