@@ -63,6 +63,8 @@ compiler feature in the normal focused-test workflow.
   one-character lexer classification path.
 - `compiler/token.ari` models simple delimiter punctuation tokens for
   parentheses, braces, comma, colon, and semicolon.
+- `compiler/token.ari` models simple one-character operator tokens for
+  assignment and arithmetic operators.
 - `compiler/source.ari` exposes small span query helpers for downstream phase
   payload smokes.
 - `compiler/lexer.ari` now has a small `LexResult` flow for one-character scans
@@ -88,6 +90,9 @@ compiler feature in the normal focused-test workflow.
 - `compiler/lexer.ari` classifies simple delimiter punctuation separately from
   unknown characters and exposes punctuation queries at the cursor and handoff
   boundary.
+- `compiler/lexer.ari` classifies simple one-character operators separately
+  from unknown characters and exposes operator queries at the cursor and
+  handoff boundary.
 - `compiler/ast.ari` now models minimal span-carrying token, statement, error,
   and missing output nodes.
 - `compiler/ast.ari` exposes a statement-kind query helper so parser payload
@@ -381,6 +386,9 @@ policy in ad hoc compiler files.
 - Added lexer classification for simple delimiter punctuation tokens and
   source-root smoke coverage that they are scanned, scored, and exposed through
   punctuation queries instead of unknown-token paths.
+- Added lexer classification for simple one-character operator tokens and
+  source-root smoke coverage that they are scanned, scored, and exposed through
+  operator queries instead of unknown-token paths.
 - Added token-kind query helpers for the lexer/parser boundary and a tiny parser
   handoff classification score.
 - Moved the test-like entry arithmetic out of `compiler/main.ari` into a
@@ -482,15 +490,15 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add focused lexer operator token classification for simple one-character
-  operators such as `=`, `+`, `-`, `*`, `/`, and `%` without changing parser
-  recovery or adding a source table.
+- Add a focused lexer two-character identifier span helper and smoke so the
+  lexer can prove a multi-byte identifier token boundary without adding a
+  source table yet.
 
 ## Next Recommended Task
 
-Add focused lexer operator token classification for simple one-character
-operators such as `=`, `+`, `-`, `*`, `/`, and `%` without changing parser
-recovery or adding a source table yet.
+Add a focused lexer two-character identifier span helper and smoke so the lexer
+can prove a multi-byte identifier token boundary without adding a source table
+yet.
 
 ## Local Validation
 
@@ -618,7 +626,9 @@ unknown-token failure end-offset smoke checked unknown-token diagnostic end
 metadata without requiring a hosted compiler fix. The two-token lexer stream
 smoke checked fixed stream cursors and EOF placement without requiring a hosted
 compiler fix. The lexer punctuation smoke checked delimiter token
-classification without requiring a hosted compiler fix.
+classification without requiring a hosted compiler fix. The lexer operator
+smoke checked one-character operator token classification without requiring a
+hosted compiler fix.
 The growing source-root fixture did expose a default-zone capacity runtime trap
 while reading the file smoke; this was fixed locally with explicit
 `zone(32768)` allocation blocks and is recorded as allocation-policy pressure

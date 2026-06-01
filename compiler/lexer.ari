@@ -63,6 +63,24 @@ pub fn classify_one(value: char) -> token::TokenKind {
   if value == ';' {
     return token::Semicolon;
   }
+  if value == '=' {
+    return token::Equal;
+  }
+  if value == '+' {
+    return token::Plus;
+  }
+  if value == '-' {
+    return token::Minus;
+  }
+  if value == '*' {
+    return token::Star;
+  }
+  if value == '/' {
+    return token::Slash;
+  }
+  if value == '%' {
+    return token::Percent;
+  }
   return token::Unknown(value);
 }
 
@@ -105,6 +123,24 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
     }
     Semicolon => {
       return Scanned(token::make_token(token::Semicolon, offset, offset + 1));
+    }
+    Equal => {
+      return Scanned(token::make_token(token::Equal, offset, offset + 1));
+    }
+    Plus => {
+      return Scanned(token::make_token(token::Plus, offset, offset + 1));
+    }
+    Minus => {
+      return Scanned(token::make_token(token::Minus, offset, offset + 1));
+    }
+    Star => {
+      return Scanned(token::make_token(token::Star, offset, offset + 1));
+    }
+    Slash => {
+      return Scanned(token::make_token(token::Slash, offset, offset + 1));
+    }
+    Percent => {
+      return Scanned(token::make_token(token::Percent, offset, offset + 1));
     }
     EndOfFile => {
       return Scanned(token::make_token(token::EndOfFile, offset, offset));
@@ -164,6 +200,12 @@ pub fn cursor_is_identifier(cursor: TokenCursor) -> bool {
     Comma => false,
     Colon => false,
     Semicolon => false,
+    Equal => false,
+    Plus => false,
+    Minus => false,
+    Star => false,
+    Slash => false,
+    Percent => false,
     EndOfFile => false,
     Unknown(_) => false,
   }
@@ -181,6 +223,12 @@ pub fn cursor_is_number(cursor: TokenCursor) -> bool {
     Comma => false,
     Colon => false,
     Semicolon => false,
+    Equal => false,
+    Plus => false,
+    Minus => false,
+    Star => false,
+    Slash => false,
+    Percent => false,
     EndOfFile => false,
     Unknown(_) => false,
   }
@@ -198,6 +246,12 @@ pub fn cursor_is_whitespace(cursor: TokenCursor) -> bool {
     Comma => false,
     Colon => false,
     Semicolon => false,
+    Equal => false,
+    Plus => false,
+    Minus => false,
+    Star => false,
+    Slash => false,
+    Percent => false,
     EndOfFile => false,
     Unknown(_) => false,
   }
@@ -215,6 +269,12 @@ pub fn cursor_is_eof(cursor: TokenCursor) -> bool {
     Comma => false,
     Colon => false,
     Semicolon => false,
+    Equal => false,
+    Plus => false,
+    Minus => false,
+    Star => false,
+    Slash => false,
+    Percent => false,
     EndOfFile => true,
     Unknown(_) => false,
   }
@@ -232,6 +292,12 @@ pub fn cursor_is_unknown(cursor: TokenCursor) -> bool {
     Comma => false,
     Colon => false,
     Semicolon => false,
+    Equal => false,
+    Plus => false,
+    Minus => false,
+    Star => false,
+    Slash => false,
+    Percent => false,
     EndOfFile => false,
     Unknown(_) => true,
   }
@@ -249,6 +315,35 @@ pub fn cursor_is_punctuation(cursor: TokenCursor) -> bool {
     Comma => true,
     Colon => true,
     Semicolon => true,
+    Equal => false,
+    Plus => false,
+    Minus => false,
+    Star => false,
+    Slash => false,
+    Percent => false,
+    EndOfFile => false,
+    Unknown(_) => false,
+  }
+}
+
+pub fn cursor_is_operator(cursor: TokenCursor) -> bool {
+  match cursor.current.kind {
+    Identifier => false,
+    Number => false,
+    Whitespace => false,
+    LeftParen => false,
+    RightParen => false,
+    LeftBrace => false,
+    RightBrace => false,
+    Comma => false,
+    Colon => false,
+    Semicolon => false,
+    Equal => true,
+    Plus => true,
+    Minus => true,
+    Star => true,
+    Slash => true,
+    Percent => true,
     EndOfFile => false,
     Unknown(_) => false,
   }
@@ -341,6 +436,10 @@ pub fn handoff_starts_with_unknown(handoff: TokenHandoff) -> bool {
 
 pub fn handoff_starts_with_punctuation(handoff: TokenHandoff) -> bool {
   return cursor_is_punctuation(handoff.first);
+}
+
+pub fn handoff_starts_with_operator(handoff: TokenHandoff) -> bool {
+  return cursor_is_operator(handoff.first);
 }
 
 pub fn cursor_score(cursor: TokenCursor) -> i64 {
