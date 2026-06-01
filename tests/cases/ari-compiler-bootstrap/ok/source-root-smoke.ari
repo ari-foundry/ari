@@ -1351,6 +1351,17 @@ fn lexer_keyword_score() -> i64 {
       10,
       "continue",
       'c'
+    ) +
+    lexer_keyword_case_with_base_score(
+      1400,
+      "break name",
+      5,
+      99,
+      "break1",
+      6,
+      7,
+      "break",
+      'b'
     );
 }
 
