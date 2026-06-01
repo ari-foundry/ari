@@ -141,6 +141,13 @@ pub fn parse_statement_span_len(result: ParseResult) -> i64 {
   }
 }
 
+pub fn parse_statement_value(result: ParseResult) -> i64 {
+  match result {
+    Parsed(node) => ast::node_value(node),
+    Failed(_) => -1,
+  }
+}
+
 pub fn parse_failure_code(result: ParseResult) -> i64 {
   match result {
     Parsed(_) => 0,
