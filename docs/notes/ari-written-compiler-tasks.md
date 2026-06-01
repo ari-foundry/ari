@@ -177,6 +177,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Routed parser source-text parsing through a reusable lexer `KeywordTable`
   helper and routed driver source-text/file-input parsing through that parser
   helper.
+- Added a private parser helper that accepts an existing `KeywordTable`, keeping
+  `parse_text_with_keywords`' table-backed handoff path centralized inside the
+  parser module.
 - Added source-root smoke coverage that checks table-backed parser keyword
   diagnostics and driver source-text keyword diagnostics.
 - Replaced the raw per-character keyword comparison chain with one slice matcher
@@ -334,6 +337,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Backfilled reusable keyword-table smoke coverage for existing `KwOwn`, with
   focused smokes for exact `own`, longer `owner`, and the table-backed
   parser/driver keyword path.
+- Backfilled reusable keyword-table smoke coverage for existing `KwRef`, with
+  focused smokes for exact `ref`, longer `reference`, and the table-backed
+  parser/driver keyword path.
 - Added a one-token file-input fixture for the compiled `compiler/main.ari`
   bootstrap run, so file input uses real loaded text without pretending the
   larger source-root smoke fixture is already parseable as a full Ari program.
@@ -345,10 +351,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Backfill reusable keyword-table smoke coverage for existing `ref`, preserving
-  longer identifiers such as `reference`.
+- Backfill reusable keyword-table smoke coverage for existing `mut`, preserving
+  longer identifiers such as `mutable`.
 
 ## Next Recommended Task
 
-Backfill reusable keyword-table smoke coverage for existing `ref`, preserving
-longer identifiers such as `reference`.
+Backfill reusable keyword-table smoke coverage for existing `mut`, preserving
+longer identifiers such as `mutable`.

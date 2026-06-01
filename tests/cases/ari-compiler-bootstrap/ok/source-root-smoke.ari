@@ -47,7 +47,7 @@ fn source_text_extra_token_driver_score() -> i64 {
 
 fn source_text_keyword_driver_score() -> i64 {
   zone(65536) {
-    return driver::result_code(driver::run_source_text(std::string::from("own")));
+    return driver::result_code(driver::run_source_text(std::string::from("ref")));
   }
 }
 
@@ -1776,8 +1776,33 @@ fn lexer_keyword_table_score() -> i64 {
     score = 81;
   }
 
+  let ref_keyword = lexer::cursor_from_text_with_keywords(ref table, "ref", 0);
+  if score == 0 && !lexer::cursor_is_keyword(ref_keyword) {
+    score = 82;
+  }
+  if score == 0 && lexer::cursor_token_score(ref_keyword) != 87 {
+    score = 83;
+  }
+  if score == 0 && lexer::cursor_token_end(ref_keyword) != 3 {
+    score = 84;
+  }
+
+  let ref_longer = lexer::cursor_from_text_with_keywords(ref table, "reference", 0);
+  if score == 0 && !lexer::cursor_is_identifier(ref_longer) {
+    score = 85;
+  }
+  if score == 0 && lexer::cursor_is_keyword(ref_longer) {
+    score = 86;
+  }
+
   std::zone::destroy(zone);
   return score;
+}
+
+fn parser_keyword_failure_code(text: Slice[u8]) -> i64 {
+  zone(65536) {
+    return parser::parse_failure_code(parser::parse_text_with_keywords(text));
+  }
 }
 
 fn parse_text_score() -> i64 {
@@ -1802,55 +1827,56 @@ fn parse_text_score() -> i64 {
   if parser::parse_statement_span_len(parser::parse_text("12345")) != 5 {
     return 7;
   }
-  zone(65536) {
-    if parser::parse_failure_code(parser::parse_text_with_keywords("meta")) != 2006 {
-      return 8;
-    }
-    if parser::parse_failure_code(parser::parse_text_with_keywords("struct")) != 2006 {
-      return 9;
-    }
-    if parser::parse_failure_code(parser::parse_text_with_keywords("extern")) != 2006 {
-      return 10;
-    }
-    if parser::parse_failure_code(parser::parse_text_with_keywords("enum")) != 2006 {
-      return 11;
-    }
-    if parser::parse_failure_code(parser::parse_text_with_keywords("trait")) != 2006 {
-      return 12;
-    }
-    if parser::parse_failure_code(parser::parse_text_with_keywords("dyn")) != 2006 {
-      return 13;
-    }
-    if parser::parse_failure_code(parser::parse_text_with_keywords("match")) != 2006 {
-      return 14;
-    }
-    if parser::parse_failure_code(parser::parse_text_with_keywords("mod")) != 2006 {
-      return 15;
-    }
-    if parser::parse_failure_code(parser::parse_text_with_keywords("pub")) != 2006 {
-      return 16;
-    }
-    if parser::parse_failure_code(parser::parse_text_with_keywords("use")) != 2006 {
-      return 17;
-    }
-    if parser::parse_failure_code(parser::parse_text_with_keywords("impl")) != 2006 {
-      return 18;
-    }
-    if parser::parse_failure_code(parser::parse_text_with_keywords("for")) != 2006 {
-      return 19;
-    }
-    if parser::parse_failure_code(parser::parse_text_with_keywords("in")) != 2006 {
-      return 20;
-    }
-    if parser::parse_failure_code(parser::parse_text_with_keywords("let")) != 2006 {
-      return 21;
-    }
-    if parser::parse_failure_code(parser::parse_text_with_keywords("var")) != 2006 {
-      return 22;
-    }
-    if parser::parse_failure_code(parser::parse_text_with_keywords("own")) != 2006 {
-      return 23;
-    }
+  if parser_keyword_failure_code("meta") != 2006 {
+    return 8;
+  }
+  if parser_keyword_failure_code("struct") != 2006 {
+    return 9;
+  }
+  if parser_keyword_failure_code("extern") != 2006 {
+    return 10;
+  }
+  if parser_keyword_failure_code("enum") != 2006 {
+    return 11;
+  }
+  if parser_keyword_failure_code("trait") != 2006 {
+    return 12;
+  }
+  if parser_keyword_failure_code("dyn") != 2006 {
+    return 13;
+  }
+  if parser_keyword_failure_code("match") != 2006 {
+    return 14;
+  }
+  if parser_keyword_failure_code("mod") != 2006 {
+    return 15;
+  }
+  if parser_keyword_failure_code("pub") != 2006 {
+    return 16;
+  }
+  if parser_keyword_failure_code("use") != 2006 {
+    return 17;
+  }
+  if parser_keyword_failure_code("impl") != 2006 {
+    return 18;
+  }
+  if parser_keyword_failure_code("for") != 2006 {
+    return 19;
+  }
+  if parser_keyword_failure_code("in") != 2006 {
+    return 20;
+  }
+  if parser_keyword_failure_code("let") != 2006 {
+    return 21;
+  }
+  if parser_keyword_failure_code("var") != 2006 {
+    return 22;
+  }
+  if parser_keyword_failure_code("own") != 2006 {
+    return 23;
+  }
+  if parser_keyword_failure_code("ref") != 2006 {
+    return 24;
   }
   return 0;
 }

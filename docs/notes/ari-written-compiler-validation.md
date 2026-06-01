@@ -106,9 +106,9 @@ without requiring a hosted compiler fix. The parser number-success smoke checked
 the number statement path through `parser::parse_is_success` without requiring
 a hosted compiler fix. The reusable keyword-table smoke checked `KwStruct`,
 `KwExtern`, `KwEnum`, `KwTrait`, `KwDyn`, `KwMatch`, `KwMod`, `KwPub`, `KwUse`,
-`KwImpl`, `KwFor`, `KwIn`, `KwLet`, `KwVar`, and `KwOwn`, plus longer `structure`, `external`,
+`KwImpl`, `KwFor`, `KwIn`, `KwLet`, `KwVar`, `KwOwn`, and `KwRef`, plus longer `structure`, `external`,
 `enumerate`, `traitor`, `dynamic`, `matches`, `module`, `public`, `user`,
-`implicit`, `forest`, `inside`, `letter`, `variant`, and `owner`, and the source-text parser/driver
+`implicit`, `forest`, `inside`, `letter`, `variant`, `owner`, and `reference`, and the source-text parser/driver
 keyword path without requiring a hosted compiler fix. The AST statement-kind
 query and parser payload-shape smoke checked successful statement output without
 requiring a hosted compiler fix. The AST node span-length query and
@@ -248,6 +248,12 @@ The parser and driver source-text paths now check through the HashMap-backed
 keyword table path without requiring a hosted compiler fix. `driver::run_source_text`
 uses a small explicit current-zone block for the transient keyword table; this
 is allocation-policy pressure only, not a confirmed hosted compiler bug.
+The private parser `KeywordTable` helper keeps `parse_text_with_keywords`' table
+handoff centralized without requiring a hosted compiler fix. The source-root
+parser keyword smoke uses a small per-call zone helper because root
+`lexer::KeywordTable` and parser-local `lexer::KeywordTable` are distinct
+module-path types, and `parser::lexer` is intentionally private; this is
+existing module-boundary pressure, not a confirmed hosted compiler bug.
 The keyword matcher helper refactor kept the width-bucket keyword path checked
 through the source-root smoke without requiring a hosted compiler fix.
 The token-kind class helper refactor checked through the bootstrap source root
