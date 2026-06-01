@@ -13,6 +13,7 @@ pub enum TokenKind {
   ColonColon,
   Semicolon,
   Dot,
+  DoubleQuote,
   Equal,
   EqualEqual,
   Bang,
@@ -69,6 +70,7 @@ pub fn kind_score(kind: TokenKind) -> i64 {
     ColonColon => 45,
     Semicolon => 10,
     Dot => 20,
+    DoubleQuote => 29,
     Equal => 11,
     EqualEqual => 17,
     Bang => 21,
@@ -98,4 +100,76 @@ pub fn kind_score(kind: TokenKind) -> i64 {
 
 pub fn token_score(token: Token) -> i64 {
   return kind_score(token.kind) + token_width(token);
+}
+
+pub fn kind_class_score(kind: TokenKind) -> i64 {
+  match kind {
+    Identifier => 1,
+    Number => 2,
+    Whitespace => 3,
+    LeftParen => 4,
+    RightParen => 4,
+    LeftBrace => 4,
+    RightBrace => 4,
+    LeftBracket => 4,
+    RightBracket => 4,
+    Comma => 4,
+    Colon => 4,
+    ColonColon => 4,
+    Semicolon => 4,
+    Dot => 4,
+    DoubleQuote => 4,
+    Equal => 5,
+    EqualEqual => 5,
+    Bang => 5,
+    Less => 5,
+    Greater => 5,
+    BangEqual => 5,
+    LessEqual => 5,
+    GreaterEqual => 5,
+    Amp => 5,
+    Pipe => 5,
+    Caret => 5,
+    AmpAmp => 5,
+    PipePipe => 5,
+    LessLess => 5,
+    GreaterGreater => 5,
+    Arrow => 5,
+    FatArrow => 5,
+    Plus => 5,
+    Minus => 5,
+    Star => 5,
+    Slash => 5,
+    Percent => 5,
+    EndOfFile => 6,
+    Unknown(_) => 7,
+  }
+}
+
+pub fn kind_is_identifier(kind: TokenKind) -> bool {
+  return kind_class_score(kind) == 1;
+}
+
+pub fn kind_is_number(kind: TokenKind) -> bool {
+  return kind_class_score(kind) == 2;
+}
+
+pub fn kind_is_whitespace(kind: TokenKind) -> bool {
+  return kind_class_score(kind) == 3;
+}
+
+pub fn kind_is_punctuation(kind: TokenKind) -> bool {
+  return kind_class_score(kind) == 4;
+}
+
+pub fn kind_is_operator(kind: TokenKind) -> bool {
+  return kind_class_score(kind) == 5;
+}
+
+pub fn kind_is_eof(kind: TokenKind) -> bool {
+  return kind_class_score(kind) == 6;
+}
+
+pub fn kind_is_unknown(kind: TokenKind) -> bool {
+  return kind_class_score(kind) == 7;
 }

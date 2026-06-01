@@ -95,6 +95,11 @@ compiler feature in the normal focused-test workflow.
 - `compiler/lexer.ari` classifies `[` and `]` as punctuation so generic
   argument and future indexing tokens no longer fall through the unknown-token
   path.
+- `compiler/token.ari` centralizes token-kind class queries so lexer cursor
+  helpers do not need to repeat a full token-kind match for every public query.
+- `compiler/lexer.ari` classifies `"` as punctuation so string-literal
+  delimiter tokenization can start without falling through the unknown-token
+  path.
 - `compiler/lexer.ari` classifies simple one-character operators separately
   from unknown characters and exposes operator queries at the cursor and
   handoff boundary.
@@ -404,6 +409,11 @@ policy in ad hoc compiler files.
   is punctuation, not an operator or unknown token.
 - Added focused `[` and `]` punctuation tokens and source-root smoke coverage
   that they are punctuation, not operators or unknown tokens.
+- Centralized token-kind class queries in `compiler/token.ari` and routed
+  lexer cursor classification helpers through those shared predicates instead
+  of repeating full token-kind matches in `compiler/lexer.ari`.
+- Added a focused `"` delimiter token and source-root smoke coverage that it is
+  punctuation, not an operator or unknown token.
 - Added a focused `::` path separator token and source-root smoke coverage that
   it falls back to the one-character colon token when the second character does
   not match.
@@ -541,13 +551,13 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a focused lexer one-character double-quote delimiter token and smoke for
-  `"`, so string-literal tokenization can start.
+- Add a focused lexer one-character question-mark operator token and smoke for
+  `?`, so result-propagation tokenization can start.
 
 ## Next Recommended Task
 
-Add a focused lexer one-character double-quote delimiter token and smoke for
-`"`, so string-literal tokenization can start.
+Add a focused lexer one-character question-mark operator token and smoke for
+`?`, so result-propagation tokenization can start.
 
 ## Local Validation
 
@@ -706,6 +716,10 @@ smoke checked `->` tokenization plus the one-character minus fallback path
 without requiring a hosted compiler fix. The consolidated `scan_two` smoke
 path checked the same two-character token spans and fallback cases without
 requiring a hosted compiler fix.
+The token-kind class helper refactor checked through the bootstrap source root
+without requiring a hosted compiler fix. The lexer double-quote delimiter smoke
+checked `"` tokenization as punctuation without requiring a hosted compiler
+fix.
 The growing source-root fixture did expose allocation-capacity runtime traps
 while reading the file smoke; this is fixed locally with explicit `zone(65536)`
 allocation blocks and is recorded as allocation-policy pressure rather than a

@@ -92,6 +92,9 @@ pub fn classify_one(value: char) -> token::TokenKind {
   if value == '.' {
     return token::Dot;
   }
+  if value == '"' {
+    return token::DoubleQuote;
+  }
   if value == '=' {
     return token::Equal;
   }
@@ -230,6 +233,9 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
     Dot => {
       return Scanned(token::make_token(token::Dot, offset, offset + 1));
     }
+    DoubleQuote => {
+      return Scanned(token::make_token(token::DoubleQuote, offset, offset + 1));
+    }
     Equal => {
       return Scanned(token::make_token(token::Equal, offset, offset + 1));
     }
@@ -351,304 +357,31 @@ pub fn cursor_token_score(cursor: TokenCursor) -> i64 {
 }
 
 pub fn cursor_is_identifier(cursor: TokenCursor) -> bool {
-  match cursor.current.kind {
-    Identifier => true,
-    Number => false,
-    Whitespace => false,
-    LeftParen => false,
-    RightParen => false,
-    LeftBrace => false,
-    RightBrace => false,
-    LeftBracket => false,
-    RightBracket => false,
-    Comma => false,
-    Colon => false,
-    ColonColon => false,
-    Semicolon => false,
-    Dot => false,
-    Equal => false,
-    EqualEqual => false,
-    Bang => false,
-    Less => false,
-    Greater => false,
-    BangEqual => false,
-    LessEqual => false,
-    GreaterEqual => false,
-    Amp => false,
-    Pipe => false,
-    Caret => false,
-    AmpAmp => false,
-    PipePipe => false,
-    LessLess => false,
-    GreaterGreater => false,
-    Arrow => false,
-    FatArrow => false,
-    Plus => false,
-    Minus => false,
-    Star => false,
-    Slash => false,
-    Percent => false,
-    EndOfFile => false,
-    Unknown(_) => false,
-  }
+  return token::kind_is_identifier(cursor.current.kind);
 }
 
 pub fn cursor_is_number(cursor: TokenCursor) -> bool {
-  match cursor.current.kind {
-    Identifier => false,
-    Number => true,
-    Whitespace => false,
-    LeftParen => false,
-    RightParen => false,
-    LeftBrace => false,
-    RightBrace => false,
-    LeftBracket => false,
-    RightBracket => false,
-    Comma => false,
-    Colon => false,
-    ColonColon => false,
-    Semicolon => false,
-    Dot => false,
-    Equal => false,
-    EqualEqual => false,
-    Bang => false,
-    Less => false,
-    Greater => false,
-    BangEqual => false,
-    LessEqual => false,
-    GreaterEqual => false,
-    Amp => false,
-    Pipe => false,
-    Caret => false,
-    AmpAmp => false,
-    PipePipe => false,
-    LessLess => false,
-    GreaterGreater => false,
-    Arrow => false,
-    FatArrow => false,
-    Plus => false,
-    Minus => false,
-    Star => false,
-    Slash => false,
-    Percent => false,
-    EndOfFile => false,
-    Unknown(_) => false,
-  }
+  return token::kind_is_number(cursor.current.kind);
 }
 
 pub fn cursor_is_whitespace(cursor: TokenCursor) -> bool {
-  match cursor.current.kind {
-    Identifier => false,
-    Number => false,
-    Whitespace => true,
-    LeftParen => false,
-    RightParen => false,
-    LeftBrace => false,
-    RightBrace => false,
-    LeftBracket => false,
-    RightBracket => false,
-    Comma => false,
-    Colon => false,
-    ColonColon => false,
-    Semicolon => false,
-    Dot => false,
-    Equal => false,
-    EqualEqual => false,
-    Bang => false,
-    Less => false,
-    Greater => false,
-    BangEqual => false,
-    LessEqual => false,
-    GreaterEqual => false,
-    Amp => false,
-    Pipe => false,
-    Caret => false,
-    AmpAmp => false,
-    PipePipe => false,
-    LessLess => false,
-    GreaterGreater => false,
-    Arrow => false,
-    FatArrow => false,
-    Plus => false,
-    Minus => false,
-    Star => false,
-    Slash => false,
-    Percent => false,
-    EndOfFile => false,
-    Unknown(_) => false,
-  }
+  return token::kind_is_whitespace(cursor.current.kind);
 }
 
 pub fn cursor_is_eof(cursor: TokenCursor) -> bool {
-  match cursor.current.kind {
-    Identifier => false,
-    Number => false,
-    Whitespace => false,
-    LeftParen => false,
-    RightParen => false,
-    LeftBrace => false,
-    RightBrace => false,
-    LeftBracket => false,
-    RightBracket => false,
-    Comma => false,
-    Colon => false,
-    ColonColon => false,
-    Semicolon => false,
-    Dot => false,
-    Equal => false,
-    EqualEqual => false,
-    Bang => false,
-    Less => false,
-    Greater => false,
-    BangEqual => false,
-    LessEqual => false,
-    GreaterEqual => false,
-    Amp => false,
-    Pipe => false,
-    Caret => false,
-    AmpAmp => false,
-    PipePipe => false,
-    LessLess => false,
-    GreaterGreater => false,
-    Arrow => false,
-    FatArrow => false,
-    Plus => false,
-    Minus => false,
-    Star => false,
-    Slash => false,
-    Percent => false,
-    EndOfFile => true,
-    Unknown(_) => false,
-  }
+  return token::kind_is_eof(cursor.current.kind);
 }
 
 pub fn cursor_is_unknown(cursor: TokenCursor) -> bool {
-  match cursor.current.kind {
-    Identifier => false,
-    Number => false,
-    Whitespace => false,
-    LeftParen => false,
-    RightParen => false,
-    LeftBrace => false,
-    RightBrace => false,
-    LeftBracket => false,
-    RightBracket => false,
-    Comma => false,
-    Colon => false,
-    ColonColon => false,
-    Semicolon => false,
-    Dot => false,
-    Equal => false,
-    EqualEqual => false,
-    Bang => false,
-    Less => false,
-    Greater => false,
-    BangEqual => false,
-    LessEqual => false,
-    GreaterEqual => false,
-    Amp => false,
-    Pipe => false,
-    Caret => false,
-    AmpAmp => false,
-    PipePipe => false,
-    LessLess => false,
-    GreaterGreater => false,
-    Arrow => false,
-    FatArrow => false,
-    Plus => false,
-    Minus => false,
-    Star => false,
-    Slash => false,
-    Percent => false,
-    EndOfFile => false,
-    Unknown(_) => true,
-  }
+  return token::kind_is_unknown(cursor.current.kind);
 }
 
 pub fn cursor_is_punctuation(cursor: TokenCursor) -> bool {
-  match cursor.current.kind {
-    Identifier => false,
-    Number => false,
-    Whitespace => false,
-    LeftParen => true,
-    RightParen => true,
-    LeftBrace => true,
-    RightBrace => true,
-    LeftBracket => true,
-    RightBracket => true,
-    Comma => true,
-    Colon => true,
-    ColonColon => true,
-    Semicolon => true,
-    Dot => true,
-    Equal => false,
-    EqualEqual => false,
-    Bang => false,
-    Less => false,
-    Greater => false,
-    BangEqual => false,
-    LessEqual => false,
-    GreaterEqual => false,
-    Amp => false,
-    Pipe => false,
-    Caret => false,
-    AmpAmp => false,
-    PipePipe => false,
-    LessLess => false,
-    GreaterGreater => false,
-    Arrow => false,
-    FatArrow => false,
-    Plus => false,
-    Minus => false,
-    Star => false,
-    Slash => false,
-    Percent => false,
-    EndOfFile => false,
-    Unknown(_) => false,
-  }
+  return token::kind_is_punctuation(cursor.current.kind);
 }
 
 pub fn cursor_is_operator(cursor: TokenCursor) -> bool {
-  match cursor.current.kind {
-    Identifier => false,
-    Number => false,
-    Whitespace => false,
-    LeftParen => false,
-    RightParen => false,
-    LeftBrace => false,
-    RightBrace => false,
-    LeftBracket => false,
-    RightBracket => false,
-    Comma => false,
-    Colon => false,
-    ColonColon => false,
-    Semicolon => false,
-    Dot => false,
-    Equal => true,
-    EqualEqual => true,
-    Bang => true,
-    Less => true,
-    Greater => true,
-    BangEqual => true,
-    LessEqual => true,
-    GreaterEqual => true,
-    Amp => true,
-    Pipe => true,
-    Caret => true,
-    AmpAmp => true,
-    PipePipe => true,
-    LessLess => true,
-    GreaterGreater => true,
-    Arrow => true,
-    FatArrow => true,
-    Plus => true,
-    Minus => true,
-    Star => true,
-    Slash => true,
-    Percent => true,
-    EndOfFile => false,
-    Unknown(_) => false,
-  }
+  return token::kind_is_operator(cursor.current.kind);
 }
 
 pub fn stream_from_one(value: char, offset: i64) -> TokenStream {
