@@ -99,7 +99,7 @@ pub fn run() -> std::Result[i64, i64] {
 
 pub fn run_from_context() -> std::Result[i64, i64] {
   if std::context::has_arg(1) {
-    zone(32768) {
+    zone(65536) {
       let path = std::context::arg(1);
       return run_file(path.as_slice());
     }

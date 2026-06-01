@@ -115,6 +115,9 @@ compiler feature in the normal focused-test workflow.
 - `compiler/lexer.ari` exposes a two-character logical operator helper so
   early smokes can distinguish `&&` and `||` from their one-character bitwise
   fallback tokens.
+- `compiler/lexer.ari` exposes a two-character shift operator helper so early
+  smokes can distinguish `<<` and `>>` from their one-character comparison
+  fallback tokens.
 - `compiler/ast.ari` now models minimal span-carrying token, statement, error,
   and missing output nodes.
 - `compiler/ast.ari` exposes a statement-kind query helper so parser payload
@@ -276,7 +279,7 @@ compiler feature in the normal focused-test workflow.
 - The bootstrap source-root smoke covers the current empty source-text driver
   path and checks that text-input validation preserves driver error code
   `1101`.
-- File-input smoke paths use explicit `zone(32768)` allocation blocks because
+- File-input smoke paths use explicit `zone(65536)` allocation blocks because
   the source-root fixture is now large enough to exceed the default zone
   capacity when read into an owned string.
 - The bootstrap source-root smoke now covers both valid loaded-source handoff
@@ -429,6 +432,9 @@ policy in ad hoc compiler files.
 - Added focused `&&` and `||` logical operator tokens and source-root smoke
   coverage that they fall back to one-character bitwise tokens when the second
   character does not match.
+- Added focused `<<` and `>>` shift operator tokens and source-root smoke
+  coverage that they fall back to one-character comparison tokens when the
+  second character does not match.
 - Added token-kind query helpers for the lexer/parser boundary and a tiny parser
   handoff classification score.
 - Moved the test-like entry arithmetic out of `compiler/main.ari` into a
@@ -522,21 +528,23 @@ policy in ad hoc compiler files.
   `Ok(0)` payload through `result_code(driver::run_input(...))`.
 - Added a focused source-text driver success smoke that checks the internal
   `Ok(0)` payload through `result_code(driver::run_source_text(...))`.
-- Switched file-input smoke allocation blocks to explicit `zone(32768)` after
-  the growing source-root fixture exceeded the default zone capacity at
-  runtime.
+- Raised file-input smoke allocation blocks to explicit `zone(65536)` after
+  the growing source-root fixture exceeded the previous explicit zone capacity
+  at runtime.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add focused lexer two-character shift operator helpers and smokes for `<<`
-  and `>>`, reusing one-character comparison operator tokens as fallback paths.
+- Add a focused lexer two-character arrow helper and smoke for `->`, reusing
+  the one-character minus operator as the fallback path, so function-signature
+  tokenization can start.
 
 ## Next Recommended Task
 
-Add focused lexer two-character shift operator helpers and smokes for `<<` and
-`>>`, reusing one-character comparison operator tokens as fallback paths.
+Add a focused lexer two-character arrow helper and smoke for `->`, reusing the
+one-character minus operator as the fallback path, so function-signature
+tokenization can start.
 
 ## Local Validation
 
@@ -680,11 +688,13 @@ paths without requiring a hosted compiler fix. The lexer one-character bitwise
 operator smoke checked `&`, `|`, and `^` tokenization without requiring a
 hosted compiler fix. The lexer two-character logical operator smoke checked
 `&&` and `||` tokenization plus one-character bitwise fallback paths without
-requiring a hosted compiler fix.
-The growing source-root fixture did expose a default-zone capacity runtime trap
-while reading the file smoke; this was fixed locally with explicit
-`zone(32768)` allocation blocks and is recorded as allocation-policy pressure
-rather than a confirmed hosted compiler bug.
+requiring a hosted compiler fix. The lexer two-character shift operator smoke
+checked `<<` and `>>` tokenization plus one-character comparison fallback paths
+without requiring a hosted compiler fix.
+The growing source-root fixture did expose allocation-capacity runtime traps
+while reading the file smoke; this is fixed locally with explicit `zone(65536)`
+allocation blocks and is recorded as allocation-policy pressure rather than a
+confirmed hosted compiler bug.
 
 This slice also showed that reusing the same payload binding name across
 `std::Result` match arms is rejected as local shadowing/redeclaration. The

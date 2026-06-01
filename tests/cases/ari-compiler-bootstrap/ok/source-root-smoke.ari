@@ -6,13 +6,13 @@ mod parser;
 mod driver;
 
 fn file_driver_score() -> i64 {
-  zone(32768) {
+  zone(65536) {
     return driver::exit_code(driver::run_file("tests/cases/ari-compiler-bootstrap/ok/source-root-smoke.ari"));
   }
 }
 
 fn file_driver_result_score() -> i64 {
-  zone(32768) {
+  zone(65536) {
     return driver::result_code(driver::run_file(
       "tests/cases/ari-compiler-bootstrap/ok/source-root-smoke.ari"
     ));
@@ -20,7 +20,7 @@ fn file_driver_result_score() -> i64 {
 }
 
 fn missing_file_driver_score() -> i64 {
-  zone(32768) {
+  zone(65536) {
     return driver::result_code(driver::run_file(
       "tests/cases/ari-compiler-bootstrap/missing-input.ari"
     ));
@@ -28,13 +28,13 @@ fn missing_file_driver_score() -> i64 {
 }
 
 fn empty_source_text_driver_score() -> i64 {
-  zone(32768) {
+  zone(65536) {
     return driver::result_code(driver::run_source_text(std::string::empty()));
   }
 }
 
 fn source_text_driver_score() -> i64 {
-  zone(32768) {
+  zone(65536) {
     return driver::result_code(driver::run_source_text(std::string::from("p")));
   }
 }
@@ -355,6 +355,41 @@ fn lexer_logical_operator_span_score() -> i64 {
   return 0;
 }
 
+fn lexer_shift_operator_span_score() -> i64 {
+  let left = lexer::cursor_from_shift_two('<', 190, '<');
+  if !lexer::cursor_is_operator(left) {
+    return 1;
+  }
+  if lexer::cursor_token_start(left) != 190 {
+    return 2;
+  }
+  if lexer::cursor_token_end(left) != 192 {
+    return 3;
+  }
+  if lexer::cursor_token_score(left) != 44 {
+    return 4;
+  }
+  let right = lexer::cursor_from_shift_two('>', 200, '>');
+  if lexer::cursor_token_end(right) != 202 {
+    return 5;
+  }
+  if lexer::cursor_token_score(right) != 45 {
+    return 6;
+  }
+  let less_fallback = lexer::cursor_from_shift_two('<', 210, '+');
+  if lexer::cursor_token_end(less_fallback) != 211 {
+    return 7;
+  }
+  if lexer::cursor_token_score(less_fallback) != 23 {
+    return 8;
+  }
+  let greater_fallback = lexer::cursor_from_shift_two('>', 220, '+');
+  if lexer::cursor_token_score(greater_fallback) != 24 {
+    return 9;
+  }
+  return 0;
+}
+
 fn parse_success_score() -> i64 {
   if !parser::parse_is_success(parser::parse_one('q', 1)) {
     return 1;
@@ -565,6 +600,7 @@ fn main() -> i64 {
     lexer_equality_operator_score() +
     lexer_comparison_operator_span_score() +
     lexer_logical_operator_span_score() +
+    lexer_shift_operator_span_score() +
     ast::node_score(ast::token_node(3, 2, 5, 8)) -
     12 +
     parser::parse_score(parser::parse_one('q', 1)) +
