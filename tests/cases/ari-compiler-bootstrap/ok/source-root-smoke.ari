@@ -207,6 +207,18 @@ fn source_text_leading_comment_unsupported_number_suffix_driver_score() -> i64 {
   return 0;
 }
 
+fn source_text_leading_comment_non_decimal_float_suffix_driver_score() -> i64 {
+  let line_code = source_text_driver_result("// skip\n0b1010f32");
+  if line_code != 1012 {
+    return 1;
+  }
+  let block_code = source_text_driver_result("/* skip */0b1010f32");
+  if block_code != 1012 {
+    return 2;
+  }
+  return 0;
+}
+
 fn source_text_trailing_comment_driver_score() -> i64 {
   let line_code = source_text_driver_result("p// skip");
   if line_code != 0 {
@@ -1884,6 +1896,18 @@ fn lexer_leading_comment_unsupported_number_suffix_handoff_score() -> i64 {
     return score;
   }
   score = lexer_handoff_failure_case_score("/* skip */42abc", 1011, 12, 15);
+  if score != 0 {
+    return 10 + score;
+  }
+  return 0;
+}
+
+fn lexer_leading_comment_non_decimal_float_suffix_handoff_score() -> i64 {
+  var score = lexer_handoff_failure_case_score("// skip\n0b1010f32", 1012, 14, 17);
+  if score != 0 {
+    return score;
+  }
+  score = lexer_handoff_failure_case_score("/* skip */0b1010f32", 1012, 16, 19);
   if score != 0 {
     return 10 + score;
   }
@@ -3663,6 +3687,18 @@ fn parse_leading_comment_unsupported_number_suffix_failure_score() -> i64 {
   return 0;
 }
 
+fn parse_leading_comment_non_decimal_float_suffix_failure_score() -> i64 {
+  var score = parse_lexer_failure_code_case_score("// skip\n0b1010f32", 1012, 14, 17);
+  if score != 0 {
+    return score;
+  }
+  score = parse_lexer_failure_code_case_score("/* skip */0b1010f32", 1012, 16, 19);
+  if score != 0 {
+    return 10 + score;
+  }
+  return 0;
+}
+
 fn parse_post_comment_lexer_failure_score() -> i64 {
   var score = parse_lexer_failure_case_score("name// skip\n\"open", 12, 17);
   if score != 0 {
@@ -4103,6 +4139,7 @@ fn main() -> i64 {
     source_text_leading_comment_missing_base_digit_driver_score() +
     source_text_leading_comment_invalid_base_digit_driver_score() +
     source_text_leading_comment_unsupported_number_suffix_driver_score() +
+    source_text_leading_comment_non_decimal_float_suffix_driver_score() +
     source_text_trailing_comment_driver_score() +
     source_text_trailing_unterminated_block_driver_score() +
     source_text_post_comment_extra_token_driver_score() +
@@ -4177,6 +4214,8 @@ fn main() -> i64 {
     lexer_leading_comment_invalid_base_digit_handoff_score() +
     parse_leading_comment_unsupported_number_suffix_failure_score() +
     lexer_leading_comment_unsupported_number_suffix_handoff_score() +
+    parse_leading_comment_non_decimal_float_suffix_failure_score() +
+    lexer_leading_comment_non_decimal_float_suffix_handoff_score() +
     parse_leading_comment_extra_token_failure_score() +
     lexer_leading_comment_extra_token_handoff_score() +
     parse_post_comment_extra_token_failure_score() +

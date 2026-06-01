@@ -526,15 +526,18 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   before a statement token, checking line and block comments followed by
   `42abc` through lexer handoff, parser, keyword-table parser, and driver
   paths.
+- Added source-text leading-comment non-decimal float-suffix diagnostics before
+  a statement token, checking line and block comments followed by `0b1010f32`
+  through lexer handoff, parser, keyword-table parser, and driver paths.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add source-text leading-comment non-decimal float-suffix diagnostics before a
+- Add source-text leading-comment non-decimal float-dot diagnostics before a
   statement token.
 
 ## Next Recommended Task
 
-Add source-text leading-comment non-decimal float-suffix diagnostics before a
+Add source-text leading-comment non-decimal float-dot diagnostics before a
 statement token.
