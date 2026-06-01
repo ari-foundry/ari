@@ -1318,6 +1318,17 @@ fn lexer_keyword_score() -> i64 {
       7,
       "while",
       'w'
+    ) +
+    lexer_keyword_case_with_base_score(
+      1100,
+      "init name",
+      4,
+      95,
+      "initial",
+      7,
+      8,
+      "init",
+      'i'
     );
 }
 

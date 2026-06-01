@@ -83,6 +83,10 @@ fn identifier_kind_from_text(text: std::Slice[u8], start: i64, end: i64) -> toke
       text[start + 2] == 's' && text[start + 3] == 'e' {
       return token::KwElse;
     }
+    if text[start] == 'i' && text[start + 1] == 'n' &&
+      text[start + 2] == 'i' && text[start + 3] == 't' {
+      return token::KwInit;
+    }
   }
   if width == 5 {
     if text[start] == 'w' && text[start + 1] == 'h' && text[start + 2] == 'i' &&
@@ -546,6 +550,9 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
     }
     KwWhile => {
       return Scanned(token::make_token(token::KwWhile, offset, offset + 5));
+    }
+    KwInit => {
+      return Scanned(token::make_token(token::KwInit, offset, offset + 4));
     }
     EndOfFile => {
       return Scanned(token::make_token(token::EndOfFile, offset, offset));
