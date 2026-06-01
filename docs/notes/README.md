@@ -10,5 +10,9 @@ the way it does.
 ## Notes
 
 - [Ari-Written Compiler](ari-written-compiler.md)
+- [Ari-Written Compiler Status](ari-written-compiler-status.md)
+- [Ari-Written Compiler Roadmap](ari-written-compiler-roadmap.md)
+- [Ari-Written Compiler Tasks](ari-written-compiler-tasks.md)
+- [Ari-Written Compiler Validation And Follow-Ups](ari-written-compiler-validation.md)
 - [Codex Project Notes](codex-notes.md)
 - [Memory Direction Notes](memory-direction.md)

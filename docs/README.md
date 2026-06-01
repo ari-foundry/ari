@@ -23,8 +23,12 @@ you are doing, then follow links only when you need deeper detail.
   [Compiler Readiness Inventory](dev/compiler-readiness-inventory.md), then
   [Roadmap](dev/roadmap.md).
 - Ari-written compiler source work:
-  [Ari-Written Compiler](notes/ari-written-compiler.md), then the source files
-  directly under `compiler/`.
+  [Ari-Written Compiler](notes/ari-written-compiler.md), then its temporary
+  split-out [status](notes/ari-written-compiler-status.md),
+  [roadmap](notes/ari-written-compiler-roadmap.md),
+  [tasks](notes/ari-written-compiler-tasks.md), and
+  [validation/follow-up](notes/ari-written-compiler-validation.md) notes, then
+  the source files directly under `compiler/`.
 
 ## Language Docs
 
@@ -128,6 +132,10 @@ Use these for design direction and handoff context:
 
 - [Notes Overview](notes/README.md)
 - [Ari-Written Compiler](notes/ari-written-compiler.md)
+- [Ari-Written Compiler Status](notes/ari-written-compiler-status.md)
+- [Ari-Written Compiler Roadmap](notes/ari-written-compiler-roadmap.md)
+- [Ari-Written Compiler Tasks](notes/ari-written-compiler-tasks.md)
+- [Ari-Written Compiler Validation And Follow-Ups](notes/ari-written-compiler-validation.md)
 - [Codex Project Notes](notes/codex-notes.md)
 - [Memory Direction Notes](notes/memory-direction.md)
 

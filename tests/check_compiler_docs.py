@@ -46,6 +46,10 @@ def main() -> int:
         "[Compiler Readiness Inventory](dev/compiler-readiness-inventory.md)",
         "[Roadmap](dev/roadmap.md)",
         "[Ari-Written Compiler](notes/ari-written-compiler.md)",
+        "[status](notes/ari-written-compiler-status.md)",
+        "[roadmap](notes/ari-written-compiler-roadmap.md)",
+        "[tasks](notes/ari-written-compiler-tasks.md)",
+        "[validation/follow-up](notes/ari-written-compiler-validation.md)",
     ]:
         require(docs_index, needle, docs_index_path)
 
@@ -110,6 +114,12 @@ def main() -> int:
         "`compiler/` is the Ari-written compiler source root",
         "There is no `compiler/src/`",
         "The existing C++ compiler remains stage0.",
+        "## Temporary Split",
+        "These split-out bootstrap notes are temporary.",
+        "[Status](ari-written-compiler-status.md)",
+        "[Roadmap](ari-written-compiler-roadmap.md)",
+        "[Tasks](ari-written-compiler-tasks.md)",
+        "[Validation And Follow-Ups](ari-written-compiler-validation.md)",
         "## Current Status",
         "## Incremental Roadmap",
         "## Phase Architecture",
@@ -122,9 +132,61 @@ def main() -> int:
         "## Stage0 Host Compiler Follow-Ups",
         "make check-ari-compiler-bootstrap",
         "`tests/cases/ari-compiler-bootstrap/`",
-        "Confirmed host compiler bugs from this bootstrap slice: none.",
+        "Confirmed host compiler bugs from this bootstrap slice are tracked there",
     ]:
         require(ari_written, needle, ari_written_path)
+
+    ari_status_path = "docs/notes/ari-written-compiler-status.md"
+    ari_status = read(ari_status_path)
+    for needle in [
+        "# Ari-Written Compiler Status",
+        "temporary split-out note",
+        "## Current Status",
+        "`compiler/` has been started as a direct Ari source root.",
+        "KeywordTable",
+        "make check-ari-compiler-bootstrap",
+        "`tests/cases/ari-compiler-bootstrap/`",
+    ]:
+        require(ari_status, needle, ari_status_path)
+
+    ari_roadmap_path = "docs/notes/ari-written-compiler-roadmap.md"
+    ari_roadmap = read(ari_roadmap_path)
+    for needle in [
+        "# Ari-Written Compiler Roadmap",
+        "temporary split-out note",
+        "## Incremental Roadmap",
+        "## Phase Architecture",
+        "Do not blindly copy the current C++ hosted compiler architecture.",
+        "## Future Package Manager Transition",
+        "package manager",
+    ]:
+        require(ari_roadmap, needle, ari_roadmap_path)
+
+    ari_tasks_path = "docs/notes/ari-written-compiler-tasks.md"
+    ari_tasks = read(ari_tasks_path)
+    for needle in [
+        "# Ari-Written Compiler Tasks",
+        "temporary split-out note",
+        "## Completed Tasks",
+        "## Small Task Queue",
+        "## Next Recommended Task",
+        "Backfill reusable keyword-table smoke coverage for existing `let`",
+    ]:
+        require(ari_tasks, needle, ari_tasks_path)
+
+    ari_validation_path = "docs/notes/ari-written-compiler-validation.md"
+    ari_validation = read(ari_validation_path)
+    for needle in [
+        "# Ari-Written Compiler Validation And Follow-Ups",
+        "temporary split-out note",
+        "## Local Validation",
+        "## Known Blockers",
+        "## Stage0 Host Compiler Follow-Ups",
+        "make check-ari-compiler-bootstrap",
+        "`tests/cases/ari-compiler-bootstrap/`",
+        "Confirmed host compiler bugs from this bootstrap slice: none.",
+    ]:
+        require(ari_validation, needle, ari_validation_path)
 
     for path in [
         docs_index_path,
