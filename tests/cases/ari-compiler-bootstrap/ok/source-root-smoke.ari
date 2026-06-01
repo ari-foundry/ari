@@ -47,7 +47,7 @@ fn source_text_extra_token_driver_score() -> i64 {
 
 fn source_text_keyword_driver_score() -> i64 {
   zone(65536) {
-    return driver::result_code(driver::run_source_text(std::string::from("var")));
+    return driver::result_code(driver::run_source_text(std::string::from("own")));
   }
 }
 
@@ -1757,6 +1757,25 @@ fn lexer_keyword_table_score() -> i64 {
     score = 76;
   }
 
+  let own_keyword = lexer::cursor_from_text_with_keywords(ref table, "own", 0);
+  if score == 0 && !lexer::cursor_is_keyword(own_keyword) {
+    score = 77;
+  }
+  if score == 0 && lexer::cursor_token_score(own_keyword) != 86 {
+    score = 78;
+  }
+  if score == 0 && lexer::cursor_token_end(own_keyword) != 3 {
+    score = 79;
+  }
+
+  let own_longer = lexer::cursor_from_text_with_keywords(ref table, "owner", 0);
+  if score == 0 && !lexer::cursor_is_identifier(own_longer) {
+    score = 80;
+  }
+  if score == 0 && lexer::cursor_is_keyword(own_longer) {
+    score = 81;
+  }
+
   std::zone::destroy(zone);
   return score;
 }
@@ -1828,6 +1847,9 @@ fn parse_text_score() -> i64 {
     }
     if parser::parse_failure_code(parser::parse_text_with_keywords("var")) != 2006 {
       return 22;
+    }
+    if parser::parse_failure_code(parser::parse_text_with_keywords("own")) != 2006 {
+      return 23;
     }
   }
   return 0;

@@ -331,6 +331,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Backfilled reusable keyword-table smoke coverage for existing `KwVar`, with
   focused smokes for exact `var`, longer `variant`, and the table-backed
   parser/driver keyword path.
+- Backfilled reusable keyword-table smoke coverage for existing `KwOwn`, with
+  focused smokes for exact `own`, longer `owner`, and the table-backed
+  parser/driver keyword path.
 - Added a one-token file-input fixture for the compiled `compiler/main.ari`
   bootstrap run, so file input uses real loaded text without pretending the
   larger source-root smoke fixture is already parseable as a full Ari program.
@@ -342,10 +345,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Backfill reusable keyword-table smoke coverage for existing `own`, preserving
-  longer identifiers such as `owner`.
+- Backfill reusable keyword-table smoke coverage for existing `ref`, preserving
+  longer identifiers such as `reference`.
 
 ## Next Recommended Task
 
-Backfill reusable keyword-table smoke coverage for existing `own`, preserving
-longer identifiers such as `owner`.
+Backfill reusable keyword-table smoke coverage for existing `ref`, preserving
+longer identifiers such as `reference`.
