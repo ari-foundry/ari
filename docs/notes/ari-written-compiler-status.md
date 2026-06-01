@@ -73,6 +73,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/lexer.ari` treats source-text line comments and nested block
   comments as whitespace spans, and reports unterminated block comments through
   the parser/driver source-text paths.
+- `compiler/lexer.ari` keeps carriage return inside CRLF line-comment spans,
+  matching stage0's line comment scanner.
 - `compiler/lexer.ari` classifies `@` as punctuation so attribute and alias
   marker tokenization no longer falls through the unknown-token path.
 - `compiler/lexer.ari` classifies simple one-character operators separately

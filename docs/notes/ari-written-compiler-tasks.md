@@ -471,15 +471,17 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   paths.
 - Added source-text carriage-return whitespace spans, matching stage0's
   whitespace skipper.
+- Added source-text CRLF line-comment span coverage, matching stage0's line
+  comment scan through carriage return before newline.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add source-text CRLF line-comment span coverage, matching stage0's line
-  comment scan through carriage return before newline.
+- Add source-text EOF line-comment span coverage, matching stage0's line
+  comment scan through end of input.
 
 ## Next Recommended Task
 
-Add source-text CRLF line-comment span coverage, matching stage0's line comment
-scan through carriage return before newline.
+Add source-text EOF line-comment span coverage, matching stage0's line comment
+scan through end of input.

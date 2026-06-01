@@ -130,7 +130,8 @@ diagnostics for byte `\x`, octal, fixed-width Unicode, and braced Unicode
 spellings without requiring a hosted compiler fix. It now also checks
 source-text line comment and nested block comment skipping as whitespace spans,
 plus unterminated block comment diagnostics preserved through parser and driver
-source-text paths, without requiring a hosted compiler fix.
+source-text paths, including CRLF line comments, without requiring a hosted
+compiler fix.
 The AST statement-kind query and parser payload-shape smoke checked successful
 statement output without requiring a hosted compiler fix. The AST node
 span-length query and parser payload-span smoke checked successful statement
@@ -446,4 +447,5 @@ Desired stage0 pressure that is not yet classified as a bug:
   direct and escaped byte spellings plus EOF after one direct byte payload.
   Direct non-ASCII byte character diagnostics now cover UTF-8 byte spellings.
   Carriage-return whitespace spans now match stage0's whitespace skipper.
-  CRLF line-comment span coverage is still pending.
+  CRLF line-comment spans now match stage0's line comment scanner. EOF
+  line-comment span coverage is still pending.
