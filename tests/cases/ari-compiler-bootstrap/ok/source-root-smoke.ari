@@ -92,6 +92,40 @@ fn lexer_stream_score() -> i64 {
   return 0;
 }
 
+fn lexer_punctuation_score() -> i64 {
+  if !lexer::cursor_is_punctuation(lexer::cursor_from_one('(', 10)) {
+    return 1;
+  }
+  if lexer::cursor_is_unknown(lexer::cursor_from_one('(', 10)) {
+    return 2;
+  }
+  if lexer::scan_result_score(lexer::scan_one_result('(', 10)) != 5 {
+    return 3;
+  }
+  if lexer::scan_score(')') != 6 {
+    return 4;
+  }
+  if lexer::scan_score('{') != 7 {
+    return 5;
+  }
+  if lexer::scan_score('}') != 8 {
+    return 6;
+  }
+  if lexer::scan_score(',') != 9 {
+    return 7;
+  }
+  if lexer::scan_score(':') != 10 {
+    return 8;
+  }
+  if lexer::scan_score(';') != 11 {
+    return 9;
+  }
+  if !lexer::handoff_starts_with_punctuation(lexer::handoff_from_one(';', 3)) {
+    return 10;
+  }
+  return 0;
+}
+
 fn parse_success_score() -> i64 {
   if !parser::parse_is_success(parser::parse_one('q', 1)) {
     return 1;
@@ -294,6 +328,7 @@ fn main() -> i64 {
     lexer::handoff_score(lexer::handoff_from_one('x', 6)) -
     16 +
     lexer_stream_score() +
+    lexer_punctuation_score() +
     ast::node_score(ast::token_node(3, 2, 5, 8)) -
     12 +
     parser::parse_score(parser::parse_one('q', 1)) +
