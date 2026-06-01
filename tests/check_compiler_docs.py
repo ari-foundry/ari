@@ -170,7 +170,7 @@ def main() -> int:
         "## Completed Tasks",
         "## Small Task Queue",
         "## Next Recommended Task",
-        "Add source-text string literal unterminated EOF/newline fallback smokes",
+        "Replace source-text string literal unterminated EOF/newline fallback",
     ]:
         require(ari_tasks, needle, ari_tasks_path)
 

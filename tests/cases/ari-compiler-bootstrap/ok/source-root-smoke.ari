@@ -541,6 +541,62 @@ fn lexer_string_literal_span_score() -> i64 {
   if lexer::cursor_token_start(after_escaped_quote) != 6 {
     return 18;
   }
+
+  let unclosed_eof_text: Slice[u8] = "\"open";
+  let unclosed_eof = lexer::cursor_from_text(unclosed_eof_text, 0);
+  if lexer::cursor_is_string_literal(unclosed_eof) {
+    return 19;
+  }
+  if !lexer::cursor_is_punctuation(unclosed_eof) {
+    return 20;
+  }
+  if lexer::cursor_token_end(unclosed_eof) != 1 {
+    return 21;
+  }
+  if lexer::cursor_token_score(unclosed_eof) != 30 {
+    return 22;
+  }
+  let after_unclosed_eof = lexer::cursor_advance_in_text(
+    unclosed_eof,
+    unclosed_eof_text
+  );
+  if !lexer::cursor_is_identifier(after_unclosed_eof) {
+    return 23;
+  }
+  if lexer::cursor_token_start(after_unclosed_eof) != 1 {
+    return 24;
+  }
+  if lexer::cursor_token_end(after_unclosed_eof) != 5 {
+    return 25;
+  }
+
+  let unclosed_newline_text: Slice[u8] = "\"open\nname";
+  let unclosed_newline = lexer::cursor_from_text(unclosed_newline_text, 0);
+  if lexer::cursor_is_string_literal(unclosed_newline) {
+    return 26;
+  }
+  if !lexer::cursor_is_punctuation(unclosed_newline) {
+    return 27;
+  }
+  if lexer::cursor_token_end(unclosed_newline) != 1 {
+    return 28;
+  }
+  if lexer::cursor_token_score(unclosed_newline) != 30 {
+    return 29;
+  }
+  let after_unclosed_newline = lexer::cursor_advance_in_text(
+    unclosed_newline,
+    unclosed_newline_text
+  );
+  if !lexer::cursor_is_identifier(after_unclosed_newline) {
+    return 30;
+  }
+  if lexer::cursor_token_start(after_unclosed_newline) != 1 {
+    return 31;
+  }
+  if lexer::cursor_token_end(after_unclosed_newline) != 5 {
+    return 32;
+  }
   return 0;
 }
 

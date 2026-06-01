@@ -116,7 +116,8 @@ a hosted compiler fix. The reusable keyword-table smoke checked `KwStruct`,
 `break1`, `drop1`, `forget1`, `null1`, `true1`, and `false1`, and the
 source-text parser/driver keyword path without requiring a hosted compiler fix.
 The source-text string literal span smoke checked closed quoted spans, escaped
-quote bytes, and empty quoted strings without requiring a hosted compiler fix.
+quote bytes, empty quoted strings, and current unterminated EOF/newline
+`DoubleQuote` fallback behavior without requiring a hosted compiler fix.
 The AST statement-kind query and parser payload-shape smoke checked successful
 statement output without requiring a hosted compiler fix. The AST node
 span-length query and parser payload-span smoke checked successful statement

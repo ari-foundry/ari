@@ -55,7 +55,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   path.
 - `compiler/lexer.ari` scans closed source-text quoted spans as
   `StringLiteral` tokens, including escaped quote bytes, while preserving the
-  one-character `DoubleQuote` delimiter path for one-character scans.
+  one-character `DoubleQuote` delimiter path for one-character scans and
+  currently falling back to `DoubleQuote` for unterminated EOF/newline text
+  until lexer diagnostics replace that temporary path.
 - `compiler/lexer.ari` classifies `@` as punctuation so attribute and alias
   marker tokenization no longer falls through the unknown-token path.
 - `compiler/lexer.ari` classifies simple one-character operators separately
