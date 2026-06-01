@@ -280,6 +280,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - The bootstrap source-root smoke checks source-text parser post-comment
   extra-token diagnostics after a statement token, including both line-comment
   and block-comment trivia before the second identifier.
+- The bootstrap source-root smoke checks source-text parser post-comment lexer
+  failure diagnostics after a statement token, including line-comment and
+  block-comment trivia before an unterminated string literal.
 - The bootstrap source-root smoke checks the parser unknown-token diagnostic
   code through `parser::parse_failure_code` instead of relying only on driver
   indirection or diagnostic smoke-score arithmetic.
@@ -377,6 +380,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - The bootstrap source-root smoke checks the source-text driver post-comment
   extra-token path and verifies skipped comments followed by another
   identifier preserve parser missing-EOF diagnostic code `2003`.
+- The bootstrap source-root smoke checks the source-text driver post-comment
+  lexer-failure path and verifies skipped comments followed by an unterminated
+  string preserve lexer diagnostic code `1004`.
 - The bootstrap source-root smoke covers the current `DriverInput` offset guard
   errors for both invalid start offsets and invalid one-byte end bounds through
   the scalar constructor helper.

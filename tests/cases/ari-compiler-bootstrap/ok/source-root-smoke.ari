@@ -99,6 +99,18 @@ fn source_text_post_comment_extra_token_driver_score() -> i64 {
   return 0;
 }
 
+fn source_text_post_comment_lexer_failure_driver_score() -> i64 {
+  let line_code = source_text_driver_result("p// skip\n\"open");
+  if line_code != 1004 {
+    return 1;
+  }
+  let block_code = source_text_driver_result("p/* skip */\"open");
+  if block_code != 1004 {
+    return 2;
+  }
+  return 0;
+}
+
 fn source_text_keyword_driver_score() -> i64 {
   zone(65536) {
     return driver::result_code(driver::run_source_text(std::string::from("false")));
@@ -1647,6 +1659,18 @@ fn lexer_trailing_unterminated_block_handoff_score() -> i64 {
   return 0;
 }
 
+fn lexer_post_comment_lexer_failure_handoff_score() -> i64 {
+  var score = lexer_handoff_failure_case_score("name// skip\n\"open", 1004, 12, 17);
+  if score != 0 {
+    return score;
+  }
+  score = lexer_handoff_failure_case_score("name/* skip */\"open", 1004, 14, 19);
+  if score != 0 {
+    return 10 + score;
+  }
+  return 0;
+}
+
 fn lexer_at_punctuation_score() -> i64 {
   let at = lexer::cursor_from_one('@', 73);
   if !lexer::cursor_is_punctuation(at) {
@@ -2953,6 +2977,40 @@ fn parse_post_comment_extra_token_failure_score() -> i64 {
   return 0;
 }
 
+fn parse_post_comment_lexer_failure_case_score(
+  text: Slice[u8],
+  expected_start: i64,
+  expected_end: i64
+) -> i64 {
+  let parsed = parser::parse_text(text);
+  if parser::parse_failure_code(parsed) != 1004 {
+    return 1;
+  }
+  if parser::parse_failure_start_offset(parsed) != expected_start {
+    return 2;
+  }
+  if parser::parse_failure_end_offset(parsed) != expected_end {
+    return 3;
+  }
+  let keyword_score = parser_keyword_failure_case_score(text, 1004, expected_start, expected_end);
+  if keyword_score != 0 {
+    return 3 + keyword_score;
+  }
+  return 0;
+}
+
+fn parse_post_comment_lexer_failure_score() -> i64 {
+  var score = parse_post_comment_lexer_failure_case_score("name// skip\n\"open", 12, 17);
+  if score != 0 {
+    return score;
+  }
+  score = parse_post_comment_lexer_failure_case_score("name/* skip */\"open", 14, 19);
+  if score != 0 {
+    return 10 + score;
+  }
+  return 0;
+}
+
 fn parse_text_score() -> i64 {
   if !parser::parse_is_success(parser::parse_text("name9")) {
     return 1;
@@ -3372,6 +3430,7 @@ fn main() -> i64 {
     source_text_trailing_comment_driver_score() +
     source_text_trailing_unterminated_block_driver_score() +
     source_text_post_comment_extra_token_driver_score() +
+    source_text_post_comment_lexer_failure_driver_score() +
     source_text_keyword_driver_score() -
     2006 +
     source_text_base_number_driver_score() +
@@ -3423,6 +3482,8 @@ fn main() -> i64 {
     lexer_trailing_unterminated_block_handoff_score() +
     parse_post_comment_extra_token_failure_score() +
     lexer_post_comment_extra_token_handoff_score() +
+    parse_post_comment_lexer_failure_score() +
+    lexer_post_comment_lexer_failure_handoff_score() +
     parser::parse_score(parser::parse_empty()) -
     3018;
 }
