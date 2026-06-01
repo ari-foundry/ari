@@ -6,13 +6,13 @@ mod parser;
 mod driver;
 
 fn file_driver_score() -> i64 {
-  zone(16384) {
+  zone(32768) {
     return driver::exit_code(driver::run_file("tests/cases/ari-compiler-bootstrap/ok/source-root-smoke.ari"));
   }
 }
 
 fn file_driver_result_score() -> i64 {
-  zone(16384) {
+  zone(32768) {
     return driver::result_code(driver::run_file(
       "tests/cases/ari-compiler-bootstrap/ok/source-root-smoke.ari"
     ));
@@ -20,7 +20,7 @@ fn file_driver_result_score() -> i64 {
 }
 
 fn missing_file_driver_score() -> i64 {
-  zone(16384) {
+  zone(32768) {
     return driver::result_code(driver::run_file(
       "tests/cases/ari-compiler-bootstrap/missing-input.ari"
     ));
@@ -28,13 +28,13 @@ fn missing_file_driver_score() -> i64 {
 }
 
 fn empty_source_text_driver_score() -> i64 {
-  zone(16384) {
+  zone(32768) {
     return driver::result_code(driver::run_source_text(std::string::empty()));
   }
 }
 
 fn source_text_driver_score() -> i64 {
-  zone(16384) {
+  zone(32768) {
     return driver::result_code(driver::run_source_text(std::string::from("p")));
   }
 }
@@ -61,6 +61,35 @@ fn loaded_driver_result_score() -> i64 {
 
 fn invalid_loaded_driver_score() -> i64 {
   return driver::result_code(driver::run_loaded_source_summary(1, 3, 'p', 3));
+}
+
+fn lexer_stream_score() -> i64 {
+  let stream = lexer::stream_from_two('a', 7, '9');
+  if lexer::stream_len(stream) != 2 {
+    return 1;
+  }
+  if !lexer::cursor_is_identifier(lexer::stream_first(stream)) {
+    return 2;
+  }
+  if !lexer::stream_has_two_tokens(stream) {
+    return 3;
+  }
+  if !lexer::cursor_is_number(lexer::stream_second(stream)) {
+    return 4;
+  }
+  if lexer::cursor_token_start(lexer::stream_second(stream)) != 8 {
+    return 5;
+  }
+  if lexer::cursor_token_end(lexer::stream_second(stream)) != 9 {
+    return 6;
+  }
+  if !lexer::stream_has_eof(stream) {
+    return 7;
+  }
+  if lexer::cursor_token_start(lexer::stream_eof(stream)) != 9 {
+    return 8;
+  }
+  return 0;
 }
 
 fn parse_success_score() -> i64 {
@@ -264,6 +293,7 @@ fn main() -> i64 {
     lexer::scan_result_score(lexer::scan_one_result('!', 4)) +
     lexer::handoff_score(lexer::handoff_from_one('x', 6)) -
     16 +
+    lexer_stream_score() +
     ast::node_score(ast::token_node(3, 2, 5, 8)) -
     12 +
     parser::parse_score(parser::parse_one('q', 1)) +

@@ -17,6 +17,13 @@ pub struct TokenHandoff {
   eof: TokenCursor,
 }
 
+pub struct TokenStream {
+  first: TokenCursor,
+  second: TokenCursor,
+  eof: TokenCursor,
+  length: i64,
+}
+
 pub fn is_ascii_alpha(value: char) -> bool {
   return (value >= 'a' && value <= 'z') || (value >= 'A' && value <= 'Z') || value == '_';
 }
@@ -66,6 +73,14 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
   }
 }
 
+pub fn cursor_eof(offset: i64) -> TokenCursor {
+  return TokenCursor {
+    current: token::make_token(token::EndOfFile, offset, offset),
+    offset: offset,
+    done: true,
+  };
+}
+
 pub fn cursor_from_one(value: char, offset: i64) -> TokenCursor {
   return TokenCursor { current: scan_one(value, offset), offset: offset, done: false };
 }
@@ -76,11 +91,7 @@ pub fn cursor_advance(cursor: TokenCursor) -> TokenCursor {
   }
 
   let next_offset = cursor.current.end;
-  return TokenCursor {
-    current: token::make_token(token::EndOfFile, next_offset, next_offset),
-    offset: next_offset,
-    done: true,
-  };
+  return cursor_eof(next_offset);
 }
 
 pub fn cursor_is_done(cursor: TokenCursor) -> bool {
@@ -147,6 +158,49 @@ pub fn cursor_is_unknown(cursor: TokenCursor) -> bool {
     EndOfFile => false,
     Unknown(_) => true,
   }
+}
+
+pub fn stream_from_one(value: char, offset: i64) -> TokenStream {
+  return TokenStream {
+    first: cursor_from_one(value, offset),
+    second: cursor_eof(offset + 1),
+    eof: cursor_eof(offset + 1),
+    length: 1,
+  };
+}
+
+pub fn stream_from_two(first_value: char, first_offset: i64, second_value: char) -> TokenStream {
+  let second_offset = first_offset + 1;
+  return TokenStream {
+    first: cursor_from_one(first_value, first_offset),
+    second: cursor_from_one(second_value, second_offset),
+    eof: cursor_eof(second_offset + 1),
+    length: 2,
+  };
+}
+
+pub fn stream_len(stream: TokenStream) -> i64 {
+  return stream.length;
+}
+
+pub fn stream_first(stream: TokenStream) -> TokenCursor {
+  return stream.first;
+}
+
+pub fn stream_second(stream: TokenStream) -> TokenCursor {
+  return stream.second;
+}
+
+pub fn stream_eof(stream: TokenStream) -> TokenCursor {
+  return stream.eof;
+}
+
+pub fn stream_has_two_tokens(stream: TokenStream) -> bool {
+  return stream.length >= 2 && !cursor_is_eof(stream.second);
+}
+
+pub fn stream_has_eof(stream: TokenStream) -> bool {
+  return cursor_is_done(stream.eof) && cursor_is_eof(stream.eof);
 }
 
 pub fn handoff_from_one(value: char, offset: i64) -> TokenHandoff {

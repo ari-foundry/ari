@@ -73,6 +73,9 @@ compiler feature in the normal focused-test workflow.
   span, token score, and done state.
 - `compiler/lexer.ari` has a minimal `TokenHandoff` shape that carries one real
   token cursor plus an explicit EOF observation.
+- `compiler/lexer.ari` has a fixed two-token `TokenStream` shape that carries
+  two scanned token cursors plus EOF as the first step beyond one-token
+  handoff smokes.
 - `compiler/lexer.ari` exposes a tiny malformed handoff helper for checking the
   parser's missing-EOF diagnostic path without making malformed handoffs normal
   driver input.
@@ -241,7 +244,7 @@ compiler feature in the normal focused-test workflow.
 - The bootstrap source-root smoke covers the current empty source-text driver
   path and checks that text-input validation preserves driver error code
   `1101`.
-- File-input smoke paths use explicit `zone(16384)` allocation blocks because
+- File-input smoke paths use explicit `zone(32768)` allocation blocks because
   the source-root fixture is now large enough to exceed the default zone
   capacity when read into an owned string.
 - The bootstrap source-root smoke now covers both valid loaded-source handoff
@@ -367,6 +370,9 @@ policy in ad hoc compiler files.
   node.
 - Added a minimal `TokenHandoff` carrying one real token plus EOF, and routed
   `parser::parse_one` through that handoff.
+- Added a fixed two-token lexer stream shape with first, second, length, and
+  EOF accessors, plus source-root smoke coverage for second-token offsets and
+  EOF placement.
 - Added token-kind query helpers for the lexer/parser boundary and a tiny parser
   handoff classification score.
 - Moved the test-like entry arithmetic out of `compiler/main.ari` into a
@@ -460,7 +466,7 @@ policy in ad hoc compiler files.
   `Ok(0)` payload through `result_code(driver::run_input(...))`.
 - Added a focused source-text driver success smoke that checks the internal
   `Ok(0)` payload through `result_code(driver::run_source_text(...))`.
-- Switched file-input smoke allocation blocks to explicit `zone(16384)` after
+- Switched file-input smoke allocation blocks to explicit `zone(32768)` after
   the growing source-root fixture exceeded the default zone capacity at
   runtime.
 
@@ -468,15 +474,15 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a focused parser unknown-token failure severity smoke using the existing
-  `parser::parse_failure_severity_score(parser::parse_one('!', ...))`
-  helper without adding recovery or diagnostic rendering.
+- Add focused lexer punctuation token classification for simple delimiters such
+  as parentheses, braces, comma, colon, and semicolon without changing parser
+  recovery or adding a source table.
 
 ## Next Recommended Task
 
-Add a focused parser unknown-token failure severity smoke using the existing
-`parser::parse_failure_severity_score(parser::parse_one('!', ...))` helper
-without adding recovery, diagnostic rendering, or a source table yet.
+Add focused lexer punctuation token classification for simple delimiters such
+as parentheses, braces, comma, colon, and semicolon without changing parser
+recovery or adding a source table yet.
 
 ## Local Validation
 
@@ -601,10 +607,12 @@ whitespace diagnostic severity metadata without requiring a hosted compiler
 fix. The parser unknown-token failure start-offset smoke checked unknown-token
 diagnostic start metadata without requiring a hosted compiler fix. The parser
 unknown-token failure end-offset smoke checked unknown-token diagnostic end
-metadata without requiring a hosted compiler fix.
+metadata without requiring a hosted compiler fix. The two-token lexer stream
+smoke checked fixed stream cursors and EOF placement without requiring a hosted
+compiler fix.
 The growing source-root fixture did expose a default-zone capacity runtime trap
 while reading the file smoke; this was fixed locally with explicit
-`zone(16384)` allocation blocks and is recorded as allocation-policy pressure
+`zone(32768)` allocation blocks and is recorded as allocation-policy pressure
 rather than a confirmed hosted compiler bug.
 
 This slice also showed that reusing the same payload binding name across
