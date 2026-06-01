@@ -46,6 +46,10 @@ pub fn node_is_statement(node: Node) -> bool {
   }
 }
 
+pub fn node_span_len(node: Node) -> i64 {
+  return source::span_len(node.span);
+}
+
 pub fn kind_score(kind: NodeKind) -> i64 {
   match kind {
     Missing => 0,

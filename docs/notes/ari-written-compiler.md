@@ -83,6 +83,8 @@ compiler feature in the normal focused-test workflow.
 - `compiler/ast.ari` exposes a statement-kind query helper so parser payload
   shape can be checked without relying on aggregate field access or score
   arithmetic.
+- `compiler/ast.ari` exposes a node span-length query helper so parser payload
+  spans can be checked without relying on `ast::node_score` arithmetic.
 - `compiler/parser.ari` exists as a phase-boundary skeleton that consumes the
   lexer handoff shape, can classify the current handoff token, and returns
   either a statement-shaped `ast::Node` over the current token span or a shared
@@ -95,6 +97,9 @@ compiler feature in the normal focused-test workflow.
   smoke-test score values.
 - `compiler/parser.ari` exposes a parser statement-node query helper so
   downstream smokes can inspect successful payload shape through the parser
+  phase boundary.
+- `compiler/parser.ari` exposes a parser statement span-length helper so
+  downstream smokes can inspect successful payload spans through the parser
   phase boundary.
 - `compiler/diagnostic.ari` exposes a diagnostic-code accessor, and
   `compiler/parser.ari` exposes a parser failure-code helper for phase
@@ -122,6 +127,8 @@ compiler feature in the normal focused-test workflow.
   smoke-score arithmetic.
 - The bootstrap source-root smoke checks successful parser payloads are
   statement nodes without relying on `ast::node_score` arithmetic.
+- The bootstrap source-root smoke checks successful parser payload span length
+  without relying on `ast::node_score` arithmetic.
 - `compiler/driver.ari` owns the current bootstrap entry flow and returns a
   standard-library `std::Result[i64, i64]` instead of embedding smoke arithmetic
   in `main`.
@@ -323,6 +330,9 @@ policy in ad hoc compiler files.
 - Added an AST statement-kind query helper and a parser payload-shape smoke that
   checks successful parser output is a statement node without `ast::node_score`
   arithmetic.
+- Added an AST node span-length query helper and a parser payload-span smoke
+  that checks successful parser output spans without `ast::node_score`
+  arithmetic.
 - Routed driver parse failures through the parser failure-code helper, with
   source-root smoke coverage for whitespace and unknown-token diagnostic codes.
 - Added a driver result-code helper and simplified bootstrap smokes that inspect
@@ -353,15 +363,15 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a focused AST node span-length query helper so parser success payload
-  span shape can be checked without relying on `ast::node_score` arithmetic.
+- Add a focused AST node value query helper so parser success payload token
+  value can be checked without relying on `ast::node_score` arithmetic.
 
 ## Next Recommended Task
 
-Add a focused AST node span-length query helper so parser success payload span
-shape can be checked without relying on `ast::node_score` arithmetic. Keep it
-tiny: add only the smallest `ast` accessor and parser/bootstrap smoke needed to
-observe the span length of a successful statement node, and do not add parser
+Add a focused AST node value query helper so parser success payload token value
+can be checked without relying on `ast::node_score` arithmetic. Keep it tiny:
+add only the smallest `ast` accessor and parser/bootstrap smoke needed to
+observe the value of a successful statement node, and do not add parser
 recovery, diagnostic rendering, or a source table yet.
 
 ## Local Validation
@@ -460,7 +470,8 @@ without requiring a hosted compiler fix. The parser number-success smoke checked
 the number statement path through `parser::parse_is_success` without requiring
 a hosted compiler fix. The AST statement-kind query and parser payload-shape
 smoke checked successful statement output without requiring a hosted compiler
-fix.
+fix. The AST node span-length query and parser payload-span smoke checked
+successful statement spans without requiring a hosted compiler fix.
 The growing source-root fixture did expose a default-zone capacity runtime trap
 while reading the file smoke; this was fixed locally with explicit
 `zone(16384)` allocation blocks and is recorded as allocation-policy pressure
