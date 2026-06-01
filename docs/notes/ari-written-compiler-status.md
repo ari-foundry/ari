@@ -436,6 +436,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - The bootstrap source-root smoke checks the source-text driver
   leading-comment byte-character escape path and verifies skipped comments
   before `'\n'` preserve the number-token span through parser and driver paths.
+- The bootstrap source-root smoke checks the source-text driver
+  leading-comment byte-character numeric escape path and verifies skipped
+  comments before `'\x41'` and `'\101'` preserve the number-token span through
+  parser and driver paths.
 - The bootstrap source-root smoke covers the current `DriverInput` offset guard
   errors for both invalid start offsets and invalid one-byte end bounds through
   the scalar constructor helper.

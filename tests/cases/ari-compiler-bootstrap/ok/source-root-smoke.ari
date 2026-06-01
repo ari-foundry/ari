@@ -255,6 +255,26 @@ fn source_text_leading_comment_byte_char_escape_driver_score() -> i64 {
   return 0;
 }
 
+fn source_text_leading_comment_byte_char_numeric_escape_driver_score() -> i64 {
+  let line_hex_code = source_text_driver_result("// skip\n'\\x41'");
+  if line_hex_code != 0 {
+    return 1;
+  }
+  let block_hex_code = source_text_driver_result("/* skip */'\\x41'");
+  if block_hex_code != 0 {
+    return 2;
+  }
+  let line_octal_code = source_text_driver_result("// skip\n'\\101'");
+  if line_octal_code != 0 {
+    return 3;
+  }
+  let block_octal_code = source_text_driver_result("/* skip */'\\101'");
+  if block_octal_code != 0 {
+    return 4;
+  }
+  return 0;
+}
+
 fn source_text_trailing_comment_driver_score() -> i64 {
   let line_code = source_text_driver_result("p// skip");
   if line_code != 0 {
@@ -1837,6 +1857,26 @@ fn lexer_leading_comment_byte_char_escape_handoff_score() -> i64 {
   score = lexer_leading_comment_number_handoff_case_score("/* skip */'\\n'", 10, 14, 14);
   if score != 0 {
     return 10 + score;
+  }
+  return 0;
+}
+
+fn lexer_leading_comment_byte_char_numeric_escape_handoff_score() -> i64 {
+  var score = lexer_leading_comment_number_handoff_case_score("// skip\n'\\x41'", 8, 14, 14);
+  if score != 0 {
+    return score;
+  }
+  score = lexer_leading_comment_number_handoff_case_score("/* skip */'\\x41'", 10, 16, 16);
+  if score != 0 {
+    return 10 + score;
+  }
+  score = lexer_leading_comment_number_handoff_case_score("// skip\n'\\101'", 8, 14, 14);
+  if score != 0 {
+    return 20 + score;
+  }
+  score = lexer_leading_comment_number_handoff_case_score("/* skip */'\\101'", 10, 16, 16);
+  if score != 0 {
+    return 30 + score;
   }
   return 0;
 }
@@ -3507,6 +3547,26 @@ fn parse_leading_comment_byte_char_escape_success_score() -> i64 {
   return 0;
 }
 
+fn parse_leading_comment_byte_char_numeric_escape_success_score() -> i64 {
+  var score = parse_leading_comment_case_score("// skip\n'\\x41'", 8, 14);
+  if score != 0 {
+    return score;
+  }
+  score = parse_leading_comment_case_score("/* skip */'\\x41'", 10, 16);
+  if score != 0 {
+    return 10 + score;
+  }
+  score = parse_leading_comment_case_score("// skip\n'\\101'", 8, 14);
+  if score != 0 {
+    return 20 + score;
+  }
+  score = parse_leading_comment_case_score("/* skip */'\\101'", 10, 16);
+  if score != 0 {
+    return 30 + score;
+  }
+  return 0;
+}
+
 fn parse_trailing_comment_case_score(text: Slice[u8], expected_statement_end: i64) -> i64 {
   let parsed = parser::parse_text(text);
   if !parser::parse_is_success(parsed) {
@@ -4284,6 +4344,7 @@ fn main() -> i64 {
     source_text_leading_comment_non_decimal_float_dot_driver_score() +
     source_text_leading_comment_byte_char_driver_score() +
     source_text_leading_comment_byte_char_escape_driver_score() +
+    source_text_leading_comment_byte_char_numeric_escape_driver_score() +
     source_text_trailing_comment_driver_score() +
     source_text_trailing_unterminated_block_driver_score() +
     source_text_post_comment_extra_token_driver_score() +
@@ -4336,10 +4397,12 @@ fn main() -> i64 {
     parse_leading_comment_success_score() +
     parse_leading_comment_byte_char_success_score() +
     parse_leading_comment_byte_char_escape_success_score() +
+    parse_leading_comment_byte_char_numeric_escape_success_score() +
     parse_trailing_comment_success_score() +
     lexer_trailing_comment_handoff_score() +
     lexer_leading_comment_byte_char_handoff_score() +
     lexer_leading_comment_byte_char_escape_handoff_score() +
+    lexer_leading_comment_byte_char_numeric_escape_handoff_score() +
     parse_trailing_unterminated_block_failure_score() +
     lexer_trailing_unterminated_block_handoff_score() +
     parse_leading_comment_unterminated_block_failure_score() +

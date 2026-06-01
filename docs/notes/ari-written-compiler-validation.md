@@ -429,6 +429,10 @@ The source-text leading-comment byte-character escape smoke now checks line and
 block comments before `'\n'` through lexer handoff, parser, keyword-table
 parser, and driver paths, preserving the number-token span and driver `Ok(0)`
 without requiring a hosted compiler fix.
+The source-text leading-comment byte-character numeric escape smoke now checks
+line and block comments before `'\x41'` and `'\101'` through lexer handoff,
+parser, keyword-table parser, and driver paths, preserving the number-token
+span and driver `Ok(0)` without requiring a hosted compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
