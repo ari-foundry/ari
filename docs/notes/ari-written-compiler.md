@@ -111,6 +111,9 @@ compiler feature in the normal focused-test workflow.
 - The bootstrap source-root smoke checks the parser missing-EOF handoff
   diagnostic code through `parser::parse_failure_code` instead of relying only
   on parser smoke-score arithmetic.
+- The bootstrap source-root smoke checks the parser number statement success
+  path through `parser::parse_is_success` instead of relying only on parser
+  smoke-score arithmetic.
 - `compiler/driver.ari` owns the current bootstrap entry flow and returns a
   standard-library `std::Result[i64, i64]` instead of embedding smoke arithmetic
   in `main`.
@@ -306,6 +309,9 @@ policy in ad hoc compiler files.
 - Added a tiny malformed handoff helper and a focused parser missing-EOF
   failure-code smoke that checks diagnostic code `2003` through
   `parser::parse_failure_code`.
+- Added a focused parser number-success smoke that checks
+  `parser::parse_is_success(parser::parse_one('9', ...))` without parser score
+  arithmetic.
 - Routed driver parse failures through the parser failure-code helper, with
   source-root smoke coverage for whitespace and unknown-token diagnostic codes.
 - Added a driver result-code helper and simplified bootstrap smokes that inspect
@@ -336,17 +342,16 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a focused parser number-success smoke using
-  `parser::parse_is_success(parser::parse_one('9', ...))` so the number
-  statement path is checked without relying on parser score arithmetic.
+- Add a focused AST statement-kind query helper so parser success payload shape
+  can be checked without relying on `ast::node_score` arithmetic.
 
 ## Next Recommended Task
 
-Add a focused parser number-success smoke using
-`parser::parse_is_success(parser::parse_one('9', ...))` so the number statement
-path is checked without relying on parser score arithmetic. Keep it inside the
-bootstrap source-root smoke and do not add parser recovery, diagnostic
-rendering, or a source table yet.
+Add a focused AST statement-kind query helper so parser success payload shape
+can be checked without relying on `ast::node_score` arithmetic. Keep it tiny:
+add only the smallest `ast` accessor and parser/bootstrap smoke needed to
+distinguish a statement node from other node kinds, and do not add parser
+recovery, diagnostic rendering, or a source table yet.
 
 ## Local Validation
 
@@ -440,7 +445,9 @@ requiring a hosted compiler fix. The parser unknown-token failure-code smoke
 checked diagnostic code `2005` through `parser::parse_failure_code` without
 requiring a hosted compiler fix. The parser missing-EOF handoff failure-code
 smoke checked diagnostic code `2003` through `parser::parse_failure_code`
-without requiring a hosted compiler fix.
+without requiring a hosted compiler fix. The parser number-success smoke checked
+the number statement path through `parser::parse_is_success` without requiring
+a hosted compiler fix.
 The growing source-root fixture did expose a default-zone capacity runtime trap
 while reading the file smoke; this was fixed locally with explicit
 `zone(16384)` allocation blocks and is recorded as allocation-policy pressure

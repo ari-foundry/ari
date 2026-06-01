@@ -67,6 +67,9 @@ fn parse_success_score() -> i64 {
   if !parser::parse_is_success(parser::parse_one('q', 1)) {
     return 1;
   }
+  if !parser::parse_is_success(parser::parse_one('9', 2)) {
+    return 3;
+  }
   if parser::parse_is_success(parser::parse_one(' ', 4)) {
     return 2;
   }
