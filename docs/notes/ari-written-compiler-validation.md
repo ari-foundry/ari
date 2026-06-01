@@ -389,6 +389,10 @@ The source-text leading-comment unknown-token smoke now checks line and block
 comments before `$` through lexer handoff, parser, keyword-table parser, and
 driver paths, preserving parser unknown-token diagnostic code `2005` and
 unknown-token spans without requiring a hosted compiler fix.
+The source-text leading-comment punctuation smoke now checks line and block
+comments before `;` through lexer handoff, parser, keyword-table parser, and
+driver paths, preserving parser unsupported-token diagnostic code `2006` and
+punctuation spans without requiring a hosted compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
