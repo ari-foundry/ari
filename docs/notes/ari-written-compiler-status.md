@@ -151,6 +151,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   spellings such as `'\x41'` and `'\101'` as number spans.
 - `compiler/lexer.ari` scans ASCII-valued fixed-width byte character Unicode
   escape spellings such as `'\u0041'` and `'\U00000041'` as number spans.
+- `compiler/lexer.ari` scans ASCII-valued braced byte character Unicode escape
+  spellings such as `'\u{41}'` as number spans.
 - `compiler/lexer.ari` exposes text-backed cursor advance and handoff helpers,
   including significant-token advance that skips leading and trailing
   whitespace around the current single-statement parser handoff.

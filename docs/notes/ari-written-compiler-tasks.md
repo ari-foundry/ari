@@ -445,15 +445,16 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Added source-text byte character fixed-width Unicode escape spans for
   ASCII-valued spellings such as `'\u0041'` and `'\U00000041'`, treating them
   as number tokens in the current Ari token model.
+- Added source-text byte character braced Unicode escape spans for ASCII-valued
+  spellings such as `'\u{41}'`, treating them as number tokens in the current
+  Ari token model.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add source-text byte character braced Unicode escape spans for ASCII-valued
-  spellings such as `'\u{41}'`.
+- Add source-text empty byte character diagnostics for spellings such as `''`.
 
 ## Next Recommended Task
 
-Add source-text byte character braced Unicode escape spans for ASCII-valued
-spellings such as `'\u{41}'`.
+Add source-text empty byte character diagnostics for spellings such as `''`.

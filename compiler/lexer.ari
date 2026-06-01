@@ -1005,6 +1005,30 @@ fn byte_char_fixed_unicode_escape_end_from_text(
   return end;
 }
 
+fn byte_char_braced_unicode_escape_end_from_text(
+  text: std::Slice[u8],
+  slash_start: i64,
+  first_digit: i64
+) -> i64 {
+  if first_digit >= text.len || text[first_digit] == '}' {
+    return slash_start;
+  }
+
+  var end = first_digit;
+  var value = 0;
+  while end < text.len && text[end] != '}' {
+    if !is_hex_digit(text[end]) {
+      return slash_start;
+    }
+    value = append_escape_digit_capped(value, 16, hex_digit_value(text[end]), 127);
+    end = end + 1;
+  }
+  if end >= text.len || value > 127 {
+    return slash_start;
+  }
+  return end + 1;
+}
+
 fn byte_char_escape_end_from_text(text: std::Slice[u8], slash_start: i64) -> i64 {
   let escape_start = slash_start + 1;
   if escape_start >= text.len {
@@ -1026,6 +1050,9 @@ fn byte_char_escape_end_from_text(text: std::Slice[u8], slash_start: i64) -> i64
     return slash_start;
   }
   if escaped == 'u' {
+    if escape_start + 1 < text.len && text[escape_start + 1] == '{' {
+      return byte_char_braced_unicode_escape_end_from_text(text, slash_start, escape_start + 2);
+    }
     return byte_char_fixed_unicode_escape_end_from_text(text, slash_start, escape_start, 4);
   }
   if escaped == 'U' {
