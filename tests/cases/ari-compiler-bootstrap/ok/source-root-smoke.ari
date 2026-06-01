@@ -199,6 +199,27 @@ fn lexer_number_span_score() -> i64 {
   return 0;
 }
 
+fn lexer_whitespace_span_score() -> i64 {
+  let cursor = lexer::cursor_from_whitespace_two(' ', 50, '\n');
+  if !lexer::cursor_is_whitespace(cursor) {
+    return 1;
+  }
+  if lexer::cursor_token_start(cursor) != 50 {
+    return 2;
+  }
+  if lexer::cursor_token_end(cursor) != 52 {
+    return 3;
+  }
+  if lexer::cursor_token_score(cursor) != 5 {
+    return 4;
+  }
+  let fallback = lexer::cursor_from_whitespace_two(' ', 60, 'a');
+  if lexer::cursor_token_end(fallback) != 61 {
+    return 5;
+  }
+  return 0;
+}
+
 fn parse_success_score() -> i64 {
   if !parser::parse_is_success(parser::parse_one('q', 1)) {
     return 1;
@@ -405,6 +426,7 @@ fn main() -> i64 {
     lexer_operator_score() +
     lexer_identifier_span_score() +
     lexer_number_span_score() +
+    lexer_whitespace_span_score() +
     ast::node_score(ast::token_node(3, 2, 5, 8)) -
     12 +
     parser::parse_score(parser::parse_one('q', 1)) +
