@@ -52,6 +52,12 @@ enum CommentScan {
   CommentUnterminated(i64),
 }
 
+enum NumberScan {
+  NumberClosed(i64),
+  NumberMissingBaseDigits(i64, i64),
+  NumberInvalidBaseDigit(i64, i64),
+}
+
 pub fn is_ascii_alpha(value: char) -> bool {
   return (value >= 'a' && value <= 'z') || (value >= 'A' && value <= 'Z') || value == '_';
 }
@@ -129,15 +135,29 @@ fn is_digit_for_number_base(value: char, marker: char) -> bool {
   return false;
 }
 
-fn base_prefixed_number_end(text: std::Slice[u8], offset: i64, marker: char) -> i64 {
+fn is_binary_or_octal_number_marker(value: char) -> bool {
+  return value == 'b' ||
+    value == 'B' ||
+    value == 'o' ||
+    value == 'O';
+}
+
+fn base_prefixed_number_scan_from_text(
+  text: std::Slice[u8],
+  offset: i64,
+  marker: char
+) -> NumberScan {
   var end = offset + 2;
   if end >= text.len || !is_digit_for_number_base(text[end], marker) {
-    return offset + 1;
+    return NumberMissingBaseDigits(offset, end);
   }
   while end < text.len && is_digit_for_number_base(text[end], marker) {
     end = end + 1;
   }
-  return end;
+  if is_binary_or_octal_number_marker(marker) && end < text.len && is_ascii_digit(text[end]) {
+    return NumberInvalidBaseDigit(end, end + 1);
+  }
+  return NumberClosed(exact_integer_suffix_end(text, end));
 }
 
 fn is_number_suffix_continue(value: char) -> bool {
@@ -181,16 +201,29 @@ fn exact_integer_suffix_end(text: std::Slice[u8], suffix_start: i64) -> i64 {
   return suffix_start;
 }
 
-fn number_end_from_text(text: std::Slice[u8], offset: i64) -> i64 {
+fn number_scan_from_text(text: std::Slice[u8], offset: i64) -> NumberScan {
   var end = offset + 1;
   if offset + 1 < text.len && text[offset] == '0' && is_number_base_marker(text[offset + 1]) {
-    end = base_prefixed_number_end(text, offset, text[offset + 1]);
-    return exact_integer_suffix_end(text, end);
+    return base_prefixed_number_scan_from_text(text, offset, text[offset + 1]);
   }
   while end < text.len && is_number_continue(text[end]) {
     end = end + 1;
   }
-  return exact_integer_suffix_end(text, end);
+  return NumberClosed(exact_integer_suffix_end(text, end));
+}
+
+fn number_end_from_text(text: std::Slice[u8], offset: i64) -> i64 {
+  match number_scan_from_text(text, offset) {
+    NumberClosed(number_end) => {
+      return number_end;
+    }
+    NumberMissingBaseDigits(_, _) => {
+      return offset + 1;
+    }
+    NumberInvalidBaseDigit(invalid_start, _) => {
+      return invalid_start;
+    }
+  }
 }
 
 fn string_escape_error_end(text: std::Slice[u8], end: i64) -> i64 {
@@ -847,6 +880,19 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
 }
 
 fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResult {
+  if is_number_start(text[offset]) {
+    match number_scan_from_text(text, offset) {
+      NumberClosed(number_end) => {
+        return Scanned(token::make_token(token::Number, offset, number_end));
+      }
+      NumberMissingBaseDigits(missing_start, missing_end) => {
+        return Failed(missing_number_base_digits(missing_start, missing_end));
+      }
+      NumberInvalidBaseDigit(invalid_start, invalid_end) => {
+        return Failed(invalid_number_base_digit(invalid_start, invalid_end));
+      }
+    }
+  }
   if offset + 1 < text.len && text[offset] == '/' && text[offset + 1] == '/' {
     return Scanned(token::make_token(
       token::Whitespace,
@@ -955,6 +1001,14 @@ pub fn scan_text_result(text: std::Slice[u8], offset: i64) -> LexResult {
 
 pub fn invalid_character(offset: i64) -> diagnostic::Diagnostic {
   return diagnostic::error(1001, offset, offset + 1);
+}
+
+pub fn missing_number_base_digits(start: i64, end: i64) -> diagnostic::Diagnostic {
+  return diagnostic::error(1009, start, end);
+}
+
+pub fn invalid_number_base_digit(start: i64, end: i64) -> diagnostic::Diagnostic {
+  return diagnostic::error(1010, start, end);
 }
 
 pub fn unterminated_string_literal(start: i64, end: i64) -> diagnostic::Diagnostic {

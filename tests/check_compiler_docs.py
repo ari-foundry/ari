@@ -170,7 +170,7 @@ def main() -> int:
         "## Completed Tasks",
         "## Small Task Queue",
         "## Next Recommended Task",
-        "Add source-text numeric base-prefix diagnostics",
+        "Add source-text numeric suffix diagnostics",
     ]:
         require(ari_tasks, needle, ari_tasks_path)
 

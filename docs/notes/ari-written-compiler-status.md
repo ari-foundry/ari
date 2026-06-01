@@ -129,6 +129,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   leading decimal `0`.
 - `compiler/lexer.ari` includes valid exact-width integer suffixes such as
   `i64` and `u8` in decimal and base-prefixed source-text number spans.
+- `compiler/lexer.ari` reports source-text numeric base-prefix diagnostics for
+  missing prefix digits and invalid binary/octal digits, preserving those
+  failures through parser and driver source-text paths.
 - `compiler/lexer.ari` exposes text-backed cursor advance and handoff helpers,
   including significant-token advance that skips leading and trailing
   whitespace around the current single-statement parser handoff.

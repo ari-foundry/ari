@@ -63,6 +63,18 @@ fn source_text_number_suffix_driver_score() -> i64 {
   }
 }
 
+fn source_text_missing_base_digit_driver_score() -> i64 {
+  zone(65536) {
+    return driver::result_code(driver::run_source_text(std::string::from("0x")));
+  }
+}
+
+fn source_text_invalid_base_digit_driver_score() -> i64 {
+  zone(65536) {
+    return driver::result_code(driver::run_source_text(std::string::from("0b102")));
+  }
+}
+
 fn source_text_unterminated_string_driver_score() -> i64 {
   zone(65536) {
     return driver::result_code(driver::run_source_text(std::string::from("\"open")));
@@ -389,6 +401,30 @@ fn lexer_number_suffix_span_score() -> i64 {
   }
   if !parser::parse_is_success(parser::parse_text("42u8")) {
     return 29;
+  }
+  return 0;
+}
+
+fn lexer_number_base_diagnostic_score() -> i64 {
+  var failure_score = lexer_failure_case_score("0x", 1009, 0, 2);
+  if failure_score != 0 {
+    return failure_score;
+  }
+  failure_score = lexer_failure_case_score("0XG", 1009, 0, 2);
+  if failure_score != 0 {
+    return 7 + failure_score;
+  }
+  failure_score = lexer_failure_case_score("0b ", 1009, 0, 2);
+  if failure_score != 0 {
+    return 14 + failure_score;
+  }
+  failure_score = lexer_failure_case_score("0b102", 1010, 4, 5);
+  if failure_score != 0 {
+    return 21 + failure_score;
+  }
+  failure_score = lexer_failure_case_score("0o778", 1010, 4, 5);
+  if failure_score != 0 {
+    return 28 + failure_score;
   }
   return 0;
 }
@@ -2406,6 +2442,7 @@ fn main() -> i64 {
     lexer_number_span_score() +
     lexer_number_base_span_score() +
     lexer_number_suffix_span_score() +
+    lexer_number_base_diagnostic_score() +
     lexer_whitespace_span_score() +
     lexer_path_separator_span_score() +
     lexer_dot_punctuation_score() +
@@ -2490,6 +2527,10 @@ fn main() -> i64 {
     2006 +
     source_text_base_number_driver_score() +
     source_text_number_suffix_driver_score() +
+    source_text_missing_base_digit_driver_score() -
+    1009 +
+    source_text_invalid_base_digit_driver_score() -
+    1010 +
     source_text_unterminated_string_driver_score() -
     1004 +
     source_text_unsupported_string_escape_driver_score() -

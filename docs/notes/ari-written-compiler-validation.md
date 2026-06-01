@@ -362,5 +362,5 @@ Desired stage0 pressure that is not yet classified as a bug:
   unterminated block comment diagnostics. Numeric base-prefix literal spans now
   cover valid lowercase and uppercase `0x`, `0o`, and `0b` prefixes, and
   exact-width integer suffix spans cover decimal and base-prefixed integers.
-  Invalid numeric suffix diagnostics and invalid base-prefix diagnostics are
-  still pending.
+  Numeric base-prefix diagnostics now cover missing prefix digits and invalid
+  binary/octal digits. Invalid numeric suffix diagnostics are still pending.
