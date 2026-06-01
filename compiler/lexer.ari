@@ -76,6 +76,10 @@ pub fn is_number_continue(value: char) -> bool {
   return is_ascii_digit(value);
 }
 
+fn is_binary_digit(value: char) -> bool {
+  return value == '0' || value == '1';
+}
+
 fn is_octal_digit(value: char) -> bool {
   return value >= '0' && value <= '7';
 }
@@ -101,6 +105,50 @@ fn is_supported_string_escape(value: char) -> bool {
     value == 'u' ||
     value == 'U' ||
     is_octal_digit(value);
+}
+
+fn is_number_base_marker(value: char) -> bool {
+  return value == 'x' ||
+    value == 'X' ||
+    value == 'o' ||
+    value == 'O' ||
+    value == 'b' ||
+    value == 'B';
+}
+
+fn is_digit_for_number_base(value: char, marker: char) -> bool {
+  if marker == 'x' || marker == 'X' {
+    return is_hex_digit(value);
+  }
+  if marker == 'o' || marker == 'O' {
+    return is_octal_digit(value);
+  }
+  if marker == 'b' || marker == 'B' {
+    return is_binary_digit(value);
+  }
+  return false;
+}
+
+fn base_prefixed_number_end(text: std::Slice[u8], offset: i64, marker: char) -> i64 {
+  var end = offset + 2;
+  if end >= text.len || !is_digit_for_number_base(text[end], marker) {
+    return offset + 1;
+  }
+  while end < text.len && is_digit_for_number_base(text[end], marker) {
+    end = end + 1;
+  }
+  return end;
+}
+
+fn number_end_from_text(text: std::Slice[u8], offset: i64) -> i64 {
+  if offset + 1 < text.len && text[offset] == '0' && is_number_base_marker(text[offset + 1]) {
+    return base_prefixed_number_end(text, offset, text[offset + 1]);
+  }
+  var end = offset + 1;
+  while end < text.len && is_number_continue(text[end]) {
+    end = end + 1;
+  }
+  return end;
 }
 
 fn string_escape_error_end(text: std::Slice[u8], end: i64) -> i64 {
@@ -702,11 +750,7 @@ fn string_literal_scan_from_text(text: std::Slice[u8], offset: i64) -> StringLit
 fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
   let first = text[offset];
   if is_number_start(first) {
-    var number_end = offset + 1;
-    while number_end < text.len && is_number_continue(text[number_end]) {
-      number_end = number_end + 1;
-    }
-    return token::make_token(token::Number, offset, number_end);
+    return token::make_token(token::Number, offset, number_end_from_text(text, offset));
   }
   if is_whitespace(first) {
     var whitespace_end = offset + 1;

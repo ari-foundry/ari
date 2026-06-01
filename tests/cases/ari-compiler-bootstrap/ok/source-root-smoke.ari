@@ -51,6 +51,12 @@ fn source_text_keyword_driver_score() -> i64 {
   }
 }
 
+fn source_text_base_number_driver_score() -> i64 {
+  zone(65536) {
+    return driver::result_code(driver::run_source_text(std::string::from("0x2a")));
+  }
+}
+
 fn source_text_unterminated_string_driver_score() -> i64 {
   zone(65536) {
     return driver::result_code(driver::run_source_text(std::string::from("\"open")));
@@ -278,6 +284,66 @@ fn lexer_number_span_score() -> i64 {
   }
   if lexer::cursor_token_score(after_number) != 13 {
     return 7;
+  }
+  return 0;
+}
+
+fn lexer_number_base_case_score(text: Slice[u8], expected_end: i64, expected_score: i64) -> i64 {
+  let cursor = lexer::cursor_from_text(text, 0);
+  if !lexer::cursor_is_number(cursor) {
+    return 1;
+  }
+  if lexer::cursor_token_start(cursor) != 0 {
+    return 2;
+  }
+  if lexer::cursor_token_end(cursor) != expected_end {
+    return 3;
+  }
+  if lexer::cursor_token_score(cursor) != expected_score {
+    return 4;
+  }
+  return 0;
+}
+
+fn lexer_number_base_span_score() -> i64 {
+  let hex_text: Slice[u8] = "0xff+";
+  var score = lexer_number_base_case_score(hex_text, 4, 6);
+  if score != 0 {
+    return score;
+  }
+  let after_hex = lexer::cursor_advance_in_text(
+    lexer::cursor_from_text(hex_text, 0),
+    hex_text
+  );
+  if !lexer::cursor_is_operator(after_hex) {
+    return 5;
+  }
+  if lexer::cursor_token_start(after_hex) != 4 {
+    return 6;
+  }
+
+  score = lexer_number_base_case_score("0XCAFE ", 6, 8);
+  if score != 0 {
+    return 6 + score;
+  }
+  score = lexer_number_base_case_score("0o755 ", 5, 7);
+  if score != 0 {
+    return 12 + score;
+  }
+  score = lexer_number_base_case_score("0O10 ", 4, 6);
+  if score != 0 {
+    return 18 + score;
+  }
+  score = lexer_number_base_case_score("0b1010 ", 6, 8);
+  if score != 0 {
+    return 24 + score;
+  }
+  score = lexer_number_base_case_score("0B11;", 4, 6);
+  if score != 0 {
+    return 30 + score;
+  }
+  if !parser::parse_is_success(parser::parse_text("0b1010")) {
+    return 35;
   }
   return 0;
 }
@@ -2293,6 +2359,7 @@ fn main() -> i64 {
     lexer_operator_score() +
     lexer_identifier_span_score() +
     lexer_number_span_score() +
+    lexer_number_base_span_score() +
     lexer_whitespace_span_score() +
     lexer_path_separator_span_score() +
     lexer_dot_punctuation_score() +
@@ -2375,6 +2442,7 @@ fn main() -> i64 {
     2003 +
     source_text_keyword_driver_score() -
     2006 +
+    source_text_base_number_driver_score() +
     source_text_unterminated_string_driver_score() -
     1004 +
     source_text_unsupported_string_escape_driver_score() -

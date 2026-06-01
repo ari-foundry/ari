@@ -124,6 +124,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/lexer.ari` can scan a real `Slice[u8]` source text from an offset,
   including multi-byte identifier, number, and whitespace runs, two-character
   tokens, one-character fallback tokens, and EOF at the source end.
+- `compiler/lexer.ari` scans valid `0x`/`0X`, `0o`/`0O`, and `0b`/`0B`
+  source-text integer prefixes as one number span instead of stopping after the
+  leading decimal `0`.
 - `compiler/lexer.ari` exposes text-backed cursor advance and handoff helpers,
   including significant-token advance that skips leading and trailing
   whitespace around the current single-statement parser handoff.
