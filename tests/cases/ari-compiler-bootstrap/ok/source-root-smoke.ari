@@ -1285,6 +1285,17 @@ fn lexer_keyword_score() -> i64 {
       10,
       "return",
       'r'
+    ) +
+    lexer_keyword_case_with_base_score(
+      800,
+      "if name",
+      2,
+      90,
+      "iffy",
+      4,
+      5,
+      "if",
+      'i'
     );
 }
 
