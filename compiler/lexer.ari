@@ -36,6 +36,13 @@ enum StringLiteralScan {
   Closed(i64),
   Unterminated(i64),
   UnsupportedEscape(i64, i64),
+  InvalidEscapeDigits(i64, i64),
+}
+
+enum StringEscapeScan {
+  Advanced(i64),
+  EscapeUnsupported(i64, i64),
+  EscapeInvalidDigits(i64, i64),
 }
 
 pub fn is_ascii_alpha(value: char) -> bool {
@@ -66,6 +73,12 @@ fn is_octal_digit(value: char) -> bool {
   return value >= '0' && value <= '7';
 }
 
+fn is_hex_digit(value: char) -> bool {
+  return is_ascii_digit(value) ||
+    (value >= 'a' && value <= 'f') ||
+    (value >= 'A' && value <= 'F');
+}
+
 fn is_supported_string_escape(value: char) -> bool {
   return value == 'a' ||
     value == 'b' ||
@@ -83,6 +96,13 @@ fn is_supported_string_escape(value: char) -> bool {
     value == 'u' ||
     value == 'U' ||
     is_octal_digit(value);
+}
+
+fn string_escape_error_end(text: std::Slice[u8], end: i64) -> i64 {
+  if end > text.len {
+    return text.len;
+  }
+  return end;
 }
 
 fn identifier_text_matches(
@@ -450,6 +470,103 @@ fn identifier_end_from_text(text: std::Slice[u8], offset: i64) -> i64 {
   return end;
 }
 
+fn hex_escape_scan_from_text(text: std::Slice[u8], escape_start: i64) -> StringEscapeScan {
+  let first_digit = escape_start + 1;
+  if first_digit >= text.len || !is_hex_digit(text[first_digit]) {
+    return EscapeInvalidDigits(escape_start, string_escape_error_end(text, first_digit));
+  }
+
+  var end = first_digit + 1;
+  while end < text.len && is_hex_digit(text[end]) {
+    end = end + 1;
+  }
+  return Advanced(end);
+}
+
+fn fixed_hex_escape_scan_from_text(
+  text: std::Slice[u8],
+  escape_start: i64,
+  first_digit: i64,
+  required_digits: i64
+) -> StringEscapeScan {
+  var end = first_digit;
+  var count = 0;
+  while count < required_digits {
+    if end >= text.len || !is_hex_digit(text[end]) {
+      return EscapeInvalidDigits(escape_start, string_escape_error_end(text, end));
+    }
+    end = end + 1;
+    count = count + 1;
+  }
+  return Advanced(end);
+}
+
+fn braced_unicode_escape_scan_from_text(
+  text: std::Slice[u8],
+  escape_start: i64,
+  first_digit: i64
+) -> StringEscapeScan {
+  if first_digit >= text.len {
+    return EscapeInvalidDigits(escape_start, text.len);
+  }
+  if text[first_digit] == '}' {
+    return EscapeInvalidDigits(escape_start, first_digit + 1);
+  }
+
+  var end = first_digit;
+  while end < text.len && text[end] != '}' {
+    if text[end] == '\n' {
+      return EscapeInvalidDigits(escape_start, end + 1);
+    }
+    if !is_hex_digit(text[end]) {
+      return EscapeInvalidDigits(end, end + 1);
+    }
+    end = end + 1;
+  }
+
+  if end >= text.len {
+    return EscapeInvalidDigits(escape_start, text.len);
+  }
+  return Advanced(end + 1);
+}
+
+fn unicode_escape_scan_from_text(text: std::Slice[u8], escape_start: i64) -> StringEscapeScan {
+  let first_digit = escape_start + 1;
+  if first_digit < text.len && text[first_digit] == '{' {
+    return braced_unicode_escape_scan_from_text(text, escape_start, first_digit + 1);
+  }
+  return fixed_hex_escape_scan_from_text(text, escape_start, first_digit, 4);
+}
+
+fn octal_escape_scan_from_text(text: std::Slice[u8], first_after_escape: i64) -> StringEscapeScan {
+  var end = first_after_escape;
+  while end < text.len && is_octal_digit(text[end]) {
+    end = end + 1;
+  }
+  return Advanced(end);
+}
+
+fn string_escape_scan_from_text(text: std::Slice[u8], slash_start: i64) -> StringEscapeScan {
+  let escape_start = slash_start + 1;
+  let escaped = text[escape_start];
+  if !is_supported_string_escape(escaped) {
+    return EscapeUnsupported(escape_start, escape_start + 1);
+  }
+  if escaped == 'x' {
+    return hex_escape_scan_from_text(text, escape_start);
+  }
+  if escaped == 'u' {
+    return unicode_escape_scan_from_text(text, escape_start);
+  }
+  if escaped == 'U' {
+    return fixed_hex_escape_scan_from_text(text, escape_start, escape_start + 1, 8);
+  }
+  if is_octal_digit(escaped) {
+    return octal_escape_scan_from_text(text, escape_start + 1);
+  }
+  return Advanced(slash_start + 2);
+}
+
 fn string_literal_scan_from_text(text: std::Slice[u8], offset: i64) -> StringLiteralScan {
   var end = offset + 1;
   while end < text.len {
@@ -460,11 +577,18 @@ fn string_literal_scan_from_text(text: std::Slice[u8], offset: i64) -> StringLit
       if text[end + 1] == '\n' {
         return Unterminated(end + 2);
       }
-      if !is_supported_string_escape(text[end + 1]) {
-        return UnsupportedEscape(end + 1, end + 2);
+      match string_escape_scan_from_text(text, end) {
+        Advanced(next_end) => {
+          end = next_end;
+          continue;
+        }
+        EscapeUnsupported(escape_start, escape_end) => {
+          return UnsupportedEscape(escape_start, escape_end);
+        }
+        EscapeInvalidDigits(digits_start, digits_end) => {
+          return InvalidEscapeDigits(digits_start, digits_end);
+        }
       }
-      end = end + 2;
-      continue;
     }
     if text[end] == '"' {
       return Closed(end + 1);
@@ -500,6 +624,7 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
       }
       Unterminated(_) => {}
       UnsupportedEscape(_, _) => {}
+      InvalidEscapeDigits(_, _) => {}
     }
   }
   if first == '.' {
@@ -532,6 +657,9 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
       }
       UnsupportedEscape(escape_start, escape_end) => {
         return Failed(unsupported_string_escape(escape_start, escape_end));
+      }
+      InvalidEscapeDigits(digits_start, digits_end) => {
+        return Failed(invalid_string_escape_digits(digits_start, digits_end));
       }
     }
   }
@@ -615,6 +743,10 @@ pub fn unterminated_string_literal(start: i64, end: i64) -> diagnostic::Diagnost
 
 pub fn unsupported_string_escape(start: i64, end: i64) -> diagnostic::Diagnostic {
   return diagnostic::error(1005, start, end);
+}
+
+pub fn invalid_string_escape_digits(start: i64, end: i64) -> diagnostic::Diagnostic {
+  return diagnostic::error(1006, start, end);
 }
 
 fn lex_failure_from_diagnostic(failure: diagnostic::Diagnostic) -> LexFailure {

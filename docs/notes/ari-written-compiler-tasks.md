@@ -400,6 +400,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   source-text paths.
 - Added source-text unsupported string escape diagnostics for `\q`, preserving
   the diagnostic through parser and driver source-text paths.
+- Added source-text string escape digit-shape diagnostics for `\x`, fixed-width
+  `\u`, fixed-width `\U`, invalid braced `\u{...}` digits, and empty braced
+  `\u{}` spellings, while preserving a valid digit-escape span covering `\x`,
+  `\u`, `\U`, braced `\u{...}`, and octal-leading escape spellings.
 - Added a one-token file-input fixture for the compiled `compiler/main.ari`
   bootstrap run, so file input uses real loaded text without pretending the
   larger source-root smoke fixture is already parseable as a full Ari program.
@@ -411,10 +415,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add source-text string escape digit-shape diagnostics for `\x`, `\u`, `\U`,
-  and octal escape spellings.
+- Add source-text string escape value-range diagnostics for byte, Unicode, and
+  octal escape spellings.
 
 ## Next Recommended Task
 
-Add source-text string escape digit-shape diagnostics for `\x`, `\u`, `\U`, and
+Add source-text string escape value-range diagnostics for byte, Unicode, and
 octal escape spellings.

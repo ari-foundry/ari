@@ -63,6 +63,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   single-character string escapes such as `\q`, while preserving supported
   common escapes, quote/backslash escapes, `\x`, `\u`, `\U`, and octal-leading
   escape spellings as string-literal spans for now.
+- `compiler/lexer.ari` validates source-text string escape digit shapes for
+  `\x`, fixed-width `\u`, fixed-width `\U`, braced `\u{...}`, and octal digit
+  runs before accepting a string-literal span, including invalid digit offsets
+  inside braced Unicode escapes.
 - `compiler/lexer.ari` classifies `@` as punctuation so attribute and alias
   marker tokenization no longer falls through the unknown-token path.
 - `compiler/lexer.ari` classifies simple one-character operators separately
