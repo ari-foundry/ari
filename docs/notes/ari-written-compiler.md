@@ -118,6 +118,8 @@ compiler feature in the normal focused-test workflow.
 - `compiler/lexer.ari` exposes a two-character shift operator helper so early
   smokes can distinguish `<<` and `>>` from their one-character comparison
   fallback tokens.
+- `compiler/lexer.ari` exposes a two-character arrow operator helper so early
+  smokes can distinguish `->` from the one-character minus fallback token.
 - `compiler/ast.ari` now models minimal span-carrying token, statement, error,
   and missing output nodes.
 - `compiler/ast.ari` exposes a statement-kind query helper so parser payload
@@ -435,6 +437,9 @@ policy in ad hoc compiler files.
 - Added focused `<<` and `>>` shift operator tokens and source-root smoke
   coverage that they fall back to one-character comparison tokens when the
   second character does not match.
+- Added a focused `->` arrow operator token and source-root smoke coverage that
+  it falls back to the one-character minus token when the second character does
+  not match.
 - Added token-kind query helpers for the lexer/parser boundary and a tiny parser
   handoff classification score.
 - Moved the test-like entry arithmetic out of `compiler/main.ari` into a
@@ -536,14 +541,14 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a focused lexer two-character arrow helper and smoke for `->`, reusing
-  the one-character minus operator as the fallback path, so function-signature
-  tokenization can start.
+- Add a focused lexer two-character path separator helper and smoke for `::`,
+  reusing the one-character colon punctuation as the fallback path, so module
+  path tokenization can start.
 
 ## Next Recommended Task
 
-Add a focused lexer two-character arrow helper and smoke for `->`, reusing the
-one-character minus operator as the fallback path, so function-signature
+Add a focused lexer two-character path separator helper and smoke for `::`,
+reusing the one-character colon punctuation as the fallback path, so module path
 tokenization can start.
 
 ## Local Validation
@@ -690,6 +695,8 @@ hosted compiler fix. The lexer two-character logical operator smoke checked
 `&&` and `||` tokenization plus one-character bitwise fallback paths without
 requiring a hosted compiler fix. The lexer two-character shift operator smoke
 checked `<<` and `>>` tokenization plus one-character comparison fallback paths
+without requiring a hosted compiler fix. The lexer two-character arrow operator
+smoke checked `->` tokenization plus the one-character minus fallback path
 without requiring a hosted compiler fix.
 The growing source-root fixture did expose allocation-capacity runtime traps
 while reading the file smoke; this is fixed locally with explicit `zone(65536)`

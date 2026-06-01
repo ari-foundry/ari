@@ -390,6 +390,30 @@ fn lexer_shift_operator_span_score() -> i64 {
   return 0;
 }
 
+fn lexer_arrow_operator_span_score() -> i64 {
+  let arrow = lexer::cursor_from_arrow_two('-', 230, '>');
+  if !lexer::cursor_is_operator(arrow) {
+    return 1;
+  }
+  if lexer::cursor_token_start(arrow) != 230 {
+    return 2;
+  }
+  if lexer::cursor_token_end(arrow) != 232 {
+    return 3;
+  }
+  if lexer::cursor_token_score(arrow) != 46 {
+    return 4;
+  }
+  let fallback = lexer::cursor_from_arrow_two('-', 240, '+');
+  if lexer::cursor_token_end(fallback) != 241 {
+    return 5;
+  }
+  if lexer::cursor_token_score(fallback) != 14 {
+    return 6;
+  }
+  return 0;
+}
+
 fn parse_success_score() -> i64 {
   if !parser::parse_is_success(parser::parse_one('q', 1)) {
     return 1;
@@ -601,6 +625,7 @@ fn main() -> i64 {
     lexer_comparison_operator_span_score() +
     lexer_logical_operator_span_score() +
     lexer_shift_operator_span_score() +
+    lexer_arrow_operator_span_score() +
     ast::node_score(ast::token_node(3, 2, 5, 8)) -
     12 +
     parser::parse_score(parser::parse_one('q', 1)) +
