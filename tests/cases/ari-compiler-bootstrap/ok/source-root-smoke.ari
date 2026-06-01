@@ -47,7 +47,7 @@ fn source_text_extra_token_driver_score() -> i64 {
 
 fn source_text_keyword_driver_score() -> i64 {
   zone(65536) {
-    return driver::result_code(driver::run_source_text(std::string::from("return")));
+    return driver::result_code(driver::run_source_text(std::string::from("if")));
   }
 }
 
@@ -1587,6 +1587,9 @@ fn lexer_keyword_table_score() -> i64 {
   if score == 0 {
     score = lexer_keyword_table_case_score(ref table, 270, "return", 93, 6, "returning", 9);
   }
+  if score == 0 {
+    score = lexer_keyword_table_case_score(ref table, 280, "if", 90, 2, "iffy", 4);
+  }
 
   std::zone::destroy(zone);
   return score;
@@ -1679,6 +1682,9 @@ fn parse_text_score() -> i64 {
   }
   if parser_keyword_failure_code("return") != 2006 {
     return 27;
+  }
+  if parser_keyword_failure_code("if") != 2006 {
+    return 28;
   }
   return 0;
 }
