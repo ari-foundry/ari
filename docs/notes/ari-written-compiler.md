@@ -61,10 +61,11 @@ compiler feature in the normal focused-test workflow.
 - Do not make bootstrap design or bug judgments from memory. Inspect the actual
   repository structure, Ari source, tests, stdlib APIs, and stage0 behavior
   before recording a conclusion or choosing an implementation direction.
-- Treat `lib/std` as usable by Ari-written compiler code. If a normal stdlib
-  capability is missing, awkward, or behaves like a bug, record the exact
-  friction or smallest repro separately and fix that stdlib or hosted-compiler
-  issue deliberately instead of silently working around it.
+- Assume `lib/std` is available to Ari-written compiler code and use it first.
+  When a capability that belongs in a normal stdlib is missing, awkward, or
+  behaves like a bug, record the exact friction or smallest repro separately
+  and fix that stdlib or hosted-compiler issue deliberately instead of silently
+  working around it.
 - Record implementation friction while coding. The point is to know when lexer
   progress is exposing host compiler or stdlib work that should be fixed before
   the Ari-written compiler grows larger.
@@ -137,11 +138,11 @@ compiler feature in the normal focused-test workflow.
   `ptrace`, `returning`, `iffy`, `elsewhere`, `while1`, `initial`, `next1`,
   `continue1`, `break1`, `drop1`, `forget1`, `null1`, `true1`, and `false1` as
   identifiers.
-- Ari-written compiler code may use `lib/std` directly. `HashMap` and
-  byte-slice string lookup helpers are available in `lib/std/collections.arih`;
-  the current stateless lexer path keeps width buckets plus a shared slice
-  matcher only to avoid rebuilding a keyword map per token before there is a
-  reusable lexer-owned keyword table.
+- Ari-written compiler code assumes `lib/std` is available and should use it
+  directly. `HashMap` and byte-slice string lookup helpers are available in
+  `lib/std/collections.arih`; the current stateless lexer path keeps width
+  buckets plus a shared slice matcher only to avoid rebuilding a keyword map per
+  token before there is a reusable lexer-owned keyword table.
 - `compiler/lexer.ari` classifies `?` and `??` as operators so
   result-propagation and null-coalescing tokens match the stage0 spellings.
 - `compiler/lexer.ari` exposes one `scan_two`/`cursor_from_two` path for all
@@ -586,9 +587,9 @@ policy in ad hoc compiler files.
 - Recorded the no-assumption working rule: inspect actual repo structure,
   Ari source, tests, stdlib APIs, and stage0 behavior before judging design or
   host-compiler bugs.
-- Recorded the bootstrap policy that Ari-written compiler code may use
-  `lib/std` directly; current keyword lookup avoids a hash map only because the
-  lexer API does not yet own a reusable table.
+- Recorded the bootstrap policy that Ari-written compiler code assumes
+  `lib/std` is available and should use it first; current keyword lookup avoids
+  a hash map only because the lexer API does not yet own a reusable table.
 - Corrected the earlier keyword lookup note so `HashMap` availability is not
   treated as a bootstrap blocker.
 - Replaced the raw per-character keyword comparison chain with one slice matcher
@@ -939,9 +940,9 @@ preserved `ask` as an identifier without requiring a hosted compiler fix.
 The working-rule update recorded that bootstrap decisions must come from
 inspecting actual repo structure, stdlib APIs, tests, and stage0 behavior
 rather than inference; this required no hosted compiler fix.
-The keyword lookup review now records that `lib/std` may be used directly and
-that std `HashMap` exists, while this stateless lexer slice kept the
-allocation-free matcher without requiring a hosted compiler fix.
+The keyword lookup review now records that `lib/std` is assumed available and
+should be used first, and that std `HashMap` exists, while this stateless lexer
+slice kept the allocation-free matcher without requiring a hosted compiler fix.
 The keyword matcher helper refactor kept the width-bucket keyword path checked
 through the source-root smoke without requiring a hosted compiler fix.
 The token-kind class helper refactor checked through the bootstrap source root
