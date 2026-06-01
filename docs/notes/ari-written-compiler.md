@@ -112,6 +112,9 @@ compiler feature in the normal focused-test workflow.
   the scalar constructor helper.
 - The bootstrap source-root smoke covers the current driver missing-file path
   and checks that file-read failures preserve driver error code `1102`.
+- The bootstrap source-root smoke covers the current empty source-text driver
+  path and checks that text-input validation preserves driver error code
+  `1101`.
 - File-input smoke paths use explicit `zone(16384)` allocation blocks because
   the source-root fixture is now large enough to exceed the default zone
   capacity when read into an owned string.
@@ -266,6 +269,8 @@ policy in ad hoc compiler files.
   input-bound smokes through it instead of public aggregate literals.
 - Added a focused missing-file driver smoke for the existing `1102` file-read
   error payload.
+- Added a focused empty source-text driver smoke for the existing `1101`
+  text-input validation error payload.
 - Switched file-input smoke allocation blocks to explicit `zone(16384)` after
   the growing source-root fixture exceeded the default zone capacity at
   runtime.
@@ -274,14 +279,14 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a focused empty-source-text smoke for the existing driver text-input
-  error `1101`, using `result_code` rather than CLI exit-code mapping.
+- Add a focused default-driver success smoke using `result_code(driver::run())`
+  so the internal `Ok(0)` payload is checked without CLI exit-code mapping.
 
 ## Next Recommended Task
 
-Add a focused empty-source-text smoke for the existing driver text-input error
-`1101`. Keep it inside the bootstrap source-root smoke with an explicit
-`zone(16384)` block and `std::string::empty()`, and do not add option parsing,
+Add a focused default-driver success smoke using `result_code(driver::run())`
+so the internal `Ok(0)` payload is checked without CLI exit-code mapping. Keep
+it inside the bootstrap source-root smoke and do not add option parsing,
 diagnostic rendering, or a source table yet.
 
 ## Local Validation
@@ -356,7 +361,9 @@ loaded-source summary smoke and parse-failure driver smokes also checked
 driver input-bound smokes checked negative integer offsets through the scalar
 constructor helper without requiring a hosted compiler fix. The missing-file
 driver smoke checked `std::fs::read_to_string` error propagation through
-`result_code` without requiring a hosted compiler fix.
+`result_code` without requiring a hosted compiler fix. The empty source-text
+smoke checked `std::string::empty()` construction and text-input validation
+through `result_code` without requiring a hosted compiler fix.
 The growing source-root fixture did expose a default-zone capacity runtime trap
 while reading the file smoke; this was fixed locally with explicit
 `zone(16384)` allocation blocks and is recorded as allocation-policy pressure
