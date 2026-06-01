@@ -11,6 +11,14 @@ fn file_driver_score() -> i64 {
   }
 }
 
+fn missing_file_driver_score() -> i64 {
+  zone(16384) {
+    return driver::result_code(driver::run_file(
+      "tests/cases/ari-compiler-bootstrap/missing-input.ari"
+    ));
+  }
+}
+
 fn loaded_source_score() -> i64 {
   let loaded = source::loaded_source_summary(7, 5, 'm', 0);
   if !source::loaded_source_has_first(loaded) {
@@ -114,6 +122,8 @@ fn main() -> i64 {
     parse_failure_code_score() -
     2004 +
     file_driver_score() +
+    missing_file_driver_score() -
+    1102 +
     parser::parse_score(parser::parse_empty()) -
     3018;
 }
