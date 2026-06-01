@@ -47,7 +47,7 @@ fn source_text_extra_token_driver_score() -> i64 {
 
 fn source_text_keyword_driver_score() -> i64 {
   zone(65536) {
-    return driver::result_code(driver::run_source_text(std::string::from("impl")));
+    return driver::result_code(driver::run_source_text(std::string::from("for")));
   }
 }
 
@@ -1681,6 +1681,25 @@ fn lexer_keyword_table_score() -> i64 {
     score = 56;
   }
 
+  let for_keyword = lexer::cursor_from_text_with_keywords(ref table, "for", 0);
+  if score == 0 && !lexer::cursor_is_keyword(for_keyword) {
+    score = 57;
+  }
+  if score == 0 && lexer::cursor_token_score(for_keyword) != 116 {
+    score = 58;
+  }
+  if score == 0 && lexer::cursor_token_end(for_keyword) != 3 {
+    score = 59;
+  }
+
+  let for_longer = lexer::cursor_from_text_with_keywords(ref table, "forest", 0);
+  if score == 0 && !lexer::cursor_is_identifier(for_longer) {
+    score = 60;
+  }
+  if score == 0 && lexer::cursor_is_keyword(for_longer) {
+    score = 61;
+  }
+
   std::zone::destroy(zone);
   return score;
 }
@@ -1740,6 +1759,9 @@ fn parse_text_score() -> i64 {
     }
     if parser::parse_failure_code(parser::parse_text_with_keywords("impl")) != 2006 {
       return 18;
+    }
+    if parser::parse_failure_code(parser::parse_text_with_keywords("for")) != 2006 {
+      return 19;
     }
   }
   return 0;
