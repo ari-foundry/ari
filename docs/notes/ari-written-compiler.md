@@ -116,9 +116,9 @@ compiler feature in the normal focused-test workflow.
 - `compiler/lexer.ari` classifies shift compound-assignment operators `<<=`
   and `>>=` with source-text longest-match behavior while preserving `<<`,
   `>>`, `<=`, and `>=`.
-- `compiler/lexer.ari` classifies exact source-text `fn`, `let`, and `var` as
-  keywords while preserving longer identifier runs such as `fn1`, `letter`,
-  and `variant` as identifiers.
+- `compiler/lexer.ari` classifies exact source-text `fn`, `let`, `var`, and
+  `own` as keywords while preserving longer identifier runs such as `fn1`,
+  `letter`, `variant`, and `owner` as identifiers.
 - `compiler/lexer.ari` classifies `?` and `??` as operators so
   result-propagation and null-coalescing tokens match the stage0 spellings.
 - `compiler/lexer.ari` exposes one `scan_two`/`cursor_from_two` path for all
@@ -503,6 +503,9 @@ policy in ad hoc compiler files.
 - Added the third text-backed keyword token, `var`, with source-root smoke
   coverage that exact `var` is a keyword and longer `variant` remains an
   identifier.
+- Added the fourth text-backed keyword token, `own`, with source-root smoke
+  coverage that exact `own` is a keyword and longer `owner` remains an
+  identifier.
 - Consolidated the public two-character lexer helpers into one
   `scan_two`/`cursor_from_two` path while preserving the existing source-root
   smokes for spans, operators, punctuation, and fallback behavior.
@@ -618,13 +621,13 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add text-backed keyword classification for stage0 `own`, preserving longer
-  identifiers such as `owner` as identifiers.
+- Add text-backed keyword classification for stage0 `ref`, preserving longer
+  identifiers such as `reference` as identifiers.
 
 ## Next Recommended Task
 
-Add text-backed keyword classification for stage0 `own`, preserving longer
-identifiers such as `owner` as identifiers.
+Add text-backed keyword classification for stage0 `ref`, preserving longer
+identifiers such as `reference` as identifiers.
 
 ## Local Validation
 
@@ -804,6 +807,8 @@ The lexer keyword smoke checked exact `let` source-text classification and
 preserved `letter` as an identifier without requiring a hosted compiler fix.
 The lexer keyword smoke checked exact `var` source-text classification and
 preserved `variant` as an identifier without requiring a hosted compiler fix.
+The lexer keyword smoke checked exact `own` source-text classification and
+preserved `owner` as an identifier without requiring a hosted compiler fix.
 The token-kind class helper refactor checked through the bootstrap source root
 without requiring a hosted compiler fix. The lexer double-quote delimiter smoke
 checked `"` tokenization as punctuation without requiring a hosted compiler

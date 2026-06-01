@@ -1301,6 +1301,76 @@ fn lexer_keyword_var_score() -> i64 {
   return 0;
 }
 
+fn lexer_keyword_own_score() -> i64 {
+  let text: Slice[u8] = "own name";
+  let keyword = lexer::cursor_from_text(text, 0);
+  if !lexer::cursor_is_keyword(keyword) {
+    return 1;
+  }
+  if lexer::cursor_is_identifier(keyword) {
+    return 2;
+  }
+  if lexer::cursor_is_unknown(keyword) {
+    return 3;
+  }
+  if lexer::cursor_token_start(keyword) != 0 {
+    return 4;
+  }
+  if lexer::cursor_token_end(keyword) != 3 {
+    return 5;
+  }
+  if lexer::cursor_token_score(keyword) != 86 {
+    return 6;
+  }
+  let after_keyword = lexer::cursor_advance_in_text(keyword, text);
+  if !lexer::cursor_is_whitespace(after_keyword) {
+    return 7;
+  }
+  let name = lexer::cursor_advance_significant_in_text(keyword, text);
+  if !lexer::cursor_is_identifier(name) {
+    return 8;
+  }
+  if lexer::cursor_token_start(name) != 4 {
+    return 9;
+  }
+  if lexer::cursor_token_end(name) != 8 {
+    return 10;
+  }
+
+  let longer: Slice[u8] = "owner";
+  let identifier = lexer::cursor_from_text(longer, 0);
+  if !lexer::cursor_is_identifier(identifier) {
+    return 11;
+  }
+  if lexer::cursor_is_keyword(identifier) {
+    return 12;
+  }
+  if lexer::cursor_token_end(identifier) != 5 {
+    return 13;
+  }
+  if lexer::cursor_token_score(identifier) != 6 {
+    return 14;
+  }
+
+  if !lexer::handoff_starts_with_keyword(lexer::handoff_from_text("own")) {
+    return 15;
+  }
+  if parser::parse_text_kind_score("own") != 45 {
+    return 16;
+  }
+  if parser::parse_failure_code(parser::parse_text("own")) != 2006 {
+    return 17;
+  }
+  let single = lexer::cursor_from_one('o', 0);
+  if !lexer::cursor_is_identifier(single) {
+    return 18;
+  }
+  if lexer::cursor_is_keyword(single) {
+    return 19;
+  }
+  return 0;
+}
+
 fn parse_text_score() -> i64 {
   if !parser::parse_is_success(parser::parse_text("name9")) {
     return 1;
@@ -1554,6 +1624,7 @@ fn main() -> i64 {
     lexer_keyword_fn_score() +
     lexer_keyword_let_score() +
     lexer_keyword_var_score() +
+    lexer_keyword_own_score() +
     parse_text_score() +
     ast::node_score(ast::token_node(3, 2, 5, 8)) -
     12 +

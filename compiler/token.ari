@@ -56,6 +56,7 @@ pub enum TokenKind {
   KwFn,
   KwLet,
   KwVar,
+  KwOwn,
   EndOfFile,
   Unknown(char),
 }
@@ -133,6 +134,7 @@ pub fn kind_score(kind: TokenKind) -> i64 {
     KwFn => 80,
     KwLet => 81,
     KwVar => 82,
+    KwOwn => 83,
     EndOfFile => 0,
     Unknown(value) => value as i64,
   }
@@ -201,6 +203,7 @@ pub fn kind_class_score(kind: TokenKind) -> i64 {
     KwFn => 8,
     KwLet => 8,
     KwVar => 8,
+    KwOwn => 8,
     EndOfFile => 6,
     Unknown(_) => 7,
   }
