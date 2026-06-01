@@ -1340,6 +1340,17 @@ fn lexer_keyword_score() -> i64 {
       6,
       "next",
       'n'
+    ) +
+    lexer_keyword_case_with_base_score(
+      1300,
+      "continue name",
+      8,
+      101,
+      "continue1",
+      9,
+      10,
+      "continue",
+      'c'
     );
 }
 
