@@ -535,15 +535,18 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Added source-text leading-comment byte-character literal spans before a
   statement token, checking line and block comments followed by `'a'` through
   lexer handoff, parser, keyword-table parser, and driver paths.
+- Added source-text leading-comment byte-character escape spans before a
+  statement token, checking line and block comments followed by `'\n'` through
+  lexer handoff, parser, keyword-table parser, and driver paths.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add source-text leading-comment byte-character escape spans before a
+- Add source-text leading-comment byte-character numeric escape spans before a
   statement token.
 
 ## Next Recommended Task
 
-Add source-text leading-comment byte-character escape spans before a
+Add source-text leading-comment byte-character numeric escape spans before a
 statement token.
