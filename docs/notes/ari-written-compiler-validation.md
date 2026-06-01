@@ -106,9 +106,9 @@ without requiring a hosted compiler fix. The parser number-success smoke checked
 the number statement path through `parser::parse_is_success` without requiring
 a hosted compiler fix. The reusable keyword-table smoke checked `KwStruct`,
 `KwExtern`, `KwEnum`, `KwTrait`, `KwDyn`, `KwMatch`, `KwMod`, `KwPub`, `KwUse`,
-`KwImpl`, `KwFor`, `KwIn`, `KwLet`, `KwVar`, `KwOwn`, `KwRef`, and `KwMut`, plus longer `structure`, `external`,
+`KwImpl`, `KwFor`, `KwIn`, `KwLet`, `KwVar`, `KwOwn`, `KwRef`, `KwMut`, and `KwPtr`, plus longer `structure`, `external`,
 `enumerate`, `traitor`, `dynamic`, `matches`, `module`, `public`, `user`,
-`implicit`, `forest`, `inside`, `letter`, `variant`, `owner`, `reference`, and `mutable`, and the source-text parser/driver
+`implicit`, `forest`, `inside`, `letter`, `variant`, `owner`, `reference`, `mutable`, and `ptrace`, and the source-text parser/driver
 keyword path without requiring a hosted compiler fix. The AST statement-kind
 query and parser payload-shape smoke checked successful statement output without
 requiring a hosted compiler fix. The AST node span-length query and
