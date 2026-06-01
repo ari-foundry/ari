@@ -75,6 +75,9 @@ fn identifier_kind_from_text(text: std::Slice[u8], start: i64, end: i64) -> toke
     if identifier_text_matches(text, start, end, "fn") {
       return token::KwFn;
     }
+    if identifier_text_matches(text, start, end, "as") {
+      return token::KwAs;
+    }
     if identifier_text_matches(text, start, end, "if") {
       return token::KwIf;
     }
@@ -569,6 +572,9 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
     }
     KwConst => {
       return Scanned(token::make_token(token::KwConst, offset, offset + 5));
+    }
+    KwAs => {
+      return Scanned(token::make_token(token::KwAs, offset, offset + 2));
     }
     KwLet => {
       return Scanned(token::make_token(token::KwLet, offset, offset + 3));

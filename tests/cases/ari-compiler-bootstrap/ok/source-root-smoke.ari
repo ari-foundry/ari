@@ -1428,6 +1428,17 @@ fn lexer_keyword_score() -> i64 {
       9,
       "const",
       'c'
+    ) +
+    lexer_keyword_case_with_base_score(
+      2100,
+      "as name",
+      2,
+      103,
+      "ask",
+      3,
+      4,
+      "as",
+      'a'
     );
 }
 

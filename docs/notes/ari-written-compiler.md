@@ -56,6 +56,19 @@ this note. When hosted compiler behavior blocks the Ari-written compiler, record
 the blocker here and then use the relevant `docs/dev/` page to fix the hosted
 compiler feature in the normal focused-test workflow.
 
+## Working Rules
+
+- Do not make bootstrap design or bug judgments from memory. Inspect the actual
+  repository structure, Ari source, tests, stdlib APIs, and stage0 behavior
+  before recording a conclusion or choosing an implementation direction.
+- Treat `lib/std` as usable by Ari-written compiler code. If a normal stdlib
+  capability is missing, awkward, or behaves like a bug, record the exact
+  friction or smallest repro separately and fix that stdlib or hosted-compiler
+  issue deliberately instead of silently working around it.
+- Record implementation friction while coding. The point is to know when lexer
+  progress is exposing host compiler or stdlib work that should be fixed before
+  the Ari-written compiler grows larger.
+
 ## Current Status
 
 - `compiler/` has been started as a direct Ari source root.
@@ -116,13 +129,13 @@ compiler feature in the normal focused-test workflow.
 - `compiler/lexer.ari` classifies shift compound-assignment operators `<<=`
   and `>>=` with source-text longest-match behavior while preserving `<<`,
   `>>`, `<=`, and `>=`.
-- `compiler/lexer.ari` classifies exact source-text `fn`, `const`, `let`,
-  `var`, `own`, `ref`, `mut`, `ptr`, `return`, `if`, `else`, `while`, `init`,
-  `next`, `continue`, `break`, `drop`, `forget`, `null`, `true`, and `false`
-  as keywords while preserving longer identifier runs such as `fn1`,
-  `constant`, `letter`, `variant`, `owner`, `reference`, `mutable`, `ptrace`,
-  `returning`, `iffy`, `elsewhere`, `while1`, `initial`, `next1`, `continue1`,
-  `break1`, `drop1`, `forget1`, `null1`, `true1`, and `false1` as
+- `compiler/lexer.ari` classifies exact source-text `fn`, `const`, `as`,
+  `let`, `var`, `own`, `ref`, `mut`, `ptr`, `return`, `if`, `else`, `while`,
+  `init`, `next`, `continue`, `break`, `drop`, `forget`, `null`, `true`, and
+  `false` as keywords while preserving longer identifier runs such as `fn1`,
+  `constant`, `ask`, `letter`, `variant`, `owner`, `reference`, `mutable`,
+  `ptrace`, `returning`, `iffy`, `elsewhere`, `while1`, `initial`, `next1`,
+  `continue1`, `break1`, `drop1`, `forget1`, `null1`, `true1`, and `false1` as
   identifiers.
 - Ari-written compiler code may use `lib/std` directly. `HashMap` and
   byte-slice string lookup helpers are available in `lib/std/collections.arih`;
@@ -567,6 +580,12 @@ policy in ad hoc compiler files.
 - Added the twenty-first text-backed keyword token, `const`, with source-root
   smoke coverage that exact `const` is a keyword and longer `constant` remains
   an identifier.
+- Added the twenty-second text-backed keyword token, `as`, with source-root
+  smoke coverage that exact `as` is a keyword and longer `ask` remains an
+  identifier.
+- Recorded the no-assumption working rule: inspect actual repo structure,
+  Ari source, tests, stdlib APIs, and stage0 behavior before judging design or
+  host-compiler bugs.
 - Recorded the bootstrap policy that Ari-written compiler code may use
   `lib/std` directly; current keyword lookup avoids a hash map only because the
   lexer API does not yet own a reusable table.
@@ -693,13 +712,13 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add text-backed keyword classification for stage0 `as`, preserving longer
-  identifiers such as `ask` as identifiers.
+- Add text-backed keyword classification for stage0 `meta`, preserving longer
+  identifiers such as `metadata` as identifiers.
 
 ## Next Recommended Task
 
-Add text-backed keyword classification for stage0 `as`, preserving longer
-identifiers such as `ask` as identifiers.
+Add text-backed keyword classification for stage0 `meta`, preserving longer
+identifiers such as `metadata` as identifiers.
 
 ## Local Validation
 
@@ -915,6 +934,11 @@ The lexer keyword smoke checked exact `false` source-text classification and
 preserved `false1` as an identifier without requiring a hosted compiler fix.
 The lexer keyword smoke checked exact `const` source-text classification and
 preserved `constant` as an identifier without requiring a hosted compiler fix.
+The lexer keyword smoke checked exact `as` source-text classification and
+preserved `ask` as an identifier without requiring a hosted compiler fix.
+The working-rule update recorded that bootstrap decisions must come from
+inspecting actual repo structure, stdlib APIs, tests, and stage0 behavior
+rather than inference; this required no hosted compiler fix.
 The keyword lookup review now records that `lib/std` may be used directly and
 that std `HashMap` exists, while this stateless lexer slice kept the
 allocation-free matcher without requiring a hosted compiler fix.
@@ -960,6 +984,10 @@ codegen, diagnostics, or another hosted compiler area.
 
 Desired stage0 pressure that is not yet classified as a bug:
 
+- The current keyword lookup lives in stateless `identifier_kind_from_text`
+  without a lexer-owned context or zone-backed keyword table. Once the lexer
+  grows that actual state, replacing width buckets with a reusable std
+  `HashMap` keyword table should be revisited.
 - More polished source-table ergonomics over the usable runtime string, slice,
   and file-IO primitives.
 - Stronger aggregate/type monomorphization for compiler-shaped models.
