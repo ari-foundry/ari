@@ -1296,6 +1296,17 @@ fn lexer_keyword_score() -> i64 {
       5,
       "if",
       'i'
+    ) +
+    lexer_keyword_case_with_base_score(
+      900,
+      "else name",
+      4,
+      93,
+      "elsewhere",
+      9,
+      10,
+      "else",
+      'e'
     );
 }
 
