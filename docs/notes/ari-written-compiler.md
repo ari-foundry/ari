@@ -85,7 +85,13 @@ compiler feature in the normal focused-test workflow.
 - `compiler/diagnostic.ari` exposes a diagnostic-code accessor, and
   `compiler/parser.ari` exposes a parser failure-code helper for phase
   boundaries that need diagnostic identity without rendering diagnostics.
+- `compiler/parser.ari` exposes a tiny `parse_one_eof` helper so EOF-cursor
+  diagnostics can be tested without exporting or passing nested lexer cursor
+  types across module paths.
 - The bootstrap source-root smoke checks the parser empty-input diagnostic code
+  through `parser::parse_failure_code` instead of relying only on diagnostic
+  smoke-score arithmetic.
+- The bootstrap source-root smoke checks the parser EOF-cursor diagnostic code
   through `parser::parse_failure_code` instead of relying only on diagnostic
   smoke-score arithmetic.
 - `compiler/driver.ari` owns the current bootstrap entry flow and returns a
@@ -276,6 +282,8 @@ policy in ad hoc compiler files.
   whitespace failure code.
 - Added a focused parser empty-input failure-code smoke that checks diagnostic
   code `2002` through `parser::parse_failure_code(parser::parse_empty())`.
+- Added a tiny parser EOF helper and a focused parser EOF-cursor failure-code
+  smoke that checks diagnostic code `2001` through `parser::parse_failure_code`.
 - Routed driver parse failures through the parser failure-code helper, with
   source-root smoke coverage for whitespace and unknown-token diagnostic codes.
 - Added a driver result-code helper and simplified bootstrap smokes that inspect
@@ -306,18 +314,18 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a focused parser EOF-cursor failure-code smoke using
-  `parser::parse_failure_code(parser::parse_cursor(lexer::handoff_eof(...)))`
-  so the parser statement EOF diagnostic identity is checked without
+- Add a focused parser unknown-token failure-code smoke using
+  `parser::parse_failure_code(parser::parse_one('!', ...))` so the parser
+  unknown-token diagnostic identity is checked without driver indirection or
   smoke-score arithmetic.
 
 ## Next Recommended Task
 
-Add a focused parser EOF-cursor failure-code smoke using
-`parser::parse_failure_code(parser::parse_cursor(lexer::handoff_eof(...)))`
-so the parser statement EOF diagnostic identity is checked without smoke-score
-arithmetic. Keep it inside the bootstrap source-root smoke and do not add
-parser recovery, diagnostic rendering, or a source table yet.
+Add a focused parser unknown-token failure-code smoke using
+`parser::parse_failure_code(parser::parse_one('!', ...))` so the parser
+unknown-token diagnostic identity is checked without driver indirection or
+smoke-score arithmetic. Keep it inside the bootstrap source-root smoke and do
+not add parser recovery, diagnostic rendering, or a source table yet.
 
 ## Local Validation
 
@@ -405,6 +413,8 @@ compiler fix. The source-text success smoke checked `std::string::from()`
 construction and the text-input `Ok(0)` payload through `result_code` without
 requiring a hosted compiler fix. The parser empty-input failure-code smoke
 checked diagnostic code `2002` through `parser::parse_failure_code` without
+requiring a hosted compiler fix. The parser EOF-cursor failure-code smoke
+checked diagnostic code `2001` through `parser::parse_failure_code` without
 requiring a hosted compiler fix.
 The growing source-root fixture did expose a default-zone capacity runtime trap
 while reading the file smoke; this was fixed locally with explicit
@@ -418,9 +428,12 @@ ergonomics pressure, not a confirmed hosted compiler bug.
 
 This slice also reconfirmed the existing cross-module type identity pressure:
 a value constructed as root `source::LoadedSourceSummary` is not the same type
-as `driver::source::LoadedSourceSummary`. That is not classified as a hosted
-compiler bug in this slice; the public driver helper uses scalar fields while
-the nested summary remains an internal driver handoff.
+as `driver::source::LoadedSourceSummary`, and a root `lexer::TokenCursor` is
+not the same type as `parser::lexer::TokenCursor`. That is not classified as a
+hosted compiler bug in this slice; public driver helpers use scalar fields
+while the nested summary remains an internal driver handoff, and the parser EOF
+smoke uses a parser-local helper so it does not pass nested lexer cursor values
+across module paths.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
@@ -434,8 +447,9 @@ Desired stage0 pressure that is not yet classified as a bug:
 - Stronger aggregate/type monomorphization for compiler-shaped models.
 - Clearer cross-module type identity ergonomics for shared phase models; these
   slices keep AST constructors and public driver helpers scalar at module
-  boundaries instead of passing `source::Span` or `LoadedSourceSummary` values
-  across nested import paths.
+  boundaries, and parser helpers construct parser-local lexer cursors instead
+  of passing root `source`, `LoadedSourceSummary`, or `lexer::TokenCursor`
+  values across nested import paths.
 - Clearer ownership-phase ergonomics for checked trees and payload movement.
 - More general iterator support beyond compiler-known `range`.
 - Clearer allocation-policy ergonomics for self-host file reads; default

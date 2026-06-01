@@ -123,6 +123,10 @@ fn parse_empty_failure_code_score() -> i64 {
   return parser::parse_failure_code(parser::parse_empty());
 }
 
+fn parse_eof_cursor_failure_code_score() -> i64 {
+  return parser::parse_failure_code(parser::parse_one_eof('p', 2));
+}
+
 fn main() -> i64 {
   let file = source::source_file(3, 12);
   let span = source::span(3, 2, 5);
@@ -167,6 +171,8 @@ fn main() -> i64 {
     2004 +
     parse_empty_failure_code_score() -
     2002 +
+    parse_eof_cursor_failure_code_score() -
+    2001 +
     file_driver_score() +
     file_driver_result_score() +
     missing_file_driver_score() -
