@@ -477,13 +477,17 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   comment scan through end of input.
 - Added source-text comment-only parser and driver EOF diagnostic coverage
   after skipped line and block comments.
+- Added source-text trailing-comment handoff coverage after a statement token,
+  checking lexer EOF placement plus parser and driver success paths.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add source-text trailing-comment handoff coverage after a statement token.
+- Add source-text trailing unterminated block-comment diagnostics after a
+  statement token.
 
 ## Next Recommended Task
 
-Add source-text trailing-comment handoff coverage after a statement token.
+Add source-text trailing unterminated block-comment diagnostics after a
+statement token.

@@ -183,6 +183,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   matching stage0's whitespace skipper.
 - `compiler/lexer.ari` keeps EOF-only line-comment spans as whitespace through
   the end of source text, matching stage0's line comment scanner.
+- `compiler/lexer.ari` skips trailing line and block comments after a
+  statement token when building source-text handoffs, so the handoff EOF cursor
+  lands at the end of the skipped comment.
 - `compiler/lexer.ari` exposes text-backed cursor advance and handoff helpers,
   including significant-token advance that skips leading and trailing
   whitespace around the current single-statement parser handoff.
@@ -264,6 +267,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - The bootstrap source-root smoke checks source-text comment-only parser EOF
   diagnostics after skipped line and block comments, including failure span
   offsets at the end of the skipped comment.
+- The bootstrap source-root smoke checks source-text parser success with
+  trailing line and block comments after a statement token, preserving the
+  statement span while skipping comments to EOF.
 - The bootstrap source-root smoke checks the parser unknown-token diagnostic
   code through `parser::parse_failure_code` instead of relying only on driver
   indirection or diagnostic smoke-score arithmetic.
@@ -352,6 +358,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - The bootstrap source-root smoke checks the source-text driver comment-only
   path and verifies skipped line and block comments preserve parser EOF
   diagnostic code `2001`.
+- The bootstrap source-root smoke checks the source-text driver trailing
+  comment path and verifies line and block comments after a statement token
+  preserve `Ok(0)`.
 - The bootstrap source-root smoke covers the current `DriverInput` offset guard
   errors for both invalid start offsets and invalid one-byte end bounds through
   the scalar constructor helper.

@@ -351,6 +351,9 @@ The source-text comment-only parser and driver smokes now check that skipped
 line and block comments preserve parser EOF diagnostic code `2001`, with
 parser failure offsets at the end of the skipped comment, without requiring a
 hosted compiler fix.
+The source-text trailing-comment handoff smoke now checks line and block
+comments after a statement token through lexer EOF placement, parser success,
+and driver `Ok(0)` paths without requiring a hosted compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
