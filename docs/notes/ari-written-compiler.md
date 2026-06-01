@@ -127,6 +127,10 @@ compiler feature in the normal focused-test workflow.
 - `compiler/diagnostic.ari` exposes a diagnostic-code accessor, and
   `compiler/parser.ari` exposes a parser failure-code helper for phase
   boundaries that need diagnostic identity without rendering diagnostics.
+- `compiler/diagnostic.ari` exposes a diagnostic start-offset accessor, and
+  `compiler/parser.ari` exposes a parser failure start-offset helper for phase
+  boundaries that need diagnostic location metadata without rendering
+  diagnostics.
 - `compiler/parser.ari` exposes a tiny `parse_one_eof` helper so EOF-cursor
   diagnostics can be tested without exporting or passing nested lexer cursor
   types across module paths.
@@ -145,6 +149,9 @@ compiler feature in the normal focused-test workflow.
 - The bootstrap source-root smoke checks the parser missing-EOF handoff
   diagnostic code through `parser::parse_failure_code` instead of relying only
   on parser smoke-score arithmetic.
+- The bootstrap source-root smoke checks the parser whitespace diagnostic start
+  offset through `parser::parse_failure_start_offset` instead of relying only
+  on diagnostic smoke-score arithmetic.
 - The bootstrap source-root smoke checks the parser number statement success
   path through `parser::parse_is_success` instead of relying only on parser
   smoke-score arithmetic.
@@ -399,6 +406,9 @@ policy in ad hoc compiler files.
   parser statement source-id helper without parser score arithmetic.
 - Added a focused parser number payload statement-node smoke using the existing
   parser statement-node helper without parser score arithmetic.
+- Added a diagnostic start-offset accessor and a parser failure start-offset
+  helper, with source-root smoke coverage for the whitespace diagnostic
+  location.
 - Routed driver parse failures through the parser failure-code helper, with
   source-root smoke coverage for whitespace and unknown-token diagnostic codes.
 - Added a driver result-code helper and simplified bootstrap smokes that inspect
@@ -429,14 +439,13 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a focused parser failure start-offset helper and smoke for whitespace
-  input, using diagnostic start metadata without adding recovery or diagnostic
-  rendering.
+- Add a focused parser failure end-offset helper and smoke for whitespace input,
+  using diagnostic end metadata without adding recovery or diagnostic rendering.
 
 ## Next Recommended Task
 
-Add a focused parser failure start-offset helper and smoke for whitespace input,
-using diagnostic start metadata without adding recovery, diagnostic rendering,
+Add a focused parser failure end-offset helper and smoke for whitespace input,
+using diagnostic end metadata without adding recovery, diagnostic rendering,
 or a source table yet.
 
 ## Local Validation
@@ -554,7 +563,8 @@ end-offset smoke checked number statement end offsets without requiring a
 hosted compiler fix. The parser number payload source-id smoke checked number
 statement source ids without requiring a hosted compiler fix. The parser number
 payload statement-node smoke checked number statement shape without requiring a
-hosted compiler fix.
+hosted compiler fix. The parser failure start-offset smoke checked whitespace
+diagnostic start metadata without requiring a hosted compiler fix.
 The growing source-root fixture did expose a default-zone capacity runtime trap
 while reading the file smoke; this was fixed locally with explicit
 `zone(16384)` allocation blocks and is recorded as allocation-policy pressure
