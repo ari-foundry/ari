@@ -126,6 +126,9 @@ fn identifier_kind_from_text(text: std::Slice[u8], start: i64, end: i64) -> toke
     if identifier_text_matches(text, start, end, "break") {
       return token::KwBreak;
     }
+    if identifier_text_matches(text, start, end, "false") {
+      return token::KwFalse;
+    }
   }
   if width == 6 {
     if identifier_text_matches(text, start, end, "return") {
@@ -614,6 +617,9 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
     }
     KwTrue => {
       return Scanned(token::make_token(token::KwTrue, offset, offset + 4));
+    }
+    KwFalse => {
+      return Scanned(token::make_token(token::KwFalse, offset, offset + 5));
     }
     EndOfFile => {
       return Scanned(token::make_token(token::EndOfFile, offset, offset));
