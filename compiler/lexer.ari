@@ -74,6 +74,12 @@ pub fn classify_one(value: char) -> token::TokenKind {
   if value == '}' {
     return token::RightBrace;
   }
+  if value == '[' {
+    return token::LeftBracket;
+  }
+  if value == ']' {
+    return token::RightBracket;
+  }
   if value == ',' {
     return token::Comma;
   }
@@ -247,6 +253,12 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
     }
     RightBrace => {
       return Scanned(token::make_token(token::RightBrace, offset, offset + 1));
+    }
+    LeftBracket => {
+      return Scanned(token::make_token(token::LeftBracket, offset, offset + 1));
+    }
+    RightBracket => {
+      return Scanned(token::make_token(token::RightBracket, offset, offset + 1));
     }
     Comma => {
       return Scanned(token::make_token(token::Comma, offset, offset + 1));
@@ -464,6 +476,8 @@ pub fn cursor_is_identifier(cursor: TokenCursor) -> bool {
     RightParen => false,
     LeftBrace => false,
     RightBrace => false,
+    LeftBracket => false,
+    RightBracket => false,
     Comma => false,
     Colon => false,
     ColonColon => false,
@@ -505,6 +519,8 @@ pub fn cursor_is_number(cursor: TokenCursor) -> bool {
     RightParen => false,
     LeftBrace => false,
     RightBrace => false,
+    LeftBracket => false,
+    RightBracket => false,
     Comma => false,
     Colon => false,
     ColonColon => false,
@@ -546,6 +562,8 @@ pub fn cursor_is_whitespace(cursor: TokenCursor) -> bool {
     RightParen => false,
     LeftBrace => false,
     RightBrace => false,
+    LeftBracket => false,
+    RightBracket => false,
     Comma => false,
     Colon => false,
     ColonColon => false,
@@ -587,6 +605,8 @@ pub fn cursor_is_eof(cursor: TokenCursor) -> bool {
     RightParen => false,
     LeftBrace => false,
     RightBrace => false,
+    LeftBracket => false,
+    RightBracket => false,
     Comma => false,
     Colon => false,
     ColonColon => false,
@@ -628,6 +648,8 @@ pub fn cursor_is_unknown(cursor: TokenCursor) -> bool {
     RightParen => false,
     LeftBrace => false,
     RightBrace => false,
+    LeftBracket => false,
+    RightBracket => false,
     Comma => false,
     Colon => false,
     ColonColon => false,
@@ -669,6 +691,8 @@ pub fn cursor_is_punctuation(cursor: TokenCursor) -> bool {
     RightParen => true,
     LeftBrace => true,
     RightBrace => true,
+    LeftBracket => true,
+    RightBracket => true,
     Comma => true,
     Colon => true,
     ColonColon => true,
@@ -710,6 +734,8 @@ pub fn cursor_is_operator(cursor: TokenCursor) -> bool {
     RightParen => false,
     LeftBrace => false,
     RightBrace => false,
+    LeftBracket => false,
+    RightBracket => false,
     Comma => false,
     Colon => false,
     ColonColon => false,
