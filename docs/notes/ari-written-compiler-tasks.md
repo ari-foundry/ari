@@ -429,15 +429,17 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   non-decimal float suffixes, preserving the parser and driver source-text
   failure path, while accepting decimal float suffix spans as number tokens for
   the current bootstrap parser.
+- Added source-text decimal floating literal spans for fractional and exponent
+  spellings, including valid decimal float suffixes.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add source-text decimal floating literal spans for fractional and exponent
-  spellings.
+- Add source-text non-decimal float dot diagnostics for base-prefixed literals
+  such as `0x2.0`.
 
 ## Next Recommended Task
 
-Add source-text decimal floating literal spans for fractional and exponent
-spellings.
+Add source-text non-decimal float dot diagnostics for base-prefixed literals
+such as `0x2.0`.

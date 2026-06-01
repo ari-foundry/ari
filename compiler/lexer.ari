@@ -226,6 +226,7 @@ fn number_suffix_scan_from_text(text: std::Slice[u8], suffix_start: i64) -> Numb
 fn number_scan_with_suffix(
   text: std::Slice[u8],
   end: i64,
+  allow_integer_suffix: bool,
   allow_float_suffix: bool
 ) -> NumberScan {
   match number_suffix_scan_from_text(text, end) {
@@ -233,6 +234,9 @@ fn number_scan_with_suffix(
       return NumberClosed(end);
     }
     NumberSuffixInteger(integer_suffix_end) => {
+      if !allow_integer_suffix {
+        return NumberUnsupportedSuffix(end, integer_suffix_end);
+      }
       return NumberClosed(integer_suffix_end);
     }
     NumberSuffixFloat(float_suffix_end) => {
@@ -245,6 +249,65 @@ fn number_scan_with_suffix(
       return NumberUnsupportedSuffix(unsupported_suffix_start, unsupported_suffix_end);
     }
   }
+}
+
+fn has_decimal_fraction(text: std::Slice[u8], end: i64) -> bool {
+  return end + 1 < text.len && text[end] == '.' && is_ascii_digit(text[end + 1]);
+}
+
+fn decimal_fraction_end_from_text(text: std::Slice[u8], dot_offset: i64) -> i64 {
+  var end = dot_offset + 2;
+  while end < text.len && is_ascii_digit(text[end]) {
+    end = end + 1;
+  }
+  return end;
+}
+
+fn has_decimal_exponent(text: std::Slice[u8], end: i64) -> bool {
+  if end >= text.len {
+    return false;
+  }
+  if text[end] != 'e' && text[end] != 'E' {
+    return false;
+  }
+  if end + 1 >= text.len {
+    return false;
+  }
+  if is_ascii_digit(text[end + 1]) {
+    return true;
+  }
+  if text[end + 1] == '+' || text[end + 1] == '-' {
+    return end + 2 < text.len && is_ascii_digit(text[end + 2]);
+  }
+  return false;
+}
+
+fn decimal_exponent_end_from_text(text: std::Slice[u8], marker_offset: i64) -> i64 {
+  var end = marker_offset + 1;
+  if text[end] == '+' || text[end] == '-' {
+    end = end + 1;
+  }
+  while end < text.len && is_ascii_digit(text[end]) {
+    end = end + 1;
+  }
+  return end;
+}
+
+fn decimal_number_scan_from_text(text: std::Slice[u8], integer_end: i64) -> NumberScan {
+  var end = integer_end;
+  var is_float = false;
+  if has_decimal_fraction(text, end) {
+    end = decimal_fraction_end_from_text(text, end);
+    is_float = true;
+  }
+  if has_decimal_exponent(text, end) {
+    end = decimal_exponent_end_from_text(text, end);
+    is_float = true;
+  }
+  if is_float {
+    return number_scan_with_suffix(text, end, false, true);
+  }
+  return number_scan_with_suffix(text, end, true, true);
 }
 
 fn base_prefixed_number_scan_from_text(
@@ -262,7 +325,7 @@ fn base_prefixed_number_scan_from_text(
   if is_binary_or_octal_number_marker(marker) && end < text.len && is_ascii_digit(text[end]) {
     return NumberInvalidBaseDigit(end, end + 1);
   }
-  return number_scan_with_suffix(text, end, false);
+  return number_scan_with_suffix(text, end, true, false);
 }
 
 fn number_scan_from_text(text: std::Slice[u8], offset: i64) -> NumberScan {
@@ -273,7 +336,7 @@ fn number_scan_from_text(text: std::Slice[u8], offset: i64) -> NumberScan {
   while end < text.len && is_number_continue(text[end]) {
     end = end + 1;
   }
-  return number_scan_with_suffix(text, end, true);
+  return decimal_number_scan_from_text(text, end);
 }
 
 fn number_end_from_text(text: std::Slice[u8], offset: i64) -> i64 {

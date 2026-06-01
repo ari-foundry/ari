@@ -63,6 +63,12 @@ fn source_text_number_suffix_driver_score() -> i64 {
   }
 }
 
+fn source_text_decimal_float_driver_score() -> i64 {
+  zone(65536) {
+    return driver::result_code(driver::run_source_text(std::string::from("1.5f32")));
+  }
+}
+
 fn source_text_missing_base_digit_driver_score() -> i64 {
   zone(65536) {
     return driver::result_code(driver::run_source_text(std::string::from("0x")));
@@ -417,6 +423,67 @@ fn lexer_number_suffix_span_score() -> i64 {
   }
   if !parser::parse_is_success(parser::parse_text("42f32")) {
     return 29;
+  }
+  return 0;
+}
+
+fn lexer_decimal_float_span_score() -> i64 {
+  let fractional_text: Slice[u8] = "1.5+";
+  var score = lexer_number_case_score(fractional_text, 3, 5);
+  if score != 0 {
+    return score;
+  }
+  let after_fractional = lexer::cursor_advance_in_text(
+    lexer::cursor_from_text(fractional_text, 0),
+    fractional_text
+  );
+  if !lexer::cursor_is_operator(after_fractional) {
+    return 5;
+  }
+  if lexer::cursor_token_start(after_fractional) != 3 {
+    return 6;
+  }
+
+  score = lexer_number_case_score("1.0f32 ", 6, 8);
+  if score != 0 {
+    return 6 + score;
+  }
+  score = lexer_number_case_score("1e3 ", 3, 5);
+  if score != 0 {
+    return 12 + score;
+  }
+  score = lexer_number_case_score("1E+3;", 4, 6);
+  if score != 0 {
+    return 18 + score;
+  }
+  score = lexer_number_case_score("1e-3 ", 4, 6);
+  if score != 0 {
+    return 24 + score;
+  }
+  score = lexer_number_case_score("1.25e+10f64 ", 11, 13);
+  if score != 0 {
+    return 30 + score;
+  }
+  let range_text: Slice[u8] = "1..2";
+  score = lexer_number_case_score(range_text, 1, 3);
+  if score != 0 {
+    return 36 + score;
+  }
+  let after_range_start = lexer::cursor_advance_in_text(
+    lexer::cursor_from_text(range_text, 0),
+    range_text
+  );
+  if !lexer::cursor_is_punctuation(after_range_start) {
+    return 41;
+  }
+  if lexer::cursor_token_start(after_range_start) != 1 {
+    return 42;
+  }
+  if lexer::cursor_token_end(after_range_start) != 3 {
+    return 43;
+  }
+  if !parser::parse_is_success(parser::parse_text("1.0f32")) {
+    return 44;
   }
   return 0;
 }
@@ -2486,6 +2553,7 @@ fn main() -> i64 {
     lexer_number_span_score() +
     lexer_number_base_span_score() +
     lexer_number_suffix_span_score() +
+    lexer_decimal_float_span_score() +
     lexer_number_base_diagnostic_score() +
     lexer_number_suffix_diagnostic_score() +
     lexer_whitespace_span_score() +
@@ -2572,6 +2640,7 @@ fn main() -> i64 {
     2006 +
     source_text_base_number_driver_score() +
     source_text_number_suffix_driver_score() +
+    source_text_decimal_float_driver_score() +
     source_text_missing_base_digit_driver_score() -
     1009 +
     source_text_invalid_base_digit_driver_score() -

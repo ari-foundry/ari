@@ -364,5 +364,6 @@ Desired stage0 pressure that is not yet classified as a bug:
   exact-width integer suffix spans cover decimal and base-prefixed integers.
   Numeric base-prefix diagnostics now cover missing prefix digits and invalid
   binary/octal digits. Numeric suffix diagnostics now cover unsupported suffixes
-  and non-decimal float suffixes. Decimal floating literal spans for fractional
-  and exponent spellings are still pending.
+  and non-decimal float suffixes. Decimal floating literal spans now cover
+  fractional and exponent spellings. Non-decimal float dot diagnostics are still
+  pending for base-prefixed literals.
