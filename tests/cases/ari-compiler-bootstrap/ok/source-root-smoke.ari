@@ -90,6 +90,9 @@ fn parse_statement_span_score() -> i64 {
   if parser::parse_statement_span_len(parser::parse_one('q', 1)) != 1 {
     return 1;
   }
+  if parser::parse_statement_span_len(parser::parse_one('9', 2)) != 1 {
+    return 3;
+  }
   if parser::parse_statement_span_len(parser::parse_one(' ', 4)) != -1 {
     return 2;
   }
