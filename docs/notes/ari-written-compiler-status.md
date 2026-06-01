@@ -166,6 +166,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   diagnostics for spellings such as `'\x'`, `'\u'`, `'\U'`, `'\u12'`,
   `'\U1234'`, `'\u{Q}'`, and `'\u{}'`, preserving those failures through
   parser and driver source-text paths.
+- `compiler/lexer.ari` reports source-text byte character escape value-range
+  diagnostics for spellings such as `'\x100'`, `'\777'`, `'\u0080'`,
+  `'\U00000080'`, and `'\u{80}'`, preserving those failures through parser and
+  driver source-text paths.
 - `compiler/lexer.ari` exposes text-backed cursor advance and handoff helpers,
   including significant-token advance that skips leading and trailing
   whitespace around the current single-statement parser handoff.

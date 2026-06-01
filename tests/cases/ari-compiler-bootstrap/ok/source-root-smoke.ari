@@ -123,6 +123,12 @@ fn source_text_invalid_byte_char_escape_digits_driver_score() -> i64 {
   }
 }
 
+fn source_text_invalid_byte_char_escape_value_driver_score() -> i64 {
+  zone(65536) {
+    return driver::result_code(driver::run_source_text(std::string::from("'\\x100'")));
+  }
+}
+
 fn source_text_missing_base_digit_driver_score() -> i64 {
   zone(65536) {
     return driver::result_code(driver::run_source_text(std::string::from("0x")));
@@ -738,6 +744,31 @@ fn lexer_byte_char_diagnostic_score() -> i64 {
   failure_score = lexer_failure_case_score("'\\u{}'", 1017, 2, 5);
   if failure_score != 0 {
     return 91 + failure_score;
+  }
+
+  failure_score = lexer_failure_case_score("'\\x100'", 1018, 2, 6);
+  if failure_score != 0 {
+    return 98 + failure_score;
+  }
+
+  failure_score = lexer_failure_case_score("'\\777'", 1018, 2, 5);
+  if failure_score != 0 {
+    return 105 + failure_score;
+  }
+
+  failure_score = lexer_failure_case_score("'\\u0080'", 1018, 2, 7);
+  if failure_score != 0 {
+    return 112 + failure_score;
+  }
+
+  failure_score = lexer_failure_case_score("'\\U00000080'", 1018, 2, 11);
+  if failure_score != 0 {
+    return 119 + failure_score;
+  }
+
+  failure_score = lexer_failure_case_score("'\\u{80}'", 1018, 2, 7);
+  if failure_score != 0 {
+    return 126 + failure_score;
   }
 
   return 0;
@@ -2928,6 +2959,8 @@ fn main() -> i64 {
     1016 +
     source_text_invalid_byte_char_escape_digits_driver_score() -
     1017 +
+    source_text_invalid_byte_char_escape_value_driver_score() -
+    1018 +
     source_text_missing_base_digit_driver_score() -
     1009 +
     source_text_invalid_base_digit_driver_score() -
