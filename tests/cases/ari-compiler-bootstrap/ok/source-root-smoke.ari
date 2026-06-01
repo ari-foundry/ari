@@ -259,6 +259,52 @@ fn lexer_equality_operator_score() -> i64 {
   return 0;
 }
 
+fn lexer_comparison_operator_span_score() -> i64 {
+  let not_equal = lexer::cursor_from_comparison_two('!', 90, '=');
+  if !lexer::cursor_is_operator(not_equal) {
+    return 1;
+  }
+  if lexer::cursor_token_start(not_equal) != 90 {
+    return 2;
+  }
+  if lexer::cursor_token_end(not_equal) != 92 {
+    return 3;
+  }
+  if lexer::cursor_token_score(not_equal) != 26 {
+    return 4;
+  }
+  let less_equal = lexer::cursor_from_comparison_two('<', 100, '=');
+  if lexer::cursor_token_end(less_equal) != 102 {
+    return 5;
+  }
+  if lexer::cursor_token_score(less_equal) != 27 {
+    return 6;
+  }
+  let greater_equal = lexer::cursor_from_comparison_two('>', 110, '=');
+  if lexer::cursor_token_end(greater_equal) != 112 {
+    return 7;
+  }
+  if lexer::cursor_token_score(greater_equal) != 28 {
+    return 8;
+  }
+  let bang_fallback = lexer::cursor_from_comparison_two('!', 120, '+');
+  if lexer::cursor_token_end(bang_fallback) != 121 {
+    return 9;
+  }
+  if lexer::cursor_token_score(bang_fallback) != 22 {
+    return 10;
+  }
+  let less_fallback = lexer::cursor_from_comparison_two('<', 130, '+');
+  if lexer::cursor_token_score(less_fallback) != 23 {
+    return 11;
+  }
+  let greater_fallback = lexer::cursor_from_comparison_two('>', 140, '+');
+  if lexer::cursor_token_score(greater_fallback) != 24 {
+    return 12;
+  }
+  return 0;
+}
+
 fn parse_success_score() -> i64 {
   if !parser::parse_is_success(parser::parse_one('q', 1)) {
     return 1;
@@ -467,6 +513,7 @@ fn main() -> i64 {
     lexer_number_span_score() +
     lexer_whitespace_span_score() +
     lexer_equality_operator_score() +
+    lexer_comparison_operator_span_score() +
     ast::node_score(ast::token_node(3, 2, 5, 8)) -
     12 +
     parser::parse_score(parser::parse_one('q', 1)) +
