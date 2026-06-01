@@ -761,6 +761,9 @@ policy in ad hoc compiler files.
 - Added `KwFor` to the Ari-written token model and reusable keyword table, with
   focused smokes for exact `for`, longer `forest`, and the table-backed
   parser/driver keyword path.
+- Added `KwIn` to the Ari-written token model and reusable keyword table, with
+  focused smokes for exact `in`, longer `inside`, and the table-backed
+  parser/driver keyword path.
 - Added a one-token file-input fixture for the compiled `compiler/main.ari`
   bootstrap run, so file input uses real loaded text without pretending the
   larger source-root smoke fixture is already parseable as a full Ari program.
@@ -772,13 +775,13 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add `in` to the reusable keyword table and token model, preserving longer
-  identifiers such as `inside`.
+- Backfill reusable keyword-table smoke coverage for existing `let`, preserving
+  longer identifiers such as `letter`.
 
 ## Next Recommended Task
 
-Add `in` to the reusable keyword table and token model, preserving longer
-identifiers such as `inside`.
+Backfill reusable keyword-table smoke coverage for existing `let`, preserving
+longer identifiers such as `letter`.
 
 ## Local Validation
 
@@ -877,12 +880,13 @@ without requiring a hosted compiler fix. The parser number-success smoke checked
 the number statement path through `parser::parse_is_success` without requiring
 a hosted compiler fix. The reusable keyword-table smoke checked `KwStruct`,
 `KwExtern`, `KwEnum`, `KwTrait`, `KwDyn`, `KwMatch`, `KwMod`, `KwPub`, `KwUse`,
-`KwImpl`, and `KwFor`, plus longer `structure`, `external`, `enumerate`,
-`traitor`, `dynamic`, `matches`, `module`, `public`, `user`, `implicit`, and
-`forest`, and the source-text parser/driver keyword path without requiring a
-hosted compiler fix. The AST statement-kind query and parser payload-shape
-smoke checked successful statement output without requiring a hosted compiler
-fix. The AST node span-length query and parser payload-span smoke checked
+`KwImpl`, `KwFor`, and `KwIn`, plus longer `structure`, `external`,
+`enumerate`, `traitor`, `dynamic`, `matches`, `module`, `public`, `user`,
+`implicit`, `forest`, and `inside`, and the source-text parser/driver keyword
+path without requiring a hosted compiler fix. The AST statement-kind query and
+parser payload-shape smoke checked successful statement output without
+requiring a hosted compiler fix. The AST node span-length query and
+parser payload-span smoke checked
 successful statement spans without requiring a hosted compiler fix. The AST
 node value query and parser payload-value smoke checked successful statement
 values without requiring a hosted compiler fix. The source span-start, AST

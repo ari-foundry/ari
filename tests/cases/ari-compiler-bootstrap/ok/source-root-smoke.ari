@@ -47,7 +47,7 @@ fn source_text_extra_token_driver_score() -> i64 {
 
 fn source_text_keyword_driver_score() -> i64 {
   zone(65536) {
-    return driver::result_code(driver::run_source_text(std::string::from("for")));
+    return driver::result_code(driver::run_source_text(std::string::from("in")));
   }
 }
 
@@ -1700,6 +1700,25 @@ fn lexer_keyword_table_score() -> i64 {
     score = 61;
   }
 
+  let in_keyword = lexer::cursor_from_text_with_keywords(ref table, "in", 0);
+  if score == 0 && !lexer::cursor_is_keyword(in_keyword) {
+    score = 62;
+  }
+  if score == 0 && lexer::cursor_token_score(in_keyword) != 116 {
+    score = 63;
+  }
+  if score == 0 && lexer::cursor_token_end(in_keyword) != 2 {
+    score = 64;
+  }
+
+  let in_longer = lexer::cursor_from_text_with_keywords(ref table, "inside", 0);
+  if score == 0 && !lexer::cursor_is_identifier(in_longer) {
+    score = 65;
+  }
+  if score == 0 && lexer::cursor_is_keyword(in_longer) {
+    score = 66;
+  }
+
   std::zone::destroy(zone);
   return score;
 }
@@ -1762,6 +1781,9 @@ fn parse_text_score() -> i64 {
     }
     if parser::parse_failure_code(parser::parse_text_with_keywords("for")) != 2006 {
       return 19;
+    }
+    if parser::parse_failure_code(parser::parse_text_with_keywords("in")) != 2006 {
+      return 20;
     }
   }
   return 0;
