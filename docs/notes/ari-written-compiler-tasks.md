@@ -367,6 +367,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Backfilled reusable keyword-table smoke coverage for existing `KwNext`, with
   focused smokes for exact `next`, longer `next1`, and the table-backed
   parser/driver keyword path.
+- Backfilled reusable keyword-table smoke coverage for existing `KwContinue`,
+  with focused smokes for exact `continue`, longer `continue1`, and the
+  table-backed parser/driver keyword path.
 - Added a one-token file-input fixture for the compiled `compiler/main.ari`
   bootstrap run, so file input uses real loaded text without pretending the
   larger source-root smoke fixture is already parseable as a full Ari program.
@@ -378,10 +381,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Backfill reusable keyword-table smoke coverage for existing `continue`,
-  preserving longer identifiers such as `continue1`.
+- Backfill reusable keyword-table smoke coverage for existing `break`,
+  preserving longer identifiers such as `break1`.
 
 ## Next Recommended Task
 
-Backfill reusable keyword-table smoke coverage for existing `continue`, preserving
-longer identifiers such as `continue1`.
+Backfill reusable keyword-table smoke coverage for existing `break`, preserving
+longer identifiers such as `break1`.
