@@ -47,7 +47,7 @@ fn source_text_extra_token_driver_score() -> i64 {
 
 fn source_text_keyword_driver_score() -> i64 {
   zone(65536) {
-    return driver::result_code(driver::run_source_text(std::string::from("in")));
+    return driver::result_code(driver::run_source_text(std::string::from("let")));
   }
 }
 
@@ -1719,6 +1719,25 @@ fn lexer_keyword_table_score() -> i64 {
     score = 66;
   }
 
+  let let_keyword = lexer::cursor_from_text_with_keywords(ref table, "let", 0);
+  if score == 0 && !lexer::cursor_is_keyword(let_keyword) {
+    score = 67;
+  }
+  if score == 0 && lexer::cursor_token_score(let_keyword) != 84 {
+    score = 68;
+  }
+  if score == 0 && lexer::cursor_token_end(let_keyword) != 3 {
+    score = 69;
+  }
+
+  let let_longer = lexer::cursor_from_text_with_keywords(ref table, "letter", 0);
+  if score == 0 && !lexer::cursor_is_identifier(let_longer) {
+    score = 70;
+  }
+  if score == 0 && lexer::cursor_is_keyword(let_longer) {
+    score = 71;
+  }
+
   std::zone::destroy(zone);
   return score;
 }
@@ -1784,6 +1803,9 @@ fn parse_text_score() -> i64 {
     }
     if parser::parse_failure_code(parser::parse_text_with_keywords("in")) != 2006 {
       return 20;
+    }
+    if parser::parse_failure_code(parser::parse_text_with_keywords("let")) != 2006 {
+      return 21;
     }
   }
   return 0;

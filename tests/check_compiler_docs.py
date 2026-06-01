@@ -170,7 +170,7 @@ def main() -> int:
         "## Completed Tasks",
         "## Small Task Queue",
         "## Next Recommended Task",
-        "Backfill reusable keyword-table smoke coverage for existing `let`",
+        "Backfill reusable keyword-table smoke coverage for existing `var`",
     ]:
         require(ari_tasks, needle, ari_tasks_path)
 
