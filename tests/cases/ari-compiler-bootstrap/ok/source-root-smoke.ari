@@ -47,7 +47,7 @@ fn source_text_extra_token_driver_score() -> i64 {
 
 fn source_text_keyword_driver_score() -> i64 {
   zone(65536) {
-    return driver::result_code(driver::run_source_text(std::string::from("forget")));
+    return driver::result_code(driver::run_source_text(std::string::from("null")));
   }
 }
 
@@ -1614,6 +1614,9 @@ fn lexer_keyword_table_score() -> i64 {
   if score == 0 {
     score = lexer_keyword_table_case_score(ref table, 360, "forget", 102, 6, "forget1", 7);
   }
+  if score == 0 {
+    score = lexer_keyword_table_case_score(ref table, 370, "null", 101, 4, "null1", 5);
+  }
 
   std::zone::destroy(zone);
   return score;
@@ -1733,6 +1736,9 @@ fn parse_text_score() -> i64 {
   }
   if parser_keyword_failure_code("forget") != 2006 {
     return 36;
+  }
+  if parser_keyword_failure_code("null") != 2006 {
+    return 37;
   }
   return 0;
 }
