@@ -97,6 +97,14 @@ pub fn parse_handoff(handoff: lexer::TokenHandoff) -> ParseResult {
   return parse_statement(lexer::handoff_first(handoff));
 }
 
+pub fn parse_text(text: std::Slice[u8]) -> ParseResult {
+  if text.is_empty() {
+    return parse_empty();
+  }
+
+  return parse_handoff(lexer::handoff_from_text(text));
+}
+
 pub fn parse_one(value: char, offset: i64) -> ParseResult {
   return parse_handoff(lexer::handoff_from_one(value, offset));
 }

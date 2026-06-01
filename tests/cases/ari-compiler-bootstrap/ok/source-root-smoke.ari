@@ -7,14 +7,14 @@ mod driver;
 
 fn file_driver_score() -> i64 {
   zone(65536) {
-    return driver::exit_code(driver::run_file("tests/cases/ari-compiler-bootstrap/ok/source-root-smoke.ari"));
+    return driver::exit_code(driver::run_file("tests/cases/ari-compiler-bootstrap/input/one-token.ari"));
   }
 }
 
 fn file_driver_result_score() -> i64 {
   zone(65536) {
     return driver::result_code(driver::run_file(
-      "tests/cases/ari-compiler-bootstrap/ok/source-root-smoke.ari"
+      "tests/cases/ari-compiler-bootstrap/input/one-token.ari"
     ));
   }
 }
@@ -36,6 +36,12 @@ fn empty_source_text_driver_score() -> i64 {
 fn source_text_driver_score() -> i64 {
   zone(65536) {
     return driver::result_code(driver::run_source_text(std::string::from("p")));
+  }
+}
+
+fn source_text_extra_token_driver_score() -> i64 {
+  zone(65536) {
+    return driver::result_code(driver::run_source_text(std::string::from("p+")));
   }
 }
 
@@ -550,6 +556,63 @@ fn lexer_arrow_operator_span_score() -> i64 {
   return 0;
 }
 
+fn lexer_text_cursor_score() -> i64 {
+  let text: Slice[u8] = "alpha9+";
+  let first = lexer::cursor_from_text(text, 0);
+  if !lexer::cursor_is_identifier(first) {
+    return 1;
+  }
+  if lexer::cursor_token_start(first) != 0 {
+    return 2;
+  }
+  if lexer::cursor_token_end(first) != 6 {
+    return 3;
+  }
+  if lexer::cursor_token_score(first) != 7 {
+    return 4;
+  }
+  let second = lexer::cursor_advance_in_text(first, text);
+  if !lexer::cursor_is_operator(second) {
+    return 5;
+  }
+  if lexer::cursor_token_start(second) != 6 {
+    return 6;
+  }
+  if lexer::cursor_token_end(second) != 7 {
+    return 7;
+  }
+  if lexer::cursor_token_score(second) != 13 {
+    return 8;
+  }
+  let eof = lexer::cursor_advance_in_text(second, text);
+  if !lexer::cursor_is_eof(eof) {
+    return 9;
+  }
+  if lexer::cursor_token_start(eof) != 7 {
+    return 10;
+  }
+  return 0;
+}
+
+fn parse_text_score() -> i64 {
+  if !parser::parse_is_success(parser::parse_text("name9")) {
+    return 1;
+  }
+  if parser::parse_statement_span_len(parser::parse_text("name9")) != 5 {
+    return 2;
+  }
+  if !parser::parse_is_success(parser::parse_text("  name9 \n")) {
+    return 3;
+  }
+  if parser::parse_statement_start_offset(parser::parse_text("  name9 \n")) != 2 {
+    return 4;
+  }
+  if parser::parse_failure_code(parser::parse_text("p+")) != 2003 {
+    return 5;
+  }
+  return 0;
+}
+
 fn parse_success_score() -> i64 {
   if !parser::parse_is_success(parser::parse_one('q', 1)) {
     return 1;
@@ -767,6 +830,8 @@ fn main() -> i64 {
     lexer_logical_operator_span_score() +
     lexer_shift_operator_span_score() +
     lexer_arrow_operator_span_score() +
+    lexer_text_cursor_score() +
+    parse_text_score() +
     ast::node_score(ast::token_node(3, 2, 5, 8)) -
     12 +
     parser::parse_score(parser::parse_one('q', 1)) +
@@ -821,6 +886,8 @@ fn main() -> i64 {
     empty_source_text_driver_score() -
     1101 +
     source_text_driver_score() +
+    source_text_extra_token_driver_score() -
+    2003 +
     parser::parse_score(parser::parse_empty()) -
     3018;
 }

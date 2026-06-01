@@ -185,6 +185,43 @@ pub fn scan_two(first: char, offset: i64, second: char) -> token::Token {
   return scan_one(first, offset);
 }
 
+pub fn scan_text(text: std::Slice[u8], offset: i64) -> token::Token {
+  if offset >= text.len {
+    return token::make_token(token::EndOfFile, offset, offset);
+  }
+
+  let first = text[offset];
+  if is_identifier_start(first) {
+    var identifier_end = offset + 1;
+    while identifier_end < text.len && is_identifier_continue(text[identifier_end]) {
+      identifier_end = identifier_end + 1;
+    }
+    return token::make_token(token::Identifier, offset, identifier_end);
+  }
+  if is_number_start(first) {
+    var number_end = offset + 1;
+    while number_end < text.len && is_number_continue(text[number_end]) {
+      number_end = number_end + 1;
+    }
+    return token::make_token(token::Number, offset, number_end);
+  }
+  if is_whitespace(first) {
+    var whitespace_end = offset + 1;
+    while whitespace_end < text.len && is_whitespace(text[whitespace_end]) {
+      whitespace_end = whitespace_end + 1;
+    }
+    return token::make_token(token::Whitespace, offset, whitespace_end);
+  }
+  if offset + 1 < text.len {
+    let combined = scan_two(first, offset, text[offset + 1]);
+    if token::token_width(combined) == 2 {
+      return combined;
+    }
+  }
+
+  return scan_one(first, offset);
+}
+
 pub fn invalid_character(offset: i64) -> diagnostic::Diagnostic {
   return diagnostic::error(1001, offset, offset + 1);
 }
@@ -331,6 +368,16 @@ pub fn cursor_from_two(first: char, offset: i64, second: char) -> TokenCursor {
   };
 }
 
+pub fn cursor_from_text(text: std::Slice[u8], offset: i64) -> TokenCursor {
+  let scanned = scan_text(text, offset);
+  let done = token::kind_is_eof(scanned.kind);
+  return TokenCursor {
+    current: scanned,
+    offset: offset,
+    done: done,
+  };
+}
+
 pub fn cursor_advance(cursor: TokenCursor) -> TokenCursor {
   if cursor.done {
     return cursor;
@@ -338,6 +385,25 @@ pub fn cursor_advance(cursor: TokenCursor) -> TokenCursor {
 
   let next_offset = cursor.current.end;
   return cursor_eof(next_offset);
+}
+
+pub fn cursor_advance_in_text(cursor: TokenCursor, text: std::Slice[u8]) -> TokenCursor {
+  if cursor.done {
+    return cursor;
+  }
+
+  return cursor_from_text(text, cursor.current.end);
+}
+
+pub fn cursor_advance_significant_in_text(
+  cursor: TokenCursor,
+  text: std::Slice[u8]
+) -> TokenCursor {
+  var advanced = cursor_advance_in_text(cursor, text);
+  while cursor_is_whitespace(advanced) {
+    advanced = cursor_advance_in_text(advanced, text);
+  }
+  return advanced;
 }
 
 pub fn cursor_is_done(cursor: TokenCursor) -> bool {
@@ -431,6 +497,17 @@ pub fn handoff_from_one(value: char, offset: i64) -> TokenHandoff {
   return TokenHandoff {
     first: cursor_from_one(value, offset),
     eof: cursor_advance(cursor_from_one(value, offset)),
+  };
+}
+
+pub fn handoff_from_text(text: std::Slice[u8]) -> TokenHandoff {
+  var first = cursor_from_text(text, 0);
+  while cursor_is_whitespace(first) {
+    first = cursor_advance_in_text(first, text);
+  }
+  return TokenHandoff {
+    first: first,
+    eof: cursor_advance_significant_in_text(first, text),
   };
 }
 

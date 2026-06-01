@@ -79,7 +79,17 @@ pub fn run_source_text(text: std::string::String) -> std::Result[i64, i64] {
     return std::Err<i64, i64>(1101);
   }
 
-  return run_loaded_source(source::loaded_source_summary(1, text.len(), text.get(0), 0));
+  let parsed = parser::parse_text(text.as_slice());
+  if parser::parse_is_success(parsed) {
+    return std::Ok<i64, i64>(0);
+  }
+
+  let code = parser::parse_failure_code(parsed);
+  if code > 0 {
+    return std::Err<i64, i64>(code);
+  }
+
+  return std::Err<i64, i64>(1003);
 }
 
 pub fn run_file(zone: ref mut Zone, path: std::Slice[u8]) -> std::Result[i64, i64] {

@@ -108,6 +108,12 @@ compiler feature in the normal focused-test workflow.
 - The two-character lexer path covers identifier, number, and whitespace spans
   plus `::`, `==`, `=>`, `!=`, `<=`, `>=`, `&&`, `||`, `<<`, `>>`, and `->`
   with one-character fallback behavior.
+- `compiler/lexer.ari` can scan a real `Slice[u8]` source text from an offset,
+  including multi-byte identifier, number, and whitespace runs, two-character
+  tokens, one-character fallback tokens, and EOF at the source end.
+- `compiler/lexer.ari` exposes text-backed cursor advance and handoff helpers,
+  including significant-token advance that skips leading and trailing
+  whitespace around the current single-statement parser handoff.
 - `compiler/lexer.ari` classifies one-character comparison operators `!`, `<`,
   and `>` and uses them as fallbacks for two-character comparison operators.
 - `compiler/lexer.ari` classifies one-character bitwise operators `&`, `|`,
@@ -238,9 +244,12 @@ compiler feature in the normal focused-test workflow.
   use `std::context` argv when the executable is invoked with a file argument.
 - `compiler/source.ari` has a minimal `LoadedSourceSummary` for source id,
   byte length, first byte, and first-byte offset. It is metadata for the
-  current file-input smoke, not a real source table or text buffer.
-- `compiler/driver.ari` routes file and text input through the loaded-source
-  summary before creating the current one-token parser handoff.
+  legacy scalar driver smoke, not a source table or owned text buffer.
+- `compiler/parser.ari` can parse a source-text slice through the text-backed
+  lexer handoff path.
+- `compiler/driver.ari` routes file and text input through `std::string::String`
+  / `Slice[u8]` source text and preserves parser diagnostic codes from that
+  path.
 - `compiler/driver.ari` now uses the parser success helper before returning
   success, so diagnostic parse results no longer count as successful driver
   runs only because they have positive smoke scores.
@@ -283,7 +292,9 @@ compiler feature in the normal focused-test workflow.
 - `make check-ari-compiler-bootstrap` checks each `compiler/*.ari` module,
   checks a small `tests/cases/ari-compiler-bootstrap/` fixture with
   `-Icompiler`, and, when an LLVM driver is available, builds and runs the
-  source-root smokes.
+  source-root smokes. The compiled `compiler/main.ari` file-input smoke reads
+  `tests/cases/ari-compiler-bootstrap/input/one-token.ari` because the
+  Ari-written parser is not yet a full Ari source-file parser.
 - Each module is kept small enough to check directly with the stage0 compiler.
 - No full Ari-written parse tree, semantic checker, IR, codegen, source table,
   or real source loader exists yet beyond the minimal parser-output node model
@@ -297,8 +308,9 @@ compiler feature in the normal focused-test workflow.
 3. Grow `parser.ari` only as token handoff proves more parser-shaped data.
 4. Add `ast.ari` and later phase-shaped model files only when the
    previous phase has checked output worth passing forward.
-5. Add source loading and real text buffers after runtime strings, slices, and
-   file IO are strong enough for compiler input.
+5. Grow source loading from the current `std::string::String` / `Slice[u8]`
+   text path into a source table with source ids, file paths, and diagnostic
+   locations.
 6. Add semantic model stubs before any lowering or backend work.
 7. Continue to use the C++ hosted compiler as stage0 until the Ari-written
    compiler can check meaningful multi-file inputs itself.
@@ -543,6 +555,17 @@ policy in ad hoc compiler files.
   `Ok(0)` payload through `result_code(driver::run_input(...))`.
 - Added a focused source-text driver success smoke that checks the internal
   `Ok(0)` payload through `result_code(driver::run_source_text(...))`.
+- Added a text-backed lexer cursor over `Slice[u8]`, source-root smoke coverage
+  for multi-byte identifier spans, text cursor advance, whitespace skipping,
+  and EOF placement.
+- Added `parser::parse_text` and routed `driver::run_source_text` through the
+  text-backed lexer handoff instead of first-byte summary input.
+- Added a focused source-text extra-token driver smoke that checks `p+`
+  preserves parser missing-EOF diagnostic code `2003`, proving text input no
+  longer ignores bytes after the first token.
+- Added a one-token file-input fixture for the compiled `compiler/main.ari`
+  bootstrap run, so file input uses real loaded text without pretending the
+  larger source-root smoke fixture is already parseable as a full Ari program.
 - Raised file-input smoke allocation blocks to explicit `zone(65536)` after
   the growing source-root fixture exceeded the previous explicit zone capacity
   at runtime.
@@ -598,8 +621,9 @@ Do not run full `make check` for ordinary bootstrap slices.
 
 ## Known Blockers
 
-- Runtime strings and richer text/slice operations are still not enough for real
-  compiler source input.
+- Runtime strings, slices, and file IO are usable for current source-text
+  lexing. The remaining gap is a real source table with source ids, file paths,
+  lifetime policy, and diagnostic location mapping over loaded text.
 - Default `zone { ... }` capacity is small for self-host-style file smokes;
   current file-input paths use explicit `zone(capacity)` until source loading
   owns allocation policy deliberately.
@@ -720,6 +744,11 @@ The token-kind class helper refactor checked through the bootstrap source root
 without requiring a hosted compiler fix. The lexer double-quote delimiter smoke
 checked `"` tokenization as punctuation without requiring a hosted compiler
 fix.
+The text-backed lexer cursor, `parser::parse_text`, and source-text extra-token
+driver smoke checked `Slice[u8]` / `std::string::String` input without
+requiring a hosted compiler fix.
+The one-token file-input fixture checked the compiled `compiler/main.ari`
+file path against real loaded text without requiring a hosted compiler fix.
 The growing source-root fixture did expose allocation-capacity runtime traps
 while reading the file smoke; this is fixed locally with explicit `zone(65536)`
 allocation blocks and is recorded as allocation-policy pressure rather than a
@@ -729,6 +758,10 @@ This slice also showed that reusing the same payload binding name across
 `std::Result` match arms is rejected as local shadowing/redeclaration. The
 helper uses distinct binding names; this is recorded as match-arm scoping
 ergonomics pressure, not a confirmed hosted compiler bug.
+The text-backed lexer scan also had to use distinct branch-local names such as
+`identifier_end`, `number_end`, and `whitespace_end`; reusing `end` across
+branches hit the same local redeclaration rule and remains ergonomics pressure,
+not a confirmed hosted compiler bug.
 
 This slice also reconfirmed the existing cross-module type identity pressure:
 a value constructed as root `source::LoadedSourceSummary` is not the same type
@@ -747,7 +780,8 @@ codegen, diagnostics, or another hosted compiler area.
 
 Desired stage0 pressure that is not yet classified as a bug:
 
-- Better runtime strings, slices, and file IO for real source input.
+- More polished source-table ergonomics over the usable runtime string, slice,
+  and file-IO primitives.
 - Stronger aggregate/type monomorphization for compiler-shaped models.
 - Clearer cross-module type identity ergonomics for shared phase models; these
   slices keep AST constructors and public driver helpers scalar at module
