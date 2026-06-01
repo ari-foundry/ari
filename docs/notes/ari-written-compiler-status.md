@@ -145,14 +145,17 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   `'a'` as number spans, matching stage0's integer-literal treatment for byte
   character literals at the current Ari token-model level.
 - `compiler/lexer.ari` scans simple byte character escape spellings such as
-  `'\n'` and `'\\'` as number spans, while leaving byte-character diagnostics
-  for a later slice.
+  `'\n'` and `'\\'` as number spans, while leaving broader byte-character
+  diagnostics for later slices.
 - `compiler/lexer.ari` scans byte character hex and octal numeric escape
   spellings such as `'\x41'` and `'\101'` as number spans.
 - `compiler/lexer.ari` scans ASCII-valued fixed-width byte character Unicode
   escape spellings such as `'\u0041'` and `'\U00000041'` as number spans.
 - `compiler/lexer.ari` scans ASCII-valued braced byte character Unicode escape
   spellings such as `'\u{41}'` as number spans.
+- `compiler/lexer.ari` reports source-text empty byte character diagnostics for
+  spellings such as `''`, preserving those failures through parser and driver
+  source-text paths.
 - `compiler/lexer.ari` exposes text-backed cursor advance and handoff helpers,
   including significant-token advance that skips leading and trailing
   whitespace around the current single-statement parser handoff.

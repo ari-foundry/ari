@@ -54,6 +54,7 @@ enum CommentScan {
 
 enum ByteCharScan {
   ByteCharClosed(i64),
+  ByteCharEmpty(i64, i64),
   ByteCharFallback,
 }
 
@@ -1076,6 +1077,9 @@ fn byte_char_scan_from_text(text: std::Slice[u8], offset: i64) -> ByteCharScan {
   if offset + 1 >= text.len {
     return ByteCharFallback;
   }
+  if text[offset + 1] == '\'' {
+    return ByteCharEmpty(offset, offset + 2);
+  }
   if text[offset + 1] == '\\' {
     let escaped_end = byte_char_escape_end_from_text(text, offset + 1);
     if escaped_end > offset + 1 && escaped_end < text.len && text[escaped_end] == '\'' {
@@ -1138,6 +1142,7 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
       ByteCharClosed(byte_char_end) => {
         return token::make_token(token::Number, offset, byte_char_end);
       }
+      ByteCharEmpty(_, _) => {}
       ByteCharFallback => {}
     }
   }
@@ -1223,6 +1228,9 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
     match byte_char_scan_from_text(text, offset) {
       ByteCharClosed(byte_char_end_result) => {
         return Scanned(token::make_token(token::Number, offset, byte_char_end_result));
+      }
+      ByteCharEmpty(empty_start, empty_end) => {
+        return Failed(empty_byte_character_literal(empty_start, empty_end));
       }
       ByteCharFallback => {}
     }
@@ -1319,6 +1327,10 @@ pub fn non_decimal_float_suffix(start: i64, end: i64) -> diagnostic::Diagnostic 
 
 pub fn non_decimal_float_dot(start: i64, end: i64) -> diagnostic::Diagnostic {
   return diagnostic::error(1013, start, end);
+}
+
+pub fn empty_byte_character_literal(start: i64, end: i64) -> diagnostic::Diagnostic {
+  return diagnostic::error(1014, start, end);
 }
 
 pub fn unterminated_string_literal(start: i64, end: i64) -> diagnostic::Diagnostic {

@@ -99,6 +99,12 @@ fn source_text_byte_char_braced_unicode_escape_driver_score() -> i64 {
   }
 }
 
+fn source_text_empty_byte_char_driver_score() -> i64 {
+  zone(65536) {
+    return driver::result_code(driver::run_source_text(std::string::from("''")));
+  }
+}
+
 fn source_text_missing_base_digit_driver_score() -> i64 {
   zone(65536) {
     return driver::result_code(driver::run_source_text(std::string::from("0x")));
@@ -640,6 +646,10 @@ fn lexer_byte_char_span_score() -> i64 {
     return 66;
   }
   return 0;
+}
+
+fn lexer_byte_char_diagnostic_score() -> i64 {
+  return lexer_failure_case_score("''", 1014, 0, 2);
 }
 
 fn lexer_number_base_diagnostic_score() -> i64 {
@@ -2725,6 +2735,7 @@ fn main() -> i64 {
     lexer_number_suffix_span_score() +
     lexer_decimal_float_span_score() +
     lexer_byte_char_span_score() +
+    lexer_byte_char_diagnostic_score() +
     lexer_number_base_diagnostic_score() +
     lexer_number_base_float_dot_diagnostic_score() +
     lexer_number_suffix_diagnostic_score() +
@@ -2818,6 +2829,8 @@ fn main() -> i64 {
     source_text_byte_char_numeric_escape_driver_score() +
     source_text_byte_char_unicode_escape_driver_score() +
     source_text_byte_char_braced_unicode_escape_driver_score() +
+    source_text_empty_byte_char_driver_score() -
+    1014 +
     source_text_missing_base_digit_driver_score() -
     1009 +
     source_text_invalid_base_digit_driver_score() -

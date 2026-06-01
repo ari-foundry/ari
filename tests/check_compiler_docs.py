@@ -170,7 +170,7 @@ def main() -> int:
         "## Completed Tasks",
         "## Small Task Queue",
         "## Next Recommended Task",
-        "Add source-text empty byte character diagnostics",
+        "Add source-text unterminated byte character diagnostics",
     ]:
         require(ari_tasks, needle, ari_tasks_path)
 

@@ -313,6 +313,9 @@ directly into `parser::diagnostic::Diagnostic`; it uses a lexer-owned
 `LexFailure` code/span payload and lets parser reconstruct its local diagnostic
 value. This is the same cross-module type identity pressure, not a confirmed
 hosted compiler bug.
+The source-text empty byte character diagnostic for `''` now preserves code
+`1014` through lexer, parser, and driver paths without requiring a hosted
+compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
@@ -380,5 +383,5 @@ Desired stage0 pressure that is not yet classified as a bug:
   spellings such as `'\x41'` and `'\101'`. Fixed-width byte character Unicode
   escape spans now cover ASCII-valued spellings such as `'\u0041'` and
   `'\U00000041'`. Braced Unicode byte character escape spans now cover
-  ASCII-valued spellings such as `'\u{41}'`. Byte-character diagnostics are
-  still pending.
+  ASCII-valued spellings such as `'\u{41}'`. Empty byte character diagnostics
+  now cover `''`; broader byte-character diagnostics are still pending.

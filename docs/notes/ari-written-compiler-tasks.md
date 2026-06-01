@@ -448,13 +448,17 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Added source-text byte character braced Unicode escape spans for ASCII-valued
   spellings such as `'\u{41}'`, treating them as number tokens in the current
   Ari token model.
+- Added source-text empty byte character diagnostics for spellings such as
+  `''`, preserving those failures through parser and driver source-text paths.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add source-text empty byte character diagnostics for spellings such as `''`.
+- Add source-text unterminated byte character diagnostics for EOF/newline
+  spellings such as a lone opening quote.
 
 ## Next Recommended Task
 
-Add source-text empty byte character diagnostics for spellings such as `''`.
+Add source-text unterminated byte character diagnostics for EOF/newline
+spellings such as a lone opening quote.
