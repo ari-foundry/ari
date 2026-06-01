@@ -95,6 +95,15 @@ pub fn classify_one(value: char) -> token::TokenKind {
   if value == '>' {
     return token::Greater;
   }
+  if value == '&' {
+    return token::Amp;
+  }
+  if value == '|' {
+    return token::Pipe;
+  }
+  if value == '^' {
+    return token::Caret;
+  }
   if value == '+' {
     return token::Plus;
   }
@@ -223,6 +232,15 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
     GreaterEqual => {
       return Scanned(token::make_token(token::GreaterEqual, offset, offset + 2));
     }
+    Amp => {
+      return Scanned(token::make_token(token::Amp, offset, offset + 1));
+    }
+    Pipe => {
+      return Scanned(token::make_token(token::Pipe, offset, offset + 1));
+    }
+    Caret => {
+      return Scanned(token::make_token(token::Caret, offset, offset + 1));
+    }
     Plus => {
       return Scanned(token::make_token(token::Plus, offset, offset + 1));
     }
@@ -344,6 +362,9 @@ pub fn cursor_is_identifier(cursor: TokenCursor) -> bool {
     BangEqual => false,
     LessEqual => false,
     GreaterEqual => false,
+    Amp => false,
+    Pipe => false,
+    Caret => false,
     Plus => false,
     Minus => false,
     Star => false,
@@ -374,6 +395,9 @@ pub fn cursor_is_number(cursor: TokenCursor) -> bool {
     BangEqual => false,
     LessEqual => false,
     GreaterEqual => false,
+    Amp => false,
+    Pipe => false,
+    Caret => false,
     Plus => false,
     Minus => false,
     Star => false,
@@ -404,6 +428,9 @@ pub fn cursor_is_whitespace(cursor: TokenCursor) -> bool {
     BangEqual => false,
     LessEqual => false,
     GreaterEqual => false,
+    Amp => false,
+    Pipe => false,
+    Caret => false,
     Plus => false,
     Minus => false,
     Star => false,
@@ -434,6 +461,9 @@ pub fn cursor_is_eof(cursor: TokenCursor) -> bool {
     BangEqual => false,
     LessEqual => false,
     GreaterEqual => false,
+    Amp => false,
+    Pipe => false,
+    Caret => false,
     Plus => false,
     Minus => false,
     Star => false,
@@ -464,6 +494,9 @@ pub fn cursor_is_unknown(cursor: TokenCursor) -> bool {
     BangEqual => false,
     LessEqual => false,
     GreaterEqual => false,
+    Amp => false,
+    Pipe => false,
+    Caret => false,
     Plus => false,
     Minus => false,
     Star => false,
@@ -494,6 +527,9 @@ pub fn cursor_is_punctuation(cursor: TokenCursor) -> bool {
     BangEqual => false,
     LessEqual => false,
     GreaterEqual => false,
+    Amp => false,
+    Pipe => false,
+    Caret => false,
     Plus => false,
     Minus => false,
     Star => false,
@@ -524,6 +560,9 @@ pub fn cursor_is_operator(cursor: TokenCursor) -> bool {
     BangEqual => true,
     LessEqual => true,
     GreaterEqual => true,
+    Amp => true,
+    Pipe => true,
+    Caret => true,
     Plus => true,
     Minus => true,
     Star => true,

@@ -169,6 +169,21 @@ fn lexer_operator_score() -> i64 {
   if !lexer::handoff_starts_with_operator(lexer::handoff_from_one('<', 19)) {
     return 14;
   }
+  if lexer::scan_score('&') != 31 {
+    return 15;
+  }
+  if lexer::scan_score('|') != 32 {
+    return 16;
+  }
+  if lexer::scan_score('^') != 33 {
+    return 17;
+  }
+  if !lexer::cursor_is_operator(lexer::cursor_from_one('&', 20)) {
+    return 18;
+  }
+  if !lexer::handoff_starts_with_operator(lexer::handoff_from_one('|', 21)) {
+    return 19;
+  }
   return 0;
 }
 
