@@ -728,6 +728,9 @@ policy in ad hoc compiler files.
 - Added a focused source-text extra-token driver smoke that checks `p+`
   preserves parser missing-EOF diagnostic code `2003`, proving text input no
   longer ignores bytes after the first token.
+- Added `KwStruct` to the Ari-written token model and reusable keyword table,
+  with focused smokes for exact `struct`, longer `structure`, and the
+  table-backed parser/driver keyword path.
 - Added a one-token file-input fixture for the compiled `compiler/main.ari`
   bootstrap run, so file input uses real loaded text without pretending the
   larger source-root smoke fixture is already parseable as a full Ari program.
@@ -739,13 +742,13 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add `struct` to the reusable keyword table and token model, preserving longer
-  identifiers such as `structure`.
+- Add `extern` to the reusable keyword table and token model, preserving longer
+  identifiers such as `external`.
 
 ## Next Recommended Task
 
-Add `struct` to the reusable keyword table and token model, preserving longer
-identifiers such as `structure`.
+Add `extern` to the reusable keyword table and token model, preserving longer
+identifiers such as `external`.
 
 ## Local Validation
 
@@ -842,9 +845,12 @@ requiring a hosted compiler fix. The parser missing-EOF handoff failure-code
 smoke checked diagnostic code `2003` through `parser::parse_failure_code`
 without requiring a hosted compiler fix. The parser number-success smoke checked
 the number statement path through `parser::parse_is_success` without requiring
-a hosted compiler fix. The AST statement-kind query and parser payload-shape
-smoke checked successful statement output without requiring a hosted compiler
-fix. The AST node span-length query and parser payload-span smoke checked
+a hosted compiler fix. The reusable keyword-table smoke checked `KwStruct`,
+longer `structure`, and the source-text parser/driver keyword path without
+requiring a hosted compiler fix. The AST statement-kind query and parser
+payload-shape smoke checked successful statement output without requiring a
+hosted compiler fix. The AST node span-length query and parser payload-span
+smoke checked
 successful statement spans without requiring a hosted compiler fix. The AST
 node value query and parser payload-value smoke checked successful statement
 values without requiring a hosted compiler fix. The source span-start, AST
