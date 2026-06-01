@@ -95,41 +95,18 @@ compiler feature in the normal focused-test workflow.
 - `compiler/lexer.ari` classifies `[` and `]` as punctuation so generic
   argument and future indexing tokens no longer fall through the unknown-token
   path.
-- `compiler/lexer.ari` exposes a two-character path separator helper so early
-  smokes can distinguish `::` from the one-character colon fallback token.
 - `compiler/lexer.ari` classifies simple one-character operators separately
   from unknown characters and exposes operator queries at the cursor and
   handoff boundary.
-- `compiler/lexer.ari` exposes a two-character identifier scan helper so early
-  smokes can prove multi-byte identifier token spans before a real source
-  table exists.
-- `compiler/lexer.ari` exposes a two-character number scan helper so early
-  smokes can prove multi-byte number token spans before a real source table
-  exists.
-- `compiler/lexer.ari` exposes a two-character whitespace scan helper so early
-  smokes can prove multi-byte whitespace token spans before a real source table
-  exists.
-- `compiler/lexer.ari` exposes a two-character equality operator helper so
-  early smokes can distinguish `==` from one-character assignment before a real
-  source table exists.
-- `compiler/lexer.ari` exposes a two-character fat-arrow operator helper so
-  early smokes can distinguish `=>` from the one-character assignment fallback
-  token.
+- `compiler/lexer.ari` exposes one `scan_two`/`cursor_from_two` path for all
+  current two-character scans instead of one public helper per token spelling.
+- The two-character lexer path covers identifier, number, and whitespace spans
+  plus `::`, `==`, `=>`, `!=`, `<=`, `>=`, `&&`, `||`, `<<`, `>>`, and `->`
+  with one-character fallback behavior.
 - `compiler/lexer.ari` classifies one-character comparison operators `!`, `<`,
   and `>` and uses them as fallbacks for two-character comparison operators.
-- `compiler/lexer.ari` exposes a two-character comparison operator helper so
-  early smokes can distinguish `!=`, `<=`, and `>=` from their one-character
-  fallback tokens.
 - `compiler/lexer.ari` classifies one-character bitwise operators `&`, `|`,
   and `^` and uses `&` and `|` as fallbacks for logical `&&` and `||`.
-- `compiler/lexer.ari` exposes a two-character logical operator helper so
-  early smokes can distinguish `&&` and `||` from their one-character bitwise
-  fallback tokens.
-- `compiler/lexer.ari` exposes a two-character shift operator helper so early
-  smokes can distinguish `<<` and `>>` from their one-character comparison
-  fallback tokens.
-- `compiler/lexer.ari` exposes a two-character arrow operator helper so early
-  smokes can distinguish `->` from the one-character minus fallback token.
 - `compiler/ast.ari` now models minimal span-carrying token, statement, error,
   and missing output nodes.
 - `compiler/ast.ari` exposes a statement-kind query helper so parser payload
@@ -460,6 +437,9 @@ policy in ad hoc compiler files.
 - Added a focused `->` arrow operator token and source-root smoke coverage that
   it falls back to the one-character minus token when the second character does
   not match.
+- Consolidated the public two-character lexer helpers into one
+  `scan_two`/`cursor_from_two` path while preserving the existing source-root
+  smokes for spans, operators, punctuation, and fallback behavior.
 - Added token-kind query helpers for the lexer/parser boundary and a tiny parser
   handoff classification score.
 - Moved the test-like entry arithmetic out of `compiler/main.ari` into a
@@ -723,7 +703,9 @@ requiring a hosted compiler fix. The lexer two-character shift operator smoke
 checked `<<` and `>>` tokenization plus one-character comparison fallback paths
 without requiring a hosted compiler fix. The lexer two-character arrow operator
 smoke checked `->` tokenization plus the one-character minus fallback path
-without requiring a hosted compiler fix.
+without requiring a hosted compiler fix. The consolidated `scan_two` smoke
+path checked the same two-character token spans and fallback cases without
+requiring a hosted compiler fix.
 The growing source-root fixture did expose allocation-capacity runtime traps
 while reading the file smoke; this is fixed locally with explicit `zone(65536)`
 allocation blocks and is recorded as allocation-policy pressure rather than a

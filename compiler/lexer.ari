@@ -135,55 +135,25 @@ pub fn scan_one(value: char, offset: i64) -> token::Token {
   return token::make_token(classify_one(value), offset, offset + 1);
 }
 
-pub fn scan_identifier_two(first: char, offset: i64, second: char) -> token::Token {
+pub fn scan_two(first: char, offset: i64, second: char) -> token::Token {
   if is_identifier_start(first) && is_identifier_continue(second) {
     return token::make_token(token::Identifier, offset, offset + 2);
   }
-
-  return scan_one(first, offset);
-}
-
-pub fn scan_number_two(first: char, offset: i64, second: char) -> token::Token {
   if is_number_start(first) && is_number_continue(second) {
     return token::make_token(token::Number, offset, offset + 2);
   }
-
-  return scan_one(first, offset);
-}
-
-pub fn scan_whitespace_two(first: char, offset: i64, second: char) -> token::Token {
   if is_whitespace(first) && is_whitespace(second) {
     return token::make_token(token::Whitespace, offset, offset + 2);
   }
-
-  return scan_one(first, offset);
-}
-
-pub fn scan_path_separator_two(first: char, offset: i64, second: char) -> token::Token {
   if first == ':' && second == ':' {
     return token::make_token(token::ColonColon, offset, offset + 2);
   }
-
-  return scan_one(first, offset);
-}
-
-pub fn scan_equality_two(first: char, offset: i64, second: char) -> token::Token {
   if first == '=' && second == '=' {
     return token::make_token(token::EqualEqual, offset, offset + 2);
   }
-
-  return scan_one(first, offset);
-}
-
-pub fn scan_fat_arrow_two(first: char, offset: i64, second: char) -> token::Token {
   if first == '=' && second == '>' {
     return token::make_token(token::FatArrow, offset, offset + 2);
   }
-
-  return scan_one(first, offset);
-}
-
-pub fn scan_comparison_two(first: char, offset: i64, second: char) -> token::Token {
   if first == '!' && second == '=' {
     return token::make_token(token::BangEqual, offset, offset + 2);
   }
@@ -193,33 +163,18 @@ pub fn scan_comparison_two(first: char, offset: i64, second: char) -> token::Tok
   if first == '>' && second == '=' {
     return token::make_token(token::GreaterEqual, offset, offset + 2);
   }
-
-  return scan_one(first, offset);
-}
-
-pub fn scan_logical_two(first: char, offset: i64, second: char) -> token::Token {
   if first == '&' && second == '&' {
     return token::make_token(token::AmpAmp, offset, offset + 2);
   }
   if first == '|' && second == '|' {
     return token::make_token(token::PipePipe, offset, offset + 2);
   }
-
-  return scan_one(first, offset);
-}
-
-pub fn scan_shift_two(first: char, offset: i64, second: char) -> token::Token {
   if first == '<' && second == '<' {
     return token::make_token(token::LessLess, offset, offset + 2);
   }
   if first == '>' && second == '>' {
     return token::make_token(token::GreaterGreater, offset, offset + 2);
   }
-
-  return scan_one(first, offset);
-}
-
-pub fn scan_arrow_two(first: char, offset: i64, second: char) -> token::Token {
   if first == '-' && second == '>' {
     return token::make_token(token::Arrow, offset, offset + 2);
   }
@@ -362,81 +317,9 @@ pub fn cursor_from_one(value: char, offset: i64) -> TokenCursor {
   return TokenCursor { current: scan_one(value, offset), offset: offset, done: false };
 }
 
-pub fn cursor_from_identifier_two(first: char, offset: i64, second: char) -> TokenCursor {
+pub fn cursor_from_two(first: char, offset: i64, second: char) -> TokenCursor {
   return TokenCursor {
-    current: scan_identifier_two(first, offset, second),
-    offset: offset,
-    done: false,
-  };
-}
-
-pub fn cursor_from_number_two(first: char, offset: i64, second: char) -> TokenCursor {
-  return TokenCursor {
-    current: scan_number_two(first, offset, second),
-    offset: offset,
-    done: false,
-  };
-}
-
-pub fn cursor_from_whitespace_two(first: char, offset: i64, second: char) -> TokenCursor {
-  return TokenCursor {
-    current: scan_whitespace_two(first, offset, second),
-    offset: offset,
-    done: false,
-  };
-}
-
-pub fn cursor_from_path_separator_two(first: char, offset: i64, second: char) -> TokenCursor {
-  return TokenCursor {
-    current: scan_path_separator_two(first, offset, second),
-    offset: offset,
-    done: false,
-  };
-}
-
-pub fn cursor_from_equality_two(first: char, offset: i64, second: char) -> TokenCursor {
-  return TokenCursor {
-    current: scan_equality_two(first, offset, second),
-    offset: offset,
-    done: false,
-  };
-}
-
-pub fn cursor_from_fat_arrow_two(first: char, offset: i64, second: char) -> TokenCursor {
-  return TokenCursor {
-    current: scan_fat_arrow_two(first, offset, second),
-    offset: offset,
-    done: false,
-  };
-}
-
-pub fn cursor_from_comparison_two(first: char, offset: i64, second: char) -> TokenCursor {
-  return TokenCursor {
-    current: scan_comparison_two(first, offset, second),
-    offset: offset,
-    done: false,
-  };
-}
-
-pub fn cursor_from_logical_two(first: char, offset: i64, second: char) -> TokenCursor {
-  return TokenCursor {
-    current: scan_logical_two(first, offset, second),
-    offset: offset,
-    done: false,
-  };
-}
-
-pub fn cursor_from_shift_two(first: char, offset: i64, second: char) -> TokenCursor {
-  return TokenCursor {
-    current: scan_shift_two(first, offset, second),
-    offset: offset,
-    done: false,
-  };
-}
-
-pub fn cursor_from_arrow_two(first: char, offset: i64, second: char) -> TokenCursor {
-  return TokenCursor {
-    current: scan_arrow_two(first, offset, second),
+    current: scan_two(first, offset, second),
     offset: offset,
     done: false,
   };
