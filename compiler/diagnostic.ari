@@ -39,6 +39,10 @@ pub fn diagnostic_end_offset(diagnostic: Diagnostic) -> i64 {
   return diagnostic.end;
 }
 
+pub fn diagnostic_severity_score(diagnostic: Diagnostic) -> i64 {
+  return severity_score(diagnostic.severity);
+}
+
 pub fn diagnostic_score(diagnostic: Diagnostic) -> i64 {
   return diagnostic.code +
     diagnostic.end -
