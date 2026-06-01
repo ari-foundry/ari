@@ -58,6 +58,10 @@ pub fn node_start_offset(node: Node) -> i64 {
   return source::span_start(node.span);
 }
 
+pub fn node_end_offset(node: Node) -> i64 {
+  return source::span_end(node.span);
+}
+
 pub fn kind_score(kind: NodeKind) -> i64 {
   match kind {
     Missing => 0,

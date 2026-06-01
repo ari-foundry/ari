@@ -47,6 +47,10 @@ pub fn span_start(span: Span) -> ByteOffset {
   return span.start;
 }
 
+pub fn span_end(span: Span) -> ByteOffset {
+  return span.end;
+}
+
 pub fn contains(file: SourceFile, offset: ByteOffset) -> bool {
   return offset >= 0 && offset <= file.byte_len;
 }
