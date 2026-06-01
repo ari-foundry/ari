@@ -1362,6 +1362,17 @@ fn lexer_keyword_score() -> i64 {
       7,
       "break",
       'b'
+    ) +
+    lexer_keyword_case_with_base_score(
+      1500,
+      "drop name",
+      4,
+      99,
+      "drop1",
+      5,
+      6,
+      "drop",
+      'd'
     );
 }
 
