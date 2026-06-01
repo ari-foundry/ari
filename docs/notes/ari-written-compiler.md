@@ -168,6 +168,8 @@ compiler feature in the normal focused-test workflow.
   without relying on parser score arithmetic.
 - The bootstrap source-root smoke checks successful parser payload source ids
   without relying on `ast::node_score` arithmetic.
+- The bootstrap source-root smoke checks number parser payload source ids
+  without relying on parser score arithmetic.
 - `compiler/driver.ari` owns the current bootstrap entry flow and returns a
   standard-library `std::Result[i64, i64]` instead of embedding smoke arithmetic
   in `main`.
@@ -391,6 +393,8 @@ policy in ad hoc compiler files.
   parser statement start-offset helper without parser score arithmetic.
 - Added a focused parser number payload end-offset smoke using the existing
   parser statement end-offset helper without parser score arithmetic.
+- Added a focused parser number payload source-id smoke using the existing
+  parser statement source-id helper without parser score arithmetic.
 - Routed driver parse failures through the parser failure-code helper, with
   source-root smoke coverage for whitespace and unknown-token diagnostic codes.
 - Added a driver result-code helper and simplified bootstrap smokes that inspect
@@ -421,15 +425,15 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a focused parser number payload source-id smoke using the existing
-  `parser::parse_statement_source_id(parser::parse_one('9', ...))` helper so
-  the number statement source id is checked without parser score arithmetic.
+- Add a focused parser number payload statement-node smoke using the existing
+  `parser::parse_is_statement_node(parser::parse_one('9', ...))` helper so the
+  number statement shape is checked without parser score arithmetic.
 
 ## Next Recommended Task
 
-Add a focused parser number payload source-id smoke using the existing
-`parser::parse_statement_source_id(parser::parse_one('9', ...))` helper so the
-number statement source id is checked without parser score arithmetic. Keep it
+Add a focused parser number payload statement-node smoke using the existing
+`parser::parse_is_statement_node(parser::parse_one('9', ...))` helper so the
+number statement shape is checked without parser score arithmetic. Keep it
 inside the bootstrap source-root smoke and do not add parser recovery,
 diagnostic rendering, or a source table yet.
 
@@ -545,7 +549,8 @@ smoke checked number statement spans without requiring a hosted compiler fix.
 The parser number payload start-offset smoke checked number statement start
 offsets without requiring a hosted compiler fix. The parser number payload
 end-offset smoke checked number statement end offsets without requiring a
-hosted compiler fix.
+hosted compiler fix. The parser number payload source-id smoke checked number
+statement source ids without requiring a hosted compiler fix.
 The growing source-root fixture did expose a default-zone capacity runtime trap
 while reading the file smoke; this was fixed locally with explicit
 `zone(16384)` allocation blocks and is recorded as allocation-policy pressure
