@@ -170,7 +170,7 @@ def main() -> int:
         "## Completed Tasks",
         "## Small Task Queue",
         "## Next Recommended Task",
-        "Backfill reusable keyword-table smoke coverage for existing `false`",
+        "Add the smallest source-text string literal token model",
     ]:
         require(ari_tasks, needle, ari_tasks_path)
 
