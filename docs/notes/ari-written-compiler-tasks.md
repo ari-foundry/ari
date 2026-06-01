@@ -390,6 +390,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   parser/driver keyword path.
 - Added the smallest source-text `StringLiteral` token model, with a
   no-escape quoted span smoke for non-empty and empty quoted strings.
+- Extended source-text `StringLiteral` scanning to skip escaped quote bytes
+  inside quoted spans.
 - Added a one-token file-input fixture for the compiled `compiler/main.ari`
   bootstrap run, so file input uses real loaded text without pretending the
   larger source-root smoke fixture is already parseable as a full Ari program.
@@ -401,10 +403,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Extend source-text string literal scanning to skip escaped quote bytes inside
-  quoted spans.
+- Add source-text string literal unterminated EOF/newline fallback smokes before
+  replacing that fallback with diagnostics.
 
 ## Next Recommended Task
 
-Extend source-text string literal scanning to skip escaped quote bytes inside
-quoted spans.
+Add source-text string literal unterminated EOF/newline fallback smokes before
+replacing that fallback with diagnostics.

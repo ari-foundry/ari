@@ -519,6 +519,28 @@ fn lexer_string_literal_span_score() -> i64 {
   if lexer::cursor_token_start(after_empty) != 2 {
     return 13;
   }
+
+  let escaped_quote_text: Slice[u8] = "\"a\\\"b\" tail";
+  let escaped_quote = lexer::cursor_from_text(escaped_quote_text, 0);
+  if !lexer::cursor_is_string_literal(escaped_quote) {
+    return 14;
+  }
+  if lexer::cursor_token_end(escaped_quote) != 6 {
+    return 15;
+  }
+  if lexer::cursor_token_score(escaped_quote) != 57 {
+    return 16;
+  }
+  let after_escaped_quote = lexer::cursor_advance_in_text(
+    escaped_quote,
+    escaped_quote_text
+  );
+  if !lexer::cursor_is_whitespace(after_escaped_quote) {
+    return 17;
+  }
+  if lexer::cursor_token_start(after_escaped_quote) != 6 {
+    return 18;
+  }
   return 0;
 }
 

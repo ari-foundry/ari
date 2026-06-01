@@ -418,6 +418,16 @@ fn identifier_end_from_text(text: std::Slice[u8], offset: i64) -> i64 {
 fn string_literal_end_from_text(text: std::Slice[u8], offset: i64) -> i64 {
   var end = offset + 1;
   while end < text.len {
+    if text[end] == '\\' {
+      if end + 1 >= text.len {
+        return offset + 1;
+      }
+      if text[end + 1] == '\n' {
+        return offset + 1;
+      }
+      end = end + 2;
+      continue;
+    }
     if text[end] == '"' {
       return end + 1;
     }

@@ -53,9 +53,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/lexer.ari` classifies `"` as punctuation so string-literal
   delimiter tokenization can start without falling through the unknown-token
   path.
-- `compiler/lexer.ari` scans closed no-escape source-text quoted spans as
-  `StringLiteral` tokens while preserving the one-character `DoubleQuote`
-  delimiter path for one-character scans.
+- `compiler/lexer.ari` scans closed source-text quoted spans as
+  `StringLiteral` tokens, including escaped quote bytes, while preserving the
+  one-character `DoubleQuote` delimiter path for one-character scans.
 - `compiler/lexer.ari` classifies `@` as punctuation so attribute and alias
   marker tokenization no longer falls through the unknown-token path.
 - `compiler/lexer.ari` classifies simple one-character operators separately
