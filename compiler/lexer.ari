@@ -166,6 +166,14 @@ pub fn scan_equality_two(first: char, offset: i64, second: char) -> token::Token
   return scan_one(first, offset);
 }
 
+pub fn scan_fat_arrow_two(first: char, offset: i64, second: char) -> token::Token {
+  if first == '=' && second == '>' {
+    return token::make_token(token::FatArrow, offset, offset + 2);
+  }
+
+  return scan_one(first, offset);
+}
+
 pub fn scan_comparison_two(first: char, offset: i64, second: char) -> token::Token {
   if first == '!' && second == '=' {
     return token::make_token(token::BangEqual, offset, offset + 2);
@@ -297,6 +305,9 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
     Arrow => {
       return Scanned(token::make_token(token::Arrow, offset, offset + 2));
     }
+    FatArrow => {
+      return Scanned(token::make_token(token::FatArrow, offset, offset + 2));
+    }
     Plus => {
       return Scanned(token::make_token(token::Plus, offset, offset + 1));
     }
@@ -368,6 +379,14 @@ pub fn cursor_from_path_separator_two(first: char, offset: i64, second: char) ->
 pub fn cursor_from_equality_two(first: char, offset: i64, second: char) -> TokenCursor {
   return TokenCursor {
     current: scan_equality_two(first, offset, second),
+    offset: offset,
+    done: false,
+  };
+}
+
+pub fn cursor_from_fat_arrow_two(first: char, offset: i64, second: char) -> TokenCursor {
+  return TokenCursor {
+    current: scan_fat_arrow_two(first, offset, second),
     offset: offset,
     done: false,
   };
@@ -459,6 +478,7 @@ pub fn cursor_is_identifier(cursor: TokenCursor) -> bool {
     LessLess => false,
     GreaterGreater => false,
     Arrow => false,
+    FatArrow => false,
     Plus => false,
     Minus => false,
     Star => false,
@@ -498,6 +518,7 @@ pub fn cursor_is_number(cursor: TokenCursor) -> bool {
     LessLess => false,
     GreaterGreater => false,
     Arrow => false,
+    FatArrow => false,
     Plus => false,
     Minus => false,
     Star => false,
@@ -537,6 +558,7 @@ pub fn cursor_is_whitespace(cursor: TokenCursor) -> bool {
     LessLess => false,
     GreaterGreater => false,
     Arrow => false,
+    FatArrow => false,
     Plus => false,
     Minus => false,
     Star => false,
@@ -576,6 +598,7 @@ pub fn cursor_is_eof(cursor: TokenCursor) -> bool {
     LessLess => false,
     GreaterGreater => false,
     Arrow => false,
+    FatArrow => false,
     Plus => false,
     Minus => false,
     Star => false,
@@ -615,6 +638,7 @@ pub fn cursor_is_unknown(cursor: TokenCursor) -> bool {
     LessLess => false,
     GreaterGreater => false,
     Arrow => false,
+    FatArrow => false,
     Plus => false,
     Minus => false,
     Star => false,
@@ -654,6 +678,7 @@ pub fn cursor_is_punctuation(cursor: TokenCursor) -> bool {
     LessLess => false,
     GreaterGreater => false,
     Arrow => false,
+    FatArrow => false,
     Plus => false,
     Minus => false,
     Star => false,
@@ -693,6 +718,7 @@ pub fn cursor_is_operator(cursor: TokenCursor) -> bool {
     LessLess => true,
     GreaterGreater => true,
     Arrow => true,
+    FatArrow => true,
     Plus => true,
     Minus => true,
     Star => true,

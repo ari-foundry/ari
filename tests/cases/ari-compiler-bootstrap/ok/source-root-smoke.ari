@@ -301,6 +301,33 @@ fn lexer_equality_operator_score() -> i64 {
   return 0;
 }
 
+fn lexer_fat_arrow_operator_span_score() -> i64 {
+  let fat = lexer::cursor_from_fat_arrow_two('=', 82, '>');
+  if !lexer::cursor_is_operator(fat) {
+    return 1;
+  }
+  if lexer::cursor_is_punctuation(fat) {
+    return 2;
+  }
+  if lexer::cursor_token_start(fat) != 82 {
+    return 3;
+  }
+  if lexer::cursor_token_end(fat) != 84 {
+    return 4;
+  }
+  if lexer::cursor_token_score(fat) != 48 {
+    return 5;
+  }
+  let fallback = lexer::cursor_from_fat_arrow_two('=', 86, '+');
+  if lexer::cursor_token_end(fallback) != 87 {
+    return 6;
+  }
+  if lexer::cursor_token_score(fallback) != 12 {
+    return 7;
+  }
+  return 0;
+}
+
 fn lexer_comparison_operator_span_score() -> i64 {
   let not_equal = lexer::cursor_from_comparison_two('!', 90, '=');
   if !lexer::cursor_is_operator(not_equal) {
@@ -650,6 +677,7 @@ fn main() -> i64 {
     lexer_whitespace_span_score() +
     lexer_path_separator_span_score() +
     lexer_equality_operator_score() +
+    lexer_fat_arrow_operator_span_score() +
     lexer_comparison_operator_span_score() +
     lexer_logical_operator_span_score() +
     lexer_shift_operator_span_score() +

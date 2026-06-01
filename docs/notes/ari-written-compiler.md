@@ -107,6 +107,9 @@ compiler feature in the normal focused-test workflow.
 - `compiler/lexer.ari` exposes a two-character equality operator helper so
   early smokes can distinguish `==` from one-character assignment before a real
   source table exists.
+- `compiler/lexer.ari` exposes a two-character fat-arrow operator helper so
+  early smokes can distinguish `=>` from the one-character assignment fallback
+  token.
 - `compiler/lexer.ari` classifies one-character comparison operators `!`, `<`,
   and `>` and uses them as fallbacks for two-character comparison operators.
 - `compiler/lexer.ari` exposes a two-character comparison operator helper so
@@ -429,6 +432,9 @@ policy in ad hoc compiler files.
   coverage for lexer whitespace token boundaries.
 - Added a focused `==` equality operator helper and source-root smoke coverage
   that distinguishes it from one-character assignment.
+- Added a focused `=>` fat-arrow operator token and source-root smoke coverage
+  that it falls back to the one-character assignment token when the second
+  character does not match.
 - Added one-character comparison operator tokens for `!`, `<`, and `>`, with
   source-root smoke coverage that they are scanned and exposed as operators.
 - Added focused `!=`, `<=`, and `>=` comparison operator tokens and source-root
@@ -546,15 +552,13 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a focused lexer two-character fat-arrow helper and smoke for `=>`,
-  reusing the one-character assignment operator as the fallback path, so match
-  arm tokenization can start.
+- Add a focused lexer one-character dot punctuation token and smoke for `.`, so
+  field-access tokenization can start.
 
 ## Next Recommended Task
 
-Add a focused lexer two-character fat-arrow helper and smoke for `=>`, reusing
-the one-character assignment operator as the fallback path, so match arm
-tokenization can start.
+Add a focused lexer one-character dot punctuation token and smoke for `.`, so
+field-access tokenization can start.
 
 ## Local Validation
 
@@ -692,7 +696,9 @@ number span smoke checked two-character number token boundaries without
 requiring a hosted compiler fix. The lexer whitespace span smoke checked
 two-character whitespace token boundaries without requiring a hosted compiler
 fix. The lexer equality operator smoke checked `==` tokenization and assignment
-fallback without requiring a hosted compiler fix. The lexer one-character
+fallback without requiring a hosted compiler fix. The lexer two-character
+fat-arrow smoke checked `=>` tokenization plus the one-character assignment
+fallback path without requiring a hosted compiler fix. The lexer one-character
 comparison operator smoke checked `!`, `<`, and `>` tokenization without
 requiring a hosted compiler fix. The lexer two-character comparison operator
 smoke checked `!=`, `<=`, and `>=` tokenization plus one-character fallback
