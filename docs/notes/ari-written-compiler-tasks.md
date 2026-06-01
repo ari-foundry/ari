@@ -453,15 +453,18 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Added source-text unterminated byte character diagnostics for direct
   EOF/newline and escaped EOF/newline spellings, preserving those failures
   through parser and driver source-text paths.
+- Added source-text unsupported byte character escape diagnostics for spellings
+  such as `'\q'`, preserving those failures through parser and driver
+  source-text paths.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add source-text unsupported byte character escape diagnostics for spellings
-  such as `'\q'`.
+- Add source-text byte character escape digit-shape diagnostics for spellings
+  such as `'\x'`, `'\u'`, `'\U'`, and `'\u{}'`.
 
 ## Next Recommended Task
 
-Add source-text unsupported byte character escape diagnostics for spellings
-such as `'\q'`.
+Add source-text byte character escape digit-shape diagnostics for spellings
+such as `'\x'`, `'\u'`, `'\U'`, and `'\u{}'`.

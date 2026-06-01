@@ -56,6 +56,7 @@ enum ByteCharScan {
   ByteCharClosed(i64),
   ByteCharEmpty(i64, i64),
   ByteCharUnterminated(i64),
+  ByteCharUnsupportedEscape(i64, i64),
   ByteCharFallback,
 }
 
@@ -984,6 +985,14 @@ fn is_simple_byte_char_escape(value: char) -> bool {
     value == '\\';
 }
 
+fn is_supported_byte_char_escape_head(value: char) -> bool {
+  return is_simple_byte_char_escape(value) ||
+    value == 'x' ||
+    value == 'u' ||
+    value == 'U' ||
+    is_octal_digit(value);
+}
+
 fn byte_char_fixed_unicode_escape_end_from_text(
   text: std::Slice[u8],
   slash_start: i64,
@@ -1091,6 +1100,9 @@ fn byte_char_scan_from_text(text: std::Slice[u8], offset: i64) -> ByteCharScan {
     if text[offset + 2] == '\n' {
       return ByteCharUnterminated(offset + 3);
     }
+    if !is_supported_byte_char_escape_head(text[offset + 2]) {
+      return ByteCharUnsupportedEscape(offset + 2, offset + 3);
+    }
     let escaped_end = byte_char_escape_end_from_text(text, offset + 1);
     if escaped_end > offset + 1 && escaped_end < text.len && text[escaped_end] == '\'' {
       return ByteCharClosed(escaped_end + 1);
@@ -1154,6 +1166,7 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
       }
       ByteCharEmpty(_, _) => {}
       ByteCharUnterminated(_) => {}
+      ByteCharUnsupportedEscape(_, _) => {}
       ByteCharFallback => {}
     }
   }
@@ -1245,6 +1258,12 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
       }
       ByteCharUnterminated(byte_char_unterminated_end) => {
         return Failed(unterminated_byte_character_literal(offset, byte_char_unterminated_end));
+      }
+      ByteCharUnsupportedEscape(byte_char_escape_start, byte_char_escape_end) => {
+        return Failed(unsupported_byte_character_escape(
+          byte_char_escape_start,
+          byte_char_escape_end
+        ));
       }
       ByteCharFallback => {}
     }
@@ -1349,6 +1368,10 @@ pub fn empty_byte_character_literal(start: i64, end: i64) -> diagnostic::Diagnos
 
 pub fn unterminated_byte_character_literal(start: i64, end: i64) -> diagnostic::Diagnostic {
   return diagnostic::error(1015, start, end);
+}
+
+pub fn unsupported_byte_character_escape(start: i64, end: i64) -> diagnostic::Diagnostic {
+  return diagnostic::error(1016, start, end);
 }
 
 pub fn unterminated_string_literal(start: i64, end: i64) -> diagnostic::Diagnostic {

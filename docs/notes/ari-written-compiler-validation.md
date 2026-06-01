@@ -323,6 +323,9 @@ compiler fix.
 The source-text unterminated byte character diagnostic now preserves code
 `1015` for direct EOF/newline and escaped EOF/newline spellings through lexer,
 parser, and driver paths without requiring a hosted compiler fix.
+The source-text unsupported byte character escape diagnostic now preserves code
+`1016` for spellings such as `'\q'` through lexer, parser, and driver paths
+without requiring a hosted compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
@@ -397,5 +400,6 @@ Desired stage0 pressure that is not yet classified as a bug:
   `'\U00000041'`. Braced Unicode byte character escape spans now cover
   ASCII-valued spellings such as `'\u{41}'`. Empty byte character diagnostics
   now cover `''`, and unterminated byte character diagnostics now cover direct
-  EOF/newline plus escaped EOF/newline spellings. Broader byte-character
-  diagnostics are still pending.
+  EOF/newline plus escaped EOF/newline spellings. Unsupported byte character
+  escape diagnostics now cover spellings such as `'\q'`. Broader
+  byte-character diagnostics are still pending.
