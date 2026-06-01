@@ -156,6 +156,13 @@ pub fn handoff_from_one(value: char, offset: i64) -> TokenHandoff {
   };
 }
 
+pub fn handoff_without_eof_from_one(value: char, offset: i64) -> TokenHandoff {
+  return TokenHandoff {
+    first: cursor_from_one(value, offset),
+    eof: cursor_from_one(value, offset),
+  };
+}
+
 pub fn handoff_first(handoff: TokenHandoff) -> TokenCursor {
   return handoff.first;
 }

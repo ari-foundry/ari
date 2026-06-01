@@ -71,6 +71,9 @@ compiler feature in the normal focused-test workflow.
   span, token score, and done state.
 - `compiler/lexer.ari` has a minimal `TokenHandoff` shape that carries one real
   token cursor plus an explicit EOF observation.
+- `compiler/lexer.ari` exposes a tiny malformed handoff helper for checking the
+  parser's missing-EOF diagnostic path without making malformed handoffs normal
+  driver input.
 - `compiler/lexer.ari` exposes token-kind query helpers at the cursor and
   handoff boundary so later parser work does not need to import token internals.
 - `compiler/lexer.ari` exposes an explicit unknown-token query at the cursor
@@ -93,6 +96,9 @@ compiler feature in the normal focused-test workflow.
 - `compiler/parser.ari` exposes a tiny `parse_one_eof` helper so EOF-cursor
   diagnostics can be tested without exporting or passing nested lexer cursor
   types across module paths.
+- `compiler/parser.ari` exposes a tiny `parse_one_without_eof` helper so
+  malformed handoff diagnostics can be tested without exposing handoff internals
+  to the bootstrap fixture.
 - The bootstrap source-root smoke checks the parser empty-input diagnostic code
   through `parser::parse_failure_code` instead of relying only on diagnostic
   smoke-score arithmetic.
@@ -102,6 +108,9 @@ compiler feature in the normal focused-test workflow.
 - The bootstrap source-root smoke checks the parser unknown-token diagnostic
   code through `parser::parse_failure_code` instead of relying only on driver
   indirection or diagnostic smoke-score arithmetic.
+- The bootstrap source-root smoke checks the parser missing-EOF handoff
+  diagnostic code through `parser::parse_failure_code` instead of relying only
+  on parser smoke-score arithmetic.
 - `compiler/driver.ari` owns the current bootstrap entry flow and returns a
   standard-library `std::Result[i64, i64]` instead of embedding smoke arithmetic
   in `main`.
@@ -294,6 +303,9 @@ policy in ad hoc compiler files.
   smoke that checks diagnostic code `2001` through `parser::parse_failure_code`.
 - Added a focused parser unknown-token failure-code smoke that checks
   diagnostic code `2005` through `parser::parse_failure_code(parser::parse_one(...))`.
+- Added a tiny malformed handoff helper and a focused parser missing-EOF
+  failure-code smoke that checks diagnostic code `2003` through
+  `parser::parse_failure_code`.
 - Routed driver parse failures through the parser failure-code helper, with
   source-root smoke coverage for whitespace and unknown-token diagnostic codes.
 - Added a driver result-code helper and simplified bootstrap smokes that inspect
@@ -324,17 +336,17 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a focused parser missing-EOF handoff failure-code smoke so diagnostic
-  code `2003` is checked through `parser::parse_failure_code` without relying
-  on parser score arithmetic.
+- Add a focused parser number-success smoke using
+  `parser::parse_is_success(parser::parse_one('9', ...))` so the number
+  statement path is checked without relying on parser score arithmetic.
 
 ## Next Recommended Task
 
-Add a focused parser missing-EOF handoff failure-code smoke so diagnostic code
-`2003` is checked through `parser::parse_failure_code` without relying on
-parser score arithmetic. Keep it tiny, add only the smallest parser or lexer
-helper needed to construct the malformed handoff, and do not add parser
-recovery, diagnostic rendering, or a source table yet.
+Add a focused parser number-success smoke using
+`parser::parse_is_success(parser::parse_one('9', ...))` so the number statement
+path is checked without relying on parser score arithmetic. Keep it inside the
+bootstrap source-root smoke and do not add parser recovery, diagnostic
+rendering, or a source table yet.
 
 ## Local Validation
 
@@ -426,7 +438,9 @@ requiring a hosted compiler fix. The parser EOF-cursor failure-code smoke
 checked diagnostic code `2001` through `parser::parse_failure_code` without
 requiring a hosted compiler fix. The parser unknown-token failure-code smoke
 checked diagnostic code `2005` through `parser::parse_failure_code` without
-requiring a hosted compiler fix.
+requiring a hosted compiler fix. The parser missing-EOF handoff failure-code
+smoke checked diagnostic code `2003` through `parser::parse_failure_code`
+without requiring a hosted compiler fix.
 The growing source-root fixture did expose a default-zone capacity runtime trap
 while reading the file smoke; this was fixed locally with explicit
 `zone(16384)` allocation blocks and is recorded as allocation-policy pressure

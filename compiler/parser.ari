@@ -101,6 +101,10 @@ pub fn parse_one(value: char, offset: i64) -> ParseResult {
   return parse_handoff(lexer::handoff_from_one(value, offset));
 }
 
+pub fn parse_one_without_eof(value: char, offset: i64) -> ParseResult {
+  return parse_handoff(lexer::handoff_without_eof_from_one(value, offset));
+}
+
 pub fn parse_one_eof(value: char, offset: i64) -> ParseResult {
   return parse_cursor(lexer::handoff_eof(lexer::handoff_from_one(
     value,
