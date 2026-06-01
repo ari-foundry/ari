@@ -118,10 +118,11 @@ compiler feature in the normal focused-test workflow.
   `>>`, `<=`, and `>=`.
 - `compiler/lexer.ari` classifies exact source-text `fn`, `let`, `var`, `own`,
   `ref`, `mut`, `ptr`, `return`, `if`, `else`, `while`, `init`, `next`,
-  `continue`, `break`, `drop`, and `forget` as keywords while preserving longer
-  identifier runs such as `fn1`, `letter`, `variant`, `owner`, `reference`,
-  `mutable`, `ptrace`, `returning`, `iffy`, `elsewhere`, `while1`, `initial`,
-  `next1`, `continue1`, `break1`, `drop1`, and `forget1` as identifiers.
+  `continue`, `break`, `drop`, `forget`, and `null` as keywords while
+  preserving longer identifier runs such as `fn1`, `letter`, `variant`,
+  `owner`, `reference`, `mutable`, `ptrace`, `returning`, `iffy`, `elsewhere`,
+  `while1`, `initial`, `next1`, `continue1`, `break1`, `drop1`, `forget1`, and
+  `null1` as identifiers.
 - `compiler/lexer.ari` classifies `?` and `??` as operators so
   result-propagation and null-coalescing tokens match the stage0 spellings.
 - `compiler/lexer.ari` exposes one `scan_two`/`cursor_from_two` path for all
@@ -548,6 +549,9 @@ policy in ad hoc compiler files.
 - Added the seventeenth text-backed keyword token, `forget`, with source-root
   smoke coverage that exact `forget` is a keyword and longer `forget1` remains
   an identifier.
+- Added the eighteenth text-backed keyword token, `null`, with source-root smoke
+  coverage that exact `null` is a keyword and longer `null1` remains an
+  identifier.
 - Replaced the raw per-character keyword comparison chain with one slice matcher
   helper while keeping width buckets, so adding keywords no longer duplicates
   manual indexing logic.
@@ -669,13 +673,13 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add text-backed keyword classification for stage0 `null`, preserving longer
-  identifiers such as `null1` as identifiers.
+- Add text-backed keyword classification for stage0 `true`, preserving longer
+  identifiers such as `true1` as identifiers.
 
 ## Next Recommended Task
 
-Add text-backed keyword classification for stage0 `null`, preserving longer
-identifiers such as `null1` as identifiers.
+Add text-backed keyword classification for stage0 `true`, preserving longer
+identifiers such as `true1` as identifiers.
 
 ## Local Validation
 
@@ -883,6 +887,8 @@ The lexer keyword smoke checked exact `drop` source-text classification and
 preserved `drop1` as an identifier without requiring a hosted compiler fix.
 The lexer keyword smoke checked exact `forget` source-text classification and
 preserved `forget1` as an identifier without requiring a hosted compiler fix.
+The lexer keyword smoke checked exact `null` source-text classification and
+preserved `null1` as an identifier without requiring a hosted compiler fix.
 The keyword matcher helper refactor kept the width-bucket keyword path checked
 through the source-root smoke without requiring a hosted compiler fix.
 The token-kind class helper refactor checked through the bootstrap source root
