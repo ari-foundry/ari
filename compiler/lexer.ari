@@ -150,6 +150,14 @@ pub fn scan_whitespace_two(first: char, offset: i64, second: char) -> token::Tok
   return scan_one(first, offset);
 }
 
+pub fn scan_path_separator_two(first: char, offset: i64, second: char) -> token::Token {
+  if first == ':' && second == ':' {
+    return token::make_token(token::ColonColon, offset, offset + 2);
+  }
+
+  return scan_one(first, offset);
+}
+
 pub fn scan_equality_two(first: char, offset: i64, second: char) -> token::Token {
   if first == '=' && second == '=' {
     return token::make_token(token::EqualEqual, offset, offset + 2);
@@ -234,6 +242,9 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
     }
     Colon => {
       return Scanned(token::make_token(token::Colon, offset, offset + 1));
+    }
+    ColonColon => {
+      return Scanned(token::make_token(token::ColonColon, offset, offset + 2));
     }
     Semicolon => {
       return Scanned(token::make_token(token::Semicolon, offset, offset + 1));
@@ -346,6 +357,14 @@ pub fn cursor_from_whitespace_two(first: char, offset: i64, second: char) -> Tok
   };
 }
 
+pub fn cursor_from_path_separator_two(first: char, offset: i64, second: char) -> TokenCursor {
+  return TokenCursor {
+    current: scan_path_separator_two(first, offset, second),
+    offset: offset,
+    done: false,
+  };
+}
+
 pub fn cursor_from_equality_two(first: char, offset: i64, second: char) -> TokenCursor {
   return TokenCursor {
     current: scan_equality_two(first, offset, second),
@@ -422,6 +441,7 @@ pub fn cursor_is_identifier(cursor: TokenCursor) -> bool {
     RightBrace => false,
     Comma => false,
     Colon => false,
+    ColonColon => false,
     Semicolon => false,
     Equal => false,
     EqualEqual => false,
@@ -460,6 +480,7 @@ pub fn cursor_is_number(cursor: TokenCursor) -> bool {
     RightBrace => false,
     Comma => false,
     Colon => false,
+    ColonColon => false,
     Semicolon => false,
     Equal => false,
     EqualEqual => false,
@@ -498,6 +519,7 @@ pub fn cursor_is_whitespace(cursor: TokenCursor) -> bool {
     RightBrace => false,
     Comma => false,
     Colon => false,
+    ColonColon => false,
     Semicolon => false,
     Equal => false,
     EqualEqual => false,
@@ -536,6 +558,7 @@ pub fn cursor_is_eof(cursor: TokenCursor) -> bool {
     RightBrace => false,
     Comma => false,
     Colon => false,
+    ColonColon => false,
     Semicolon => false,
     Equal => false,
     EqualEqual => false,
@@ -574,6 +597,7 @@ pub fn cursor_is_unknown(cursor: TokenCursor) -> bool {
     RightBrace => false,
     Comma => false,
     Colon => false,
+    ColonColon => false,
     Semicolon => false,
     Equal => false,
     EqualEqual => false,
@@ -612,6 +636,7 @@ pub fn cursor_is_punctuation(cursor: TokenCursor) -> bool {
     RightBrace => true,
     Comma => true,
     Colon => true,
+    ColonColon => true,
     Semicolon => true,
     Equal => false,
     EqualEqual => false,
@@ -650,6 +675,7 @@ pub fn cursor_is_operator(cursor: TokenCursor) -> bool {
     RightBrace => false,
     Comma => false,
     Colon => false,
+    ColonColon => false,
     Semicolon => false,
     Equal => true,
     EqualEqual => true,
