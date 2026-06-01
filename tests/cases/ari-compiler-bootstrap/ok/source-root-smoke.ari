@@ -33,6 +33,12 @@ fn empty_source_text_driver_score() -> i64 {
   }
 }
 
+fn source_text_driver_score() -> i64 {
+  zone(16384) {
+    return driver::result_code(driver::run_source_text(std::string::from("p")));
+  }
+}
+
 fn default_driver_result_score() -> i64 {
   return driver::result_code(driver::run());
 }
@@ -161,6 +167,7 @@ fn main() -> i64 {
     1102 +
     empty_source_text_driver_score() -
     1101 +
+    source_text_driver_score() +
     parser::parse_score(parser::parse_empty()) -
     3018;
 }

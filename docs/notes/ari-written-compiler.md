@@ -117,6 +117,8 @@ compiler feature in the normal focused-test workflow.
   inspection.
 - The bootstrap source-root smoke checks the raw `DriverInput` success path
   with raw `result_code` payload inspection.
+- The bootstrap source-root smoke checks the source-text driver success path
+  with raw `result_code` payload inspection.
 - The bootstrap source-root smoke covers the current `DriverInput` offset guard
   errors for both invalid start offsets and invalid one-byte end bounds through
   the scalar constructor helper.
@@ -289,6 +291,8 @@ policy in ad hoc compiler files.
   `Ok(0)` payload through `result_code(driver::run_loaded_source_summary(...))`.
 - Added a focused raw `DriverInput` success smoke that checks the internal
   `Ok(0)` payload through `result_code(driver::run_input(...))`.
+- Added a focused source-text driver success smoke that checks the internal
+  `Ok(0)` payload through `result_code(driver::run_source_text(...))`.
 - Switched file-input smoke allocation blocks to explicit `zone(16384)` after
   the growing source-root fixture exceeded the default zone capacity at
   runtime.
@@ -297,17 +301,17 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a focused source-text success smoke using
-  `result_code(driver::run_source_text(...))` so the internal text-input
-  `Ok(0)` payload is checked without CLI exit-code mapping.
+- Add a focused parser empty-input failure-code smoke using
+  `parser::parse_failure_code(parser::parse_empty())` so the EOF/empty parser
+  diagnostic identity is checked without smoke-score arithmetic.
 
 ## Next Recommended Task
 
-Add a focused source-text success smoke using
-`result_code(driver::run_source_text(...))` so the internal text-input `Ok(0)`
-payload is checked without CLI exit-code mapping. Keep it inside the bootstrap
-source-root smoke with an explicit `zone(16384)` block and do not add option
-parsing, diagnostic rendering, or a source table yet.
+Add a focused parser empty-input failure-code smoke using
+`parser::parse_failure_code(parser::parse_empty())` so the EOF/empty parser
+diagnostic identity is checked without smoke-score arithmetic. Keep it inside
+the bootstrap source-root smoke and do not add parser recovery, diagnostic
+rendering, or a source table yet.
 
 ## Local Validation
 
@@ -391,7 +395,9 @@ without requiring a hosted compiler fix. The loaded-source success smoke
 checked the loaded-source `Ok(0)` payload through `result_code` without
 requiring a hosted compiler fix. The raw `DriverInput` success smoke checked
 the input-path `Ok(0)` payload through `result_code` without requiring a hosted
-compiler fix.
+compiler fix. The source-text success smoke checked `std::string::from()`
+construction and the text-input `Ok(0)` payload through `result_code` without
+requiring a hosted compiler fix.
 The growing source-root fixture did expose a default-zone capacity runtime trap
 while reading the file smoke; this was fixed locally with explicit
 `zone(16384)` allocation blocks and is recorded as allocation-policy pressure
