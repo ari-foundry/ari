@@ -326,6 +326,10 @@ parser, and driver paths without requiring a hosted compiler fix.
 The source-text unsupported byte character escape diagnostic now preserves code
 `1016` for spellings such as `'\q'` through lexer, parser, and driver paths
 without requiring a hosted compiler fix.
+The source-text byte character escape digit-shape diagnostic now preserves code
+`1017` for spellings such as `'\x'`, `'\xG'`, `'\u'`, `'\U'`, `'\u12'`,
+`'\U1234'`, `'\u{Q}'`, and `'\u{}'` through lexer, parser, and driver paths
+without requiring a hosted compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
@@ -401,5 +405,7 @@ Desired stage0 pressure that is not yet classified as a bug:
   ASCII-valued spellings such as `'\u{41}'`. Empty byte character diagnostics
   now cover `''`, and unterminated byte character diagnostics now cover direct
   EOF/newline plus escaped EOF/newline spellings. Unsupported byte character
-  escape diagnostics now cover spellings such as `'\q'`. Broader
-  byte-character diagnostics are still pending.
+  escape diagnostics now cover spellings such as `'\q'`. Byte character
+  escape digit-shape diagnostics now cover missing/invalid `\x`, fixed-width
+  Unicode, and braced Unicode digits. Broader byte-character diagnostics are
+  still pending.

@@ -162,6 +162,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/lexer.ari` reports source-text unsupported byte character escape
   diagnostics for spellings such as `'\q'`, preserving those failures through
   parser and driver source-text paths.
+- `compiler/lexer.ari` reports source-text byte character escape digit-shape
+  diagnostics for spellings such as `'\x'`, `'\u'`, `'\U'`, `'\u12'`,
+  `'\U1234'`, `'\u{Q}'`, and `'\u{}'`, preserving those failures through
+  parser and driver source-text paths.
 - `compiler/lexer.ari` exposes text-backed cursor advance and handoff helpers,
   including significant-token advance that skips leading and trailing
   whitespace around the current single-statement parser handoff.
