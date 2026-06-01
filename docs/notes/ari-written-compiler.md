@@ -116,17 +116,19 @@ compiler feature in the normal focused-test workflow.
 - `compiler/lexer.ari` classifies shift compound-assignment operators `<<=`
   and `>>=` with source-text longest-match behavior while preserving `<<`,
   `>>`, `<=`, and `>=`.
-- `compiler/lexer.ari` classifies exact source-text `fn`, `let`, `var`, `own`,
-  `ref`, `mut`, `ptr`, `return`, `if`, `else`, `while`, `init`, `next`,
-  `continue`, `break`, `drop`, `forget`, `null`, `true`, and `false` as
-  keywords while preserving longer identifier runs such as `fn1`, `letter`,
-  `variant`, `owner`, `reference`, `mutable`, `ptrace`, `returning`, `iffy`,
-  `elsewhere`, `while1`, `initial`, `next1`, `continue1`, `break1`, `drop1`,
-  `forget1`, `null1`, `true1`, and `false1` as identifiers.
-- `lib/std/collections.arih` already provides `HashMap` and byte-slice string
-  lookup helpers. The bootstrap lexer still uses allocation-free width buckets
-  plus a shared slice matcher until it has a phase-owned persistent keyword
-  table instead of rebuilding a map per token.
+- `compiler/lexer.ari` classifies exact source-text `fn`, `const`, `let`,
+  `var`, `own`, `ref`, `mut`, `ptr`, `return`, `if`, `else`, `while`, `init`,
+  `next`, `continue`, `break`, `drop`, `forget`, `null`, `true`, and `false`
+  as keywords while preserving longer identifier runs such as `fn1`,
+  `constant`, `letter`, `variant`, `owner`, `reference`, `mutable`, `ptrace`,
+  `returning`, `iffy`, `elsewhere`, `while1`, `initial`, `next1`, `continue1`,
+  `break1`, `drop1`, `forget1`, `null1`, `true1`, and `false1` as
+  identifiers.
+- Ari-written compiler code may use `lib/std` directly. `HashMap` and
+  byte-slice string lookup helpers are available in `lib/std/collections.arih`;
+  the current stateless lexer path keeps width buckets plus a shared slice
+  matcher only to avoid rebuilding a keyword map per token before there is a
+  reusable lexer-owned keyword table.
 - `compiler/lexer.ari` classifies `?` and `??` as operators so
   result-propagation and null-coalescing tokens match the stage0 spellings.
 - `compiler/lexer.ari` exposes one `scan_two`/`cursor_from_two` path for all
@@ -562,9 +564,14 @@ policy in ad hoc compiler files.
 - Added the twentieth text-backed keyword token, `false`, with source-root smoke
   coverage that exact `false` is a keyword and longer `false1` remains an
   identifier.
-- Corrected the keyword lookup note: std `HashMap` already exists, but this
-  lexer slice still avoids using it until there is a persistent keyword table
-  rather than per-token map allocation.
+- Added the twenty-first text-backed keyword token, `const`, with source-root
+  smoke coverage that exact `const` is a keyword and longer `constant` remains
+  an identifier.
+- Recorded the bootstrap policy that Ari-written compiler code may use
+  `lib/std` directly; current keyword lookup avoids a hash map only because the
+  lexer API does not yet own a reusable table.
+- Corrected the earlier keyword lookup note so `HashMap` availability is not
+  treated as a bootstrap blocker.
 - Replaced the raw per-character keyword comparison chain with one slice matcher
   helper while keeping width buckets, so adding keywords no longer duplicates
   manual indexing logic.
@@ -686,13 +693,13 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add text-backed keyword classification for stage0 `const`, preserving longer
-  identifiers such as `constant` as identifiers.
+- Add text-backed keyword classification for stage0 `as`, preserving longer
+  identifiers such as `ask` as identifiers.
 
 ## Next Recommended Task
 
-Add text-backed keyword classification for stage0 `const`, preserving longer
-identifiers such as `constant` as identifiers.
+Add text-backed keyword classification for stage0 `as`, preserving longer
+identifiers such as `ask` as identifiers.
 
 ## Local Validation
 
@@ -906,9 +913,11 @@ The lexer keyword smoke checked exact `true` source-text classification and
 preserved `true1` as an identifier without requiring a hosted compiler fix.
 The lexer keyword smoke checked exact `false` source-text classification and
 preserved `false1` as an identifier without requiring a hosted compiler fix.
-The keyword lookup review now records that std `HashMap` exists, while this
-bootstrap slice kept the allocation-free matcher without requiring a hosted
-compiler fix.
+The lexer keyword smoke checked exact `const` source-text classification and
+preserved `constant` as an identifier without requiring a hosted compiler fix.
+The keyword lookup review now records that `lib/std` may be used directly and
+that std `HashMap` exists, while this stateless lexer slice kept the
+allocation-free matcher without requiring a hosted compiler fix.
 The keyword matcher helper refactor kept the width-bucket keyword path checked
 through the source-root smoke without requiring a hosted compiler fix.
 The token-kind class helper refactor checked through the bootstrap source root

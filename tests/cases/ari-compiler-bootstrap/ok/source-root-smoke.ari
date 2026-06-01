@@ -1417,6 +1417,17 @@ fn lexer_keyword_score() -> i64 {
       7,
       "false",
       'f'
+    ) +
+    lexer_keyword_case_with_base_score(
+      2000,
+      "const name",
+      5,
+      105,
+      "constant",
+      8,
+      9,
+      "const",
+      'c'
     );
 }
 
