@@ -37,6 +37,15 @@ pub fn error_node(source_id: i64, start: i64, end: i64, code: i64) -> Node {
   return make_node(Error, source_id, start, end, code);
 }
 
+pub fn node_is_statement(node: Node) -> bool {
+  match node.kind {
+    Missing => false,
+    Token => false,
+    Statement => true,
+    Error => false,
+  }
+}
+
 pub fn kind_score(kind: NodeKind) -> i64 {
   match kind {
     Missing => 0,

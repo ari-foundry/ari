@@ -76,6 +76,16 @@ fn parse_success_score() -> i64 {
   return 0;
 }
 
+fn parse_statement_node_score() -> i64 {
+  if !parser::parse_is_statement_node(parser::parse_one('q', 1)) {
+    return 1;
+  }
+  if parser::parse_is_statement_node(parser::parse_one(' ', 4)) {
+    return 2;
+  }
+  return 0;
+}
+
 fn failed_parse_driver_score() -> i64 {
   return driver::result_code(driver::run_loaded_source_summary(1, 3, ' ', 0));
 }
@@ -167,6 +177,7 @@ fn main() -> i64 {
     invalid_loaded_driver_score() -
     1103 +
     parse_success_score() +
+    parse_statement_node_score() +
     failed_parse_driver_score() -
     2004 +
     failed_unknown_driver_score() -

@@ -127,6 +127,13 @@ pub fn parse_is_success(result: ParseResult) -> bool {
   }
 }
 
+pub fn parse_is_statement_node(result: ParseResult) -> bool {
+  match result {
+    Parsed(node) => ast::node_is_statement(node),
+    Failed(_) => false,
+  }
+}
+
 pub fn parse_failure_code(result: ParseResult) -> i64 {
   match result {
     Parsed(_) => 0,
