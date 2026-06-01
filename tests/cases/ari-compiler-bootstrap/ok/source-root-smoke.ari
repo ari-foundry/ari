@@ -47,7 +47,7 @@ fn source_text_extra_token_driver_score() -> i64 {
 
 fn source_text_keyword_driver_score() -> i64 {
   zone(65536) {
-    return driver::result_code(driver::run_source_text(std::string::from("ptr")));
+    return driver::result_code(driver::run_source_text(std::string::from("return")));
   }
 }
 
@@ -1584,6 +1584,9 @@ fn lexer_keyword_table_score() -> i64 {
   if score == 0 {
     score = lexer_keyword_table_case_score(ref table, 260, "ptr", 89, 3, "ptrace", 6);
   }
+  if score == 0 {
+    score = lexer_keyword_table_case_score(ref table, 270, "return", 93, 6, "returning", 9);
+  }
 
   std::zone::destroy(zone);
   return score;
@@ -1673,6 +1676,9 @@ fn parse_text_score() -> i64 {
   }
   if parser_keyword_failure_code("ptr") != 2006 {
     return 26;
+  }
+  if parser_keyword_failure_code("return") != 2006 {
+    return 27;
   }
   return 0;
 }
