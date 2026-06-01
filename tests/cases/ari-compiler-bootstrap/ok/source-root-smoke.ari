@@ -99,6 +99,18 @@ fn source_text_leading_comment_extra_token_driver_score() -> i64 {
   return 0;
 }
 
+fn source_text_leading_comment_unterminated_block_driver_score() -> i64 {
+  let line_code = source_text_driver_result("// skip\n/* open");
+  if line_code != 1008 {
+    return 1;
+  }
+  let block_code = source_text_driver_result("/* skip *//* open");
+  if block_code != 1008 {
+    return 2;
+  }
+  return 0;
+}
+
 fn source_text_trailing_comment_driver_score() -> i64 {
   let line_code = source_text_driver_result("p// skip");
   if line_code != 0 {
@@ -1722,6 +1734,18 @@ fn lexer_trailing_unterminated_block_handoff_score() -> i64 {
   return 0;
 }
 
+fn lexer_leading_comment_unterminated_block_handoff_score() -> i64 {
+  var score = lexer_handoff_failure_case_score("// skip\n/* open", 1008, 8, 15);
+  if score != 0 {
+    return score;
+  }
+  score = lexer_handoff_failure_case_score("/* skip *//* open", 1008, 10, 17);
+  if score != 0 {
+    return 10 + score;
+  }
+  return 0;
+}
+
 fn lexer_leading_comment_lexer_failure_handoff_score() -> i64 {
   var score = lexer_handoff_failure_case_score("// skip\n\"open", 1004, 8, 13);
   if score != 0 {
@@ -3041,7 +3065,7 @@ fn parse_trailing_comment_success_score() -> i64 {
   return 0;
 }
 
-fn parse_trailing_unterminated_block_case_score(
+fn parse_unterminated_block_case_score(
   text: Slice[u8],
   expected_start: i64,
   expected_end: i64
@@ -3064,11 +3088,23 @@ fn parse_trailing_unterminated_block_case_score(
 }
 
 fn parse_trailing_unterminated_block_failure_score() -> i64 {
-  var score = parse_trailing_unterminated_block_case_score("name/* open", 4, 11);
+  var score = parse_unterminated_block_case_score("name/* open", 4, 11);
   if score != 0 {
     return score;
   }
-  score = parse_trailing_unterminated_block_case_score("name /* open", 5, 12);
+  score = parse_unterminated_block_case_score("name /* open", 5, 12);
+  if score != 0 {
+    return 10 + score;
+  }
+  return 0;
+}
+
+fn parse_leading_comment_unterminated_block_failure_score() -> i64 {
+  var score = parse_unterminated_block_case_score("// skip\n/* open", 8, 15);
+  if score != 0 {
+    return score;
+  }
+  score = parse_unterminated_block_case_score("/* skip *//* open", 10, 17);
   if score != 0 {
     return 10 + score;
   }
@@ -3586,6 +3622,7 @@ fn main() -> i64 {
     source_text_leading_comment_driver_score() +
     source_text_leading_comment_lexer_failure_driver_score() +
     source_text_leading_comment_extra_token_driver_score() +
+    source_text_leading_comment_unterminated_block_driver_score() +
     source_text_trailing_comment_driver_score() +
     source_text_trailing_unterminated_block_driver_score() +
     source_text_post_comment_extra_token_driver_score() +
@@ -3640,6 +3677,8 @@ fn main() -> i64 {
     lexer_trailing_comment_handoff_score() +
     parse_trailing_unterminated_block_failure_score() +
     lexer_trailing_unterminated_block_handoff_score() +
+    parse_leading_comment_unterminated_block_failure_score() +
+    lexer_leading_comment_unterminated_block_handoff_score() +
     parse_leading_comment_lexer_failure_score() +
     lexer_leading_comment_lexer_failure_handoff_score() +
     parse_leading_comment_extra_token_failure_score() +

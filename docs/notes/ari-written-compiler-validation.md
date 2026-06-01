@@ -377,6 +377,10 @@ The source-text leading-comment extra-token smoke now checks line and block
 comments before a statement followed by another identifier through lexer
 handoff, parser, and driver paths, preserving parser missing-EOF diagnostic
 code `2003` and the extra-token span without requiring a hosted compiler fix.
+The source-text leading-comment unterminated block-comment smoke now checks
+line and block comments before an unterminated block comment through lexer
+handoff, parser, and driver paths, preserving lexer diagnostic code `1008` and
+failure spans without requiring a hosted compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
