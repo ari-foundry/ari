@@ -109,13 +109,15 @@ compiler feature in the normal focused-test workflow.
   handoff boundary.
 - `compiler/lexer.ari` classifies simple compound-assignment operators `+=`,
   `-=`, `*=`, `/=`, and `%=` as fixed-width two-character operators.
+- `compiler/lexer.ari` classifies bitwise compound-assignment operators `&=`,
+  `|=`, and `^=` while preserving `&&` and `||` logical-operator priority.
 - `compiler/lexer.ari` classifies `?` and `??` as operators so
   result-propagation and null-coalescing tokens match the stage0 spellings.
 - `compiler/lexer.ari` exposes one `scan_two`/`cursor_from_two` path for all
   current two-character scans instead of one public helper per token spelling.
 - The two-character lexer path covers fixed-width two-character spellings:
   `::`, `??`, `==`, `=>`, `!=`, `<=`, `>=`, `&&`, `||`, `<<`, `>>`, `->`,
-  `+=`, `-=`, `*=`, `/=`, and `%=`
+  `+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, and `^=`
   with one-character fallback behavior.
 - `compiler/lexer.ari` can scan a real `Slice[u8]` source text from an offset,
   including multi-byte identifier, number, and whitespace runs, two-character
@@ -477,6 +479,9 @@ policy in ad hoc compiler files.
 - Added focused `+=`, `-=`, `*=`, `/=`, and `%=` compound-assignment operator
   tokens and source-root smoke coverage that `+=` falls back to the
   one-character plus token when the second character does not match.
+- Added focused `&=`, `|=`, and `^=` bitwise compound-assignment operator
+  tokens and source-root smoke coverage that `&&` and `||` still take logical
+  operator priority while `&` falls back to the one-character bitwise token.
 - Consolidated the public two-character lexer helpers into one
   `scan_two`/`cursor_from_two` path while preserving the existing source-root
   smokes for spans, operators, punctuation, and fallback behavior.
@@ -592,15 +597,15 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add the stage0 bitwise compound-assignment token family (`&=`, `|=`, and
-  `^=`) so bitwise assignment spellings no longer fall through as separate
-  operator tokens.
+- Add the stage0 shift compound-assignment token family (`<<=` and `>>=`) so
+  shift assignment spellings no longer fall through as a shift token followed
+  by assignment.
 
 ## Next Recommended Task
 
-Add the stage0 bitwise compound-assignment token family (`&=`, `|=`, and `^=`)
-so bitwise assignment spellings no longer fall through as separate operator
-tokens.
+Add the stage0 shift compound-assignment token family (`<<=` and `>>=`) so
+shift assignment spellings no longer fall through as a shift token followed by
+assignment.
 
 ## Local Validation
 
@@ -766,6 +771,9 @@ longest-match behavior without requiring a hosted compiler fix.
 The lexer simple compound-assignment smoke checked `+=`, `-=`, `*=`, `/=`, and
 `%=` tokenization plus the one-character `+` fallback path without requiring a
 hosted compiler fix.
+The lexer bitwise compound-assignment smoke checked `&=`, `|=`, and `^=`
+tokenization, preserved `&&` / `||` priority, and checked the one-character
+`&` fallback path without requiring a hosted compiler fix.
 The token-kind class helper refactor checked through the bootstrap source root
 without requiring a hosted compiler fix. The lexer double-quote delimiter smoke
 checked `"` tokenization as punctuation without requiring a hosted compiler
