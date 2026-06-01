@@ -43,6 +43,10 @@ pub fn span_len(span: Span) -> i64 {
   return span.end - span.start;
 }
 
+pub fn span_start(span: Span) -> ByteOffset {
+  return span.start;
+}
+
 pub fn contains(file: SourceFile, offset: ByteOffset) -> bool {
   return offset >= 0 && offset <= file.byte_len;
 }

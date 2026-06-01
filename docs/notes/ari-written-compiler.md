@@ -61,6 +61,8 @@ compiler feature in the normal focused-test workflow.
 - `compiler/` has been started as a direct Ari source root.
 - The initial files model source spans, token kinds, diagnostics, and a tiny
   one-character lexer classification path.
+- `compiler/source.ari` exposes small span query helpers for downstream phase
+  payload smokes.
 - `compiler/lexer.ari` now has a small `LexResult` flow for one-character scans
   that can return either a token or a shared `diagnostic::Diagnostic`
   invalid-character failure.
@@ -87,6 +89,8 @@ compiler feature in the normal focused-test workflow.
   spans can be checked without relying on `ast::node_score` arithmetic.
 - `compiler/ast.ari` exposes a node value query helper so parser payload values
   can be checked without relying on `ast::node_score` arithmetic.
+- `compiler/ast.ari` exposes a node start-offset query helper so parser payload
+  offsets can be checked without relying on `ast::node_score` arithmetic.
 - `compiler/parser.ari` exists as a phase-boundary skeleton that consumes the
   lexer handoff shape, can classify the current handoff token, and returns
   either a statement-shaped `ast::Node` over the current token span or a shared
@@ -106,6 +110,9 @@ compiler feature in the normal focused-test workflow.
 - `compiler/parser.ari` exposes a parser statement value helper so downstream
   smokes can inspect successful payload values through the parser phase
   boundary.
+- `compiler/parser.ari` exposes a parser statement start-offset helper so
+  downstream smokes can inspect successful payload offsets through the parser
+  phase boundary.
 - `compiler/diagnostic.ari` exposes a diagnostic-code accessor, and
   `compiler/parser.ari` exposes a parser failure-code helper for phase
   boundaries that need diagnostic identity without rendering diagnostics.
@@ -135,6 +142,8 @@ compiler feature in the normal focused-test workflow.
 - The bootstrap source-root smoke checks successful parser payload span length
   without relying on `ast::node_score` arithmetic.
 - The bootstrap source-root smoke checks successful parser payload values
+  without relying on `ast::node_score` arithmetic.
+- The bootstrap source-root smoke checks successful parser payload start offsets
   without relying on `ast::node_score` arithmetic.
 - `compiler/driver.ari` owns the current bootstrap entry flow and returns a
   standard-library `std::Result[i64, i64]` instead of embedding smoke arithmetic
@@ -342,6 +351,9 @@ policy in ad hoc compiler files.
   arithmetic.
 - Added an AST node value query helper and a parser payload-value smoke that
   checks successful parser output values without `ast::node_score` arithmetic.
+- Added source span-start, AST node start-offset, and parser payload-start
+  helpers with a smoke that checks successful parser output start offsets
+  without `ast::node_score` arithmetic.
 - Routed driver parse failures through the parser failure-code helper, with
   source-root smoke coverage for whitespace and unknown-token diagnostic codes.
 - Added a driver result-code helper and simplified bootstrap smokes that inspect
@@ -372,16 +384,16 @@ policy in ad hoc compiler files.
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a focused AST node start-offset query helper so parser success payload
-  start offsets can be checked without relying on `ast::node_score` arithmetic.
+- Add a focused AST node end-offset query helper so parser success payload end
+  offsets can be checked without relying on `ast::node_score` arithmetic.
 
 ## Next Recommended Task
 
-Add a focused AST node start-offset query helper so parser success payload start
+Add a focused AST node end-offset query helper so parser success payload end
 offsets can be checked without relying on `ast::node_score` arithmetic. Keep it
-tiny: add only the smallest `ast` accessor and parser/bootstrap smoke needed to
-observe the start offset of a successful statement node, and do not add parser
-recovery, diagnostic rendering, or a source table yet.
+tiny: add only the smallest `source`/`ast` accessors and parser/bootstrap smoke
+needed to observe the end offset of a successful statement node, and do not add
+parser recovery, diagnostic rendering, or a source table yet.
 
 ## Local Validation
 
@@ -482,7 +494,9 @@ smoke checked successful statement output without requiring a hosted compiler
 fix. The AST node span-length query and parser payload-span smoke checked
 successful statement spans without requiring a hosted compiler fix. The AST
 node value query and parser payload-value smoke checked successful statement
-values without requiring a hosted compiler fix.
+values without requiring a hosted compiler fix. The source span-start, AST
+node start-offset, and parser payload-start helpers checked successful
+statement start offsets without requiring a hosted compiler fix.
 The growing source-root fixture did expose a default-zone capacity runtime trap
 while reading the file smoke; this was fixed locally with explicit
 `zone(16384)` allocation blocks and is recorded as allocation-policy pressure
