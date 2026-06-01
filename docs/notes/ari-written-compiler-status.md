@@ -427,6 +427,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - The bootstrap source-root smoke checks the source-text driver
   leading-comment non-decimal float-suffix path and verifies skipped comments
   before `0b1010f32` preserve lexer diagnostic code `1012`.
+- The bootstrap source-root smoke checks the source-text driver
+  leading-comment non-decimal float-dot path and verifies skipped comments
+  before `0x2.0` preserve lexer diagnostic code `1013`.
 - The bootstrap source-root smoke covers the current `DriverInput` offset guard
   errors for both invalid start offsets and invalid one-byte end bounds through
   the scalar constructor helper.

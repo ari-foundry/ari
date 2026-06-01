@@ -417,6 +417,10 @@ The source-text leading-comment non-decimal float-suffix smoke now checks line
 and block comments before `0b1010f32` through lexer handoff, parser,
 keyword-table parser, and driver paths, preserving lexer diagnostic code `1012`
 and failure spans without requiring a hosted compiler fix.
+The source-text leading-comment non-decimal float-dot smoke now checks line and
+block comments before `0x2.0` through lexer handoff, parser, keyword-table
+parser, and driver paths, preserving lexer diagnostic code `1013` and failure
+spans without requiring a hosted compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
