@@ -47,7 +47,7 @@ fn source_text_extra_token_driver_score() -> i64 {
 
 fn source_text_keyword_driver_score() -> i64 {
   zone(65536) {
-    return driver::result_code(driver::run_source_text(std::string::from("match")));
+    return driver::result_code(driver::run_source_text(std::string::from("mod")));
   }
 }
 
@@ -1605,6 +1605,25 @@ fn lexer_keyword_table_score() -> i64 {
     score = 36;
   }
 
+  let mod_keyword = lexer::cursor_from_text_with_keywords(ref table, "mod", 0);
+  if score == 0 && !lexer::cursor_is_keyword(mod_keyword) {
+    score = 37;
+  }
+  if score == 0 && lexer::cursor_token_score(mod_keyword) != 112 {
+    score = 38;
+  }
+  if score == 0 && lexer::cursor_token_end(mod_keyword) != 3 {
+    score = 39;
+  }
+
+  let mod_longer = lexer::cursor_from_text_with_keywords(ref table, "module", 0);
+  if score == 0 && !lexer::cursor_is_identifier(mod_longer) {
+    score = 40;
+  }
+  if score == 0 && lexer::cursor_is_keyword(mod_longer) {
+    score = 41;
+  }
+
   std::zone::destroy(zone);
   return score;
 }
@@ -1652,6 +1671,9 @@ fn parse_text_score() -> i64 {
     }
     if parser::parse_failure_code(parser::parse_text_with_keywords("match")) != 2006 {
       return 14;
+    }
+    if parser::parse_failure_code(parser::parse_text_with_keywords("mod")) != 2006 {
+      return 15;
     }
   }
   return 0;
