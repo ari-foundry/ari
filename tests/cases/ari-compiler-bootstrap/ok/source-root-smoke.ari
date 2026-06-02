@@ -5543,6 +5543,48 @@ fn diagnostic_name_text_score() -> i64 {
   return 0;
 }
 
+fn token_kind_name_text_score() -> i64 {
+  if !token::kind_name_text(token::Identifier).equals("token.identifier") {
+    return 1;
+  }
+  if !token::kind_name_text(token::StringLiteral).equals("token.string-literal") {
+    return 2;
+  }
+  if !token::kind_name_text(token::KwTrue).equals("token.keyword.true") {
+    return 3;
+  }
+  if !token::kind_name_text(token::EndOfFile).equals("token.eof") {
+    return 4;
+  }
+  if !token::kind_name_text(token::Unknown('$')).equals("token.unknown") {
+    return 5;
+  }
+  return 0;
+}
+
+fn lexer_cursor_kind_name_text_score() -> i64 {
+  let plus_equal = lexer::cursor_from_text("+=", 0);
+  if !lexer::cursor_token_kind_name_text(plus_equal).equals("token.plus-equal") {
+    return 1;
+  }
+  let string_literal = lexer::cursor_from_text("\"ari\"", 0);
+  if !lexer::cursor_token_kind_name_text(string_literal).equals("token.string-literal") {
+    return 2;
+  }
+  zone(65536) {
+    var table = lexer::keyword_table();
+    let keyword = lexer::cursor_from_text_with_keywords(ref table, "true", 0);
+    if !lexer::cursor_token_kind_name_text(keyword).equals("token.keyword.true") {
+      return 3;
+    }
+  }
+  let unknown = lexer::cursor_from_text("$", 0);
+  if !lexer::cursor_token_kind_name_text(unknown).equals("token.unknown") {
+    return 4;
+  }
+  return 0;
+}
+
 fn parse_failure_code_score() -> i64 {
   if parser::parse_failure_code(parser::parse_one('q', 1)) != 0 {
     return 1;
@@ -5747,6 +5789,8 @@ fn main() -> i64 {
     diagnostic_code_score() -
     77 +
     diagnostic_name_text_score() +
+    token_kind_name_text_score() +
+    lexer_cursor_kind_name_text_score() +
     parse_failure_code_score() -
     2004 +
     parse_failure_name_score() +

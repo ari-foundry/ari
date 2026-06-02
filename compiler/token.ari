@@ -412,6 +412,108 @@ pub fn token_kind_rank(token: Token) -> i64 {
   return kind_rank(token.kind);
 }
 
+pub fn kind_name_text(kind: TokenKind) -> std::Slice[u8] {
+  match kind {
+    Identifier => { return "token.identifier"; }
+    Integer => { return "token.integer"; }
+    Float => { return "token.float"; }
+    Whitespace => { return "token.whitespace"; }
+    LeftParen => { return "token.left-paren"; }
+    RightParen => { return "token.right-paren"; }
+    LeftBrace => { return "token.left-brace"; }
+    RightBrace => { return "token.right-brace"; }
+    LeftBracket => { return "token.left-bracket"; }
+    RightBracket => { return "token.right-bracket"; }
+    Comma => { return "token.comma"; }
+    Colon => { return "token.colon"; }
+    ColonColon => { return "token.colon-colon"; }
+    Semicolon => { return "token.semicolon"; }
+    Dot => { return "token.dot"; }
+    DotDot => { return "token.dot-dot"; }
+    DotDotEqual => { return "token.dot-dot-equal"; }
+    Ellipsis => { return "token.ellipsis"; }
+    DoubleQuote => { return "token.double-quote"; }
+    StringLiteral => { return "token.string-literal"; }
+    At => { return "token.at"; }
+    Question => { return "token.question"; }
+    QuestionQuestion => { return "token.question-question"; }
+    Equal => { return "token.equal"; }
+    EqualEqual => { return "token.equal-equal"; }
+    Bang => { return "token.bang"; }
+    Tilde => { return "token.tilde"; }
+    Less => { return "token.less"; }
+    Greater => { return "token.greater"; }
+    BangEqual => { return "token.bang-equal"; }
+    LessEqual => { return "token.less-equal"; }
+    GreaterEqual => { return "token.greater-equal"; }
+    Amp => { return "token.amp"; }
+    AmpEqual => { return "token.amp-equal"; }
+    Pipe => { return "token.pipe"; }
+    PipeEqual => { return "token.pipe-equal"; }
+    Caret => { return "token.caret"; }
+    CaretEqual => { return "token.caret-equal"; }
+    AmpAmp => { return "token.amp-amp"; }
+    PipePipe => { return "token.pipe-pipe"; }
+    LessLess => { return "token.less-less"; }
+    LessLessEqual => { return "token.less-less-equal"; }
+    GreaterGreater => { return "token.greater-greater"; }
+    GreaterGreaterEqual => { return "token.greater-greater-equal"; }
+    Arrow => { return "token.arrow"; }
+    FatArrow => { return "token.fat-arrow"; }
+    Plus => { return "token.plus"; }
+    PlusEqual => { return "token.plus-equal"; }
+    Minus => { return "token.minus"; }
+    MinusEqual => { return "token.minus-equal"; }
+    Star => { return "token.star"; }
+    StarEqual => { return "token.star-equal"; }
+    Slash => { return "token.slash"; }
+    SlashEqual => { return "token.slash-equal"; }
+    Percent => { return "token.percent"; }
+    PercentEqual => { return "token.percent-equal"; }
+    KwFn => { return "token.keyword.fn"; }
+    KwConst => { return "token.keyword.const"; }
+    KwAs => { return "token.keyword.as"; }
+    KwMeta => { return "token.keyword.meta"; }
+    KwStruct => { return "token.keyword.struct"; }
+    KwExtern => { return "token.keyword.extern"; }
+    KwEnum => { return "token.keyword.enum"; }
+    KwTrait => { return "token.keyword.trait"; }
+    KwDyn => { return "token.keyword.dyn"; }
+    KwMatch => { return "token.keyword.match"; }
+    KwMod => { return "token.keyword.mod"; }
+    KwPub => { return "token.keyword.pub"; }
+    KwUse => { return "token.keyword.use"; }
+    KwImpl => { return "token.keyword.impl"; }
+    KwFor => { return "token.keyword.for"; }
+    KwIn => { return "token.keyword.in"; }
+    KwLet => { return "token.keyword.let"; }
+    KwVar => { return "token.keyword.var"; }
+    KwOwn => { return "token.keyword.own"; }
+    KwRef => { return "token.keyword.ref"; }
+    KwMut => { return "token.keyword.mut"; }
+    KwPtr => { return "token.keyword.ptr"; }
+    KwReturn => { return "token.keyword.return"; }
+    KwIf => { return "token.keyword.if"; }
+    KwElse => { return "token.keyword.else"; }
+    KwWhile => { return "token.keyword.while"; }
+    KwInit => { return "token.keyword.init"; }
+    KwNext => { return "token.keyword.next"; }
+    KwContinue => { return "token.keyword.continue"; }
+    KwBreak => { return "token.keyword.break"; }
+    KwDrop => { return "token.keyword.drop"; }
+    KwForget => { return "token.keyword.forget"; }
+    KwNull => { return "token.keyword.null"; }
+    KwTrue => { return "token.keyword.true"; }
+    KwFalse => { return "token.keyword.false"; }
+    EndOfFile => { return "token.eof"; }
+    Unknown(_) => { return "token.unknown"; }
+  }
+}
+
+pub fn token_kind_name_text(token: Token) -> std::Slice[u8] {
+  return kind_name_text(token.kind);
+}
+
 pub fn kind_class_rank(kind: TokenKind) -> i64 {
   match kind {
     Identifier => 1,

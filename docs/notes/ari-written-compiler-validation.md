@@ -150,6 +150,11 @@ source text now parses as a statement literal with the `LiteralNull` kind,
 source-backed spans, no bool payload, and no decoded string length; the driver
 source-text `null` path also returns success. This required no hosted compiler
 fix.
+The token-kind name text smoke checked that token and lexer cursor callers can
+ask for stable names such as `token.identifier`, `token.string-literal`,
+`token.keyword.true`, `token.plus-equal`, `token.eof`, and `token.unknown`
+instead of relying only on numeric kind/ranked-width values. This required no
+hosted compiler fix.
 The AST statement-kind query and parser payload-shape smoke checked successful
 statement output without requiring a hosted compiler fix. The AST node
 span-length query and parser payload-span smoke checked successful statement

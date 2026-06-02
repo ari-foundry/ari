@@ -782,6 +782,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   with the `LiteralNull` kind variant, added source-root smoke coverage for
   the literal kind, spans, and driver source-text success, and kept
   non-literal keywords on the unsupported-token path.
+- Added token-kind name text accessors in `compiler/token.ari` and a lexer
+  cursor forwarding accessor, with source-root smoke coverage for identifiers,
+  string literals, keywords, operators, EOF, and unknown tokens. This gives
+  lexer debugging a named path instead of relying only on numeric ranks.
 
 ## Small Task Queue
 

@@ -663,6 +663,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   test-only AST aggregate score helper.
 - `compiler/token.ari` now uses token-kind-rank and token-kind-class-rank
   naming and no longer exposes the test-only aggregate token score helper.
+- `compiler/token.ari` also exposes token-kind name text, and
+  `compiler/lexer.ari` forwards that through cursors so smoke checks and
+  debugging do not have to rely only on numeric token ranks.
 - `compiler/lexer.ari` now uses ranked-width and ranked-position query names
   and no longer exposes public `score` helpers.
 - `compiler/parser.ari` now uses parser kind-rank query names and no longer
