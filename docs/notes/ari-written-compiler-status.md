@@ -397,6 +397,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/source.ari` can derive a source-table-entry-local span-start
   location summary, so callers do not need to unwrap the entry's `SourceFile`
   before validating source ownership and computing start line/column metadata.
+- `compiler/source.ari` can derive a source-table-entry-local span-end
+  location summary with the same source ownership, byte-bound, and EOF
+  insertion-point behavior as file-local span end summaries.
 - `compiler/source.ari` can derive a span-start location summary after checking
   that the span belongs to the file and stays inside the file byte bounds.
 - `compiler/source.ari` can derive a span-end location summary with the same
