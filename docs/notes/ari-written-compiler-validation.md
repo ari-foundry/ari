@@ -657,3 +657,6 @@ Desired stage0 pressure that is not yet classified as a bug:
   from the summary without requiring a hosted compiler fix. Loaded-source
   first-byte location summaries now reuse that span plus the loaded-source
   span-start location helper without requiring a hosted compiler fix.
+  Source-file id and byte-length query helpers now keep source-model code from
+  reading `SourceFile` fields outside those accessors, without requiring a
+  hosted compiler fix.

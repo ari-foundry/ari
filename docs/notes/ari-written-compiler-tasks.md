@@ -689,13 +689,15 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Added a loaded-source first-byte location summary helper in
   `compiler/source.ari`, reusing the first-byte span and loaded-source-local
   span-start location path.
+- Added source-file id and byte-length query helpers in `compiler/source.ari`,
+  then routed source-model helpers through those accessors.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add source-file id and byte-length query helpers in `compiler/source.ari`.
+- Add a source-file span constructor helper in `compiler/source.ari`.
 
 ## Next Recommended Task
 
-Add source-file id and byte-length query helpers in `compiler/source.ari`.
+Add a source-file span constructor helper in `compiler/source.ari`.

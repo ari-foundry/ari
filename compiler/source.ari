@@ -44,8 +44,16 @@ pub fn source_file(id: SourceId, byte_len: ByteOffset) -> SourceFile {
   return SourceFile { id: id, byte_len: byte_len };
 }
 
+pub fn source_file_id(file: SourceFile) -> SourceId {
+  return file.id;
+}
+
+pub fn source_file_byte_len(file: SourceFile) -> ByteOffset {
+  return file.byte_len;
+}
+
 pub fn source_file_byte_len_valid(file: SourceFile) -> bool {
-  return file.byte_len >= 0;
+  return source_file_byte_len(file) >= 0;
 }
 
 pub fn source_line_starts(
@@ -107,7 +115,7 @@ pub fn span_source(span: Span) -> SourceId {
 pub fn contains(file: SourceFile, offset: ByteOffset) -> bool {
   return source_file_byte_len_valid(file) &&
     offset >= 0 &&
-    offset <= file.byte_len;
+    offset <= source_file_byte_len(file);
 }
 
 pub fn source_line_starts_first(lines: SourceLineStarts) -> ByteOffset {
@@ -165,8 +173,9 @@ pub fn source_line_starts_line_number(
   if offset < 0 {
     return 0;
   }
-  if offset > file.byte_len {
-    if source_line_starts_has_second(lines) && file.byte_len >= lines.second {
+  let byte_len = source_file_byte_len(file);
+  if offset > byte_len {
+    if source_line_starts_has_second(lines) && byte_len >= lines.second {
       return 2;
     }
     return 1;
@@ -189,8 +198,9 @@ pub fn source_line_starts_byte_column(
     return 0;
   }
   var clamped = offset;
-  if clamped > file.byte_len {
-    clamped = file.byte_len;
+  let byte_len = source_file_byte_len(file);
+  if clamped > byte_len {
+    clamped = byte_len;
   }
   var line_start = lines.first;
   if source_line_starts_has_second(lines) && clamped >= lines.second {
@@ -214,17 +224,18 @@ pub fn source_location_summary(
   offset: ByteOffset
 ) -> SourceLocationSummary {
   if !source_line_starts_valid(lines, file) {
-    return invalid_source_location_summary(file.id);
+    return invalid_source_location_summary(source_file_id(file));
   }
   var byte_offset = offset;
-  if byte_offset > file.byte_len {
-    byte_offset = file.byte_len;
+  let byte_len = source_file_byte_len(file);
+  if byte_offset > byte_len {
+    byte_offset = byte_len;
   }
   if offset < 0 {
     byte_offset = -1;
   }
   return SourceLocationSummary {
-    source: file.id,
+    source: source_file_id(file),
     byte_offset: byte_offset,
     line: source_line_starts_line_number(lines, file, offset),
     column: source_line_starts_byte_column(lines, file, offset),
@@ -264,7 +275,7 @@ pub fn source_location_summary_valid(
 }
 
 fn span_valid_for_file(file: SourceFile, span: Span) -> bool {
-  return span.source == file.id &&
+  return span.source == source_file_id(file) &&
     span.start >= 0 &&
     span.end >= span.start &&
     contains(file, span.end);
@@ -297,11 +308,11 @@ pub fn source_table_entry_file(entry: SourceTableEntry) -> SourceFile {
 }
 
 pub fn source_table_entry_id(entry: SourceTableEntry) -> SourceId {
-  return entry.file.id;
+  return source_file_id(entry.file);
 }
 
 pub fn source_table_entry_byte_len(entry: SourceTableEntry) -> ByteOffset {
-  return entry.file.byte_len;
+  return source_file_byte_len(entry.file);
 }
 
 pub fn source_table_entry_byte_len_valid(entry: SourceTableEntry) -> bool {
@@ -324,7 +335,7 @@ pub fn source_table_entry_span(
   start: ByteOffset,
   end: ByteOffset
 ) -> Span {
-  return span(entry.file.id, start, end);
+  return span(source_file_id(entry.file), start, end);
 }
 
 pub fn source_table_entry_location_summary(
@@ -363,11 +374,11 @@ pub fn loaded_source_file(summary: LoadedSourceSummary) -> SourceFile {
 }
 
 pub fn loaded_source_id(summary: LoadedSourceSummary) -> SourceId {
-  return summary.file.id;
+  return source_file_id(summary.file);
 }
 
 pub fn loaded_source_byte_len(summary: LoadedSourceSummary) -> ByteOffset {
-  return summary.file.byte_len;
+  return source_file_byte_len(summary.file);
 }
 
 pub fn loaded_source_byte_len_valid(summary: LoadedSourceSummary) -> bool {
@@ -403,7 +414,7 @@ pub fn loaded_source_span(
   start: ByteOffset,
   end: ByteOffset
 ) -> Span {
-  return span(summary.file.id, start, end);
+  return span(source_file_id(summary.file), start, end);
 }
 
 pub fn loaded_source_first_span(summary: LoadedSourceSummary) -> Span {

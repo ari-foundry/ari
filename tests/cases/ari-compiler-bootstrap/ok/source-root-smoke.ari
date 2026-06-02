@@ -660,14 +660,20 @@ fn source_line_starts_score() -> i64 {
   if source::source_line_starts_byte_column(one_line, file, 99) != 13 {
     return 31;
   }
-  if !source::source_file_byte_len_valid(file) {
+  if source::source_file_id(file) != 3 {
     return 32;
   }
-  if source::source_file_byte_len_valid(bad_file) {
+  if source::source_file_byte_len(file) != 12 {
     return 33;
   }
-  if source::contains(bad_file, 0) {
+  if !source::source_file_byte_len_valid(file) {
     return 34;
+  }
+  if source::source_file_byte_len_valid(bad_file) {
+    return 35;
+  }
+  if source::contains(bad_file, 0) {
+    return 36;
   }
   return source::source_line_starts_first(lines) +
     source::source_line_starts_second(lines) +
