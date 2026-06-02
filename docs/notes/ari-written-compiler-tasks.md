@@ -680,13 +680,15 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   result aggregate arithmetic into the source-root smoke as a test-only helper,
   finishing the current removal of public `score` helpers from
   `compiler/*.ari`.
+- Added a loaded-source span validity helper in `compiler/source.ari`, reusing
+  the wrapped `SourceFile` span ownership and byte-bound checks.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a loaded-source span validity helper in `compiler/source.ari`.
+- Add a loaded-source byte containment helper in `compiler/source.ari`.
 
 ## Next Recommended Task
 
-Add a loaded-source span validity helper in `compiler/source.ari`.
+Add a loaded-source byte containment helper in `compiler/source.ari`.

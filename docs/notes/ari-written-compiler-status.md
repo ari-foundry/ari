@@ -412,6 +412,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   text and line-start table remain future work.
 - `compiler/source.ari` can construct a span from a loaded source summary, so
   callers do not need to manually repeat the loaded source id.
+- `compiler/source.ari` can validate that a span belongs to a loaded source
+  summary and stays inside that summary's byte length.
 - `compiler/source.ari` can derive a loaded-source-local span-start location
   summary, reusing the loaded source's `SourceFile` metadata for source
   ownership and byte-bound validation.

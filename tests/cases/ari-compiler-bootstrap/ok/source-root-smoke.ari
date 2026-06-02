@@ -887,22 +887,37 @@ fn source_location_summary_score() -> i64 {
     return 60;
   }
   let loaded_helper_span = source::loaded_source_span(loaded, 9, 11);
+  if !source::loaded_source_valid_span(loaded, loaded_helper_span) {
+    return 61;
+  }
+  if !source::loaded_source_valid_span(loaded, source::span(6, 9, 12)) {
+    return 62;
+  }
+  if source::loaded_source_valid_span(loaded, source::span(5, 9, 11)) {
+    return 63;
+  }
+  if source::loaded_source_valid_span(loaded, source::span(6, 11, 9)) {
+    return 64;
+  }
+  if source::loaded_source_valid_span(loaded, source::span(6, 9, 13)) {
+    return 65;
+  }
   let loaded_span_start = source::loaded_source_span_start_location_summary(
     loaded,
     lines,
     loaded_helper_span
   );
   if source::source_location_summary_source(loaded_span_start) != 6 {
-    return 61;
+    return 66;
   }
   if source::source_location_summary_byte_offset(loaded_span_start) != 9 {
-    return 62;
+    return 67;
   }
   if source::source_location_summary_line(loaded_span_start) != 2 {
-    return 63;
+    return 68;
   }
   if source::source_location_summary_column(loaded_span_start) != 2 {
-    return 64;
+    return 69;
   }
   let wrong_loaded_span_start = source::loaded_source_span_start_location_summary(
     loaded,
@@ -910,7 +925,7 @@ fn source_location_summary_score() -> i64 {
     source::span(5, 9, 11)
   );
   if source::source_location_summary_valid(wrong_loaded_span_start) {
-    return 65;
+    return 70;
   }
   let reversed_loaded_span_start = source::loaded_source_span_start_location_summary(
     loaded,
@@ -918,7 +933,7 @@ fn source_location_summary_score() -> i64 {
     source::span(6, 11, 9)
   );
   if source::source_location_summary_valid(reversed_loaded_span_start) {
-    return 66;
+    return 71;
   }
   let out_of_range_loaded_span_start = source::loaded_source_span_start_location_summary(
     loaded,
@@ -926,7 +941,7 @@ fn source_location_summary_score() -> i64 {
     source::span(6, 9, 13)
   );
   if source::source_location_summary_valid(out_of_range_loaded_span_start) {
-    return 67;
+    return 72;
   }
   let loaded_span_end = source::loaded_source_span_end_location_summary(
     loaded,
@@ -934,16 +949,16 @@ fn source_location_summary_score() -> i64 {
     loaded_helper_span
   );
   if source::source_location_summary_source(loaded_span_end) != 6 {
-    return 68;
+    return 73;
   }
   if source::source_location_summary_byte_offset(loaded_span_end) != 11 {
-    return 69;
+    return 74;
   }
   if source::source_location_summary_line(loaded_span_end) != 2 {
-    return 70;
+    return 75;
   }
   if source::source_location_summary_column(loaded_span_end) != 4 {
-    return 71;
+    return 76;
   }
   let eof_loaded_span_end = source::loaded_source_span_end_location_summary(
     loaded,
@@ -951,10 +966,10 @@ fn source_location_summary_score() -> i64 {
     source::span(6, 9, 12)
   );
   if source::source_location_summary_byte_offset(eof_loaded_span_end) != 12 {
-    return 72;
+    return 77;
   }
   if source::source_location_summary_column(eof_loaded_span_end) != 5 {
-    return 73;
+    return 78;
   }
   let wrong_loaded_span_end = source::loaded_source_span_end_location_summary(
     loaded,
@@ -962,7 +977,7 @@ fn source_location_summary_score() -> i64 {
     source::span(5, 9, 11)
   );
   if source::source_location_summary_valid(wrong_loaded_span_end) {
-    return 74;
+    return 79;
   }
   let reversed_loaded_span_end = source::loaded_source_span_end_location_summary(
     loaded,
@@ -970,7 +985,7 @@ fn source_location_summary_score() -> i64 {
     source::span(6, 11, 9)
   );
   if source::source_location_summary_valid(reversed_loaded_span_end) {
-    return 75;
+    return 80;
   }
   let out_of_range_loaded_span_end = source::loaded_source_span_end_location_summary(
     loaded,
@@ -978,16 +993,16 @@ fn source_location_summary_score() -> i64 {
     source::span(6, 9, 13)
   );
   if source::source_location_summary_valid(out_of_range_loaded_span_end) {
-    return 76;
+    return 81;
   }
   if source::span_source(loaded_helper_span) != 6 {
-    return 77;
+    return 82;
   }
   if source::span_start(loaded_helper_span) != 9 {
-    return 78;
+    return 83;
   }
   if source::span_end(loaded_helper_span) != 11 {
-    return 79;
+    return 84;
   }
   return source::source_location_summary_source(location) +
     source::source_location_summary_byte_offset(location) +

@@ -648,4 +648,7 @@ Desired stage0 pressure that is not yet classified as a bug:
   compiler fix. Loaded-source byte-length validity now reuses the wrapped
   source-file invariant and does not require a hosted compiler fix. Loaded-source
   first-offset validity now makes one-byte availability explicit through the
-  existing containment rule and does not require a hosted compiler fix.
+  loaded source's `SourceFile` containment rule without requiring a hosted
+  compiler fix. Loaded-source span validity now reuses the same file-local
+  source-id, ordering, and byte-bound checks as source-table entries, without
+  requiring a hosted compiler fix.

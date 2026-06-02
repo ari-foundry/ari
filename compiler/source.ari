@@ -399,6 +399,13 @@ pub fn loaded_source_span(
   return span(summary.file.id, start, end);
 }
 
+pub fn loaded_source_valid_span(
+  summary: LoadedSourceSummary,
+  span: Span
+) -> bool {
+  return span_valid_for_file(summary.file, span);
+}
+
 pub fn loaded_source_location_summary(
   summary: LoadedSourceSummary,
   lines: SourceLineStarts,
