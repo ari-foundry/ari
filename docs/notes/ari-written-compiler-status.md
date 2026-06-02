@@ -299,6 +299,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - The bootstrap source-root smoke checks source-text parser post-comment
   extra-token diagnostics after a statement token, including both line-comment
   and block-comment trivia before the second identifier.
+- The bootstrap source-root smoke checks CRLF post-comment parser extra-token
+  diagnostics after a statement token, preserving parser missing-EOF
+  diagnostic code `2003` and span `13..18` through the parser and
+  keyword-table parser paths.
 - The bootstrap source-root smoke checks source-text parser post-comment lexer
   failure diagnostics after a statement token, including line-comment and
   block-comment trivia before an unterminated string literal.
@@ -413,6 +417,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - The bootstrap source-root smoke checks the source-text driver post-comment
   extra-token path and verifies skipped comments followed by another
   identifier preserve parser missing-EOF diagnostic code `2003`.
+- The bootstrap source-root smoke checks the source-text driver CRLF
+  post-comment extra-token path and verifies `p// skip\r\nq` preserves parser
+  missing-EOF diagnostic code `2003`.
 - The bootstrap source-root smoke checks the source-text driver post-comment
   lexer-failure path and verifies skipped comments followed by an unterminated
   string preserve lexer diagnostic code `1004`.

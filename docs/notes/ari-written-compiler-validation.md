@@ -472,9 +472,9 @@ Desired stage0 pressure that is not yet classified as a bug:
 - Keep the reusable keyword-table source-root smoke data-driven through its
   table-case helper as future keywords are backfilled; new cases should add one
   helper call rather than another copied cursor-check block.
-- The CRLF line-comment parser/driver, lexer-failure, extra-token, and handoff
-  slices added more narrow source-root smoke helpers. That is acceptable for
-  these tiny coverage steps, but the
+- The CRLF line-comment parser/driver, lexer-failure, extra-token, handoff,
+  and post-comment extra-token slices added more narrow source-root smoke
+  helpers. That is acceptable for these tiny coverage steps, but the
   fixture is continuing to grow by scenario-specific score helpers; once the
   hosted compiler makes richer table data easier to express, these comment
   path smokes should move toward table-shaped cases instead of one helper per
@@ -582,4 +582,6 @@ Desired stage0 pressure that is not yet classified as a bug:
   code `2003` at span `14..19`. CRLF line-comment extra-token handoff coverage
   now checks that the handoff first token remains at `9..13` and the extra
   token stays visible in the handoff EOF slot at `14..19`. CRLF post-comment
-  extra-token parser and driver coverage is still pending.
+  extra-token parser, keyword-table parser, and driver coverage now checks
+  that `name// skip\r\nother` preserves diagnostic code `2003` at span
+  `13..18`. CRLF post-comment extra-token handoff coverage is still pending.
