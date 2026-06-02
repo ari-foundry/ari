@@ -488,9 +488,10 @@ Desired stage0 pressure that is not yet classified as a bug:
   helper was removed from `compiler/ast.ari` and replaced by explicit
   node-kind-rank/span/value queries; the token aggregate score helper was
   removed from `compiler/token.ari` and replaced by explicit token-kind-rank
-  and token-kind-class-rank queries. The remaining `score`-named compiler APIs
-  in `compiler/lexer.ari` and `compiler/parser.ari` should be audited and
-  renamed or replaced as the bootstrap model gains direct queries.
+  and token-kind-class-rank queries; lexer score helpers were renamed to
+  ranked-width/ranked-position queries. The remaining `score`-named compiler
+  APIs are in `compiler/parser.ari` and should be audited and renamed or
+  replaced as the bootstrap model gains direct queries.
 - Wrapping a zone-backed `HashMap` in a new Ari struct was awkward in this
   slice: mutating a `HashMap` through a helper/field lost tracked-zone receiver
   information, and returning a wrapper with a raw zone pointer or embedded map

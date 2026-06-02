@@ -24,7 +24,7 @@ pub fn parse_statement(cursor: lexer::TokenCursor) -> ParseResult {
     ));
   }
 
-  let statement_value = lexer::cursor_token_score(cursor);
+  let statement_value = lexer::cursor_token_ranked_width(cursor);
   if lexer::cursor_is_identifier(cursor) || lexer::cursor_is_number(cursor) {
     return Parsed(ast::statement_node(
       0,

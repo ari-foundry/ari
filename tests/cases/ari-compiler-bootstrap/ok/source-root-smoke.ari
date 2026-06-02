@@ -1043,25 +1043,25 @@ fn lexer_punctuation_score() -> i64 {
   if lexer::cursor_is_unknown(lexer::cursor_from_one('(', 10)) {
     return 2;
   }
-  if lexer::scan_result_score(lexer::scan_one_result('(', 10)) != 5 {
+  if lexer::scan_result_ranked_width_or_diagnostic_summary(lexer::scan_one_result('(', 10)) != 5 {
     return 3;
   }
-  if lexer::scan_score(')') != 6 {
+  if lexer::scan_ranked_width(')') != 6 {
     return 4;
   }
-  if lexer::scan_score('{') != 7 {
+  if lexer::scan_ranked_width('{') != 7 {
     return 5;
   }
-  if lexer::scan_score('}') != 8 {
+  if lexer::scan_ranked_width('}') != 8 {
     return 6;
   }
-  if lexer::scan_score(',') != 9 {
+  if lexer::scan_ranked_width(',') != 9 {
     return 7;
   }
-  if lexer::scan_score(':') != 10 {
+  if lexer::scan_ranked_width(':') != 10 {
     return 8;
   }
-  if lexer::scan_score(';') != 11 {
+  if lexer::scan_ranked_width(';') != 11 {
     return 9;
   }
   if !lexer::handoff_starts_with_punctuation(lexer::handoff_from_one(';', 3)) {
@@ -1077,34 +1077,34 @@ fn lexer_operator_score() -> i64 {
   if lexer::cursor_is_unknown(lexer::cursor_from_one('=', 12)) {
     return 2;
   }
-  if lexer::scan_result_score(lexer::scan_one_result('=', 12)) != 12 {
+  if lexer::scan_result_ranked_width_or_diagnostic_summary(lexer::scan_one_result('=', 12)) != 12 {
     return 3;
   }
-  if lexer::scan_score('+') != 13 {
+  if lexer::scan_ranked_width('+') != 13 {
     return 4;
   }
-  if lexer::scan_score('-') != 14 {
+  if lexer::scan_ranked_width('-') != 14 {
     return 5;
   }
-  if lexer::scan_score('*') != 15 {
+  if lexer::scan_ranked_width('*') != 15 {
     return 6;
   }
-  if lexer::scan_score('/') != 16 {
+  if lexer::scan_ranked_width('/') != 16 {
     return 7;
   }
-  if lexer::scan_score('%') != 17 {
+  if lexer::scan_ranked_width('%') != 17 {
     return 8;
   }
   if !lexer::handoff_starts_with_operator(lexer::handoff_from_one('+', 3)) {
     return 9;
   }
-  if lexer::scan_score('!') != 22 {
+  if lexer::scan_ranked_width('!') != 22 {
     return 10;
   }
-  if lexer::scan_score('<') != 23 {
+  if lexer::scan_ranked_width('<') != 23 {
     return 11;
   }
-  if lexer::scan_score('>') != 24 {
+  if lexer::scan_ranked_width('>') != 24 {
     return 12;
   }
   if !lexer::cursor_is_operator(lexer::cursor_from_one('!', 18)) {
@@ -1113,13 +1113,13 @@ fn lexer_operator_score() -> i64 {
   if !lexer::handoff_starts_with_operator(lexer::handoff_from_one('<', 19)) {
     return 14;
   }
-  if lexer::scan_score('&') != 31 {
+  if lexer::scan_ranked_width('&') != 31 {
     return 15;
   }
-  if lexer::scan_score('|') != 32 {
+  if lexer::scan_ranked_width('|') != 32 {
     return 16;
   }
-  if lexer::scan_score('^') != 33 {
+  if lexer::scan_ranked_width('^') != 33 {
     return 17;
   }
   if !lexer::cursor_is_operator(lexer::cursor_from_one('&', 20)) {
@@ -1143,7 +1143,7 @@ fn lexer_identifier_span_score() -> i64 {
   if lexer::cursor_token_end(cursor) != 6 {
     return 3;
   }
-  if lexer::cursor_token_score(cursor) != 7 {
+  if lexer::cursor_token_ranked_width(cursor) != 7 {
     return 4;
   }
   let after_identifier = lexer::cursor_advance_in_text(cursor, text);
@@ -1168,7 +1168,7 @@ fn lexer_number_span_score() -> i64 {
   if lexer::cursor_token_end(cursor) != 5 {
     return 3;
   }
-  if lexer::cursor_token_score(cursor) != 7 {
+  if lexer::cursor_token_ranked_width(cursor) != 7 {
     return 4;
   }
   let after_number = lexer::cursor_advance_in_text(cursor, text);
@@ -1178,7 +1178,7 @@ fn lexer_number_span_score() -> i64 {
   if lexer::cursor_token_start(after_number) != 5 {
     return 6;
   }
-  if lexer::cursor_token_score(after_number) != 13 {
+  if lexer::cursor_token_ranked_width(after_number) != 13 {
     return 7;
   }
   return 0;
@@ -1195,7 +1195,7 @@ fn lexer_number_case_score(text: Slice[u8], expected_end: i64, expected_score: i
   if lexer::cursor_token_end(cursor) != expected_end {
     return 3;
   }
-  if lexer::cursor_token_score(cursor) != expected_score {
+  if lexer::cursor_token_ranked_width(cursor) != expected_score {
     return 4;
   }
   return 0;
@@ -1669,7 +1669,7 @@ fn lexer_whitespace_span_score() -> i64 {
   if lexer::cursor_token_end(cursor) != 4 {
     return 3;
   }
-  if lexer::cursor_token_score(cursor) != 7 {
+  if lexer::cursor_token_ranked_width(cursor) != 7 {
     return 4;
   }
   let after_whitespace = lexer::cursor_advance_in_text(cursor, text);
@@ -1679,7 +1679,7 @@ fn lexer_whitespace_span_score() -> i64 {
   if lexer::cursor_token_start(after_whitespace) != 4 {
     return 6;
   }
-  if lexer::scan_score('\r') != 4 {
+  if lexer::scan_ranked_width('\r') != 4 {
     return 7;
   }
   return 0;
@@ -1699,14 +1699,14 @@ fn lexer_path_separator_span_score() -> i64 {
   if lexer::cursor_token_end(path) != 67 {
     return 4;
   }
-  if lexer::cursor_token_score(path) != 47 {
+  if lexer::cursor_token_ranked_width(path) != 47 {
     return 5;
   }
   let fallback = lexer::cursor_from_two(':', 68, '+');
   if lexer::cursor_token_end(fallback) != 69 {
     return 6;
   }
-  if lexer::cursor_token_score(fallback) != 10 {
+  if lexer::cursor_token_ranked_width(fallback) != 10 {
     return 7;
   }
   return 0;
@@ -1729,7 +1729,7 @@ fn lexer_dot_punctuation_score() -> i64 {
   if lexer::cursor_token_end(dot) != 67 {
     return 5;
   }
-  if lexer::cursor_token_score(dot) != 21 {
+  if lexer::cursor_token_ranked_width(dot) != 21 {
     return 6;
   }
   return 0;
@@ -1750,7 +1750,7 @@ fn lexer_dot_run_punctuation_score() -> i64 {
   if lexer::cursor_token_end(range) != 2 {
     return 4;
   }
-  if lexer::cursor_token_score(range) != 50 {
+  if lexer::cursor_token_ranked_width(range) != 50 {
     return 5;
   }
   let after_range = lexer::cursor_advance_in_text(range, range_text);
@@ -1769,7 +1769,7 @@ fn lexer_dot_run_punctuation_score() -> i64 {
   if lexer::cursor_token_end(inclusive) != 3 {
     return 9;
   }
-  if lexer::cursor_token_score(inclusive) != 52 {
+  if lexer::cursor_token_ranked_width(inclusive) != 52 {
     return 10;
   }
   let after_inclusive = lexer::cursor_advance_in_text(inclusive, inclusive_text);
@@ -1788,7 +1788,7 @@ fn lexer_dot_run_punctuation_score() -> i64 {
   if lexer::cursor_token_end(ellipsis) != 3 {
     return 14;
   }
-  if lexer::cursor_token_score(ellipsis) != 53 {
+  if lexer::cursor_token_ranked_width(ellipsis) != 53 {
     return 15;
   }
   let after_ellipsis = lexer::cursor_advance_in_text(ellipsis, ellipsis_text);
@@ -1806,7 +1806,7 @@ fn lexer_dot_run_punctuation_score() -> i64 {
   if lexer::cursor_token_end(two) != 90 {
     return 19;
   }
-  if lexer::cursor_token_score(two) != 50 {
+  if lexer::cursor_token_ranked_width(two) != 50 {
     return 20;
   }
   let fallback_text: Slice[u8] = ".end";
@@ -1814,7 +1814,7 @@ fn lexer_dot_run_punctuation_score() -> i64 {
   if lexer::cursor_token_end(fallback) != 1 {
     return 21;
   }
-  if lexer::cursor_token_score(fallback) != 21 {
+  if lexer::cursor_token_ranked_width(fallback) != 21 {
     return 22;
   }
   return 0;
@@ -1834,7 +1834,7 @@ fn lexer_bracket_punctuation_score() -> i64 {
   if lexer::cursor_token_end(left) != 68 {
     return 4;
   }
-  if lexer::cursor_token_score(left) != 19 {
+  if lexer::cursor_token_ranked_width(left) != 19 {
     return 5;
   }
   let right = lexer::cursor_from_one(']', 69);
@@ -1847,7 +1847,7 @@ fn lexer_bracket_punctuation_score() -> i64 {
   if lexer::cursor_token_end(right) != 70 {
     return 8;
   }
-  if lexer::cursor_token_score(right) != 20 {
+  if lexer::cursor_token_ranked_width(right) != 20 {
     return 9;
   }
   return 0;
@@ -1870,10 +1870,10 @@ fn lexer_double_quote_delimiter_score() -> i64 {
   if lexer::cursor_token_end(quote) != 73 {
     return 5;
   }
-  if lexer::cursor_token_score(quote) != 30 {
+  if lexer::cursor_token_ranked_width(quote) != 30 {
     return 6;
   }
-  if lexer::scan_score('"') != 30 {
+  if lexer::scan_ranked_width('"') != 30 {
     return 7;
   }
   return 0;
@@ -1951,7 +1951,7 @@ fn lexer_string_literal_span_score() -> i64 {
   if lexer::cursor_token_end(literal) != 5 {
     return 4;
   }
-  if lexer::cursor_token_score(literal) != 56 {
+  if lexer::cursor_token_ranked_width(literal) != 56 {
     return 5;
   }
 
@@ -1974,7 +1974,7 @@ fn lexer_string_literal_span_score() -> i64 {
   if lexer::cursor_token_end(empty) != 2 {
     return 10;
   }
-  if lexer::cursor_token_score(empty) != 53 {
+  if lexer::cursor_token_ranked_width(empty) != 53 {
     return 11;
   }
   let after_empty = lexer::cursor_advance_in_text(empty, empty_text);
@@ -1993,7 +1993,7 @@ fn lexer_string_literal_span_score() -> i64 {
   if lexer::cursor_token_end(escaped_quote) != 6 {
     return 15;
   }
-  if lexer::cursor_token_score(escaped_quote) != 57 {
+  if lexer::cursor_token_ranked_width(escaped_quote) != 57 {
     return 16;
   }
   let after_escaped_quote = lexer::cursor_advance_in_text(
@@ -2124,7 +2124,7 @@ fn lexer_string_literal_span_score() -> i64 {
   if lexer::cursor_token_end(digit_escape) != 36 {
     return 119;
   }
-  if lexer::cursor_token_score(digit_escape) != 87 {
+  if lexer::cursor_token_ranked_width(digit_escape) != 87 {
     return 120;
   }
   let after_digit_escape = lexer::cursor_advance_in_text(digit_escape, digit_escape_text);
@@ -2145,7 +2145,7 @@ fn lexer_line_comment_span_score(text: Slice[u8], expected_comment_end: i64) -> 
   if lexer::cursor_token_end(line) != expected_comment_end {
     return 3;
   }
-  if lexer::cursor_token_score(line) != expected_comment_end + 3 {
+  if lexer::cursor_token_ranked_width(line) != expected_comment_end + 3 {
     return 4;
   }
   return 0;
@@ -2239,7 +2239,7 @@ fn lexer_comment_span_score() -> i64 {
   if lexer::cursor_token_end(block) != 29 {
     return 33;
   }
-  if lexer::cursor_token_score(block) != 32 {
+  if lexer::cursor_token_ranked_width(block) != 32 {
     return 34;
   }
   let block_name = lexer::cursor_advance_significant_in_text(block, block_text);
@@ -2685,10 +2685,10 @@ fn lexer_at_punctuation_score() -> i64 {
   if lexer::cursor_token_end(at) != 74 {
     return 5;
   }
-  if lexer::cursor_token_score(at) != 35 {
+  if lexer::cursor_token_ranked_width(at) != 35 {
     return 6;
   }
-  if lexer::scan_score('@') != 35 {
+  if lexer::scan_ranked_width('@') != 35 {
     return 7;
   }
 
@@ -2730,7 +2730,7 @@ fn lexer_question_operator_score() -> i64 {
   if lexer::cursor_token_end(question) != 75 {
     return 5;
   }
-  if lexer::cursor_token_score(question) != 34 {
+  if lexer::cursor_token_ranked_width(question) != 34 {
     return 6;
   }
 
@@ -2741,7 +2741,7 @@ fn lexer_question_operator_score() -> i64 {
   if lexer::cursor_token_end(coalescing) != 78 {
     return 8;
   }
-  if lexer::cursor_token_score(coalescing) != 49 {
+  if lexer::cursor_token_ranked_width(coalescing) != 49 {
     return 9;
   }
 
@@ -2749,7 +2749,7 @@ fn lexer_question_operator_score() -> i64 {
   if lexer::cursor_token_end(fallback) != 81 {
     return 10;
   }
-  if lexer::cursor_token_score(fallback) != 34 {
+  if lexer::cursor_token_ranked_width(fallback) != 34 {
     return 11;
   }
 
@@ -2764,7 +2764,7 @@ fn lexer_question_operator_score() -> i64 {
   if lexer::cursor_token_end(text_cursor) != 2 {
     return 14;
   }
-  if lexer::cursor_token_score(text_cursor) != 49 {
+  if lexer::cursor_token_ranked_width(text_cursor) != 49 {
     return 15;
   }
 
@@ -2789,14 +2789,14 @@ fn lexer_equality_operator_score() -> i64 {
   if lexer::cursor_token_end(cursor) != 72 {
     return 3;
   }
-  if lexer::cursor_token_score(cursor) != 19 {
+  if lexer::cursor_token_ranked_width(cursor) != 19 {
     return 4;
   }
   let fallback = lexer::cursor_from_two('=', 80, '+');
   if lexer::cursor_token_end(fallback) != 81 {
     return 5;
   }
-  if lexer::cursor_token_score(fallback) != 12 {
+  if lexer::cursor_token_ranked_width(fallback) != 12 {
     return 6;
   }
   return 0;
@@ -2816,14 +2816,14 @@ fn lexer_fat_arrow_operator_span_score() -> i64 {
   if lexer::cursor_token_end(fat) != 84 {
     return 4;
   }
-  if lexer::cursor_token_score(fat) != 48 {
+  if lexer::cursor_token_ranked_width(fat) != 48 {
     return 5;
   }
   let fallback = lexer::cursor_from_two('=', 86, '+');
   if lexer::cursor_token_end(fallback) != 87 {
     return 6;
   }
-  if lexer::cursor_token_score(fallback) != 12 {
+  if lexer::cursor_token_ranked_width(fallback) != 12 {
     return 7;
   }
   return 0;
@@ -2840,36 +2840,36 @@ fn lexer_comparison_operator_span_score() -> i64 {
   if lexer::cursor_token_end(not_equal) != 92 {
     return 3;
   }
-  if lexer::cursor_token_score(not_equal) != 26 {
+  if lexer::cursor_token_ranked_width(not_equal) != 26 {
     return 4;
   }
   let less_equal = lexer::cursor_from_two('<', 100, '=');
   if lexer::cursor_token_end(less_equal) != 102 {
     return 5;
   }
-  if lexer::cursor_token_score(less_equal) != 27 {
+  if lexer::cursor_token_ranked_width(less_equal) != 27 {
     return 6;
   }
   let greater_equal = lexer::cursor_from_two('>', 110, '=');
   if lexer::cursor_token_end(greater_equal) != 112 {
     return 7;
   }
-  if lexer::cursor_token_score(greater_equal) != 28 {
+  if lexer::cursor_token_ranked_width(greater_equal) != 28 {
     return 8;
   }
   let bang_fallback = lexer::cursor_from_two('!', 120, '+');
   if lexer::cursor_token_end(bang_fallback) != 121 {
     return 9;
   }
-  if lexer::cursor_token_score(bang_fallback) != 22 {
+  if lexer::cursor_token_ranked_width(bang_fallback) != 22 {
     return 10;
   }
   let less_fallback = lexer::cursor_from_two('<', 130, '+');
-  if lexer::cursor_token_score(less_fallback) != 23 {
+  if lexer::cursor_token_ranked_width(less_fallback) != 23 {
     return 11;
   }
   let greater_fallback = lexer::cursor_from_two('>', 140, '+');
-  if lexer::cursor_token_score(greater_fallback) != 24 {
+  if lexer::cursor_token_ranked_width(greater_fallback) != 24 {
     return 12;
   }
   return 0;
@@ -2892,10 +2892,10 @@ fn lexer_tilde_operator_score() -> i64 {
   if lexer::cursor_token_end(tilde) != 146 {
     return 5;
   }
-  if lexer::cursor_token_score(tilde) != 73 {
+  if lexer::cursor_token_ranked_width(tilde) != 73 {
     return 6;
   }
-  if lexer::scan_score('~') != 73 {
+  if lexer::scan_ranked_width('~') != 73 {
     return 7;
   }
 
@@ -2907,7 +2907,7 @@ fn lexer_tilde_operator_score() -> i64 {
   if lexer::cursor_token_end(text_cursor) != 1 {
     return 9;
   }
-  if lexer::cursor_token_score(text_cursor) != 73 {
+  if lexer::cursor_token_ranked_width(text_cursor) != 73 {
     return 10;
   }
   let after_text = lexer::cursor_advance_in_text(text_cursor, text);
@@ -2934,25 +2934,25 @@ fn lexer_logical_operator_span_score() -> i64 {
   if lexer::cursor_token_end(and_cursor) != 152 {
     return 3;
   }
-  if lexer::cursor_token_score(and_cursor) != 42 {
+  if lexer::cursor_token_ranked_width(and_cursor) != 42 {
     return 4;
   }
   let or_cursor = lexer::cursor_from_two('|', 160, '|');
   if lexer::cursor_token_end(or_cursor) != 162 {
     return 5;
   }
-  if lexer::cursor_token_score(or_cursor) != 43 {
+  if lexer::cursor_token_ranked_width(or_cursor) != 43 {
     return 6;
   }
   let amp_fallback = lexer::cursor_from_two('&', 170, '+');
   if lexer::cursor_token_end(amp_fallback) != 171 {
     return 7;
   }
-  if lexer::cursor_token_score(amp_fallback) != 31 {
+  if lexer::cursor_token_ranked_width(amp_fallback) != 31 {
     return 8;
   }
   let pipe_fallback = lexer::cursor_from_two('|', 180, '+');
-  if lexer::cursor_token_score(pipe_fallback) != 32 {
+  if lexer::cursor_token_ranked_width(pipe_fallback) != 32 {
     return 9;
   }
   return 0;
@@ -2969,25 +2969,25 @@ fn lexer_shift_operator_span_score() -> i64 {
   if lexer::cursor_token_end(left) != 192 {
     return 3;
   }
-  if lexer::cursor_token_score(left) != 44 {
+  if lexer::cursor_token_ranked_width(left) != 44 {
     return 4;
   }
   let right = lexer::cursor_from_two('>', 200, '>');
   if lexer::cursor_token_end(right) != 202 {
     return 5;
   }
-  if lexer::cursor_token_score(right) != 45 {
+  if lexer::cursor_token_ranked_width(right) != 45 {
     return 6;
   }
   let less_fallback = lexer::cursor_from_two('<', 210, '+');
   if lexer::cursor_token_end(less_fallback) != 211 {
     return 7;
   }
-  if lexer::cursor_token_score(less_fallback) != 23 {
+  if lexer::cursor_token_ranked_width(less_fallback) != 23 {
     return 8;
   }
   let greater_fallback = lexer::cursor_from_two('>', 220, '+');
-  if lexer::cursor_token_score(greater_fallback) != 24 {
+  if lexer::cursor_token_ranked_width(greater_fallback) != 24 {
     return 9;
   }
   return 0;
@@ -3004,14 +3004,14 @@ fn lexer_arrow_operator_span_score() -> i64 {
   if lexer::cursor_token_end(arrow) != 232 {
     return 3;
   }
-  if lexer::cursor_token_score(arrow) != 46 {
+  if lexer::cursor_token_ranked_width(arrow) != 46 {
     return 4;
   }
   let fallback = lexer::cursor_from_two('-', 240, '+');
   if lexer::cursor_token_end(fallback) != 241 {
     return 5;
   }
-  if lexer::cursor_token_score(fallback) != 14 {
+  if lexer::cursor_token_ranked_width(fallback) != 14 {
     return 6;
   }
   return 0;
@@ -3034,7 +3034,7 @@ fn lexer_compound_assignment_operator_score() -> i64 {
   if lexer::cursor_token_end(plus) != 252 {
     return 5;
   }
-  if lexer::cursor_token_score(plus) != 62 {
+  if lexer::cursor_token_ranked_width(plus) != 62 {
     return 6;
   }
 
@@ -3045,20 +3045,20 @@ fn lexer_compound_assignment_operator_score() -> i64 {
   if lexer::cursor_token_end(minus) != 262 {
     return 8;
   }
-  if lexer::cursor_token_score(minus) != 63 {
+  if lexer::cursor_token_ranked_width(minus) != 63 {
     return 9;
   }
 
   let star = lexer::cursor_from_two('*', 270, '=');
-  if lexer::cursor_token_score(star) != 64 {
+  if lexer::cursor_token_ranked_width(star) != 64 {
     return 10;
   }
   let slash = lexer::cursor_from_two('/', 280, '=');
-  if lexer::cursor_token_score(slash) != 65 {
+  if lexer::cursor_token_ranked_width(slash) != 65 {
     return 11;
   }
   let percent = lexer::cursor_from_two('%', 290, '=');
-  if lexer::cursor_token_score(percent) != 66 {
+  if lexer::cursor_token_ranked_width(percent) != 66 {
     return 12;
   }
 
@@ -3066,7 +3066,7 @@ fn lexer_compound_assignment_operator_score() -> i64 {
   if lexer::cursor_token_end(fallback) != 301 {
     return 13;
   }
-  if lexer::cursor_token_score(fallback) != 13 {
+  if lexer::cursor_token_ranked_width(fallback) != 13 {
     return 14;
   }
 
@@ -3078,7 +3078,7 @@ fn lexer_compound_assignment_operator_score() -> i64 {
   if lexer::cursor_token_end(text_cursor) != 2 {
     return 16;
   }
-  if lexer::cursor_token_score(text_cursor) != 62 {
+  if lexer::cursor_token_ranked_width(text_cursor) != 62 {
     return 17;
   }
   let after_text = lexer::cursor_advance_in_text(text_cursor, text);
@@ -3111,7 +3111,7 @@ fn lexer_bitwise_compound_assignment_score() -> i64 {
   if lexer::cursor_token_end(amp) != 312 {
     return 5;
   }
-  if lexer::cursor_token_score(amp) != 67 {
+  if lexer::cursor_token_ranked_width(amp) != 67 {
     return 6;
   }
 
@@ -3122,7 +3122,7 @@ fn lexer_bitwise_compound_assignment_score() -> i64 {
   if lexer::cursor_token_end(pipe) != 322 {
     return 8;
   }
-  if lexer::cursor_token_score(pipe) != 68 {
+  if lexer::cursor_token_ranked_width(pipe) != 68 {
     return 9;
   }
 
@@ -3133,16 +3133,16 @@ fn lexer_bitwise_compound_assignment_score() -> i64 {
   if lexer::cursor_token_end(caret) != 332 {
     return 11;
   }
-  if lexer::cursor_token_score(caret) != 69 {
+  if lexer::cursor_token_ranked_width(caret) != 69 {
     return 12;
   }
 
   let logical_and = lexer::cursor_from_two('&', 340, '&');
-  if lexer::cursor_token_score(logical_and) != 42 {
+  if lexer::cursor_token_ranked_width(logical_and) != 42 {
     return 13;
   }
   let logical_or = lexer::cursor_from_two('|', 350, '|');
-  if lexer::cursor_token_score(logical_or) != 43 {
+  if lexer::cursor_token_ranked_width(logical_or) != 43 {
     return 14;
   }
 
@@ -3150,7 +3150,7 @@ fn lexer_bitwise_compound_assignment_score() -> i64 {
   if lexer::cursor_token_end(fallback) != 361 {
     return 15;
   }
-  if lexer::cursor_token_score(fallback) != 31 {
+  if lexer::cursor_token_ranked_width(fallback) != 31 {
     return 16;
   }
 
@@ -3162,7 +3162,7 @@ fn lexer_bitwise_compound_assignment_score() -> i64 {
   if lexer::cursor_token_end(text_cursor) != 2 {
     return 18;
   }
-  if lexer::cursor_token_score(text_cursor) != 67 {
+  if lexer::cursor_token_ranked_width(text_cursor) != 67 {
     return 19;
   }
   let after_text = lexer::cursor_advance_in_text(text_cursor, text);
@@ -3196,7 +3196,7 @@ fn lexer_shift_compound_assignment_score() -> i64 {
   if lexer::cursor_token_end(left) != 3 {
     return 5;
   }
-  if lexer::cursor_token_score(left) != 71 {
+  if lexer::cursor_token_ranked_width(left) != 71 {
     return 6;
   }
   let after_left = lexer::cursor_advance_in_text(left, left_text);
@@ -3218,7 +3218,7 @@ fn lexer_shift_compound_assignment_score() -> i64 {
   if lexer::cursor_token_end(right) != 3 {
     return 11;
   }
-  if lexer::cursor_token_score(right) != 72 {
+  if lexer::cursor_token_ranked_width(right) != 72 {
     return 12;
   }
 
@@ -3230,7 +3230,7 @@ fn lexer_shift_compound_assignment_score() -> i64 {
   if lexer::cursor_token_end(shift) != 2 {
     return 14;
   }
-  if lexer::cursor_token_score(shift) != 44 {
+  if lexer::cursor_token_ranked_width(shift) != 44 {
     return 15;
   }
 
@@ -3242,15 +3242,15 @@ fn lexer_shift_compound_assignment_score() -> i64 {
   if lexer::cursor_token_end(less_equal) != 2 {
     return 17;
   }
-  if lexer::cursor_token_score(less_equal) != 27 {
+  if lexer::cursor_token_ranked_width(less_equal) != 27 {
     return 18;
   }
   let less_fallback = lexer::cursor_from_two('<', 370, '<');
-  if lexer::cursor_token_score(less_fallback) != 44 {
+  if lexer::cursor_token_ranked_width(less_fallback) != 44 {
     return 19;
   }
   let greater_fallback = lexer::cursor_from_two('>', 380, '>');
-  if lexer::cursor_token_score(greater_fallback) != 45 {
+  if lexer::cursor_token_ranked_width(greater_fallback) != 45 {
     return 20;
   }
   return 0;
@@ -3268,7 +3268,7 @@ fn lexer_text_cursor_score() -> i64 {
   if lexer::cursor_token_end(first) != 6 {
     return 3;
   }
-  if lexer::cursor_token_score(first) != 7 {
+  if lexer::cursor_token_ranked_width(first) != 7 {
     return 4;
   }
   let second = lexer::cursor_advance_in_text(first, text);
@@ -3281,7 +3281,7 @@ fn lexer_text_cursor_score() -> i64 {
   if lexer::cursor_token_end(second) != 7 {
     return 7;
   }
-  if lexer::cursor_token_score(second) != 13 {
+  if lexer::cursor_token_ranked_width(second) != 13 {
     return 8;
   }
   let eof = lexer::cursor_advance_in_text(second, text);
@@ -3320,7 +3320,7 @@ fn lexer_keyword_case_score(
   if lexer::cursor_token_end(keyword) != keyword_width {
     return 5;
   }
-  if lexer::cursor_token_score(keyword) != expected_keyword_score {
+  if lexer::cursor_token_ranked_width(keyword) != expected_keyword_score {
     return 6;
   }
   let after_keyword = lexer::cursor_advance_in_text(keyword, text);
@@ -3348,7 +3348,7 @@ fn lexer_keyword_case_score(
   if lexer::cursor_token_end(identifier) != longer_width {
     return 13;
   }
-  if lexer::cursor_token_score(identifier) != expected_longer_score {
+  if lexer::cursor_token_ranked_width(identifier) != expected_longer_score {
     return 14;
   }
 
@@ -3669,7 +3669,7 @@ fn lexer_keyword_table_case_score(
   if !lexer::cursor_is_keyword(keyword) {
     return base + 1;
   }
-  if lexer::cursor_token_score(keyword) != expected_keyword_score {
+  if lexer::cursor_token_ranked_width(keyword) != expected_keyword_score {
     return base + 2;
   }
   if lexer::cursor_token_end(keyword) != keyword_width {
@@ -3695,7 +3695,7 @@ fn lexer_keyword_table_flow_score(table: ref lexer::KeywordTable) -> i64 {
   if !lexer::cursor_is_keyword(keyword) {
     return 1;
   }
-  if lexer::cursor_token_score(keyword) != 106 {
+  if lexer::cursor_token_ranked_width(keyword) != 106 {
     return 2;
   }
 
@@ -3792,7 +3792,7 @@ fn lexer_leading_comment_keyword_handoff_case_score(
   if lexer::cursor_token_end(first) != expected_end {
     return 3;
   }
-  if lexer::cursor_token_score(first) != 104 {
+  if lexer::cursor_token_ranked_width(first) != 104 {
     return 4;
   }
   if !lexer::handoff_has_eof(handoff) {
@@ -4836,8 +4836,8 @@ fn main() -> i64 {
   }
 
   return source::span_len(span) +
-    lexer::scan_result_score(lexer::scan_one_result('$', 4)) +
-    lexer::handoff_score(lexer::handoff_from_one('x', 6)) -
+    lexer::scan_result_ranked_width_or_diagnostic_summary(lexer::scan_one_result('$', 4)) +
+    lexer::handoff_ranked_position_sum(lexer::handoff_from_one('x', 6)) -
     16 +
     lexer_stream_score() +
     lexer_punctuation_score() +

@@ -27,7 +27,7 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   and an EOF advance path. It is a placeholder for phase handoff, not a real
   source-text stream.
 - `compiler/lexer.ari` exposes small cursor accessors for the current token
-  span, token score, and done state.
+  span, ranked token width, and done state.
 - `compiler/lexer.ari` has a minimal `TokenHandoff` shape that carries one real
   token cursor plus an explicit EOF observation.
 - `compiler/lexer.ari` has a fixed two-token `TokenStream` shape that carries
@@ -571,6 +571,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   test-only AST aggregate score helper.
 - `compiler/token.ari` now uses token-kind-rank and token-kind-class-rank
   naming and no longer exposes the test-only aggregate token score helper.
+- `compiler/lexer.ari` now uses ranked-width and ranked-position query names
+  and no longer exposes public `score` helpers.
 - `compiler/main.ari` is now a thin entrypoint that delegates to the driver and
   maps the driver's result to an exit code.
 - `make check-ari-compiler-bootstrap` checks each `compiler/*.ari` module,

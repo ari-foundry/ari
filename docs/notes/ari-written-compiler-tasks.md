@@ -673,6 +673,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Renamed token-kind and token-kind-class score helpers to rank queries and
   removed the test-only aggregate token score helper from `compiler/token.ari`;
   lexer score helpers now compose token kind rank with token width directly.
+- Renamed lexer score helpers to ranked-width/ranked-position queries, keeping
+  source-root smoke arithmetic stable while removing public `score` helpers
+  from `compiler/lexer.ari`.
 
 ## Small Task Queue
 
@@ -680,11 +683,13 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   when the underlying phases have checked handoff data.
 - Audit remaining public `score` helpers in `compiler/*.ari`; remove test-only
   helpers from compiler modules and rename necessary numeric queries to
-  explicit accessor, predicate, rank, or classifier names.
+  explicit accessor, predicate, rank, or classifier names. The remaining
+  compiler APIs with this name now live in `compiler/parser.ari`.
 - Add a loaded-source span validity helper in `compiler/source.ari`.
 
 ## Next Recommended Task
 
 Audit remaining public `score` helpers in `compiler/*.ari`; remove test-only
 helpers from compiler modules and rename necessary numeric queries to explicit
-accessor, predicate, rank, or classifier names.
+accessor, predicate, rank, or classifier names. The remaining compiler APIs
+with this name now live in `compiler/parser.ari`.

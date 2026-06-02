@@ -1866,7 +1866,7 @@ fn token_ranked_width(scanned: token::Token) -> i64 {
   return token::token_kind_rank(scanned) + token::token_width(scanned);
 }
 
-pub fn cursor_token_score(cursor: TokenCursor) -> i64 {
+pub fn cursor_token_ranked_width(cursor: TokenCursor) -> i64 {
   return token_ranked_width(cursor.current);
 }
 
@@ -2121,7 +2121,7 @@ pub fn handoff_starts_with_keyword(handoff: TokenHandoff) -> bool {
   return cursor_is_keyword(handoff.first);
 }
 
-pub fn cursor_score(cursor: TokenCursor) -> i64 {
+pub fn cursor_ranked_position(cursor: TokenCursor) -> i64 {
   if cursor.done {
     return token_ranked_width(cursor.current) +
       cursor.offset +
@@ -2130,11 +2130,11 @@ pub fn cursor_score(cursor: TokenCursor) -> i64 {
   return token_ranked_width(cursor.current) + cursor.offset;
 }
 
-pub fn handoff_score(handoff: TokenHandoff) -> i64 {
-  return cursor_score(handoff.first) + cursor_score(handoff.eof);
+pub fn handoff_ranked_position_sum(handoff: TokenHandoff) -> i64 {
+  return cursor_ranked_position(handoff.first) + cursor_ranked_position(handoff.eof);
 }
 
-pub fn scan_result_score(result: LexResult) -> i64 {
+pub fn scan_result_ranked_width_or_diagnostic_summary(result: LexResult) -> i64 {
   match result {
     Scanned(scanned) => token_ranked_width(scanned),
     Failed(failure) => diagnostic::diagnostic_code(failure) +
@@ -2172,7 +2172,7 @@ pub fn scan_result_failure_end_offset(result: LexResult) -> i64 {
   }
 }
 
-pub fn scan_score(value: char) -> i64 {
+pub fn scan_ranked_width(value: char) -> i64 {
   let scanned = scan_one(value, 0);
   return token_ranked_width(scanned);
 }
