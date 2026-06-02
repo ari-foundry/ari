@@ -619,4 +619,6 @@ Desired stage0 pressure that is not yet classified as a bug:
   insertion-point behavior without requiring a hosted compiler fix. Full source
   table ownership, file path strings, loaded text ownership, owned line-start
   arrays, CRLF visual-column handling, UTF-8 byte-column policy, and diagnostic
-  location mapping remain pending.
+  location mapping remain pending. Loaded-source-local location summaries reuse
+  the placeholder's `SourceFile` metadata and do not require a hosted compiler
+  fix.
