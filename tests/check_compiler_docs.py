@@ -170,7 +170,7 @@ def main() -> int:
         "## Completed Tasks",
         "## Small Task Queue",
         "## Next Recommended Task",
-        "Add source-text leading-comment byte-character braced Unicode escape spans",
+        "Add EOF line-comment source-text parser and driver coverage",
     ]:
         require(ari_tasks, needle, ari_tasks_path)
 

@@ -546,6 +546,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   spans before a statement token, checking line and block comments followed by
   `'\u0041'` and `'\U00000041'` through lexer handoff, parser,
   keyword-table parser, and driver paths.
+- Added source-text leading-comment byte-character braced Unicode escape spans
+  before a statement token, checking line and block comments followed by
+  `'\u{41}'` through lexer handoff, parser, keyword-table parser, and driver
+  paths.
 - Reviewed the recent source-text leading-comment smoke additions and replaced
   copied line/block driver, lexer handoff, and parser checks with explicit
   line/block helpers so future escaped-token coverage adds cases instead of
@@ -566,10 +570,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add source-text leading-comment byte-character braced Unicode escape spans
-  before a statement token.
+- Add EOF line-comment source-text parser and driver coverage.
 
 ## Next Recommended Task
 
-Add source-text leading-comment byte-character braced Unicode escape spans
-before a statement token.
+Add EOF line-comment source-text parser and driver coverage.

@@ -444,6 +444,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   leading-comment byte-character fixed-width Unicode escape path and verifies
   skipped comments before `'\u0041'` and `'\U00000041'` preserve the
   number-token span through parser and driver paths.
+- The bootstrap source-root smoke checks the source-text driver
+  leading-comment byte-character braced Unicode escape path and verifies
+  skipped comments before `'\u{41}'` preserve the number-token span through
+  parser and driver paths.
 - The bootstrap source-root smoke covers the current `DriverInput` offset guard
   errors for both invalid start offsets and invalid one-byte end bounds through
   the scalar constructor helper.

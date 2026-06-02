@@ -163,6 +163,10 @@ fn source_text_leading_comment_byte_char_fixed_unicode_escape_driver_score() -> 
   return 0;
 }
 
+fn source_text_leading_comment_byte_char_braced_unicode_escape_driver_score() -> i64 {
+  return source_text_line_block_driver_score("// skip\n'\\u{41}'", "/* skip */'\\u{41}'", 0);
+}
+
 fn source_text_trailing_comment_driver_score() -> i64 {
   return source_text_line_block_driver_score("p// skip", "p/* skip */", 0);
 }
@@ -1802,6 +1806,17 @@ fn lexer_leading_comment_byte_char_fixed_unicode_escape_handoff_score() -> i64 {
     return 20 + score;
   }
   return 0;
+}
+
+fn lexer_leading_comment_byte_char_braced_unicode_escape_handoff_score() -> i64 {
+  return lexer_leading_comment_number_handoff_line_block_score(
+    "// skip\n'\\u{41}'",
+    8,
+    16,
+    "/* skip */'\\u{41}'",
+    10,
+    18
+  );
 }
 
 fn lexer_extra_token_handoff_case_score(
@@ -3554,6 +3569,17 @@ fn parse_leading_comment_byte_char_fixed_unicode_escape_success_score() -> i64 {
   return 0;
 }
 
+fn parse_leading_comment_byte_char_braced_unicode_escape_success_score() -> i64 {
+  return parse_leading_comment_line_block_score(
+    "// skip\n'\\u{41}'",
+    8,
+    16,
+    "/* skip */'\\u{41}'",
+    10,
+    18
+  );
+}
+
 fn parse_trailing_comment_case_score(text: Slice[u8], expected_statement_end: i64) -> i64 {
   let parsed = parser::parse_text(text);
   if !parser::parse_is_success(parsed) {
@@ -4241,6 +4267,7 @@ fn main() -> i64 {
     source_text_leading_comment_byte_char_escape_driver_score() +
     source_text_leading_comment_byte_char_numeric_escape_driver_score() +
     source_text_leading_comment_byte_char_fixed_unicode_escape_driver_score() +
+    source_text_leading_comment_byte_char_braced_unicode_escape_driver_score() +
     source_text_trailing_comment_driver_score() +
     source_text_trailing_unterminated_block_driver_score() +
     source_text_post_comment_extra_token_driver_score() +
@@ -4295,12 +4322,14 @@ fn main() -> i64 {
     parse_leading_comment_byte_char_escape_success_score() +
     parse_leading_comment_byte_char_numeric_escape_success_score() +
     parse_leading_comment_byte_char_fixed_unicode_escape_success_score() +
+    parse_leading_comment_byte_char_braced_unicode_escape_success_score() +
     parse_trailing_comment_success_score() +
     lexer_trailing_comment_handoff_score() +
     lexer_leading_comment_byte_char_handoff_score() +
     lexer_leading_comment_byte_char_escape_handoff_score() +
     lexer_leading_comment_byte_char_numeric_escape_handoff_score() +
     lexer_leading_comment_byte_char_fixed_unicode_escape_handoff_score() +
+    lexer_leading_comment_byte_char_braced_unicode_escape_handoff_score() +
     parse_trailing_unterminated_block_failure_score() +
     lexer_trailing_unterminated_block_handoff_score() +
     parse_leading_comment_unterminated_block_failure_score() +

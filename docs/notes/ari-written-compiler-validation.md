@@ -549,16 +549,19 @@ Desired stage0 pressure that is not yet classified as a bug:
   spellings such as `'\x41'` and `'\101'`. Fixed-width byte character Unicode
   escape spans now cover ASCII-valued spellings such as `'\u0041'` and
   `'\U00000041'`. Braced Unicode byte character escape spans now cover
-  ASCII-valued spellings such as `'\u{41}'`. Empty byte character diagnostics
-  now cover `''`, and unterminated byte character diagnostics now cover direct
-  EOF/newline plus escaped EOF/newline spellings. Unsupported byte character
-  escape diagnostics now cover spellings such as `'\q'`. Byte character
-  escape digit-shape diagnostics now cover missing/invalid `\x`, fixed-width
-  Unicode, and braced Unicode digits. Byte character escape value-range
-  diagnostics now cover oversized hex/octal byte escapes and non-ASCII Unicode
-  escapes. Byte character exactly-one-byte diagnostics now cover too-long
-  direct and escaped byte spellings plus EOF after one direct byte payload.
-  Direct non-ASCII byte character diagnostics now cover UTF-8 byte spellings.
-  Carriage-return whitespace spans now match stage0's whitespace skipper.
+  ASCII-valued spellings such as `'\u{41}'`, including the leading-comment
+  source-text driver, lexer handoff, parser, and keyword-table parser paths.
+  Empty byte character diagnostics now cover `''`, and unterminated byte
+  character diagnostics now cover direct EOF/newline plus escaped EOF/newline
+  spellings. Unsupported byte character escape diagnostics now cover spellings
+  such as `'\q'`. Byte character escape digit-shape diagnostics now cover
+  missing/invalid `\x`, fixed-width Unicode, and braced Unicode digits. Byte
+  character escape value-range diagnostics now cover oversized hex/octal byte
+  escapes and non-ASCII Unicode escapes. Byte character exactly-one-byte
+  diagnostics now cover too-long direct and escaped byte spellings plus EOF
+  after one direct byte payload. Direct non-ASCII byte character diagnostics
+  now cover UTF-8 byte spellings. Carriage-return whitespace spans now match
+  stage0's whitespace skipper.
   CRLF line-comment spans now match stage0's line comment scanner. EOF
-  line-comment span coverage is still pending.
+  line-comment span coverage exists; EOF line-comment parser and driver
+  coverage is still pending.
