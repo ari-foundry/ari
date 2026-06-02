@@ -225,22 +225,23 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   `parser::parse_is_success(parser::parse_one('9', ...))` without parser score
   arithmetic.
 - Added an AST statement-kind query helper and a parser payload-shape smoke that
-  checks successful parser output is a statement node without `ast::node_score`
-  arithmetic.
+  checks successful parser output is a statement node without old aggregate
+  node-score arithmetic.
 - Added an AST node span-length query helper and a parser payload-span smoke
-  that checks successful parser output spans without `ast::node_score`
+  that checks successful parser output spans without old aggregate node-score
   arithmetic.
 - Added an AST node value query helper and a parser payload-value smoke that
-  checks successful parser output values without `ast::node_score` arithmetic.
+  checks successful parser output values without old aggregate node-score
+  arithmetic.
 - Added source span-start, AST node start-offset, and parser payload-start
   helpers with a smoke that checks successful parser output start offsets
-  without `ast::node_score` arithmetic.
+  without old aggregate node-score arithmetic.
 - Added source span-end, AST node end-offset, and parser payload-end helpers
   with a smoke that checks successful parser output end offsets without
-  `ast::node_score` arithmetic.
+  old aggregate node-score arithmetic.
 - Added source span-source, AST node source-id, and parser payload-source
   helpers with a smoke that checks successful parser output source ids without
-  `ast::node_score` arithmetic.
+  old aggregate node-score arithmetic.
 - Added a focused parser number payload-value smoke using the existing parser
   statement value helper without parser score arithmetic.
 - Added a focused parser number payload span-length smoke using the existing
@@ -666,6 +667,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Renamed diagnostic severity score helpers to severity-rank queries and
   removed the test-only diagnostic aggregate score helper from
   `compiler/diagnostic.ari`.
+- Removed the test-only AST aggregate score helper from `compiler/ast.ari`;
+  parser success scoring and source-root smoke arithmetic now compose the
+  explicit node-kind-rank, span-length, and value queries.
 
 ## Small Task Queue
 

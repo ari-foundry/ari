@@ -407,6 +407,12 @@ fn default_driver_result_score() -> i64 {
   return driver::result_code(driver::run());
 }
 
+fn ast_node_test_value(node: ast::Node) -> i64 {
+  return ast::node_kind_rank(node) +
+    ast::node_span_len(node) +
+    ast::node_value(node);
+}
+
 fn loaded_source_score() -> i64 {
   let loaded = source::loaded_source_summary(7, 5, 'm', 0);
   if !source::loaded_source_has_first(loaded) {
@@ -4870,7 +4876,7 @@ fn main() -> i64 {
     lexer_keyword_score() +
     lexer_keyword_table_score() +
     parse_text_score() +
-    ast::node_score(ast::token_node(3, 2, 5, 8)) -
+    ast_node_test_value(ast::token_node(3, 2, 5, 8)) -
     12 +
     parser::parse_score(parser::parse_one('q', 1)) +
     parser::parse_score(parser::parse_one(' ', 4)) +

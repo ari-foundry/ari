@@ -24,13 +24,13 @@ pub fn parse_statement(cursor: lexer::TokenCursor) -> ParseResult {
     ));
   }
 
-  let score = lexer::cursor_token_score(cursor);
+  let statement_value = lexer::cursor_token_score(cursor);
   if lexer::cursor_is_identifier(cursor) || lexer::cursor_is_number(cursor) {
     return Parsed(ast::statement_node(
       0,
       lexer::cursor_token_start(cursor),
       lexer::cursor_token_end(cursor),
-      score
+      statement_value
     ));
   }
 
@@ -259,7 +259,9 @@ pub fn parse_failure_severity_rank(result: ParseResult) -> i64 {
 
 pub fn parse_score(result: ParseResult) -> i64 {
   match result {
-    Parsed(node) => ast::node_score(node),
+    Parsed(node) => ast::node_kind_rank(node) +
+      ast::node_span_len(node) +
+      ast::node_value(node),
     Failed(failure) => diagnostic::diagnostic_code(failure) +
       diagnostic::diagnostic_end_offset(failure) -
       diagnostic::diagnostic_start_offset(failure) +

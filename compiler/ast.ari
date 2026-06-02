@@ -66,17 +66,11 @@ pub fn node_source_id(node: Node) -> i64 {
   return source::span_source(node.span);
 }
 
-pub fn kind_score(kind: NodeKind) -> i64 {
-  match kind {
+pub fn node_kind_rank(node: Node) -> i64 {
+  match node.kind {
     Missing => 0,
     Token => 1,
     Statement => 2,
     Error => 3,
   }
-}
-
-pub fn node_score(node: Node) -> i64 {
-  return kind_score(node.kind) +
-    source::span_len(node.span) +
-    node.value;
 }

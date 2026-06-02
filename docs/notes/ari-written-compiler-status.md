@@ -202,16 +202,18 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   shape can be checked without relying on aggregate field access or score
   arithmetic.
 - `compiler/ast.ari` exposes a node span-length query helper so parser payload
-  spans can be checked without relying on `ast::node_score` arithmetic.
+  spans can be checked without relying on old aggregate node-score arithmetic.
 - `compiler/ast.ari` exposes a node value query helper so parser payload values
-  can be checked without relying on `ast::node_score` arithmetic.
+  can be checked without relying on old aggregate node-score arithmetic.
 - `compiler/ast.ari` exposes a node start-offset query helper so parser payload
-  offsets can be checked without relying on `ast::node_score` arithmetic.
+  offsets can be checked without relying on old aggregate node-score arithmetic.
 - `compiler/ast.ari` exposes a node end-offset query helper so parser payload
-  offsets can be checked without relying on `ast::node_score` arithmetic.
+  offsets can be checked without relying on old aggregate node-score arithmetic.
 - `compiler/ast.ari` exposes a node source-id query helper so parser payload
-  source identities can be checked without relying on `ast::node_score`
+  source identities can be checked without relying on old aggregate node-score
   arithmetic.
+- `compiler/ast.ari` exposes a node-kind rank query and no longer exposes the
+  test-only aggregate node score helper.
 - `compiler/parser.ari` exists as a phase-boundary skeleton that consumes the
   lexer handoff shape, can classify the current handoff token, and returns
   either a statement-shaped `ast::Node` over the current token span or a shared
@@ -344,27 +346,27 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   path through `parser::parse_is_success` instead of relying only on parser
   smoke-score arithmetic.
 - The bootstrap source-root smoke checks successful parser payloads are
-  statement nodes without relying on `ast::node_score` arithmetic.
+  statement nodes without relying on old aggregate node-score arithmetic.
 - The bootstrap source-root smoke checks number parser payloads are statement
   nodes without relying on parser score arithmetic.
 - The bootstrap source-root smoke checks successful parser payload span length
-  without relying on `ast::node_score` arithmetic.
+  without relying on old aggregate node-score arithmetic.
 - The bootstrap source-root smoke checks number parser payload span length
   without relying on parser score arithmetic.
 - The bootstrap source-root smoke checks successful parser payload values
-  without relying on `ast::node_score` arithmetic.
+  without relying on old aggregate node-score arithmetic.
 - The bootstrap source-root smoke checks number parser payload values without
   relying on parser score arithmetic.
 - The bootstrap source-root smoke checks successful parser payload start offsets
-  without relying on `ast::node_score` arithmetic.
+  without relying on old aggregate node-score arithmetic.
 - The bootstrap source-root smoke checks number parser payload start offsets
   without relying on parser score arithmetic.
 - The bootstrap source-root smoke checks successful parser payload end offsets
-  without relying on `ast::node_score` arithmetic.
+  without relying on old aggregate node-score arithmetic.
 - The bootstrap source-root smoke checks number parser payload end offsets
   without relying on parser score arithmetic.
 - The bootstrap source-root smoke checks successful parser payload source ids
-  without relying on `ast::node_score` arithmetic.
+  without relying on old aggregate node-score arithmetic.
 - The bootstrap source-root smoke checks number parser payload source ids
   without relying on parser score arithmetic.
 - `compiler/driver.ari` owns the current bootstrap entry flow and returns a
@@ -563,6 +565,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   test-only.
 - `compiler/diagnostic.ari` now uses severity-rank naming and no longer
   exposes the test-only diagnostic aggregate score helper.
+- `compiler/ast.ari` now uses node-kind-rank naming and no longer exposes the
+  test-only AST aggregate score helper.
 - `compiler/main.ari` is now a thin entrypoint that delegates to the driver and
   maps the driver's result to an exit code.
 - `make check-ari-compiler-bootstrap` checks each `compiler/*.ari` module,
