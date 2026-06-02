@@ -389,6 +389,14 @@ pub fn loaded_source_span_start_location_summary(
   return span_start_location_summary(summary.file, lines, span);
 }
 
+pub fn loaded_source_span_end_location_summary(
+  summary: LoadedSourceSummary,
+  lines: SourceLineStarts,
+  span: Span
+) -> SourceLocationSummary {
+  return span_end_location_summary(summary.file, lines, span);
+}
+
 pub fn loaded_source_score(summary: LoadedSourceSummary) -> i64 {
   return summary.file.id +
     summary.file.byte_len +

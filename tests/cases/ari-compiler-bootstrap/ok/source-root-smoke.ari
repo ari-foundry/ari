@@ -861,6 +861,58 @@ fn source_location_summary_score() -> i64 {
   if source::source_location_summary_valid(out_of_range_loaded_span_start) {
     return 67;
   }
+  let loaded_span_end = source::loaded_source_span_end_location_summary(
+    loaded,
+    lines,
+    source::span(6, 9, 11)
+  );
+  if source::source_location_summary_source(loaded_span_end) != 6 {
+    return 68;
+  }
+  if source::source_location_summary_byte_offset(loaded_span_end) != 11 {
+    return 69;
+  }
+  if source::source_location_summary_line(loaded_span_end) != 2 {
+    return 70;
+  }
+  if source::source_location_summary_column(loaded_span_end) != 4 {
+    return 71;
+  }
+  let eof_loaded_span_end = source::loaded_source_span_end_location_summary(
+    loaded,
+    lines,
+    source::span(6, 9, 12)
+  );
+  if source::source_location_summary_byte_offset(eof_loaded_span_end) != 12 {
+    return 72;
+  }
+  if source::source_location_summary_column(eof_loaded_span_end) != 5 {
+    return 73;
+  }
+  let wrong_loaded_span_end = source::loaded_source_span_end_location_summary(
+    loaded,
+    lines,
+    source::span(5, 9, 11)
+  );
+  if source::source_location_summary_valid(wrong_loaded_span_end) {
+    return 74;
+  }
+  let reversed_loaded_span_end = source::loaded_source_span_end_location_summary(
+    loaded,
+    lines,
+    source::span(6, 11, 9)
+  );
+  if source::source_location_summary_valid(reversed_loaded_span_end) {
+    return 75;
+  }
+  let out_of_range_loaded_span_end = source::loaded_source_span_end_location_summary(
+    loaded,
+    lines,
+    source::span(6, 9, 13)
+  );
+  if source::source_location_summary_valid(out_of_range_loaded_span_end) {
+    return 76;
+  }
   return source::source_location_summary_source(location) +
     source::source_location_summary_byte_offset(location) +
     source::source_location_summary_line(location) +
