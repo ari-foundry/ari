@@ -2409,40 +2409,72 @@ fn lexer_string_literal_span_score() -> i64 {
     return 30;
   }
 
+  let line_continuation_text: Slice[u8] = "\"a\\\nb\" tail";
+  let line_continuation = lexer::cursor_from_text(line_continuation_text, 0);
+  if !lexer::cursor_is_string_literal(line_continuation) {
+    return 31;
+  }
+  if lexer::cursor_token_end(line_continuation) != 6 {
+    return 32;
+  }
+  if lexer::cursor_token_ranked_width(line_continuation) != 57 {
+    return 33;
+  }
+  span_score = lexer_literal_payload_span_score(line_continuation, 1, 5, 5, 5);
+  if span_score != 0 {
+    return 33 + span_score;
+  }
+
+  let crlf_continuation_text: Slice[u8] = "\"a\\\r\nb\" tail";
+  let crlf_continuation = lexer::cursor_from_text(crlf_continuation_text, 0);
+  if !lexer::cursor_is_string_literal(crlf_continuation) {
+    return 38;
+  }
+  if lexer::cursor_token_end(crlf_continuation) != 7 {
+    return 39;
+  }
+  if lexer::cursor_token_ranked_width(crlf_continuation) != 58 {
+    return 40;
+  }
+  span_score = lexer_literal_payload_span_score(crlf_continuation, 1, 6, 6, 6);
+  if span_score != 0 {
+    return 40 + span_score;
+  }
+
   let unclosed_eof_text: Slice[u8] = "\"open";
   var failure_score = lexer_failure_case_score(unclosed_eof_text, 1004, 0, 5);
   if failure_score != 0 {
-    return 30 + failure_score;
+    return 45 + failure_score;
   }
 
   let unclosed_newline_text: Slice[u8] = "\"open\nname";
   failure_score = lexer_failure_case_score(unclosed_newline_text, 1004, 0, 6);
   if failure_score != 0 {
-    return 37 + failure_score;
+    return 52 + failure_score;
   }
 
   let unsupported_escape_text: Slice[u8] = "\"\\q\"";
   failure_score = lexer_failure_case_score(unsupported_escape_text, 1005, 2, 3);
   if failure_score != 0 {
-    return 44 + failure_score;
+    return 59 + failure_score;
   }
 
   let invalid_hex_escape_text: Slice[u8] = "\"\\x\"";
   failure_score = lexer_failure_case_score(invalid_hex_escape_text, 1006, 2, 3);
   if failure_score != 0 {
-    return 51 + failure_score;
+    return 66 + failure_score;
   }
 
   let invalid_hex_digit_escape_text: Slice[u8] = "\"\\xG\"";
   failure_score = lexer_failure_case_score(invalid_hex_digit_escape_text, 1006, 2, 3);
   if failure_score != 0 {
-    return 58 + failure_score;
+    return 73 + failure_score;
   }
 
   let invalid_unicode_escape_text: Slice[u8] = "\"\\u12\"";
   failure_score = lexer_failure_case_score(invalid_unicode_escape_text, 1006, 2, 5);
   if failure_score != 0 {
-    return 65 + failure_score;
+    return 80 + failure_score;
   }
 
   let invalid_wide_unicode_escape_text: Slice[u8] = "\"\\U1234\"";
@@ -2453,7 +2485,7 @@ fn lexer_string_literal_span_score() -> i64 {
     7
   );
   if failure_score != 0 {
-    return 72 + failure_score;
+    return 87 + failure_score;
   }
 
   let invalid_braced_unicode_digit_text: Slice[u8] = "\"\\u{Q}\"";
@@ -2464,7 +2496,7 @@ fn lexer_string_literal_span_score() -> i64 {
     5
   );
   if failure_score != 0 {
-    return 79 + failure_score;
+    return 94 + failure_score;
   }
 
   let empty_braced_unicode_escape_text: Slice[u8] = "\"\\u{}\"";
@@ -2475,25 +2507,25 @@ fn lexer_string_literal_span_score() -> i64 {
     5
   );
   if failure_score != 0 {
-    return 86 + failure_score;
+    return 101 + failure_score;
   }
 
   let invalid_hex_value_escape_text: Slice[u8] = "\"\\x100\"";
   failure_score = lexer_failure_case_score(invalid_hex_value_escape_text, 1007, 2, 6);
   if failure_score != 0 {
-    return 94 + failure_score;
+    return 109 + failure_score;
   }
 
   let invalid_octal_value_escape_text: Slice[u8] = "\"\\777\"";
   failure_score = lexer_failure_case_score(invalid_octal_value_escape_text, 1007, 2, 5);
   if failure_score != 0 {
-    return 101 + failure_score;
+    return 116 + failure_score;
   }
 
   let invalid_fixed_unicode_value_text: Slice[u8] = "\"\\uD800\"";
   failure_score = lexer_failure_case_score(invalid_fixed_unicode_value_text, 1007, 2, 7);
   if failure_score != 0 {
-    return 108 + failure_score;
+    return 123 + failure_score;
   }
 
   let invalid_wide_unicode_value_text: Slice[u8] = "\"\\U00110000\"";
@@ -2504,7 +2536,7 @@ fn lexer_string_literal_span_score() -> i64 {
     11
   );
   if failure_score != 0 {
-    return 115 + failure_score;
+    return 130 + failure_score;
   }
 
   let invalid_braced_unicode_value_text: Slice[u8] = "\"\\u{110000}\"";
@@ -2515,27 +2547,27 @@ fn lexer_string_literal_span_score() -> i64 {
     11
   );
   if failure_score != 0 {
-    return 122 + failure_score;
+    return 137 + failure_score;
   }
 
   let digit_escape_text: Slice[u8] = "\"\\x21\\u0041\\U00000042\\u{1F600}\\0123\" tail";
   let digit_escape = lexer::cursor_from_text(digit_escape_text, 0);
   if !lexer::cursor_is_string_literal(digit_escape) {
-    return 130;
+    return 145;
   }
   if lexer::cursor_token_end(digit_escape) != 36 {
-    return 131;
+    return 146;
   }
   if lexer::cursor_token_ranked_width(digit_escape) != 87 {
-    return 132;
+    return 147;
   }
   span_score = lexer_literal_payload_span_score(digit_escape, 1, 35, 35, 35);
   if span_score != 0 {
-    return 132 + span_score;
+    return 147 + span_score;
   }
   let after_digit_escape = lexer::cursor_advance_in_text(digit_escape, digit_escape_text);
   if !lexer::cursor_is_whitespace(after_digit_escape) {
-    return 137;
+    return 152;
   }
   return 0;
 }

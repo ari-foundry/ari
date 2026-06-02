@@ -738,6 +738,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   string literals succeed, preserve raw content spans through parser accessors,
   and no longer report string literals as unsupported tokens after leading
   comments.
+- Added stage0-parity string line-continuation scanning for backslash-LF and
+  backslash-CRLF inside Ari `StringLiteral` spans, with source-root smoke
+  coverage for token spans and raw content spans.
 
 ## Small Task Queue
 

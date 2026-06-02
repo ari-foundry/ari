@@ -120,6 +120,7 @@ quote bytes, empty quoted strings, source-backed raw content spans inside the
 quotes, and unterminated EOF/newline lexer diagnostics preserved through parser
 and driver source-text paths without requiring a hosted compiler fix. The same
 string-literal smoke now checks
+backslash-LF and backslash-CRLF line-continuation spans, plus
 unsupported `\q` escape diagnostics preserved through parser and driver
 source-text paths without requiring a hosted compiler fix. It also checks
 source-text string escape digit-shape diagnostics for `\x`, fixed-width `\u`,
@@ -599,12 +600,15 @@ Desired stage0 pressure that is not yet classified as a bug:
   input. `StringLiteral` tokens now reuse the source-backed literal span fields
   for raw content inside the quotes and a zero-width suffix at the closing
   quote, and the parser skeleton now preserves that payload for statement
-  nodes. That is useful for cursor and parser smokes, but the current
-  `LiteralPayload` shape is still numeric-leaning and does not represent
-  decoded escape text as a string value or a dedicated string literal AST
-  variant. It still lacks owned stage0-style token text, textual literal suffix
-  strings for synthetic cases, richer expression/statement AST literal shapes,
-  and narrower suffix-specific range checks such as `f32`/`f128`. Simple byte
+  nodes. The lexer now recognizes stage0-style string line-continuation escape
+  spans, but because payloads are source-backed, it still does not model the
+  decoded string value where those continuation bytes disappear. That is useful
+  for cursor and parser smokes, but the current `LiteralPayload` shape is still
+  numeric-leaning and does not represent decoded escape text as a string value
+  or a dedicated string literal AST variant. It still lacks owned stage0-style
+  token text, textual literal suffix strings for synthetic cases, richer
+  expression/statement AST literal shapes, and narrower suffix-specific range
+  checks such as `f32`/`f128`. Simple byte
   character literal spans are modeled as
   `Integer` tokens, matching stage0's byte-character-as-integer token
   treatment; their synthetic byte-character suffix rank remains spanless

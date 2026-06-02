@@ -1409,7 +1409,14 @@ fn string_literal_scan_from_text(text: std::Slice[u8], offset: i64) -> StringLit
         return Unterminated(text.len);
       }
       if text[end + 1] == '\n' {
-        return Unterminated(end + 2);
+        end = end + 2;
+        continue;
+      }
+      if text[end + 1] == '\r' &&
+          end + 2 < text.len &&
+          text[end + 2] == '\n' {
+        end = end + 3;
+        continue;
       }
       match string_escape_scan_from_text(text, end) {
         Advanced(next_end, _) => {
