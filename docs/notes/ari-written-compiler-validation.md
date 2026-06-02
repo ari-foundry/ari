@@ -765,6 +765,11 @@ Desired stage0 pressure that is not yet classified as a bug:
   several `std::Some(decoded_len)` match arms appeared in the same function.
   The fix was explicit per-case names. This is currently ergonomics pressure
   around pattern binding scopes, not a confirmed hosted compiler bug.
+- Numeric scanner cleanup re-hit the same local-name reuse pressure for block
+  locals in one function: a loop-local byte and a later tail byte could not both
+  be named `current`, so the implementation uses more specific names such as
+  `base_digit` and `tail`. This is local-binding ergonomics pressure, not a
+  confirmed hosted compiler bug.
 - Parser tests could not pass a root `lexer::TokenCursor` into
   `parser::parse_cursor` because the parser module's nested import names the
   parameter type as `parser::lexer::TokenCursor`. That nominal path distinction

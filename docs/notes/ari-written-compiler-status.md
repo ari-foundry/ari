@@ -718,6 +718,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - String and byte-character escape helper loops now reuse a loop-local current
   byte for hex/octal digit classification, braced Unicode closing/newline
   checks, and byte-character too-long recovery.
+- Numeric exponent and base-prefixed scanner paths now reuse local marker,
+  exponent, digit, and tail bytes instead of rereading the same source offsets
+  across adjacent checks.
 - `compiler/lexer.ari` now uses ranked-width and ranked-position query names
   and no longer exposes public `score` helpers.
 - `compiler/parser.ari` now uses parser kind-rank query names and no longer

@@ -544,27 +544,35 @@ fn has_decimal_exponent(text: std::Slice[u8], end: i64) -> bool {
   if end >= text.len {
     return false;
   }
-  if text[end] != 'e' && text[end] != 'E' {
+  let marker = text[end];
+  if marker != 'e' && marker != 'E' {
     return false;
   }
-  if end + 1 >= text.len {
+  let first_offset = end + 1;
+  if first_offset >= text.len {
     return false;
   }
-  if is_ascii_digit(text[end + 1]) {
+  let first = text[first_offset];
+  if is_ascii_digit(first) {
     return true;
   }
-  if text[end + 1] == '+' || text[end + 1] == '-' {
-    return end + 2 < text.len && is_ascii_digit(text[end + 2]);
+  if first == '+' || first == '-' {
+    return first_offset + 1 < text.len && is_ascii_digit(text[first_offset + 1]);
   }
   return false;
 }
 
 fn decimal_exponent_end_from_text(text: std::Slice[u8], marker_offset: i64) -> i64 {
   var end = marker_offset + 1;
-  if text[end] == '+' || text[end] == '-' {
+  let first = text[end];
+  if first == '+' || first == '-' {
     end = end + 1;
   }
-  while end < text.len && is_ascii_digit(text[end]) {
+  while end < text.len {
+    let current = text[end];
+    if !is_ascii_digit(current) {
+      break;
+    }
     end = end + 1;
   }
   return end;
@@ -597,17 +605,29 @@ fn base_prefixed_number_scan_from_text(
   marker: char
 ) -> NumberScan {
   var end = offset + 2;
-  if end >= text.len || !is_digit_for_number_base(text[end], marker) {
+  if end >= text.len {
     return NumberMissingBaseDigits(offset, end);
   }
-  while end < text.len && is_digit_for_number_base(text[end], marker) {
+  let first_digit = text[end];
+  if !is_digit_for_number_base(first_digit, marker) {
+    return NumberMissingBaseDigits(offset, end);
+  }
+  end = end + 1;
+  while end < text.len {
+    let base_digit = text[end];
+    if !is_digit_for_number_base(base_digit, marker) {
+      break;
+    }
     end = end + 1;
   }
-  if is_binary_or_octal_number_marker(marker) && end < text.len && is_ascii_digit(text[end]) {
-    return NumberInvalidBaseDigit(end, end + 1);
-  }
-  if end < text.len && text[end] == '.' {
-    return NumberNonDecimalFloatDot(end, end + 1);
+  if end < text.len {
+    let tail = text[end];
+    if is_binary_or_octal_number_marker(marker) && is_ascii_digit(tail) {
+      return NumberInvalidBaseDigit(end, end + 1);
+    }
+    if tail == '.' {
+      return NumberNonDecimalFloatDot(end, end + 1);
+    }
   }
   let literal_base = literal_base_rank_from_marker(marker);
   return base_prefixed_integer_number_scan_with_suffix(text, offset, end, literal_base);

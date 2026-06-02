@@ -847,6 +847,11 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   classification. This removed repeated `text[end]` reads from shared string
   escape scanners, byte-character Unicode scanners, and byte-character
   too-long recovery.
+- Re-reviewed numeric exponent and base-prefixed scanner paths. Decimal
+  exponent detection now caches the marker and first exponent byte, exponent
+  end scanning reuses a loop-local digit byte, and base-prefixed scanning
+  consumes the first valid base digit once before scanning later digits and
+  checking the tail byte for invalid binary/octal digits or non-decimal dots.
 
 ## Small Task Queue
 
