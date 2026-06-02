@@ -2433,6 +2433,86 @@ fn lexer_handoff_failure_case_score(
   }
 }
 
+fn lexer_string_simple_escape_case_score(text: Slice[u8]) -> i64 {
+  let literal = lexer::cursor_from_text(text, 0);
+  if !lexer::cursor_is_string_literal(literal) {
+    return 1;
+  }
+  if lexer::cursor_token_start(literal) != 0 {
+    return 2;
+  }
+  if lexer::cursor_token_end(literal) != text.len {
+    return 3;
+  }
+  let content_end = text.len - 1;
+  let span_score = lexer_literal_payload_span_score(
+    literal,
+    1,
+    content_end,
+    content_end,
+    content_end
+  );
+  if span_score != 0 {
+    return 4 + span_score;
+  }
+  if !parser::parse_is_success(parser::parse_text(text)) {
+    return 9;
+  }
+  return 0;
+}
+
+fn lexer_string_simple_escape_score() -> i64 {
+  var score = lexer_string_simple_escape_case_score("\"\\a\"");
+  if score != 0 {
+    return score;
+  }
+  score = lexer_string_simple_escape_case_score("\"\\b\"");
+  if score != 0 {
+    return 20 + score;
+  }
+  score = lexer_string_simple_escape_case_score("\"\\e\"");
+  if score != 0 {
+    return 40 + score;
+  }
+  score = lexer_string_simple_escape_case_score("\"\\f\"");
+  if score != 0 {
+    return 60 + score;
+  }
+  score = lexer_string_simple_escape_case_score("\"\\n\"");
+  if score != 0 {
+    return 80 + score;
+  }
+  score = lexer_string_simple_escape_case_score("\"\\r\"");
+  if score != 0 {
+    return 100 + score;
+  }
+  score = lexer_string_simple_escape_case_score("\"\\t\"");
+  if score != 0 {
+    return 120 + score;
+  }
+  score = lexer_string_simple_escape_case_score("\"\\v\"");
+  if score != 0 {
+    return 140 + score;
+  }
+  score = lexer_string_simple_escape_case_score("\"\\\"\"");
+  if score != 0 {
+    return 160 + score;
+  }
+  score = lexer_string_simple_escape_case_score("\"\\'\"");
+  if score != 0 {
+    return 180 + score;
+  }
+  score = lexer_string_simple_escape_case_score("\"\\?\"");
+  if score != 0 {
+    return 200 + score;
+  }
+  score = lexer_string_simple_escape_case_score("\"\\\\\"");
+  if score != 0 {
+    return 220 + score;
+  }
+  return 0;
+}
+
 fn lexer_string_literal_span_score() -> i64 {
   let text: Slice[u8] = "\"ari\" name";
   let literal = lexer::cursor_from_text(text, 0);
@@ -5304,6 +5384,7 @@ fn main() -> i64 {
     lexer_dot_run_punctuation_score() +
     lexer_bracket_punctuation_score() +
     lexer_double_quote_delimiter_score() +
+    lexer_string_simple_escape_score() +
     lexer_string_literal_span_score() +
     lexer_comment_span_score() +
     lexer_at_punctuation_score() +

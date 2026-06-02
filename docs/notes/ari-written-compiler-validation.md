@@ -641,7 +641,11 @@ Desired stage0 pressure that is not yet classified as a bug:
 - Ari-written string escape scanning now distinguishes supported
   single-character escape heads from unsupported ones and validates the digit
   shape of `\x`, fixed-width `\u`, fixed-width `\U`, and braced `\u{...}`
-  spellings plus byte, Unicode scalar, and octal value ranges. Source-text
+  spellings plus byte, Unicode scalar, and octal value ranges. Source-root
+  smoke now checks lexer spans and parser success for all stage0 simple string
+  escape spellings: alert, backspace, escape, form-feed, newline, carriage
+  return, tab, vertical tab, quote, single-quote, question-mark, and backslash.
+  Source-text
   comment skipping now covers line comments, nested block comments, and
   unterminated block comment diagnostics. Numeric base-prefix literal spans now
   cover valid lowercase and uppercase `0x`, `0o`, and `0b` prefixes, and

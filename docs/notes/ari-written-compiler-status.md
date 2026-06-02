@@ -67,7 +67,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/lexer.ari` returns source-text lexer diagnostics for unsupported
   single-character string escapes such as `\q`, while preserving supported
   common escapes, quote/backslash escapes, `\x`, `\u`, `\U`, and octal-leading
-  escape spellings as string-literal spans for now.
+  escape spellings as string-literal spans for now. Source-root smoke coverage
+  now checks all stage0 simple string escape spellings through lexer spans and
+  parser success.
 - `compiler/lexer.ari` validates source-text string escape digit shapes for
   `\x`, fixed-width `\u`, fixed-width `\U`, braced `\u{...}`, and octal digit
   runs before accepting a string-literal span, including invalid digit offsets
