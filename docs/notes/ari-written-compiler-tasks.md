@@ -615,13 +615,17 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   `compiler/source.ari`, keeping the minimal two-line summary honest by
   rejecting counts it cannot represent yet and stale second-line metadata on
   one-line summaries.
+- Added a one-based source byte-column helper in `compiler/source.ari`,
+  deriving columns from the current line start and clamping offsets past EOF
+  while leaving visual UTF-8 and CRLF column policy for the later real source
+  table.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a source line-start byte-column helper in `compiler/source.ari`.
+- Add a minimal source location summary model in `compiler/source.ari`.
 
 ## Next Recommended Task
 
-Add a source line-start byte-column helper in `compiler/source.ari`.
+Add a minimal source location summary model in `compiler/source.ari`.

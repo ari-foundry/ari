@@ -385,8 +385,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   callers do not need to manually repeat the entry source id.
 - `compiler/source.ari` has a minimal `SourceLineStarts` summary with up to
   two line starts, count metadata, validity checks, and a one-based
-  byte-to-line-number helper. It is a checked source-model placeholder, not a
-  full owned line-start table yet.
+  byte-to-line-number helper plus a one-based byte-column helper. It is a
+  checked source-model placeholder, not a full owned line-start table or
+  visual-column lookup yet.
 - `compiler/parser.ari` can parse a source-text slice through the text-backed
   lexer handoff path.
 - `compiler/driver.ari` routes file and text input through `std::string::String`

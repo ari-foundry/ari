@@ -3,6 +3,7 @@ type SourcePathId = i64;
 type ByteOffset = i64;
 type SourceLineCount = i64;
 type SourceLineNumber = i64;
+type SourceColumnNumber = i64;
 
 pub struct Span {
   source: SourceId,
@@ -161,6 +162,28 @@ pub fn source_line_starts_line_number(
     return 2;
   }
   return 1;
+}
+
+pub fn source_line_starts_byte_column(
+  lines: SourceLineStarts,
+  file: SourceFile,
+  offset: ByteOffset
+) -> SourceColumnNumber {
+  if !source_line_starts_valid(lines, file) {
+    return 0;
+  }
+  if offset < 0 {
+    return 0;
+  }
+  var clamped = offset;
+  if clamped > file.byte_len {
+    clamped = file.byte_len;
+  }
+  var line_start = lines.first;
+  if source_line_starts_has_second(lines) && clamped >= lines.second {
+    line_start = lines.second;
+  }
+  return clamped - line_start + 1;
 }
 
 pub fn source_table_entry_file(entry: SourceTableEntry) -> SourceFile {
