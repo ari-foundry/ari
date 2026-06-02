@@ -143,8 +143,13 @@ hosted compiler fix.
 The parser bool-literal payload smoke checked that table-backed `KwTrue` and
 `KwFalse` source text now parse as statement literals with `Option[bool]`
 payloads, source-backed spans, and no decoded string length; unsupported
-keyword parser and driver coverage now uses `while` while `KwNull` remains on
-the unsupported-token path. This required no hosted compiler fix.
+keyword parser and driver coverage now uses `while`. This required no hosted
+compiler fix.
+The parser null-literal payload smoke checked that table-backed `KwNull`
+source text now parses as a statement literal with the `LiteralNull` kind,
+source-backed spans, no bool payload, and no decoded string length; the driver
+source-text `null` path also returns success. This required no hosted compiler
+fix.
 The AST statement-kind query and parser payload-shape smoke checked successful
 statement output without requiring a hosted compiler fix. The AST node
 span-length query and parser payload-span smoke checked successful statement

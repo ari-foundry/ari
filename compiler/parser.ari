@@ -8,6 +8,19 @@ pub enum ParseResult {
   Failed(diagnostic::Diagnostic),
 }
 
+fn literal_kind_from_cursor(cursor: lexer::TokenCursor) -> ast::NodeLiteralKind {
+  if lexer::cursor_is_integer(cursor) {
+    return ast::LiteralInteger;
+  }
+  if lexer::cursor_is_float(cursor) {
+    return ast::LiteralFloat;
+  }
+  if lexer::cursor_is_string_literal(cursor) {
+    return ast::LiteralString;
+  }
+  return ast::LiteralNone;
+}
+
 fn literal_statement_node_from_cursor_with_decoded_len(
   cursor: lexer::TokenCursor,
   decoded_byte_len: std::Option[i64]
@@ -18,6 +31,7 @@ fn literal_statement_node_from_cursor_with_decoded_len(
     lexer::cursor_token_end(cursor),
     lexer::cursor_token_ranked_width(cursor),
     ast::literal_payload(
+      literal_kind_from_cursor(cursor),
       lexer::cursor_token_literal_base(cursor),
       lexer::cursor_token_literal_suffix_rank(cursor),
       lexer::cursor_token_literal_integer_value(cursor),
@@ -44,6 +58,7 @@ fn bool_statement_node_from_cursor(
     end,
     lexer::cursor_token_ranked_width(cursor),
     ast::literal_payload(
+      ast::LiteralBool,
       token::literal_base_none_rank(),
       token::literal_suffix_none_rank(),
       0u64,
@@ -54,6 +69,30 @@ fn bool_statement_node_from_cursor(
       end,
       std::None<i64>(),
       std::Some<bool>(literal_bool_value)
+    )
+  );
+}
+
+fn null_statement_node_from_cursor(cursor: lexer::TokenCursor) -> ast::Node {
+  let start = lexer::cursor_token_start(cursor);
+  let end = lexer::cursor_token_end(cursor);
+  return ast::statement_literal_node(
+    0,
+    start,
+    end,
+    lexer::cursor_token_ranked_width(cursor),
+    ast::literal_payload(
+      ast::LiteralNull,
+      token::literal_base_none_rank(),
+      token::literal_suffix_none_rank(),
+      0u64,
+      0.0f64,
+      start,
+      end,
+      end,
+      end,
+      std::None<i64>(),
+      std::None<bool>()
     )
   );
 }
@@ -100,6 +139,10 @@ fn parse_statement_with_literal_decoded_len(
       return Parsed(bool_statement_node_from_cursor(cursor, literal_bool_value));
     }
     std::None => {}
+  }
+
+  if lexer::cursor_is_null_literal(cursor) {
+    return Parsed(null_statement_node_from_cursor(cursor));
   }
 
   if lexer::cursor_is_number(cursor) {
@@ -150,6 +193,9 @@ pub fn parse_cursor_kind_rank(cursor: lexer::TokenCursor) -> i64 {
   if lexer::cursor_is_bool_literal(cursor) {
     return 7;
   }
+  if lexer::cursor_is_null_literal(cursor) {
+    return 10;
+  }
   if lexer::cursor_is_whitespace(cursor) {
     return 3;
   }
@@ -181,6 +227,9 @@ pub fn parse_handoff_kind_rank(handoff: lexer::TokenHandoff) -> i64 {
   }
   if lexer::handoff_starts_with_bool_literal(handoff) {
     return 7 + eof_rank * 10;
+  }
+  if lexer::handoff_starts_with_null_literal(handoff) {
+    return 10 + eof_rank * 10;
   }
   if lexer::handoff_starts_with_keyword(handoff) {
     return 5 + eof_rank * 10;
@@ -346,6 +395,13 @@ pub fn parse_statement_has_literal_payload(result: ParseResult) -> bool {
   match result {
     Parsed(node) => ast::node_has_literal_payload(node),
     Failed(_) => false,
+  }
+}
+
+pub fn parse_statement_literal_kind_rank(result: ParseResult) -> i64 {
+  match result {
+    Parsed(node) => ast::node_literal_kind_rank(node),
+    Failed(_) => 0,
   }
 }
 

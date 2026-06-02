@@ -266,6 +266,14 @@ fn source_text_bool_driver_score() -> i64 {
   return 0;
 }
 
+fn source_text_null_driver_score() -> i64 {
+  let null_code = source_text_driver_result("null");
+  if null_code != 0 {
+    return 1;
+  }
+  return 0;
+}
+
 fn source_text_base_number_driver_score() -> i64 {
   zone(65536) {
     return driver::result_code(driver::run_source_text(std::string::from("0x2a")));
@@ -4409,8 +4417,7 @@ fn parser_keyword_failure_keywords_score() -> i64 {
     parser_keyword_failure_code_case_with_base_score(290, "continue", 2006) +
     parser_keyword_failure_code_case_with_base_score(300, "break", 2006) +
     parser_keyword_failure_code_case_with_base_score(310, "drop", 2006) +
-    parser_keyword_failure_code_case_with_base_score(320, "forget", 2006) +
-    parser_keyword_failure_code_case_with_base_score(330, "null", 2006);
+    parser_keyword_failure_code_case_with_base_score(320, "forget", 2006);
 }
 
 fn parser_keyword_failure_case_score(
@@ -5135,10 +5142,16 @@ fn parse_statement_literal_payload_score() -> i64 {
     }
     std::None => {}
   }
+  if parser::parse_statement_literal_kind_rank(identifier) != 0 {
+    return 74;
+  }
 
   let integer = parser::parse_text("0xffu8");
   if !parser::parse_statement_has_literal_payload(integer) {
     return 3;
+  }
+  if parser::parse_statement_literal_kind_rank(integer) != 1 {
+    return 7;
   }
   if parser::parse_statement_literal_base(integer) != token::literal_base_hex_rank() {
     return 4;
@@ -5164,6 +5177,9 @@ fn parse_statement_literal_payload_score() -> i64 {
   if !parser::parse_statement_has_literal_payload(decimal_float) {
     return 20;
   }
+  if parser::parse_statement_literal_kind_rank(decimal_float) != 2 {
+    return 23;
+  }
   if parser::parse_statement_literal_suffix_rank(decimal_float) != token::literal_suffix_f64_rank() {
     return 21;
   }
@@ -5179,6 +5195,9 @@ fn parse_statement_literal_payload_score() -> i64 {
   if !parser::parse_statement_has_literal_payload(byte_char) {
     return 40;
   }
+  if parser::parse_statement_literal_kind_rank(byte_char) != 1 {
+    return 43;
+  }
   if parser::parse_statement_literal_suffix_rank(byte_char) !=
       token::literal_suffix_byte_char_rank() {
     return 41;
@@ -5190,6 +5209,9 @@ fn parse_statement_literal_payload_score() -> i64 {
   let string_literal = parser::parse_text("\"ari\"");
   if !parser::parse_statement_has_literal_payload(string_literal) {
     return 50;
+  }
+  if parser::parse_statement_literal_kind_rank(string_literal) != 3 {
+    return 55;
   }
   if parser::parse_statement_literal_base(string_literal) != token::literal_base_none_rank() {
     return 51;
@@ -5251,6 +5273,9 @@ fn parse_statement_literal_payload_score() -> i64 {
     if !parser::parse_statement_has_literal_payload(true_literal) {
       return 91;
     }
+    if parser::parse_statement_literal_kind_rank(true_literal) != 4 {
+      return 120;
+    }
     match parser::parse_statement_literal_bool_value(true_literal) {
       std::Some(true_value) => {
         if !true_value {
@@ -5279,6 +5304,9 @@ fn parse_statement_literal_payload_score() -> i64 {
     if !parser::parse_statement_has_literal_payload(false_literal) {
       return 101;
     }
+    if parser::parse_statement_literal_kind_rank(false_literal) != 4 {
+      return 121;
+    }
     match parser::parse_statement_literal_bool_value(false_literal) {
       std::Some(false_value) => {
         if false_value {
@@ -5292,6 +5320,33 @@ fn parse_statement_literal_payload_score() -> i64 {
     span_score = parse_statement_literal_span_score(false_literal, 0, 5, 5, 5);
     if span_score != 0 {
       return 104 + span_score;
+    }
+
+    let null_literal = parser::parse_text_with_keywords("null");
+    if !parser::parse_is_success(null_literal) {
+      return 110;
+    }
+    if !parser::parse_statement_has_literal_payload(null_literal) {
+      return 111;
+    }
+    if parser::parse_statement_literal_kind_rank(null_literal) != 5 {
+      return 122;
+    }
+    match parser::parse_statement_literal_bool_value(null_literal) {
+      std::Some(_) => {
+        return 113;
+      }
+      std::None => {}
+    }
+    span_score = parse_statement_literal_span_score(null_literal, 0, 4, 4, 4);
+    if span_score != 0 {
+      return 114 + span_score;
+    }
+    match parser::parse_statement_literal_decoded_byte_len(null_literal) {
+      std::Some(_) => {
+        return 119;
+      }
+      std::None => {}
     }
   }
 
@@ -5753,6 +5808,7 @@ fn main() -> i64 {
     source_text_keyword_driver_score() -
     2006 +
     source_text_bool_driver_score() +
+    source_text_null_driver_score() +
     source_text_base_number_driver_score() +
     source_text_number_suffix_driver_score() +
     source_text_decimal_float_driver_score() +

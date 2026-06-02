@@ -556,6 +556,13 @@ pub fn kind_bool_value(kind: TokenKind) -> std::Option[bool] {
   }
 }
 
+pub fn kind_is_null_literal(kind: TokenKind) -> bool {
+  match kind {
+    KwNull => true,
+    _ => false,
+  }
+}
+
 pub fn kind_is_eof(kind: TokenKind) -> bool {
   return kind_class_rank(kind) == 6;
 }

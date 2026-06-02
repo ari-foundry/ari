@@ -2493,6 +2493,10 @@ pub fn cursor_is_bool_literal(cursor: TokenCursor) -> bool {
   }
 }
 
+pub fn cursor_is_null_literal(cursor: TokenCursor) -> bool {
+  return token::kind_is_null_literal(cursor.current.kind);
+}
+
 pub fn cursor_is_string_literal(cursor: TokenCursor) -> bool {
   return token::kind_is_string_literal(cursor.current.kind);
 }
@@ -2760,6 +2764,10 @@ pub fn handoff_starts_with_keyword(handoff: TokenHandoff) -> bool {
 
 pub fn handoff_starts_with_bool_literal(handoff: TokenHandoff) -> bool {
   return cursor_is_bool_literal(handoff.first);
+}
+
+pub fn handoff_starts_with_null_literal(handoff: TokenHandoff) -> bool {
+  return cursor_is_null_literal(handoff.first);
 }
 
 pub fn handoff_starts_with_string_literal(handoff: TokenHandoff) -> bool {

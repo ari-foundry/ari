@@ -777,7 +777,11 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Routed table-backed `KwTrue` and `KwFalse` through parser/AST statement
   literal payloads as `Option[bool]`, added source-root smoke coverage for
   bool payload values and spans, and moved unsupported keyword parser/driver
-  coverage to `while` while leaving `KwNull` unsupported for now.
+  coverage to `while`.
+- Routed table-backed `KwNull` through parser/AST statement literal payloads
+  with the `LiteralNull` kind variant, added source-root smoke coverage for
+  the literal kind, spans, and driver source-text success, and kept
+  non-literal keywords on the unsupported-token path.
 
 ## Small Task Queue
 

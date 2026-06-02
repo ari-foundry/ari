@@ -7,7 +7,17 @@ pub enum NodeKind {
   Error,
 }
 
+pub enum NodeLiteralKind {
+  LiteralNone,
+  LiteralInteger,
+  LiteralFloat,
+  LiteralString,
+  LiteralBool,
+  LiteralNull,
+}
+
 pub struct NodeLiteralPayload {
+  literal_kind: NodeLiteralKind,
   literal_base: i64,
   literal_suffix_rank: i64,
   literal_integer_value: u64,
@@ -58,6 +68,7 @@ pub fn make_payload_node(
 }
 
 pub fn literal_payload(
+  literal_kind: NodeLiteralKind,
   literal_base: i64,
   literal_suffix_rank: i64,
   literal_integer_value: u64,
@@ -70,6 +81,7 @@ pub fn literal_payload(
   literal_bool_value: std::Option[bool]
 ) -> NodeLiteralPayload {
   return NodeLiteralPayload {
+    literal_kind: literal_kind,
     literal_base: literal_base,
     literal_suffix_rank: literal_suffix_rank,
     literal_integer_value: literal_integer_value,
@@ -85,6 +97,7 @@ pub fn literal_payload(
 
 pub fn empty_literal_payload() -> NodeLiteralPayload {
   return literal_payload(
+    LiteralNone,
     0,
     0,
     0u64,
@@ -159,6 +172,17 @@ pub fn node_literal_payload(node: Node) -> NodeLiteralPayload {
   match node.payload {
     EmptyPayload => empty_literal_payload(),
     LiteralNodePayload(literal) => literal,
+  }
+}
+
+pub fn node_literal_kind_rank(node: Node) -> i64 {
+  match node_literal_payload(node).literal_kind {
+    LiteralNone => 0,
+    LiteralInteger => 1,
+    LiteralFloat => 2,
+    LiteralString => 3,
+    LiteralBool => 4,
+    LiteralNull => 5,
   }
 }
 

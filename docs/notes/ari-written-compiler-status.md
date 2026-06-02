@@ -204,9 +204,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   source text, using the lexer string decoded-length accessor while keeping
   non-string literals as `None`.
 - `compiler/ast.ari` and `compiler/parser.ari` now preserve source-text
-  `KwTrue` and `KwFalse` as bool literal statement payloads with
-  `Option[bool]`, while leaving `KwNull` and the remaining keyword statements
-  on the unsupported-token diagnostic path for now.
+  `KwTrue`, `KwFalse`, and `KwNull` as statement literal payloads. Bool
+  literals carry `Option[bool]`, null literals use the `LiteralNull` kind
+  variant, and the remaining keyword statements stay on the unsupported-token
+  diagnostic path for now.
 - `compiler/lexer.ari` scans simple byte character escape spellings such as
   `'\n'` and `'\\'` as `Integer` spans, and source-root smoke coverage now
   checks stage0 simple escape value payloads for alert, backspace, escape,
