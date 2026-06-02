@@ -1942,6 +1942,16 @@ fn lexer_post_comment_extra_token_handoff_score() -> i64 {
   if score != 0 {
     return 10 + score;
   }
+  score = lexer_extra_token_handoff_case_score(
+    "name// skip\r\nother",
+    0,
+    4,
+    13,
+    18
+  );
+  if score != 0 {
+    return 20 + score;
+  }
   return 0;
 }
 

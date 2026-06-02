@@ -303,6 +303,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   diagnostics after a statement token, preserving parser missing-EOF
   diagnostic code `2003` and span `13..18` through the parser and
   keyword-table parser paths.
+- The bootstrap source-root smoke checks CRLF post-comment extra-token handoff
+  after a statement token, preserving the first token span `0..4` and the
+  extra token span `13..18` in the handoff EOF slot.
 - The bootstrap source-root smoke checks source-text parser post-comment lexer
   failure diagnostics after a statement token, including line-comment and
   block-comment trivia before an unterminated string literal.

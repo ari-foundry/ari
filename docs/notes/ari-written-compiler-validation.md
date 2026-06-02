@@ -584,4 +584,7 @@ Desired stage0 pressure that is not yet classified as a bug:
   token stays visible in the handoff EOF slot at `14..19`. CRLF post-comment
   extra-token parser, keyword-table parser, and driver coverage now checks
   that `name// skip\r\nother` preserves diagnostic code `2003` at span
-  `13..18`. CRLF post-comment extra-token handoff coverage is still pending.
+  `13..18`. CRLF post-comment extra-token handoff coverage now checks that
+  the first token remains at `0..4` and the extra token stays visible in the
+  handoff EOF slot at `13..18`. CRLF post-comment lexer-failure parser and
+  driver coverage is still pending.
