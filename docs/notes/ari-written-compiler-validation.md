@@ -556,12 +556,15 @@ Desired stage0 pressure that is not yet classified as a bug:
   compiler bug.
 - The Ari-written token model now separates `Integer` and `Float` token kinds
   and carries literal base plus suffix-rank metadata for decimal,
-  base-prefixed, typed numeric, and byte-character tokens. It still lacks
-  stage0-style token text, exact integer/float value payloads, byte-character
-  integer values, and textual literal suffix strings. Simple byte character
-  literal spans are modeled as `Integer` tokens, matching stage0's
-  byte-character-as-integer token treatment. The remaining payload gap is
-  Ari-written compiler model pressure, not a confirmed hosted compiler bug.
+  base-prefixed, typed numeric, and byte-character tokens. It now also carries
+  normal-range `u64` integer payloads and `f64` float payloads for source-text
+  numeric and byte-character lexer paths. It still lacks stage0-style token
+  text, textual literal suffix strings, and numeric overflow/range diagnostics
+  that fail lexing instead of leaving a zero fallback payload. Simple byte
+  character literal spans are modeled as `Integer` tokens, matching stage0's
+  byte-character-as-integer token treatment. The remaining payload and
+  diagnostic gaps are Ari-written compiler model pressure, not a confirmed
+  hosted compiler bug.
 - Numeric base-prefix handling such as `0x`, `0o`, and `0b` should stay
   separated from decimal floating literal handling. Decimal float scanning
   should not accidentally inherit octal/binary/hex prefix behavior; keep this

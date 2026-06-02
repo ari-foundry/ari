@@ -703,19 +703,23 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   hexadecimal, octal, binary, typed integer suffix, typed float suffix, and
   byte-character lexer paths, and covered the metadata with source-root smoke
   checks.
+- Added Ari token literal value payloads for normal-range decimal,
+  hexadecimal, octal, binary, decimal-float, float-suffix, direct byte-character,
+  and escaped byte-character lexer paths, using `u64` integer values and `f64`
+  float values.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
 - Continue lexer parity by adding source-text smoke coverage for the next
-  missing stage0 token family; the next concrete slice is exact numeric literal
-  value payloads (`int_value`, `float_value`, and byte-character values) and
-  textual suffix payload parity before growing parser literal AST logic.
+  missing stage0 token family; the next concrete slice is textual token/suffix
+  payload parity plus numeric overflow/range diagnostics before growing parser
+  literal AST logic.
 
 ## Next Recommended Task
 
 Continue lexer parity by adding source-text smoke coverage for the next missing
-stage0 token family; the next concrete slice is exact numeric literal value
-payloads (`int_value`, `float_value`, and byte-character values) and textual
-suffix payload parity before growing parser literal AST logic.
+stage0 token family; the next concrete slice is textual token/suffix payload
+parity plus numeric overflow/range diagnostics before growing parser literal
+AST logic.

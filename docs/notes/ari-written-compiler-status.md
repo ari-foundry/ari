@@ -157,6 +157,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/token.ari` carries literal base and suffix-rank metadata, and
   `compiler/lexer.ari` fills it for decimal, hexadecimal, octal, binary,
   typed numeric suffixes, and byte-character integer tokens.
+- `compiler/token.ari` carries numeric literal value payloads: `u64` integer
+  values for decimal/base-prefixed integers and byte-character literals, plus
+  `f64` values for decimal float literals and decimal integer spellings with
+  float suffixes.
 - `compiler/lexer.ari` scans simple byte character escape spellings such as
   `'\n'` and `'\\'` as `Integer` spans, while leaving broader byte-character
   diagnostics for later slices.

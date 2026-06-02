@@ -41,7 +41,7 @@ enum StringLiteralScan {
 }
 
 enum StringEscapeScan {
-  Advanced(i64),
+  Advanced(i64, i64),
   EscapeUnsupported(i64, i64),
   EscapeInvalidDigits(i64, i64),
   EscapeInvalidValue(i64, i64),
@@ -53,7 +53,7 @@ enum CommentScan {
 }
 
 enum ByteCharScan {
-  ByteCharClosed(i64),
+  ByteCharClosed(i64, u64),
   ByteCharEmpty(i64, i64),
   ByteCharUnterminated(i64),
   ByteCharUnsupportedEscape(i64, i64),
@@ -65,7 +65,7 @@ enum ByteCharScan {
 }
 
 enum NumberScan {
-  NumberClosed(token::TokenKind, i64, i64, i64),
+  NumberClosed(token::TokenKind, i64, i64, i64, u64, f64),
   NumberMissingBaseDigits(i64, i64),
   NumberInvalidBaseDigit(i64, i64),
   NumberUnsupportedSuffix(i64, i64),
@@ -266,6 +266,8 @@ fn number_scan_with_suffix(
   end: i64,
   literal_kind: token::TokenKind,
   literal_base: i64,
+  literal_integer_value: u64,
+  literal_float_value: f64,
   allow_integer_suffix: bool,
   allow_float_suffix: bool
 ) -> NumberScan {
@@ -275,7 +277,9 @@ fn number_scan_with_suffix(
         literal_kind,
         end,
         literal_base,
-        token::literal_suffix_none_rank()
+        token::literal_suffix_none_rank(),
+        literal_integer_payload_for_kind(literal_kind, literal_integer_value),
+        literal_float_payload_for_kind(literal_kind, literal_float_value)
       );
     }
     NumberSuffixInteger(integer_suffix_end, integer_suffix_rank) => {
@@ -286,7 +290,9 @@ fn number_scan_with_suffix(
         literal_kind,
         integer_suffix_end,
         literal_base,
-        integer_suffix_rank
+        integer_suffix_rank,
+        literal_integer_payload_for_kind(literal_kind, literal_integer_value),
+        literal_float_payload_for_kind(literal_kind, literal_float_value)
       );
     }
     NumberSuffixFloat(float_suffix_end, float_suffix_rank) => {
@@ -295,7 +301,9 @@ fn number_scan_with_suffix(
           token::Float,
           float_suffix_end,
           literal_base,
-          float_suffix_rank
+          float_suffix_rank,
+          0u64,
+          literal_float_value
         );
       }
       return NumberNonDecimalFloatSuffix(end, float_suffix_end);
@@ -348,7 +356,11 @@ fn decimal_exponent_end_from_text(text: std::Slice[u8], marker_offset: i64) -> i
   return end;
 }
 
-fn decimal_number_scan_from_text(text: std::Slice[u8], integer_end: i64) -> NumberScan {
+fn decimal_number_scan_from_text(
+  text: std::Slice[u8],
+  offset: i64,
+  integer_end: i64
+) -> NumberScan {
   var end = integer_end;
   var is_float = false;
   if has_decimal_fraction(text, end) {
@@ -365,6 +377,8 @@ fn decimal_number_scan_from_text(text: std::Slice[u8], integer_end: i64) -> Numb
       end,
       token::Float,
       token::literal_base_decimal_rank(),
+      0u64,
+      literal_float_value_from_text(text, offset, end),
       false,
       true
     );
@@ -374,6 +388,8 @@ fn decimal_number_scan_from_text(text: std::Slice[u8], integer_end: i64) -> Numb
     end,
     token::Integer,
     token::literal_base_decimal_rank(),
+    literal_unsigned_value_from_text(text, offset, end, token::literal_base_decimal_rank()),
+    literal_float_value_from_text(text, offset, end),
     true,
     true
   );
@@ -397,11 +413,14 @@ fn base_prefixed_number_scan_from_text(
   if end < text.len && text[end] == '.' {
     return NumberNonDecimalFloatDot(end, end + 1);
   }
+  let literal_base = literal_base_rank_from_marker(marker);
   return number_scan_with_suffix(
     text,
     end,
     token::Integer,
-    literal_base_rank_from_marker(marker),
+    literal_base,
+    literal_unsigned_value_from_text(text, offset + 2, end, literal_base),
+    0.0f64,
     true,
     false
   );
@@ -415,12 +434,12 @@ fn number_scan_from_text(text: std::Slice[u8], offset: i64) -> NumberScan {
   while end < text.len && is_number_continue(text[end]) {
     end = end + 1;
   }
-  return decimal_number_scan_from_text(text, end);
+  return decimal_number_scan_from_text(text, offset, end);
 }
 
 fn number_end_from_text(text: std::Slice[u8], offset: i64) -> i64 {
   match number_scan_from_text(text, offset) {
-    NumberClosed(_, number_end, _, _) => {
+    NumberClosed(_, number_end, _, _, _, _) => {
       return number_end;
     }
     NumberMissingBaseDigits(_, _) => {
@@ -478,6 +497,87 @@ fn append_escape_digit_capped(value: i64, radix: i64, digit: i64, limit: i64) ->
     return limit + 1;
   }
   return (value * radix) + digit;
+}
+
+fn simple_escape_value(value: char) -> i64 {
+  if value == 'a' {
+    return 7;
+  }
+  if value == 'b' {
+    return 8;
+  }
+  if value == 'e' {
+    return 27;
+  }
+  if value == 'f' {
+    return 12;
+  }
+  if value == 'n' {
+    return 10;
+  }
+  if value == 'r' {
+    return 13;
+  }
+  if value == 't' {
+    return 9;
+  }
+  if value == 'v' {
+    return 11;
+  }
+  if value == '"' {
+    return 34;
+  }
+  if value == '\'' {
+    return 39;
+  }
+  if value == '?' {
+    return 63;
+  }
+  if value == '\\' {
+    return 92;
+  }
+  return value as i64;
+}
+
+fn literal_unsigned_value_from_text(
+  text: std::Slice[u8],
+  start: i64,
+  end: i64,
+  radix: i64
+) -> u64 {
+  match std::parse::unsigned_radix(text.slice(start, end), radix) {
+    std::Ok(value) => {
+      return value;
+    }
+    std::Err(_) => {
+      return 0u64;
+    }
+  }
+}
+
+fn literal_float_value_from_text(text: std::Slice[u8], start: i64, end: i64) -> f64 {
+  match std::parse::float(text.slice(start, end)) {
+    std::Ok(value) => {
+      return value;
+    }
+    std::Err(_) => {
+      return 0.0f64;
+    }
+  }
+}
+
+fn literal_integer_payload_for_kind(kind: token::TokenKind, value: u64) -> u64 {
+  if token::kind_is_integer(kind) {
+    return value;
+  }
+  return 0u64;
+}
+
+fn literal_float_payload_for_kind(kind: token::TokenKind, value: f64) -> f64 {
+  if token::kind_is_float(kind) {
+    return value;
+  }
+  return 0.0f64;
 }
 
 fn is_unicode_escape_value(value: i64) -> bool {
@@ -934,7 +1034,7 @@ fn hex_escape_scan_from_text(text: std::Slice[u8], escape_start: i64) -> StringE
   if value > 255 {
     return EscapeInvalidValue(escape_start, end);
   }
-  return Advanced(end);
+  return Advanced(end, value);
 }
 
 fn fixed_hex_escape_scan_from_text(
@@ -957,7 +1057,7 @@ fn fixed_hex_escape_scan_from_text(
   if !is_unicode_escape_value(value) {
     return EscapeInvalidValue(escape_start, end);
   }
-  return Advanced(end);
+  return Advanced(end, value);
 }
 
 fn braced_unicode_escape_scan_from_text(
@@ -991,7 +1091,7 @@ fn braced_unicode_escape_scan_from_text(
   if !is_unicode_escape_value(value) {
     return EscapeInvalidValue(escape_start, end + 1);
   }
-  return Advanced(end + 1);
+  return Advanced(end + 1, value);
 }
 
 fn unicode_escape_scan_from_text(text: std::Slice[u8], escape_start: i64) -> StringEscapeScan {
@@ -1012,7 +1112,7 @@ fn octal_escape_scan_from_text(text: std::Slice[u8], escape_start: i64) -> Strin
   if value > 255 {
     return EscapeInvalidValue(escape_start, end);
   }
-  return Advanced(end);
+  return Advanced(end, value);
 }
 
 fn string_escape_scan_from_text(text: std::Slice[u8], slash_start: i64) -> StringEscapeScan {
@@ -1033,7 +1133,7 @@ fn string_escape_scan_from_text(text: std::Slice[u8], slash_start: i64) -> Strin
   if is_octal_digit(escaped) {
     return octal_escape_scan_from_text(text, escape_start);
   }
-  return Advanced(slash_start + 2);
+  return Advanced(slash_start + 2, simple_escape_value(escaped));
 }
 
 fn string_literal_scan_from_text(text: std::Slice[u8], offset: i64) -> StringLiteralScan {
@@ -1047,7 +1147,7 @@ fn string_literal_scan_from_text(text: std::Slice[u8], offset: i64) -> StringLit
         return Unterminated(end + 2);
       }
       match string_escape_scan_from_text(text, end) {
-        Advanced(next_end) => {
+        Advanced(next_end, _) => {
           end = next_end;
           continue;
         }
@@ -1108,7 +1208,7 @@ fn byte_char_fixed_unicode_escape_scan_from_text(
   if value > 127 {
     return EscapeInvalidValue(escape_start, end);
   }
-  return Advanced(end);
+  return Advanced(end, value);
 }
 
 fn byte_char_braced_unicode_escape_scan_from_text(
@@ -1141,7 +1241,7 @@ fn byte_char_braced_unicode_escape_scan_from_text(
   if value > 127 {
     return EscapeInvalidValue(escape_start, end + 1);
   }
-  return Advanced(end + 1);
+  return Advanced(end + 1, value);
 }
 
 fn byte_char_escape_scan_from_text(text: std::Slice[u8], slash_start: i64) -> StringEscapeScan {
@@ -1151,7 +1251,7 @@ fn byte_char_escape_scan_from_text(text: std::Slice[u8], slash_start: i64) -> St
   }
   let escaped = text[escape_start];
   if is_simple_byte_char_escape(escaped) {
-    return Advanced(slash_start + 2);
+    return Advanced(slash_start + 2, simple_escape_value(escaped));
   }
   if escaped == 'x' {
     return hex_escape_scan_from_text(text, escape_start);
@@ -1206,9 +1306,9 @@ fn byte_char_scan_from_text(text: std::Slice[u8], offset: i64) -> ByteCharScan {
       return ByteCharUnterminated(offset + 3);
     }
     match byte_char_escape_scan_from_text(text, offset + 1) {
-      Advanced(byte_char_escaped_end) => {
+      Advanced(byte_char_escaped_end, byte_char_escaped_value) => {
         if byte_char_escaped_end < text.len && text[byte_char_escaped_end] == '\'' {
-          return ByteCharClosed(byte_char_escaped_end + 1);
+          return ByteCharClosed(byte_char_escaped_end + 1, byte_char_escaped_value as u64);
         }
         return ByteCharTooLong(offset, byte_char_too_long_end_from_text(text, offset));
       }
@@ -1230,7 +1330,7 @@ fn byte_char_scan_from_text(text: std::Slice[u8], offset: i64) -> ByteCharScan {
     return ByteCharFallback;
   }
   if text[offset + 2] == '\'' {
-    return ByteCharClosed(offset + 3);
+    return ByteCharClosed(offset + 3, text[offset + 1] as u64);
   }
   return ByteCharTooLong(offset, byte_char_too_long_end_from_text(text, offset));
 }
@@ -1239,13 +1339,22 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
   let first = text[offset];
   if is_number_start(first) {
     match number_scan_from_text(text, offset) {
-      NumberClosed(number_kind, number_end, literal_base, literal_suffix_rank) => {
+      NumberClosed(
+        number_kind,
+        number_end,
+        literal_base,
+        literal_suffix_rank,
+        literal_integer_value,
+        literal_float_value
+      ) => {
         return token::make_literal_token(
           number_kind,
           offset,
           number_end,
           literal_base,
-          literal_suffix_rank
+          literal_suffix_rank,
+          literal_integer_value,
+          literal_float_value
         );
       }
       NumberMissingBaseDigits(_, _) => {
@@ -1300,13 +1409,15 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
   }
   if first == '\'' {
     match byte_char_scan_from_text(text, offset) {
-      ByteCharClosed(byte_char_end) => {
+      ByteCharClosed(byte_char_end, byte_char_value) => {
         return token::make_literal_token(
           token::Integer,
           offset,
           byte_char_end,
           token::literal_base_decimal_rank(),
-          token::literal_suffix_byte_char_rank()
+          token::literal_suffix_byte_char_rank(),
+          byte_char_value,
+          0.0f64
         );
       }
       ByteCharEmpty(_, _) => {}
@@ -1341,13 +1452,22 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
 fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResult {
   if is_number_start(text[offset]) {
     match number_scan_from_text(text, offset) {
-      NumberClosed(number_kind, number_end, literal_base, literal_suffix_rank) => {
+      NumberClosed(
+        number_kind,
+        number_end,
+        literal_base,
+        literal_suffix_rank,
+        literal_integer_value,
+        literal_float_value
+      ) => {
         return Scanned(token::make_literal_token(
           number_kind,
           offset,
           number_end,
           literal_base,
-          literal_suffix_rank
+          literal_suffix_rank,
+          literal_integer_value,
+          literal_float_value
         ));
       }
       NumberMissingBaseDigits(missing_start, missing_end) => {
@@ -1405,13 +1525,15 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
   }
   if text[offset] == '\'' {
     match byte_char_scan_from_text(text, offset) {
-      ByteCharClosed(byte_char_end_result) => {
+      ByteCharClosed(byte_char_end_result, byte_char_value_result) => {
         return Scanned(token::make_literal_token(
           token::Integer,
           offset,
           byte_char_end_result,
           token::literal_base_decimal_rank(),
-          token::literal_suffix_byte_char_rank()
+          token::literal_suffix_byte_char_rank(),
+          byte_char_value_result,
+          0.0f64
         ));
       }
       ByteCharEmpty(empty_start, empty_end) => {
@@ -2009,6 +2131,14 @@ pub fn cursor_token_literal_base(cursor: TokenCursor) -> i64 {
 
 pub fn cursor_token_literal_suffix_rank(cursor: TokenCursor) -> i64 {
   return token::token_literal_suffix_rank(cursor.current);
+}
+
+pub fn cursor_token_literal_integer_value(cursor: TokenCursor) -> u64 {
+  return token::token_literal_integer_value(cursor.current);
+}
+
+pub fn cursor_token_literal_float_value(cursor: TokenCursor) -> f64 {
+  return token::token_literal_float_value(cursor.current);
 }
 
 fn token_ranked_width(scanned: token::Token) -> i64 {
