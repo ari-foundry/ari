@@ -571,6 +571,62 @@ fn source_line_starts_score() -> i64 {
     source::source_line_starts_count(lines);
 }
 
+fn source_location_summary_score() -> i64 {
+  let file = source::source_file(3, 12);
+  let lines = source::source_line_starts(0, 8, 2);
+  let location = source::source_location_summary(file, lines, 9);
+  if source::source_location_summary_source(location) != 3 {
+    return 1;
+  }
+  if source::source_location_summary_byte_offset(location) != 9 {
+    return 2;
+  }
+  if source::source_location_summary_line(location) != 2 {
+    return 3;
+  }
+  if source::source_location_summary_column(location) != 2 {
+    return 4;
+  }
+  if !source::source_location_summary_valid(location) {
+    return 5;
+  }
+  let eof_location = source::source_location_summary(file, lines, 99);
+  if source::source_location_summary_byte_offset(eof_location) != 12 {
+    return 6;
+  }
+  if source::source_location_summary_line(eof_location) != 2 {
+    return 7;
+  }
+  if source::source_location_summary_column(eof_location) != 5 {
+    return 8;
+  }
+  let negative_location = source::source_location_summary(file, lines, -1);
+  if source::source_location_summary_valid(negative_location) {
+    return 9;
+  }
+  if source::source_location_summary_byte_offset(negative_location) != -1 {
+    return 10;
+  }
+  if source::source_location_summary_line(negative_location) != 0 {
+    return 11;
+  }
+  if source::source_location_summary_column(negative_location) != 0 {
+    return 12;
+  }
+  let bad_lines = source::source_line_starts(0, 8, 3);
+  let bad_location = source::source_location_summary(file, bad_lines, 8);
+  if source::source_location_summary_valid(bad_location) {
+    return 13;
+  }
+  if source::source_location_summary_byte_offset(bad_location) != -1 {
+    return 14;
+  }
+  return source::source_location_summary_source(location) +
+    source::source_location_summary_byte_offset(location) +
+    source::source_location_summary_line(location) +
+    source::source_location_summary_column(location);
+}
+
 fn loaded_driver_score() -> i64 {
   return driver::exit_code(driver::run_loaded_source_summary(1, 16, 'p', 2));
 }
@@ -4468,6 +4524,8 @@ fn main() -> i64 {
     34 +
     source_line_starts_score() -
     10 +
+    source_location_summary_score() -
+    16 +
     loaded_driver_score() +
     loaded_driver_result_score() +
     invalid_loaded_driver_score() -

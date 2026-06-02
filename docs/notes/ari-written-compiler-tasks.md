@@ -619,13 +619,16 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   deriving columns from the current line start and clamping offsets past EOF
   while leaving visual UTF-8 and CRLF column policy for the later real source
   table.
+- Added a minimal source location summary model in `compiler/source.ari`,
+  carrying source id, clamped byte offset, one-based line number, and
+  one-based byte column without adding a real source table yet.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a minimal source location summary model in `compiler/source.ari`.
+- Add a source-table entry location summary helper in `compiler/source.ari`.
 
 ## Next Recommended Task
 
-Add a minimal source location summary model in `compiler/source.ari`.
+Add a source-table entry location summary helper in `compiler/source.ari`.

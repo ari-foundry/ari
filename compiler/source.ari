@@ -22,6 +22,13 @@ pub struct SourceLineStarts {
   count: SourceLineCount,
 }
 
+pub struct SourceLocationSummary {
+  source: SourceId,
+  byte_offset: ByteOffset,
+  line: SourceLineNumber,
+  column: SourceColumnNumber,
+}
+
 pub struct SourceTableEntry {
   file: SourceFile,
   path_id: SourcePathId,
@@ -184,6 +191,66 @@ pub fn source_line_starts_byte_column(
     line_start = lines.second;
   }
   return clamped - line_start + 1;
+}
+
+pub fn source_location_summary(
+  file: SourceFile,
+  lines: SourceLineStarts,
+  offset: ByteOffset
+) -> SourceLocationSummary {
+  if !source_line_starts_valid(lines, file) {
+    return SourceLocationSummary {
+      source: file.id,
+      byte_offset: -1,
+      line: 0,
+      column: 0,
+    };
+  }
+  var byte_offset = offset;
+  if byte_offset > file.byte_len {
+    byte_offset = file.byte_len;
+  }
+  if offset < 0 {
+    byte_offset = -1;
+  }
+  return SourceLocationSummary {
+    source: file.id,
+    byte_offset: byte_offset,
+    line: source_line_starts_line_number(lines, file, offset),
+    column: source_line_starts_byte_column(lines, file, offset),
+  };
+}
+
+pub fn source_location_summary_source(
+  location: SourceLocationSummary
+) -> SourceId {
+  return location.source;
+}
+
+pub fn source_location_summary_byte_offset(
+  location: SourceLocationSummary
+) -> ByteOffset {
+  return location.byte_offset;
+}
+
+pub fn source_location_summary_line(
+  location: SourceLocationSummary
+) -> SourceLineNumber {
+  return location.line;
+}
+
+pub fn source_location_summary_column(
+  location: SourceLocationSummary
+) -> SourceColumnNumber {
+  return location.column;
+}
+
+pub fn source_location_summary_valid(
+  location: SourceLocationSummary
+) -> bool {
+  return location.byte_offset >= 0 &&
+    location.line > 0 &&
+    location.column > 0;
 }
 
 pub fn source_table_entry_file(entry: SourceTableEntry) -> SourceFile {

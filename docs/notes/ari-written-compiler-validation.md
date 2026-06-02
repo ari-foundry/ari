@@ -603,6 +603,9 @@ Desired stage0 pressure that is not yet classified as a bug:
   starts. It also rejects stale second-line metadata on one-line summaries.
   A one-based byte-column helper now derives columns from the current line
   start and clamps offsets past EOF without requiring a hosted compiler fix.
-  Full source table ownership, file path strings, loaded text ownership, owned
-  line-start arrays, CRLF visual-column handling, UTF-8 byte-column policy, and
-  diagnostic location mapping remain pending.
+  A minimal source location summary now carries source id, clamped byte offset,
+  one-based line number, and one-based byte column for source-model handoff
+  checks without requiring a hosted compiler fix. Full source table ownership,
+  file path strings, loaded text ownership, owned line-start arrays, CRLF
+  visual-column handling, UTF-8 byte-column policy, and diagnostic location
+  mapping remain pending.

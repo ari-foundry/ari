@@ -170,7 +170,7 @@ def main() -> int:
         "## Completed Tasks",
         "## Small Task Queue",
         "## Next Recommended Task",
-        "Add a minimal source location summary model in `compiler/source.ari`",
+        "Add a source-table entry location summary helper in `compiler/source.ari`",
     ]:
         require(ari_tasks, needle, ari_tasks_path)
 

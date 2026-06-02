@@ -388,6 +388,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   byte-to-line-number helper plus a one-based byte-column helper. It is a
   checked source-model placeholder, not a full owned line-start table or
   visual-column lookup yet.
+- `compiler/source.ari` has a minimal `SourceLocationSummary` that carries a
+  source id, clamped byte offset, one-based line number, and one-based byte
+  column for source-model handoff checks.
 - `compiler/parser.ari` can parse a source-text slice through the text-backed
   lexer handoff path.
 - `compiler/driver.ari` routes file and text input through `std::string::String`
