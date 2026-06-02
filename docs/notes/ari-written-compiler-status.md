@@ -395,6 +395,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/source.ari` can validate that a `SourceFile` has a non-negative
   byte length, and byte containment checks now make that source-file invariant
   explicit.
+- `compiler/source.ari` can check byte containment through a loaded source
+  summary, so callers do not need to unwrap its `SourceFile`.
 - `compiler/source.ari` has a minimal `SourceLocationSummary` that carries a
   source id, clamped byte offset, one-based line number, and one-based byte
   column for source-model handoff checks.

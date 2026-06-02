@@ -682,13 +682,15 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   `compiler/*.ari`.
 - Added a loaded-source span validity helper in `compiler/source.ari`, reusing
   the wrapped `SourceFile` span ownership and byte-bound checks.
+- Added a loaded-source byte containment helper in `compiler/source.ari`,
+  delegating through the wrapped `SourceFile` containment rule.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a loaded-source byte containment helper in `compiler/source.ari`.
+- Add a loaded-source first-byte span helper in `compiler/source.ari`.
 
 ## Next Recommended Task
 
-Add a loaded-source byte containment helper in `compiler/source.ari`.
+Add a loaded-source first-byte span helper in `compiler/source.ari`.

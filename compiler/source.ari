@@ -374,6 +374,13 @@ pub fn loaded_source_byte_len_valid(summary: LoadedSourceSummary) -> bool {
   return source_file_byte_len_valid(summary.file);
 }
 
+pub fn loaded_source_contains(
+  summary: LoadedSourceSummary,
+  offset: ByteOffset
+) -> bool {
+  return contains(summary.file, offset);
+}
+
 pub fn loaded_source_first(summary: LoadedSourceSummary) -> char {
   return summary.first;
 }
@@ -383,8 +390,8 @@ pub fn loaded_source_first_offset(summary: LoadedSourceSummary) -> ByteOffset {
 }
 
 pub fn loaded_source_first_offset_valid(summary: LoadedSourceSummary) -> bool {
-  return contains(summary.file, summary.first_offset) &&
-    contains(summary.file, summary.first_offset + 1);
+  return loaded_source_contains(summary, summary.first_offset) &&
+    loaded_source_contains(summary, summary.first_offset + 1);
 }
 
 pub fn loaded_source_has_first(summary: LoadedSourceSummary) -> bool {

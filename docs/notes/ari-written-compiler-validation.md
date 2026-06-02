@@ -651,4 +651,5 @@ Desired stage0 pressure that is not yet classified as a bug:
   loaded source's `SourceFile` containment rule without requiring a hosted
   compiler fix. Loaded-source span validity now reuses the same file-local
   source-id, ordering, and byte-bound checks as source-table entries, without
-  requiring a hosted compiler fix.
+  requiring a hosted compiler fix. Loaded-source byte containment now delegates
+  through the wrapped `SourceFile` without requiring a hosted compiler fix.
