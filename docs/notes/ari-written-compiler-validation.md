@@ -472,6 +472,12 @@ Desired stage0 pressure that is not yet classified as a bug:
 - Keep the reusable keyword-table source-root smoke data-driven through its
   table-case helper as future keywords are backfilled; new cases should add one
   helper call rather than another copied cursor-check block.
+- The CRLF line-comment parser/driver slice added another narrow source-root
+  smoke helper. That is acceptable for this tiny coverage step, but the
+  fixture is continuing to grow by scenario-specific score helpers; once the
+  hosted compiler makes richer table data easier to express, these comment
+  path smokes should move toward table-shaped cases instead of one helper per
+  spelling.
 - Wrapping a zone-backed `HashMap` in a new Ari struct was awkward in this
   slice: mutating a `HashMap` through a helper/field lost tracked-zone receiver
   information, and returning a wrapper with a raw zone pointer or embedded map
@@ -565,5 +571,7 @@ Desired stage0 pressure that is not yet classified as a bug:
   CRLF line-comment spans now match stage0's line comment scanner. EOF
   line-comment span coverage now has source-text parser, keyword-table parser,
   and driver coverage for `// eof`, preserving the EOF diagnostic offset at
-  byte 6. CRLF line-comment source-text parser and driver coverage is still
-  pending.
+  byte 6. CRLF line-comment source-text parser, keyword-table parser, and
+  driver coverage now checks that carriage return stays inside the skipped
+  comment span while the following statement starts at byte 9. CRLF
+  line-comment lexer-failure parser and driver coverage is still pending.

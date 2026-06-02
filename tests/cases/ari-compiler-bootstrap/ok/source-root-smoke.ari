@@ -83,6 +83,14 @@ fn source_text_leading_comment_driver_score() -> i64 {
   return source_text_line_block_driver_score("// skip\np", "/* skip */p", 0);
 }
 
+fn source_text_crlf_line_comment_driver_score() -> i64 {
+  let code = source_text_driver_result("// skip\r\np");
+  if code != 0 {
+    return 1;
+  }
+  return 0;
+}
+
 fn source_text_leading_comment_lexer_failure_driver_score() -> i64 {
   return source_text_line_block_driver_score("// skip\n\"open", "/* skip */\"open", 1004);
 }
@@ -3508,6 +3516,10 @@ fn parse_leading_comment_success_score() -> i64 {
   );
 }
 
+fn parse_crlf_line_comment_success_score() -> i64 {
+  return parse_leading_comment_case_score("// skip\r\nname", 9, 13);
+}
+
 fn parse_leading_comment_byte_char_success_score() -> i64 {
   return parse_leading_comment_line_block_score(
     "// skip\n'a'",
@@ -4264,6 +4276,7 @@ fn main() -> i64 {
     source_text_comment_only_driver_score() +
     source_text_eof_line_comment_driver_score() +
     source_text_leading_comment_driver_score() +
+    source_text_crlf_line_comment_driver_score() +
     source_text_leading_comment_lexer_failure_driver_score() +
     source_text_leading_comment_extra_token_driver_score() +
     source_text_leading_comment_unterminated_block_driver_score() +
@@ -4333,6 +4346,7 @@ fn main() -> i64 {
     parse_comment_only_failure_score() +
     parse_eof_line_comment_failure_score() +
     parse_leading_comment_success_score() +
+    parse_crlf_line_comment_success_score() +
     parse_leading_comment_byte_char_success_score() +
     parse_leading_comment_byte_char_escape_success_score() +
     parse_leading_comment_byte_char_numeric_escape_success_score() +

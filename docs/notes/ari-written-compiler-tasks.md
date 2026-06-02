@@ -570,13 +570,16 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   paths with the EOF diagnostic offset preserved at byte 6.
 - Reviewed the comment-only parser smoke helper while adding EOF coverage and
   collapsed its repeated `parser::parse_text` calls into one parsed result.
+- Added CRLF line-comment source-text parser and driver coverage, checking
+  `// skip\r\nname` statement spans through parser and keyword-table parser
+  paths and `// skip\r\np` through the source-text driver path.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add CRLF line-comment source-text parser and driver coverage.
+- Add CRLF line-comment source-text lexer-failure parser and driver coverage.
 
 ## Next Recommended Task
 
-Add CRLF line-comment source-text parser and driver coverage.
+Add CRLF line-comment source-text lexer-failure parser and driver coverage.
