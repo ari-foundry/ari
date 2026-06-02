@@ -797,6 +797,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Re-reviewed the consolidated token query path and changed hot token
   predicates to direct matches, so lexer/parser classification checks no longer
   construct `TokenKindInfo` just to answer a boolean query.
+- Re-reviewed the lexer one-character result path and removed the duplicated
+  full-token construction match from `scan_one_result`; it now reuses
+  `scan_one` and only converts unknown tokens into lexer diagnostics.
 
 ## Small Task Queue
 

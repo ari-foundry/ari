@@ -169,6 +169,11 @@ matches instead of constructing `TokenKindInfo` just to compare a class rank.
 The tradeoff is intentional duplication of class membership in the predicate
 helpers, which is preferable for the current lexer/parser hot checks. This
 required no hosted compiler fix.
+The lexer one-character result path review removed the duplicated full-token
+construction match from `scan_one_result`. That function now reuses `scan_one`
+and only turns unknown tokens into `lexer.invalid-character`, keeping the
+token-only and diagnostic paths synchronized without requiring a hosted
+compiler fix.
 The AST statement-kind query and parser payload-shape smoke checked successful
 statement output without requiring a hosted compiler fix. The AST node
 span-length query and parser payload-span smoke checked successful statement
@@ -574,6 +579,10 @@ Desired stage0 pressure that is not yet classified as a bug:
   the source-root smoke as a test-only helper. No public `score`-named helpers
   should remain in `compiler/*.ari`; remaining `score` names are fixture-local
   or language/example uses unless a future audit proves otherwise.
+- Lexer diagnostic wrappers should stay thin over the token scanner when they
+  only add failure payloads. A second full token-construction `match` beside
+  the token-only path is a synchronization hazard and code-quality pressure in
+  the Ari-written compiler, not a confirmed hosted compiler bug.
 - Wrapping a zone-backed `HashMap` in a new Ari struct was awkward in this
   slice: mutating a `HashMap` through a helper/field lost tracked-zone receiver
   information, and returning a wrapper with a raw zone pointer or embedded map
