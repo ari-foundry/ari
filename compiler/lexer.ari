@@ -2482,6 +2482,17 @@ pub fn cursor_is_keyword(cursor: TokenCursor) -> bool {
   return token::kind_is_keyword(cursor.current.kind);
 }
 
+pub fn cursor_bool_value(cursor: TokenCursor) -> std::Option[bool] {
+  return token::kind_bool_value(cursor.current.kind);
+}
+
+pub fn cursor_is_bool_literal(cursor: TokenCursor) -> bool {
+  match cursor_bool_value(cursor) {
+    std::Some(_) => true,
+    std::None => false,
+  }
+}
+
 pub fn cursor_is_string_literal(cursor: TokenCursor) -> bool {
   return token::kind_is_string_literal(cursor.current.kind);
 }
@@ -2745,6 +2756,10 @@ pub fn handoff_starts_with_operator(handoff: TokenHandoff) -> bool {
 
 pub fn handoff_starts_with_keyword(handoff: TokenHandoff) -> bool {
   return cursor_is_keyword(handoff.first);
+}
+
+pub fn handoff_starts_with_bool_literal(handoff: TokenHandoff) -> bool {
+  return cursor_is_bool_literal(handoff.first);
 }
 
 pub fn handoff_starts_with_string_literal(handoff: TokenHandoff) -> bool {

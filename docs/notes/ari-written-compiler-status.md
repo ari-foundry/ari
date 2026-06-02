@@ -203,6 +203,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   `Option[i64]` decoded string byte length for parser results produced from
   source text, using the lexer string decoded-length accessor while keeping
   non-string literals as `None`.
+- `compiler/ast.ari` and `compiler/parser.ari` now preserve source-text
+  `KwTrue` and `KwFalse` as bool literal statement payloads with
+  `Option[bool]`, while leaving `KwNull` and the remaining keyword statements
+  on the unsupported-token diagnostic path for now.
 - `compiler/lexer.ari` scans simple byte character escape spellings such as
   `'\n'` and `'\\'` as `Integer` spans, and source-root smoke coverage now
   checks stage0 simple escape value payloads for alert, backspace, escape,
@@ -583,7 +587,7 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   leading-comment unterminated block-comment path and verifies skipped comments
   before an unterminated block comment preserve lexer diagnostic code `1008`.
 - The bootstrap source-root smoke checks the source-text driver
-  leading-comment keyword path and verifies skipped comments before `false`
+  leading-comment keyword path and verifies skipped comments before `while`
   preserve parser unsupported-token diagnostic code `2006`.
 - The bootstrap source-root smoke checks the source-text driver
   leading-comment unknown-token path and verifies skipped comments before `$`
@@ -596,7 +600,7 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   preserve parser unsupported-token diagnostic code `2006`.
 - The bootstrap source-root smoke checks the source-text driver
   leading-comment string-literal path and verifies skipped comments before
-  `"ari"` preserve parser unsupported-token diagnostic code `2006`.
+  `"ari"` preserve parser and driver success.
 - The bootstrap source-root smoke checks the source-text driver
   leading-comment numeric missing-base-digit path and verifies skipped
   comments before `0x` preserve lexer diagnostic code `1009`.

@@ -503,7 +503,7 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   before a statement token, checking line and block comments followed by an
   unterminated block comment through lexer handoff, parser, and driver paths.
 - Added source-text leading-comment keyword diagnostics before a statement
-  token, checking line and block comments followed by `false` through
+  token, checking line and block comments followed by `while` through
   HashMap-backed keyword-table handoff, parser, and driver paths.
 - Added source-text leading-comment unknown-token diagnostics before a
   statement token, checking line and block comments followed by `$` through
@@ -514,7 +514,7 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Added source-text leading-comment operator diagnostics before a statement
   token, checking line and block comments followed by `+` through lexer
   handoff, parser, keyword-table parser, and driver paths.
-- Added source-text leading-comment string-literal diagnostics before a
+- Added source-text leading-comment string-literal success coverage before a
   statement token, checking line and block comments followed by `"ari"`
   through lexer handoff, parser, keyword-table parser, and driver paths.
 - Added source-text leading-comment numeric missing-base-digit diagnostics
@@ -774,6 +774,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   simple byte-character escape spellings: alert, backspace, escape,
   form-feed, newline, carriage return, tab, vertical tab, quote, single-quote,
   question-mark, and backslash.
+- Routed table-backed `KwTrue` and `KwFalse` through parser/AST statement
+  literal payloads as `Option[bool]`, added source-root smoke coverage for
+  bool payload values and spans, and moved unsupported keyword parser/driver
+  coverage to `while` while leaving `KwNull` unsupported for now.
 
 ## Small Task Queue
 

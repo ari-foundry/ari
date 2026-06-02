@@ -140,6 +140,11 @@ The parser string-literal payload smoke checked that source-backed string
 literal spans now survive through parser statement payload accessors, and the
 driver source-text smoke checked string literal success without requiring a
 hosted compiler fix.
+The parser bool-literal payload smoke checked that table-backed `KwTrue` and
+`KwFalse` source text now parse as statement literals with `Option[bool]`
+payloads, source-backed spans, and no decoded string length; unsupported
+keyword parser and driver coverage now uses `while` while `KwNull` remains on
+the unsupported-token path. This required no hosted compiler fix.
 The AST statement-kind query and parser payload-shape smoke checked successful
 statement output without requiring a hosted compiler fix. The AST node
 span-length query and parser payload-span smoke checked successful statement
@@ -421,7 +426,7 @@ line and block comments before an unterminated block comment through lexer
 handoff, parser, and driver paths, preserving lexer diagnostic code `1008` and
 failure spans without requiring a hosted compiler fix.
 The source-text leading-comment keyword smoke now checks line and block
-comments before `false` through HashMap-backed keyword-table handoff,
+comments before `while` through HashMap-backed keyword-table handoff,
 keyword-table parser, and driver paths, preserving parser unsupported-token
 diagnostic code `2006` and keyword spans without requiring a hosted compiler
 fix.
@@ -439,8 +444,8 @@ driver paths, preserving parser unsupported-token diagnostic code `2006` and
 operator spans without requiring a hosted compiler fix.
 The source-text leading-comment string-literal smoke now checks line and block
 comments before `"ari"` through lexer handoff, parser, keyword-table parser,
-and driver paths, preserving parser unsupported-token diagnostic code `2006`
-and string-literal spans without requiring a hosted compiler fix.
+and driver paths, preserving parser and driver success plus string-literal
+spans without requiring a hosted compiler fix.
 The source-text leading-comment numeric missing-base-digit smoke now checks
 line and block comments before `0x` through lexer handoff, parser,
 keyword-table parser, and driver paths, preserving lexer diagnostic code

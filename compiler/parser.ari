@@ -26,7 +26,34 @@ fn literal_statement_node_from_cursor_with_decoded_len(
       lexer::cursor_token_literal_text_end(cursor),
       lexer::cursor_token_literal_suffix_start(cursor),
       lexer::cursor_token_literal_suffix_end(cursor),
-      decoded_byte_len
+      decoded_byte_len,
+      std::None<bool>()
+    )
+  );
+}
+
+fn bool_statement_node_from_cursor(
+  cursor: lexer::TokenCursor,
+  literal_bool_value: bool
+) -> ast::Node {
+  let start = lexer::cursor_token_start(cursor);
+  let end = lexer::cursor_token_end(cursor);
+  return ast::statement_literal_node(
+    0,
+    start,
+    end,
+    lexer::cursor_token_ranked_width(cursor),
+    ast::literal_payload(
+      token::literal_base_none_rank(),
+      token::literal_suffix_none_rank(),
+      0u64,
+      0.0f64,
+      start,
+      end,
+      end,
+      end,
+      std::None<i64>(),
+      std::Some<bool>(literal_bool_value)
     )
   );
 }
@@ -66,6 +93,13 @@ fn parse_statement_with_literal_decoded_len(
       lexer::cursor_token_end(cursor),
       lexer::cursor_token_ranked_width(cursor)
     ));
+  }
+
+  match lexer::cursor_bool_value(cursor) {
+    std::Some(literal_bool_value) => {
+      return Parsed(bool_statement_node_from_cursor(cursor, literal_bool_value));
+    }
+    std::None => {}
   }
 
   if lexer::cursor_is_number(cursor) {
@@ -113,6 +147,9 @@ pub fn parse_cursor_kind_rank(cursor: lexer::TokenCursor) -> i64 {
   if lexer::cursor_is_string_literal(cursor) {
     return 6;
   }
+  if lexer::cursor_is_bool_literal(cursor) {
+    return 7;
+  }
   if lexer::cursor_is_whitespace(cursor) {
     return 3;
   }
@@ -141,6 +178,9 @@ pub fn parse_handoff_kind_rank(handoff: lexer::TokenHandoff) -> i64 {
   }
   if lexer::handoff_starts_with_unknown(handoff) {
     return 9 + eof_rank * 10;
+  }
+  if lexer::handoff_starts_with_bool_literal(handoff) {
+    return 7 + eof_rank * 10;
   }
   if lexer::handoff_starts_with_keyword(handoff) {
     return 5 + eof_rank * 10;
@@ -369,6 +409,13 @@ pub fn parse_statement_literal_decoded_byte_len(result: ParseResult) -> std::Opt
   match result {
     Parsed(node) => ast::node_literal_decoded_byte_len(node),
     Failed(_) => std::None<i64>(),
+  }
+}
+
+pub fn parse_statement_literal_bool_value(result: ParseResult) -> std::Option[bool] {
+  match result {
+    Parsed(node) => ast::node_literal_bool_value(node),
+    Failed(_) => std::None<bool>(),
   }
 }
 

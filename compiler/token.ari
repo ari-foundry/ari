@@ -548,6 +548,14 @@ pub fn kind_is_keyword(kind: TokenKind) -> bool {
   return kind_class_rank(kind) == 8;
 }
 
+pub fn kind_bool_value(kind: TokenKind) -> std::Option[bool] {
+  match kind {
+    KwTrue => std::Some<bool>(true),
+    KwFalse => std::Some<bool>(false),
+    _ => std::None<bool>(),
+  }
+}
+
 pub fn kind_is_eof(kind: TokenKind) -> bool {
   return kind_class_rank(kind) == 6;
 }
