@@ -489,9 +489,11 @@ Desired stage0 pressure that is not yet classified as a bug:
   node-kind-rank/span/value queries; the token aggregate score helper was
   removed from `compiler/token.ari` and replaced by explicit token-kind-rank
   and token-kind-class-rank queries; lexer score helpers were renamed to
-  ranked-width/ranked-position queries. The remaining `score`-named compiler
-  APIs are in `compiler/parser.ari` and should be audited and renamed or
-  replaced as the bootstrap model gains direct queries.
+  ranked-width/ranked-position queries; parser kind score helpers were renamed
+  to kind-rank queries, and parser result aggregate arithmetic was moved into
+  the source-root smoke as a test-only helper. No public `score`-named helpers
+  should remain in `compiler/*.ari`; remaining `score` names are fixture-local
+  or language/example uses unless a future audit proves otherwise.
 - Wrapping a zone-backed `HashMap` in a new Ari struct was awkward in this
   slice: mutating a `HashMap` through a helper/field lost tracked-zone receiver
   information, and returning a wrapper with a raw zone pointer or embedded map

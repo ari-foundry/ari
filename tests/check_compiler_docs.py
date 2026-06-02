@@ -170,7 +170,7 @@ def main() -> int:
         "## Completed Tasks",
         "## Small Task Queue",
         "## Next Recommended Task",
-        "Audit remaining public `score` helpers in `compiler/*.ari`",
+        "Add a loaded-source span validity helper in `compiler/source.ari`",
     ]:
         require(ari_tasks, needle, ari_tasks_path)
 

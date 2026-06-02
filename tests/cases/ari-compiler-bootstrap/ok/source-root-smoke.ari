@@ -3356,7 +3356,7 @@ fn lexer_keyword_case_score(
   if !lexer::handoff_starts_with_keyword(handoff) {
     return 15;
   }
-  if parser::parse_text_kind_score(keyword_text) != 45 {
+  if parser::parse_text_kind_rank(keyword_text) != 45 {
     return 16;
   }
   if parser::parse_failure_code(parser::parse_text(keyword_text)) != 2006 {
@@ -4609,6 +4609,19 @@ fn parse_post_comment_lexer_failure_score() -> i64 {
   return 0;
 }
 
+// Test-only exit-code arithmetic for parser result smoke coverage.
+fn parse_result_test_score(result: parser::ParseResult) -> i64 {
+  if parser::parse_is_success(result) {
+    return 2 +
+      parser::parse_statement_span_len(result) +
+      parser::parse_statement_value(result);
+  }
+  return parser::parse_failure_code(result) +
+    parser::parse_failure_end_offset(result) -
+    parser::parse_failure_start_offset(result) +
+    parser::parse_failure_severity_rank(result);
+}
+
 fn parse_text_score() -> i64 {
   if !parser::parse_is_success(parser::parse_text("name9")) {
     return 1;
@@ -4878,11 +4891,11 @@ fn main() -> i64 {
     parse_text_score() +
     ast_node_test_value(ast::token_node(3, 2, 5, 8)) -
     12 +
-    parser::parse_score(parser::parse_one('q', 1)) +
-    parser::parse_score(parser::parse_one(' ', 4)) +
-    parser::parse_score(parser::parse_one('$', 5)) -
+    parse_result_test_score(parser::parse_one('q', 1)) +
+    parse_result_test_score(parser::parse_one(' ', 4)) +
+    parse_result_test_score(parser::parse_one('$', 5)) -
     4017 +
-    parser::parse_one_kind_score('9', 2) -
+    parser::parse_one_kind_rank('9', 2) -
     42 +
     driver::exit_code(driver::run()) +
     default_driver_result_score() +
@@ -5062,6 +5075,6 @@ fn main() -> i64 {
     lexer_post_comment_extra_token_handoff_score() +
     parse_post_comment_lexer_failure_score() +
     lexer_post_comment_lexer_failure_handoff_score() +
-    parser::parse_score(parser::parse_empty()) -
+    parse_result_test_score(parser::parse_empty()) -
     3018;
 }

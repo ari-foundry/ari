@@ -222,8 +222,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   failure-code smoke that checks diagnostic code `2003` through
   `parser::parse_failure_code`.
 - Added a focused parser number-success smoke that checks
-  `parser::parse_is_success(parser::parse_one('9', ...))` without parser score
-  arithmetic.
+  `parser::parse_is_success(parser::parse_one('9', ...))` without parser
+  aggregate arithmetic.
 - Added an AST statement-kind query helper and a parser payload-shape smoke that
   checks successful parser output is a statement node without old aggregate
   node-score arithmetic.
@@ -676,20 +676,17 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Renamed lexer score helpers to ranked-width/ranked-position queries, keeping
   source-root smoke arithmetic stable while removing public `score` helpers
   from `compiler/lexer.ari`.
+- Renamed parser kind score helpers to kind-rank queries and moved parser
+  result aggregate arithmetic into the source-root smoke as a test-only helper,
+  finishing the current removal of public `score` helpers from
+  `compiler/*.ari`.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Audit remaining public `score` helpers in `compiler/*.ari`; remove test-only
-  helpers from compiler modules and rename necessary numeric queries to
-  explicit accessor, predicate, rank, or classifier names. The remaining
-  compiler APIs with this name now live in `compiler/parser.ari`.
 - Add a loaded-source span validity helper in `compiler/source.ari`.
 
 ## Next Recommended Task
 
-Audit remaining public `score` helpers in `compiler/*.ari`; remove test-only
-helpers from compiler modules and rename necessary numeric queries to explicit
-accessor, predicate, rank, or classifier names. The remaining compiler APIs
-with this name now live in `compiler/parser.ari`.
+Add a loaded-source span validity helper in `compiler/source.ari`.

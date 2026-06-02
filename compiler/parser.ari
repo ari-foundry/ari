@@ -53,7 +53,7 @@ pub fn parse_cursor(cursor: lexer::TokenCursor) -> ParseResult {
   return parse_statement(cursor);
 }
 
-pub fn parse_cursor_kind_score(cursor: lexer::TokenCursor) -> i64 {
+pub fn parse_cursor_kind_rank(cursor: lexer::TokenCursor) -> i64 {
   if lexer::cursor_is_identifier(cursor) {
     return 1;
   }
@@ -75,24 +75,24 @@ pub fn parse_cursor_kind_score(cursor: lexer::TokenCursor) -> i64 {
   return 8;
 }
 
-pub fn parse_handoff_kind_score(handoff: lexer::TokenHandoff) -> i64 {
-  let eof_score = parse_cursor_kind_score(lexer::handoff_eof(handoff));
+pub fn parse_handoff_kind_rank(handoff: lexer::TokenHandoff) -> i64 {
+  let eof_rank = parse_cursor_kind_rank(lexer::handoff_eof(handoff));
   if lexer::handoff_starts_with_identifier(handoff) {
-    return 1 + eof_score * 10;
+    return 1 + eof_rank * 10;
   }
   if lexer::handoff_starts_with_number(handoff) {
-    return 2 + eof_score * 10;
+    return 2 + eof_rank * 10;
   }
   if lexer::handoff_starts_with_whitespace(handoff) {
-    return 3 + eof_score * 10;
+    return 3 + eof_rank * 10;
   }
   if lexer::handoff_starts_with_unknown(handoff) {
-    return 9 + eof_score * 10;
+    return 9 + eof_rank * 10;
   }
   if lexer::handoff_starts_with_keyword(handoff) {
-    return 5 + eof_score * 10;
+    return 5 + eof_rank * 10;
   }
-  return 8 + eof_score * 10;
+  return 8 + eof_rank * 10;
 }
 
 pub fn parse_handoff(handoff: lexer::TokenHandoff) -> ParseResult {
@@ -168,12 +168,12 @@ pub fn parse_one_eof(value: char, offset: i64) -> ParseResult {
   )));
 }
 
-pub fn parse_one_kind_score(value: char, offset: i64) -> i64 {
-  return parse_handoff_kind_score(lexer::handoff_from_one(value, offset));
+pub fn parse_one_kind_rank(value: char, offset: i64) -> i64 {
+  return parse_handoff_kind_rank(lexer::handoff_from_one(value, offset));
 }
 
-pub fn parse_text_kind_score(text: std::Slice[u8]) -> i64 {
-  return parse_handoff_kind_score(lexer::handoff_from_text(text));
+pub fn parse_text_kind_rank(text: std::Slice[u8]) -> i64 {
+  return parse_handoff_kind_rank(lexer::handoff_from_text(text));
 }
 
 pub fn parse_empty() -> ParseResult {
@@ -254,17 +254,5 @@ pub fn parse_failure_severity_rank(result: ParseResult) -> i64 {
   match result {
     Parsed(_) => 0,
     Failed(failure) => diagnostic::diagnostic_severity_rank(failure),
-  }
-}
-
-pub fn parse_score(result: ParseResult) -> i64 {
-  match result {
-    Parsed(node) => ast::node_kind_rank(node) +
-      ast::node_span_len(node) +
-      ast::node_value(node),
-    Failed(failure) => diagnostic::diagnostic_code(failure) +
-      diagnostic::diagnostic_end_offset(failure) -
-      diagnostic::diagnostic_start_offset(failure) +
-      diagnostic::diagnostic_severity_rank(failure),
   }
 }

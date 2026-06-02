@@ -573,6 +573,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   naming and no longer exposes the test-only aggregate token score helper.
 - `compiler/lexer.ari` now uses ranked-width and ranked-position query names
   and no longer exposes public `score` helpers.
+- `compiler/parser.ari` now uses parser kind-rank query names and no longer
+  exposes public `score` helpers; parser result aggregate arithmetic is kept
+  local to the source-root smoke as test-only exit-code logic.
 - `compiler/main.ari` is now a thin entrypoint that delegates to the driver and
   maps the driver's result to an exit code.
 - `make check-ari-compiler-bootstrap` checks each `compiler/*.ari` module,
