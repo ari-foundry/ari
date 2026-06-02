@@ -803,6 +803,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Re-reviewed one-character stream/handoff constructors and removed repeated
   construction of identical `TokenCursor` and EOF cursors in `stream_from_one`,
   `handoff_from_one`, and `handoff_without_eof_from_one`.
+- Re-reviewed result-producing text handoff construction and factored the
+  repeated scan/skip-whitespace/failure-conversion loops into private
+  significant-token helpers for the plain and keyword-table lexer paths.
 
 ## Small Task Queue
 

@@ -179,6 +179,11 @@ construction of identical cursors in `stream_from_one`, `handoff_from_one`,
 and `handoff_without_eof_from_one`. This is Ari-written lexer cleanup only; the
 existing stream and handoff smoke coverage already checks the resulting cursor
 placement without requiring a hosted compiler fix.
+The result-producing text handoff review moved the repeated
+scan/skip-whitespace/failure-conversion loops into private significant-token
+helpers for the plain and keyword-table lexer paths. This keeps diagnostic
+handoff assembly focused on constructing the two handoff cursors and required
+no hosted compiler fix.
 The AST statement-kind query and parser payload-shape smoke checked successful
 statement output without requiring a hosted compiler fix. The AST node
 span-length query and parser payload-span smoke checked successful statement
@@ -592,6 +597,12 @@ Desired stage0 pressure that is not yet classified as a bug:
   those values are needed in multiple fields. Rebuilding the same cursor in a
   struct literal is easy to miss in reviews, and it is Ari-written compiler
   code-quality pressure rather than a hosted compiler bug.
+- Result-producing lexer handoff code should keep token scanning, whitespace
+  skipping, diagnostic conversion, and final handoff assembly separated. The
+  current helper split still has parallel plain/keyword-table variants because
+  Ari-written compiler code does not yet use a callback-style scan function
+  abstraction there; that is an acceptable local tradeoff, not a confirmed
+  hosted compiler bug.
 - Wrapping a zone-backed `HashMap` in a new Ari struct was awkward in this
   slice: mutating a `HashMap` through a helper/field lost tracked-zone receiver
   information, and returning a wrapper with a raw zone pointer or embedded map

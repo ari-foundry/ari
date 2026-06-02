@@ -2342,42 +2342,46 @@ pub fn handoff_from_text(text: std::Slice[u8]) -> TokenHandoff {
   };
 }
 
-pub fn handoff_from_text_result(
-  text: std::Slice[u8]
-) -> std::Result[TokenHandoff, LexFailure] {
-  match scan_text_result(text, 0) {
-    Failed(first_scan_failure) => {
-      return std::Err<TokenHandoff, LexFailure>(lex_failure_from_diagnostic(first_scan_failure));
+fn significant_text_token_result(
+  text: std::Slice[u8],
+  offset: i64
+) -> std::Result[token::Token, LexFailure] {
+  match scan_text_result(text, offset) {
+    Failed(scan_failure) => {
+      return std::Err<token::Token, LexFailure>(lex_failure_from_diagnostic(scan_failure));
     }
     Scanned(first_token) => {
-      var first = first_token;
-      while token::kind_is_whitespace(first.kind) {
-        match scan_text_result(text, first.end) {
-          Failed(leading_ws_failure) => {
-            return std::Err<TokenHandoff, LexFailure>(lex_failure_from_diagnostic(leading_ws_failure));
+      var significant = first_token;
+      while token::kind_is_whitespace(significant.kind) {
+        match scan_text_result(text, significant.end) {
+          Failed(whitespace_failure) => {
+            return std::Err<token::Token, LexFailure>(
+              lex_failure_from_diagnostic(whitespace_failure)
+            );
           }
-          Scanned(leading_ws_token) => {
-            first = leading_ws_token;
+          Scanned(next_token) => {
+            significant = next_token;
           }
         }
       }
+      return std::Ok<token::Token, LexFailure>(significant);
+    }
+  }
+}
 
-      match scan_text_result(text, first.end) {
-        Failed(eof_scan_failure) => {
-          return std::Err<TokenHandoff, LexFailure>(lex_failure_from_diagnostic(eof_scan_failure));
+pub fn handoff_from_text_result(
+  text: std::Slice[u8]
+) -> std::Result[TokenHandoff, LexFailure] {
+  match significant_text_token_result(text, 0) {
+    std::Err(first_failure) => {
+      return std::Err<TokenHandoff, LexFailure>(first_failure);
+    }
+    std::Ok(first) => {
+      match significant_text_token_result(text, first.end) {
+        std::Err(eof_failure) => {
+          return std::Err<TokenHandoff, LexFailure>(eof_failure);
         }
-        Scanned(eof_token_start) => {
-          var eof_token = eof_token_start;
-          while token::kind_is_whitespace(eof_token.kind) {
-            match scan_text_result(text, eof_token.end) {
-              Failed(trailing_ws_failure) => {
-                return std::Err<TokenHandoff, LexFailure>(lex_failure_from_diagnostic(trailing_ws_failure));
-              }
-              Scanned(trailing_ws_token) => {
-                eof_token = trailing_ws_token;
-              }
-            }
-          }
+        std::Ok(eof_token) => {
           return std::Ok<TokenHandoff, LexFailure>(TokenHandoff {
             first: cursor_from_token(first),
             eof: cursor_from_token(eof_token),
@@ -2402,43 +2406,48 @@ pub fn handoff_from_text_with_keywords(
   };
 }
 
+fn significant_text_token_with_keywords_result(
+  table: ref KeywordTable,
+  text: std::Slice[u8],
+  offset: i64
+) -> std::Result[token::Token, LexFailure] {
+  match scan_text_with_keywords_result(table, text, offset) {
+    Failed(scan_failure) => {
+      return std::Err<token::Token, LexFailure>(lex_failure_from_diagnostic(scan_failure));
+    }
+    Scanned(first_token) => {
+      var significant = first_token;
+      while token::kind_is_whitespace(significant.kind) {
+        match scan_text_with_keywords_result(table, text, significant.end) {
+          Failed(whitespace_failure) => {
+            return std::Err<token::Token, LexFailure>(
+              lex_failure_from_diagnostic(whitespace_failure)
+            );
+          }
+          Scanned(next_token) => {
+            significant = next_token;
+          }
+        }
+      }
+      return std::Ok<token::Token, LexFailure>(significant);
+    }
+  }
+}
+
 pub fn handoff_from_text_with_keywords_result(
   table: ref KeywordTable,
   text: std::Slice[u8]
 ) -> std::Result[TokenHandoff, LexFailure] {
-  match scan_text_with_keywords_result(table, text, 0) {
-    Failed(first_scan_failure) => {
-      return std::Err<TokenHandoff, LexFailure>(lex_failure_from_diagnostic(first_scan_failure));
+  match significant_text_token_with_keywords_result(table, text, 0) {
+    std::Err(first_failure) => {
+      return std::Err<TokenHandoff, LexFailure>(first_failure);
     }
-    Scanned(first_token) => {
-      var first = first_token;
-      while token::kind_is_whitespace(first.kind) {
-        match scan_text_with_keywords_result(table, text, first.end) {
-          Failed(leading_ws_failure) => {
-            return std::Err<TokenHandoff, LexFailure>(lex_failure_from_diagnostic(leading_ws_failure));
-          }
-          Scanned(leading_ws_token) => {
-            first = leading_ws_token;
-          }
+    std::Ok(first) => {
+      match significant_text_token_with_keywords_result(table, text, first.end) {
+        std::Err(eof_failure) => {
+          return std::Err<TokenHandoff, LexFailure>(eof_failure);
         }
-      }
-
-      match scan_text_with_keywords_result(table, text, first.end) {
-        Failed(eof_scan_failure) => {
-          return std::Err<TokenHandoff, LexFailure>(lex_failure_from_diagnostic(eof_scan_failure));
-        }
-        Scanned(eof_token_start) => {
-          var eof_token = eof_token_start;
-          while token::kind_is_whitespace(eof_token.kind) {
-            match scan_text_with_keywords_result(table, text, eof_token.end) {
-              Failed(trailing_ws_failure) => {
-                return std::Err<TokenHandoff, LexFailure>(lex_failure_from_diagnostic(trailing_ws_failure));
-              }
-              Scanned(trailing_ws_token) => {
-                eof_token = trailing_ws_token;
-              }
-            }
-          }
+        std::Ok(eof_token) => {
           return std::Ok<TokenHandoff, LexFailure>(TokenHandoff {
             first: cursor_from_token(first),
             eof: cursor_from_token(eof_token),
