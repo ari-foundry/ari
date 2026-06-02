@@ -642,6 +642,10 @@ Desired stage0 pressure that is not yet classified as a bug:
   pairs share the same leading character, such as `=`, `<`, `>`, `&`, `|`, and
   `-`. A flat pair-by-pair chain is easy to let drift and repeats work. This
   is Ari-written compiler code-quality pressure, not a hosted compiler bug.
+- String and byte-character scan loops should keep the byte currently under
+  inspection in a local before branching on escape, terminator, and newline
+  cases. This avoids repeated slice indexing in hot paths and keeps the scan
+  shape easier to review; it is not a hosted compiler bug.
 - Diagnostic metadata should avoid separate full-kind matches for rank, public
   identity text, and message text. Numeric compatibility codes can stay
   separate where stage0 preserves an older external code while the Ari kind rank

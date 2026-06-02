@@ -703,6 +703,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `scan_two` now dispatches by the first byte and reuses one computed two-byte
   end offset, so paired operators and punctuation no longer sit in a flat
   repeated `first && second` chain.
+- String literal scanning now reuses loop-local current and escaped bytes while
+  preserving stage0 line-continuation, escape, quote, and newline behavior.
 - `compiler/lexer.ari` now uses ranked-width and ranked-position query names
   and no longer exposes public `score` helpers.
 - `compiler/parser.ari` now uses parser kind-rank query names and no longer

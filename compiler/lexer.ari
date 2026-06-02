@@ -1419,15 +1419,17 @@ fn string_escape_scan_from_text(text: std::Slice[u8], slash_start: i64) -> Strin
 fn string_literal_scan_from_text(text: std::Slice[u8], offset: i64) -> StringLiteralScan {
   var end = offset + 1;
   while end < text.len {
-    if text[end] == '\\' {
+    let current = text[end];
+    if current == '\\' {
       if end + 1 >= text.len {
         return Unterminated(text.len);
       }
-      if text[end + 1] == '\n' {
+      let escaped = text[end + 1];
+      if escaped == '\n' {
         end = end + 2;
         continue;
       }
-      if text[end + 1] == '\r' &&
+      if escaped == '\r' &&
           end + 2 < text.len &&
           text[end + 2] == '\n' {
         end = end + 3;
@@ -1452,10 +1454,10 @@ fn string_literal_scan_from_text(text: std::Slice[u8], offset: i64) -> StringLit
         }
       }
     }
-    if text[end] == '"' {
+    if current == '"' {
       return Closed(end + 1);
     }
-    if text[end] == '\n' {
+    if current == '\n' {
       return Unterminated(end + 1);
     }
     end = end + 1;

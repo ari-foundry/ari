@@ -825,6 +825,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   chain into first-byte grouped dispatch with one shared two-byte end offset,
   keeping the same stage0 two-character token surface while avoiding repeated
   first-character tests.
+- Re-reviewed string literal scanning and hoisted the current byte plus the
+  escaped byte into locals inside the scan loop, so quote/newline/escape
+  dispatch no longer repeats `text[end]` or `text[end + 1]` reads in the hot
+  path.
 
 ## Small Task Queue
 
