@@ -852,6 +852,90 @@ fn string_literal_payload(offset: i64, string_end: i64) -> token::LiteralPayload
   );
 }
 
+fn utf8_encoded_len_optional(value: i64) -> std::Option[i64] {
+  if value < 0 {
+    return std::None<i64>();
+  }
+  return std::encoding::utf8_encoded_len(value as u32);
+}
+
+fn string_escape_decoded_byte_len(escaped: char, value: i64) -> std::Option[i64] {
+  if escaped == 'u' || escaped == 'U' {
+    return utf8_encoded_len_optional(value);
+  }
+  return std::Some<i64>(1);
+}
+
+fn string_literal_decoded_byte_len_from_text(
+  text: std::Slice[u8],
+  offset: i64,
+  string_end: i64
+) -> std::Option[i64] {
+  if offset < 0 {
+    return std::None<i64>();
+  }
+  if string_end > text.len {
+    return std::None<i64>();
+  }
+  if string_end <= offset {
+    return std::None<i64>();
+  }
+
+  var decoded_len = 0;
+  var index = offset + 1;
+  let content_end = string_end - 1;
+  while index < content_end {
+    if text[index] == '\\' {
+      if index + 1 >= content_end {
+        return std::None<i64>();
+      }
+      if text[index + 1] == '\n' {
+        index = index + 2;
+        continue;
+      }
+      if text[index + 1] == '\r' &&
+          index + 2 < string_end &&
+          text[index + 2] == '\n' {
+        index = index + 3;
+        continue;
+      }
+      let escaped = text[index + 1];
+      match string_escape_scan_from_text(text, index) {
+        Advanced(next_end, value) => {
+          if next_end > content_end {
+            return std::None<i64>();
+          }
+          match string_escape_decoded_byte_len(escaped, value) {
+            std::Some(escape_len) => {
+              decoded_len = decoded_len + escape_len;
+            }
+            std::None => {
+              return std::None<i64>();
+            }
+          }
+          index = next_end;
+          continue;
+        }
+        EscapeUnsupported(_, _) => {
+          return std::None<i64>();
+        }
+        EscapeInvalidDigits(_, _) => {
+          return std::None<i64>();
+        }
+        EscapeInvalidValue(_, _) => {
+          return std::None<i64>();
+        }
+        EscapeUnterminatedUnicode(_, _) => {
+          return std::None<i64>();
+        }
+      }
+    }
+    decoded_len = decoded_len + 1;
+    index = index + 1;
+  }
+  return std::Some<i64>(decoded_len);
+}
+
 fn is_unicode_escape_value(value: i64) -> bool {
   if value > 1114111 {
     return false;
@@ -2400,6 +2484,52 @@ pub fn cursor_is_keyword(cursor: TokenCursor) -> bool {
 
 pub fn cursor_is_string_literal(cursor: TokenCursor) -> bool {
   return token::kind_is_string_literal(cursor.current.kind);
+}
+
+pub fn cursor_string_literal_decoded_byte_len(
+  cursor: TokenCursor,
+  text: std::Slice[u8]
+) -> std::Option[i64] {
+  if !cursor_is_string_literal(cursor) {
+    return std::None<i64>();
+  }
+  let start = cursor_token_start(cursor);
+  let end = cursor_token_end(cursor);
+  if start < 0 {
+    return std::None<i64>();
+  }
+  if start >= text.len {
+    return std::None<i64>();
+  }
+  if end <= start {
+    return std::None<i64>();
+  }
+  if end > text.len {
+    return std::None<i64>();
+  }
+  match string_literal_scan_from_text(text, start) {
+    Closed(closed_end) => {
+      if closed_end != end {
+        return std::None<i64>();
+      }
+      return string_literal_decoded_byte_len_from_text(text, start, end);
+    }
+    Unterminated(_) => {
+      return std::None<i64>();
+    }
+    UnsupportedEscape(_, _) => {
+      return std::None<i64>();
+    }
+    InvalidEscapeDigits(_, _) => {
+      return std::None<i64>();
+    }
+    InvalidEscapeValue(_, _) => {
+      return std::None<i64>();
+    }
+    UnterminatedUnicodeEscape(_, _) => {
+      return std::None<i64>();
+    }
+  }
 }
 
 pub fn stream_from_one(value: char, offset: i64) -> TokenStream {

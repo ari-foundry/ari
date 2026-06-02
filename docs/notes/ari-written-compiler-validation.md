@@ -611,14 +611,16 @@ Desired stage0 pressure that is not yet classified as a bug:
   for raw content inside the quotes and a zero-width suffix at the closing
   quote, and the parser skeleton now preserves that payload for statement
   nodes. The lexer now recognizes stage0-style string line-continuation escape
-  spans, but because payloads are source-backed, it still does not model the
-  decoded string value where those continuation bytes disappear. That is useful
-  for cursor and parser smokes, but the current `LiteralPayload` shape is still
-  numeric-leaning and does not represent decoded escape text as a string value
-  or a dedicated string literal AST variant. It still lacks owned stage0-style
-  token text, textual literal suffix strings for synthetic cases, richer
-  expression/statement AST literal shapes, and narrower suffix-specific range
-  checks such as `f32`/`f128`. Simple byte
+  spans, and an `Option[i64]` cursor accessor can compute stage0-style decoded
+  byte length from the original source slice, including simple, byte/octal,
+  Unicode, and line-continuation escapes. Because payloads are still
+  source-backed, it still does not model the decoded string value itself. That
+  is useful for cursor and parser smokes, but the current `LiteralPayload`
+  shape is still numeric-leaning and does not represent decoded escape text as
+  a string value or a dedicated string literal AST variant. It still lacks owned
+  stage0-style token text, textual literal suffix strings for synthetic cases,
+  richer expression/statement AST literal shapes, and narrower suffix-specific
+  range checks such as `f32`/`f128`. Simple byte
   character literal spans are modeled as
   `Integer` tokens, matching stage0's byte-character-as-integer token
   treatment; their synthetic byte-character suffix rank remains spanless
@@ -640,6 +642,15 @@ Desired stage0 pressure that is not yet classified as a bug:
 - The byte-character span helper now uses an enum-shaped scan result instead
   of a sentinel fallback end. Malformed byte-character diagnostics can grow on
   that shape later without adding more sentinel meanings.
+- Zone use remains a real ergonomics pressure point for Ari-written compiler
+  work. Passing `zone` into every small helper is noisy, but caching zone or
+  allocator handles in every container/helper would fight the stdlib direction
+  documented in `AGENTS.md`: recover the zone from stable zone-backed
+  allocations where possible, and provide real sentinels/backing allocations
+  for empty containers. The likely improvement is a clearer library/compiler
+  pattern for deriving the active zone at allocation/growth sites, not a new
+  magical global heap. This is design pressure, not a confirmed hosted compiler
+  bug.
 - Ari-written string escape scanning now distinguishes supported
   single-character escape heads from unsupported ones and validates the digit
   shape of `\x`, fixed-width `\u`, fixed-width `\U`, and braced `\u{...}`

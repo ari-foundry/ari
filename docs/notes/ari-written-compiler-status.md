@@ -189,6 +189,11 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   strings without adding decoded owned string payloads yet.
 - `compiler/lexer.ari` accepts stage0-style string line-continuation escapes
   for backslash-LF and backslash-CRLF as part of a closed `StringLiteral` span.
+- `compiler/lexer.ari` can now return the stage0-style decoded byte length
+  of a valid `StringLiteral` cursor from the original source slice as
+  `Option[i64]`, including simple, byte, octal, fixed Unicode, braced Unicode,
+  and line-continuation escapes. This is a checked parity accessor, not an
+  owned decoded string payload.
 - `compiler/ast.ari` and `compiler/parser.ari` preserve numeric and
   source-backed string statement literal metadata/value payloads as an
   AST-owned snapshot, so parser-facing accessors can inspect literal base,

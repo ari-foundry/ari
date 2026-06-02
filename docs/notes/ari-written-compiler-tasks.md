@@ -746,6 +746,11 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   simple string escape spellings: alert, backspace, escape, form-feed,
   newline, carriage return, tab, vertical tab, quote, single-quote,
   question-mark, and backslash.
+- Added a source-text string decoded-byte-length lexer accessor for valid
+  `StringLiteral` cursors. It returns `Option[i64]` and computes stage0-style
+  byte length for simple, byte, octal, fixed Unicode, braced Unicode, and
+  line-continuation escapes from the original source slice without adding an
+  owned decoded string payload yet.
 - Added a dedicated Ari diagnostic identity for unterminated braced Unicode
   escapes, `lexer.unterminated-unicode-escape`, and routed both string and
   byte-character `\u{...` EOF/newline failures through it instead of the

@@ -2530,6 +2530,73 @@ fn lexer_string_simple_escape_score() -> i64 {
   return 0;
 }
 
+fn lexer_string_decoded_byte_len_case_score(text: Slice[u8], expected_len: i64) -> i64 {
+  let literal = lexer::cursor_from_text(text, 0);
+  if !lexer::cursor_is_string_literal(literal) {
+    return 1;
+  }
+  match lexer::cursor_string_literal_decoded_byte_len(literal, text) {
+    std::Some(decoded_len) => {
+      if decoded_len != expected_len {
+        return 2;
+      }
+    }
+    std::None => {
+      return 3;
+    }
+  }
+  return 0;
+}
+
+fn lexer_string_decoded_byte_len_score() -> i64 {
+  var score = lexer_string_decoded_byte_len_case_score("\"ari\"", 3);
+  if score != 0 {
+    return score;
+  }
+  score = lexer_string_decoded_byte_len_case_score("\"\"", 0);
+  if score != 0 {
+    return 20 + score;
+  }
+  score = lexer_string_decoded_byte_len_case_score("\"a\\\"b\"", 3);
+  if score != 0 {
+    return 40 + score;
+  }
+  score = lexer_string_decoded_byte_len_case_score("\"a\\\nb\"", 2);
+  if score != 0 {
+    return 60 + score;
+  }
+  score = lexer_string_decoded_byte_len_case_score("\"a\\\r\nb\"", 2);
+  if score != 0 {
+    return 80 + score;
+  }
+  score = lexer_string_decoded_byte_len_case_score(
+    "\"\\x21\\u0041\\U00000042\\u{1F600}\\012\"",
+    8
+  );
+  if score != 0 {
+    return 100 + score;
+  }
+
+  let operator = lexer::cursor_from_text("+", 0);
+  match lexer::cursor_string_literal_decoded_byte_len(operator, "+") {
+    std::Some(_) => {
+      return 121;
+    }
+    std::None => {}
+  }
+
+  let original_text: Slice[u8] = "\"ari\"";
+  let literal = lexer::cursor_from_text(original_text, 0);
+  match lexer::cursor_string_literal_decoded_byte_len(literal, "\"a") {
+    std::Some(_) => {
+      return 122;
+    }
+    std::None => {}
+  }
+
+  return 0;
+}
+
 fn lexer_string_literal_span_score() -> i64 {
   let text: Slice[u8] = "\"ari\" name";
   let literal = lexer::cursor_from_text(text, 0);
@@ -5447,6 +5514,7 @@ fn main() -> i64 {
     lexer_bracket_punctuation_score() +
     lexer_double_quote_delimiter_score() +
     lexer_string_simple_escape_score() +
+    lexer_string_decoded_byte_len_score() +
     lexer_string_literal_span_score() +
     lexer_comment_span_score() +
     lexer_at_punctuation_score() +
