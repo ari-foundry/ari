@@ -1294,6 +1294,44 @@ fn lexer_number_case_score(text: Slice[u8], expected_end: i64, expected_score: i
   return 0;
 }
 
+fn lexer_number_kind_split_score() -> i64 {
+  let integer = lexer::cursor_from_text("42 ", 0);
+  if !lexer::cursor_is_integer(integer) {
+    return 1;
+  }
+  if lexer::cursor_is_float(integer) {
+    return 2;
+  }
+
+  let suffix_float = lexer::cursor_from_text("42f32 ", 0);
+  if !lexer::cursor_is_float(suffix_float) {
+    return 3;
+  }
+  if !lexer::cursor_is_number(suffix_float) {
+    return 4;
+  }
+  if lexer::cursor_token_ranked_width(suffix_float) != 57 {
+    return 5;
+  }
+
+  let decimal_float = lexer::cursor_from_text("1.5 ", 0);
+  if !lexer::cursor_is_float(decimal_float) {
+    return 6;
+  }
+  if lexer::cursor_token_ranked_width(decimal_float) != 55 {
+    return 7;
+  }
+
+  let byte_char = lexer::cursor_from_text("'a' ", 0);
+  if !lexer::cursor_is_integer(byte_char) {
+    return 8;
+  }
+  if lexer::cursor_is_float(byte_char) {
+    return 9;
+  }
+  return 0;
+}
+
 fn lexer_number_base_span_score() -> i64 {
   let hex_text: Slice[u8] = "0xff+";
   var score = lexer_number_case_score(hex_text, 4, 6);
@@ -1370,7 +1408,7 @@ fn lexer_number_suffix_span_score() -> i64 {
   if score != 0 {
     return 24 + score;
   }
-  score = lexer_number_case_score("42f32 ", 5, 7);
+  score = lexer_number_case_score("42f32 ", 5, 57);
   if score != 0 {
     return 30 + score;
   }
@@ -1382,7 +1420,7 @@ fn lexer_number_suffix_span_score() -> i64 {
 
 fn lexer_decimal_float_span_score() -> i64 {
   let fractional_text: Slice[u8] = "1.5+";
-  var score = lexer_number_case_score(fractional_text, 3, 5);
+  var score = lexer_number_case_score(fractional_text, 3, 55);
   if score != 0 {
     return score;
   }
@@ -1397,23 +1435,23 @@ fn lexer_decimal_float_span_score() -> i64 {
     return 6;
   }
 
-  score = lexer_number_case_score("1.0f32 ", 6, 8);
+  score = lexer_number_case_score("1.0f32 ", 6, 58);
   if score != 0 {
     return 6 + score;
   }
-  score = lexer_number_case_score("1e3 ", 3, 5);
+  score = lexer_number_case_score("1e3 ", 3, 55);
   if score != 0 {
     return 12 + score;
   }
-  score = lexer_number_case_score("1E+3;", 4, 6);
+  score = lexer_number_case_score("1E+3;", 4, 56);
   if score != 0 {
     return 18 + score;
   }
-  score = lexer_number_case_score("1e-3 ", 4, 6);
+  score = lexer_number_case_score("1e-3 ", 4, 56);
   if score != 0 {
     return 24 + score;
   }
-  score = lexer_number_case_score("1.25e+10f64 ", 11, 13);
+  score = lexer_number_case_score("1.25e+10f64 ", 11, 63);
   if score != 0 {
     return 30 + score;
   }
@@ -5082,6 +5120,7 @@ fn main() -> i64 {
     lexer_operator_score() +
     lexer_identifier_span_score() +
     lexer_number_span_score() +
+    lexer_number_kind_split_score() +
     lexer_number_base_span_score() +
     lexer_number_suffix_span_score() +
     lexer_decimal_float_span_score() +

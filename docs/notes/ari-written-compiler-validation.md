@@ -464,6 +464,10 @@ The keyword-table fixture was then split again into a flow helper and a
 keyword-set helper so the smoke no longer carries a long `var score` /
 `if score == 0` chain. This was another source-root smoke readability cleanup,
 not a hosted compiler behavior change.
+The Ari-written lexer now separates `Integer` and `Float` token kinds while
+keeping the parser-facing number-class predicate, and the source-root smoke
+checks integer, decimal-float, float-suffix, and byte-character token-kind
+distinctions without requiring a hosted compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
@@ -550,11 +554,12 @@ Desired stage0 pressure that is not yet classified as a bug:
   diagnostics can carry stage0-style stable string codes such as `L0001`; this
   slice keeps numeric bootstrap codes and does not classify that as a hosted
   compiler bug.
-- The Ari-written token model still has a single `Number` token without
-  stage0-style integer/float value payloads or literal suffix metadata. Simple
-  byte character literal spans are therefore modeled as number tokens for now;
-  this is Ari-written compiler model pressure, not a confirmed hosted compiler
-  bug.
+- The Ari-written token model now separates `Integer` and `Float` token kinds,
+  but still lacks stage0-style integer/float value payloads and literal suffix
+  metadata. Simple byte character literal spans are modeled as `Integer`
+  tokens, matching stage0's byte-character-as-integer token treatment. The
+  remaining payload gap is Ari-written compiler model pressure, not a
+  confirmed hosted compiler bug.
 - Numeric base-prefix handling such as `0x`, `0o`, and `0b` should stay
   separated from decimal floating literal handling. Decimal float scanning
   should not accidentally inherit octal/binary/hex prefix behavior; keep this

@@ -421,14 +421,14 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   `0o`/`0O`, and `0b`/`0B` integer spellings, preserving the parser and driver
   source-text success path.
 - Added source-text exact-width integer suffix spans such as `i64` and `u8`
-  for decimal and base-prefixed number tokens, preserving the parser and driver
+  for decimal and base-prefixed integer tokens, preserving the parser and driver
   source-text success path.
 - Added source-text numeric base-prefix diagnostics for missing prefix digits
   and invalid binary/octal digits, preserving the parser and driver source-text
   failure path.
 - Added source-text numeric suffix diagnostics for unsupported suffixes and
   non-decimal float suffixes, preserving the parser and driver source-text
-  failure path, while accepting decimal float suffix spans as number tokens for
+  failure path, while accepting decimal float suffix spans as float tokens for
   the current bootstrap parser.
 - Added source-text decimal floating literal spans for fractional and exponent
   spellings, including valid decimal float suffixes.
@@ -436,18 +436,18 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   literals such as `0x2.0`, preserving the parser and driver source-text
   failure path.
 - Added source-text byte character literal spans for simple ASCII spellings
-  such as `'a'`, treating them as number tokens in the current Ari token model.
+  such as `'a'`, treating them as integer tokens in the current Ari token model.
 - Added source-text byte character escape spans for simple supported escape
-  spellings such as `'\n'` and `'\\'`, treating them as number tokens in the
+  spellings such as `'\n'` and `'\\'`, treating them as integer tokens in the
   current Ari token model.
 - Added source-text byte character numeric escape spans for hex and octal
-  spellings such as `'\x41'` and `'\101'`, treating them as number tokens in
+  spellings such as `'\x41'` and `'\101'`, treating them as integer tokens in
   the current Ari token model.
 - Added source-text byte character fixed-width Unicode escape spans for
   ASCII-valued spellings such as `'\u0041'` and `'\U00000041'`, treating them
-  as number tokens in the current Ari token model.
+  as integer tokens in the current Ari token model.
 - Added source-text byte character braced Unicode escape spans for ASCII-valued
-  spellings such as `'\u{41}'`, treating them as number tokens in the current
+  spellings such as `'\u{41}'`, treating them as integer tokens in the current
   Ari token model.
 - Added source-text empty byte character diagnostics for spellings such as
   `''`, preserving those failures through parser and driver source-text paths.
@@ -695,6 +695,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   routed source-table and loaded-source span constructors through it.
 - Completed the stateless lexer keyword fallback so `scan_text` now recognizes
   the same exact keyword set as the HashMap-backed `KeywordTable` path.
+- Split the Ari-written token model's numeric literal family into `Integer`
+  and `Float` token kinds, kept the shared number-class predicate for parser
+  compatibility, and added source-root smoke coverage for integer, decimal
+  float, float-suffix, and byte-character token-kind distinctions.
 
 ## Small Task Queue
 
@@ -702,9 +706,13 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   when the underlying phases have checked handoff data.
 - Expose a source-file span validity helper in `compiler/source.ari`.
 - Continue lexer parity by adding source-text smoke coverage for the next
-  missing stage0 token family before growing parser logic.
+  missing stage0 token family; the next concrete slice is numeric literal
+  payload metadata for value and suffix information before growing parser
+  literal AST logic.
 
 ## Next Recommended Task
 
 Continue lexer parity by adding source-text smoke coverage for the next missing
-stage0 token family before growing parser logic.
+stage0 token family; the next concrete slice is numeric literal payload
+metadata for value and suffix information before growing parser literal AST
+logic.

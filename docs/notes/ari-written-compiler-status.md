@@ -18,6 +18,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   assignment and arithmetic operators.
 - `compiler/token.ari` exposes token-kind rank and class-rank queries, and no
   longer exposes the old aggregate token score helper.
+- `compiler/token.ari` separates `Integer` and `Float` token kinds while
+  keeping a shared number class query so the early parser skeleton can still
+  accept either numeric literal family through one phase-boundary predicate.
 - `compiler/source.ari` exposes small span query helpers for downstream phase
   payload smokes.
 - `compiler/lexer.ari` now has a small `LexResult` flow for one-character scans
@@ -135,31 +138,31 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   source-text integer prefixes as one number span instead of stopping after the
   leading decimal `0`.
 - `compiler/lexer.ari` includes valid exact-width integer suffixes such as
-  `i64` and `u8` in decimal and base-prefixed source-text number spans.
+  `i64` and `u8` in decimal and base-prefixed source-text `Integer` spans.
 - `compiler/lexer.ari` reports source-text numeric base-prefix diagnostics for
   missing prefix digits and invalid binary/octal digits, preserving those
   failures through parser and driver source-text paths.
 - `compiler/lexer.ari` reports source-text numeric suffix diagnostics for
   unsupported suffixes and non-decimal float suffixes, while accepting decimal
-  float suffix spans as number tokens for the current bootstrap parser.
+  float suffix spans as `Float` tokens for the current bootstrap parser.
 - `compiler/lexer.ari` scans source-text decimal floating literal spans for
   fractional forms such as `1.5` and exponent forms such as `1e3`, including
-  valid decimal float suffixes.
+  valid decimal float suffixes, as `Float` tokens.
 - `compiler/lexer.ari` reports source-text non-decimal float dot diagnostics
   for base-prefixed spellings such as `0x2.0`, preserving those failures
   through parser and driver source-text paths.
 - `compiler/lexer.ari` scans simple ASCII byte character spellings such as
-  `'a'` as number spans, matching stage0's integer-literal treatment for byte
-  character literals at the current Ari token-model level.
+  `'a'` as `Integer` spans, matching stage0's integer-literal treatment for
+  byte character literals at the current Ari token-model level.
 - `compiler/lexer.ari` scans simple byte character escape spellings such as
-  `'\n'` and `'\\'` as number spans, while leaving broader byte-character
+  `'\n'` and `'\\'` as `Integer` spans, while leaving broader byte-character
   diagnostics for later slices.
 - `compiler/lexer.ari` scans byte character hex and octal numeric escape
-  spellings such as `'\x41'` and `'\101'` as number spans.
+  spellings such as `'\x41'` and `'\101'` as `Integer` spans.
 - `compiler/lexer.ari` scans ASCII-valued fixed-width byte character Unicode
-  escape spellings such as `'\u0041'` and `'\U00000041'` as number spans.
+  escape spellings such as `'\u0041'` and `'\U00000041'` as `Integer` spans.
 - `compiler/lexer.ari` scans ASCII-valued braced byte character Unicode escape
-  spellings such as `'\u{41}'` as number spans.
+  spellings such as `'\u{41}'` as `Integer` spans.
 - `compiler/lexer.ari` reports source-text empty byte character diagnostics for
   spellings such as `''`, preserving those failures through parser and driver
   source-text paths.

@@ -65,7 +65,7 @@ enum ByteCharScan {
 }
 
 enum NumberScan {
-  NumberClosed(i64),
+  NumberClosed(token::TokenKind, i64),
   NumberMissingBaseDigits(i64, i64),
   NumberInvalidBaseDigit(i64, i64),
   NumberUnsupportedSuffix(i64, i64),
@@ -243,22 +243,23 @@ fn number_suffix_scan_from_text(text: std::Slice[u8], suffix_start: i64) -> Numb
 fn number_scan_with_suffix(
   text: std::Slice[u8],
   end: i64,
+  literal_kind: token::TokenKind,
   allow_integer_suffix: bool,
   allow_float_suffix: bool
 ) -> NumberScan {
   match number_suffix_scan_from_text(text, end) {
     NumberSuffixNone => {
-      return NumberClosed(end);
+      return NumberClosed(literal_kind, end);
     }
     NumberSuffixInteger(integer_suffix_end) => {
       if !allow_integer_suffix {
         return NumberUnsupportedSuffix(end, integer_suffix_end);
       }
-      return NumberClosed(integer_suffix_end);
+      return NumberClosed(literal_kind, integer_suffix_end);
     }
     NumberSuffixFloat(float_suffix_end) => {
       if allow_float_suffix {
-        return NumberClosed(float_suffix_end);
+        return NumberClosed(token::Float, float_suffix_end);
       }
       return NumberNonDecimalFloatSuffix(end, float_suffix_end);
     }
@@ -322,9 +323,9 @@ fn decimal_number_scan_from_text(text: std::Slice[u8], integer_end: i64) -> Numb
     is_float = true;
   }
   if is_float {
-    return number_scan_with_suffix(text, end, false, true);
+    return number_scan_with_suffix(text, end, token::Float, false, true);
   }
-  return number_scan_with_suffix(text, end, true, true);
+  return number_scan_with_suffix(text, end, token::Integer, true, true);
 }
 
 fn base_prefixed_number_scan_from_text(
@@ -345,7 +346,7 @@ fn base_prefixed_number_scan_from_text(
   if end < text.len && text[end] == '.' {
     return NumberNonDecimalFloatDot(end, end + 1);
   }
-  return number_scan_with_suffix(text, end, true, false);
+  return number_scan_with_suffix(text, end, token::Integer, true, false);
 }
 
 fn number_scan_from_text(text: std::Slice[u8], offset: i64) -> NumberScan {
@@ -361,7 +362,7 @@ fn number_scan_from_text(text: std::Slice[u8], offset: i64) -> NumberScan {
 
 fn number_end_from_text(text: std::Slice[u8], offset: i64) -> i64 {
   match number_scan_from_text(text, offset) {
-    NumberClosed(number_end) => {
+    NumberClosed(_, number_end) => {
       return number_end;
     }
     NumberMissingBaseDigits(_, _) => {
@@ -630,7 +631,7 @@ pub fn classify_one(value: char) -> token::TokenKind {
     return token::Identifier;
   }
   if is_number_start(value) {
-    return token::Number;
+    return token::Integer;
   }
   if is_whitespace(value) {
     return token::Whitespace;
@@ -1179,7 +1180,26 @@ fn byte_char_scan_from_text(text: std::Slice[u8], offset: i64) -> ByteCharScan {
 fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
   let first = text[offset];
   if is_number_start(first) {
-    return token::make_token(token::Number, offset, number_end_from_text(text, offset));
+    match number_scan_from_text(text, offset) {
+      NumberClosed(number_kind, number_end) => {
+        return token::make_token(number_kind, offset, number_end);
+      }
+      NumberMissingBaseDigits(_, _) => {
+        return token::make_token(token::Integer, offset, offset + 1);
+      }
+      NumberInvalidBaseDigit(base_invalid_start, _) => {
+        return token::make_token(token::Integer, offset, base_invalid_start);
+      }
+      NumberUnsupportedSuffix(unsupported_suffix_start, _) => {
+        return token::make_token(token::Integer, offset, unsupported_suffix_start);
+      }
+      NumberNonDecimalFloatSuffix(non_decimal_suffix_start, _) => {
+        return token::make_token(token::Integer, offset, non_decimal_suffix_start);
+      }
+      NumberNonDecimalFloatDot(non_decimal_dot_start, _) => {
+        return token::make_token(token::Integer, offset, non_decimal_dot_start);
+      }
+    }
   }
   if is_whitespace(first) {
     var whitespace_end = offset + 1;
@@ -1217,7 +1237,7 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
   if first == '\'' {
     match byte_char_scan_from_text(text, offset) {
       ByteCharClosed(byte_char_end) => {
-        return token::make_token(token::Number, offset, byte_char_end);
+        return token::make_token(token::Integer, offset, byte_char_end);
       }
       ByteCharEmpty(_, _) => {}
       ByteCharUnterminated(_) => {}
@@ -1251,8 +1271,8 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
 fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResult {
   if is_number_start(text[offset]) {
     match number_scan_from_text(text, offset) {
-      NumberClosed(number_end) => {
-        return Scanned(token::make_token(token::Number, offset, number_end));
+      NumberClosed(number_kind, number_end) => {
+        return Scanned(token::make_token(number_kind, offset, number_end));
       }
       NumberMissingBaseDigits(missing_start, missing_end) => {
         return Failed(missing_number_base_digits(missing_start, missing_end));
@@ -1310,7 +1330,7 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
   if text[offset] == '\'' {
     match byte_char_scan_from_text(text, offset) {
       ByteCharClosed(byte_char_end_result) => {
-        return Scanned(token::make_token(token::Number, offset, byte_char_end_result));
+        return Scanned(token::make_token(token::Integer, offset, byte_char_end_result));
       }
       ByteCharEmpty(empty_start, empty_end) => {
         return Failed(empty_byte_character_literal(empty_start, empty_end));
@@ -1518,8 +1538,11 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
     Identifier => {
       return Scanned(token::make_token(token::Identifier, offset, offset + 1));
     }
-    Number => {
-      return Scanned(token::make_token(token::Number, offset, offset + 1));
+    Integer => {
+      return Scanned(token::make_token(token::Integer, offset, offset + 1));
+    }
+    Float => {
+      return Scanned(token::make_token(token::Float, offset, offset + 1));
     }
     Whitespace => {
       return Scanned(token::make_token(token::Whitespace, offset, offset + 1));
@@ -1912,6 +1935,14 @@ pub fn cursor_is_identifier(cursor: TokenCursor) -> bool {
 
 pub fn cursor_is_number(cursor: TokenCursor) -> bool {
   return token::kind_is_number(cursor.current.kind);
+}
+
+pub fn cursor_is_integer(cursor: TokenCursor) -> bool {
+  return token::kind_is_integer(cursor.current.kind);
+}
+
+pub fn cursor_is_float(cursor: TokenCursor) -> bool {
+  return token::kind_is_float(cursor.current.kind);
 }
 
 pub fn cursor_is_whitespace(cursor: TokenCursor) -> bool {
