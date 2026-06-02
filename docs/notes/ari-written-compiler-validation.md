@@ -147,6 +147,9 @@ checked successful statement source ids without requiring a hosted compiler
 fix. The parser number payload-value smoke checked number statement values
 without requiring a hosted compiler fix. The parser number payload span-length
 smoke checked number statement spans without requiring a hosted compiler fix.
+The source-file span constructor helper and the source-table / loaded-source
+wrapper span constructors checked source id propagation without requiring a
+hosted compiler fix.
 The parser number payload start-offset smoke checked number statement start
 offsets without requiring a hosted compiler fix. The parser number payload
 end-offset smoke checked number statement end offsets without requiring a

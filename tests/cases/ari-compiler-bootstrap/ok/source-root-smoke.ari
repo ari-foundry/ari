@@ -666,14 +666,27 @@ fn source_line_starts_score() -> i64 {
   if source::source_file_byte_len(file) != 12 {
     return 33;
   }
-  if !source::source_file_byte_len_valid(file) {
+  let file_span = source::source_file_span(file, 4, 9);
+  if source::span_source(file_span) != 3 {
     return 34;
   }
-  if source::source_file_byte_len_valid(bad_file) {
+  if source::span_start(file_span) != 4 {
     return 35;
   }
-  if source::contains(bad_file, 0) {
+  if source::span_end(file_span) != 9 {
     return 36;
+  }
+  if source::span_len(file_span) != 5 {
+    return 37;
+  }
+  if !source::source_file_byte_len_valid(file) {
+    return 38;
+  }
+  if source::source_file_byte_len_valid(bad_file) {
+    return 39;
+  }
+  if source::contains(bad_file, 0) {
+    return 40;
   }
   return source::source_line_starts_first(lines) +
     source::source_line_starts_second(lines) +

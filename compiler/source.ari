@@ -96,6 +96,14 @@ pub fn span(source: SourceId, start: ByteOffset, end: ByteOffset) -> Span {
   return Span { source: source, start: start, end: end };
 }
 
+pub fn source_file_span(
+  file: SourceFile,
+  start: ByteOffset,
+  end: ByteOffset
+) -> Span {
+  return span(source_file_id(file), start, end);
+}
+
 pub fn span_len(span: Span) -> i64 {
   return span.end - span.start;
 }
@@ -335,7 +343,7 @@ pub fn source_table_entry_span(
   start: ByteOffset,
   end: ByteOffset
 ) -> Span {
-  return span(source_file_id(entry.file), start, end);
+  return source_file_span(entry.file, start, end);
 }
 
 pub fn source_table_entry_location_summary(
@@ -414,7 +422,7 @@ pub fn loaded_source_span(
   start: ByteOffset,
   end: ByteOffset
 ) -> Span {
-  return span(source_file_id(summary.file), start, end);
+  return source_file_span(summary.file, start, end);
 }
 
 pub fn loaded_source_first_span(summary: LoadedSourceSummary) -> Span {

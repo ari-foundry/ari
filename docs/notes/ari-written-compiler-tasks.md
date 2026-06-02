@@ -691,13 +691,15 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   span-start location path.
 - Added source-file id and byte-length query helpers in `compiler/source.ari`,
   then routed source-model helpers through those accessors.
+- Added a source-file span constructor helper in `compiler/source.ari`, then
+  routed source-table and loaded-source span constructors through it.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a source-file span constructor helper in `compiler/source.ari`.
+- Expose a source-file span validity helper in `compiler/source.ari`.
 
 ## Next Recommended Task
 
-Add a source-file span constructor helper in `compiler/source.ari`.
+Expose a source-file span validity helper in `compiler/source.ari`.

@@ -170,7 +170,7 @@ def main() -> int:
         "## Completed Tasks",
         "## Small Task Queue",
         "## Next Recommended Task",
-        "Add a source-file span constructor helper in `compiler/source.ari`",
+        "Expose a source-file span validity helper in `compiler/source.ari`",
     ]:
         require(ari_tasks, needle, ari_tasks_path)
 

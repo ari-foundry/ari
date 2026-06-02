@@ -398,6 +398,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/source.ari` exposes source-file id and byte-length query helpers,
   so downstream source-model code does not need to read `SourceFile` fields
   directly.
+- `compiler/source.ari` exposes a source-file span constructor helper, so
+  source-table and loaded-source wrappers can share the same source id handoff
+  path.
 - `compiler/source.ari` can check byte containment through a loaded source
   summary, so callers do not need to unwrap its `SourceFile`.
 - `compiler/source.ari` has a minimal `SourceLocationSummary` that carries a
