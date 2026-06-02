@@ -483,8 +483,10 @@ Desired stage0 pressure that is not yet classified as a bug:
   as test-only exit-code arithmetic. Production `compiler/*.ari` APIs should
   use named accessors, predicates, or stable classifier/query names instead.
   The loaded-source score helper was removed from `compiler/source.ari`; the
-  remaining `score`-named compiler APIs should be audited and renamed or
-  replaced as the bootstrap model gains direct queries.
+  diagnostic aggregate score helper was removed from `compiler/diagnostic.ari`;
+  diagnostic severity queries now use rank naming. The remaining `score`-named
+  compiler APIs should be audited and renamed or replaced as the bootstrap
+  model gains direct queries.
 - Wrapping a zone-backed `HashMap` in a new Ari struct was awkward in this
   slice: mutating a `HashMap` through a helper/field lost tracked-zone receiver
   information, and returning a wrapper with a raw zone pointer or embedded map

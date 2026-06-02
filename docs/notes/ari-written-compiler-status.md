@@ -251,8 +251,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   `compiler/parser.ari` exposes a parser failure end-offset helper for phase
   boundaries that need diagnostic location metadata without rendering
   diagnostics.
-- `compiler/diagnostic.ari` exposes a diagnostic severity-score accessor, and
-  `compiler/parser.ari` exposes a parser failure severity-score helper for
+- `compiler/diagnostic.ari` exposes a diagnostic severity-rank accessor, and
+  `compiler/parser.ari` exposes a parser failure severity-rank helper for
   phase boundaries that need diagnostic severity metadata without rendering
   diagnostics.
 - `compiler/parser.ari` exposes a tiny `parse_one_eof` helper so EOF-cursor
@@ -338,7 +338,7 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   end offset through `parser::parse_failure_end_offset` instead of relying only
   on diagnostic smoke-score arithmetic.
 - The bootstrap source-root smoke checks the parser whitespace diagnostic
-  severity through `parser::parse_failure_severity_score` instead of relying
+  severity through `parser::parse_failure_severity_rank` instead of relying
   only on diagnostic smoke-score arithmetic.
 - The bootstrap source-root smoke checks the parser number statement success
   path through `parser::parse_is_success` instead of relying only on parser
@@ -561,6 +561,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/source.ari` no longer exposes the test-only loaded-source score
   helper; the source-root smoke keeps score arithmetic local and marked as
   test-only.
+- `compiler/diagnostic.ari` now uses severity-rank naming and no longer
+  exposes the test-only diagnostic aggregate score helper.
 - `compiler/main.ari` is now a thin entrypoint that delegates to the driver and
   maps the driver's result to an exit code.
 - `make check-ari-compiler-bootstrap` checks each `compiler/*.ari` module,

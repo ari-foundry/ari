@@ -4796,10 +4796,10 @@ fn parse_failure_end_score() -> i64 {
 }
 
 fn parse_failure_severity_score() -> i64 {
-  if parser::parse_failure_severity_score(parser::parse_one('q', 1)) != 0 {
+  if parser::parse_failure_severity_rank(parser::parse_one('q', 1)) != 0 {
     return 1;
   }
-  if parser::parse_failure_severity_score(parser::parse_one(' ', 4)) != 3 {
+  if parser::parse_failure_severity_rank(parser::parse_one(' ', 4)) != 3 {
     return 2;
   }
   return 0;

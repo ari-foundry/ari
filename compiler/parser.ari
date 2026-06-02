@@ -250,16 +250,19 @@ pub fn parse_failure_end_offset(result: ParseResult) -> i64 {
   }
 }
 
-pub fn parse_failure_severity_score(result: ParseResult) -> i64 {
+pub fn parse_failure_severity_rank(result: ParseResult) -> i64 {
   match result {
     Parsed(_) => 0,
-    Failed(failure) => diagnostic::diagnostic_severity_score(failure),
+    Failed(failure) => diagnostic::diagnostic_severity_rank(failure),
   }
 }
 
 pub fn parse_score(result: ParseResult) -> i64 {
   match result {
     Parsed(node) => ast::node_score(node),
-    Failed(failure) => diagnostic::diagnostic_score(failure),
+    Failed(failure) => diagnostic::diagnostic_code(failure) +
+      diagnostic::diagnostic_end_offset(failure) -
+      diagnostic::diagnostic_start_offset(failure) +
+      diagnostic::diagnostic_severity_rank(failure),
   }
 }

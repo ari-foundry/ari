@@ -258,8 +258,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   location.
 - Added a diagnostic end-offset accessor and a parser failure end-offset helper,
   with source-root smoke coverage for the whitespace diagnostic location.
-- Added a diagnostic severity-score accessor and a parser failure
-  severity-score helper, with source-root smoke coverage for the whitespace
+- Added a diagnostic severity-rank accessor and a parser failure
+  severity-rank helper, with source-root smoke coverage for the whitespace
   diagnostic severity.
 - Added a focused parser unknown-token failure start-offset smoke using the
   existing parser failure start-offset helper without diagnostic rendering.
@@ -663,6 +663,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Removed the test-only loaded-source score helper from `compiler/source.ari`;
   the source-root smoke now marks local score helpers as test-only exit-code
   arithmetic and computes loaded-source fixture values through real accessors.
+- Renamed diagnostic severity score helpers to severity-rank queries and
+  removed the test-only diagnostic aggregate score helper from
+  `compiler/diagnostic.ari`.
 
 ## Small Task Queue
 

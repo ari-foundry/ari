@@ -2131,7 +2131,10 @@ pub fn handoff_score(handoff: TokenHandoff) -> i64 {
 pub fn scan_result_score(result: LexResult) -> i64 {
   match result {
     Scanned(scanned) => token::token_score(scanned),
-    Failed(failure) => diagnostic::diagnostic_score(failure),
+    Failed(failure) => diagnostic::diagnostic_code(failure) +
+      diagnostic::diagnostic_end_offset(failure) -
+      diagnostic::diagnostic_start_offset(failure) +
+      diagnostic::diagnostic_severity_rank(failure),
   }
 }
 

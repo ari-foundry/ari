@@ -19,7 +19,7 @@ pub fn error(code: i64, start: i64, end: i64) -> Diagnostic {
   return diagnostic(code, start, end, Error);
 }
 
-pub fn severity_score(severity: Severity) -> i64 {
+pub fn severity_rank(severity: Severity) -> i64 {
   match severity {
     Note => 1,
     Warning => 2,
@@ -39,13 +39,6 @@ pub fn diagnostic_end_offset(diagnostic: Diagnostic) -> i64 {
   return diagnostic.end;
 }
 
-pub fn diagnostic_severity_score(diagnostic: Diagnostic) -> i64 {
-  return severity_score(diagnostic.severity);
-}
-
-pub fn diagnostic_score(diagnostic: Diagnostic) -> i64 {
-  return diagnostic.code +
-    diagnostic.end -
-    diagnostic.start +
-    severity_score(diagnostic.severity);
+pub fn diagnostic_severity_rank(diagnostic: Diagnostic) -> i64 {
+  return severity_rank(diagnostic.severity);
 }
