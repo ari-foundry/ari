@@ -275,6 +275,26 @@ fn source_text_leading_comment_byte_char_numeric_escape_driver_score() -> i64 {
   return 0;
 }
 
+fn source_text_leading_comment_byte_char_fixed_unicode_escape_driver_score() -> i64 {
+  let line_u_code = source_text_driver_result("// skip\n'\\u0041'");
+  if line_u_code != 0 {
+    return 1;
+  }
+  let block_u_code = source_text_driver_result("/* skip */'\\u0041'");
+  if block_u_code != 0 {
+    return 2;
+  }
+  let line_big_u_code = source_text_driver_result("// skip\n'\\U00000041'");
+  if line_big_u_code != 0 {
+    return 3;
+  }
+  let block_big_u_code = source_text_driver_result("/* skip */'\\U00000041'");
+  if block_big_u_code != 0 {
+    return 4;
+  }
+  return 0;
+}
+
 fn source_text_trailing_comment_driver_score() -> i64 {
   let line_code = source_text_driver_result("p// skip");
   if line_code != 0 {
@@ -1875,6 +1895,26 @@ fn lexer_leading_comment_byte_char_numeric_escape_handoff_score() -> i64 {
     return 20 + score;
   }
   score = lexer_leading_comment_number_handoff_case_score("/* skip */'\\101'", 10, 16, 16);
+  if score != 0 {
+    return 30 + score;
+  }
+  return 0;
+}
+
+fn lexer_leading_comment_byte_char_fixed_unicode_escape_handoff_score() -> i64 {
+  var score = lexer_leading_comment_number_handoff_case_score("// skip\n'\\u0041'", 8, 16, 16);
+  if score != 0 {
+    return score;
+  }
+  score = lexer_leading_comment_number_handoff_case_score("/* skip */'\\u0041'", 10, 18, 18);
+  if score != 0 {
+    return 10 + score;
+  }
+  score = lexer_leading_comment_number_handoff_case_score("// skip\n'\\U00000041'", 8, 20, 20);
+  if score != 0 {
+    return 20 + score;
+  }
+  score = lexer_leading_comment_number_handoff_case_score("/* skip */'\\U00000041'", 10, 22, 22);
   if score != 0 {
     return 30 + score;
   }
@@ -3567,6 +3607,26 @@ fn parse_leading_comment_byte_char_numeric_escape_success_score() -> i64 {
   return 0;
 }
 
+fn parse_leading_comment_byte_char_fixed_unicode_escape_success_score() -> i64 {
+  var score = parse_leading_comment_case_score("// skip\n'\\u0041'", 8, 16);
+  if score != 0 {
+    return score;
+  }
+  score = parse_leading_comment_case_score("/* skip */'\\u0041'", 10, 18);
+  if score != 0 {
+    return 10 + score;
+  }
+  score = parse_leading_comment_case_score("// skip\n'\\U00000041'", 8, 20);
+  if score != 0 {
+    return 20 + score;
+  }
+  score = parse_leading_comment_case_score("/* skip */'\\U00000041'", 10, 22);
+  if score != 0 {
+    return 30 + score;
+  }
+  return 0;
+}
+
 fn parse_trailing_comment_case_score(text: Slice[u8], expected_statement_end: i64) -> i64 {
   let parsed = parser::parse_text(text);
   if !parser::parse_is_success(parsed) {
@@ -4345,6 +4405,7 @@ fn main() -> i64 {
     source_text_leading_comment_byte_char_driver_score() +
     source_text_leading_comment_byte_char_escape_driver_score() +
     source_text_leading_comment_byte_char_numeric_escape_driver_score() +
+    source_text_leading_comment_byte_char_fixed_unicode_escape_driver_score() +
     source_text_trailing_comment_driver_score() +
     source_text_trailing_unterminated_block_driver_score() +
     source_text_post_comment_extra_token_driver_score() +
@@ -4398,11 +4459,13 @@ fn main() -> i64 {
     parse_leading_comment_byte_char_success_score() +
     parse_leading_comment_byte_char_escape_success_score() +
     parse_leading_comment_byte_char_numeric_escape_success_score() +
+    parse_leading_comment_byte_char_fixed_unicode_escape_success_score() +
     parse_trailing_comment_success_score() +
     lexer_trailing_comment_handoff_score() +
     lexer_leading_comment_byte_char_handoff_score() +
     lexer_leading_comment_byte_char_escape_handoff_score() +
     lexer_leading_comment_byte_char_numeric_escape_handoff_score() +
+    lexer_leading_comment_byte_char_fixed_unicode_escape_handoff_score() +
     parse_trailing_unterminated_block_failure_score() +
     lexer_trailing_unterminated_block_handoff_score() +
     parse_leading_comment_unterminated_block_failure_score() +

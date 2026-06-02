@@ -542,15 +542,19 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   a statement token, checking line and block comments followed by `'\x41'` and
   `'\101'` through lexer handoff, parser, keyword-table parser, and driver
   paths.
+- Added source-text leading-comment byte-character fixed-width Unicode escape
+  spans before a statement token, checking line and block comments followed by
+  `'\u0041'` and `'\U00000041'` through lexer handoff, parser,
+  keyword-table parser, and driver paths.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add source-text leading-comment byte-character fixed-width Unicode escape
-  spans before a statement token.
+- Add source-text leading-comment byte-character braced Unicode escape spans
+  before a statement token.
 
 ## Next Recommended Task
 
-Add source-text leading-comment byte-character fixed-width Unicode escape spans
+Add source-text leading-comment byte-character braced Unicode escape spans
 before a statement token.
