@@ -170,7 +170,7 @@ def main() -> int:
         "## Completed Tasks",
         "## Small Task Queue",
         "## Next Recommended Task",
-        "Add a loaded-source first-byte location summary helper in `compiler/source.ari`",
+        "Add source-file id and byte-length query helpers in `compiler/source.ari`",
     ]:
         require(ari_tasks, needle, ari_tasks_path)
 

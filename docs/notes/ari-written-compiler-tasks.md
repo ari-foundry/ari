@@ -686,13 +686,16 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   delegating through the wrapped `SourceFile` containment rule.
 - Added a loaded-source first-byte span helper in `compiler/source.ari`,
   deriving `first_offset..first_offset + 1` from the summary metadata.
+- Added a loaded-source first-byte location summary helper in
+  `compiler/source.ari`, reusing the first-byte span and loaded-source-local
+  span-start location path.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a loaded-source first-byte location summary helper in `compiler/source.ari`.
+- Add source-file id and byte-length query helpers in `compiler/source.ari`.
 
 ## Next Recommended Task
 
-Add a loaded-source first-byte location summary helper in `compiler/source.ari`.
+Add source-file id and byte-length query helpers in `compiler/source.ari`.

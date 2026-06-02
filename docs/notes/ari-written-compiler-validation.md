@@ -654,4 +654,6 @@ Desired stage0 pressure that is not yet classified as a bug:
   requiring a hosted compiler fix. Loaded-source byte containment now delegates
   through the wrapped `SourceFile` without requiring a hosted compiler fix.
   Loaded-source first-byte spans now derive `first_offset..first_offset + 1`
-  from the summary without requiring a hosted compiler fix.
+  from the summary without requiring a hosted compiler fix. Loaded-source
+  first-byte location summaries now reuse that span plus the loaded-source
+  span-start location helper without requiring a hosted compiler fix.

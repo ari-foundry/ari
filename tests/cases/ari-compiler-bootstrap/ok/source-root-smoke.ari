@@ -1041,6 +1041,28 @@ fn source_location_summary_score() -> i64 {
   if source::span_end(loaded_helper_span) != 11 {
     return 84;
   }
+  let loaded_first_location = source::loaded_source_first_location_summary(loaded, lines);
+  if source::source_location_summary_source(loaded_first_location) != 6 {
+    return 85;
+  }
+  if source::source_location_summary_byte_offset(loaded_first_location) != 0 {
+    return 86;
+  }
+  if source::source_location_summary_line(loaded_first_location) != 1 {
+    return 87;
+  }
+  if source::source_location_summary_column(loaded_first_location) != 1 {
+    return 88;
+  }
+  let bad_loaded_first_location = source::loaded_source_first_location_summary(loaded, bad_lines);
+  if source::source_location_summary_valid(bad_loaded_first_location) {
+    return 89;
+  }
+  let eof_first_loaded = source::loaded_source_summary(6, 12, 's', 12);
+  let eof_first_location = source::loaded_source_first_location_summary(eof_first_loaded, lines);
+  if source::source_location_summary_valid(eof_first_location) {
+    return 90;
+  }
   return source::source_location_summary_source(location) +
     source::source_location_summary_byte_offset(location) +
     source::source_location_summary_line(location) +

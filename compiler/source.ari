@@ -426,6 +426,17 @@ pub fn loaded_source_location_summary(
   return source_location_summary(summary.file, lines, offset);
 }
 
+pub fn loaded_source_first_location_summary(
+  summary: LoadedSourceSummary,
+  lines: SourceLineStarts
+) -> SourceLocationSummary {
+  return loaded_source_span_start_location_summary(
+    summary,
+    lines,
+    loaded_source_first_span(summary)
+  );
+}
+
 pub fn loaded_source_span_start_location_summary(
   summary: LoadedSourceSummary,
   lines: SourceLineStarts,
