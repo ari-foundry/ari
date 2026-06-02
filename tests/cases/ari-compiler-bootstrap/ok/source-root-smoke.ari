@@ -1909,6 +1909,10 @@ fn lexer_leading_comment_extra_token_handoff_score() -> i64 {
   return 0;
 }
 
+fn lexer_crlf_line_comment_extra_token_handoff_score() -> i64 {
+  return lexer_extra_token_handoff_case_score("// skip\r\nname other", 9, 13, 14, 19);
+}
+
 fn lexer_post_comment_extra_token_handoff_score() -> i64 {
   var score = lexer_extra_token_handoff_case_score(
     "name// skip\nother",
@@ -4415,6 +4419,7 @@ fn main() -> i64 {
     parse_leading_comment_extra_token_failure_score() +
     parse_crlf_line_comment_extra_token_failure_score() +
     lexer_leading_comment_extra_token_handoff_score() +
+    lexer_crlf_line_comment_extra_token_handoff_score() +
     parse_post_comment_extra_token_failure_score() +
     lexer_post_comment_extra_token_handoff_score() +
     parse_post_comment_lexer_failure_score() +

@@ -581,13 +581,16 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   checking `// skip\r\nname other` preserves parser missing-EOF diagnostic
   code `2003` and extra-token span `14..19` through parser, keyword-table
   parser, and source-text driver paths.
+- Added CRLF line-comment source-text extra-token handoff coverage, checking
+  `// skip\r\nname other` preserves the first statement span `9..13` and keeps
+  the extra identifier visible in the handoff EOF slot at span `14..19`.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add CRLF line-comment source-text extra-token handoff coverage.
+- Add CRLF post-comment source-text extra-token parser and driver coverage.
 
 ## Next Recommended Task
 
-Add CRLF line-comment source-text extra-token handoff coverage.
+Add CRLF post-comment source-text extra-token parser and driver coverage.

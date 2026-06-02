@@ -289,6 +289,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   diagnostics before a statement followed by another identifier, preserving
   parser missing-EOF diagnostic code `2003` and span `14..19` through the
   parser and keyword-table parser paths.
+- The bootstrap source-root smoke checks CRLF line-comment extra-token handoff
+  before a statement followed by another identifier, preserving the first token
+  span `9..13` and the extra token span `14..19` in the handoff EOF slot.
 - The bootstrap source-root smoke checks source-text parser trailing
   unterminated block-comment diagnostics after a statement token, including
   both immediate `name/* open` and whitespace-separated `name /* open`
