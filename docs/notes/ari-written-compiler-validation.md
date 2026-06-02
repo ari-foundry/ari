@@ -258,6 +258,10 @@ The lexer keyword smoke checked exact `as` source-text classification and
 preserved `ask` as an identifier without requiring a hosted compiler fix.
 The lexer keyword smoke checked exact `meta` source-text classification and
 preserved `metadata` as an identifier without requiring a hosted compiler fix.
+The lexer keyword smoke now also checks the stateless `scan_text` fallback for
+`struct`, `extern`, `enum`, `trait`, `dyn`, `match`, `mod`, `pub`, `use`,
+`impl`, `for`, and `in`, matching the existing HashMap-backed keyword table
+path without requiring a hosted compiler fix.
 The working-rule update recorded that bootstrap decisions must come from
 inspecting actual repo structure, stdlib APIs, tests, and stage0 behavior
 rather than inference; this required no hosted compiler fix.
@@ -472,6 +476,9 @@ Desired stage0 pressure that is not yet classified as a bug:
 - The compatibility keyword lookup still lives in stateless
   `identifier_kind_from_text`; keep it only for focused legacy smokes while
   adding future source-text keywords to the reusable `KeywordTable` path.
+  It now mirrors the current `KeywordTable` keyword set, but maintaining two
+  keyword lists remains lexer design pressure until the stateless API is
+  retired or can share table data without forcing ad hoc zone plumbing.
 - Keep the reusable keyword-table source-root smoke data-driven through its
   table-case helper as future keywords are backfilled; new cases should add one
   helper call rather than another copied cursor-check block.

@@ -92,13 +92,16 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   and `>>=` with source-text longest-match behavior while preserving `<<`,
   `>>`, `<=`, and `>=`.
 - `compiler/lexer.ari` classifies exact source-text `fn`, `const`, `as`,
-  `meta`, `let`, `var`, `own`, `ref`, `mut`, `ptr`, `return`, `if`, `else`,
-  `while`, `init`, `next`, `continue`, `break`, `drop`, `forget`, `null`,
-  `true`, and `false` as keywords while preserving longer identifier runs such
-  as `fn1`, `constant`, `ask`, `metadata`, `letter`, `variant`, `owner`,
-  `reference`, `mutable`, `ptrace`, `returning`, `iffy`, `elsewhere`, `while1`,
-  `initial`, `next1`, `continue1`, `break1`, `drop1`, `forget1`, `null1`,
-  `true1`, and `false1` as identifiers.
+  `meta`, `struct`, `extern`, `enum`, `trait`, `dyn`, `match`, `mod`, `pub`,
+  `use`, `impl`, `for`, `in`, `let`, `var`, `own`, `ref`, `mut`, `ptr`,
+  `return`, `if`, `else`, `while`, `init`, `next`, `continue`, `break`,
+  `drop`, `forget`, `null`, `true`, and `false` as keywords while preserving
+  longer identifier runs such as `fn1`, `constant`, `ask`, `metadata`,
+  `structure`, `external`, `enumerate`, `traitor`, `dynamic`, `matches`,
+  `module`, `public`, `user`, `implicit`, `forest`, `inside`, `letter`,
+  `variant`, `owner`, `reference`, `mutable`, `ptrace`, `returning`, `iffy`,
+  `elsewhere`, `while1`, `initial`, `next1`, `continue1`, `break1`, `drop1`,
+  `forget1`, `null1`, `true1`, and `false1` as identifiers.
 - Ari-written compiler code assumes `lib/std` is available and should use it
   directly. `HashMap` and byte-slice string lookup helpers are available in
   `lib/std/collections.arih`.

@@ -3746,6 +3746,138 @@ fn lexer_keyword_score() -> i64 {
       9,
       "meta",
       'm'
+    ) +
+    lexer_keyword_case_with_base_score(
+      2300,
+      "struct name",
+      6,
+      109,
+      "structure",
+      9,
+      10,
+      "struct",
+      's'
+    ) +
+    lexer_keyword_case_with_base_score(
+      2400,
+      "extern name",
+      6,
+      110,
+      "external",
+      8,
+      9,
+      "extern",
+      'e'
+    ) +
+    lexer_keyword_case_with_base_score(
+      2500,
+      "enum name",
+      4,
+      109,
+      "enumerate",
+      9,
+      10,
+      "enum",
+      'e'
+    ) +
+    lexer_keyword_case_with_base_score(
+      2600,
+      "trait name",
+      5,
+      111,
+      "traitor",
+      7,
+      8,
+      "trait",
+      't'
+    ) +
+    lexer_keyword_case_with_base_score(
+      2700,
+      "dyn name",
+      3,
+      110,
+      "dynamic",
+      7,
+      8,
+      "dyn",
+      'd'
+    ) +
+    lexer_keyword_case_with_base_score(
+      2800,
+      "match name",
+      5,
+      113,
+      "matches",
+      7,
+      8,
+      "match",
+      'm'
+    ) +
+    lexer_keyword_case_with_base_score(
+      2900,
+      "mod name",
+      3,
+      112,
+      "module",
+      6,
+      7,
+      "mod",
+      'm'
+    ) +
+    lexer_keyword_case_with_base_score(
+      3000,
+      "pub name",
+      3,
+      113,
+      "public",
+      6,
+      7,
+      "pub",
+      'p'
+    ) +
+    lexer_keyword_case_with_base_score(
+      3100,
+      "use name",
+      3,
+      114,
+      "user",
+      4,
+      5,
+      "use",
+      'u'
+    ) +
+    lexer_keyword_case_with_base_score(
+      3200,
+      "impl name",
+      4,
+      116,
+      "implicit",
+      8,
+      9,
+      "impl",
+      'i'
+    ) +
+    lexer_keyword_case_with_base_score(
+      3300,
+      "for name",
+      3,
+      116,
+      "forest",
+      6,
+      7,
+      "for",
+      'f'
+    ) +
+    lexer_keyword_case_with_base_score(
+      3400,
+      "in name",
+      2,
+      116,
+      "inside",
+      6,
+      7,
+      "in",
+      'i'
     );
 }
 

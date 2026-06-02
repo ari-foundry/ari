@@ -511,8 +511,26 @@ fn identifier_kind_from_text(text: std::Slice[u8], start: i64, end: i64) -> toke
     if identifier_text_matches(text, start, end, "if") {
       return token::KwIf;
     }
+    if identifier_text_matches(text, start, end, "in") {
+      return token::KwIn;
+    }
   }
   if width == 3 {
+    if identifier_text_matches(text, start, end, "dyn") {
+      return token::KwDyn;
+    }
+    if identifier_text_matches(text, start, end, "mod") {
+      return token::KwMod;
+    }
+    if identifier_text_matches(text, start, end, "pub") {
+      return token::KwPub;
+    }
+    if identifier_text_matches(text, start, end, "use") {
+      return token::KwUse;
+    }
+    if identifier_text_matches(text, start, end, "for") {
+      return token::KwFor;
+    }
     if identifier_text_matches(text, start, end, "let") {
       return token::KwLet;
     }
@@ -535,6 +553,12 @@ fn identifier_kind_from_text(text: std::Slice[u8], start: i64, end: i64) -> toke
   if width == 4 {
     if identifier_text_matches(text, start, end, "meta") {
       return token::KwMeta;
+    }
+    if identifier_text_matches(text, start, end, "enum") {
+      return token::KwEnum;
+    }
+    if identifier_text_matches(text, start, end, "impl") {
+      return token::KwImpl;
     }
     if identifier_text_matches(text, start, end, "else") {
       return token::KwElse;
@@ -559,6 +583,12 @@ fn identifier_kind_from_text(text: std::Slice[u8], start: i64, end: i64) -> toke
     if identifier_text_matches(text, start, end, "const") {
       return token::KwConst;
     }
+    if identifier_text_matches(text, start, end, "trait") {
+      return token::KwTrait;
+    }
+    if identifier_text_matches(text, start, end, "match") {
+      return token::KwMatch;
+    }
     if identifier_text_matches(text, start, end, "while") {
       return token::KwWhile;
     }
@@ -570,6 +600,12 @@ fn identifier_kind_from_text(text: std::Slice[u8], start: i64, end: i64) -> toke
     }
   }
   if width == 6 {
+    if identifier_text_matches(text, start, end, "struct") {
+      return token::KwStruct;
+    }
+    if identifier_text_matches(text, start, end, "extern") {
+      return token::KwExtern;
+    }
     if identifier_text_matches(text, start, end, "return") {
       return token::KwReturn;
     }

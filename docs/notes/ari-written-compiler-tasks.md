@@ -693,13 +693,18 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   then routed source-model helpers through those accessors.
 - Added a source-file span constructor helper in `compiler/source.ari`, then
   routed source-table and loaded-source span constructors through it.
+- Completed the stateless lexer keyword fallback so `scan_text` now recognizes
+  the same exact keyword set as the HashMap-backed `KeywordTable` path.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
 - Expose a source-file span validity helper in `compiler/source.ari`.
+- Continue lexer parity by adding source-text smoke coverage for the next
+  missing stage0 token family before growing parser logic.
 
 ## Next Recommended Task
 
-Expose a source-file span validity helper in `compiler/source.ari`.
+Continue lexer parity by adding source-text smoke coverage for the next missing
+stage0 token family before growing parser logic.

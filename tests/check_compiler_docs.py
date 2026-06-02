@@ -170,7 +170,7 @@ def main() -> int:
         "## Completed Tasks",
         "## Small Task Queue",
         "## Next Recommended Task",
-        "Expose a source-file span validity helper in `compiler/source.ari`",
+        "Continue lexer parity by adding source-text smoke coverage for the next missing",
     ]:
         require(ari_tasks, needle, ari_tasks_path)
 
