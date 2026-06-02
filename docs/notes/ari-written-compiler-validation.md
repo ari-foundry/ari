@@ -612,7 +612,9 @@ Desired stage0 pressure that is not yet classified as a bug:
   spans, and out-of-range spans before deriving line and byte-column metadata,
   without requiring a hosted compiler fix. Span-end location summaries share
   the same validity rule and preserve EOF insertion-point locations without
-  requiring a hosted compiler fix. Full source table ownership, file path
-  strings, loaded text ownership, owned line-start arrays, CRLF visual-column
-  handling, UTF-8 byte-column policy, and diagnostic location mapping remain
-  pending.
+  requiring a hosted compiler fix. Source-table entry span-start location
+  summaries delegate through the entry's `SourceFile`, avoiding duplicated
+  entry unwrapping without requiring a hosted compiler fix. Full source table
+  ownership, file path strings, loaded text ownership, owned line-start arrays,
+  CRLF visual-column handling, UTF-8 byte-column policy, and diagnostic
+  location mapping remain pending.
