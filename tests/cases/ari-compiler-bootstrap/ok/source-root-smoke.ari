@@ -3015,151 +3015,89 @@ fn lexer_keyword_table_case_score(
   return 0;
 }
 
+fn lexer_keyword_table_flow_score(table: ref lexer::KeywordTable) -> i64 {
+  let text = "meta name";
+  let keyword = lexer::cursor_from_text_with_keywords(table, text, 0);
+  if !lexer::cursor_is_keyword(keyword) {
+    return 1;
+  }
+  if lexer::cursor_token_score(keyword) != 106 {
+    return 2;
+  }
+
+  let name = lexer::cursor_advance_significant_in_text_with_keywords(table, keyword, text);
+  if !lexer::cursor_is_identifier(name) {
+    return 3;
+  }
+  if lexer::cursor_token_start(name) != 5 {
+    return 4;
+  }
+
+  let longer = lexer::cursor_from_text_with_keywords(table, "metadata", 0);
+  if !lexer::cursor_is_identifier(longer) {
+    return 5;
+  }
+  if lexer::cursor_is_keyword(longer) {
+    return 6;
+  }
+
+  let handoff = lexer::handoff_from_text_with_keywords(table, "as");
+  if !lexer::handoff_starts_with_keyword(handoff) {
+    return 7;
+  }
+  if !lexer::handoff_has_eof(handoff) {
+    return 8;
+  }
+  return 0;
+}
+
+fn lexer_keyword_table_keywords_score(table: ref lexer::KeywordTable) -> i64 {
+  return
+    lexer_keyword_table_case_score(table, 60, "fn", 82, 2, "fn1", 3) +
+    lexer_keyword_table_case_score(table, 70, "const", 105, 5, "constant", 8) +
+    lexer_keyword_table_case_score(table, 80, "as", 103, 2, "ask", 3) +
+    lexer_keyword_table_case_score(table, 90, "meta", 106, 4, "metadata", 8) +
+    lexer_keyword_table_case_score(table, 100, "struct", 109, 6, "structure", 9) +
+    lexer_keyword_table_case_score(table, 110, "extern", 110, 6, "external", 8) +
+    lexer_keyword_table_case_score(table, 120, "enum", 109, 4, "enumerate", 9) +
+    lexer_keyword_table_case_score(table, 130, "trait", 111, 5, "traitor", 7) +
+    lexer_keyword_table_case_score(table, 140, "dyn", 110, 3, "dynamic", 7) +
+    lexer_keyword_table_case_score(table, 150, "match", 113, 5, "matches", 7) +
+    lexer_keyword_table_case_score(table, 160, "mod", 112, 3, "module", 6) +
+    lexer_keyword_table_case_score(table, 170, "pub", 113, 3, "public", 6) +
+    lexer_keyword_table_case_score(table, 180, "use", 114, 3, "user", 4) +
+    lexer_keyword_table_case_score(table, 190, "impl", 116, 4, "implicit", 8) +
+    lexer_keyword_table_case_score(table, 200, "for", 116, 3, "forest", 6) +
+    lexer_keyword_table_case_score(table, 210, "in", 116, 2, "inside", 6) +
+    lexer_keyword_table_case_score(table, 220, "let", 84, 3, "letter", 6) +
+    lexer_keyword_table_case_score(table, 230, "var", 85, 3, "variant", 7) +
+    lexer_keyword_table_case_score(table, 240, "own", 86, 3, "owner", 5) +
+    lexer_keyword_table_case_score(table, 250, "ref", 87, 3, "reference", 9) +
+    lexer_keyword_table_case_score(table, 260, "mut", 88, 3, "mutable", 7) +
+    lexer_keyword_table_case_score(table, 270, "ptr", 89, 3, "ptrace", 6) +
+    lexer_keyword_table_case_score(table, 280, "return", 93, 6, "returning", 9) +
+    lexer_keyword_table_case_score(table, 290, "if", 90, 2, "iffy", 4) +
+    lexer_keyword_table_case_score(table, 300, "else", 93, 4, "elsewhere", 9) +
+    lexer_keyword_table_case_score(table, 310, "while", 95, 5, "while1", 6) +
+    lexer_keyword_table_case_score(table, 320, "init", 95, 4, "initial", 7) +
+    lexer_keyword_table_case_score(table, 330, "next", 96, 4, "next1", 5) +
+    lexer_keyword_table_case_score(table, 340, "continue", 101, 8, "continue1", 9) +
+    lexer_keyword_table_case_score(table, 350, "break", 99, 5, "break1", 6) +
+    lexer_keyword_table_case_score(table, 360, "drop", 99, 4, "drop1", 5) +
+    lexer_keyword_table_case_score(table, 370, "forget", 102, 6, "forget1", 7) +
+    lexer_keyword_table_case_score(table, 380, "null", 101, 4, "null1", 5) +
+    lexer_keyword_table_case_score(table, 390, "true", 102, 4, "true1", 5) +
+    lexer_keyword_table_case_score(table, 400, "false", 104, 5, "false1", 6);
+}
+
 fn lexer_keyword_table_score() -> i64 {
   zone(65536) {
     var table = lexer::keyword_table();
-    var score = 0;
-
-    let text = "meta name";
-    let keyword = lexer::cursor_from_text_with_keywords(ref table, text, 0);
-    if score == 0 && !lexer::cursor_is_keyword(keyword) {
-      score = 1;
+    let flow_score = lexer_keyword_table_flow_score(ref table);
+    if flow_score != 0 {
+      return flow_score;
     }
-    if score == 0 && lexer::cursor_token_score(keyword) != 106 {
-      score = 2;
-    }
-
-    let name = lexer::cursor_advance_significant_in_text_with_keywords(ref table, keyword, text);
-    if score == 0 && !lexer::cursor_is_identifier(name) {
-      score = 3;
-    }
-    if score == 0 && lexer::cursor_token_start(name) != 5 {
-      score = 4;
-    }
-
-    let longer = lexer::cursor_from_text_with_keywords(ref table, "metadata", 0);
-    if score == 0 && !lexer::cursor_is_identifier(longer) {
-      score = 5;
-    }
-    if score == 0 && lexer::cursor_is_keyword(longer) {
-      score = 6;
-    }
-
-    let handoff = lexer::handoff_from_text_with_keywords(ref table, "as");
-    if score == 0 && !lexer::handoff_starts_with_keyword(handoff) {
-      score = 7;
-    }
-    if score == 0 && !lexer::handoff_has_eof(handoff) {
-      score = 8;
-    }
-
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 60, "fn", 82, 2, "fn1", 3);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 70, "const", 105, 5, "constant", 8);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 80, "as", 103, 2, "ask", 3);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 90, "meta", 106, 4, "metadata", 8);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 100, "struct", 109, 6, "structure", 9);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 110, "extern", 110, 6, "external", 8);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 120, "enum", 109, 4, "enumerate", 9);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 130, "trait", 111, 5, "traitor", 7);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 140, "dyn", 110, 3, "dynamic", 7);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 150, "match", 113, 5, "matches", 7);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 160, "mod", 112, 3, "module", 6);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 170, "pub", 113, 3, "public", 6);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 180, "use", 114, 3, "user", 4);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 190, "impl", 116, 4, "implicit", 8);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 200, "for", 116, 3, "forest", 6);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 210, "in", 116, 2, "inside", 6);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 220, "let", 84, 3, "letter", 6);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 230, "var", 85, 3, "variant", 7);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 240, "own", 86, 3, "owner", 5);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 250, "ref", 87, 3, "reference", 9);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 260, "mut", 88, 3, "mutable", 7);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 270, "ptr", 89, 3, "ptrace", 6);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 280, "return", 93, 6, "returning", 9);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 290, "if", 90, 2, "iffy", 4);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 300, "else", 93, 4, "elsewhere", 9);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 310, "while", 95, 5, "while1", 6);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 320, "init", 95, 4, "initial", 7);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 330, "next", 96, 4, "next1", 5);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 340, "continue", 101, 8, "continue1", 9);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 350, "break", 99, 5, "break1", 6);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 360, "drop", 99, 4, "drop1", 5);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 370, "forget", 102, 6, "forget1", 7);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 380, "null", 101, 4, "null1", 5);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 390, "true", 102, 4, "true1", 5);
-    }
-    if score == 0 {
-      score = lexer_keyword_table_case_score(ref table, 400, "false", 104, 5, "false1", 6);
-    }
-
-    return score;
+    return lexer_keyword_table_keywords_score(ref table);
   }
 }
 

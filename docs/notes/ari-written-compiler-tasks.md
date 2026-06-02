@@ -558,6 +558,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   `zone(65536)` block, added table-backed `fn`, `const`, `as`, and `meta`
   keyword cases to the shared helper path, and consolidated copied parser
   keyword failure checks behind one helper-scored keyword set.
+- Split the keyword-table source-root smoke into a focused flow helper and a
+  table keyword-set helper, removing the long `var score` / `if score == 0`
+  chain that made the fixture look like debugging scaffolding.
 
 ## Small Task Queue
 

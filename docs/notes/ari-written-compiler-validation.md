@@ -453,6 +453,10 @@ lexical `zone(65536)` style for the keyword-table fixture. The same pass moved
 copied parser keyword failure checks into one helper-scored keyword set and
 backfilled table/parser coverage for `fn`, `const`, `as`, and `meta`; this was
 fixture cleanup and coverage tightening, not a hosted compiler bug.
+The keyword-table fixture was then split again into a flow helper and a
+keyword-set helper so the smoke no longer carries a long `var score` /
+`if score == 0` chain. This was another source-root smoke readability cleanup,
+not a hosted compiler behavior change.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
