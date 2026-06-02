@@ -573,13 +573,17 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Added CRLF line-comment source-text parser and driver coverage, checking
   `// skip\r\nname` statement spans through parser and keyword-table parser
   paths and `// skip\r\np` through the source-text driver path.
+- Added CRLF line-comment source-text lexer-failure parser and driver
+  coverage, checking `// skip\r\n"open` preserves unterminated-string
+  diagnostic code `1004` and span `9..14` through parser, keyword-table
+  parser, and source-text driver paths.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add CRLF line-comment source-text lexer-failure parser and driver coverage.
+- Add CRLF line-comment source-text extra-token parser and driver coverage.
 
 ## Next Recommended Task
 
-Add CRLF line-comment source-text lexer-failure parser and driver coverage.
+Add CRLF line-comment source-text extra-token parser and driver coverage.

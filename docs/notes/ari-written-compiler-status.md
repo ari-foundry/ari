@@ -281,6 +281,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - The bootstrap source-root smoke checks CRLF line-comment parser success
   before a statement token, preserving the carriage return inside the skipped
   comment span and starting the statement at byte offset 9.
+- The bootstrap source-root smoke checks CRLF line-comment parser
+  lexer-failure diagnostics before an unterminated string, preserving
+  diagnostic code `1004` and span `9..14` through the parser and keyword-table
+  parser paths.
 - The bootstrap source-root smoke checks source-text parser trailing
   unterminated block-comment diagnostics after a statement token, including
   both immediate `name/* open` and whitespace-separated `name /* open`
@@ -387,6 +391,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   `2001`.
 - The bootstrap source-root smoke checks the source-text driver CRLF
   line-comment path and verifies `// skip\r\np` preserves `Ok(0)`.
+- The bootstrap source-root smoke checks the source-text driver CRLF
+  line-comment lexer-failure path and verifies `// skip\r\n"open` preserves
+  lexer diagnostic code `1004`.
 - The bootstrap source-root smoke checks the source-text driver trailing
   comment path and verifies line and block comments after a statement token
   preserve `Ok(0)`.
