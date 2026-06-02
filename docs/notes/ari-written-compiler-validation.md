@@ -189,6 +189,11 @@ cursor loops into private significant-cursor helpers for the plain and
 keyword-table paths. Public significant-advance helpers and text handoff
 constructors now share those helpers without changing scan order, and this
 required no hosted compiler fix.
+The text scan entrypoint review moved EOF and identifier token construction
+into private helpers shared by token-only and result-producing scans. This keeps
+the recovery/diagnostic policy split intact while removing duplicated
+source-span construction for the token cases that are identical, and required
+no hosted compiler fix.
 The AST statement-kind query and parser payload-shape smoke checked successful
 statement output without requiring a hosted compiler fix. The AST node
 span-length query and parser payload-span smoke checked successful statement
@@ -612,6 +617,10 @@ Desired stage0 pressure that is not yet classified as a bug:
   separation: significant-token traversal belongs in a helper, while handoff
   constructors should only choose the first/eof cursors. The helper still has
   plain and keyword-table variants for the same reason as the result path.
+- Token-only and result-producing scan entrypoints should share construction
+  helpers for token cases with identical behavior, such as EOF and identifiers,
+  while keeping diagnostic-only branches separate where recovery token behavior
+  intentionally differs.
 - Wrapping a zone-backed `HashMap` in a new Ari struct was awkward in this
   slice: mutating a `HashMap` through a helper/field lost tracked-zone receiver
   information, and returning a wrapper with a raw zone pointer or embedded map

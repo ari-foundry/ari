@@ -993,6 +993,25 @@ fn identifier_kind_from_keywords(
   return table.get_or_bytes(spelling, token::Identifier);
 }
 
+fn make_eof_token(offset: i64) -> token::Token {
+  return token::make_token(token::EndOfFile, offset, offset);
+}
+
+fn make_identifier_token_from_text(text: std::Slice[u8], offset: i64) -> token::Token {
+  let identifier_end = identifier_end_from_text(text, offset);
+  return token::make_token(token::Identifier, offset, identifier_end);
+}
+
+fn make_identifier_token_from_text_with_keywords(
+  table: ref KeywordTable,
+  text: std::Slice[u8],
+  offset: i64
+) -> token::Token {
+  let identifier_end = identifier_end_from_text(text, offset);
+  let kind = identifier_kind_from_keywords(table, text, offset, identifier_end);
+  return token::make_token(kind, offset, identifier_end);
+}
+
 pub fn is_whitespace(value: char) -> bool {
   return value == ' ' || value == '\n' || value == '\t' || value == '\r';
 }
@@ -1835,13 +1854,11 @@ pub fn scan_text_with_keywords(
   offset: i64
 ) -> token::Token {
   if offset >= text.len {
-    return token::make_token(token::EndOfFile, offset, offset);
+    return make_eof_token(offset);
   }
 
   if is_identifier_start(text[offset]) {
-    let identifier_end = identifier_end_from_text(text, offset);
-    let kind = identifier_kind_from_keywords(table, text, offset, identifier_end);
-    return token::make_token(kind, offset, identifier_end);
+    return make_identifier_token_from_text_with_keywords(table, text, offset);
   }
 
   return scan_non_identifier_text(text, offset);
@@ -1853,13 +1870,11 @@ pub fn scan_text_with_keywords_result(
   offset: i64
 ) -> LexResult {
   if offset >= text.len {
-    return Scanned(token::make_token(token::EndOfFile, offset, offset));
+    return Scanned(make_eof_token(offset));
   }
 
   if is_identifier_start(text[offset]) {
-    let identifier_end = identifier_end_from_text(text, offset);
-    let kind = identifier_kind_from_keywords(table, text, offset, identifier_end);
-    return Scanned(token::make_token(kind, offset, identifier_end));
+    return Scanned(make_identifier_token_from_text_with_keywords(table, text, offset));
   }
 
   return scan_non_identifier_text_result(text, offset);
@@ -1867,13 +1882,12 @@ pub fn scan_text_with_keywords_result(
 
 pub fn scan_text(text: std::Slice[u8], offset: i64) -> token::Token {
   if offset >= text.len {
-    return token::make_token(token::EndOfFile, offset, offset);
+    return make_eof_token(offset);
   }
 
   let first = text[offset];
   if is_identifier_start(first) {
-    let identifier_end = identifier_end_from_text(text, offset);
-    return token::make_token(token::Identifier, offset, identifier_end);
+    return make_identifier_token_from_text(text, offset);
   }
 
   return scan_non_identifier_text(text, offset);
@@ -1881,13 +1895,12 @@ pub fn scan_text(text: std::Slice[u8], offset: i64) -> token::Token {
 
 pub fn scan_text_result(text: std::Slice[u8], offset: i64) -> LexResult {
   if offset >= text.len {
-    return Scanned(token::make_token(token::EndOfFile, offset, offset));
+    return Scanned(make_eof_token(offset));
   }
 
   let first = text[offset];
   if is_identifier_start(first) {
-    let identifier_end = identifier_end_from_text(text, offset);
-    return Scanned(token::make_token(token::Identifier, offset, identifier_end));
+    return Scanned(make_identifier_token_from_text(text, offset));
   }
 
   return scan_non_identifier_text_result(text, offset);
@@ -2024,7 +2037,7 @@ pub fn scan_one_result(value: char, offset: i64) -> LexResult {
 
 pub fn cursor_eof(offset: i64) -> TokenCursor {
   return TokenCursor {
-    current: token::make_token(token::EndOfFile, offset, offset),
+    current: make_eof_token(offset),
     offset: offset,
     done: true,
   };

@@ -688,6 +688,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Non-result text cursor advancement and handoff construction now share private
   significant-cursor helpers, so whitespace skipping is no longer open-coded in
   every handoff constructor.
+- Text scan entrypoints now share private EOF and identifier token-construction
+  helpers between token-only and result-producing paths.
 - `compiler/lexer.ari` now uses ranked-width and ranked-position query names
   and no longer exposes public `score` helpers.
 - `compiler/parser.ari` now uses parser kind-rank query names and no longer
