@@ -272,6 +272,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - The bootstrap source-root smoke checks source-text comment-only parser EOF
   diagnostics after skipped line and block comments, including failure span
   offsets at the end of the skipped comment.
+- The bootstrap source-root smoke checks an explicit EOF line-comment spelling
+  through the source-text parser and keyword-table parser paths, preserving
+  parser EOF diagnostic code `2001` at byte offset 6.
 - The bootstrap source-root smoke checks source-text parser success with
   trailing line and block comments after a statement token, preserving the
   statement span while skipping comments to EOF.
@@ -376,6 +379,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - The bootstrap source-root smoke checks the source-text driver comment-only
   path and verifies skipped line and block comments preserve parser EOF
   diagnostic code `2001`.
+- The bootstrap source-root smoke checks the source-text driver EOF
+  line-comment path and verifies `// eof` preserves parser EOF diagnostic code
+  `2001`.
 - The bootstrap source-root smoke checks the source-text driver trailing
   comment path and verifies line and block comments after a statement token
   preserve `Ok(0)`.

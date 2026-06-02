@@ -71,6 +71,14 @@ fn source_text_comment_only_driver_score() -> i64 {
   return source_text_line_block_driver_score("// skip", "/* skip */", 2001);
 }
 
+fn source_text_eof_line_comment_driver_score() -> i64 {
+  let code = source_text_driver_result("// eof");
+  if code != 2001 {
+    return 1;
+  }
+  return 0;
+}
+
 fn source_text_leading_comment_driver_score() -> i64 {
   return source_text_line_block_driver_score("// skip\np", "/* skip */p", 0);
 }
@@ -3397,13 +3405,14 @@ fn parser_keyword_failure_case_score(
 }
 
 fn parse_comment_only_case_score(text: Slice[u8], expected_offset: i64) -> i64 {
-  if parser::parse_failure_code(parser::parse_text(text)) != 2001 {
+  let parsed = parser::parse_text(text);
+  if parser::parse_failure_code(parsed) != 2001 {
     return 1;
   }
-  if parser::parse_failure_start_offset(parser::parse_text(text)) != expected_offset {
+  if parser::parse_failure_start_offset(parsed) != expected_offset {
     return 2;
   }
-  if parser::parse_failure_end_offset(parser::parse_text(text)) != expected_offset {
+  if parser::parse_failure_end_offset(parsed) != expected_offset {
     return 3;
   }
   if parser_keyword_failure_code(text) != 2001 {
@@ -3422,6 +3431,10 @@ fn parse_comment_only_failure_score() -> i64 {
     return 10 + score;
   }
   return 0;
+}
+
+fn parse_eof_line_comment_failure_score() -> i64 {
+  return parse_comment_only_case_score("// eof", 6);
 }
 
 fn parse_leading_comment_case_score(
@@ -4249,6 +4262,7 @@ fn main() -> i64 {
     source_text_extra_token_driver_score() -
     2003 +
     source_text_comment_only_driver_score() +
+    source_text_eof_line_comment_driver_score() +
     source_text_leading_comment_driver_score() +
     source_text_leading_comment_lexer_failure_driver_score() +
     source_text_leading_comment_extra_token_driver_score() +
@@ -4317,6 +4331,7 @@ fn main() -> i64 {
     source_text_unterminated_block_comment_driver_score() -
     1008 +
     parse_comment_only_failure_score() +
+    parse_eof_line_comment_failure_score() +
     parse_leading_comment_success_score() +
     parse_leading_comment_byte_char_success_score() +
     parse_leading_comment_byte_char_escape_success_score() +

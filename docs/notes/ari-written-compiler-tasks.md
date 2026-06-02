@@ -565,13 +565,18 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Split the keyword-table source-root smoke into a focused flow helper and a
   table keyword-set helper, removing the long `var score` / `if score == 0`
   chain that made the fixture look like debugging scaffolding.
+- Added EOF line-comment source-text parser and driver coverage, checking
+  `// eof` through the parser, keyword-table parser, and source-text driver
+  paths with the EOF diagnostic offset preserved at byte 6.
+- Reviewed the comment-only parser smoke helper while adding EOF coverage and
+  collapsed its repeated `parser::parse_text` calls into one parsed result.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add EOF line-comment source-text parser and driver coverage.
+- Add CRLF line-comment source-text parser and driver coverage.
 
 ## Next Recommended Task
 
-Add EOF line-comment source-text parser and driver coverage.
+Add CRLF line-comment source-text parser and driver coverage.

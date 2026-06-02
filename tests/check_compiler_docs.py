@@ -170,7 +170,7 @@ def main() -> int:
         "## Completed Tasks",
         "## Small Task Queue",
         "## Next Recommended Task",
-        "Add EOF line-comment source-text parser and driver coverage",
+        "Add CRLF line-comment source-text parser and driver coverage",
     ]:
         require(ari_tasks, needle, ari_tasks_path)
 

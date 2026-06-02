@@ -563,5 +563,7 @@ Desired stage0 pressure that is not yet classified as a bug:
   now cover UTF-8 byte spellings. Carriage-return whitespace spans now match
   stage0's whitespace skipper.
   CRLF line-comment spans now match stage0's line comment scanner. EOF
-  line-comment span coverage exists; EOF line-comment parser and driver
-  coverage is still pending.
+  line-comment span coverage now has source-text parser, keyword-table parser,
+  and driver coverage for `// eof`, preserving the EOF diagnostic offset at
+  byte 6. CRLF line-comment source-text parser and driver coverage is still
+  pending.
