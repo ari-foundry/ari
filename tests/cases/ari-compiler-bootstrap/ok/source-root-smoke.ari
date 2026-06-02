@@ -432,6 +432,18 @@ fn source_table_entry_score() -> i64 {
   if !source::contains(file, 0) {
     return 6;
   }
+  if !source::source_table_entry_valid_span(entry, source::span(9, 2, 21)) {
+    return 7;
+  }
+  if source::source_table_entry_valid_span(entry, source::span(10, 2, 21)) {
+    return 8;
+  }
+  if source::source_table_entry_valid_span(entry, source::span(9, 9, 2)) {
+    return 9;
+  }
+  if source::source_table_entry_valid_span(entry, source::span(9, 2, 22)) {
+    return 10;
+  }
   return source::source_table_entry_id(entry) +
     source::source_table_entry_byte_len(entry) +
     source::source_table_entry_path_id(entry);

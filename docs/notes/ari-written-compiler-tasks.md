@@ -602,13 +602,16 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   `SourceFile` with a scalar path id placeholder and accessor helpers while
   keeping path string ownership, loaded text ownership, line starts, and
   diagnostic display-name mapping for later source-table slices.
+- Added a source-table entry span-validation helper in `compiler/source.ari`,
+  checking source-id ownership, nonnegative starts, non-reversed ranges, and
+  byte-length bounds for source-table-shaped spans.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a source-table entry span-validation helper in `compiler/source.ari`.
+- Add a source-table entry span-constructor helper in `compiler/source.ari`.
 
 ## Next Recommended Task
 
-Add a source-table entry span-validation helper in `compiler/source.ari`.
+Add a source-table entry span-constructor helper in `compiler/source.ari`.

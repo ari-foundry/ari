@@ -379,6 +379,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   `SourceFile` plus a scalar path id placeholder, giving the Ari-written
   compiler its first source-table-shaped entry without owning path strings,
   source text, line starts, or diagnostic display names yet.
+- `compiler/source.ari` can validate that a span belongs to a
+  `SourceTableEntry` and stays inside that entry's byte length.
 - `compiler/parser.ari` can parse a source-text slice through the text-backed
   lexer handoff path.
 - `compiler/driver.ari` routes file and text input through `std::string::String`
