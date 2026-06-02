@@ -670,6 +670,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Removed the test-only AST aggregate score helper from `compiler/ast.ari`;
   parser success scoring and source-root smoke arithmetic now compose the
   explicit node-kind-rank, span-length, and value queries.
+- Renamed token-kind and token-kind-class score helpers to rank queries and
+  removed the test-only aggregate token score helper from `compiler/token.ari`;
+  lexer score helpers now compose token kind rank with token width directly.
 
 ## Small Task Queue
 

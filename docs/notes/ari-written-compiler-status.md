@@ -16,6 +16,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   parentheses, braces, comma, colon, and semicolon.
 - `compiler/token.ari` models simple one-character operator tokens for
   assignment and arithmetic operators.
+- `compiler/token.ari` exposes token-kind rank and class-rank queries, and no
+  longer exposes the old aggregate token score helper.
 - `compiler/source.ari` exposes small span query helpers for downstream phase
   payload smokes.
 - `compiler/lexer.ari` now has a small `LexResult` flow for one-character scans
@@ -567,6 +569,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   exposes the test-only diagnostic aggregate score helper.
 - `compiler/ast.ari` now uses node-kind-rank naming and no longer exposes the
   test-only AST aggregate score helper.
+- `compiler/token.ari` now uses token-kind-rank and token-kind-class-rank
+  naming and no longer exposes the test-only aggregate token score helper.
 - `compiler/main.ari` is now a thin entrypoint that delegates to the driver and
   maps the driver's result to an exit code.
 - `make check-ari-compiler-bootstrap` checks each `compiler/*.ari` module,
