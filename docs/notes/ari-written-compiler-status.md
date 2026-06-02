@@ -696,6 +696,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Diagnostic kind rank, name text, and message text now share a private
   diagnostic-kind metadata mapping instead of maintaining separate full-kind
   matches for each query.
+- The result-producing non-identifier text scan now caches the current byte
+  once and reuses it for number, comment, string, and byte-character dispatch,
+  matching the token-only path's shape and avoiding repeated `text[offset]`
+  indexing in the hot lexer branch.
 - `compiler/lexer.ari` now uses ranked-width and ranked-position query names
   and no longer exposes public `score` helpers.
 - `compiler/parser.ari` now uses parser kind-rank query names and no longer

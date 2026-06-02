@@ -1726,7 +1726,8 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
 }
 
 fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResult {
-  if is_number_start(text[offset]) {
+  let first = text[offset];
+  if is_number_start(first) {
     match number_scan_from_text(text, offset) {
       NumberClosed(
         number_kind,
@@ -1766,14 +1767,14 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
       }
     }
   }
-  if offset + 1 < text.len && text[offset] == '/' && text[offset + 1] == '/' {
+  if offset + 1 < text.len && first == '/' && text[offset + 1] == '/' {
     return Scanned(token::make_token(
       token::Whitespace,
       offset,
       line_comment_end_from_text(text, offset)
     ));
   }
-  if offset + 1 < text.len && text[offset] == '/' && text[offset + 1] == '*' {
+  if offset + 1 < text.len && first == '/' && text[offset + 1] == '*' {
     match block_comment_scan_from_text(text, offset) {
       CommentClosed(closed_comment_end) => {
         return Scanned(token::make_token(token::Whitespace, offset, closed_comment_end));
@@ -1783,7 +1784,7 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
       }
     }
   }
-  if text[offset] == '"' {
+  if first == '"' {
     match string_literal_scan_from_text(text, offset) {
       Closed(string_end) => {
         return Scanned(make_string_literal_token(offset, string_end));
@@ -1805,7 +1806,7 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
       }
     }
   }
-  if text[offset] == '\'' {
+  if first == '\'' {
     match byte_char_scan_from_text(text, offset) {
       ByteCharClosed(byte_char_end_result, byte_char_value_result) => {
         return Scanned(make_byte_char_literal_token(

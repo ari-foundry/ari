@@ -634,6 +634,10 @@ Desired stage0 pressure that is not yet classified as a bug:
   result-producing scan paths when the scan result is already closed. Do not
   merge the failure branches: those encode different recovery and diagnostic
   policies.
+- Hot lexer dispatch paths should hoist the current byte once and reuse it
+  through the branch family instead of repeatedly indexing `text[offset]`.
+  This is a local Ari-written compiler code-quality issue, not a confirmed
+  hosted compiler bug.
 - Diagnostic metadata should avoid separate full-kind matches for rank, public
   identity text, and message text. Numeric compatibility codes can stay
   separate where stage0 preserves an older external code while the Ari kind rank

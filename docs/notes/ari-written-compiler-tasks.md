@@ -818,6 +818,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Re-reviewed diagnostic metadata access and consolidated diagnostic kind rank,
   name text, and message text behind one private diagnostic-kind metadata
   mapping.
+- Re-reviewed the result-producing non-identifier text scan and hoisted the
+  current byte into one `first` local, so number/comment/string/byte-character
+  dispatch no longer repeats `text[offset]` indexing across branches.
 
 ## Small Task Queue
 
