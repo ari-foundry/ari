@@ -597,6 +597,10 @@ Desired stage0 pressure that is not yet classified as a bug:
   repeating the source id at call sites. The source model now also has a
   minimal line-start summary shape with first line start, optional second line
   start, and count metadata, checked through source-root smoke coverage without
-  requiring a hosted compiler fix. Full source table ownership, file path
-  strings, loaded text ownership, owned line-start arrays, UTF-8 byte-column
-  policy, and diagnostic location mapping remain pending.
+  requiring a hosted compiler fix. It now has a one-based byte-to-line-number
+  helper, and the helper forced the minimal summary validity rule to reject
+  counts above two because the current shape only stores first and second line
+  starts. It also rejects stale second-line metadata on one-line summaries.
+  Full source table ownership, file path strings, loaded text ownership, owned
+  line-start arrays, UTF-8 byte-column policy, and diagnostic location mapping
+  remain pending.

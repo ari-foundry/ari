@@ -2,6 +2,7 @@ type SourceId = i64;
 type SourcePathId = i64;
 type ByteOffset = i64;
 type SourceLineCount = i64;
+type SourceLineNumber = i64;
 
 pub struct Span {
   source: SourceId,
@@ -118,21 +119,48 @@ pub fn source_line_starts_valid(
   if lines.count < 1 {
     return false;
   }
+  if lines.count > 2 {
+    return false;
+  }
   if lines.first != 0 {
     return false;
   }
   if !contains(file, lines.first) {
     return false;
   }
-  if lines.count > 1 {
-    if lines.second <= lines.first {
-      return false;
-    }
-    if !contains(file, lines.second) {
-      return false;
-    }
+  if lines.count == 1 {
+    return lines.second == lines.first;
+  }
+  if lines.second <= lines.first {
+    return false;
+  }
+  if !contains(file, lines.second) {
+    return false;
   }
   return true;
+}
+
+pub fn source_line_starts_line_number(
+  lines: SourceLineStarts,
+  file: SourceFile,
+  offset: ByteOffset
+) -> SourceLineNumber {
+  if !source_line_starts_valid(lines, file) {
+    return 0;
+  }
+  if offset < 0 {
+    return 0;
+  }
+  if offset > file.byte_len {
+    if source_line_starts_has_second(lines) && file.byte_len >= lines.second {
+      return 2;
+    }
+    return 1;
+  }
+  if source_line_starts_has_second(lines) && offset >= lines.second {
+    return 2;
+  }
+  return 1;
 }
 
 pub fn source_table_entry_file(entry: SourceTableEntry) -> SourceFile {

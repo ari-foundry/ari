@@ -500,6 +500,45 @@ fn source_line_starts_score() -> i64 {
   if source::source_line_starts_valid(lines, bad_file) {
     return 10;
   }
+  let bad_count_too_many = source::source_line_starts(0, 8, 3);
+  if source::source_line_starts_valid(bad_count_too_many, file) {
+    return 11;
+  }
+  if source::source_line_starts_line_number(lines, file, 0) != 1 {
+    return 12;
+  }
+  if source::source_line_starts_line_number(lines, file, 7) != 1 {
+    return 13;
+  }
+  if source::source_line_starts_line_number(lines, file, 8) != 2 {
+    return 14;
+  }
+  if source::source_line_starts_line_number(lines, file, 12) != 2 {
+    return 15;
+  }
+  if source::source_line_starts_line_number(lines, file, 99) != 2 {
+    return 16;
+  }
+  if source::source_line_starts_line_number(lines, file, -1) != 0 {
+    return 17;
+  }
+  if source::source_line_starts_line_number(bad_count_too_many, file, 8) != 0 {
+    return 18;
+  }
+  let one_line = source::source_line_starts(0, 0, 1);
+  if source::source_line_starts_line_number(one_line, file, 12) != 1 {
+    return 19;
+  }
+  if source::source_line_starts_line_number(one_line, file, 99) != 1 {
+    return 20;
+  }
+  let bad_single_line_second = source::source_line_starts(0, 8, 1);
+  if source::source_line_starts_valid(bad_single_line_second, file) {
+    return 21;
+  }
+  if source::source_line_starts_line_number(bad_single_line_second, file, 0) != 0 {
+    return 22;
+  }
   return source::source_line_starts_first(lines) +
     source::source_line_starts_second(lines) +
     source::source_line_starts_count(lines);

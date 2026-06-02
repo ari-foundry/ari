@@ -611,13 +611,17 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Added a minimal source line-start summary model in `compiler/source.ari`,
   carrying first line start, optional second line start, and count metadata
   with focused source-root smoke coverage for accessor and validity behavior.
+- Added a one-based source byte-to-line-number helper in
+  `compiler/source.ari`, keeping the minimal two-line summary honest by
+  rejecting counts it cannot represent yet and stale second-line metadata on
+  one-line summaries.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a source line-start byte-to-line helper in `compiler/source.ari`.
+- Add a source line-start byte-column helper in `compiler/source.ari`.
 
 ## Next Recommended Task
 
-Add a source line-start byte-to-line helper in `compiler/source.ari`.
+Add a source line-start byte-column helper in `compiler/source.ari`.
