@@ -613,14 +613,16 @@ Desired stage0 pressure that is not yet classified as a bug:
   nodes. The lexer now recognizes stage0-style string line-continuation escape
   spans, and an `Option[i64]` cursor accessor can compute stage0-style decoded
   byte length from the original source slice, including simple, byte/octal,
-  Unicode, and line-continuation escapes. Because payloads are still
-  source-backed, it still does not model the decoded string value itself. That
-  is useful for cursor and parser smokes, but the current `LiteralPayload`
-  shape is still numeric-leaning and does not represent decoded escape text as
-  a string value or a dedicated string literal AST variant. It still lacks owned
-  stage0-style token text, textual literal suffix strings for synthetic cases,
-  richer expression/statement AST literal shapes, and narrower suffix-specific
-  range checks such as `f32`/`f128`. Simple byte
+  Unicode, and line-continuation escapes. Parser/AST literal payload snapshots
+  now preserve that decoded byte length as `Option[i64]` for source-text string
+  parse results. Because payloads are still source-backed, they still do not
+  model the decoded string value itself. That is useful for cursor and parser
+  smokes, but the current `LiteralPayload` shape is still numeric-leaning and
+  does not represent decoded escape text as a string value or a dedicated
+  string literal AST variant. It still lacks owned stage0-style token text,
+  textual literal suffix strings for synthetic cases, richer expression/
+  statement AST literal shapes, and narrower suffix-specific range checks such
+  as `f32`/`f128`. Simple byte
   character literal spans are modeled as
   `Integer` tokens, matching stage0's byte-character-as-integer token
   treatment; their synthetic byte-character suffix rank remains spanless
@@ -651,6 +653,16 @@ Desired stage0 pressure that is not yet classified as a bug:
   pattern for deriving the active zone at allocation/growth sites, not a new
   magical global heap. This is design pressure, not a confirmed hosted compiler
   bug.
+- The source-root smoke re-hit Ari's local pattern-binding shadowing rule when
+  several `std::Some(decoded_len)` match arms appeared in the same function.
+  The fix was explicit per-case names. This is currently ergonomics pressure
+  around pattern binding scopes, not a confirmed hosted compiler bug.
+- Parser tests could not pass a root `lexer::TokenCursor` into
+  `parser::parse_cursor` because the parser module's nested import names the
+  parameter type as `parser::lexer::TokenCursor`. That nominal path distinction
+  may be desirable, but it is awkward for cross-module smoke helpers that want
+  to compose phase APIs directly. Keep this recorded as module/type ergonomics
+  pressure until a smaller repro proves a hosted compiler bug.
 - Ari-written string escape scanning now distinguishes supported
   single-character escape heads from unsupported ones and validates the digit
   shape of `\x`, fixed-width `\u`, fixed-width `\U`, and braced `\u{...}`

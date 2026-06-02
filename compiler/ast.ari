@@ -16,6 +16,7 @@ pub struct NodeLiteralPayload {
   literal_text_end: i64,
   literal_suffix_start: i64,
   literal_suffix_end: i64,
+  literal_decoded_byte_len: std::Option[i64],
 }
 
 pub enum NodePayload {
@@ -63,7 +64,8 @@ pub fn literal_payload(
   literal_text_start: i64,
   literal_text_end: i64,
   literal_suffix_start: i64,
-  literal_suffix_end: i64
+  literal_suffix_end: i64,
+  literal_decoded_byte_len: std::Option[i64]
 ) -> NodeLiteralPayload {
   return NodeLiteralPayload {
     literal_base: literal_base,
@@ -74,6 +76,7 @@ pub fn literal_payload(
     literal_text_end: literal_text_end,
     literal_suffix_start: literal_suffix_start,
     literal_suffix_end: literal_suffix_end,
+    literal_decoded_byte_len: literal_decoded_byte_len,
   };
 }
 
@@ -86,7 +89,8 @@ pub fn empty_literal_payload() -> NodeLiteralPayload {
     0,
     0,
     0,
-    0
+    0,
+    std::None<i64>()
   );
 }
 
@@ -184,6 +188,10 @@ pub fn node_literal_suffix_start(node: Node) -> i64 {
 
 pub fn node_literal_suffix_end(node: Node) -> i64 {
   return node_literal_payload(node).literal_suffix_end;
+}
+
+pub fn node_literal_decoded_byte_len(node: Node) -> std::Option[i64] {
+  return node_literal_payload(node).literal_decoded_byte_len;
 }
 
 pub fn node_start_offset(node: Node) -> i64 {

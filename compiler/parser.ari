@@ -8,7 +8,10 @@ pub enum ParseResult {
   Failed(diagnostic::Diagnostic),
 }
 
-fn literal_statement_node_from_cursor(cursor: lexer::TokenCursor) -> ast::Node {
+fn literal_statement_node_from_cursor_with_decoded_len(
+  cursor: lexer::TokenCursor,
+  decoded_byte_len: std::Option[i64]
+) -> ast::Node {
   return ast::statement_literal_node(
     0,
     lexer::cursor_token_start(cursor),
@@ -22,12 +25,26 @@ fn literal_statement_node_from_cursor(cursor: lexer::TokenCursor) -> ast::Node {
       lexer::cursor_token_literal_text_start(cursor),
       lexer::cursor_token_literal_text_end(cursor),
       lexer::cursor_token_literal_suffix_start(cursor),
-      lexer::cursor_token_literal_suffix_end(cursor)
+      lexer::cursor_token_literal_suffix_end(cursor),
+      decoded_byte_len
     )
   );
 }
 
-pub fn parse_statement(cursor: lexer::TokenCursor) -> ParseResult {
+fn literal_decoded_byte_len_from_text(
+  cursor: lexer::TokenCursor,
+  text: std::Slice[u8]
+) -> std::Option[i64] {
+  if lexer::cursor_is_string_literal(cursor) {
+    return lexer::cursor_string_literal_decoded_byte_len(cursor, text);
+  }
+  return std::None<i64>();
+}
+
+fn parse_statement_with_literal_decoded_len(
+  cursor: lexer::TokenCursor,
+  decoded_byte_len: std::Option[i64]
+) -> ParseResult {
   if lexer::cursor_is_done(cursor) || lexer::cursor_is_eof(cursor) {
     return Failed(diagnostic::parser_expected_statement(
       lexer::cursor_token_start(cursor),
@@ -52,11 +69,17 @@ pub fn parse_statement(cursor: lexer::TokenCursor) -> ParseResult {
   }
 
   if lexer::cursor_is_number(cursor) {
-    return Parsed(literal_statement_node_from_cursor(cursor));
+    return Parsed(literal_statement_node_from_cursor_with_decoded_len(
+      cursor,
+      decoded_byte_len
+    ));
   }
 
   if lexer::cursor_is_string_literal(cursor) {
-    return Parsed(literal_statement_node_from_cursor(cursor));
+    return Parsed(literal_statement_node_from_cursor_with_decoded_len(
+      cursor,
+      decoded_byte_len
+    ));
   }
 
   if lexer::cursor_is_unknown(cursor) {
@@ -70,6 +93,10 @@ pub fn parse_statement(cursor: lexer::TokenCursor) -> ParseResult {
     lexer::cursor_token_start(cursor),
     lexer::cursor_token_end(cursor)
   ));
+}
+
+pub fn parse_statement(cursor: lexer::TokenCursor) -> ParseResult {
+  return parse_statement_with_literal_decoded_len(cursor, std::None<i64>());
 }
 
 pub fn parse_cursor(cursor: lexer::TokenCursor) -> ParseResult {
@@ -124,7 +151,10 @@ pub fn parse_handoff_kind_rank(handoff: lexer::TokenHandoff) -> i64 {
   return 8 + eof_rank * 10;
 }
 
-pub fn parse_handoff(handoff: lexer::TokenHandoff) -> ParseResult {
+fn parse_handoff_with_literal_decoded_len(
+  handoff: lexer::TokenHandoff,
+  decoded_byte_len: std::Option[i64]
+) -> ParseResult {
   if !lexer::handoff_has_eof(handoff) {
     let extra = lexer::handoff_eof(handoff);
     return Failed(diagnostic::parser_expected_eof(
@@ -133,7 +163,19 @@ pub fn parse_handoff(handoff: lexer::TokenHandoff) -> ParseResult {
     ));
   }
 
-  return parse_statement(lexer::handoff_first(handoff));
+  return parse_statement_with_literal_decoded_len(lexer::handoff_first(handoff), decoded_byte_len);
+}
+
+pub fn parse_handoff(handoff: lexer::TokenHandoff) -> ParseResult {
+  return parse_handoff_with_literal_decoded_len(handoff, std::None<i64>());
+}
+
+fn parse_failure_from_lex_failure(lex_failure: lexer::LexFailure) -> ParseResult {
+  return Failed(diagnostic::error_kind_rank(
+    lexer::lex_failure_kind_rank(lex_failure),
+    lexer::lex_failure_start_offset(lex_failure),
+    lexer::lex_failure_end_offset(lex_failure)
+  ));
 }
 
 fn parse_handoff_result(
@@ -144,11 +186,32 @@ fn parse_handoff_result(
       return parse_handoff(handoff);
     }
     std::Err(lex_failure) => {
-      return Failed(diagnostic::error_kind_rank(
-        lexer::lex_failure_kind_rank(lex_failure),
-        lexer::lex_failure_start_offset(lex_failure),
-        lexer::lex_failure_end_offset(lex_failure)
-      ));
+      return parse_failure_from_lex_failure(lex_failure);
+    }
+  }
+}
+
+fn parse_handoff_with_text(handoff: lexer::TokenHandoff, text: std::Slice[u8]) -> ParseResult {
+  if !lexer::handoff_has_eof(handoff) {
+    return parse_handoff_with_literal_decoded_len(handoff, std::None<i64>());
+  }
+  let first = lexer::handoff_first(handoff);
+  return parse_handoff_with_literal_decoded_len(
+    handoff,
+    literal_decoded_byte_len_from_text(first, text)
+  );
+}
+
+fn parse_handoff_result_with_text(
+  result: std::Result[lexer::TokenHandoff, lexer::LexFailure],
+  text: std::Slice[u8]
+) -> ParseResult {
+  match result {
+    std::Ok(handoff) => {
+      return parse_handoff_with_text(handoff, text);
+    }
+    std::Err(lex_failure) => {
+      return parse_failure_from_lex_failure(lex_failure);
     }
   }
 }
@@ -158,7 +221,7 @@ pub fn parse_text(text: std::Slice[u8]) -> ParseResult {
     return parse_empty();
   }
 
-  return parse_handoff_result(lexer::handoff_from_text_result(text));
+  return parse_handoff_result_with_text(lexer::handoff_from_text_result(text), text);
 }
 
 fn parse_text_with_keyword_table(
@@ -169,7 +232,10 @@ fn parse_text_with_keyword_table(
     return parse_empty();
   }
 
-  return parse_handoff_result(lexer::handoff_from_text_with_keywords_result(table, text));
+  return parse_handoff_result_with_text(
+    lexer::handoff_from_text_with_keywords_result(table, text),
+    text
+  );
 }
 
 pub fn parse_text_with_keywords(zone: ref mut Zone, text: std::Slice[u8]) -> ParseResult {
@@ -296,6 +362,13 @@ pub fn parse_statement_literal_suffix_end(result: ParseResult) -> i64 {
   match result {
     Parsed(node) => ast::node_literal_suffix_end(node),
     Failed(_) => 0,
+  }
+}
+
+pub fn parse_statement_literal_decoded_byte_len(result: ParseResult) -> std::Option[i64] {
+  match result {
+    Parsed(node) => ast::node_literal_decoded_byte_len(node),
+    Failed(_) => std::None<i64>(),
   }
 }
 

@@ -5113,6 +5113,12 @@ fn parse_statement_literal_payload_score() -> i64 {
   if parser::parse_statement_literal_base(identifier) != token::literal_base_none_rank() {
     return 2;
   }
+  match parser::parse_statement_literal_decoded_byte_len(identifier) {
+    std::Some(_) => {
+      return 70;
+    }
+    std::None => {}
+  }
 
   let integer = parser::parse_text("0xffu8");
   if !parser::parse_statement_has_literal_payload(integer) {
@@ -5126,6 +5132,12 @@ fn parse_statement_literal_payload_score() -> i64 {
   }
   if parser::parse_statement_literal_integer_value(integer) != 255u64 {
     return 6;
+  }
+  match parser::parse_statement_literal_decoded_byte_len(integer) {
+    std::Some(_) => {
+      return 71;
+    }
+    std::None => {}
   }
   var span_score = parse_statement_literal_span_score(integer, 0, 4, 4, 6);
   if span_score != 0 {
@@ -5180,6 +5192,41 @@ fn parse_statement_literal_payload_score() -> i64 {
   if span_score != 0 {
     return 60 + span_score;
   }
+  match parser::parse_statement_literal_decoded_byte_len(string_literal) {
+    std::Some(string_decoded_len) => {
+      if string_decoded_len != 3 {
+        return 80;
+      }
+    }
+    std::None => {
+      return 81;
+    }
+  }
+
+  let escaped_string = parser::parse_text("\"a\\\"b\"");
+  match parser::parse_statement_literal_decoded_byte_len(escaped_string) {
+    std::Some(escaped_decoded_len) => {
+      if escaped_decoded_len != 3 {
+        return 82;
+      }
+    }
+    std::None => {
+      return 83;
+    }
+  }
+
+  let line_continuation_string = parser::parse_text("\"a\\\nb\"");
+  match parser::parse_statement_literal_decoded_byte_len(line_continuation_string) {
+    std::Some(line_decoded_len) => {
+      if line_decoded_len != 2 {
+        return 84;
+      }
+    }
+    std::None => {
+      return 85;
+    }
+  }
+
   return 0;
 }
 

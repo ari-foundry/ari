@@ -199,6 +199,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   AST-owned snapshot, so parser-facing accessors can inspect literal base,
   suffix rank, checked values, and source-backed literal/suffix spans without
   passing nested `token` module types across phase boundaries.
+- `compiler/ast.ari` and `compiler/parser.ari` now also preserve
+  `Option[i64]` decoded string byte length for parser results produced from
+  source text, using the lexer string decoded-length accessor while keeping
+  non-string literals as `None`.
 - `compiler/lexer.ari` scans simple byte character escape spellings such as
   `'\n'` and `'\\'` as `Integer` spans, and source-root smoke coverage now
   checks stage0 simple escape value payloads for alert, backspace, escape,

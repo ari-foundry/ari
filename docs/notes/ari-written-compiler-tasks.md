@@ -751,6 +751,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   byte length for simple, byte, octal, fixed Unicode, braced Unicode, and
   line-continuation escapes from the original source slice without adding an
   owned decoded string payload yet.
+- Routed source-text string decoded byte length into the Ari parser/AST literal
+  payload snapshot as `Option[i64]`, so parser results for source-text string
+  literals can expose stage0-style decoded byte length while numeric and
+  non-literal statements remain `None`.
 - Added a dedicated Ari diagnostic identity for unterminated braced Unicode
   escapes, `lexer.unterminated-unicode-escape`, and routed both string and
   byte-character `\u{...` EOF/newline failures through it instead of the
