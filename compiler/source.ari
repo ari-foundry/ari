@@ -44,6 +44,10 @@ pub fn source_file(id: SourceId, byte_len: ByteOffset) -> SourceFile {
   return SourceFile { id: id, byte_len: byte_len };
 }
 
+pub fn source_file_byte_len_valid(file: SourceFile) -> bool {
+  return file.byte_len >= 0;
+}
+
 pub fn source_line_starts(
   first: ByteOffset,
   second: ByteOffset,
@@ -101,7 +105,9 @@ pub fn span_source(span: Span) -> SourceId {
 }
 
 pub fn contains(file: SourceFile, offset: ByteOffset) -> bool {
-  return offset >= 0 && offset <= file.byte_len;
+  return source_file_byte_len_valid(file) &&
+    offset >= 0 &&
+    offset <= file.byte_len;
 }
 
 pub fn source_line_starts_first(lines: SourceLineStarts) -> ByteOffset {

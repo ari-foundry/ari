@@ -388,6 +388,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   byte-to-line-number helper plus a one-based byte-column helper. It is a
   checked source-model placeholder, not a full owned line-start table or
   visual-column lookup yet.
+- `compiler/source.ari` can validate that a `SourceFile` has a non-negative
+  byte length, and byte containment checks now make that source-file invariant
+  explicit.
 - `compiler/source.ari` has a minimal `SourceLocationSummary` that carries a
   source id, clamped byte offset, one-based line number, and one-based byte
   column for source-model handoff checks.

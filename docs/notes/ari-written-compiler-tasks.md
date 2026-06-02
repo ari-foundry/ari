@@ -649,13 +649,16 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Added a loaded-source span constructor helper in `compiler/source.ari`, so
   callers can derive spans from the loaded source id without repeating that id
   manually.
+- Added a source-file byte-length validity helper in `compiler/source.ari`,
+  making non-negative byte length an explicit source-file invariant used by
+  containment checks.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a source-file byte-length validity helper in `compiler/source.ari`.
+- Add a source-table-entry byte-length validity helper in `compiler/source.ari`.
 
 ## Next Recommended Task
 
-Add a source-file byte-length validity helper in `compiler/source.ari`.
+Add a source-table-entry byte-length validity helper in `compiler/source.ari`.

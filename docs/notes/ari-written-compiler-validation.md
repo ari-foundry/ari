@@ -626,4 +626,6 @@ Desired stage0 pressure that is not yet classified as a bug:
   Loaded-source-local span-end location summaries preserve EOF insertion-point
   behavior through the same delegation and do not require a hosted compiler fix.
   Loaded-source span construction now reuses the placeholder source id without
-  requiring a hosted compiler fix.
+  requiring a hosted compiler fix. Source-file byte-length validity is now an
+  explicit non-negative invariant used by containment checks and does not
+  require a hosted compiler fix.
