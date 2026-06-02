@@ -821,6 +821,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Re-reviewed the result-producing non-identifier text scan and hoisted the
   current byte into one `first` local, so number/comment/string/byte-character
   dispatch no longer repeats `text[offset]` indexing across branches.
+- Re-reviewed `scan_two` and changed the flat `first && second` candidate
+  chain into first-byte grouped dispatch with one shared two-byte end offset,
+  keeping the same stage0 two-character token surface while avoiding repeated
+  first-character tests.
 
 ## Small Task Queue
 

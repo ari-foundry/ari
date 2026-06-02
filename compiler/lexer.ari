@@ -1143,68 +1143,85 @@ pub fn scan_one(value: char, offset: i64) -> token::Token {
 }
 
 pub fn scan_two(first: char, offset: i64, second: char) -> token::Token {
-  if first == ':' && second == ':' {
-    return token::make_token(token::ColonColon, offset, offset + 2);
-  }
-  if first == '.' && second == '.' {
-    return token::make_token(token::DotDot, offset, offset + 2);
-  }
-  if first == '?' && second == '?' {
-    return token::make_token(token::QuestionQuestion, offset, offset + 2);
-  }
-  if first == '=' && second == '=' {
-    return token::make_token(token::EqualEqual, offset, offset + 2);
-  }
-  if first == '=' && second == '>' {
-    return token::make_token(token::FatArrow, offset, offset + 2);
-  }
-  if first == '!' && second == '=' {
-    return token::make_token(token::BangEqual, offset, offset + 2);
-  }
-  if first == '<' && second == '=' {
-    return token::make_token(token::LessEqual, offset, offset + 2);
-  }
-  if first == '>' && second == '=' {
-    return token::make_token(token::GreaterEqual, offset, offset + 2);
-  }
-  if first == '&' && second == '&' {
-    return token::make_token(token::AmpAmp, offset, offset + 2);
-  }
-  if first == '|' && second == '|' {
-    return token::make_token(token::PipePipe, offset, offset + 2);
-  }
-  if first == '&' && second == '=' {
-    return token::make_token(token::AmpEqual, offset, offset + 2);
-  }
-  if first == '|' && second == '=' {
-    return token::make_token(token::PipeEqual, offset, offset + 2);
-  }
-  if first == '^' && second == '=' {
-    return token::make_token(token::CaretEqual, offset, offset + 2);
-  }
-  if first == '<' && second == '<' {
-    return token::make_token(token::LessLess, offset, offset + 2);
-  }
-  if first == '>' && second == '>' {
-    return token::make_token(token::GreaterGreater, offset, offset + 2);
-  }
-  if first == '-' && second == '>' {
-    return token::make_token(token::Arrow, offset, offset + 2);
-  }
-  if first == '+' && second == '=' {
-    return token::make_token(token::PlusEqual, offset, offset + 2);
-  }
-  if first == '-' && second == '=' {
-    return token::make_token(token::MinusEqual, offset, offset + 2);
-  }
-  if first == '*' && second == '=' {
-    return token::make_token(token::StarEqual, offset, offset + 2);
-  }
-  if first == '/' && second == '=' {
-    return token::make_token(token::SlashEqual, offset, offset + 2);
-  }
-  if first == '%' && second == '=' {
-    return token::make_token(token::PercentEqual, offset, offset + 2);
+  let end = offset + 2;
+  if first == ':' {
+    if second == ':' {
+      return token::make_token(token::ColonColon, offset, end);
+    }
+  } else if first == '.' {
+    if second == '.' {
+      return token::make_token(token::DotDot, offset, end);
+    }
+  } else if first == '?' {
+    if second == '?' {
+      return token::make_token(token::QuestionQuestion, offset, end);
+    }
+  } else if first == '=' {
+    if second == '=' {
+      return token::make_token(token::EqualEqual, offset, end);
+    }
+    if second == '>' {
+      return token::make_token(token::FatArrow, offset, end);
+    }
+  } else if first == '!' {
+    if second == '=' {
+      return token::make_token(token::BangEqual, offset, end);
+    }
+  } else if first == '<' {
+    if second == '=' {
+      return token::make_token(token::LessEqual, offset, end);
+    }
+    if second == '<' {
+      return token::make_token(token::LessLess, offset, end);
+    }
+  } else if first == '>' {
+    if second == '=' {
+      return token::make_token(token::GreaterEqual, offset, end);
+    }
+    if second == '>' {
+      return token::make_token(token::GreaterGreater, offset, end);
+    }
+  } else if first == '&' {
+    if second == '&' {
+      return token::make_token(token::AmpAmp, offset, end);
+    }
+    if second == '=' {
+      return token::make_token(token::AmpEqual, offset, end);
+    }
+  } else if first == '|' {
+    if second == '|' {
+      return token::make_token(token::PipePipe, offset, end);
+    }
+    if second == '=' {
+      return token::make_token(token::PipeEqual, offset, end);
+    }
+  } else if first == '^' {
+    if second == '=' {
+      return token::make_token(token::CaretEqual, offset, end);
+    }
+  } else if first == '-' {
+    if second == '>' {
+      return token::make_token(token::Arrow, offset, end);
+    }
+    if second == '=' {
+      return token::make_token(token::MinusEqual, offset, end);
+    }
+  } else if first == '+' {
+    if second == '=' {
+      return token::make_token(token::PlusEqual, offset, end);
+    }
+  } else if first == '*' {
+    if second == '=' {
+      return token::make_token(token::StarEqual, offset, end);
+    }
+  } else if first == '/' {
+    if second == '=' {
+      return token::make_token(token::SlashEqual, offset, end);
+    }
+  } else if first == '%' {
+    if second == '=' {
+      return token::make_token(token::PercentEqual, offset, end);
+    }
   }
 
   return scan_one(first, offset);

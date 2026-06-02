@@ -638,6 +638,10 @@ Desired stage0 pressure that is not yet classified as a bug:
   through the branch family instead of repeatedly indexing `text[offset]`.
   This is a local Ari-written compiler code-quality issue, not a confirmed
   hosted compiler bug.
+- Two-character lexer dispatch should stay grouped by first byte when several
+  pairs share the same leading character, such as `=`, `<`, `>`, `&`, `|`, and
+  `-`. A flat pair-by-pair chain is easy to let drift and repeats work. This
+  is Ari-written compiler code-quality pressure, not a hosted compiler bug.
 - Diagnostic metadata should avoid separate full-kind matches for rank, public
   identity text, and message text. Numeric compatibility codes can stay
   separate where stage0 preserves an older external code while the Ari kind rank

@@ -700,6 +700,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   once and reuses it for number, comment, string, and byte-character dispatch,
   matching the token-only path's shape and avoiding repeated `text[offset]`
   indexing in the hot lexer branch.
+- `scan_two` now dispatches by the first byte and reuses one computed two-byte
+  end offset, so paired operators and punctuation no longer sit in a flat
+  repeated `first && second` chain.
 - `compiler/lexer.ari` now uses ranked-width and ranked-position query names
   and no longer exposes public `score` helpers.
 - `compiler/parser.ari` now uses parser kind-rank query names and no longer
