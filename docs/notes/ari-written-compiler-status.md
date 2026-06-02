@@ -690,6 +690,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   every handoff constructor.
 - Text scan entrypoints now share private EOF and identifier token-construction
   helpers between token-only and result-producing paths.
+- Non-identifier text scan success branches now share private closed literal
+  token helpers for number, string, and byte-character tokens; result paths only
+  wrap those shared tokens in `Scanned`.
 - Diagnostic kind rank, name text, and message text now share a private
   diagnostic-kind metadata mapping instead of maintaining separate full-kind
   matches for each query.

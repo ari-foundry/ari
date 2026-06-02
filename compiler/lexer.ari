@@ -852,6 +852,37 @@ fn string_literal_payload(offset: i64, string_end: i64) -> token::LiteralPayload
   );
 }
 
+fn make_number_literal_token(
+  kind: token::TokenKind,
+  offset: i64,
+  end: i64,
+  literal: token::LiteralPayload
+) -> token::Token {
+  return token::make_literal_token(kind, offset, end, literal);
+}
+
+fn make_string_literal_token(offset: i64, string_end: i64) -> token::Token {
+  return token::make_literal_token(
+    token::StringLiteral,
+    offset,
+    string_end,
+    string_literal_payload(offset, string_end)
+  );
+}
+
+fn make_byte_char_literal_token(
+  offset: i64,
+  byte_char_end: i64,
+  byte_char_value: u64
+) -> token::Token {
+  return token::make_literal_token(
+    token::Integer,
+    offset,
+    byte_char_end,
+    byte_char_literal_payload(offset, byte_char_value)
+  );
+}
+
 fn utf8_encoded_len_optional(value: i64) -> std::Option[i64] {
   if value < 0 {
     return std::None<i64>();
@@ -1592,7 +1623,7 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
         number_end,
         literal
       ) => {
-        return token::make_literal_token(
+        return make_number_literal_token(
           number_kind,
           offset,
           number_end,
@@ -1650,12 +1681,7 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
   if first == '"' {
     match string_literal_scan_from_text(text, offset) {
       Closed(string_end) => {
-        return token::make_literal_token(
-          token::StringLiteral,
-          offset,
-          string_end,
-          string_literal_payload(offset, string_end)
-        );
+        return make_string_literal_token(offset, string_end);
       }
       Unterminated(_) => {}
       UnsupportedEscape(_, _) => {}
@@ -1667,12 +1693,7 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
   if first == '\'' {
     match byte_char_scan_from_text(text, offset) {
       ByteCharClosed(byte_char_end, byte_char_value) => {
-        return token::make_literal_token(
-          token::Integer,
-          offset,
-          byte_char_end,
-          byte_char_literal_payload(offset, byte_char_value)
-        );
+        return make_byte_char_literal_token(offset, byte_char_end, byte_char_value);
       }
       ByteCharEmpty(_, _) => {}
       ByteCharUnterminated(_) => {}
@@ -1712,7 +1733,7 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
         number_end,
         literal
       ) => {
-        return Scanned(token::make_literal_token(
+        return Scanned(make_number_literal_token(
           number_kind,
           offset,
           number_end,
@@ -1765,12 +1786,7 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
   if text[offset] == '"' {
     match string_literal_scan_from_text(text, offset) {
       Closed(string_end) => {
-        return Scanned(token::make_literal_token(
-          token::StringLiteral,
-          offset,
-          string_end,
-          string_literal_payload(offset, string_end)
-        ));
+        return Scanned(make_string_literal_token(offset, string_end));
       }
       Unterminated(unterminated_end) => {
         return Failed(unterminated_string_literal(offset, unterminated_end));
@@ -1792,11 +1808,10 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
   if text[offset] == '\'' {
     match byte_char_scan_from_text(text, offset) {
       ByteCharClosed(byte_char_end_result, byte_char_value_result) => {
-        return Scanned(token::make_literal_token(
-          token::Integer,
+        return Scanned(make_byte_char_literal_token(
           offset,
           byte_char_end_result,
-          byte_char_literal_payload(offset, byte_char_value_result)
+          byte_char_value_result
         ));
       }
       ByteCharEmpty(empty_start, empty_end) => {

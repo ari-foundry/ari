@@ -194,6 +194,11 @@ into private helpers shared by token-only and result-producing scans. This keeps
 the recovery/diagnostic policy split intact while removing duplicated
 source-span construction for the token cases that are identical, and required
 no hosted compiler fix.
+The non-identifier text scan success-path review moved closed number, string,
+and byte-character literal token construction into private helpers shared by
+token-only and result-producing scans. Diagnostic/recovery variants remain
+separate, so result paths only add `Scanned(...)` around the same successful
+token construction, and this required no hosted compiler fix.
 The diagnostic metadata review consolidated diagnostic kind rank, diagnostic
 identity text, and message text behind one private mapping. This keeps numeric
 compatibility codes and user-readable diagnostic names/messages in one source
@@ -625,6 +630,10 @@ Desired stage0 pressure that is not yet classified as a bug:
   helpers for token cases with identical behavior, such as EOF and identifiers,
   while keeping diagnostic-only branches separate where recovery token behavior
   intentionally differs.
+- Successful literal token construction should be shared between token-only and
+  result-producing scan paths when the scan result is already closed. Do not
+  merge the failure branches: those encode different recovery and diagnostic
+  policies.
 - Diagnostic metadata should avoid separate full-kind matches for rank, public
   identity text, and message text. Numeric compatibility codes can stay
   separate where stage0 preserves an older external code while the Ari kind rank
