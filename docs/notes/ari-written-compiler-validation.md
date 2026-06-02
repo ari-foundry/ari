@@ -593,6 +593,7 @@ Desired stage0 pressure that is not yet classified as a bug:
   diagnostic code and span through the lexer handoff result path. The next
   source-model step now has a minimal source table entry shape with a scalar
   path id placeholder, and entry-local span validation now checks source-id
-  ownership and byte bounds. Full source table ownership, file path strings,
-  loaded text ownership, line starts, and diagnostic location mapping remain
-  pending.
+  ownership and byte bounds. Entry-local span construction now avoids manually
+  repeating the source id at call sites. Full source table ownership, file path
+  strings, loaded text ownership, line starts, and diagnostic location mapping
+  remain pending.

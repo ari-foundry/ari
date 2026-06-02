@@ -605,13 +605,16 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Added a source-table entry span-validation helper in `compiler/source.ari`,
   checking source-id ownership, nonnegative starts, non-reversed ranges, and
   byte-length bounds for source-table-shaped spans.
+- Added a source-table entry span-constructor helper in `compiler/source.ari`,
+  allowing callers to construct entry-local spans without manually repeating
+  the entry's source id.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a source-table entry span-constructor helper in `compiler/source.ari`.
+- Add a minimal source line-start summary model in `compiler/source.ari`.
 
 ## Next Recommended Task
 
-Add a source-table entry span-constructor helper in `compiler/source.ari`.
+Add a minimal source line-start summary model in `compiler/source.ari`.

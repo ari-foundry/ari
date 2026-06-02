@@ -99,6 +99,14 @@ pub fn source_table_entry_contains(
   return contains(entry.file, offset);
 }
 
+pub fn source_table_entry_span(
+  entry: SourceTableEntry,
+  start: ByteOffset,
+  end: ByteOffset
+) -> Span {
+  return span(entry.file.id, start, end);
+}
+
 pub fn source_table_entry_valid_span(
   entry: SourceTableEntry,
   span: Span

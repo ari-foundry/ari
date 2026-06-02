@@ -444,6 +444,19 @@ fn source_table_entry_score() -> i64 {
   if source::source_table_entry_valid_span(entry, source::span(9, 2, 22)) {
     return 10;
   }
+  let entry_span = source::source_table_entry_span(entry, 4, 9);
+  if source::span_source(entry_span) != 9 {
+    return 11;
+  }
+  if source::span_start(entry_span) != 4 {
+    return 12;
+  }
+  if source::span_end(entry_span) != 9 {
+    return 13;
+  }
+  if !source::source_table_entry_valid_span(entry, entry_span) {
+    return 14;
+  }
   return source::source_table_entry_id(entry) +
     source::source_table_entry_byte_len(entry) +
     source::source_table_entry_path_id(entry);

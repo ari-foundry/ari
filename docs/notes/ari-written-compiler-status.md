@@ -381,6 +381,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   source text, line starts, or diagnostic display names yet.
 - `compiler/source.ari` can validate that a span belongs to a
   `SourceTableEntry` and stays inside that entry's byte length.
+- `compiler/source.ari` can construct a span from a `SourceTableEntry`, so
+  callers do not need to manually repeat the entry source id.
 - `compiler/parser.ari` can parse a source-text slice through the text-backed
   lexer handoff path.
 - `compiler/driver.ari` routes file and text input through `std::string::String`
