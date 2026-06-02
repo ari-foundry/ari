@@ -610,7 +610,9 @@ Desired stage0 pressure that is not yet classified as a bug:
   invalid-line-table and EOF-clamp behavior without requiring a hosted compiler
   fix. Span-start location summaries now reject source-id mismatches, reversed
   spans, and out-of-range spans before deriving line and byte-column metadata,
-  without requiring a hosted compiler fix. Full source table ownership, file
-  path strings, loaded text ownership, owned line-start arrays, CRLF
-  visual-column handling, UTF-8 byte-column policy, and diagnostic location
-  mapping remain pending.
+  without requiring a hosted compiler fix. Span-end location summaries share
+  the same validity rule and preserve EOF insertion-point locations without
+  requiring a hosted compiler fix. Full source table ownership, file path
+  strings, loaded text ownership, owned line-start arrays, CRLF visual-column
+  handling, UTF-8 byte-column policy, and diagnostic location mapping remain
+  pending.

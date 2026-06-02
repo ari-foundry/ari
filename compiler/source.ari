@@ -257,18 +257,33 @@ pub fn source_location_summary_valid(
     location.column > 0;
 }
 
+fn span_valid_for_file(file: SourceFile, span: Span) -> bool {
+  return span.source == file.id &&
+    span.start >= 0 &&
+    span.end >= span.start &&
+    contains(file, span.end);
+}
+
 pub fn span_start_location_summary(
   file: SourceFile,
   lines: SourceLineStarts,
   span: Span
 ) -> SourceLocationSummary {
-  if span.source != file.id {
-    return invalid_source_location_summary(span.source);
-  }
-  if span.start < 0 || span.end < span.start || !contains(file, span.end) {
+  if !span_valid_for_file(file, span) {
     return invalid_source_location_summary(span.source);
   }
   return source_location_summary(file, lines, span.start);
+}
+
+pub fn span_end_location_summary(
+  file: SourceFile,
+  lines: SourceLineStarts,
+  span: Span
+) -> SourceLocationSummary {
+  if !span_valid_for_file(file, span) {
+    return invalid_source_location_summary(span.source);
+  }
+  return source_location_summary(file, lines, span.end);
 }
 
 pub fn source_table_entry_file(entry: SourceTableEntry) -> SourceFile {
@@ -314,10 +329,7 @@ pub fn source_table_entry_valid_span(
   entry: SourceTableEntry,
   span: Span
 ) -> bool {
-  return span.source == entry.file.id &&
-    span.start >= 0 &&
-    span.end >= span.start &&
-    contains(entry.file, span.end);
+  return span_valid_for_file(entry.file, span);
 }
 
 pub fn loaded_source_file(summary: LoadedSourceSummary) -> SourceFile {

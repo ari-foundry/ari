@@ -396,6 +396,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   computing line and byte-column metadata.
 - `compiler/source.ari` can derive a span-start location summary after checking
   that the span belongs to the file and stays inside the file byte bounds.
+- `compiler/source.ari` can derive a span-end location summary with the same
+  source-id and byte-bound checks, including EOF insertion-point spans.
 - `compiler/parser.ari` can parse a source-text slice through the text-backed
   lexer handoff path.
 - `compiler/driver.ari` routes file and text input through `std::string::String`

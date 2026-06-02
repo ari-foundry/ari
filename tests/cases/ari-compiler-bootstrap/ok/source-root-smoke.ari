@@ -674,6 +674,34 @@ fn source_location_summary_score() -> i64 {
   if source::source_location_summary_valid(out_of_range_span) {
     return 29;
   }
+  let span_end_location = source::span_end_location_summary(file, lines, source::span(3, 9, 11));
+  if source::source_location_summary_source(span_end_location) != 3 {
+    return 30;
+  }
+  if source::source_location_summary_byte_offset(span_end_location) != 11 {
+    return 31;
+  }
+  if source::source_location_summary_line(span_end_location) != 2 {
+    return 32;
+  }
+  if source::source_location_summary_column(span_end_location) != 4 {
+    return 33;
+  }
+  let eof_span_end = source::span_end_location_summary(file, lines, source::span(3, 9, 12));
+  if source::source_location_summary_byte_offset(eof_span_end) != 12 {
+    return 34;
+  }
+  if source::source_location_summary_column(eof_span_end) != 5 {
+    return 35;
+  }
+  let reversed_span_end = source::span_end_location_summary(file, lines, source::span(3, 11, 9));
+  if source::source_location_summary_valid(reversed_span_end) {
+    return 36;
+  }
+  let wrong_source_end = source::span_end_location_summary(file, lines, source::span(4, 9, 11));
+  if source::source_location_summary_valid(wrong_source_end) {
+    return 37;
+  }
   return source::source_location_summary_source(location) +
     source::source_location_summary_byte_offset(location) +
     source::source_location_summary_line(location) +

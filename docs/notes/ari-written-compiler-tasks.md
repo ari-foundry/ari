@@ -628,13 +628,16 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Added a source span start location summary helper in `compiler/source.ari`,
   checking source-id ownership and byte bounds before deriving the span start's
   line and byte-column metadata.
+- Added a source span end location summary helper in `compiler/source.ari`,
+  sharing the span/file validity check with the start helper and preserving EOF
+  insertion-point behavior.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a source span end location summary helper in `compiler/source.ari`.
+- Add a source-table entry span start location summary helper in `compiler/source.ari`.
 
 ## Next Recommended Task
 
-Add a source span end location summary helper in `compiler/source.ari`.
+Add a source-table entry span start location summary helper in `compiler/source.ari`.
