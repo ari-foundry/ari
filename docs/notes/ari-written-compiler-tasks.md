@@ -553,6 +553,11 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Extended that review cleanup to the older comment-only, trailing-comment,
   and post-comment source-text driver smokes that also compare line and block
   comment spellings with the same expected result code.
+- Reviewed the keyword-table and parser keyword failure smokes, replaced the
+  remaining manual `std::zone::create`/`destroy` fixture block with a lexical
+  `zone(65536)` block, added table-backed `fn`, `const`, `as`, and `meta`
+  keyword cases to the shared helper path, and consolidated copied parser
+  keyword failure checks behind one helper-scored keyword set.
 
 ## Small Task Queue
 

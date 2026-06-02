@@ -447,6 +447,12 @@ post-comment source-text driver smokes onto the same line/block helper where
 their expected-code shape matched it. The trailing unterminated-block driver
 smoke intentionally stays separate because it compares direct and spaced block
 comment forms instead of line and block comment equivalents.
+A later review pass removed the only remaining manual `std::zone::create` /
+`std::zone::destroy` pair from the source-root smoke and used the existing
+lexical `zone(65536)` style for the keyword-table fixture. The same pass moved
+copied parser keyword failure checks into one helper-scored keyword set and
+backfilled table/parser coverage for `fn`, `const`, `as`, and `meta`; this was
+fixture cleanup and coverage tightening, not a hosted compiler bug.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.

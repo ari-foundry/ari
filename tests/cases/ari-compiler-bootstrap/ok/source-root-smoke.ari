@@ -3016,139 +3016,151 @@ fn lexer_keyword_table_case_score(
 }
 
 fn lexer_keyword_table_score() -> i64 {
-  var zone = std::zone::create(65536);
-  var table = lexer::keyword_table(ref mut zone);
-  var score = 0;
+  zone(65536) {
+    var table = lexer::keyword_table();
+    var score = 0;
 
-  let text = "meta name";
-  let keyword = lexer::cursor_from_text_with_keywords(ref table, text, 0);
-  if score == 0 && !lexer::cursor_is_keyword(keyword) {
-    score = 1;
-  }
-  if score == 0 && lexer::cursor_token_score(keyword) != 106 {
-    score = 2;
-  }
+    let text = "meta name";
+    let keyword = lexer::cursor_from_text_with_keywords(ref table, text, 0);
+    if score == 0 && !lexer::cursor_is_keyword(keyword) {
+      score = 1;
+    }
+    if score == 0 && lexer::cursor_token_score(keyword) != 106 {
+      score = 2;
+    }
 
-  let name = lexer::cursor_advance_significant_in_text_with_keywords(ref table, keyword, text);
-  if score == 0 && !lexer::cursor_is_identifier(name) {
-    score = 3;
-  }
-  if score == 0 && lexer::cursor_token_start(name) != 5 {
-    score = 4;
-  }
+    let name = lexer::cursor_advance_significant_in_text_with_keywords(ref table, keyword, text);
+    if score == 0 && !lexer::cursor_is_identifier(name) {
+      score = 3;
+    }
+    if score == 0 && lexer::cursor_token_start(name) != 5 {
+      score = 4;
+    }
 
-  let longer = lexer::cursor_from_text_with_keywords(ref table, "metadata", 0);
-  if score == 0 && !lexer::cursor_is_identifier(longer) {
-    score = 5;
-  }
-  if score == 0 && lexer::cursor_is_keyword(longer) {
-    score = 6;
-  }
+    let longer = lexer::cursor_from_text_with_keywords(ref table, "metadata", 0);
+    if score == 0 && !lexer::cursor_is_identifier(longer) {
+      score = 5;
+    }
+    if score == 0 && lexer::cursor_is_keyword(longer) {
+      score = 6;
+    }
 
-  let handoff = lexer::handoff_from_text_with_keywords(ref table, "as");
-  if score == 0 && !lexer::handoff_starts_with_keyword(handoff) {
-    score = 7;
-  }
-  if score == 0 && !lexer::handoff_has_eof(handoff) {
-    score = 8;
-  }
+    let handoff = lexer::handoff_from_text_with_keywords(ref table, "as");
+    if score == 0 && !lexer::handoff_starts_with_keyword(handoff) {
+      score = 7;
+    }
+    if score == 0 && !lexer::handoff_has_eof(handoff) {
+      score = 8;
+    }
 
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 90, "struct", 109, 6, "structure", 9);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 100, "extern", 110, 6, "external", 8);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 110, "enum", 109, 4, "enumerate", 9);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 120, "trait", 111, 5, "traitor", 7);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 130, "dyn", 110, 3, "dynamic", 7);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 140, "match", 113, 5, "matches", 7);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 150, "mod", 112, 3, "module", 6);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 160, "pub", 113, 3, "public", 6);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 170, "use", 114, 3, "user", 4);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 180, "impl", 116, 4, "implicit", 8);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 190, "for", 116, 3, "forest", 6);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 200, "in", 116, 2, "inside", 6);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 210, "let", 84, 3, "letter", 6);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 220, "var", 85, 3, "variant", 7);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 230, "own", 86, 3, "owner", 5);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 240, "ref", 87, 3, "reference", 9);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 250, "mut", 88, 3, "mutable", 7);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 260, "ptr", 89, 3, "ptrace", 6);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 270, "return", 93, 6, "returning", 9);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 280, "if", 90, 2, "iffy", 4);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 290, "else", 93, 4, "elsewhere", 9);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 300, "while", 95, 5, "while1", 6);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 310, "init", 95, 4, "initial", 7);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 320, "next", 96, 4, "next1", 5);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 330, "continue", 101, 8, "continue1", 9);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 340, "break", 99, 5, "break1", 6);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 350, "drop", 99, 4, "drop1", 5);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 360, "forget", 102, 6, "forget1", 7);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 370, "null", 101, 4, "null1", 5);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 380, "true", 102, 4, "true1", 5);
-  }
-  if score == 0 {
-    score = lexer_keyword_table_case_score(ref table, 390, "false", 104, 5, "false1", 6);
-  }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 60, "fn", 82, 2, "fn1", 3);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 70, "const", 105, 5, "constant", 8);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 80, "as", 103, 2, "ask", 3);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 90, "meta", 106, 4, "metadata", 8);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 100, "struct", 109, 6, "structure", 9);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 110, "extern", 110, 6, "external", 8);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 120, "enum", 109, 4, "enumerate", 9);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 130, "trait", 111, 5, "traitor", 7);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 140, "dyn", 110, 3, "dynamic", 7);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 150, "match", 113, 5, "matches", 7);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 160, "mod", 112, 3, "module", 6);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 170, "pub", 113, 3, "public", 6);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 180, "use", 114, 3, "user", 4);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 190, "impl", 116, 4, "implicit", 8);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 200, "for", 116, 3, "forest", 6);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 210, "in", 116, 2, "inside", 6);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 220, "let", 84, 3, "letter", 6);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 230, "var", 85, 3, "variant", 7);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 240, "own", 86, 3, "owner", 5);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 250, "ref", 87, 3, "reference", 9);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 260, "mut", 88, 3, "mutable", 7);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 270, "ptr", 89, 3, "ptrace", 6);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 280, "return", 93, 6, "returning", 9);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 290, "if", 90, 2, "iffy", 4);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 300, "else", 93, 4, "elsewhere", 9);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 310, "while", 95, 5, "while1", 6);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 320, "init", 95, 4, "initial", 7);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 330, "next", 96, 4, "next1", 5);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 340, "continue", 101, 8, "continue1", 9);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 350, "break", 99, 5, "break1", 6);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 360, "drop", 99, 4, "drop1", 5);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 370, "forget", 102, 6, "forget1", 7);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 380, "null", 101, 4, "null1", 5);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 390, "true", 102, 4, "true1", 5);
+    }
+    if score == 0 {
+      score = lexer_keyword_table_case_score(ref table, 400, "false", 104, 5, "false1", 6);
+    }
 
-  std::zone::destroy(zone);
-  return score;
+    return score;
+  }
 }
 
 fn lexer_leading_comment_keyword_handoff_case_score(
@@ -3350,6 +3362,64 @@ fn parser_keyword_failure_code(text: Slice[u8]) -> i64 {
   zone(65536) {
     return parser::parse_failure_code(parser::parse_text_with_keywords(text));
   }
+}
+
+fn parser_keyword_failure_code_case_score(text: Slice[u8], expected_code: i64) -> i64 {
+  if parser_keyword_failure_code(text) != expected_code {
+    return 1;
+  }
+  return 0;
+}
+
+fn parser_keyword_failure_code_case_with_base_score(
+  base: i64,
+  text: Slice[u8],
+  expected_code: i64
+) -> i64 {
+  let score = parser_keyword_failure_code_case_score(text, expected_code);
+  if score != 0 {
+    return base + score;
+  }
+  return 0;
+}
+
+fn parser_keyword_failure_keywords_score() -> i64 {
+  return
+    parser_keyword_failure_code_case_with_base_score(10, "fn", 2006) +
+    parser_keyword_failure_code_case_with_base_score(20, "const", 2006) +
+    parser_keyword_failure_code_case_with_base_score(30, "as", 2006) +
+    parser_keyword_failure_code_case_with_base_score(40, "meta", 2006) +
+    parser_keyword_failure_code_case_with_base_score(50, "struct", 2006) +
+    parser_keyword_failure_code_case_with_base_score(60, "extern", 2006) +
+    parser_keyword_failure_code_case_with_base_score(70, "enum", 2006) +
+    parser_keyword_failure_code_case_with_base_score(80, "trait", 2006) +
+    parser_keyword_failure_code_case_with_base_score(90, "dyn", 2006) +
+    parser_keyword_failure_code_case_with_base_score(100, "match", 2006) +
+    parser_keyword_failure_code_case_with_base_score(110, "mod", 2006) +
+    parser_keyword_failure_code_case_with_base_score(120, "pub", 2006) +
+    parser_keyword_failure_code_case_with_base_score(130, "use", 2006) +
+    parser_keyword_failure_code_case_with_base_score(140, "impl", 2006) +
+    parser_keyword_failure_code_case_with_base_score(150, "for", 2006) +
+    parser_keyword_failure_code_case_with_base_score(160, "in", 2006) +
+    parser_keyword_failure_code_case_with_base_score(170, "let", 2006) +
+    parser_keyword_failure_code_case_with_base_score(180, "var", 2006) +
+    parser_keyword_failure_code_case_with_base_score(190, "own", 2006) +
+    parser_keyword_failure_code_case_with_base_score(200, "ref", 2006) +
+    parser_keyword_failure_code_case_with_base_score(210, "mut", 2006) +
+    parser_keyword_failure_code_case_with_base_score(220, "ptr", 2006) +
+    parser_keyword_failure_code_case_with_base_score(230, "return", 2006) +
+    parser_keyword_failure_code_case_with_base_score(240, "if", 2006) +
+    parser_keyword_failure_code_case_with_base_score(250, "else", 2006) +
+    parser_keyword_failure_code_case_with_base_score(260, "while", 2006) +
+    parser_keyword_failure_code_case_with_base_score(270, "init", 2006) +
+    parser_keyword_failure_code_case_with_base_score(280, "next", 2006) +
+    parser_keyword_failure_code_case_with_base_score(290, "continue", 2006) +
+    parser_keyword_failure_code_case_with_base_score(300, "break", 2006) +
+    parser_keyword_failure_code_case_with_base_score(310, "drop", 2006) +
+    parser_keyword_failure_code_case_with_base_score(320, "forget", 2006) +
+    parser_keyword_failure_code_case_with_base_score(330, "null", 2006) +
+    parser_keyword_failure_code_case_with_base_score(340, "true", 2006) +
+    parser_keyword_failure_code_case_with_base_score(350, "false", 2006);
 }
 
 fn parser_keyword_failure_case_score(
@@ -3913,101 +3983,9 @@ fn parse_text_score() -> i64 {
   if parser::parse_statement_span_len(parser::parse_text("12345")) != 5 {
     return 7;
   }
-  if parser_keyword_failure_code("meta") != 2006 {
-    return 8;
-  }
-  if parser_keyword_failure_code("struct") != 2006 {
-    return 9;
-  }
-  if parser_keyword_failure_code("extern") != 2006 {
-    return 10;
-  }
-  if parser_keyword_failure_code("enum") != 2006 {
-    return 11;
-  }
-  if parser_keyword_failure_code("trait") != 2006 {
-    return 12;
-  }
-  if parser_keyword_failure_code("dyn") != 2006 {
-    return 13;
-  }
-  if parser_keyword_failure_code("match") != 2006 {
-    return 14;
-  }
-  if parser_keyword_failure_code("mod") != 2006 {
-    return 15;
-  }
-  if parser_keyword_failure_code("pub") != 2006 {
-    return 16;
-  }
-  if parser_keyword_failure_code("use") != 2006 {
-    return 17;
-  }
-  if parser_keyword_failure_code("impl") != 2006 {
-    return 18;
-  }
-  if parser_keyword_failure_code("for") != 2006 {
-    return 19;
-  }
-  if parser_keyword_failure_code("in") != 2006 {
-    return 20;
-  }
-  if parser_keyword_failure_code("let") != 2006 {
-    return 21;
-  }
-  if parser_keyword_failure_code("var") != 2006 {
-    return 22;
-  }
-  if parser_keyword_failure_code("own") != 2006 {
-    return 23;
-  }
-  if parser_keyword_failure_code("ref") != 2006 {
-    return 24;
-  }
-  if parser_keyword_failure_code("mut") != 2006 {
-    return 25;
-  }
-  if parser_keyword_failure_code("ptr") != 2006 {
-    return 26;
-  }
-  if parser_keyword_failure_code("return") != 2006 {
-    return 27;
-  }
-  if parser_keyword_failure_code("if") != 2006 {
-    return 28;
-  }
-  if parser_keyword_failure_code("else") != 2006 {
-    return 29;
-  }
-  if parser_keyword_failure_code("while") != 2006 {
-    return 30;
-  }
-  if parser_keyword_failure_code("init") != 2006 {
-    return 31;
-  }
-  if parser_keyword_failure_code("next") != 2006 {
-    return 32;
-  }
-  if parser_keyword_failure_code("continue") != 2006 {
-    return 33;
-  }
-  if parser_keyword_failure_code("break") != 2006 {
-    return 34;
-  }
-  if parser_keyword_failure_code("drop") != 2006 {
-    return 35;
-  }
-  if parser_keyword_failure_code("forget") != 2006 {
-    return 36;
-  }
-  if parser_keyword_failure_code("null") != 2006 {
-    return 37;
-  }
-  if parser_keyword_failure_code("true") != 2006 {
-    return 38;
-  }
-  if parser_keyword_failure_code("false") != 2006 {
-    return 39;
+  let keyword_score = parser_keyword_failure_keywords_score();
+  if keyword_score != 0 {
+    return 8 + keyword_score;
   }
   return 0;
 }
