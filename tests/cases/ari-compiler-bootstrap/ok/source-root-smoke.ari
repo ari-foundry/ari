@@ -428,6 +428,20 @@ fn loaded_source_score() -> i64 {
   if source::loaded_source_has_first(bad_loaded) {
     return 7;
   }
+  if !source::loaded_source_first_offset_valid(loaded) {
+    return 8;
+  }
+  let eof_first_loaded = source::loaded_source_summary(7, 5, 'm', 5);
+  if source::loaded_source_first_offset_valid(eof_first_loaded) {
+    return 9;
+  }
+  if source::loaded_source_has_first(eof_first_loaded) {
+    return 10;
+  }
+  let negative_first_loaded = source::loaded_source_summary(7, 5, 'm', -1);
+  if source::loaded_source_first_offset_valid(negative_first_loaded) {
+    return 11;
+  }
   return source::loaded_source_score(source::loaded_source_summary(7, 5, 'm', 0));
 }
 

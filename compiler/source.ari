@@ -382,9 +382,13 @@ pub fn loaded_source_first_offset(summary: LoadedSourceSummary) -> ByteOffset {
   return summary.first_offset;
 }
 
-pub fn loaded_source_has_first(summary: LoadedSourceSummary) -> bool {
+pub fn loaded_source_first_offset_valid(summary: LoadedSourceSummary) -> bool {
   return contains(summary.file, summary.first_offset) &&
     contains(summary.file, summary.first_offset + 1);
+}
+
+pub fn loaded_source_has_first(summary: LoadedSourceSummary) -> bool {
+  return loaded_source_first_offset_valid(summary);
 }
 
 pub fn loaded_source_span(

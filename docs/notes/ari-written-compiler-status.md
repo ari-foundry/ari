@@ -556,6 +556,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   reuse the wrapped source-file invariant.
 - The source model now has loaded-source byte-length validity checks that
   reuse the wrapped source-file invariant.
+- The source model now has loaded-source first-offset validity checks that
+  make one-byte availability explicit through the existing containment rule.
 - `compiler/main.ari` is now a thin entrypoint that delegates to the driver and
   maps the driver's result to an exit code.
 - `make check-ari-compiler-bootstrap` checks each `compiler/*.ari` module,

@@ -631,4 +631,6 @@ Desired stage0 pressure that is not yet classified as a bug:
   require a hosted compiler fix. Source-table-entry byte-length validity now
   reuses the wrapped source-file invariant and does not require a hosted
   compiler fix. Loaded-source byte-length validity now reuses the wrapped
-  source-file invariant and does not require a hosted compiler fix.
+  source-file invariant and does not require a hosted compiler fix. Loaded-source
+  first-offset validity now makes one-byte availability explicit through the
+  existing containment rule and does not require a hosted compiler fix.
