@@ -666,6 +666,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/token.ari` also exposes token-kind name text, and
   `compiler/lexer.ari` forwards that through cursors so smoke checks and
   debugging do not have to rely only on numeric token ranks.
+- Token class name text is also available from `compiler/token.ari` and lexer
+  cursors, so callers can distinguish identifier, number, punctuation,
+  operator, keyword, string-literal, EOF, and unknown classes without decoding
+  class ranks.
 - `compiler/lexer.ari` now uses ranked-width and ranked-position query names
   and no longer exposes public `score` helpers.
 - `compiler/parser.ari` now uses parser kind-rank query names and no longer

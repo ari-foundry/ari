@@ -5585,6 +5585,66 @@ fn lexer_cursor_kind_name_text_score() -> i64 {
   return 0;
 }
 
+fn token_kind_class_name_text_score() -> i64 {
+  if !token::kind_class_name_text(token::Identifier).equals("token-class.identifier") {
+    return 1;
+  }
+  if !token::kind_class_name_text(token::Integer).equals("token-class.number") {
+    return 2;
+  }
+  if !token::kind_class_name_text(token::Float).equals("token-class.number") {
+    return 3;
+  }
+  if !token::kind_class_name_text(token::LeftParen).equals("token-class.punctuation") {
+    return 4;
+  }
+  if !token::kind_class_name_text(token::Plus).equals("token-class.operator") {
+    return 5;
+  }
+  if !token::kind_class_name_text(token::KwTrue).equals("token-class.keyword") {
+    return 6;
+  }
+  if !token::kind_class_name_text(token::EndOfFile).equals("token-class.eof") {
+    return 7;
+  }
+  if !token::kind_class_name_text(token::Unknown('$')).equals("token-class.unknown") {
+    return 8;
+  }
+  if !token::kind_class_name_text(token::StringLiteral).equals("token-class.string-literal") {
+    return 9;
+  }
+  return 0;
+}
+
+fn lexer_cursor_kind_class_name_text_score() -> i64 {
+  let number = lexer::cursor_from_text("42", 0);
+  if !lexer::cursor_token_kind_class_name_text(number).equals("token-class.number") {
+    return 1;
+  }
+  let operator = lexer::cursor_from_text("+=", 0);
+  if !lexer::cursor_token_kind_class_name_text(operator).equals("token-class.operator") {
+    return 2;
+  }
+  let string_literal = lexer::cursor_from_text("\"ari\"", 0);
+  if !lexer::cursor_token_kind_class_name_text(string_literal).equals(
+    "token-class.string-literal"
+  ) {
+    return 3;
+  }
+  zone(65536) {
+    var table = lexer::keyword_table();
+    let keyword = lexer::cursor_from_text_with_keywords(ref table, "true", 0);
+    if !lexer::cursor_token_kind_class_name_text(keyword).equals("token-class.keyword") {
+      return 4;
+    }
+  }
+  let unknown = lexer::cursor_from_text("$", 0);
+  if !lexer::cursor_token_kind_class_name_text(unknown).equals("token-class.unknown") {
+    return 5;
+  }
+  return 0;
+}
+
 fn parse_failure_code_score() -> i64 {
   if parser::parse_failure_code(parser::parse_one('q', 1)) != 0 {
     return 1;
@@ -5791,6 +5851,8 @@ fn main() -> i64 {
     diagnostic_name_text_score() +
     token_kind_name_text_score() +
     lexer_cursor_kind_name_text_score() +
+    token_kind_class_name_text_score() +
+    lexer_cursor_kind_class_name_text_score() +
     parse_failure_code_score() -
     2004 +
     parse_failure_name_score() +

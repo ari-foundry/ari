@@ -2446,6 +2446,10 @@ pub fn cursor_token_kind_name_text(cursor: TokenCursor) -> std::Slice[u8] {
   return token::token_kind_name_text(cursor.current);
 }
 
+pub fn cursor_token_kind_class_name_text(cursor: TokenCursor) -> std::Slice[u8] {
+  return token::token_kind_class_name_text(cursor.current);
+}
+
 pub fn cursor_is_identifier(cursor: TokenCursor) -> bool {
   return token::kind_is_identifier(cursor.current.kind);
 }

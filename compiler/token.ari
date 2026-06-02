@@ -676,3 +676,39 @@ pub fn kind_is_unknown(kind: TokenKind) -> bool {
 pub fn kind_is_string_literal(kind: TokenKind) -> bool {
   return kind_class_rank(kind) == 9;
 }
+
+pub fn kind_class_name_text(kind: TokenKind) -> std::Slice[u8] {
+  let class_rank = kind_class_rank(kind);
+  if class_rank == 1 {
+    return "token-class.identifier";
+  }
+  if class_rank == 2 {
+    return "token-class.number";
+  }
+  if class_rank == 3 {
+    return "token-class.whitespace";
+  }
+  if class_rank == 4 {
+    return "token-class.punctuation";
+  }
+  if class_rank == 5 {
+    return "token-class.operator";
+  }
+  if class_rank == 6 {
+    return "token-class.eof";
+  }
+  if class_rank == 7 {
+    return "token-class.unknown";
+  }
+  if class_rank == 8 {
+    return "token-class.keyword";
+  }
+  if class_rank == 9 {
+    return "token-class.string-literal";
+  }
+  return "token-class.unknown";
+}
+
+pub fn token_kind_class_name_text(token: Token) -> std::Slice[u8] {
+  return kind_class_name_text(token.kind);
+}

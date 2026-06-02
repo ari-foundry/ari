@@ -786,6 +786,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   cursor forwarding accessor, with source-root smoke coverage for identifiers,
   string literals, keywords, operators, EOF, and unknown tokens. This gives
   lexer debugging a named path instead of relying only on numeric ranks.
+- Added token-class name text accessors in `compiler/token.ari` and a lexer
+  cursor forwarding accessor, with source-root smoke coverage for the main
+  lexer classes so debug and fixture code can avoid decoding class-rank
+  numbers.
 
 ## Small Task Queue
 
