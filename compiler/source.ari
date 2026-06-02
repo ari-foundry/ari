@@ -1,6 +1,7 @@
 type SourceId = i64;
 type SourcePathId = i64;
 type ByteOffset = i64;
+type SourceLineCount = i64;
 
 pub struct Span {
   source: SourceId,
@@ -11,6 +12,12 @@ pub struct Span {
 pub struct SourceFile {
   id: SourceId,
   byte_len: ByteOffset,
+}
+
+pub struct SourceLineStarts {
+  first: ByteOffset,
+  second: ByteOffset,
+  count: SourceLineCount,
 }
 
 pub struct SourceTableEntry {
@@ -26,6 +33,18 @@ pub struct LoadedSourceSummary {
 
 pub fn source_file(id: SourceId, byte_len: ByteOffset) -> SourceFile {
   return SourceFile { id: id, byte_len: byte_len };
+}
+
+pub fn source_line_starts(
+  first: ByteOffset,
+  second: ByteOffset,
+  count: SourceLineCount
+) -> SourceLineStarts {
+  return SourceLineStarts {
+    first: first,
+    second: second,
+    count: count,
+  };
 }
 
 pub fn source_table_entry(
@@ -74,6 +93,46 @@ pub fn span_source(span: Span) -> SourceId {
 
 pub fn contains(file: SourceFile, offset: ByteOffset) -> bool {
   return offset >= 0 && offset <= file.byte_len;
+}
+
+pub fn source_line_starts_first(lines: SourceLineStarts) -> ByteOffset {
+  return lines.first;
+}
+
+pub fn source_line_starts_second(lines: SourceLineStarts) -> ByteOffset {
+  return lines.second;
+}
+
+pub fn source_line_starts_count(lines: SourceLineStarts) -> SourceLineCount {
+  return lines.count;
+}
+
+pub fn source_line_starts_has_second(lines: SourceLineStarts) -> bool {
+  return lines.count > 1;
+}
+
+pub fn source_line_starts_valid(
+  lines: SourceLineStarts,
+  file: SourceFile
+) -> bool {
+  if lines.count < 1 {
+    return false;
+  }
+  if lines.first != 0 {
+    return false;
+  }
+  if !contains(file, lines.first) {
+    return false;
+  }
+  if lines.count > 1 {
+    if lines.second <= lines.first {
+      return false;
+    }
+    if !contains(file, lines.second) {
+      return false;
+    }
+  }
+  return true;
 }
 
 pub fn source_table_entry_file(entry: SourceTableEntry) -> SourceFile {

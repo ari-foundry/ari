@@ -383,6 +383,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   `SourceTableEntry` and stays inside that entry's byte length.
 - `compiler/source.ari` can construct a span from a `SourceTableEntry`, so
   callers do not need to manually repeat the entry source id.
+- `compiler/source.ari` has a minimal `SourceLineStarts` summary with first
+  line start, optional second line start, and count metadata. It is a checked
+  source-model placeholder, not a full owned line-start table yet.
 - `compiler/parser.ari` can parse a source-text slice through the text-backed
   lexer handoff path.
 - `compiler/driver.ari` routes file and text input through `std::string::String`

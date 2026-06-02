@@ -462,6 +462,49 @@ fn source_table_entry_score() -> i64 {
     source::source_table_entry_path_id(entry);
 }
 
+fn source_line_starts_score() -> i64 {
+  let file = source::source_file(3, 12);
+  let lines = source::source_line_starts(0, 8, 2);
+  if source::source_line_starts_first(lines) != 0 {
+    return 1;
+  }
+  if source::source_line_starts_second(lines) != 8 {
+    return 2;
+  }
+  if source::source_line_starts_count(lines) != 2 {
+    return 3;
+  }
+  if !source::source_line_starts_has_second(lines) {
+    return 4;
+  }
+  if !source::source_line_starts_valid(lines, file) {
+    return 5;
+  }
+  let bad_first = source::source_line_starts(1, 8, 2);
+  if source::source_line_starts_valid(bad_first, file) {
+    return 6;
+  }
+  let bad_second_bounds = source::source_line_starts(0, 13, 2);
+  if source::source_line_starts_valid(bad_second_bounds, file) {
+    return 7;
+  }
+  let bad_second_order = source::source_line_starts(0, 0, 2);
+  if source::source_line_starts_valid(bad_second_order, file) {
+    return 8;
+  }
+  let bad_count = source::source_line_starts(0, 8, 0);
+  if source::source_line_starts_valid(bad_count, file) {
+    return 9;
+  }
+  let bad_file = source::source_file(3, -1);
+  if source::source_line_starts_valid(lines, bad_file) {
+    return 10;
+  }
+  return source::source_line_starts_first(lines) +
+    source::source_line_starts_second(lines) +
+    source::source_line_starts_count(lines);
+}
+
 fn loaded_driver_score() -> i64 {
   return driver::exit_code(driver::run_loaded_source_summary(1, 16, 'p', 2));
 }
@@ -4357,6 +4400,8 @@ fn main() -> i64 {
     121 +
     source_table_entry_score() -
     34 +
+    source_line_starts_score() -
+    10 +
     loaded_driver_score() +
     loaded_driver_result_score() +
     invalid_loaded_driver_score() -

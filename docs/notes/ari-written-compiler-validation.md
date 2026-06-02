@@ -594,6 +594,9 @@ Desired stage0 pressure that is not yet classified as a bug:
   source-model step now has a minimal source table entry shape with a scalar
   path id placeholder, and entry-local span validation now checks source-id
   ownership and byte bounds. Entry-local span construction now avoids manually
-  repeating the source id at call sites. Full source table ownership, file path
-  strings, loaded text ownership, line starts, and diagnostic location mapping
-  remain pending.
+  repeating the source id at call sites. The source model now also has a
+  minimal line-start summary shape with first line start, optional second line
+  start, and count metadata, checked through source-root smoke coverage without
+  requiring a hosted compiler fix. Full source table ownership, file path
+  strings, loaded text ownership, owned line-start arrays, UTF-8 byte-column
+  policy, and diagnostic location mapping remain pending.
