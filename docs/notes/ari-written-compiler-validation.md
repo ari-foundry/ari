@@ -160,6 +160,13 @@ ask for stable classes such as `token-class.identifier`, `token-class.number`,
 `token-class.punctuation`, `token-class.operator`, `token-class.keyword`,
 `token-class.string-literal`, `token-class.eof`, and `token-class.unknown`
 instead of decoding class-rank values. This required no hosted compiler fix.
+The token query review removed the duplicated full-token matches for rank,
+class rank, token name text, and class name text. Those public accessors now
+read one private `TokenKindInfo` mapping, so adding a lexer token has one
+metadata synchronization point. The tradeoff is that rank-only and class-only
+queries now flow through a small aggregate return; this is acceptable for the
+current bootstrap surface, but should be revisited if token classification
+shows up on a hot lexer/parser path. This required no hosted compiler fix.
 The AST statement-kind query and parser payload-shape smoke checked successful
 statement output without requiring a hosted compiler fix. The AST node
 span-length query and parser payload-span smoke checked successful statement

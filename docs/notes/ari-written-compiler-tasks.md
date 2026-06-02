@@ -790,6 +790,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   cursor forwarding accessor, with source-root smoke coverage for the main
   lexer classes so debug and fixture code can avoid decoding class-rank
   numbers.
+- Reviewed the token query implementation and consolidated token kind rank,
+  class rank, token name text, and token class name text behind one private
+  token-kind metadata mapping instead of maintaining separate full-token
+  matches for each query.
 
 ## Small Task Queue
 

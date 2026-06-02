@@ -670,6 +670,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   cursors, so callers can distinguish identifier, number, punctuation,
   operator, keyword, string-literal, EOF, and unknown classes without decoding
   class ranks.
+- Token kind rank, class rank, token name text, and class name text now share a
+  single private token-kind metadata mapping in `compiler/token.ari`, reducing
+  the duplicated full-token `match` blocks that had to be kept synchronized
+  after every lexer token addition.
 - `compiler/lexer.ari` now uses ranked-width and ranked-position query names
   and no longer exposes public `score` helpers.
 - `compiler/parser.ari` now uses parser kind-rank query names and no longer

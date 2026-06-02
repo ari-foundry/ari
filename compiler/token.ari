@@ -112,6 +112,27 @@ pub struct Token {
   literal: LiteralPayload,
 }
 
+struct TokenKindInfo {
+  rank: i64,
+  class_rank: i64,
+  name_text: std::Slice[u8],
+  class_name_text: std::Slice[u8],
+}
+
+fn token_kind_info_value(
+  rank: i64,
+  class_rank: i64,
+  name_text: std::Slice[u8],
+  class_name_text: std::Slice[u8]
+) -> TokenKindInfo {
+  return TokenKindInfo {
+    rank: rank,
+    class_rank: class_rank,
+    name_text: name_text,
+    class_name_text: class_name_text,
+  };
+}
+
 pub fn make_literal_payload(
   literal_base: i64,
   literal_suffix_rank: i64,
@@ -310,102 +331,106 @@ pub fn literal_suffix_byte_char_rank() -> i64 {
   return 40;
 }
 
-pub fn kind_rank(kind: TokenKind) -> i64 {
+fn token_kind_info(kind: TokenKind) -> TokenKindInfo {
   match kind {
-    Identifier => 1,
-    Integer => 2,
-    Float => 52,
-    Whitespace => 3,
-    LeftParen => 4,
-    RightParen => 5,
-    LeftBrace => 6,
-    RightBrace => 7,
-    LeftBracket => 18,
-    RightBracket => 19,
-    Comma => 8,
-    Colon => 9,
-    ColonColon => 45,
-    Semicolon => 10,
-    Dot => 20,
-    DotDot => 48,
-    DotDotEqual => 49,
-    Ellipsis => 50,
-    DoubleQuote => 29,
-    StringLiteral => 51,
-    At => 34,
-    Question => 33,
-    QuestionQuestion => 47,
-    Equal => 11,
-    EqualEqual => 17,
-    Bang => 21,
-    Tilde => 72,
-    Less => 22,
-    Greater => 23,
-    BangEqual => 24,
-    LessEqual => 25,
-    GreaterEqual => 26,
-    Amp => 30,
-    AmpEqual => 65,
-    Pipe => 31,
-    PipeEqual => 66,
-    Caret => 32,
-    CaretEqual => 67,
-    AmpAmp => 40,
-    PipePipe => 41,
-    LessLess => 42,
-    LessLessEqual => 68,
-    GreaterGreater => 43,
-    GreaterGreaterEqual => 69,
-    Arrow => 44,
-    FatArrow => 46,
-    Plus => 12,
-    PlusEqual => 60,
-    Minus => 13,
-    MinusEqual => 61,
-    Star => 14,
-    StarEqual => 62,
-    Slash => 15,
-    SlashEqual => 63,
-    Percent => 16,
-    PercentEqual => 64,
-    KwFn => 80,
-    KwConst => 100,
-    KwAs => 101,
-    KwMeta => 102,
-    KwStruct => 103,
-    KwExtern => 104,
-    KwEnum => 105,
-    KwTrait => 106,
-    KwDyn => 107,
-    KwMatch => 108,
-    KwMod => 109,
-    KwPub => 110,
-    KwUse => 111,
-    KwImpl => 112,
-    KwFor => 113,
-    KwIn => 114,
-    KwLet => 81,
-    KwVar => 82,
-    KwOwn => 83,
-    KwRef => 84,
-    KwMut => 85,
-    KwPtr => 86,
-    KwReturn => 87,
-    KwIf => 88,
-    KwElse => 89,
-    KwWhile => 90,
-    KwInit => 91,
-    KwNext => 92,
-    KwContinue => 93,
-    KwBreak => 94,
-    KwDrop => 95,
-    KwForget => 96,
-    KwNull => 97,
-    KwTrue => 98,
-    KwFalse => 99,
-    EndOfFile => 0,
-    Unknown(value) => value as i64,
+    Identifier => token_kind_info_value(1, 1, "token.identifier", "token-class.identifier"),
+    Integer => token_kind_info_value(2, 2, "token.integer", "token-class.number"),
+    Float => token_kind_info_value(52, 2, "token.float", "token-class.number"),
+    Whitespace => token_kind_info_value(3, 3, "token.whitespace", "token-class.whitespace"),
+    LeftParen => token_kind_info_value(4, 4, "token.left-paren", "token-class.punctuation"),
+    RightParen => token_kind_info_value(5, 4, "token.right-paren", "token-class.punctuation"),
+    LeftBrace => token_kind_info_value(6, 4, "token.left-brace", "token-class.punctuation"),
+    RightBrace => token_kind_info_value(7, 4, "token.right-brace", "token-class.punctuation"),
+    LeftBracket => token_kind_info_value(18, 4, "token.left-bracket", "token-class.punctuation"),
+    RightBracket => token_kind_info_value(19, 4, "token.right-bracket", "token-class.punctuation"),
+    Comma => token_kind_info_value(8, 4, "token.comma", "token-class.punctuation"),
+    Colon => token_kind_info_value(9, 4, "token.colon", "token-class.punctuation"),
+    ColonColon => token_kind_info_value(45, 4, "token.colon-colon", "token-class.punctuation"),
+    Semicolon => token_kind_info_value(10, 4, "token.semicolon", "token-class.punctuation"),
+    Dot => token_kind_info_value(20, 4, "token.dot", "token-class.punctuation"),
+    DotDot => token_kind_info_value(48, 4, "token.dot-dot", "token-class.punctuation"),
+    DotDotEqual => token_kind_info_value(49, 4, "token.dot-dot-equal", "token-class.punctuation"),
+    Ellipsis => token_kind_info_value(50, 4, "token.ellipsis", "token-class.punctuation"),
+    DoubleQuote => token_kind_info_value(29, 4, "token.double-quote", "token-class.punctuation"),
+    StringLiteral => token_kind_info_value(51, 9, "token.string-literal", "token-class.string-literal"),
+    At => token_kind_info_value(34, 4, "token.at", "token-class.punctuation"),
+    Question => token_kind_info_value(33, 5, "token.question", "token-class.operator"),
+    QuestionQuestion => token_kind_info_value(47, 5, "token.question-question", "token-class.operator"),
+    Equal => token_kind_info_value(11, 5, "token.equal", "token-class.operator"),
+    EqualEqual => token_kind_info_value(17, 5, "token.equal-equal", "token-class.operator"),
+    Bang => token_kind_info_value(21, 5, "token.bang", "token-class.operator"),
+    Tilde => token_kind_info_value(72, 5, "token.tilde", "token-class.operator"),
+    Less => token_kind_info_value(22, 5, "token.less", "token-class.operator"),
+    Greater => token_kind_info_value(23, 5, "token.greater", "token-class.operator"),
+    BangEqual => token_kind_info_value(24, 5, "token.bang-equal", "token-class.operator"),
+    LessEqual => token_kind_info_value(25, 5, "token.less-equal", "token-class.operator"),
+    GreaterEqual => token_kind_info_value(26, 5, "token.greater-equal", "token-class.operator"),
+    Amp => token_kind_info_value(30, 5, "token.amp", "token-class.operator"),
+    AmpEqual => token_kind_info_value(65, 5, "token.amp-equal", "token-class.operator"),
+    Pipe => token_kind_info_value(31, 5, "token.pipe", "token-class.operator"),
+    PipeEqual => token_kind_info_value(66, 5, "token.pipe-equal", "token-class.operator"),
+    Caret => token_kind_info_value(32, 5, "token.caret", "token-class.operator"),
+    CaretEqual => token_kind_info_value(67, 5, "token.caret-equal", "token-class.operator"),
+    AmpAmp => token_kind_info_value(40, 5, "token.amp-amp", "token-class.operator"),
+    PipePipe => token_kind_info_value(41, 5, "token.pipe-pipe", "token-class.operator"),
+    LessLess => token_kind_info_value(42, 5, "token.less-less", "token-class.operator"),
+    LessLessEqual => token_kind_info_value(68, 5, "token.less-less-equal", "token-class.operator"),
+    GreaterGreater => token_kind_info_value(43, 5, "token.greater-greater", "token-class.operator"),
+    GreaterGreaterEqual => token_kind_info_value(69, 5, "token.greater-greater-equal", "token-class.operator"),
+    Arrow => token_kind_info_value(44, 5, "token.arrow", "token-class.operator"),
+    FatArrow => token_kind_info_value(46, 5, "token.fat-arrow", "token-class.operator"),
+    Plus => token_kind_info_value(12, 5, "token.plus", "token-class.operator"),
+    PlusEqual => token_kind_info_value(60, 5, "token.plus-equal", "token-class.operator"),
+    Minus => token_kind_info_value(13, 5, "token.minus", "token-class.operator"),
+    MinusEqual => token_kind_info_value(61, 5, "token.minus-equal", "token-class.operator"),
+    Star => token_kind_info_value(14, 5, "token.star", "token-class.operator"),
+    StarEqual => token_kind_info_value(62, 5, "token.star-equal", "token-class.operator"),
+    Slash => token_kind_info_value(15, 5, "token.slash", "token-class.operator"),
+    SlashEqual => token_kind_info_value(63, 5, "token.slash-equal", "token-class.operator"),
+    Percent => token_kind_info_value(16, 5, "token.percent", "token-class.operator"),
+    PercentEqual => token_kind_info_value(64, 5, "token.percent-equal", "token-class.operator"),
+    KwFn => token_kind_info_value(80, 8, "token.keyword.fn", "token-class.keyword"),
+    KwConst => token_kind_info_value(100, 8, "token.keyword.const", "token-class.keyword"),
+    KwAs => token_kind_info_value(101, 8, "token.keyword.as", "token-class.keyword"),
+    KwMeta => token_kind_info_value(102, 8, "token.keyword.meta", "token-class.keyword"),
+    KwStruct => token_kind_info_value(103, 8, "token.keyword.struct", "token-class.keyword"),
+    KwExtern => token_kind_info_value(104, 8, "token.keyword.extern", "token-class.keyword"),
+    KwEnum => token_kind_info_value(105, 8, "token.keyword.enum", "token-class.keyword"),
+    KwTrait => token_kind_info_value(106, 8, "token.keyword.trait", "token-class.keyword"),
+    KwDyn => token_kind_info_value(107, 8, "token.keyword.dyn", "token-class.keyword"),
+    KwMatch => token_kind_info_value(108, 8, "token.keyword.match", "token-class.keyword"),
+    KwMod => token_kind_info_value(109, 8, "token.keyword.mod", "token-class.keyword"),
+    KwPub => token_kind_info_value(110, 8, "token.keyword.pub", "token-class.keyword"),
+    KwUse => token_kind_info_value(111, 8, "token.keyword.use", "token-class.keyword"),
+    KwImpl => token_kind_info_value(112, 8, "token.keyword.impl", "token-class.keyword"),
+    KwFor => token_kind_info_value(113, 8, "token.keyword.for", "token-class.keyword"),
+    KwIn => token_kind_info_value(114, 8, "token.keyword.in", "token-class.keyword"),
+    KwLet => token_kind_info_value(81, 8, "token.keyword.let", "token-class.keyword"),
+    KwVar => token_kind_info_value(82, 8, "token.keyword.var", "token-class.keyword"),
+    KwOwn => token_kind_info_value(83, 8, "token.keyword.own", "token-class.keyword"),
+    KwRef => token_kind_info_value(84, 8, "token.keyword.ref", "token-class.keyword"),
+    KwMut => token_kind_info_value(85, 8, "token.keyword.mut", "token-class.keyword"),
+    KwPtr => token_kind_info_value(86, 8, "token.keyword.ptr", "token-class.keyword"),
+    KwReturn => token_kind_info_value(87, 8, "token.keyword.return", "token-class.keyword"),
+    KwIf => token_kind_info_value(88, 8, "token.keyword.if", "token-class.keyword"),
+    KwElse => token_kind_info_value(89, 8, "token.keyword.else", "token-class.keyword"),
+    KwWhile => token_kind_info_value(90, 8, "token.keyword.while", "token-class.keyword"),
+    KwInit => token_kind_info_value(91, 8, "token.keyword.init", "token-class.keyword"),
+    KwNext => token_kind_info_value(92, 8, "token.keyword.next", "token-class.keyword"),
+    KwContinue => token_kind_info_value(93, 8, "token.keyword.continue", "token-class.keyword"),
+    KwBreak => token_kind_info_value(94, 8, "token.keyword.break", "token-class.keyword"),
+    KwDrop => token_kind_info_value(95, 8, "token.keyword.drop", "token-class.keyword"),
+    KwForget => token_kind_info_value(96, 8, "token.keyword.forget", "token-class.keyword"),
+    KwNull => token_kind_info_value(97, 8, "token.keyword.null", "token-class.keyword"),
+    KwTrue => token_kind_info_value(98, 8, "token.keyword.true", "token-class.keyword"),
+    KwFalse => token_kind_info_value(99, 8, "token.keyword.false", "token-class.keyword"),
+    EndOfFile => token_kind_info_value(0, 6, "token.eof", "token-class.eof"),
+    Unknown(value) => token_kind_info_value(value as i64, 7, "token.unknown", "token-class.unknown"),
   }
+}
+
+pub fn kind_rank(kind: TokenKind) -> i64 {
+  return token_kind_info(kind).rank;
 }
 
 pub fn token_kind_rank(token: Token) -> i64 {
@@ -413,101 +438,7 @@ pub fn token_kind_rank(token: Token) -> i64 {
 }
 
 pub fn kind_name_text(kind: TokenKind) -> std::Slice[u8] {
-  match kind {
-    Identifier => { return "token.identifier"; }
-    Integer => { return "token.integer"; }
-    Float => { return "token.float"; }
-    Whitespace => { return "token.whitespace"; }
-    LeftParen => { return "token.left-paren"; }
-    RightParen => { return "token.right-paren"; }
-    LeftBrace => { return "token.left-brace"; }
-    RightBrace => { return "token.right-brace"; }
-    LeftBracket => { return "token.left-bracket"; }
-    RightBracket => { return "token.right-bracket"; }
-    Comma => { return "token.comma"; }
-    Colon => { return "token.colon"; }
-    ColonColon => { return "token.colon-colon"; }
-    Semicolon => { return "token.semicolon"; }
-    Dot => { return "token.dot"; }
-    DotDot => { return "token.dot-dot"; }
-    DotDotEqual => { return "token.dot-dot-equal"; }
-    Ellipsis => { return "token.ellipsis"; }
-    DoubleQuote => { return "token.double-quote"; }
-    StringLiteral => { return "token.string-literal"; }
-    At => { return "token.at"; }
-    Question => { return "token.question"; }
-    QuestionQuestion => { return "token.question-question"; }
-    Equal => { return "token.equal"; }
-    EqualEqual => { return "token.equal-equal"; }
-    Bang => { return "token.bang"; }
-    Tilde => { return "token.tilde"; }
-    Less => { return "token.less"; }
-    Greater => { return "token.greater"; }
-    BangEqual => { return "token.bang-equal"; }
-    LessEqual => { return "token.less-equal"; }
-    GreaterEqual => { return "token.greater-equal"; }
-    Amp => { return "token.amp"; }
-    AmpEqual => { return "token.amp-equal"; }
-    Pipe => { return "token.pipe"; }
-    PipeEqual => { return "token.pipe-equal"; }
-    Caret => { return "token.caret"; }
-    CaretEqual => { return "token.caret-equal"; }
-    AmpAmp => { return "token.amp-amp"; }
-    PipePipe => { return "token.pipe-pipe"; }
-    LessLess => { return "token.less-less"; }
-    LessLessEqual => { return "token.less-less-equal"; }
-    GreaterGreater => { return "token.greater-greater"; }
-    GreaterGreaterEqual => { return "token.greater-greater-equal"; }
-    Arrow => { return "token.arrow"; }
-    FatArrow => { return "token.fat-arrow"; }
-    Plus => { return "token.plus"; }
-    PlusEqual => { return "token.plus-equal"; }
-    Minus => { return "token.minus"; }
-    MinusEqual => { return "token.minus-equal"; }
-    Star => { return "token.star"; }
-    StarEqual => { return "token.star-equal"; }
-    Slash => { return "token.slash"; }
-    SlashEqual => { return "token.slash-equal"; }
-    Percent => { return "token.percent"; }
-    PercentEqual => { return "token.percent-equal"; }
-    KwFn => { return "token.keyword.fn"; }
-    KwConst => { return "token.keyword.const"; }
-    KwAs => { return "token.keyword.as"; }
-    KwMeta => { return "token.keyword.meta"; }
-    KwStruct => { return "token.keyword.struct"; }
-    KwExtern => { return "token.keyword.extern"; }
-    KwEnum => { return "token.keyword.enum"; }
-    KwTrait => { return "token.keyword.trait"; }
-    KwDyn => { return "token.keyword.dyn"; }
-    KwMatch => { return "token.keyword.match"; }
-    KwMod => { return "token.keyword.mod"; }
-    KwPub => { return "token.keyword.pub"; }
-    KwUse => { return "token.keyword.use"; }
-    KwImpl => { return "token.keyword.impl"; }
-    KwFor => { return "token.keyword.for"; }
-    KwIn => { return "token.keyword.in"; }
-    KwLet => { return "token.keyword.let"; }
-    KwVar => { return "token.keyword.var"; }
-    KwOwn => { return "token.keyword.own"; }
-    KwRef => { return "token.keyword.ref"; }
-    KwMut => { return "token.keyword.mut"; }
-    KwPtr => { return "token.keyword.ptr"; }
-    KwReturn => { return "token.keyword.return"; }
-    KwIf => { return "token.keyword.if"; }
-    KwElse => { return "token.keyword.else"; }
-    KwWhile => { return "token.keyword.while"; }
-    KwInit => { return "token.keyword.init"; }
-    KwNext => { return "token.keyword.next"; }
-    KwContinue => { return "token.keyword.continue"; }
-    KwBreak => { return "token.keyword.break"; }
-    KwDrop => { return "token.keyword.drop"; }
-    KwForget => { return "token.keyword.forget"; }
-    KwNull => { return "token.keyword.null"; }
-    KwTrue => { return "token.keyword.true"; }
-    KwFalse => { return "token.keyword.false"; }
-    EndOfFile => { return "token.eof"; }
-    Unknown(_) => { return "token.unknown"; }
-  }
+  return token_kind_info(kind).name_text;
 }
 
 pub fn token_kind_name_text(token: Token) -> std::Slice[u8] {
@@ -515,101 +446,7 @@ pub fn token_kind_name_text(token: Token) -> std::Slice[u8] {
 }
 
 pub fn kind_class_rank(kind: TokenKind) -> i64 {
-  match kind {
-    Identifier => 1,
-    Integer => 2,
-    Float => 2,
-    Whitespace => 3,
-    LeftParen => 4,
-    RightParen => 4,
-    LeftBrace => 4,
-    RightBrace => 4,
-    LeftBracket => 4,
-    RightBracket => 4,
-    Comma => 4,
-    Colon => 4,
-    ColonColon => 4,
-    Semicolon => 4,
-    Dot => 4,
-    DotDot => 4,
-    DotDotEqual => 4,
-    Ellipsis => 4,
-    DoubleQuote => 4,
-    StringLiteral => 9,
-    At => 4,
-    Question => 5,
-    QuestionQuestion => 5,
-    Equal => 5,
-    EqualEqual => 5,
-    Bang => 5,
-    Tilde => 5,
-    Less => 5,
-    Greater => 5,
-    BangEqual => 5,
-    LessEqual => 5,
-    GreaterEqual => 5,
-    Amp => 5,
-    AmpEqual => 5,
-    Pipe => 5,
-    PipeEqual => 5,
-    Caret => 5,
-    CaretEqual => 5,
-    AmpAmp => 5,
-    PipePipe => 5,
-    LessLess => 5,
-    LessLessEqual => 5,
-    GreaterGreater => 5,
-    GreaterGreaterEqual => 5,
-    Arrow => 5,
-    FatArrow => 5,
-    Plus => 5,
-    PlusEqual => 5,
-    Minus => 5,
-    MinusEqual => 5,
-    Star => 5,
-    StarEqual => 5,
-    Slash => 5,
-    SlashEqual => 5,
-    Percent => 5,
-    PercentEqual => 5,
-    KwFn => 8,
-    KwConst => 8,
-    KwAs => 8,
-    KwMeta => 8,
-    KwStruct => 8,
-    KwExtern => 8,
-    KwEnum => 8,
-    KwTrait => 8,
-    KwDyn => 8,
-    KwMatch => 8,
-    KwMod => 8,
-    KwPub => 8,
-    KwUse => 8,
-    KwImpl => 8,
-    KwFor => 8,
-    KwIn => 8,
-    KwLet => 8,
-    KwVar => 8,
-    KwOwn => 8,
-    KwRef => 8,
-    KwMut => 8,
-    KwPtr => 8,
-    KwReturn => 8,
-    KwIf => 8,
-    KwElse => 8,
-    KwWhile => 8,
-    KwInit => 8,
-    KwNext => 8,
-    KwContinue => 8,
-    KwBreak => 8,
-    KwDrop => 8,
-    KwForget => 8,
-    KwNull => 8,
-    KwTrue => 8,
-    KwFalse => 8,
-    EndOfFile => 6,
-    Unknown(_) => 7,
-  }
+  return token_kind_info(kind).class_rank;
 }
 
 pub fn kind_is_identifier(kind: TokenKind) -> bool {
@@ -678,35 +515,7 @@ pub fn kind_is_string_literal(kind: TokenKind) -> bool {
 }
 
 pub fn kind_class_name_text(kind: TokenKind) -> std::Slice[u8] {
-  let class_rank = kind_class_rank(kind);
-  if class_rank == 1 {
-    return "token-class.identifier";
-  }
-  if class_rank == 2 {
-    return "token-class.number";
-  }
-  if class_rank == 3 {
-    return "token-class.whitespace";
-  }
-  if class_rank == 4 {
-    return "token-class.punctuation";
-  }
-  if class_rank == 5 {
-    return "token-class.operator";
-  }
-  if class_rank == 6 {
-    return "token-class.eof";
-  }
-  if class_rank == 7 {
-    return "token-class.unknown";
-  }
-  if class_rank == 8 {
-    return "token-class.keyword";
-  }
-  if class_rank == 9 {
-    return "token-class.string-literal";
-  }
-  return "token-class.unknown";
+  return token_kind_info(kind).class_name_text;
 }
 
 pub fn token_kind_class_name_text(token: Token) -> std::Slice[u8] {
