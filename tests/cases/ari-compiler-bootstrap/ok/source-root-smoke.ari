@@ -1,5 +1,6 @@
 mod source;
 mod diagnostic;
+mod token;
 mod lexer;
 mod ast;
 mod parser;
@@ -1328,6 +1329,86 @@ fn lexer_number_kind_split_score() -> i64 {
   }
   if lexer::cursor_is_float(byte_char) {
     return 9;
+  }
+  return 0;
+}
+
+fn lexer_number_literal_metadata_score() -> i64 {
+  let decimal = lexer::cursor_from_text("42 ", 0);
+  if lexer::cursor_token_literal_base(decimal) != token::literal_base_decimal_rank() {
+    return 1;
+  }
+  if lexer::cursor_token_literal_suffix_rank(decimal) != token::literal_suffix_none_rank() {
+    return 2;
+  }
+
+  let typed_integer = lexer::cursor_from_text("42i64 ", 0);
+  if !lexer::cursor_is_integer(typed_integer) {
+    return 3;
+  }
+  if lexer::cursor_token_literal_base(typed_integer) != token::literal_base_decimal_rank() {
+    return 4;
+  }
+  if lexer::cursor_token_literal_suffix_rank(typed_integer) != token::literal_suffix_i64_rank() {
+    return 5;
+  }
+
+  let typed_float = lexer::cursor_from_text("42f32 ", 0);
+  if !lexer::cursor_is_float(typed_float) {
+    return 6;
+  }
+  if lexer::cursor_token_literal_base(typed_float) != token::literal_base_decimal_rank() {
+    return 7;
+  }
+  if lexer::cursor_token_literal_suffix_rank(typed_float) != token::literal_suffix_f32_rank() {
+    return 8;
+  }
+
+  let hex_integer = lexer::cursor_from_text("0xffu8 ", 0);
+  if !lexer::cursor_is_integer(hex_integer) {
+    return 9;
+  }
+  if lexer::cursor_token_literal_base(hex_integer) != token::literal_base_hex_rank() {
+    return 10;
+  }
+  if lexer::cursor_token_literal_suffix_rank(hex_integer) != token::literal_suffix_u8_rank() {
+    return 11;
+  }
+
+  let octal_integer = lexer::cursor_from_text("0o7 ", 0);
+  if lexer::cursor_token_literal_base(octal_integer) != token::literal_base_octal_rank() {
+    return 12;
+  }
+  if lexer::cursor_token_literal_suffix_rank(octal_integer) != token::literal_suffix_none_rank() {
+    return 13;
+  }
+
+  let binary_integer = lexer::cursor_from_text("0b10 ", 0);
+  if lexer::cursor_token_literal_base(binary_integer) != token::literal_base_binary_rank() {
+    return 14;
+  }
+  if lexer::cursor_token_literal_suffix_rank(binary_integer) != token::literal_suffix_none_rank() {
+    return 15;
+  }
+
+  let byte_char = lexer::cursor_from_text("'a' ", 0);
+  if !lexer::cursor_is_integer(byte_char) {
+    return 16;
+  }
+  if lexer::cursor_token_literal_base(byte_char) != token::literal_base_decimal_rank() {
+    return 17;
+  }
+  if lexer::cursor_token_literal_suffix_rank(byte_char) !=
+      token::literal_suffix_byte_char_rank() {
+    return 18;
+  }
+
+  let punctuation = lexer::cursor_from_text("+ ", 0);
+  if lexer::cursor_token_literal_base(punctuation) != token::literal_base_none_rank() {
+    return 19;
+  }
+  if lexer::cursor_token_literal_suffix_rank(punctuation) != token::literal_suffix_none_rank() {
+    return 20;
   }
   return 0;
 }
@@ -5121,6 +5202,7 @@ fn main() -> i64 {
     lexer_identifier_span_score() +
     lexer_number_span_score() +
     lexer_number_kind_split_score() +
+    lexer_number_literal_metadata_score() +
     lexer_number_base_span_score() +
     lexer_number_suffix_span_score() +
     lexer_decimal_float_span_score() +

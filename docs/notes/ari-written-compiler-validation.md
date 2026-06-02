@@ -554,12 +554,14 @@ Desired stage0 pressure that is not yet classified as a bug:
   diagnostics can carry stage0-style stable string codes such as `L0001`; this
   slice keeps numeric bootstrap codes and does not classify that as a hosted
   compiler bug.
-- The Ari-written token model now separates `Integer` and `Float` token kinds,
-  but still lacks stage0-style integer/float value payloads and literal suffix
-  metadata. Simple byte character literal spans are modeled as `Integer`
-  tokens, matching stage0's byte-character-as-integer token treatment. The
-  remaining payload gap is Ari-written compiler model pressure, not a
-  confirmed hosted compiler bug.
+- The Ari-written token model now separates `Integer` and `Float` token kinds
+  and carries literal base plus suffix-rank metadata for decimal,
+  base-prefixed, typed numeric, and byte-character tokens. It still lacks
+  stage0-style token text, exact integer/float value payloads, byte-character
+  integer values, and textual literal suffix strings. Simple byte character
+  literal spans are modeled as `Integer` tokens, matching stage0's
+  byte-character-as-integer token treatment. The remaining payload gap is
+  Ari-written compiler model pressure, not a confirmed hosted compiler bug.
 - Numeric base-prefix handling such as `0x`, `0o`, and `0b` should stay
   separated from decimal floating literal handling. Decimal float scanning
   should not accidentally inherit octal/binary/hex prefix behavior; keep this

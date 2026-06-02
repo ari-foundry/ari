@@ -699,20 +699,23 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   and `Float` token kinds, kept the shared number-class predicate for parser
   compatibility, and added source-root smoke coverage for integer, decimal
   float, float-suffix, and byte-character token-kind distinctions.
+- Added Ari token literal base and suffix-rank metadata, filled it from decimal,
+  hexadecimal, octal, binary, typed integer suffix, typed float suffix, and
+  byte-character lexer paths, and covered the metadata with source-root smoke
+  checks.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Expose a source-file span validity helper in `compiler/source.ari`.
 - Continue lexer parity by adding source-text smoke coverage for the next
-  missing stage0 token family; the next concrete slice is numeric literal
-  payload metadata for value and suffix information before growing parser
-  literal AST logic.
+  missing stage0 token family; the next concrete slice is exact numeric literal
+  value payloads (`int_value`, `float_value`, and byte-character values) and
+  textual suffix payload parity before growing parser literal AST logic.
 
 ## Next Recommended Task
 
 Continue lexer parity by adding source-text smoke coverage for the next missing
-stage0 token family; the next concrete slice is numeric literal payload
-metadata for value and suffix information before growing parser literal AST
-logic.
+stage0 token family; the next concrete slice is exact numeric literal value
+payloads (`int_value`, `float_value`, and byte-character values) and textual
+suffix payload parity before growing parser literal AST logic.

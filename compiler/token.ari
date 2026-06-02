@@ -98,14 +98,118 @@ pub struct Token {
   kind: TokenKind,
   start: i64,
   end: i64,
+  literal_base: i64,
+  literal_suffix_rank: i64,
 }
 
 pub fn make_token(kind: TokenKind, start: i64, end: i64) -> Token {
-  return Token { kind: kind, start: start, end: end };
+  return Token {
+    kind: kind,
+    start: start,
+    end: end,
+    literal_base: 0,
+    literal_suffix_rank: 0,
+  };
+}
+
+pub fn make_literal_token(
+  kind: TokenKind,
+  start: i64,
+  end: i64,
+  literal_base: i64,
+  literal_suffix_rank: i64
+) -> Token {
+  return Token {
+    kind: kind,
+    start: start,
+    end: end,
+    literal_base: literal_base,
+    literal_suffix_rank: literal_suffix_rank,
+  };
 }
 
 pub fn token_width(token: Token) -> i64 {
   return token.end - token.start;
+}
+
+pub fn token_literal_base(token: Token) -> i64 {
+  return token.literal_base;
+}
+
+pub fn token_literal_suffix_rank(token: Token) -> i64 {
+  return token.literal_suffix_rank;
+}
+
+pub fn literal_base_none_rank() -> i64 {
+  return 0;
+}
+
+pub fn literal_base_binary_rank() -> i64 {
+  return 2;
+}
+
+pub fn literal_base_octal_rank() -> i64 {
+  return 8;
+}
+
+pub fn literal_base_decimal_rank() -> i64 {
+  return 10;
+}
+
+pub fn literal_base_hex_rank() -> i64 {
+  return 16;
+}
+
+pub fn literal_suffix_none_rank() -> i64 {
+  return 0;
+}
+
+pub fn literal_suffix_i8_rank() -> i64 {
+  return 1;
+}
+
+pub fn literal_suffix_i16_rank() -> i64 {
+  return 2;
+}
+
+pub fn literal_suffix_i32_rank() -> i64 {
+  return 3;
+}
+
+pub fn literal_suffix_i64_rank() -> i64 {
+  return 4;
+}
+
+pub fn literal_suffix_u8_rank() -> i64 {
+  return 5;
+}
+
+pub fn literal_suffix_u16_rank() -> i64 {
+  return 6;
+}
+
+pub fn literal_suffix_u32_rank() -> i64 {
+  return 7;
+}
+
+pub fn literal_suffix_u64_rank() -> i64 {
+  return 8;
+}
+
+pub fn literal_suffix_f32_rank() -> i64 {
+  return 20;
+}
+
+pub fn literal_suffix_f64_rank() -> i64 {
+  return 21;
+}
+
+pub fn literal_suffix_f128_rank() -> i64 {
+  return 22;
+}
+
+pub fn literal_suffix_byte_char_rank() -> i64 {
+  return 40;
 }
 
 pub fn kind_rank(kind: TokenKind) -> i64 {

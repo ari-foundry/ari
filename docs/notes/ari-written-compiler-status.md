@@ -154,6 +154,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/lexer.ari` scans simple ASCII byte character spellings such as
   `'a'` as `Integer` spans, matching stage0's integer-literal treatment for
   byte character literals at the current Ari token-model level.
+- `compiler/token.ari` carries literal base and suffix-rank metadata, and
+  `compiler/lexer.ari` fills it for decimal, hexadecimal, octal, binary,
+  typed numeric suffixes, and byte-character integer tokens.
 - `compiler/lexer.ari` scans simple byte character escape spellings such as
   `'\n'` and `'\\'` as `Integer` spans, while leaving broader byte-character
   diagnostics for later slices.
