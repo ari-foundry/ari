@@ -1333,6 +1333,28 @@ fn lexer_number_kind_split_score() -> i64 {
   return 0;
 }
 
+fn lexer_literal_payload_span_score(
+  cursor: lexer::TokenCursor,
+  text_start: i64,
+  text_end: i64,
+  suffix_start: i64,
+  suffix_end: i64
+) -> i64 {
+  if lexer::cursor_token_literal_text_start(cursor) != text_start {
+    return 1;
+  }
+  if lexer::cursor_token_literal_text_end(cursor) != text_end {
+    return 2;
+  }
+  if lexer::cursor_token_literal_suffix_start(cursor) != suffix_start {
+    return 3;
+  }
+  if lexer::cursor_token_literal_suffix_end(cursor) != suffix_end {
+    return 4;
+  }
+  return 0;
+}
+
 fn lexer_number_literal_metadata_score() -> i64 {
   let decimal = lexer::cursor_from_text("42 ", 0);
   if lexer::cursor_token_literal_base(decimal) != token::literal_base_decimal_rank() {
@@ -1347,6 +1369,10 @@ fn lexer_number_literal_metadata_score() -> i64 {
   if lexer::cursor_token_literal_float_value(decimal) != 0.0f64 {
     return 4;
   }
+  var span_score = lexer_literal_payload_span_score(decimal, 0, 2, 2, 2);
+  if span_score != 0 {
+    return 36 + span_score;
+  }
 
   let typed_integer = lexer::cursor_from_text("42i64 ", 0);
   if !lexer::cursor_is_integer(typed_integer) {
@@ -1360,6 +1386,10 @@ fn lexer_number_literal_metadata_score() -> i64 {
   }
   if lexer::cursor_token_literal_integer_value(typed_integer) != 42u64 {
     return 8;
+  }
+  span_score = lexer_literal_payload_span_score(typed_integer, 0, 2, 2, 5);
+  if span_score != 0 {
+    return 40 + span_score;
   }
 
   let typed_float = lexer::cursor_from_text("42f32 ", 0);
@@ -1378,6 +1408,10 @@ fn lexer_number_literal_metadata_score() -> i64 {
   if (lexer::cursor_token_literal_float_value(typed_float) as i64) != 42 {
     return 13;
   }
+  span_score = lexer_literal_payload_span_score(typed_float, 0, 2, 2, 5);
+  if span_score != 0 {
+    return 44 + span_score;
+  }
 
   let decimal_float = lexer::cursor_from_text("1.5 ", 0);
   if !lexer::cursor_is_float(decimal_float) {
@@ -1385,6 +1419,10 @@ fn lexer_number_literal_metadata_score() -> i64 {
   }
   if ((lexer::cursor_token_literal_float_value(decimal_float) * 10.0f64) as i64) != 15 {
     return 15;
+  }
+  span_score = lexer_literal_payload_span_score(decimal_float, 0, 3, 3, 3);
+  if span_score != 0 {
+    return 48 + span_score;
   }
 
   let hex_integer = lexer::cursor_from_text("0xffu8 ", 0);
@@ -1400,6 +1438,10 @@ fn lexer_number_literal_metadata_score() -> i64 {
   if lexer::cursor_token_literal_integer_value(hex_integer) != 255u64 {
     return 19;
   }
+  span_score = lexer_literal_payload_span_score(hex_integer, 0, 4, 4, 6);
+  if span_score != 0 {
+    return 52 + span_score;
+  }
 
   let octal_integer = lexer::cursor_from_text("0o7 ", 0);
   if lexer::cursor_token_literal_base(octal_integer) != token::literal_base_octal_rank() {
@@ -1411,6 +1453,10 @@ fn lexer_number_literal_metadata_score() -> i64 {
   if lexer::cursor_token_literal_integer_value(octal_integer) != 7u64 {
     return 22;
   }
+  span_score = lexer_literal_payload_span_score(octal_integer, 0, 3, 3, 3);
+  if span_score != 0 {
+    return 56 + span_score;
+  }
 
   let binary_integer = lexer::cursor_from_text("0b10 ", 0);
   if lexer::cursor_token_literal_base(binary_integer) != token::literal_base_binary_rank() {
@@ -1421,6 +1467,10 @@ fn lexer_number_literal_metadata_score() -> i64 {
   }
   if lexer::cursor_token_literal_integer_value(binary_integer) != 2u64 {
     return 25;
+  }
+  span_score = lexer_literal_payload_span_score(binary_integer, 0, 4, 4, 4);
+  if span_score != 0 {
+    return 60 + span_score;
   }
 
   let byte_char = lexer::cursor_from_text("'a' ", 0);
@@ -1437,15 +1487,27 @@ fn lexer_number_literal_metadata_score() -> i64 {
   if lexer::cursor_token_literal_integer_value(byte_char) != 97u64 {
     return 29;
   }
+  span_score = lexer_literal_payload_span_score(byte_char, 0, 0, 0, 0);
+  if span_score != 0 {
+    return 64 + span_score;
+  }
 
   let escaped_byte_char = lexer::cursor_from_text("'\\n' ", 0);
   if lexer::cursor_token_literal_integer_value(escaped_byte_char) != 10u64 {
     return 30;
   }
+  span_score = lexer_literal_payload_span_score(escaped_byte_char, 0, 0, 0, 0);
+  if span_score != 0 {
+    return 72 + span_score;
+  }
 
   let hex_byte_char = lexer::cursor_from_text("'\\x41' ", 0);
   if lexer::cursor_token_literal_integer_value(hex_byte_char) != 65u64 {
     return 31;
+  }
+  span_score = lexer_literal_payload_span_score(hex_byte_char, 0, 0, 0, 0);
+  if span_score != 0 {
+    return 76 + span_score;
   }
 
   let punctuation = lexer::cursor_from_text("+ ", 0);
@@ -1460,6 +1522,10 @@ fn lexer_number_literal_metadata_score() -> i64 {
   }
   if lexer::cursor_token_literal_float_value(punctuation) != 0.0f64 {
     return 35;
+  }
+  span_score = lexer_literal_payload_span_score(punctuation, 0, 0, 0, 0);
+  if span_score != 0 {
+    return 68 + span_score;
   }
   return 0;
 }

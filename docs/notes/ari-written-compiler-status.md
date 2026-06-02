@@ -161,6 +161,12 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   values for decimal/base-prefixed integers and byte-character literals, plus
   `f64` values for decimal float literals and decimal integer spellings with
   float suffixes.
+- `compiler/token.ari` groups literal metadata in `LiteralPayload` and carries
+  source-backed literal text and suffix spans. Numeric literals can now expose
+  the token's full span separately from the numeric core and typed suffix
+  spans without storing owned token text in each token. Byte-character tokens
+  keep the synthetic byte-character suffix rank with zero-width text/suffix
+  spans because the `"char"` marker is not source-backed.
 - `compiler/lexer.ari` scans simple byte character escape spellings such as
   `'\n'` and `'\\'` as `Integer` spans, while leaving broader byte-character
   diagnostics for later slices.

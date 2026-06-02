@@ -65,7 +65,7 @@ enum ByteCharScan {
 }
 
 enum NumberScan {
-  NumberClosed(token::TokenKind, i64, i64, i64, u64, f64),
+  NumberClosed(token::TokenKind, i64, token::LiteralPayload),
   NumberMissingBaseDigits(i64, i64),
   NumberInvalidBaseDigit(i64, i64),
   NumberUnsupportedSuffix(i64, i64),
@@ -263,6 +263,7 @@ fn literal_base_rank_from_marker(marker: char) -> i64 {
 
 fn number_scan_with_suffix(
   text: std::Slice[u8],
+  literal_text_start: i64,
   end: i64,
   literal_kind: token::TokenKind,
   literal_base: i64,
@@ -276,10 +277,16 @@ fn number_scan_with_suffix(
       return NumberClosed(
         literal_kind,
         end,
-        literal_base,
-        token::literal_suffix_none_rank(),
-        literal_integer_payload_for_kind(literal_kind, literal_integer_value),
-        literal_float_payload_for_kind(literal_kind, literal_float_value)
+        number_literal_payload(
+          literal_base,
+          token::literal_suffix_none_rank(),
+          literal_kind,
+          literal_integer_value,
+          literal_float_value,
+          literal_text_start,
+          end,
+          end
+        )
       );
     }
     NumberSuffixInteger(integer_suffix_end, integer_suffix_rank) => {
@@ -289,10 +296,16 @@ fn number_scan_with_suffix(
       return NumberClosed(
         literal_kind,
         integer_suffix_end,
-        literal_base,
-        integer_suffix_rank,
-        literal_integer_payload_for_kind(literal_kind, literal_integer_value),
-        literal_float_payload_for_kind(literal_kind, literal_float_value)
+        number_literal_payload(
+          literal_base,
+          integer_suffix_rank,
+          literal_kind,
+          literal_integer_value,
+          literal_float_value,
+          literal_text_start,
+          end,
+          integer_suffix_end
+        )
       );
     }
     NumberSuffixFloat(float_suffix_end, float_suffix_rank) => {
@@ -300,10 +313,16 @@ fn number_scan_with_suffix(
         return NumberClosed(
           token::Float,
           float_suffix_end,
-          literal_base,
-          float_suffix_rank,
-          0u64,
-          literal_float_value
+          number_literal_payload(
+            literal_base,
+            float_suffix_rank,
+            token::Float,
+            0u64,
+            literal_float_value,
+            literal_text_start,
+            end,
+            float_suffix_end
+          )
         );
       }
       return NumberNonDecimalFloatSuffix(end, float_suffix_end);
@@ -374,6 +393,7 @@ fn decimal_number_scan_from_text(
   if is_float {
     return number_scan_with_suffix(
       text,
+      offset,
       end,
       token::Float,
       token::literal_base_decimal_rank(),
@@ -385,6 +405,7 @@ fn decimal_number_scan_from_text(
   }
   return number_scan_with_suffix(
     text,
+    offset,
     end,
     token::Integer,
     token::literal_base_decimal_rank(),
@@ -416,6 +437,7 @@ fn base_prefixed_number_scan_from_text(
   let literal_base = literal_base_rank_from_marker(marker);
   return number_scan_with_suffix(
     text,
+    offset,
     end,
     token::Integer,
     literal_base,
@@ -439,7 +461,7 @@ fn number_scan_from_text(text: std::Slice[u8], offset: i64) -> NumberScan {
 
 fn number_end_from_text(text: std::Slice[u8], offset: i64) -> i64 {
   match number_scan_from_text(text, offset) {
-    NumberClosed(_, number_end, _, _, _, _) => {
+    NumberClosed(_, number_end, _) => {
       return number_end;
     }
     NumberMissingBaseDigits(_, _) => {
@@ -578,6 +600,41 @@ fn literal_float_payload_for_kind(kind: token::TokenKind, value: f64) -> f64 {
     return value;
   }
   return 0.0f64;
+}
+
+fn number_literal_payload(
+  literal_base: i64,
+  literal_suffix_rank: i64,
+  literal_kind: token::TokenKind,
+  literal_integer_value: u64,
+  literal_float_value: f64,
+  literal_text_start: i64,
+  literal_text_end: i64,
+  literal_suffix_end: i64
+) -> token::LiteralPayload {
+  return token::make_literal_payload(
+    literal_base,
+    literal_suffix_rank,
+    literal_integer_payload_for_kind(literal_kind, literal_integer_value),
+    literal_float_payload_for_kind(literal_kind, literal_float_value),
+    literal_text_start,
+    literal_text_end,
+    literal_text_end,
+    literal_suffix_end
+  );
+}
+
+fn byte_char_literal_payload(offset: i64, value: u64) -> token::LiteralPayload {
+  return token::make_literal_payload(
+    token::literal_base_decimal_rank(),
+    token::literal_suffix_byte_char_rank(),
+    value,
+    0.0f64,
+    offset,
+    offset,
+    offset,
+    offset
+  );
 }
 
 fn is_unicode_escape_value(value: i64) -> bool {
@@ -1342,19 +1399,13 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
       NumberClosed(
         number_kind,
         number_end,
-        literal_base,
-        literal_suffix_rank,
-        literal_integer_value,
-        literal_float_value
+        literal
       ) => {
         return token::make_literal_token(
           number_kind,
           offset,
           number_end,
-          literal_base,
-          literal_suffix_rank,
-          literal_integer_value,
-          literal_float_value
+          literal
         );
       }
       NumberMissingBaseDigits(_, _) => {
@@ -1414,10 +1465,7 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
           token::Integer,
           offset,
           byte_char_end,
-          token::literal_base_decimal_rank(),
-          token::literal_suffix_byte_char_rank(),
-          byte_char_value,
-          0.0f64
+          byte_char_literal_payload(offset, byte_char_value)
         );
       }
       ByteCharEmpty(_, _) => {}
@@ -1455,19 +1503,13 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
       NumberClosed(
         number_kind,
         number_end,
-        literal_base,
-        literal_suffix_rank,
-        literal_integer_value,
-        literal_float_value
+        literal
       ) => {
         return Scanned(token::make_literal_token(
           number_kind,
           offset,
           number_end,
-          literal_base,
-          literal_suffix_rank,
-          literal_integer_value,
-          literal_float_value
+          literal
         ));
       }
       NumberMissingBaseDigits(missing_start, missing_end) => {
@@ -1530,10 +1572,7 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
           token::Integer,
           offset,
           byte_char_end_result,
-          token::literal_base_decimal_rank(),
-          token::literal_suffix_byte_char_rank(),
-          byte_char_value_result,
-          0.0f64
+          byte_char_literal_payload(offset, byte_char_value_result)
         ));
       }
       ByteCharEmpty(empty_start, empty_end) => {
@@ -2139,6 +2178,22 @@ pub fn cursor_token_literal_integer_value(cursor: TokenCursor) -> u64 {
 
 pub fn cursor_token_literal_float_value(cursor: TokenCursor) -> f64 {
   return token::token_literal_float_value(cursor.current);
+}
+
+pub fn cursor_token_literal_text_start(cursor: TokenCursor) -> i64 {
+  return token::token_literal_text_start(cursor.current);
+}
+
+pub fn cursor_token_literal_text_end(cursor: TokenCursor) -> i64 {
+  return token::token_literal_text_end(cursor.current);
+}
+
+pub fn cursor_token_literal_suffix_start(cursor: TokenCursor) -> i64 {
+  return token::token_literal_suffix_start(cursor.current);
+}
+
+pub fn cursor_token_literal_suffix_end(cursor: TokenCursor) -> i64 {
+  return token::token_literal_suffix_end(cursor.current);
 }
 
 fn token_ranked_width(scanned: token::Token) -> i64 {

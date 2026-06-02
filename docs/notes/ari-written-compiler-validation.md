@@ -212,6 +212,10 @@ longest-match behavior while preserving `<<` and `<=` paths without requiring
 a hosted compiler fix.
 The lexer tilde-operator smoke checked `~` tokenization as an operator without
 requiring a hosted compiler fix.
+The lexer literal payload smoke checked source-backed literal text and suffix
+spans for decimal integers, typed integers, typed floats, decimal floats,
+hexadecimal integers, octal integers, binary integers, byte-character integer
+tokens, and non-literal punctuation without requiring a hosted compiler fix.
 The lexer keyword smoke checked exact `fn` source-text classification and
 preserved `fn1` as an identifier without requiring a hosted compiler fix.
 The lexer keyword smoke checked exact `let` source-text classification and
@@ -558,13 +562,19 @@ Desired stage0 pressure that is not yet classified as a bug:
   and carries literal base plus suffix-rank metadata for decimal,
   base-prefixed, typed numeric, and byte-character tokens. It now also carries
   normal-range `u64` integer payloads and `f64` float payloads for source-text
-  numeric and byte-character lexer paths. It still lacks stage0-style token
-  text, textual literal suffix strings, and numeric overflow/range diagnostics
-  that fail lexing instead of leaving a zero fallback payload. Simple byte
-  character literal spans are modeled as `Integer` tokens, matching stage0's
-  byte-character-as-integer token treatment. The remaining payload and
-  diagnostic gaps are Ari-written compiler model pressure, not a confirmed
-  hosted compiler bug.
+  numeric and byte-character lexer paths. Literal metadata is now grouped in
+  `LiteralPayload`, and numeric lexer paths carry source-backed spans for the
+  literal core text and typed suffix text. This avoids owned per-token
+  `String` payloads while later parser work can still recover source slices
+  from the original input. It still lacks owned stage0-style token text,
+  textual literal suffix strings for synthetic cases, and numeric
+  overflow/range diagnostics that fail lexing instead of leaving a zero
+  fallback payload. Simple byte character literal spans are modeled as
+  `Integer` tokens, matching stage0's byte-character-as-integer token
+  treatment; their synthetic byte-character suffix rank remains spanless
+  because `"char"` is not source text. The remaining payload and diagnostic
+  gaps are Ari-written compiler model pressure, not a confirmed hosted
+  compiler bug.
 - Numeric base-prefix handling such as `0x`, `0o`, and `0b` should stay
   separated from decimal floating literal handling. Decimal float scanning
   should not accidentally inherit octal/binary/hex prefix behavior; keep this

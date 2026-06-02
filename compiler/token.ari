@@ -94,14 +94,57 @@ pub enum TokenKind {
   Unknown(char),
 }
 
-pub struct Token {
-  kind: TokenKind,
-  start: i64,
-  end: i64,
+pub struct LiteralPayload {
   literal_base: i64,
   literal_suffix_rank: i64,
   literal_integer_value: u64,
   literal_float_value: f64,
+  literal_text_start: i64,
+  literal_text_end: i64,
+  literal_suffix_start: i64,
+  literal_suffix_end: i64,
+}
+
+pub struct Token {
+  kind: TokenKind,
+  start: i64,
+  end: i64,
+  literal: LiteralPayload,
+}
+
+pub fn make_literal_payload(
+  literal_base: i64,
+  literal_suffix_rank: i64,
+  literal_integer_value: u64,
+  literal_float_value: f64,
+  literal_text_start: i64,
+  literal_text_end: i64,
+  literal_suffix_start: i64,
+  literal_suffix_end: i64
+) -> LiteralPayload {
+  return LiteralPayload {
+    literal_base: literal_base,
+    literal_suffix_rank: literal_suffix_rank,
+    literal_integer_value: literal_integer_value,
+    literal_float_value: literal_float_value,
+    literal_text_start: literal_text_start,
+    literal_text_end: literal_text_end,
+    literal_suffix_start: literal_suffix_start,
+    literal_suffix_end: literal_suffix_end,
+  };
+}
+
+pub fn empty_literal_payload() -> LiteralPayload {
+  return make_literal_payload(
+    literal_base_none_rank(),
+    literal_suffix_none_rank(),
+    0u64,
+    0.0f64,
+    0,
+    0,
+    0,
+    0
+  );
 }
 
 pub fn make_token(kind: TokenKind, start: i64, end: i64) -> Token {
@@ -109,10 +152,7 @@ pub fn make_token(kind: TokenKind, start: i64, end: i64) -> Token {
     kind: kind,
     start: start,
     end: end,
-    literal_base: 0,
-    literal_suffix_rank: 0,
-    literal_integer_value: 0u64,
-    literal_float_value: 0.0f64,
+    literal: empty_literal_payload(),
   };
 }
 
@@ -120,19 +160,13 @@ pub fn make_literal_token(
   kind: TokenKind,
   start: i64,
   end: i64,
-  literal_base: i64,
-  literal_suffix_rank: i64,
-  literal_integer_value: u64,
-  literal_float_value: f64
+  literal: LiteralPayload
 ) -> Token {
   return Token {
     kind: kind,
     start: start,
     end: end,
-    literal_base: literal_base,
-    literal_suffix_rank: literal_suffix_rank,
-    literal_integer_value: literal_integer_value,
-    literal_float_value: literal_float_value,
+    literal: literal,
   };
 }
 
@@ -141,19 +175,35 @@ pub fn token_width(token: Token) -> i64 {
 }
 
 pub fn token_literal_base(token: Token) -> i64 {
-  return token.literal_base;
+  return token.literal.literal_base;
 }
 
 pub fn token_literal_suffix_rank(token: Token) -> i64 {
-  return token.literal_suffix_rank;
+  return token.literal.literal_suffix_rank;
 }
 
 pub fn token_literal_integer_value(token: Token) -> u64 {
-  return token.literal_integer_value;
+  return token.literal.literal_integer_value;
 }
 
 pub fn token_literal_float_value(token: Token) -> f64 {
-  return token.literal_float_value;
+  return token.literal.literal_float_value;
+}
+
+pub fn token_literal_text_start(token: Token) -> i64 {
+  return token.literal.literal_text_start;
+}
+
+pub fn token_literal_text_end(token: Token) -> i64 {
+  return token.literal.literal_text_end;
+}
+
+pub fn token_literal_suffix_start(token: Token) -> i64 {
+  return token.literal.literal_suffix_start;
+}
+
+pub fn token_literal_suffix_end(token: Token) -> i64 {
+  return token.literal.literal_suffix_end;
 }
 
 pub fn literal_base_none_rank() -> i64 {

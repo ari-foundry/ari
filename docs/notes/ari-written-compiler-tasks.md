@@ -707,19 +707,23 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   hexadecimal, octal, binary, decimal-float, float-suffix, direct byte-character,
   and escaped byte-character lexer paths, using `u64` integer values and `f64`
   float values.
+- Grouped Ari token literal metadata into `LiteralPayload` and added
+  source-backed literal text and suffix spans for numeric lexer paths, so
+  `42i64` can carry token span `0..5`, literal text span `0..2`, and suffix
+  span `2..5` without adding owned `String` fields or extra zone plumbing.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
 - Continue lexer parity by adding source-text smoke coverage for the next
-  missing stage0 token family; the next concrete slice is textual token/suffix
-  payload parity plus numeric overflow/range diagnostics before growing parser
-  literal AST logic.
+  missing stage0 token family; the next concrete slice is numeric
+  overflow/range diagnostics plus any parser-facing literal AST payload wiring
+  that can reuse the new literal text/suffix spans.
 
 ## Next Recommended Task
 
 Continue lexer parity by adding source-text smoke coverage for the next missing
-stage0 token family; the next concrete slice is textual token/suffix payload
-parity plus numeric overflow/range diagnostics before growing parser literal
-AST logic.
+stage0 token family; the next concrete slice is numeric overflow/range
+diagnostics plus any parser-facing literal AST payload wiring that can reuse
+the new literal text/suffix spans.
