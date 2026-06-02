@@ -184,6 +184,11 @@ scan/skip-whitespace/failure-conversion loops into private significant-token
 helpers for the plain and keyword-table lexer paths. This keeps diagnostic
 handoff assembly focused on constructing the two handoff cursors and required
 no hosted compiler fix.
+The non-result text cursor review then moved repeated whitespace-skipping
+cursor loops into private significant-cursor helpers for the plain and
+keyword-table paths. Public significant-advance helpers and text handoff
+constructors now share those helpers without changing scan order, and this
+required no hosted compiler fix.
 The AST statement-kind query and parser payload-shape smoke checked successful
 statement output without requiring a hosted compiler fix. The AST node
 span-length query and parser payload-span smoke checked successful statement
@@ -603,6 +608,10 @@ Desired stage0 pressure that is not yet classified as a bug:
   Ari-written compiler code does not yet use a callback-style scan function
   abstraction there; that is an acceptable local tradeoff, not a confirmed
   hosted compiler bug.
+- Non-result lexer handoff and cursor-advance code should follow the same
+  separation: significant-token traversal belongs in a helper, while handoff
+  constructors should only choose the first/eof cursors. The helper still has
+  plain and keyword-table variants for the same reason as the result path.
 - Wrapping a zone-backed `HashMap` in a new Ari struct was awkward in this
   slice: mutating a `HashMap` through a helper/field lost tracked-zone receiver
   information, and returning a wrapper with a raw zone pointer or embedded map

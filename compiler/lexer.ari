@@ -2079,6 +2079,14 @@ pub fn cursor_advance_in_text(cursor: TokenCursor, text: std::Slice[u8]) -> Toke
   return cursor_from_text(text, cursor.current.end);
 }
 
+fn cursor_from_significant_text(text: std::Slice[u8], offset: i64) -> TokenCursor {
+  var significant = cursor_from_text(text, offset);
+  while cursor_is_whitespace(significant) {
+    significant = cursor_advance_in_text(significant, text);
+  }
+  return significant;
+}
+
 pub fn cursor_advance_in_text_with_keywords(
   table: ref KeywordTable,
   cursor: TokenCursor,
@@ -2091,15 +2099,26 @@ pub fn cursor_advance_in_text_with_keywords(
   return cursor_from_text_with_keywords(table, text, cursor.current.end);
 }
 
+fn cursor_from_significant_text_with_keywords(
+  table: ref KeywordTable,
+  text: std::Slice[u8],
+  offset: i64
+) -> TokenCursor {
+  var significant = cursor_from_text_with_keywords(table, text, offset);
+  while cursor_is_whitespace(significant) {
+    significant = cursor_advance_in_text_with_keywords(table, significant, text);
+  }
+  return significant;
+}
+
 pub fn cursor_advance_significant_in_text(
   cursor: TokenCursor,
   text: std::Slice[u8]
 ) -> TokenCursor {
-  var advanced = cursor_advance_in_text(cursor, text);
-  while cursor_is_whitespace(advanced) {
-    advanced = cursor_advance_in_text(advanced, text);
+  if cursor.done {
+    return cursor;
   }
-  return advanced;
+  return cursor_from_significant_text(text, cursor.current.end);
 }
 
 pub fn cursor_advance_significant_in_text_with_keywords(
@@ -2107,11 +2126,10 @@ pub fn cursor_advance_significant_in_text_with_keywords(
   cursor: TokenCursor,
   text: std::Slice[u8]
 ) -> TokenCursor {
-  var advanced = cursor_advance_in_text_with_keywords(table, cursor, text);
-  while cursor_is_whitespace(advanced) {
-    advanced = cursor_advance_in_text_with_keywords(table, advanced, text);
+  if cursor.done {
+    return cursor;
   }
-  return advanced;
+  return cursor_from_significant_text_with_keywords(table, text, cursor.current.end);
 }
 
 pub fn cursor_is_done(cursor: TokenCursor) -> bool {
@@ -2332,13 +2350,10 @@ pub fn handoff_from_one(value: char, offset: i64) -> TokenHandoff {
 }
 
 pub fn handoff_from_text(text: std::Slice[u8]) -> TokenHandoff {
-  var first = cursor_from_text(text, 0);
-  while cursor_is_whitespace(first) {
-    first = cursor_advance_in_text(first, text);
-  }
+  let first = cursor_from_significant_text(text, 0);
   return TokenHandoff {
     first: first,
-    eof: cursor_advance_significant_in_text(first, text),
+    eof: cursor_from_significant_text(text, first.current.end),
   };
 }
 
@@ -2396,13 +2411,10 @@ pub fn handoff_from_text_with_keywords(
   table: ref KeywordTable,
   text: std::Slice[u8]
 ) -> TokenHandoff {
-  var first = cursor_from_text_with_keywords(table, text, 0);
-  while cursor_is_whitespace(first) {
-    first = cursor_advance_in_text_with_keywords(table, first, text);
-  }
+  let first = cursor_from_significant_text_with_keywords(table, text, 0);
   return TokenHandoff {
     first: first,
-    eof: cursor_advance_significant_in_text_with_keywords(table, first, text),
+    eof: cursor_from_significant_text_with_keywords(table, text, first.current.end),
   };
 }
 

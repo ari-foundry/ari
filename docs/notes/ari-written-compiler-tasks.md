@@ -806,6 +806,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Re-reviewed result-producing text handoff construction and factored the
   repeated scan/skip-whitespace/failure-conversion loops into private
   significant-token helpers for the plain and keyword-table lexer paths.
+- Re-reviewed non-result text cursor advancement and handoff construction, then
+  factored repeated whitespace-skipping cursor loops into private
+  significant-cursor helpers for the plain and keyword-table lexer paths.
 
 ## Small Task Queue
 
