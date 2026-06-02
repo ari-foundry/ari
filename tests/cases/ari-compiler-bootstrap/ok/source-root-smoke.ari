@@ -408,6 +408,16 @@ fn loaded_source_score() -> i64 {
   if !source::loaded_source_has_first(loaded) {
     return 1;
   }
+  let loaded_span = source::loaded_source_span(loaded, 2, 5);
+  if source::span_source(loaded_span) != 7 {
+    return 2;
+  }
+  if source::span_start(loaded_span) != 2 {
+    return 3;
+  }
+  if source::span_end(loaded_span) != 5 {
+    return 4;
+  }
   return source::loaded_source_score(source::loaded_source_summary(7, 5, 'm', 0));
 }
 
@@ -820,10 +830,11 @@ fn source_location_summary_score() -> i64 {
   if source::source_location_summary_valid(bad_loaded_location) {
     return 60;
   }
+  let loaded_helper_span = source::loaded_source_span(loaded, 9, 11);
   let loaded_span_start = source::loaded_source_span_start_location_summary(
     loaded,
     lines,
-    source::span(6, 9, 11)
+    loaded_helper_span
   );
   if source::source_location_summary_source(loaded_span_start) != 6 {
     return 61;
@@ -864,7 +875,7 @@ fn source_location_summary_score() -> i64 {
   let loaded_span_end = source::loaded_source_span_end_location_summary(
     loaded,
     lines,
-    source::span(6, 9, 11)
+    loaded_helper_span
   );
   if source::source_location_summary_source(loaded_span_end) != 6 {
     return 68;
@@ -912,6 +923,15 @@ fn source_location_summary_score() -> i64 {
   );
   if source::source_location_summary_valid(out_of_range_loaded_span_end) {
     return 76;
+  }
+  if source::span_source(loaded_helper_span) != 6 {
+    return 77;
+  }
+  if source::span_start(loaded_helper_span) != 9 {
+    return 78;
+  }
+  if source::span_end(loaded_helper_span) != 11 {
+    return 79;
   }
   return source::source_location_summary_source(location) +
     source::source_location_summary_byte_offset(location) +

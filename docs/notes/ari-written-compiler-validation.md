@@ -625,3 +625,5 @@ Desired stage0 pressure that is not yet classified as a bug:
   `SourceFile` delegation and do not require a hosted compiler fix.
   Loaded-source-local span-end location summaries preserve EOF insertion-point
   behavior through the same delegation and do not require a hosted compiler fix.
+  Loaded-source span construction now reuses the placeholder source id without
+  requiring a hosted compiler fix.

@@ -373,6 +373,14 @@ pub fn loaded_source_has_first(summary: LoadedSourceSummary) -> bool {
     contains(summary.file, summary.first_offset + 1);
 }
 
+pub fn loaded_source_span(
+  summary: LoadedSourceSummary,
+  start: ByteOffset,
+  end: ByteOffset
+) -> Span {
+  return span(summary.file.id, start, end);
+}
+
 pub fn loaded_source_location_summary(
   summary: LoadedSourceSummary,
   lines: SourceLineStarts,

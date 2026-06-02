@@ -646,13 +646,16 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Added a loaded-source span end location summary helper in
   `compiler/source.ari`, preserving the file-local span end validation and EOF
   insertion-point behavior through the loaded source's `SourceFile`.
+- Added a loaded-source span constructor helper in `compiler/source.ari`, so
+  callers can derive spans from the loaded source id without repeating that id
+  manually.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a loaded-source span constructor helper in `compiler/source.ari`.
+- Add a source-file byte-length validity helper in `compiler/source.ari`.
 
 ## Next Recommended Task
 
-Add a loaded-source span constructor helper in `compiler/source.ari`.
+Add a source-file byte-length validity helper in `compiler/source.ari`.
