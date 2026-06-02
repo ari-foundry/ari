@@ -24,6 +24,9 @@ pub enum DiagnosticKind {
   LexerInvalidByteCharacterEscapeValue,
   LexerByteCharacterLiteralTooLong,
   LexerNonAsciiByteCharacterLiteral,
+  LexerIntegerLiteralOverflow,
+  LexerFloatLiteralOverflow,
+  LexerFloatLiteralUnderflow,
   ParserExpectedStatement,
   ParserEmptyInput,
   ParserExpectedEof,
@@ -107,6 +110,9 @@ pub fn kind_rank(kind: DiagnosticKind) -> i64 {
     LexerInvalidByteCharacterEscapeValue => 1018,
     LexerByteCharacterLiteralTooLong => 1019,
     LexerNonAsciiByteCharacterLiteral => 1020,
+    LexerIntegerLiteralOverflow => 1021,
+    LexerFloatLiteralOverflow => 1022,
+    LexerFloatLiteralUnderflow => 1023,
     ParserExpectedStatement => 2001,
     ParserEmptyInput => 2002,
     ParserExpectedEof => 2003,
@@ -188,6 +194,15 @@ pub fn kind_from_rank(rank: i64) -> DiagnosticKind {
   }
   if rank == 1020 {
     return LexerNonAsciiByteCharacterLiteral;
+  }
+  if rank == 1021 {
+    return LexerIntegerLiteralOverflow;
+  }
+  if rank == 1022 {
+    return LexerFloatLiteralOverflow;
+  }
+  if rank == 1023 {
+    return LexerFloatLiteralUnderflow;
   }
   if rank == 2001 {
     return ParserExpectedStatement;
@@ -274,6 +289,9 @@ pub fn kind_name_text(kind: DiagnosticKind) -> std::Slice[u8] {
     }
     LexerByteCharacterLiteralTooLong => { return "lexer.byte-character-literal-too-long"; }
     LexerNonAsciiByteCharacterLiteral => { return "lexer.non-ascii-byte-character-literal"; }
+    LexerIntegerLiteralOverflow => { return "lexer.integer-literal-overflow"; }
+    LexerFloatLiteralOverflow => { return "lexer.float-literal-overflow"; }
+    LexerFloatLiteralUnderflow => { return "lexer.float-literal-underflow"; }
     ParserExpectedStatement => { return "parser.expected-statement"; }
     ParserEmptyInput => { return "parser.empty-input"; }
     ParserExpectedEof => { return "parser.expected-eof"; }
@@ -314,6 +332,9 @@ pub fn kind_message_text(kind: DiagnosticKind) -> std::Slice[u8] {
     }
     LexerByteCharacterLiteralTooLong => { return "byte character literal must contain one byte"; }
     LexerNonAsciiByteCharacterLiteral => { return "byte character literal must be ASCII"; }
+    LexerIntegerLiteralOverflow => { return "integer literal is too large"; }
+    LexerFloatLiteralOverflow => { return "float literal is too large"; }
+    LexerFloatLiteralUnderflow => { return "float literal is too small"; }
     ParserExpectedStatement => { return "expected a statement"; }
     ParserEmptyInput => { return "input is empty"; }
     ParserExpectedEof => { return "expected end of file after statement"; }
@@ -427,6 +448,18 @@ pub fn lexer_byte_character_literal_too_long(start: i64, end: i64) -> Diagnostic
 
 pub fn lexer_non_ascii_byte_character_literal(start: i64, end: i64) -> Diagnostic {
   return error_kind(LexerNonAsciiByteCharacterLiteral, start, end);
+}
+
+pub fn lexer_integer_literal_overflow(start: i64, end: i64) -> Diagnostic {
+  return error_kind(LexerIntegerLiteralOverflow, start, end);
+}
+
+pub fn lexer_float_literal_overflow(start: i64, end: i64) -> Diagnostic {
+  return error_kind(LexerFloatLiteralOverflow, start, end);
+}
+
+pub fn lexer_float_literal_underflow(start: i64, end: i64) -> Diagnostic {
+  return error_kind(LexerFloatLiteralUnderflow, start, end);
 }
 
 pub fn parser_expected_statement(start: i64, end: i64) -> Diagnostic {

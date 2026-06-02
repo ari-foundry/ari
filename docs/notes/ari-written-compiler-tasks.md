@@ -717,19 +717,25 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   changed driver `Err` payloads from raw `i64` to `diagnostic::Diagnostic` so
   `1001` can be distinguished as either `lexer.invalid-character` or
   `driver.input-start-out-of-bounds`.
+- Added Ari-written numeric range diagnostics for integer literal overflow and
+  decimal float overflow/underflow, using `std::parse` instead of local fallback
+  zero payloads. Source-root smoke now checks lexer, parser, and driver
+  propagation for diagnostic codes `1021`, `1022`, and `1023`, and checks that a
+  large decimal integer spelling with a float suffix still follows the float
+  literal path.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
 - Continue lexer parity by adding source-text smoke coverage for the next
-  missing stage0 token family; the next concrete slice is numeric
-  overflow/range diagnostics plus any parser-facing literal AST payload wiring
-  that can reuse the new literal text/suffix spans.
+  missing stage0 token family, or start parser-facing literal AST payload wiring
+  that can reuse the new literal text/suffix spans and range-checked value
+  payloads.
 
 ## Next Recommended Task
 
 Continue lexer parity by adding source-text smoke coverage for the next missing
-stage0 token family; the next concrete slice is numeric overflow/range
-diagnostics plus any parser-facing literal AST payload wiring that can reuse
-the new literal text/suffix spans.
+stage0 token family discovered from source and tests, or continue
+parser-facing literal AST payload wiring from the checked token literal
+metadata/value spans.

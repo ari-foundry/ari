@@ -161,6 +161,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   values for decimal/base-prefixed integers and byte-character literals, plus
   `f64` values for decimal float literals and decimal integer spellings with
   float suffixes.
+- `compiler/lexer.ari` reports integer literal overflow plus decimal float
+  overflow/underflow diagnostics using `std::parse`, and keeps decimal integer
+  spellings with float suffixes on the float parsing path instead of rejecting
+  them as integer overflow first.
 - `compiler/token.ari` groups literal metadata in `LiteralPayload` and carries
   source-backed literal text and suffix spans. Numeric literals can now expose
   the token's full span separately from the numeric core and typed suffix

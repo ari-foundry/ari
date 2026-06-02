@@ -72,6 +72,9 @@ enum NumberScan {
   NumberUnsupportedSuffix(i64, i64),
   NumberNonDecimalFloatSuffix(i64, i64),
   NumberNonDecimalFloatDot(i64, i64),
+  NumberIntegerOverflow(i64, i64),
+  NumberFloatOverflow(i64, i64),
+  NumberFloatUnderflow(i64, i64),
 }
 
 enum NumberSuffixScan {
@@ -79,6 +82,17 @@ enum NumberSuffixScan {
   NumberSuffixInteger(i64, i64),
   NumberSuffixFloat(i64, i64),
   NumberSuffixUnsupported(i64, i64),
+}
+
+enum UnsignedLiteralValueScan {
+  UnsignedLiteralValue(u64),
+  UnsignedLiteralOverflow(i64, i64),
+}
+
+enum FloatLiteralValueScan {
+  FloatLiteralValue(f64),
+  FloatLiteralOverflow(i64, i64),
+  FloatLiteralUnderflow(i64, i64),
 }
 
 pub fn is_ascii_alpha(value: char) -> bool {
@@ -262,70 +276,244 @@ fn literal_base_rank_from_marker(marker: char) -> i64 {
   return token::literal_base_decimal_rank();
 }
 
-fn number_scan_with_suffix(
-  text: std::Slice[u8],
+fn number_closed_from_integer_value(
   literal_text_start: i64,
-  end: i64,
-  literal_kind: token::TokenKind,
+  literal_text_end: i64,
   literal_base: i64,
-  literal_integer_value: u64,
-  literal_float_value: f64,
-  allow_integer_suffix: bool,
-  allow_float_suffix: bool
+  suffix_rank: i64,
+  suffix_end: i64,
+  value: u64
+) -> NumberScan {
+  return NumberClosed(
+    token::Integer,
+    suffix_end,
+    number_literal_payload(
+      literal_base,
+      suffix_rank,
+      token::Integer,
+      value,
+      0.0f64,
+      literal_text_start,
+      literal_text_end,
+      suffix_end
+    )
+  );
+}
+
+fn number_closed_from_float_value(
+  literal_text_start: i64,
+  literal_text_end: i64,
+  suffix_rank: i64,
+  suffix_end: i64,
+  value: f64
+) -> NumberScan {
+  return NumberClosed(
+    token::Float,
+    suffix_end,
+    number_literal_payload(
+      token::literal_base_decimal_rank(),
+      suffix_rank,
+      token::Float,
+      0u64,
+      value,
+      literal_text_start,
+      literal_text_end,
+      suffix_end
+    )
+  );
+}
+
+fn decimal_integer_number_scan_with_suffix(
+  text: std::Slice[u8],
+  offset: i64,
+  end: i64
 ) -> NumberScan {
   match number_suffix_scan_from_text(text, end) {
     NumberSuffixNone => {
-      return NumberClosed(
-        literal_kind,
+      match unsigned_literal_value_scan_from_text(
+        text,
+        offset,
         end,
-        number_literal_payload(
-          literal_base,
-          token::literal_suffix_none_rank(),
-          literal_kind,
-          literal_integer_value,
-          literal_float_value,
-          literal_text_start,
-          end,
-          end
-        )
-      );
+        token::literal_base_decimal_rank()
+      ) {
+        UnsignedLiteralValue(decimal_value) => {
+          return number_closed_from_integer_value(
+            offset,
+            end,
+            token::literal_base_decimal_rank(),
+            token::literal_suffix_none_rank(),
+            end,
+            decimal_value
+          );
+        }
+        UnsignedLiteralOverflow(decimal_overflow_start, decimal_overflow_end) => {
+          return NumberIntegerOverflow(decimal_overflow_start, decimal_overflow_end);
+        }
+      }
     }
     NumberSuffixInteger(integer_suffix_end, integer_suffix_rank) => {
-      if !allow_integer_suffix {
-        return NumberUnsupportedSuffix(end, integer_suffix_end);
+      match unsigned_literal_value_scan_from_text(
+        text,
+        offset,
+        end,
+        token::literal_base_decimal_rank()
+      ) {
+        UnsignedLiteralValue(suffixed_integer_value) => {
+          return number_closed_from_integer_value(
+            offset,
+            end,
+            token::literal_base_decimal_rank(),
+            integer_suffix_rank,
+            integer_suffix_end,
+            suffixed_integer_value
+          );
+        }
+        UnsignedLiteralOverflow(suffixed_integer_overflow_start, suffixed_integer_overflow_end) => {
+          return NumberIntegerOverflow(
+            suffixed_integer_overflow_start,
+            suffixed_integer_overflow_end
+          );
+        }
       }
-      return NumberClosed(
-        literal_kind,
-        integer_suffix_end,
-        number_literal_payload(
-          literal_base,
-          integer_suffix_rank,
-          literal_kind,
-          literal_integer_value,
-          literal_float_value,
-          literal_text_start,
-          end,
-          integer_suffix_end
-        )
-      );
     }
     NumberSuffixFloat(float_suffix_end, float_suffix_rank) => {
-      if allow_float_suffix {
-        return NumberClosed(
-          token::Float,
-          float_suffix_end,
-          number_literal_payload(
-            literal_base,
-            float_suffix_rank,
-            token::Float,
-            0u64,
-            literal_float_value,
-            literal_text_start,
+      match float_literal_value_scan_from_text(text, offset, end) {
+        FloatLiteralValue(suffixed_float_value) => {
+          return number_closed_from_float_value(
+            offset,
             end,
-            float_suffix_end
-          )
-        );
+            float_suffix_rank,
+            float_suffix_end,
+            suffixed_float_value
+          );
+        }
+        FloatLiteralOverflow(suffixed_float_overflow_start, suffixed_float_overflow_end) => {
+          return NumberFloatOverflow(suffixed_float_overflow_start, suffixed_float_overflow_end);
+        }
+        FloatLiteralUnderflow(suffixed_float_underflow_start, suffixed_float_underflow_end) => {
+          return NumberFloatUnderflow(
+            suffixed_float_underflow_start,
+            suffixed_float_underflow_end
+          );
+        }
       }
+    }
+    NumberSuffixUnsupported(unsupported_suffix_start, unsupported_suffix_end) => {
+      return NumberUnsupportedSuffix(unsupported_suffix_start, unsupported_suffix_end);
+    }
+  }
+}
+
+fn decimal_float_number_scan_with_suffix(
+  text: std::Slice[u8],
+  offset: i64,
+  end: i64
+) -> NumberScan {
+  match number_suffix_scan_from_text(text, end) {
+    NumberSuffixNone => {
+      match float_literal_value_scan_from_text(text, offset, end) {
+        FloatLiteralValue(decimal_float_value) => {
+          return number_closed_from_float_value(
+            offset,
+            end,
+            token::literal_suffix_none_rank(),
+            end,
+            decimal_float_value
+          );
+        }
+        FloatLiteralOverflow(decimal_float_overflow_start, decimal_float_overflow_end) => {
+          return NumberFloatOverflow(decimal_float_overflow_start, decimal_float_overflow_end);
+        }
+        FloatLiteralUnderflow(decimal_float_underflow_start, decimal_float_underflow_end) => {
+          return NumberFloatUnderflow(decimal_float_underflow_start, decimal_float_underflow_end);
+        }
+      }
+    }
+    NumberSuffixInteger(integer_suffix_end, _) => {
+      return NumberUnsupportedSuffix(end, integer_suffix_end);
+    }
+    NumberSuffixFloat(float_suffix_end, float_suffix_rank) => {
+      match float_literal_value_scan_from_text(text, offset, end) {
+        FloatLiteralValue(decimal_suffixed_float_value) => {
+          return number_closed_from_float_value(
+            offset,
+            end,
+            float_suffix_rank,
+            float_suffix_end,
+            decimal_suffixed_float_value
+          );
+        }
+        FloatLiteralOverflow(
+          decimal_suffixed_float_overflow_start,
+          decimal_suffixed_float_overflow_end
+        ) => {
+          return NumberFloatOverflow(
+            decimal_suffixed_float_overflow_start,
+            decimal_suffixed_float_overflow_end
+          );
+        }
+        FloatLiteralUnderflow(
+          decimal_suffixed_float_underflow_start,
+          decimal_suffixed_float_underflow_end
+        ) => {
+          return NumberFloatUnderflow(
+            decimal_suffixed_float_underflow_start,
+            decimal_suffixed_float_underflow_end
+          );
+        }
+      }
+    }
+    NumberSuffixUnsupported(unsupported_suffix_start, unsupported_suffix_end) => {
+      return NumberUnsupportedSuffix(unsupported_suffix_start, unsupported_suffix_end);
+    }
+  }
+}
+
+fn base_prefixed_integer_number_scan_with_suffix(
+  text: std::Slice[u8],
+  offset: i64,
+  end: i64,
+  literal_base: i64
+) -> NumberScan {
+  match number_suffix_scan_from_text(text, end) {
+    NumberSuffixNone => {
+      match unsigned_literal_value_scan_from_text(text, offset + 2, end, literal_base) {
+        UnsignedLiteralValue(base_value) => {
+          return number_closed_from_integer_value(
+            offset,
+            end,
+            literal_base,
+            token::literal_suffix_none_rank(),
+            end,
+            base_value
+          );
+        }
+        UnsignedLiteralOverflow(base_overflow_start, base_overflow_end) => {
+          return NumberIntegerOverflow(base_overflow_start, base_overflow_end);
+        }
+      }
+    }
+    NumberSuffixInteger(integer_suffix_end, integer_suffix_rank) => {
+      match unsigned_literal_value_scan_from_text(text, offset + 2, end, literal_base) {
+        UnsignedLiteralValue(base_suffixed_value) => {
+          return number_closed_from_integer_value(
+            offset,
+            end,
+            literal_base,
+            integer_suffix_rank,
+            integer_suffix_end,
+            base_suffixed_value
+          );
+        }
+        UnsignedLiteralOverflow(base_suffixed_overflow_start, base_suffixed_overflow_end) => {
+          return NumberIntegerOverflow(
+            base_suffixed_overflow_start,
+            base_suffixed_overflow_end
+          );
+        }
+      }
+    }
+    NumberSuffixFloat(float_suffix_end, _) => {
       return NumberNonDecimalFloatSuffix(end, float_suffix_end);
     }
     NumberSuffixUnsupported(unsupported_suffix_start, unsupported_suffix_end) => {
@@ -392,29 +580,9 @@ fn decimal_number_scan_from_text(
     is_float = true;
   }
   if is_float {
-    return number_scan_with_suffix(
-      text,
-      offset,
-      end,
-      token::Float,
-      token::literal_base_decimal_rank(),
-      0u64,
-      literal_float_value_from_text(text, offset, end),
-      false,
-      true
-    );
+    return decimal_float_number_scan_with_suffix(text, offset, end);
   }
-  return number_scan_with_suffix(
-    text,
-    offset,
-    end,
-    token::Integer,
-    token::literal_base_decimal_rank(),
-    literal_unsigned_value_from_text(text, offset, end, token::literal_base_decimal_rank()),
-    literal_float_value_from_text(text, offset, end),
-    true,
-    true
-  );
+  return decimal_integer_number_scan_with_suffix(text, offset, end);
 }
 
 fn base_prefixed_number_scan_from_text(
@@ -436,17 +604,7 @@ fn base_prefixed_number_scan_from_text(
     return NumberNonDecimalFloatDot(end, end + 1);
   }
   let literal_base = literal_base_rank_from_marker(marker);
-  return number_scan_with_suffix(
-    text,
-    offset,
-    end,
-    token::Integer,
-    literal_base,
-    literal_unsigned_value_from_text(text, offset + 2, end, literal_base),
-    0.0f64,
-    true,
-    false
-  );
+  return base_prefixed_integer_number_scan_with_suffix(text, offset, end, literal_base);
 }
 
 fn number_scan_from_text(text: std::Slice[u8], offset: i64) -> NumberScan {
@@ -479,6 +637,15 @@ fn number_end_from_text(text: std::Slice[u8], offset: i64) -> i64 {
     }
     NumberNonDecimalFloatDot(dot_start, _) => {
       return dot_start;
+    }
+    NumberIntegerOverflow(integer_overflow_start, _) => {
+      return integer_overflow_start;
+    }
+    NumberFloatOverflow(float_overflow_start, _) => {
+      return float_overflow_start;
+    }
+    NumberFloatUnderflow(float_underflow_start, _) => {
+      return float_underflow_start;
     }
   }
 }
@@ -562,29 +729,54 @@ fn simple_escape_value(value: char) -> i64 {
   return value as i64;
 }
 
-fn literal_unsigned_value_from_text(
+fn unsigned_literal_value_scan_from_text(
   text: std::Slice[u8],
   start: i64,
   end: i64,
   radix: i64
-) -> u64 {
-  match std::parse::unsigned_radix(text.slice(start, end), radix) {
+) -> UnsignedLiteralValueScan {
+  let literal_text = text.slice(start, end);
+  match std::parse::unsigned_radix(literal_text, radix) {
     std::Ok(value) => {
-      return value;
+      return UnsignedLiteralValue(value);
     }
     std::Err(_) => {
-      return 0u64;
+      match std::parse::unsigned_radix_error(literal_text, radix) {
+        std::Some(detail) => {
+          if detail.is_overflow() {
+            return UnsignedLiteralOverflow(start + detail.offset(), end);
+          }
+        }
+        std::None => {}
+      }
+      return UnsignedLiteralOverflow(start, end);
     }
   }
 }
 
-fn literal_float_value_from_text(text: std::Slice[u8], start: i64, end: i64) -> f64 {
-  match std::parse::float(text.slice(start, end)) {
+fn float_literal_value_scan_from_text(
+  text: std::Slice[u8],
+  start: i64,
+  end: i64
+) -> FloatLiteralValueScan {
+  let literal_text = text.slice(start, end);
+  match std::parse::float(literal_text) {
     std::Ok(value) => {
-      return value;
+      return FloatLiteralValue(value);
     }
     std::Err(_) => {
-      return 0.0f64;
+      match std::parse::float_error(literal_text) {
+        std::Some(detail) => {
+          if detail.is_overflow() {
+            return FloatLiteralOverflow(start + detail.offset(), end);
+          }
+          if detail.is_underflow() {
+            return FloatLiteralUnderflow(start + detail.offset(), end);
+          }
+        }
+        std::None => {}
+      }
+      return FloatLiteralOverflow(start, end);
     }
   }
 }
@@ -1424,6 +1616,15 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
       NumberNonDecimalFloatDot(non_decimal_dot_start, _) => {
         return token::make_token(token::Integer, offset, non_decimal_dot_start);
       }
+      NumberIntegerOverflow(integer_overflow_start, _) => {
+        return token::make_token(token::Integer, offset, integer_overflow_start);
+      }
+      NumberFloatOverflow(float_overflow_start, _) => {
+        return token::make_token(token::Float, offset, float_overflow_start);
+      }
+      NumberFloatUnderflow(float_underflow_start, _) => {
+        return token::make_token(token::Float, offset, float_underflow_start);
+      }
     }
   }
   if is_whitespace(first) {
@@ -1527,6 +1728,15 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
       }
       NumberNonDecimalFloatDot(non_decimal_dot_start, non_decimal_dot_end) => {
         return Failed(non_decimal_float_dot(non_decimal_dot_start, non_decimal_dot_end));
+      }
+      NumberIntegerOverflow(integer_overflow_start, integer_overflow_end) => {
+        return Failed(integer_literal_overflow(integer_overflow_start, integer_overflow_end));
+      }
+      NumberFloatOverflow(float_overflow_start, float_overflow_end) => {
+        return Failed(float_literal_overflow(float_overflow_start, float_overflow_end));
+      }
+      NumberFloatUnderflow(float_underflow_start, float_underflow_end) => {
+        return Failed(float_literal_underflow(float_underflow_start, float_underflow_end));
       }
     }
   }
@@ -1735,6 +1945,18 @@ pub fn byte_character_literal_too_long(start: i64, end: i64) -> diagnostic::Diag
 
 pub fn non_ascii_byte_character_literal(start: i64, end: i64) -> diagnostic::Diagnostic {
   return diagnostic::lexer_non_ascii_byte_character_literal(start, end);
+}
+
+pub fn integer_literal_overflow(start: i64, end: i64) -> diagnostic::Diagnostic {
+  return diagnostic::lexer_integer_literal_overflow(start, end);
+}
+
+pub fn float_literal_overflow(start: i64, end: i64) -> diagnostic::Diagnostic {
+  return diagnostic::lexer_float_literal_overflow(start, end);
+}
+
+pub fn float_literal_underflow(start: i64, end: i64) -> diagnostic::Diagnostic {
+  return diagnostic::lexer_float_literal_underflow(start, end);
 }
 
 pub fn unterminated_string_literal(start: i64, end: i64) -> diagnostic::Diagnostic {

@@ -216,6 +216,10 @@ The lexer literal payload smoke checked source-backed literal text and suffix
 spans for decimal integers, typed integers, typed floats, decimal floats,
 hexadecimal integers, octal integers, binary integers, byte-character integer
 tokens, and non-literal punctuation without requiring a hosted compiler fix.
+The lexer numeric range smoke checked integer literal overflow and decimal float
+overflow/underflow diagnostics via `std::parse`, including parser and driver
+propagation and the float-suffixed large-decimal path, without requiring a
+hosted compiler fix.
 The lexer keyword smoke checked exact `fn` source-text classification and
 preserved `fn1` as an identifier without requiring a hosted compiler fix.
 The lexer keyword smoke checked exact `let` source-text classification and
@@ -572,12 +576,14 @@ Desired stage0 pressure that is not yet classified as a bug:
   normal-range `u64` integer payloads and `f64` float payloads for source-text
   numeric and byte-character lexer paths. Literal metadata is now grouped in
   `LiteralPayload`, and numeric lexer paths carry source-backed spans for the
-  literal core text and typed suffix text. This avoids owned per-token
-  `String` payloads while later parser work can still recover source slices
-  from the original input. It still lacks owned stage0-style token text,
-  textual literal suffix strings for synthetic cases, and numeric
-  overflow/range diagnostics that fail lexing instead of leaving a zero
-  fallback payload. Simple byte character literal spans are modeled as
+  literal core text and typed suffix text. Numeric overflow/range checks now use
+  `std::parse` for integer overflow and decimal float overflow/underflow, while
+  keeping large decimal integer spellings with a float suffix on the float path.
+  This avoids owned per-token `String` payloads while later parser work can
+  still recover source slices from the original input. It still lacks owned
+  stage0-style token text, textual literal suffix strings for synthetic cases,
+  parser-facing literal AST payload wiring, and narrower suffix-specific range
+  checks such as `f32`/`f128`. Simple byte character literal spans are modeled as
   `Integer` tokens, matching stage0's byte-character-as-integer token
   treatment; their synthetic byte-character suffix rank remains spanless
   because `"char"` is not source text. The remaining payload and diagnostic
