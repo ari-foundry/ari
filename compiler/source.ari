@@ -304,6 +304,10 @@ pub fn source_table_entry_byte_len(entry: SourceTableEntry) -> ByteOffset {
   return entry.file.byte_len;
 }
 
+pub fn source_table_entry_byte_len_valid(entry: SourceTableEntry) -> bool {
+  return source_file_byte_len_valid(entry.file);
+}
+
 pub fn source_table_entry_path_id(entry: SourceTableEntry) -> SourcePathId {
   return entry.path_id;
 }

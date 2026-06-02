@@ -467,6 +467,16 @@ fn source_table_entry_score() -> i64 {
   if !source::source_table_entry_valid_span(entry, entry_span) {
     return 14;
   }
+  if !source::source_table_entry_byte_len_valid(entry) {
+    return 15;
+  }
+  let bad_entry = source::source_table_entry(9, -1, 4);
+  if source::source_table_entry_byte_len_valid(bad_entry) {
+    return 16;
+  }
+  if source::source_table_entry_contains(bad_entry, 0) {
+    return 17;
+  }
   return source::source_table_entry_id(entry) +
     source::source_table_entry_byte_len(entry) +
     source::source_table_entry_path_id(entry);

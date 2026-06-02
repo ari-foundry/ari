@@ -628,4 +628,6 @@ Desired stage0 pressure that is not yet classified as a bug:
   Loaded-source span construction now reuses the placeholder source id without
   requiring a hosted compiler fix. Source-file byte-length validity is now an
   explicit non-negative invariant used by containment checks and does not
-  require a hosted compiler fix.
+  require a hosted compiler fix. Source-table-entry byte-length validity now
+  reuses the wrapped source-file invariant and does not require a hosted
+  compiler fix.
