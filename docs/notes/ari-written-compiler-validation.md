@@ -621,4 +621,5 @@ Desired stage0 pressure that is not yet classified as a bug:
   arrays, CRLF visual-column handling, UTF-8 byte-column policy, and diagnostic
   location mapping remain pending. Loaded-source-local location summaries reuse
   the placeholder's `SourceFile` metadata and do not require a hosted compiler
-  fix.
+  fix. Loaded-source-local span-start location summaries share the same
+  `SourceFile` delegation and do not require a hosted compiler fix.

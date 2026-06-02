@@ -403,6 +403,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/source.ari` can derive a loaded-source-local location summary,
   reusing the loaded source's `SourceFile` metadata while the real owned source
   text and line-start table remain future work.
+- `compiler/source.ari` can derive a loaded-source-local span-start location
+  summary, reusing the loaded source's `SourceFile` metadata for source
+  ownership and byte-bound validation.
 - `compiler/source.ari` can derive a span-start location summary after checking
   that the span belongs to the file and stays inside the file byte bounds.
 - `compiler/source.ari` can derive a span-end location summary with the same
