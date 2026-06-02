@@ -684,13 +684,15 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   the wrapped `SourceFile` span ownership and byte-bound checks.
 - Added a loaded-source byte containment helper in `compiler/source.ari`,
   delegating through the wrapped `SourceFile` containment rule.
+- Added a loaded-source first-byte span helper in `compiler/source.ari`,
+  deriving `first_offset..first_offset + 1` from the summary metadata.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a loaded-source first-byte span helper in `compiler/source.ari`.
+- Add a loaded-source first-byte location summary helper in `compiler/source.ari`.
 
 ## Next Recommended Task
 
-Add a loaded-source first-byte span helper in `compiler/source.ari`.
+Add a loaded-source first-byte location summary helper in `compiler/source.ari`.

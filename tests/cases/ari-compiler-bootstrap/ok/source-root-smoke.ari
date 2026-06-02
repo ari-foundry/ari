@@ -464,6 +464,31 @@ fn loaded_source_score() -> i64 {
   if source::loaded_source_first_offset_valid(negative_first_loaded) {
     return 15;
   }
+  let first_span = source::loaded_source_first_span(loaded);
+  if source::span_source(first_span) != 7 {
+    return 16;
+  }
+  if source::span_start(first_span) != 0 {
+    return 17;
+  }
+  if source::span_end(first_span) != 1 {
+    return 18;
+  }
+  if !source::loaded_source_valid_span(loaded, first_span) {
+    return 19;
+  }
+  let eof_first_span = source::loaded_source_first_span(eof_first_loaded);
+  if source::loaded_source_valid_span(eof_first_loaded, eof_first_span) {
+    return 20;
+  }
+  let negative_first_span = source::loaded_source_first_span(negative_first_loaded);
+  if source::loaded_source_valid_span(negative_first_loaded, negative_first_span) {
+    return 21;
+  }
+  let bad_first_span = source::loaded_source_first_span(bad_loaded);
+  if source::loaded_source_valid_span(bad_loaded, bad_first_span) {
+    return 22;
+  }
   return source::loaded_source_id(loaded) +
     source::loaded_source_byte_len(loaded) +
     source::loaded_source_first_offset(loaded) +

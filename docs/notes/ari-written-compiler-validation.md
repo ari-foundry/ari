@@ -653,3 +653,5 @@ Desired stage0 pressure that is not yet classified as a bug:
   source-id, ordering, and byte-bound checks as source-table entries, without
   requiring a hosted compiler fix. Loaded-source byte containment now delegates
   through the wrapped `SourceFile` without requiring a hosted compiler fix.
+  Loaded-source first-byte spans now derive `first_offset..first_offset + 1`
+  from the summary without requiring a hosted compiler fix.

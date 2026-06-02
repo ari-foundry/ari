@@ -406,6 +406,11 @@ pub fn loaded_source_span(
   return span(summary.file.id, start, end);
 }
 
+pub fn loaded_source_first_span(summary: LoadedSourceSummary) -> Span {
+  let start = loaded_source_first_offset(summary);
+  return loaded_source_span(summary, start, start + 1);
+}
+
 pub fn loaded_source_valid_span(
   summary: LoadedSourceSummary,
   span: Span
