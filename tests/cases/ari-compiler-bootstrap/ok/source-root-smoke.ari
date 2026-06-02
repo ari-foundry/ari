@@ -424,6 +424,12 @@ fn source_text_invalid_string_escape_value_driver_score() -> i64 {
   }
 }
 
+fn source_text_unterminated_unicode_escape_driver_score() -> i64 {
+  zone(65536) {
+    return driver::result_code(driver::run_source_text(std::string::from("\"\\u{12")));
+  }
+}
+
 fn source_text_unterminated_block_comment_driver_score() -> i64 {
   zone(65536) {
     return driver::result_code(driver::run_source_text(std::string::from("/* open")));
@@ -2002,50 +2008,61 @@ fn lexer_byte_char_diagnostic_score() -> i64 {
     return 91 + failure_score;
   }
 
-  failure_score = lexer_failure_case_score("'\\x100'", 1018, 2, 6);
+  failure_score = lexer_failure_case_score("'\\u{41", 1024, 2, 6);
   if failure_score != 0 {
     return 98 + failure_score;
   }
 
-  failure_score = lexer_failure_case_score("'\\777'", 1018, 2, 5);
+  let unterminated_unicode_newline_text: Slice[u8] = "'\\u{41\nname";
+  failure_score = lexer_failure_case_score(unterminated_unicode_newline_text, 1024, 2, 6);
   if failure_score != 0 {
     return 105 + failure_score;
   }
 
-  failure_score = lexer_failure_case_score("'\\u0080'", 1018, 2, 7);
+  failure_score = lexer_failure_case_score("'\\x100'", 1018, 2, 6);
   if failure_score != 0 {
     return 112 + failure_score;
   }
 
-  failure_score = lexer_failure_case_score("'\\U00000080'", 1018, 2, 11);
+  failure_score = lexer_failure_case_score("'\\777'", 1018, 2, 5);
   if failure_score != 0 {
     return 119 + failure_score;
   }
 
-  failure_score = lexer_failure_case_score("'\\u{80}'", 1018, 2, 7);
+  failure_score = lexer_failure_case_score("'\\u0080'", 1018, 2, 7);
   if failure_score != 0 {
     return 126 + failure_score;
   }
 
-  failure_score = lexer_failure_case_score("'ab'", 1019, 0, 4);
+  failure_score = lexer_failure_case_score("'\\U00000080'", 1018, 2, 11);
   if failure_score != 0 {
     return 133 + failure_score;
   }
 
-  failure_score = lexer_failure_case_score("'a", 1019, 0, 2);
+  failure_score = lexer_failure_case_score("'\\u{80}'", 1018, 2, 7);
   if failure_score != 0 {
     return 140 + failure_score;
   }
 
-  failure_score = lexer_failure_case_score("'\\nA'", 1019, 0, 5);
+  failure_score = lexer_failure_case_score("'ab'", 1019, 0, 4);
   if failure_score != 0 {
     return 147 + failure_score;
+  }
+
+  failure_score = lexer_failure_case_score("'a", 1019, 0, 2);
+  if failure_score != 0 {
+    return 154 + failure_score;
+  }
+
+  failure_score = lexer_failure_case_score("'\\nA'", 1019, 0, 5);
+  if failure_score != 0 {
+    return 161 + failure_score;
   }
 
   let non_ascii_text: Slice[u8] = "'\xC3\xA9'";
   failure_score = lexer_failure_case_score(non_ascii_text, 1020, 1, 2);
   if failure_score != 0 {
-    return 154 + failure_score;
+    return 168 + failure_score;
   }
 
   return 0;
@@ -2697,22 +2714,44 @@ fn lexer_string_literal_span_score() -> i64 {
     return 101 + failure_score;
   }
 
+  let unterminated_braced_unicode_escape_text: Slice[u8] = "\"\\u{12";
+  failure_score = lexer_failure_case_score(
+    unterminated_braced_unicode_escape_text,
+    1024,
+    2,
+    6
+  );
+  if failure_score != 0 {
+    return 109 + failure_score;
+  }
+
+  let unterminated_braced_unicode_newline_text: Slice[u8] = "\"\\u{12\nname";
+  failure_score = lexer_failure_case_score(
+    unterminated_braced_unicode_newline_text,
+    1024,
+    2,
+    6
+  );
+  if failure_score != 0 {
+    return 117 + failure_score;
+  }
+
   let invalid_hex_value_escape_text: Slice[u8] = "\"\\x100\"";
   failure_score = lexer_failure_case_score(invalid_hex_value_escape_text, 1007, 2, 6);
   if failure_score != 0 {
-    return 109 + failure_score;
+    return 125 + failure_score;
   }
 
   let invalid_octal_value_escape_text: Slice[u8] = "\"\\777\"";
   failure_score = lexer_failure_case_score(invalid_octal_value_escape_text, 1007, 2, 5);
   if failure_score != 0 {
-    return 116 + failure_score;
+    return 132 + failure_score;
   }
 
   let invalid_fixed_unicode_value_text: Slice[u8] = "\"\\uD800\"";
   failure_score = lexer_failure_case_score(invalid_fixed_unicode_value_text, 1007, 2, 7);
   if failure_score != 0 {
-    return 123 + failure_score;
+    return 139 + failure_score;
   }
 
   let invalid_wide_unicode_value_text: Slice[u8] = "\"\\U00110000\"";
@@ -2723,7 +2762,7 @@ fn lexer_string_literal_span_score() -> i64 {
     11
   );
   if failure_score != 0 {
-    return 130 + failure_score;
+    return 146 + failure_score;
   }
 
   let invalid_braced_unicode_value_text: Slice[u8] = "\"\\u{110000}\"";
@@ -2734,27 +2773,27 @@ fn lexer_string_literal_span_score() -> i64 {
     11
   );
   if failure_score != 0 {
-    return 137 + failure_score;
+    return 153 + failure_score;
   }
 
   let digit_escape_text: Slice[u8] = "\"\\x21\\u0041\\U00000042\\u{1F600}\\0123\" tail";
   let digit_escape = lexer::cursor_from_text(digit_escape_text, 0);
   if !lexer::cursor_is_string_literal(digit_escape) {
-    return 145;
+    return 161;
   }
   if lexer::cursor_token_end(digit_escape) != 36 {
-    return 146;
+    return 162;
   }
   if lexer::cursor_token_ranked_width(digit_escape) != 87 {
-    return 147;
+    return 163;
   }
   span_score = lexer_literal_payload_span_score(digit_escape, 1, 35, 35, 35);
   if span_score != 0 {
-    return 147 + span_score;
+    return 163 + span_score;
   }
   let after_digit_escape = lexer::cursor_advance_in_text(digit_escape, digit_escape_text);
   if !lexer::cursor_is_whitespace(after_digit_escape) {
-    return 152;
+    return 168;
   }
   return 0;
 }
@@ -5188,6 +5227,11 @@ fn driver_result_name_score() -> i64 {
     ) {
       return 8;
     }
+    if !driver::result_name_text(driver::run_source_text(std::string::from("\"\\u{12"))).equals(
+      "lexer.unterminated-unicode-escape"
+    ) {
+      return 9;
+    }
   }
   return 0;
 }
@@ -5240,6 +5284,24 @@ fn diagnostic_name_text_score() -> i64 {
     "driver.empty-source-text"
   ) {
     return 11;
+  }
+
+  let unterminated_unicode = diagnostic::lexer_unterminated_unicode_escape(2, 6);
+  if diagnostic::diagnostic_code(unterminated_unicode) != 1024 {
+    return 12;
+  }
+  if diagnostic::diagnostic_kind_rank(unterminated_unicode) != 1024 {
+    return 13;
+  }
+  if !diagnostic::diagnostic_name_text(unterminated_unicode).equals(
+    "lexer.unterminated-unicode-escape"
+  ) {
+    return 14;
+  }
+  if !diagnostic::diagnostic_message_text(unterminated_unicode).equals(
+    "unterminated Unicode escape"
+  ) {
+    return 15;
   }
   return 0;
 }
@@ -5548,6 +5610,8 @@ fn main() -> i64 {
     1006 +
     source_text_invalid_string_escape_value_driver_score() -
     1007 +
+    source_text_unterminated_unicode_escape_driver_score() -
+    1024 +
     source_text_unterminated_block_comment_driver_score() -
     1008 +
     parse_comment_only_failure_score() +

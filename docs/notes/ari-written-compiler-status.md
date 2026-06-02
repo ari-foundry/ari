@@ -74,6 +74,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   `\x`, fixed-width `\u`, fixed-width `\U`, braced `\u{...}`, and octal digit
   runs before accepting a string-literal span, including invalid digit offsets
   inside braced Unicode escapes.
+- `compiler/lexer.ari` reports braced string Unicode escapes that hit EOF or a
+  newline before `}` as `lexer.unterminated-unicode-escape`, matching stage0's
+  diagnostic identity instead of grouping them with invalid escape digits.
 - `compiler/lexer.ari` validates source-text string escape value ranges for
   byte `\x`, octal, fixed-width Unicode, and braced Unicode escapes before
   accepting a string-literal span.
@@ -215,6 +218,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   diagnostics for spellings such as `'\x'`, `'\u'`, `'\U'`, `'\u12'`,
   `'\U1234'`, `'\u{Q}'`, and `'\u{}'`, preserving those failures through
   parser and driver source-text paths.
+- `compiler/lexer.ari` reports braced byte-character Unicode escapes that hit
+  EOF or a newline before `}` as `lexer.unterminated-unicode-escape`, sharing
+  the same stage0-parity diagnostic identity as string Unicode escapes.
 - `compiler/lexer.ari` reports source-text byte character escape value-range
   diagnostics for spellings such as `'\x100'`, `'\777'`, `'\u0080'`,
   `'\U00000080'`, and `'\u{80}'`, preserving those failures through parser and

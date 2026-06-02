@@ -746,6 +746,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   simple string escape spellings: alert, backspace, escape, form-feed,
   newline, carriage return, tab, vertical tab, quote, single-quote,
   question-mark, and backslash.
+- Added a dedicated Ari diagnostic identity for unterminated braced Unicode
+  escapes, `lexer.unterminated-unicode-escape`, and routed both string and
+  byte-character `\u{...` EOF/newline failures through it instead of the
+  invalid-digits diagnostic.
 - Added lexer failure name/message accessors for direct scan failures and
   handoff failures, with source-root smoke coverage for string escape and
   unterminated-string diagnostics so callers are not limited to numeric codes.

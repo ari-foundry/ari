@@ -39,6 +39,7 @@ enum StringLiteralScan {
   UnsupportedEscape(i64, i64),
   InvalidEscapeDigits(i64, i64),
   InvalidEscapeValue(i64, i64),
+  UnterminatedUnicodeEscape(i64, i64),
 }
 
 enum StringEscapeScan {
@@ -46,6 +47,7 @@ enum StringEscapeScan {
   EscapeUnsupported(i64, i64),
   EscapeInvalidDigits(i64, i64),
   EscapeInvalidValue(i64, i64),
+  EscapeUnterminatedUnicode(i64, i64),
 }
 
 enum CommentScan {
@@ -60,6 +62,7 @@ enum ByteCharScan {
   ByteCharUnsupportedEscape(i64, i64),
   ByteCharInvalidEscapeDigits(i64, i64),
   ByteCharInvalidEscapeValue(i64, i64),
+  ByteCharUnterminatedUnicodeEscape(i64, i64),
   ByteCharTooLong(i64, i64),
   ByteCharNonAscii(i64, i64),
   ByteCharFallback,
@@ -1202,7 +1205,7 @@ fn braced_unicode_escape_scan_from_text(
   var value = 0;
   while end < text.len && text[end] != '}' {
     if text[end] == '\n' {
-      return EscapeInvalidDigits(escape_start, end + 1);
+      return EscapeUnterminatedUnicode(escape_start, end);
     }
     if !is_hex_digit(text[end]) {
       return EscapeInvalidDigits(end, end + 1);
@@ -1212,7 +1215,7 @@ fn braced_unicode_escape_scan_from_text(
   }
 
   if end >= text.len {
-    return EscapeInvalidDigits(escape_start, text.len);
+    return EscapeUnterminatedUnicode(escape_start, text.len);
   }
   if !is_unicode_escape_value(value) {
     return EscapeInvalidValue(escape_start, end + 1);
@@ -1293,6 +1296,9 @@ fn string_literal_scan_from_text(text: std::Slice[u8], offset: i64) -> StringLit
         EscapeInvalidValue(value_start, value_end) => {
           return InvalidEscapeValue(value_start, value_end);
         }
+        EscapeUnterminatedUnicode(unicode_start, unicode_end) => {
+          return UnterminatedUnicodeEscape(unicode_start, unicode_end);
+        }
       }
     }
     if text[end] == '"' {
@@ -1360,7 +1366,7 @@ fn byte_char_braced_unicode_escape_scan_from_text(
   var value = 0;
   while end < text.len && text[end] != '}' {
     if text[end] == '\n' {
-      return EscapeInvalidDigits(escape_start, end + 1);
+      return EscapeUnterminatedUnicode(escape_start, end);
     }
     if !is_hex_digit(text[end]) {
       return EscapeInvalidDigits(end, end + 1);
@@ -1369,7 +1375,7 @@ fn byte_char_braced_unicode_escape_scan_from_text(
     end = end + 1;
   }
   if end >= text.len {
-    return EscapeInvalidDigits(escape_start, text.len);
+    return EscapeUnterminatedUnicode(escape_start, text.len);
   }
   if value > 127 {
     return EscapeInvalidValue(escape_start, end + 1);
@@ -1453,6 +1459,12 @@ fn byte_char_scan_from_text(text: std::Slice[u8], offset: i64) -> ByteCharScan {
       }
       EscapeInvalidValue(byte_char_value_start, byte_char_value_end) => {
         return ByteCharInvalidEscapeValue(byte_char_value_start, byte_char_value_end);
+      }
+      EscapeUnterminatedUnicode(byte_char_unicode_start, byte_char_unicode_end) => {
+        return ByteCharUnterminatedUnicodeEscape(
+          byte_char_unicode_start,
+          byte_char_unicode_end
+        );
       }
     }
   }
@@ -1546,6 +1558,7 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
       UnsupportedEscape(_, _) => {}
       InvalidEscapeDigits(_, _) => {}
       InvalidEscapeValue(_, _) => {}
+      UnterminatedUnicodeEscape(_, _) => {}
     }
   }
   if first == '\'' {
@@ -1563,6 +1576,7 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
       ByteCharUnsupportedEscape(_, _) => {}
       ByteCharInvalidEscapeDigits(_, _) => {}
       ByteCharInvalidEscapeValue(_, _) => {}
+      ByteCharUnterminatedUnicodeEscape(_, _) => {}
       ByteCharTooLong(_, _) => {}
       ByteCharNonAscii(_, _) => {}
       ByteCharFallback => {}
@@ -1667,6 +1681,9 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
       InvalidEscapeValue(value_start, value_end) => {
         return Failed(invalid_string_escape_value(value_start, value_end));
       }
+      UnterminatedUnicodeEscape(unicode_start, unicode_end) => {
+        return Failed(unterminated_unicode_escape(unicode_start, unicode_end));
+      }
     }
   }
   if text[offset] == '\'' {
@@ -1701,6 +1718,12 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
         return Failed(invalid_byte_character_escape_value(
           byte_char_value_start,
           byte_char_value_end
+        ));
+      }
+      ByteCharUnterminatedUnicodeEscape(byte_char_unicode_start, byte_char_unicode_end) => {
+        return Failed(unterminated_unicode_escape(
+          byte_char_unicode_start,
+          byte_char_unicode_end
         ));
       }
       ByteCharTooLong(byte_char_too_long_start, byte_char_too_long_end) => {
@@ -1868,6 +1891,10 @@ pub fn invalid_string_escape_digits(start: i64, end: i64) -> diagnostic::Diagnos
 
 pub fn invalid_string_escape_value(start: i64, end: i64) -> diagnostic::Diagnostic {
   return diagnostic::lexer_invalid_string_escape_value(start, end);
+}
+
+pub fn unterminated_unicode_escape(start: i64, end: i64) -> diagnostic::Diagnostic {
+  return diagnostic::lexer_unterminated_unicode_escape(start, end);
 }
 
 fn lex_failure_from_diagnostic(failure: diagnostic::Diagnostic) -> LexFailure {

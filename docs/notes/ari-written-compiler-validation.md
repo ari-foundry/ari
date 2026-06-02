@@ -127,10 +127,12 @@ source-text string escape digit-shape diagnostics for `\x`, fixed-width `\u`,
 fixed-width `\U`, invalid braced `\u{...}` digits, and empty braced `\u{}`
 spellings, plus a valid digit-escape span covering `\x`, `\u`, `\U`, braced
 `\u{...}`, and octal-leading escape spellings, without requiring a hosted
-compiler fix. It now also checks source-text string escape value-range
-diagnostics for byte `\x`, octal, fixed-width Unicode, and braced Unicode
-spellings without requiring a hosted compiler fix. It now also checks
-source-text line comment and nested block comment skipping as whitespace spans,
+compiler fix. Dedicated unterminated Unicode escape diagnostics are also checked
+for braced string Unicode escapes that hit EOF or newline before `}`, without
+requiring a hosted compiler fix. Source-text string escape value-range
+diagnostics are checked for byte `\x`, octal, fixed-width Unicode, and braced
+Unicode spellings without requiring a hosted compiler fix. Source-text line
+comment and nested block comment skipping are checked as whitespace spans,
 plus unterminated block comment diagnostics preserved through parser and driver
 source-text paths, including CRLF line comments, without requiring a hosted
 compiler fix.
@@ -645,9 +647,11 @@ Desired stage0 pressure that is not yet classified as a bug:
   smoke now checks lexer spans and parser success for all stage0 simple string
   escape spellings: alert, backspace, escape, form-feed, newline, carriage
   return, tab, vertical tab, quote, single-quote, question-mark, and backslash.
-  Source-text
-  comment skipping now covers line comments, nested block comments, and
-  unterminated block comment diagnostics. Numeric base-prefix literal spans now
+  Braced Unicode string escapes that hit EOF or a newline before `}` now report
+  `lexer.unterminated-unicode-escape` instead of invalid escape digits, matching
+  stage0 diagnostic identity without requiring a hosted compiler fix.
+  Source-text comment skipping now covers line comments, nested block comments,
+  and unterminated block comment diagnostics. Numeric base-prefix literal spans now
   cover valid lowercase and uppercase `0x`, `0o`, and `0b` prefixes, and
   exact-width integer suffix spans cover decimal and base-prefixed integers.
   Numeric base-prefix diagnostics now cover missing prefix digits, invalid
@@ -668,7 +672,9 @@ Desired stage0 pressure that is not yet classified as a bug:
   Empty byte character diagnostics now cover `''`, and unterminated byte
   character diagnostics now cover direct EOF/newline plus escaped EOF/newline
   spellings. Unsupported byte character escape diagnostics now cover spellings
-  such as `'\q'`. Byte character escape digit-shape diagnostics now cover
+  such as `'\q'`. Braced Unicode byte-character escapes that hit EOF or a
+  newline before `}` now share `lexer.unterminated-unicode-escape` with string
+  Unicode escapes. Byte character escape digit-shape diagnostics now cover
   missing/invalid `\x`, fixed-width Unicode, and braced Unicode digits. Byte
   character escape value-range diagnostics now cover oversized hex/octal byte
   escapes and non-ASCII Unicode escapes. Byte character exactly-one-byte

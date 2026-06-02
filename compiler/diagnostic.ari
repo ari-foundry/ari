@@ -27,6 +27,7 @@ pub enum DiagnosticKind {
   LexerIntegerLiteralOverflow,
   LexerFloatLiteralOverflow,
   LexerFloatLiteralUnderflow,
+  LexerUnterminatedUnicodeEscape,
   ParserExpectedStatement,
   ParserEmptyInput,
   ParserExpectedEof,
@@ -113,6 +114,7 @@ pub fn kind_rank(kind: DiagnosticKind) -> i64 {
     LexerIntegerLiteralOverflow => 1021,
     LexerFloatLiteralOverflow => 1022,
     LexerFloatLiteralUnderflow => 1023,
+    LexerUnterminatedUnicodeEscape => 1024,
     ParserExpectedStatement => 2001,
     ParserEmptyInput => 2002,
     ParserExpectedEof => 2003,
@@ -204,6 +206,9 @@ pub fn kind_from_rank(rank: i64) -> DiagnosticKind {
   if rank == 1023 {
     return LexerFloatLiteralUnderflow;
   }
+  if rank == 1024 {
+    return LexerUnterminatedUnicodeEscape;
+  }
   if rank == 2001 {
     return ParserExpectedStatement;
   }
@@ -292,6 +297,7 @@ pub fn kind_name_text(kind: DiagnosticKind) -> std::Slice[u8] {
     LexerIntegerLiteralOverflow => { return "lexer.integer-literal-overflow"; }
     LexerFloatLiteralOverflow => { return "lexer.float-literal-overflow"; }
     LexerFloatLiteralUnderflow => { return "lexer.float-literal-underflow"; }
+    LexerUnterminatedUnicodeEscape => { return "lexer.unterminated-unicode-escape"; }
     ParserExpectedStatement => { return "parser.expected-statement"; }
     ParserEmptyInput => { return "parser.empty-input"; }
     ParserExpectedEof => { return "parser.expected-eof"; }
@@ -335,6 +341,7 @@ pub fn kind_message_text(kind: DiagnosticKind) -> std::Slice[u8] {
     LexerIntegerLiteralOverflow => { return "integer literal is too large"; }
     LexerFloatLiteralOverflow => { return "float literal is too large"; }
     LexerFloatLiteralUnderflow => { return "float literal is too small"; }
+    LexerUnterminatedUnicodeEscape => { return "unterminated Unicode escape"; }
     ParserExpectedStatement => { return "expected a statement"; }
     ParserEmptyInput => { return "input is empty"; }
     ParserExpectedEof => { return "expected end of file after statement"; }
@@ -396,6 +403,10 @@ pub fn lexer_invalid_string_escape_digits(start: i64, end: i64) -> Diagnostic {
 
 pub fn lexer_invalid_string_escape_value(start: i64, end: i64) -> Diagnostic {
   return error_kind(LexerInvalidStringEscapeValue, start, end);
+}
+
+pub fn lexer_unterminated_unicode_escape(start: i64, end: i64) -> Diagnostic {
+  return error_kind(LexerUnterminatedUnicodeEscape, start, end);
 }
 
 pub fn lexer_unterminated_block_comment(start: i64, end: i64) -> Diagnostic {
