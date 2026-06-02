@@ -394,6 +394,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/source.ari` can construct a source-table-entry-local location
   summary, so callers do not need to unwrap the entry's `SourceFile` before
   computing line and byte-column metadata.
+- `compiler/source.ari` can derive a span-start location summary after checking
+  that the span belongs to the file and stays inside the file byte bounds.
 - `compiler/parser.ari` can parse a source-text slice through the text-backed
   lexer handoff path.
 - `compiler/driver.ari` routes file and text input through `std::string::String`

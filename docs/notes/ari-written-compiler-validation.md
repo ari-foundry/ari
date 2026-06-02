@@ -608,6 +608,9 @@ Desired stage0 pressure that is not yet classified as a bug:
   checks without requiring a hosted compiler fix. Source-table-entry-local
   location summaries now reuse the entry's `SourceFile` and preserve the same
   invalid-line-table and EOF-clamp behavior without requiring a hosted compiler
-  fix. Full source table ownership, file path strings, loaded text ownership,
-  owned line-start arrays, CRLF visual-column handling, UTF-8 byte-column
-  policy, and diagnostic location mapping remain pending.
+  fix. Span-start location summaries now reject source-id mismatches, reversed
+  spans, and out-of-range spans before deriving line and byte-column metadata,
+  without requiring a hosted compiler fix. Full source table ownership, file
+  path strings, loaded text ownership, owned line-start arrays, CRLF
+  visual-column handling, UTF-8 byte-column policy, and diagnostic location
+  mapping remain pending.
