@@ -2028,6 +2028,14 @@ pub fn lex_failure_code(failure: LexFailure) -> i64 {
   return failure.code;
 }
 
+pub fn lex_failure_name_text(failure: LexFailure) -> std::Slice[u8] {
+  return diagnostic::kind_name_text(diagnostic::kind_from_rank(failure.kind_rank));
+}
+
+pub fn lex_failure_message_text(failure: LexFailure) -> std::Slice[u8] {
+  return diagnostic::kind_message_text(diagnostic::kind_from_rank(failure.kind_rank));
+}
+
 pub fn lex_failure_start_offset(failure: LexFailure) -> i64 {
   return failure.start;
 }
@@ -2768,6 +2776,13 @@ pub fn scan_result_failure_name_text(result: LexResult) -> std::Slice[u8] {
   match result {
     Scanned(_) => "ok",
     Failed(failure) => diagnostic::diagnostic_name_text(failure),
+  }
+}
+
+pub fn scan_result_failure_message_text(result: LexResult) -> std::Slice[u8] {
+  match result {
+    Scanned(_) => "ok",
+    Failed(failure) => diagnostic::diagnostic_message_text(failure),
   }
 }
 

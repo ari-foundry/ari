@@ -741,6 +741,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Added stage0-parity string line-continuation scanning for backslash-LF and
   backslash-CRLF inside Ari `StringLiteral` spans, with source-root smoke
   coverage for token spans and raw content spans.
+- Added lexer failure name/message accessors for direct scan failures and
+  handoff failures, with source-root smoke coverage for string escape and
+  unterminated-string diagnostics so callers are not limited to numeric codes.
 
 ## Small Task Queue
 

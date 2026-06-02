@@ -5619,6 +5619,24 @@ fn parse_failure_name_score() -> i64 {
   ) {
     return 6;
   }
+  if !lexer::scan_result_failure_message_text(lexer::scan_text_result("\"\\q\"", 0)).equals(
+    "unsupported string escape"
+  ) {
+    return 7;
+  }
+  match lexer::handoff_from_text_result("\"open") {
+    std::Ok(_) => {
+      return 8;
+    }
+    std::Err(failure) => {
+      if !lexer::lex_failure_name_text(failure).equals("lexer.unterminated-string-literal") {
+        return 9;
+      }
+      if !lexer::lex_failure_message_text(failure).equals("unterminated string literal") {
+        return 10;
+      }
+    }
+  }
   return 0;
 }
 

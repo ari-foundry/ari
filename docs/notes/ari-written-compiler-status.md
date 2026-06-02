@@ -298,6 +298,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   accessors so bootstrap failures can report names such as
   `parser.unexpected-whitespace` and `lexer.unterminated-string-literal`
   instead of only numeric codes such as `2004` and `1004`.
+- `compiler/lexer.ari` exposes lexer failure name/message helpers for both
+  direct `LexResult` failures and handoff-level `LexFailure` payloads, so
+  lexer callers do not have to interpret raw diagnostic numbers first.
 - `compiler/driver.ari` now returns diagnostic payloads in `Err` results while
   preserving the old `result_code` helper for focused smokes. Driver result
   helpers can expose diagnostic name/message text, and driver-local failures

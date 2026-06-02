@@ -497,6 +497,10 @@ driver now returns diagnostic payloads in `Err` results, and source-root smoke
 coverage checks that the same compatibility code `1001` can be distinguished
 as either `lexer.invalid-character` or `driver.input-start-out-of-bounds`
 without requiring a hosted compiler fix.
+Lexer direct scan failures and handoff failures now expose name/message text
+helpers as well, and source-root smoke coverage checks lexer string escape and
+unterminated-string failures through those helpers so numeric codes are not the
+only readable identity.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
@@ -579,12 +583,14 @@ Desired stage0 pressure that is not yet classified as a bug:
 - Clearer match-arm binding scoping ergonomics; today a helper that matches
   both `std::Ok(code)` and `std::Err(code)`, or sibling enum cases with the
   same payload spelling, must use distinct payload names.
-- Ari-written diagnostics now have named kind/message identity, but they still
-  do not carry stage0-style stable string codes such as `L0001`, localized
-  labels, source snippets, or rendered diagnostic output. Numeric codes remain
+- Ari-written diagnostics now have named kind/message identity, and lexer,
+  parser, and driver boundary helpers expose that identity instead of forcing
+  callers to interpret numeric compatibility codes first. They still do not
+  carry stage0-style stable string codes such as `L0001`, localized labels,
+  source snippets, or rendered diagnostic output. Numeric codes remain
   compatibility payloads for focused smokes rather than the primary human
-  identity. The remaining rendering gap is Ari-written compiler model pressure,
-  not a confirmed hosted compiler bug.
+  identity. The remaining rendering gap is Ari-written compiler model
+  pressure, not a confirmed hosted compiler bug.
 - The Ari-written token model now separates `Integer` and `Float` token kinds
   and carries literal base plus suffix-rank metadata for decimal,
   base-prefixed, typed numeric, and byte-character tokens. It now also carries
