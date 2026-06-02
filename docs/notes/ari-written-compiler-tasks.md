@@ -842,6 +842,11 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   optional second byte once for line comments, block comments, shifts, and
   two-byte token dispatch, while the result path reads it only inside the slash
   comment-diagnostic branch.
+- Re-reviewed string and byte-character escape helper loops and hoisted each
+  scanned byte into a `current` local before hex/octal/newline/closing-brace
+  classification. This removed repeated `text[end]` reads from shared string
+  escape scanners, byte-character Unicode scanners, and byte-character
+  too-long recovery.
 
 ## Small Task Queue
 

@@ -715,6 +715,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   once for comment, shift, and two-byte token dispatch; the result scanner
   keeps second-byte reads limited to slash comment diagnostics before
   delegating the remaining token surface.
+- String and byte-character escape helper loops now reuse a loop-local current
+  byte for hex/octal digit classification, braced Unicode closing/newline
+  checks, and byte-character too-long recovery.
 - `compiler/lexer.ari` now uses ranked-width and ranked-position query names
   and no longer exposes public `score` helpers.
 - `compiler/parser.ari` now uses parser kind-rank query names and no longer

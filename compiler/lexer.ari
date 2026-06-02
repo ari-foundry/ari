@@ -1304,15 +1304,23 @@ fn block_comment_scan_from_text(text: std::Slice[u8], offset: i64) -> CommentSca
 
 fn hex_escape_scan_from_text(text: std::Slice[u8], escape_start: i64) -> StringEscapeScan {
   let first_digit = escape_start + 1;
-  if first_digit >= text.len || !is_hex_digit(text[first_digit]) {
+  if first_digit >= text.len {
+    return EscapeInvalidDigits(escape_start, string_escape_error_end(text, first_digit));
+  }
+  let first = text[first_digit];
+  if !is_hex_digit(first) {
     return EscapeInvalidDigits(escape_start, string_escape_error_end(text, first_digit));
   }
 
   var value = 0;
   var end = first_digit + 1;
-  value = append_escape_digit_capped(value, 16, hex_digit_value(text[first_digit]), 255);
-  while end < text.len && is_hex_digit(text[end]) {
-    value = append_escape_digit_capped(value, 16, hex_digit_value(text[end]), 255);
+  value = append_escape_digit_capped(value, 16, hex_digit_value(first), 255);
+  while end < text.len {
+    let current = text[end];
+    if !is_hex_digit(current) {
+      break;
+    }
+    value = append_escape_digit_capped(value, 16, hex_digit_value(current), 255);
     end = end + 1;
   }
   if value > 255 {
@@ -1331,10 +1339,14 @@ fn fixed_hex_escape_scan_from_text(
   var count = 0;
   var value = 0;
   while count < required_digits {
-    if end >= text.len || !is_hex_digit(text[end]) {
+    if end >= text.len {
       return EscapeInvalidDigits(escape_start, string_escape_error_end(text, end));
     }
-    value = append_escape_digit_capped(value, 16, hex_digit_value(text[end]), 1114111);
+    let current = text[end];
+    if !is_hex_digit(current) {
+      return EscapeInvalidDigits(escape_start, string_escape_error_end(text, end));
+    }
+    value = append_escape_digit_capped(value, 16, hex_digit_value(current), 1114111);
     end = end + 1;
     count = count + 1;
   }
@@ -1358,14 +1370,18 @@ fn braced_unicode_escape_scan_from_text(
 
   var end = first_digit;
   var value = 0;
-  while end < text.len && text[end] != '}' {
-    if text[end] == '\n' {
+  while end < text.len {
+    let current = text[end];
+    if current == '}' {
+      break;
+    }
+    if current == '\n' {
       return EscapeUnterminatedUnicode(escape_start, end);
     }
-    if !is_hex_digit(text[end]) {
+    if !is_hex_digit(current) {
       return EscapeInvalidDigits(end, end + 1);
     }
-    value = append_escape_digit_capped(value, 16, hex_digit_value(text[end]), 1114111);
+    value = append_escape_digit_capped(value, 16, hex_digit_value(current), 1114111);
     end = end + 1;
   }
 
@@ -1389,8 +1405,12 @@ fn unicode_escape_scan_from_text(text: std::Slice[u8], escape_start: i64) -> Str
 fn octal_escape_scan_from_text(text: std::Slice[u8], escape_start: i64) -> StringEscapeScan {
   var value = 0;
   var end = escape_start;
-  while end < text.len && is_octal_digit(text[end]) {
-    value = append_escape_digit_capped(value, 8, decimal_digit_value(text[end]), 255);
+  while end < text.len {
+    let current = text[end];
+    if !is_octal_digit(current) {
+      break;
+    }
+    value = append_escape_digit_capped(value, 8, decimal_digit_value(current), 255);
     end = end + 1;
   }
   if value > 255 {
@@ -1494,10 +1514,14 @@ fn byte_char_fixed_unicode_escape_scan_from_text(
   var count = 0;
   var value = 0;
   while count < required_digits {
-    if end >= text.len || !is_hex_digit(text[end]) {
+    if end >= text.len {
       return EscapeInvalidDigits(escape_start, string_escape_error_end(text, end));
     }
-    value = append_escape_digit_capped(value, 16, hex_digit_value(text[end]), 127);
+    let current = text[end];
+    if !is_hex_digit(current) {
+      return EscapeInvalidDigits(escape_start, string_escape_error_end(text, end));
+    }
+    value = append_escape_digit_capped(value, 16, hex_digit_value(current), 127);
     end = end + 1;
     count = count + 1;
   }
@@ -1521,14 +1545,18 @@ fn byte_char_braced_unicode_escape_scan_from_text(
 
   var end = first_digit;
   var value = 0;
-  while end < text.len && text[end] != '}' {
-    if text[end] == '\n' {
+  while end < text.len {
+    let current = text[end];
+    if current == '}' {
+      break;
+    }
+    if current == '\n' {
       return EscapeUnterminatedUnicode(escape_start, end);
     }
-    if !is_hex_digit(text[end]) {
+    if !is_hex_digit(current) {
       return EscapeInvalidDigits(end, end + 1);
     }
-    value = append_escape_digit_capped(value, 16, hex_digit_value(text[end]), 127);
+    value = append_escape_digit_capped(value, 16, hex_digit_value(current), 127);
     end = end + 1;
   }
   if end >= text.len {
@@ -1570,10 +1598,11 @@ fn byte_char_escape_scan_from_text(text: std::Slice[u8], slash_start: i64) -> St
 fn byte_char_too_long_end_from_text(text: std::Slice[u8], offset: i64) -> i64 {
   var end = offset + 1;
   while end < text.len {
-    if text[end] == '\'' {
+    let current = text[end];
+    if current == '\'' {
       return end + 1;
     }
-    if text[end] == '\n' {
+    if current == '\n' {
       return end + 1;
     }
     end = end + 1;
