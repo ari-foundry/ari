@@ -228,7 +228,19 @@ fn source_text_crlf_post_comment_extra_token_driver_score() -> i64 {
 }
 
 fn source_text_post_comment_lexer_failure_driver_score() -> i64 {
-  return source_text_line_block_driver_score("p// skip\n\"open", "p/* skip */\"open", 1004);
+  let score = source_text_line_block_driver_score(
+    "p// skip\n\"open",
+    "p/* skip */\"open",
+    1004
+  );
+  if score != 0 {
+    return score;
+  }
+  let crlf_code = source_text_driver_result("p// skip\r\n\"open");
+  if crlf_code != 1004 {
+    return 10;
+  }
+  return 0;
 }
 
 fn source_text_keyword_driver_score() -> i64 {
@@ -3996,6 +4008,10 @@ fn parse_post_comment_lexer_failure_score() -> i64 {
   score = parse_lexer_failure_case_score("name/* skip */\"open", 14, 19);
   if score != 0 {
     return 10 + score;
+  }
+  score = parse_lexer_failure_case_score("name// skip\r\n\"open", 13, 18);
+  if score != 0 {
+    return 20 + score;
   }
   return 0;
 }
