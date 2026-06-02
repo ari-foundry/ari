@@ -39,17 +39,17 @@ fn source_text_driver_result(text: Slice[u8]) -> i64 {
   }
 }
 
-fn source_text_driver_pair_score(
-  first_text: Slice[u8],
-  second_text: Slice[u8],
+fn source_text_line_block_driver_score(
+  line_text: Slice[u8],
+  block_text: Slice[u8],
   expected_code: i64
 ) -> i64 {
-  let first_code = source_text_driver_result(first_text);
-  if first_code != expected_code {
+  let line_code = source_text_driver_result(line_text);
+  if line_code != expected_code {
     return 1;
   }
-  let second_code = source_text_driver_result(second_text);
-  if second_code != expected_code {
+  let block_code = source_text_driver_result(block_text);
+  if block_code != expected_code {
     return 2;
   }
   return 0;
@@ -80,75 +80,75 @@ fn source_text_comment_only_driver_score() -> i64 {
 }
 
 fn source_text_leading_comment_driver_score() -> i64 {
-  return source_text_driver_pair_score("// skip\np", "/* skip */p", 0);
+  return source_text_line_block_driver_score("// skip\np", "/* skip */p", 0);
 }
 
 fn source_text_leading_comment_lexer_failure_driver_score() -> i64 {
-  return source_text_driver_pair_score("// skip\n\"open", "/* skip */\"open", 1004);
+  return source_text_line_block_driver_score("// skip\n\"open", "/* skip */\"open", 1004);
 }
 
 fn source_text_leading_comment_extra_token_driver_score() -> i64 {
-  return source_text_driver_pair_score("// skip\nname other", "/* skip */name other", 2003);
+  return source_text_line_block_driver_score("// skip\nname other", "/* skip */name other", 2003);
 }
 
 fn source_text_leading_comment_unterminated_block_driver_score() -> i64 {
-  return source_text_driver_pair_score("// skip\n/* open", "/* skip *//* open", 1008);
+  return source_text_line_block_driver_score("// skip\n/* open", "/* skip *//* open", 1008);
 }
 
 fn source_text_leading_comment_keyword_driver_score() -> i64 {
-  return source_text_driver_pair_score("// skip\nfalse", "/* skip */false", 2006);
+  return source_text_line_block_driver_score("// skip\nfalse", "/* skip */false", 2006);
 }
 
 fn source_text_leading_comment_unknown_driver_score() -> i64 {
-  return source_text_driver_pair_score("// skip\n$", "/* skip */$", 2005);
+  return source_text_line_block_driver_score("// skip\n$", "/* skip */$", 2005);
 }
 
 fn source_text_leading_comment_punctuation_driver_score() -> i64 {
-  return source_text_driver_pair_score("// skip\n;", "/* skip */;", 2006);
+  return source_text_line_block_driver_score("// skip\n;", "/* skip */;", 2006);
 }
 
 fn source_text_leading_comment_operator_driver_score() -> i64 {
-  return source_text_driver_pair_score("// skip\n+", "/* skip */+", 2006);
+  return source_text_line_block_driver_score("// skip\n+", "/* skip */+", 2006);
 }
 
 fn source_text_leading_comment_string_literal_driver_score() -> i64 {
-  return source_text_driver_pair_score("// skip\n\"ari\"", "/* skip */\"ari\"", 2006);
+  return source_text_line_block_driver_score("// skip\n\"ari\"", "/* skip */\"ari\"", 2006);
 }
 
 fn source_text_leading_comment_missing_base_digit_driver_score() -> i64 {
-  return source_text_driver_pair_score("// skip\n0x", "/* skip */0x", 1009);
+  return source_text_line_block_driver_score("// skip\n0x", "/* skip */0x", 1009);
 }
 
 fn source_text_leading_comment_invalid_base_digit_driver_score() -> i64 {
-  return source_text_driver_pair_score("// skip\n0b102", "/* skip */0b102", 1010);
+  return source_text_line_block_driver_score("// skip\n0b102", "/* skip */0b102", 1010);
 }
 
 fn source_text_leading_comment_unsupported_number_suffix_driver_score() -> i64 {
-  return source_text_driver_pair_score("// skip\n42abc", "/* skip */42abc", 1011);
+  return source_text_line_block_driver_score("// skip\n42abc", "/* skip */42abc", 1011);
 }
 
 fn source_text_leading_comment_non_decimal_float_suffix_driver_score() -> i64 {
-  return source_text_driver_pair_score("// skip\n0b1010f32", "/* skip */0b1010f32", 1012);
+  return source_text_line_block_driver_score("// skip\n0b1010f32", "/* skip */0b1010f32", 1012);
 }
 
 fn source_text_leading_comment_non_decimal_float_dot_driver_score() -> i64 {
-  return source_text_driver_pair_score("// skip\n0x2.0", "/* skip */0x2.0", 1013);
+  return source_text_line_block_driver_score("// skip\n0x2.0", "/* skip */0x2.0", 1013);
 }
 
 fn source_text_leading_comment_byte_char_driver_score() -> i64 {
-  return source_text_driver_pair_score("// skip\n'a'", "/* skip */'a'", 0);
+  return source_text_line_block_driver_score("// skip\n'a'", "/* skip */'a'", 0);
 }
 
 fn source_text_leading_comment_byte_char_escape_driver_score() -> i64 {
-  return source_text_driver_pair_score("// skip\n'\\n'", "/* skip */'\\n'", 0);
+  return source_text_line_block_driver_score("// skip\n'\\n'", "/* skip */'\\n'", 0);
 }
 
 fn source_text_leading_comment_byte_char_numeric_escape_driver_score() -> i64 {
-  let hex_score = source_text_driver_pair_score("// skip\n'\\x41'", "/* skip */'\\x41'", 0);
+  let hex_score = source_text_line_block_driver_score("// skip\n'\\x41'", "/* skip */'\\x41'", 0);
   if hex_score != 0 {
     return hex_score;
   }
-  let octal_score = source_text_driver_pair_score("// skip\n'\\101'", "/* skip */'\\101'", 0);
+  let octal_score = source_text_line_block_driver_score("// skip\n'\\101'", "/* skip */'\\101'", 0);
   if octal_score != 0 {
     return 10 + octal_score;
   }
@@ -156,11 +156,11 @@ fn source_text_leading_comment_byte_char_numeric_escape_driver_score() -> i64 {
 }
 
 fn source_text_leading_comment_byte_char_fixed_unicode_escape_driver_score() -> i64 {
-  let u_score = source_text_driver_pair_score("// skip\n'\\u0041'", "/* skip */'\\u0041'", 0);
+  let u_score = source_text_line_block_driver_score("// skip\n'\\u0041'", "/* skip */'\\u0041'", 0);
   if u_score != 0 {
     return u_score;
   }
-  let big_u_score = source_text_driver_pair_score(
+  let big_u_score = source_text_line_block_driver_score(
     "// skip\n'\\U00000041'",
     "/* skip */'\\U00000041'",
     0
@@ -1733,7 +1733,7 @@ fn lexer_leading_comment_number_handoff_case_score(
   return 0;
 }
 
-fn lexer_leading_comment_number_handoff_pair_score(
+fn lexer_leading_comment_number_handoff_line_block_score(
   line_text: Slice[u8],
   line_expected_start: i64,
   line_expected_end: i64,
@@ -1763,7 +1763,7 @@ fn lexer_leading_comment_number_handoff_pair_score(
 }
 
 fn lexer_leading_comment_byte_char_handoff_score() -> i64 {
-  return lexer_leading_comment_number_handoff_pair_score(
+  return lexer_leading_comment_number_handoff_line_block_score(
     "// skip\n'a'",
     8,
     11,
@@ -1774,7 +1774,7 @@ fn lexer_leading_comment_byte_char_handoff_score() -> i64 {
 }
 
 fn lexer_leading_comment_byte_char_escape_handoff_score() -> i64 {
-  return lexer_leading_comment_number_handoff_pair_score(
+  return lexer_leading_comment_number_handoff_line_block_score(
     "// skip\n'\\n'",
     8,
     12,
@@ -1785,7 +1785,7 @@ fn lexer_leading_comment_byte_char_escape_handoff_score() -> i64 {
 }
 
 fn lexer_leading_comment_byte_char_numeric_escape_handoff_score() -> i64 {
-  var score = lexer_leading_comment_number_handoff_pair_score(
+  var score = lexer_leading_comment_number_handoff_line_block_score(
     "// skip\n'\\x41'",
     8,
     14,
@@ -1796,7 +1796,7 @@ fn lexer_leading_comment_byte_char_numeric_escape_handoff_score() -> i64 {
   if score != 0 {
     return score;
   }
-  score = lexer_leading_comment_number_handoff_pair_score(
+  score = lexer_leading_comment_number_handoff_line_block_score(
     "// skip\n'\\101'",
     8,
     14,
@@ -1811,7 +1811,7 @@ fn lexer_leading_comment_byte_char_numeric_escape_handoff_score() -> i64 {
 }
 
 fn lexer_leading_comment_byte_char_fixed_unicode_escape_handoff_score() -> i64 {
-  var score = lexer_leading_comment_number_handoff_pair_score(
+  var score = lexer_leading_comment_number_handoff_line_block_score(
     "// skip\n'\\u0041'",
     8,
     16,
@@ -1822,7 +1822,7 @@ fn lexer_leading_comment_byte_char_fixed_unicode_escape_handoff_score() -> i64 {
   if score != 0 {
     return score;
   }
-  score = lexer_leading_comment_number_handoff_pair_score(
+  score = lexer_leading_comment_number_handoff_line_block_score(
     "// skip\n'\\U00000041'",
     8,
     20,
@@ -3466,7 +3466,7 @@ fn parse_leading_comment_case_score(
   return 0;
 }
 
-fn parse_leading_comment_pair_score(
+fn parse_leading_comment_line_block_score(
   line_text: Slice[u8],
   line_expected_start: i64,
   line_expected_end: i64,
@@ -3494,7 +3494,7 @@ fn parse_leading_comment_pair_score(
 }
 
 fn parse_leading_comment_success_score() -> i64 {
-  return parse_leading_comment_pair_score(
+  return parse_leading_comment_line_block_score(
     "// skip\nname",
     8,
     12,
@@ -3505,7 +3505,7 @@ fn parse_leading_comment_success_score() -> i64 {
 }
 
 fn parse_leading_comment_byte_char_success_score() -> i64 {
-  return parse_leading_comment_pair_score(
+  return parse_leading_comment_line_block_score(
     "// skip\n'a'",
     8,
     11,
@@ -3516,7 +3516,7 @@ fn parse_leading_comment_byte_char_success_score() -> i64 {
 }
 
 fn parse_leading_comment_byte_char_escape_success_score() -> i64 {
-  return parse_leading_comment_pair_score(
+  return parse_leading_comment_line_block_score(
     "// skip\n'\\n'",
     8,
     12,
@@ -3527,7 +3527,7 @@ fn parse_leading_comment_byte_char_escape_success_score() -> i64 {
 }
 
 fn parse_leading_comment_byte_char_numeric_escape_success_score() -> i64 {
-  var score = parse_leading_comment_pair_score(
+  var score = parse_leading_comment_line_block_score(
     "// skip\n'\\x41'",
     8,
     14,
@@ -3538,7 +3538,7 @@ fn parse_leading_comment_byte_char_numeric_escape_success_score() -> i64 {
   if score != 0 {
     return score;
   }
-  score = parse_leading_comment_pair_score(
+  score = parse_leading_comment_line_block_score(
     "// skip\n'\\101'",
     8,
     14,
@@ -3553,7 +3553,7 @@ fn parse_leading_comment_byte_char_numeric_escape_success_score() -> i64 {
 }
 
 fn parse_leading_comment_byte_char_fixed_unicode_escape_success_score() -> i64 {
-  var score = parse_leading_comment_pair_score(
+  var score = parse_leading_comment_line_block_score(
     "// skip\n'\\u0041'",
     8,
     16,
@@ -3564,7 +3564,7 @@ fn parse_leading_comment_byte_char_fixed_unicode_escape_success_score() -> i64 {
   if score != 0 {
     return score;
   }
-  score = parse_leading_comment_pair_score(
+  score = parse_leading_comment_line_block_score(
     "// skip\n'\\U00000041'",
     8,
     20,

@@ -547,9 +547,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   `'\u0041'` and `'\U00000041'` through lexer handoff, parser,
   keyword-table parser, and driver paths.
 - Reviewed the recent source-text leading-comment smoke additions and replaced
-  copied line/block driver, lexer handoff, and parser checks with pair helpers
-  so future escaped-token coverage adds cases instead of another copied
-  check block.
+  copied line/block driver, lexer handoff, and parser checks with explicit
+  line/block helpers so future escaped-token coverage adds cases instead of
+  another copied check block.
 
 ## Small Task Queue
 
