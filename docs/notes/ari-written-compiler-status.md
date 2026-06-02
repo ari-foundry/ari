@@ -145,6 +145,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/lexer.ari` reports source-text numeric suffix diagnostics for
   unsupported suffixes and non-decimal float suffixes, while accepting decimal
   float suffix spans as `Float` tokens for the current bootstrap parser.
+- `compiler/lexer.ari` keeps stage0 parity for numeric suffix starts: suffixes
+  must start with an ASCII letter, so inputs such as `42_abc` stop the numeric
+  token at `42` and leave `_abc` as the following identifier instead of
+  reporting an unsupported suffix.
 - `compiler/lexer.ari` scans source-text decimal floating literal spans for
   fractional forms such as `1.5` and exponent forms such as `1e3`, including
   valid decimal float suffixes, as `Float` tokens.

@@ -744,6 +744,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Added lexer failure name/message accessors for direct scan failures and
   handoff failures, with source-root smoke coverage for string escape and
   unterminated-string diagnostics so callers are not limited to numeric codes.
+- Corrected Ari numeric suffix start parity so `_` after a number no longer
+  starts an unsupported suffix; source-root smoke now checks `42_abc` tokenizes
+  as integer `42` followed by identifier `_abc` and reports parser missing-EOF
+  on the extra identifier span.
 
 ## Small Task Queue
 

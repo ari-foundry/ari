@@ -222,6 +222,11 @@ The lexer literal payload smoke checked source-backed literal text and suffix
 spans for decimal integers, typed integers, typed floats, decimal floats,
 hexadecimal integers, octal integers, binary integers, byte-character integer
 tokens, and non-literal punctuation without requiring a hosted compiler fix.
+The numeric suffix smoke now checks stage0 parity for suffix starts: an
+underscore immediately after digits, as in `42_abc`, does not begin a numeric
+suffix. Ari scans the integer `42`, leaves `_abc` as the next identifier, and
+the parser reports missing EOF on that extra identifier span without requiring
+a hosted compiler fix.
 The lexer numeric range smoke checked integer literal overflow and decimal float
 overflow/underflow diagnostics via `std::parse`, including parser and driver
 propagation and the float-suffixed large-decimal path, without requiring a
@@ -626,6 +631,13 @@ Desired stage0 pressure that is not yet classified as a bug:
   should not accidentally inherit octal/binary/hex prefix behavior; keep this
   as lexer design pressure until the Ari-written numeric literal model is
   richer.
+- The lexer currently has a public `is_ascii_alpha` helper that includes `_`
+  because it grew around identifier classification. That is convenient for
+  identifier starts but too broad for number suffix starts, which must match
+  stage0's letter-only `is_alpha` gate before allowing `_` as a continuation.
+  Keep suffix-start predicates separate unless the stdlib grows clearer ASCII
+  letter-vs-identifier helpers. This is Ari-written compiler/std ergonomics
+  pressure, not a confirmed hosted compiler bug.
 - The byte-character span helper now uses an enum-shaped scan result instead
   of a sentinel fallback end. Malformed byte-character diagnostics can grow on
   that shape later without adding more sentinel meanings.

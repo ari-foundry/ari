@@ -1639,6 +1639,38 @@ fn lexer_number_suffix_span_score() -> i64 {
   if !parser::parse_is_success(parser::parse_text("42f32")) {
     return 29;
   }
+
+  let underscore_tail_text: Slice[u8] = "42_abc";
+  let underscore_number = lexer::cursor_from_text(underscore_tail_text, 0);
+  if !lexer::cursor_is_integer(underscore_number) {
+    return 36;
+  }
+  if lexer::cursor_token_end(underscore_number) != 2 {
+    return 37;
+  }
+  let underscore_tail = lexer::cursor_advance_in_text(
+    underscore_number,
+    underscore_tail_text
+  );
+  if !lexer::cursor_is_identifier(underscore_tail) {
+    return 38;
+  }
+  if lexer::cursor_token_start(underscore_tail) != 2 {
+    return 39;
+  }
+  if lexer::cursor_token_end(underscore_tail) != 6 {
+    return 40;
+  }
+  let underscore_parse = parser::parse_text(underscore_tail_text);
+  if parser::parse_failure_code(underscore_parse) != 2003 {
+    return 41;
+  }
+  if parser::parse_failure_start_offset(underscore_parse) != 2 {
+    return 42;
+  }
+  if parser::parse_failure_end_offset(underscore_parse) != 6 {
+    return 43;
+  }
   return 0;
 }
 

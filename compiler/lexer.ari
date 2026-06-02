@@ -187,6 +187,10 @@ fn is_number_suffix_continue(value: char) -> bool {
   return is_ascii_alpha(value) || is_ascii_digit(value) || value == '_';
 }
 
+fn is_number_suffix_start(value: char) -> bool {
+  return (value >= 'a' && value <= 'z') || (value >= 'A' && value <= 'Z');
+}
+
 fn number_suffix_run_end(text: std::Slice[u8], suffix_start: i64) -> i64 {
   var end = suffix_start;
   while end < text.len && is_number_suffix_continue(text[end]) {
@@ -248,7 +252,7 @@ fn float_suffix_rank_from_text(text: std::Slice[u8], suffix_start: i64, suffix_e
 }
 
 fn number_suffix_scan_from_text(text: std::Slice[u8], suffix_start: i64) -> NumberSuffixScan {
-  if suffix_start >= text.len || !is_ascii_alpha(text[suffix_start]) {
+  if suffix_start >= text.len || !is_number_suffix_start(text[suffix_start]) {
     return NumberSuffixNone;
   }
   let suffix_end = number_suffix_run_end(text, suffix_start);
