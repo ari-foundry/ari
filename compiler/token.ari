@@ -174,36 +174,68 @@ pub fn token_width(token: Token) -> i64 {
   return token.end - token.start;
 }
 
+pub fn literal_payload_base(literal: LiteralPayload) -> i64 {
+  return literal.literal_base;
+}
+
+pub fn literal_payload_suffix_rank(literal: LiteralPayload) -> i64 {
+  return literal.literal_suffix_rank;
+}
+
+pub fn literal_payload_integer_value(literal: LiteralPayload) -> u64 {
+  return literal.literal_integer_value;
+}
+
+pub fn literal_payload_float_value(literal: LiteralPayload) -> f64 {
+  return literal.literal_float_value;
+}
+
+pub fn literal_payload_text_start(literal: LiteralPayload) -> i64 {
+  return literal.literal_text_start;
+}
+
+pub fn literal_payload_text_end(literal: LiteralPayload) -> i64 {
+  return literal.literal_text_end;
+}
+
+pub fn literal_payload_suffix_start(literal: LiteralPayload) -> i64 {
+  return literal.literal_suffix_start;
+}
+
+pub fn literal_payload_suffix_end(literal: LiteralPayload) -> i64 {
+  return literal.literal_suffix_end;
+}
+
 pub fn token_literal_base(token: Token) -> i64 {
-  return token.literal.literal_base;
+  return literal_payload_base(token.literal);
 }
 
 pub fn token_literal_suffix_rank(token: Token) -> i64 {
-  return token.literal.literal_suffix_rank;
+  return literal_payload_suffix_rank(token.literal);
 }
 
 pub fn token_literal_integer_value(token: Token) -> u64 {
-  return token.literal.literal_integer_value;
+  return literal_payload_integer_value(token.literal);
 }
 
 pub fn token_literal_float_value(token: Token) -> f64 {
-  return token.literal.literal_float_value;
+  return literal_payload_float_value(token.literal);
 }
 
 pub fn token_literal_text_start(token: Token) -> i64 {
-  return token.literal.literal_text_start;
+  return literal_payload_text_start(token.literal);
 }
 
 pub fn token_literal_text_end(token: Token) -> i64 {
-  return token.literal.literal_text_end;
+  return literal_payload_text_end(token.literal);
 }
 
 pub fn token_literal_suffix_start(token: Token) -> i64 {
-  return token.literal.literal_suffix_start;
+  return literal_payload_suffix_start(token.literal);
 }
 
 pub fn token_literal_suffix_end(token: Token) -> i64 {
-  return token.literal.literal_suffix_end;
+  return literal_payload_suffix_end(token.literal);
 }
 
 pub fn literal_base_none_rank() -> i64 {

@@ -723,19 +723,23 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   propagation for diagnostic codes `1021`, `1022`, and `1023`, and checks that a
   large decimal integer spelling with a float suffix still follows the float
   literal path.
+- Added parser-facing literal AST payload wiring for numeric statement nodes.
+  `compiler/ast.ari` now stores an enum-shaped payload snapshot with literal
+  base, suffix rank, checked values, and literal/suffix spans, and
+  `compiler/parser.ari` fills it from lexer cursor accessors without passing
+  nested `token::LiteralPayload` types across module paths.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
 - Continue lexer parity by adding source-text smoke coverage for the next
-  missing stage0 token family, or start parser-facing literal AST payload wiring
-  that can reuse the new literal text/suffix spans and range-checked value
-  payloads.
+  missing stage0 token family, or grow parser AST shape only when the current
+  checked token payloads have a direct consumer.
 
 ## Next Recommended Task
 
 Continue lexer parity by adding source-text smoke coverage for the next missing
-stage0 token family discovered from source and tests, or continue
-parser-facing literal AST payload wiring from the checked token literal
-metadata/value spans.
+stage0 token family discovered from source and tests, while keeping any further
+parser AST payload work tied to a checked lexer token payload and a focused
+source-root smoke.

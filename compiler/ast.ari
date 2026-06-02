@@ -7,10 +7,27 @@ pub enum NodeKind {
   Error,
 }
 
+pub struct NodeLiteralPayload {
+  literal_base: i64,
+  literal_suffix_rank: i64,
+  literal_integer_value: u64,
+  literal_float_value: f64,
+  literal_text_start: i64,
+  literal_text_end: i64,
+  literal_suffix_start: i64,
+  literal_suffix_end: i64,
+}
+
+pub enum NodePayload {
+  EmptyPayload,
+  LiteralNodePayload(NodeLiteralPayload),
+}
+
 pub struct Node {
   kind: NodeKind,
   span: source::Span,
   value: i64,
+  payload: NodePayload,
 }
 
 pub fn make_node(kind: NodeKind, source_id: i64, start: i64, end: i64, value: i64) -> Node {
@@ -18,7 +35,59 @@ pub fn make_node(kind: NodeKind, source_id: i64, start: i64, end: i64, value: i6
     kind: kind,
     span: source::span(source_id, start, end),
     value: value,
+    payload: EmptyPayload,
   };
+}
+
+pub fn make_payload_node(
+  kind: NodeKind,
+  source_id: i64,
+  start: i64,
+  end: i64,
+  value: i64,
+  payload: NodePayload
+) -> Node {
+  return Node {
+    kind: kind,
+    span: source::span(source_id, start, end),
+    value: value,
+    payload: payload,
+  };
+}
+
+pub fn literal_payload(
+  literal_base: i64,
+  literal_suffix_rank: i64,
+  literal_integer_value: u64,
+  literal_float_value: f64,
+  literal_text_start: i64,
+  literal_text_end: i64,
+  literal_suffix_start: i64,
+  literal_suffix_end: i64
+) -> NodeLiteralPayload {
+  return NodeLiteralPayload {
+    literal_base: literal_base,
+    literal_suffix_rank: literal_suffix_rank,
+    literal_integer_value: literal_integer_value,
+    literal_float_value: literal_float_value,
+    literal_text_start: literal_text_start,
+    literal_text_end: literal_text_end,
+    literal_suffix_start: literal_suffix_start,
+    literal_suffix_end: literal_suffix_end,
+  };
+}
+
+pub fn empty_literal_payload() -> NodeLiteralPayload {
+  return literal_payload(
+    0,
+    0,
+    0u64,
+    0.0f64,
+    0,
+    0,
+    0,
+    0
+  );
 }
 
 pub fn missing_node(source_id: i64, start: i64, end: i64) -> Node {
@@ -31,6 +100,23 @@ pub fn token_node(source_id: i64, start: i64, end: i64, value: i64) -> Node {
 
 pub fn statement_node(source_id: i64, start: i64, end: i64, value: i64) -> Node {
   return make_node(Statement, source_id, start, end, value);
+}
+
+pub fn statement_literal_node(
+  source_id: i64,
+  start: i64,
+  end: i64,
+  value: i64,
+  literal: NodeLiteralPayload
+) -> Node {
+  return make_payload_node(
+    Statement,
+    source_id,
+    start,
+    end,
+    value,
+    LiteralNodePayload(literal)
+  );
 }
 
 pub fn error_node(source_id: i64, start: i64, end: i64, code: i64) -> Node {
@@ -52,6 +138,52 @@ pub fn node_span_len(node: Node) -> i64 {
 
 pub fn node_value(node: Node) -> i64 {
   return node.value;
+}
+
+pub fn node_has_literal_payload(node: Node) -> bool {
+  match node.payload {
+    EmptyPayload => false,
+    LiteralNodePayload(_) => true,
+  }
+}
+
+pub fn node_literal_payload(node: Node) -> NodeLiteralPayload {
+  match node.payload {
+    EmptyPayload => empty_literal_payload(),
+    LiteralNodePayload(literal) => literal,
+  }
+}
+
+pub fn node_literal_base(node: Node) -> i64 {
+  return node_literal_payload(node).literal_base;
+}
+
+pub fn node_literal_suffix_rank(node: Node) -> i64 {
+  return node_literal_payload(node).literal_suffix_rank;
+}
+
+pub fn node_literal_integer_value(node: Node) -> u64 {
+  return node_literal_payload(node).literal_integer_value;
+}
+
+pub fn node_literal_float_value(node: Node) -> f64 {
+  return node_literal_payload(node).literal_float_value;
+}
+
+pub fn node_literal_text_start(node: Node) -> i64 {
+  return node_literal_payload(node).literal_text_start;
+}
+
+pub fn node_literal_text_end(node: Node) -> i64 {
+  return node_literal_payload(node).literal_text_end;
+}
+
+pub fn node_literal_suffix_start(node: Node) -> i64 {
+  return node_literal_payload(node).literal_suffix_start;
+}
+
+pub fn node_literal_suffix_end(node: Node) -> i64 {
+  return node_literal_payload(node).literal_suffix_end;
 }
 
 pub fn node_start_offset(node: Node) -> i64 {

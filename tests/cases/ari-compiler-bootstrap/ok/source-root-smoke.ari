@@ -5219,6 +5219,84 @@ fn parse_statement_value_score() -> i64 {
   return 0;
 }
 
+fn parse_statement_literal_span_score(
+  result: parser::ParseResult,
+  text_start: i64,
+  text_end: i64,
+  suffix_start: i64,
+  suffix_end: i64
+) -> i64 {
+  if parser::parse_statement_literal_text_start(result) != text_start {
+    return 1;
+  }
+  if parser::parse_statement_literal_text_end(result) != text_end {
+    return 2;
+  }
+  if parser::parse_statement_literal_suffix_start(result) != suffix_start {
+    return 3;
+  }
+  if parser::parse_statement_literal_suffix_end(result) != suffix_end {
+    return 4;
+  }
+  return 0;
+}
+
+fn parse_statement_literal_payload_score() -> i64 {
+  let identifier = parser::parse_text("name");
+  if parser::parse_statement_has_literal_payload(identifier) {
+    return 1;
+  }
+  if parser::parse_statement_literal_base(identifier) != token::literal_base_none_rank() {
+    return 2;
+  }
+
+  let integer = parser::parse_text("0xffu8");
+  if !parser::parse_statement_has_literal_payload(integer) {
+    return 3;
+  }
+  if parser::parse_statement_literal_base(integer) != token::literal_base_hex_rank() {
+    return 4;
+  }
+  if parser::parse_statement_literal_suffix_rank(integer) != token::literal_suffix_u8_rank() {
+    return 5;
+  }
+  if parser::parse_statement_literal_integer_value(integer) != 255u64 {
+    return 6;
+  }
+  var span_score = parse_statement_literal_span_score(integer, 0, 4, 4, 6);
+  if span_score != 0 {
+    return 10 + span_score;
+  }
+
+  let decimal_float = parser::parse_text("1.5f64");
+  if !parser::parse_statement_has_literal_payload(decimal_float) {
+    return 20;
+  }
+  if parser::parse_statement_literal_suffix_rank(decimal_float) != token::literal_suffix_f64_rank() {
+    return 21;
+  }
+  if ((parser::parse_statement_literal_float_value(decimal_float) * 10.0f64) as i64) != 15 {
+    return 22;
+  }
+  span_score = parse_statement_literal_span_score(decimal_float, 0, 3, 3, 6);
+  if span_score != 0 {
+    return 30 + span_score;
+  }
+
+  let byte_char = parser::parse_text("'a'");
+  if !parser::parse_statement_has_literal_payload(byte_char) {
+    return 40;
+  }
+  if parser::parse_statement_literal_suffix_rank(byte_char) !=
+      token::literal_suffix_byte_char_rank() {
+    return 41;
+  }
+  if parser::parse_statement_literal_integer_value(byte_char) != 97u64 {
+    return 42;
+  }
+  return 0;
+}
+
 fn parse_statement_start_score() -> i64 {
   if parser::parse_statement_start_offset(parser::parse_one('q', 1)) != 1 {
     return 1;
@@ -5551,6 +5629,7 @@ fn main() -> i64 {
     parse_statement_node_score() +
     parse_statement_span_score() +
     parse_statement_value_score() +
+    parse_statement_literal_payload_score() +
     parse_statement_start_score() +
     parse_statement_end_score() +
     parse_statement_source_score() +

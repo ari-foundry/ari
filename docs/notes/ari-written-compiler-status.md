@@ -171,6 +171,11 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   spans without storing owned token text in each token. Byte-character tokens
   keep the synthetic byte-character suffix rank with zero-width text/suffix
   spans because the `"char"` marker is not source-backed.
+- `compiler/ast.ari` and `compiler/parser.ari` preserve numeric statement
+  literal metadata/value payloads as an AST-owned snapshot, so parser-facing
+  accessors can inspect literal base, suffix rank, checked values, and
+  source-backed literal/suffix spans without passing nested `token` module
+  types across phase boundaries.
 - `compiler/lexer.ari` scans simple byte character escape spellings such as
   `'\n'` and `'\\'` as `Integer` spans, while leaving broader byte-character
   diagnostics for later slices.
