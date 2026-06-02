@@ -411,6 +411,32 @@ fn loaded_source_score() -> i64 {
   return source::loaded_source_score(source::loaded_source_summary(7, 5, 'm', 0));
 }
 
+fn source_table_entry_score() -> i64 {
+  let entry = source::source_table_entry(9, 21, 4);
+  if source::source_table_entry_id(entry) != 9 {
+    return 1;
+  }
+  if source::source_table_entry_byte_len(entry) != 21 {
+    return 2;
+  }
+  if source::source_table_entry_path_id(entry) != 4 {
+    return 3;
+  }
+  if !source::source_table_entry_contains(entry, 21) {
+    return 4;
+  }
+  if source::source_table_entry_contains(entry, 22) {
+    return 5;
+  }
+  let file = source::source_table_entry_file(entry);
+  if !source::contains(file, 0) {
+    return 6;
+  }
+  return source::source_table_entry_id(entry) +
+    source::source_table_entry_byte_len(entry) +
+    source::source_table_entry_path_id(entry);
+}
+
 fn loaded_driver_score() -> i64 {
   return driver::exit_code(driver::run_loaded_source_summary(1, 16, 'p', 2));
 }
@@ -4304,6 +4330,8 @@ fn main() -> i64 {
     default_driver_result_score() +
     loaded_source_score() -
     121 +
+    source_table_entry_score() -
+    34 +
     loaded_driver_score() +
     loaded_driver_result_score() +
     invalid_loaded_driver_score() -

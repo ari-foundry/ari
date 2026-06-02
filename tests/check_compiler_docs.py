@@ -170,7 +170,7 @@ def main() -> int:
         "## Completed Tasks",
         "## Small Task Queue",
         "## Next Recommended Task",
-        "Add a minimal source table entry model in `compiler/source.ari`",
+        "Add a source-table entry span-validation helper in `compiler/source.ari`",
     ]:
         require(ari_tasks, needle, ari_tasks_path)
 

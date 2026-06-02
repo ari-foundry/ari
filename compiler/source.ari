@@ -1,4 +1,5 @@
 type SourceId = i64;
+type SourcePathId = i64;
 type ByteOffset = i64;
 
 pub struct Span {
@@ -12,6 +13,11 @@ pub struct SourceFile {
   byte_len: ByteOffset,
 }
 
+pub struct SourceTableEntry {
+  file: SourceFile,
+  path_id: SourcePathId,
+}
+
 pub struct LoadedSourceSummary {
   file: SourceFile,
   first: char,
@@ -20,6 +26,17 @@ pub struct LoadedSourceSummary {
 
 pub fn source_file(id: SourceId, byte_len: ByteOffset) -> SourceFile {
   return SourceFile { id: id, byte_len: byte_len };
+}
+
+pub fn source_table_entry(
+  id: SourceId,
+  byte_len: ByteOffset,
+  path_id: SourcePathId
+) -> SourceTableEntry {
+  return SourceTableEntry {
+    file: source_file(id, byte_len),
+    path_id: path_id,
+  };
 }
 
 pub fn loaded_source_summary(
@@ -57,6 +74,29 @@ pub fn span_source(span: Span) -> SourceId {
 
 pub fn contains(file: SourceFile, offset: ByteOffset) -> bool {
   return offset >= 0 && offset <= file.byte_len;
+}
+
+pub fn source_table_entry_file(entry: SourceTableEntry) -> SourceFile {
+  return entry.file;
+}
+
+pub fn source_table_entry_id(entry: SourceTableEntry) -> SourceId {
+  return entry.file.id;
+}
+
+pub fn source_table_entry_byte_len(entry: SourceTableEntry) -> ByteOffset {
+  return entry.file.byte_len;
+}
+
+pub fn source_table_entry_path_id(entry: SourceTableEntry) -> SourcePathId {
+  return entry.path_id;
+}
+
+pub fn source_table_entry_contains(
+  entry: SourceTableEntry,
+  offset: ByteOffset
+) -> bool {
+  return contains(entry.file, offset);
 }
 
 pub fn loaded_source_file(summary: LoadedSourceSummary) -> SourceFile {

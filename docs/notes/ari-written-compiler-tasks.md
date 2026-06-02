@@ -598,13 +598,17 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Added CRLF post-comment source-text lexer-failure handoff coverage, checking
   `name// skip\r\n"open` preserves unterminated-string diagnostic code `1004`
   and span `13..18` through the lexer handoff result path.
+- Added a minimal source table entry model in `compiler/source.ari`, wrapping
+  `SourceFile` with a scalar path id placeholder and accessor helpers while
+  keeping path string ownership, loaded text ownership, line starts, and
+  diagnostic display-name mapping for later source-table slices.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add a minimal source table entry model in `compiler/source.ari`.
+- Add a source-table entry span-validation helper in `compiler/source.ari`.
 
 ## Next Recommended Task
 
-Add a minimal source table entry model in `compiler/source.ari`.
+Add a source-table entry span-validation helper in `compiler/source.ari`.

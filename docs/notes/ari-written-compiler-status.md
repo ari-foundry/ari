@@ -375,6 +375,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/source.ari` has a minimal `LoadedSourceSummary` for source id,
   byte length, first byte, and first-byte offset. It is metadata for the
   legacy scalar driver smoke, not a source table or owned text buffer.
+- `compiler/source.ari` has a minimal `SourceTableEntry` that wraps a
+  `SourceFile` plus a scalar path id placeholder, giving the Ari-written
+  compiler its first source-table-shaped entry without owning path strings,
+  source text, line starts, or diagnostic display names yet.
 - `compiler/parser.ari` can parse a source-text slice through the text-backed
   lexer handoff path.
 - `compiler/driver.ari` routes file and text input through `std::string::String`
