@@ -605,7 +605,9 @@ Desired stage0 pressure that is not yet classified as a bug:
   start and clamps offsets past EOF without requiring a hosted compiler fix.
   A minimal source location summary now carries source id, clamped byte offset,
   one-based line number, and one-based byte column for source-model handoff
-  checks without requiring a hosted compiler fix. Full source table ownership,
-  file path strings, loaded text ownership, owned line-start arrays, CRLF
-  visual-column handling, UTF-8 byte-column policy, and diagnostic location
-  mapping remain pending.
+  checks without requiring a hosted compiler fix. Source-table-entry-local
+  location summaries now reuse the entry's `SourceFile` and preserve the same
+  invalid-line-table and EOF-clamp behavior without requiring a hosted compiler
+  fix. Full source table ownership, file path strings, loaded text ownership,
+  owned line-start arrays, CRLF visual-column handling, UTF-8 byte-column
+  policy, and diagnostic location mapping remain pending.

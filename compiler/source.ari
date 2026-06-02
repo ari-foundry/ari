@@ -284,6 +284,14 @@ pub fn source_table_entry_span(
   return span(entry.file.id, start, end);
 }
 
+pub fn source_table_entry_location_summary(
+  entry: SourceTableEntry,
+  lines: SourceLineStarts,
+  offset: ByteOffset
+) -> SourceLocationSummary {
+  return source_location_summary(entry.file, lines, offset);
+}
+
 pub fn source_table_entry_valid_span(
   entry: SourceTableEntry,
   span: Span

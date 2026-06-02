@@ -391,6 +391,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/source.ari` has a minimal `SourceLocationSummary` that carries a
   source id, clamped byte offset, one-based line number, and one-based byte
   column for source-model handoff checks.
+- `compiler/source.ari` can construct a source-table-entry-local location
+  summary, so callers do not need to unwrap the entry's `SourceFile` before
+  computing line and byte-column metadata.
 - `compiler/parser.ari` can parse a source-text slice through the text-backed
   lexer handoff path.
 - `compiler/driver.ari` routes file and text input through `std::string::String`
