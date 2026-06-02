@@ -171,6 +171,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   spans without storing owned token text in each token. Byte-character tokens
   keep the synthetic byte-character suffix rank with zero-width text/suffix
   spans because the `"char"` marker is not source-backed.
+- `compiler/lexer.ari` now emits `StringLiteral` tokens with source-backed raw
+  content spans inside the quotes through `LiteralPayload`, using a zero-width
+  suffix span at the closing quote. This records recoverable source text for
+  strings without adding decoded owned string payloads yet.
 - `compiler/ast.ari` and `compiler/parser.ari` preserve numeric statement
   literal metadata/value payloads as an AST-owned snapshot, so parser-facing
   accessors can inspect literal base, suffix rank, checked values, and

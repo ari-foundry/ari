@@ -830,6 +830,21 @@ fn byte_char_literal_payload(offset: i64, value: u64) -> token::LiteralPayload {
   );
 }
 
+fn string_literal_payload(offset: i64, string_end: i64) -> token::LiteralPayload {
+  let content_start = offset + 1;
+  let content_end = string_end - 1;
+  return token::make_literal_payload(
+    token::literal_base_none_rank(),
+    token::literal_suffix_none_rank(),
+    0u64,
+    0.0f64,
+    content_start,
+    content_end,
+    content_end,
+    content_end
+  );
+}
+
 fn is_unicode_escape_value(value: i64) -> bool {
   if value > 1114111 {
     return false;
@@ -1652,7 +1667,12 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
   if first == '"' {
     match string_literal_scan_from_text(text, offset) {
       Closed(string_end) => {
-        return token::make_token(token::StringLiteral, offset, string_end);
+        return token::make_literal_token(
+          token::StringLiteral,
+          offset,
+          string_end,
+          string_literal_payload(offset, string_end)
+        );
       }
       Unterminated(_) => {}
       UnsupportedEscape(_, _) => {}
@@ -1760,7 +1780,12 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
   if text[offset] == '"' {
     match string_literal_scan_from_text(text, offset) {
       Closed(string_end) => {
-        return Scanned(token::make_token(token::StringLiteral, offset, string_end));
+        return Scanned(token::make_literal_token(
+          token::StringLiteral,
+          offset,
+          string_end,
+          string_literal_payload(offset, string_end)
+        ));
       }
       Unterminated(unterminated_end) => {
         return Failed(unterminated_string_literal(offset, unterminated_end));

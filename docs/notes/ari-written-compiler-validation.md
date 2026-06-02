@@ -116,9 +116,10 @@ a hosted compiler fix. The reusable keyword-table smoke checked `KwStruct`,
 `break1`, `drop1`, `forget1`, `null1`, `true1`, and `false1`, and the
 source-text parser/driver keyword path without requiring a hosted compiler fix.
 The source-text string literal span smoke checked closed quoted spans, escaped
-quote bytes, empty quoted strings, and unterminated EOF/newline lexer
-diagnostics preserved through parser and driver source-text paths without
-requiring a hosted compiler fix. The same string-literal smoke now checks
+quote bytes, empty quoted strings, source-backed raw content spans inside the
+quotes, and unterminated EOF/newline lexer diagnostics preserved through parser
+and driver source-text paths without requiring a hosted compiler fix. The same
+string-literal smoke now checks
 unsupported `\q` escape diagnostics preserved through parser and driver
 source-text paths without requiring a hosted compiler fix. It also checks
 source-text string escape digit-shape diagnostics for `\x`, fixed-width `\u`,
@@ -591,9 +592,14 @@ Desired stage0 pressure that is not yet classified as a bug:
   Parser-facing numeric statement nodes now preserve those literal fields as an
   AST-owned primitive snapshot. This avoids owned per-token `String` payloads
   while later parser work can still recover source slices from the original
-  input. It still lacks owned stage0-style token text, textual literal suffix
-  strings for synthetic cases, richer expression/statement AST literal shapes,
-  and narrower suffix-specific range checks such as `f32`/`f128`. Simple byte
+  input. `StringLiteral` tokens now reuse the source-backed literal span fields
+  for raw content inside the quotes and a zero-width suffix at the closing
+  quote. That is useful for cursor and parser smokes, but the current
+  `LiteralPayload` shape is still numeric-leaning and does not represent
+  decoded escape text as a string value. It still lacks owned stage0-style
+  token text, textual literal suffix strings for synthetic cases, richer
+  expression/statement AST literal shapes, and narrower suffix-specific range
+  checks such as `f32`/`f128`. Simple byte
   character literal spans are modeled as
   `Integer` tokens, matching stage0's byte-character-as-integer token
   treatment; their synthetic byte-character suffix rank remains spanless

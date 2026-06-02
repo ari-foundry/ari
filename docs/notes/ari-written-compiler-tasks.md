@@ -728,6 +728,11 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   base, suffix rank, checked values, and literal/suffix spans, and
   `compiler/parser.ari` fills it from lexer cursor accessors without passing
   nested `token::LiteralPayload` types across module paths.
+- Added source-backed raw content spans for Ari `StringLiteral` tokens. The
+  source-root smoke now checks normal, empty, escaped-quote, and digit-escaped
+  string literals expose content spans inside the quotes and a zero-width
+  suffix span at the closing quote, without adding decoded owned string
+  payloads yet.
 
 ## Small Task Queue
 
