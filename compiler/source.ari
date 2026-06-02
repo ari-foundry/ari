@@ -422,10 +422,3 @@ pub fn loaded_source_span_end_location_summary(
 ) -> SourceLocationSummary {
   return span_end_location_summary(summary.file, lines, span);
 }
-
-pub fn loaded_source_score(summary: LoadedSourceSummary) -> i64 {
-  return summary.file.id +
-    summary.file.byte_len +
-    summary.first_offset +
-    summary.first as i64;
-}

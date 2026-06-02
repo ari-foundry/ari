@@ -5,6 +5,10 @@ mod ast;
 mod parser;
 mod driver;
 
+// Test-only score helpers feed this fixture's process exit code. They return
+// stable expected values or small failure codes because this smoke has no
+// assertion framework yet; do not copy these helpers into compiler modules.
+
 fn file_driver_score() -> i64 {
   zone(65536) {
     return driver::exit_code(driver::run_file("tests/cases/ari-compiler-bootstrap/input/one-token.ari"));
@@ -442,7 +446,10 @@ fn loaded_source_score() -> i64 {
   if source::loaded_source_first_offset_valid(negative_first_loaded) {
     return 11;
   }
-  return source::loaded_source_score(source::loaded_source_summary(7, 5, 'm', 0));
+  return source::loaded_source_id(loaded) +
+    source::loaded_source_byte_len(loaded) +
+    source::loaded_source_first_offset(loaded) +
+    source::loaded_source_first(loaded) as i64;
 }
 
 fn source_table_entry_score() -> i64 {

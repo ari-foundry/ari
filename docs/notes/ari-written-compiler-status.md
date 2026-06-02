@@ -558,6 +558,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   reuse the wrapped source-file invariant.
 - The source model now has loaded-source first-offset validity checks that
   make one-byte availability explicit through the existing containment rule.
+- `compiler/source.ari` no longer exposes the test-only loaded-source score
+  helper; the source-root smoke keeps score arithmetic local and marked as
+  test-only.
 - `compiler/main.ari` is now a thin entrypoint that delegates to the driver and
   maps the driver's result to an exit code.
 - `make check-ari-compiler-bootstrap` checks each `compiler/*.ari` module,
