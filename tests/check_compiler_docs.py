@@ -170,7 +170,7 @@ def main() -> int:
         "## Completed Tasks",
         "## Small Task Queue",
         "## Next Recommended Task",
-        "Add CRLF line-comment source-text extra-token parser and driver coverage",
+        "Add CRLF line-comment source-text extra-token handoff coverage",
     ]:
         require(ari_tasks, needle, ari_tasks_path)
 
