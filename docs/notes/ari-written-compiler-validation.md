@@ -589,4 +589,7 @@ Desired stage0 pressure that is not yet classified as a bug:
   handoff EOF slot at `13..18`. CRLF post-comment lexer-failure parser,
   keyword-table parser, and driver coverage now checks that
   `name// skip\r\n"open` preserves diagnostic code `1004` at span `13..18`.
-  CRLF post-comment lexer-failure handoff coverage is still pending.
+  CRLF post-comment lexer-failure handoff coverage now checks the same
+  diagnostic code and span through the lexer handoff result path. The next
+  source-model step is a minimal source table entry shape; full source table,
+  file path ownership, and diagnostic location mapping remain pending.

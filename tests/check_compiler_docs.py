@@ -170,7 +170,7 @@ def main() -> int:
         "## Completed Tasks",
         "## Small Task Queue",
         "## Next Recommended Task",
-        "Add CRLF post-comment source-text lexer-failure handoff coverage",
+        "Add a minimal source table entry model in `compiler/source.ari`",
     ]:
         require(ari_tasks, needle, ari_tasks_path)
 

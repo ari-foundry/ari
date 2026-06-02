@@ -313,6 +313,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   lexer-failure diagnostics after a statement token, preserving diagnostic
   code `1004` and span `13..18` through the parser and keyword-table parser
   paths.
+- The bootstrap source-root smoke checks CRLF post-comment lexer-failure
+  handoff diagnostics after a statement token, preserving diagnostic code
+  `1004` and span `13..18` through the lexer handoff result path.
 - The bootstrap source-root smoke checks source-text parser leading-comment
   handoff success before a statement token, including line-comment and
   block-comment trivia before an identifier while preserving statement spans.

@@ -2072,6 +2072,15 @@ fn lexer_post_comment_lexer_failure_handoff_score() -> i64 {
   if score != 0 {
     return 10 + score;
   }
+  score = lexer_handoff_failure_case_score(
+    "name// skip\r\n\"open",
+    1004,
+    13,
+    18
+  );
+  if score != 0 {
+    return 20 + score;
+  }
   return 0;
 }
 

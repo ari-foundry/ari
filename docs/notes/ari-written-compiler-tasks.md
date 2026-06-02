@@ -595,13 +595,16 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   checking `name// skip\r\n"open` preserves unterminated-string diagnostic code
   `1004` and span `13..18` through parser and keyword-table parser paths, and
   `p// skip\r\n"open` preserves driver diagnostic code `1004`.
+- Added CRLF post-comment source-text lexer-failure handoff coverage, checking
+  `name// skip\r\n"open` preserves unterminated-string diagnostic code `1004`
+  and span `13..18` through the lexer handoff result path.
 
 ## Small Task Queue
 
 - Keep `compiler/main.ari` thin; grow real entry behavior in `driver.ari` only
   when the underlying phases have checked handoff data.
-- Add CRLF post-comment source-text lexer-failure handoff coverage.
+- Add a minimal source table entry model in `compiler/source.ari`.
 
 ## Next Recommended Task
 
-Add CRLF post-comment source-text lexer-failure handoff coverage.
+Add a minimal source table entry model in `compiler/source.ari`.
