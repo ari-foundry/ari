@@ -370,6 +370,10 @@ pub fn loaded_source_byte_len(summary: LoadedSourceSummary) -> ByteOffset {
   return summary.file.byte_len;
 }
 
+pub fn loaded_source_byte_len_valid(summary: LoadedSourceSummary) -> bool {
+  return source_file_byte_len_valid(summary.file);
+}
+
 pub fn loaded_source_first(summary: LoadedSourceSummary) -> char {
   return summary.first;
 }

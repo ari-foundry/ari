@@ -554,6 +554,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   and an out-of-range first-byte offset error from the driver path.
 - The source model now has source-table-entry byte-length validity checks that
   reuse the wrapped source-file invariant.
+- The source model now has loaded-source byte-length validity checks that
+  reuse the wrapped source-file invariant.
 - `compiler/main.ari` is now a thin entrypoint that delegates to the driver and
   maps the driver's result to an exit code.
 - `make check-ari-compiler-bootstrap` checks each `compiler/*.ari` module,

@@ -630,4 +630,5 @@ Desired stage0 pressure that is not yet classified as a bug:
   explicit non-negative invariant used by containment checks and does not
   require a hosted compiler fix. Source-table-entry byte-length validity now
   reuses the wrapped source-file invariant and does not require a hosted
-  compiler fix.
+  compiler fix. Loaded-source byte-length validity now reuses the wrapped
+  source-file invariant and does not require a hosted compiler fix.

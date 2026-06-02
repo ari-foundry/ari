@@ -418,6 +418,16 @@ fn loaded_source_score() -> i64 {
   if source::span_end(loaded_span) != 5 {
     return 4;
   }
+  if !source::loaded_source_byte_len_valid(loaded) {
+    return 5;
+  }
+  let bad_loaded = source::loaded_source_summary(7, -1, 'm', 0);
+  if source::loaded_source_byte_len_valid(bad_loaded) {
+    return 6;
+  }
+  if source::loaded_source_has_first(bad_loaded) {
+    return 7;
+  }
   return source::loaded_source_score(source::loaded_source_summary(7, 5, 'm', 0));
 }
 
