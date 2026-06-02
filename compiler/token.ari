@@ -450,11 +450,18 @@ pub fn kind_class_rank(kind: TokenKind) -> i64 {
 }
 
 pub fn kind_is_identifier(kind: TokenKind) -> bool {
-  return kind_class_rank(kind) == 1;
+  match kind {
+    Identifier => true,
+    _ => false,
+  }
 }
 
 pub fn kind_is_number(kind: TokenKind) -> bool {
-  return kind_class_rank(kind) == 2;
+  match kind {
+    Integer => true,
+    Float => true,
+    _ => false,
+  }
 }
 
 pub fn kind_is_integer(kind: TokenKind) -> bool {
@@ -472,19 +479,114 @@ pub fn kind_is_float(kind: TokenKind) -> bool {
 }
 
 pub fn kind_is_whitespace(kind: TokenKind) -> bool {
-  return kind_class_rank(kind) == 3;
+  match kind {
+    Whitespace => true,
+    _ => false,
+  }
 }
 
 pub fn kind_is_punctuation(kind: TokenKind) -> bool {
-  return kind_class_rank(kind) == 4;
+  match kind {
+    LeftParen => true,
+    RightParen => true,
+    LeftBrace => true,
+    RightBrace => true,
+    LeftBracket => true,
+    RightBracket => true,
+    Comma => true,
+    Colon => true,
+    ColonColon => true,
+    Semicolon => true,
+    Dot => true,
+    DotDot => true,
+    DotDotEqual => true,
+    Ellipsis => true,
+    DoubleQuote => true,
+    At => true,
+    _ => false,
+  }
 }
 
 pub fn kind_is_operator(kind: TokenKind) -> bool {
-  return kind_class_rank(kind) == 5;
+  match kind {
+    Question => true,
+    QuestionQuestion => true,
+    Equal => true,
+    EqualEqual => true,
+    Bang => true,
+    Tilde => true,
+    Less => true,
+    Greater => true,
+    BangEqual => true,
+    LessEqual => true,
+    GreaterEqual => true,
+    Amp => true,
+    AmpEqual => true,
+    Pipe => true,
+    PipeEqual => true,
+    Caret => true,
+    CaretEqual => true,
+    AmpAmp => true,
+    PipePipe => true,
+    LessLess => true,
+    LessLessEqual => true,
+    GreaterGreater => true,
+    GreaterGreaterEqual => true,
+    Arrow => true,
+    FatArrow => true,
+    Plus => true,
+    PlusEqual => true,
+    Minus => true,
+    MinusEqual => true,
+    Star => true,
+    StarEqual => true,
+    Slash => true,
+    SlashEqual => true,
+    Percent => true,
+    PercentEqual => true,
+    _ => false,
+  }
 }
 
 pub fn kind_is_keyword(kind: TokenKind) -> bool {
-  return kind_class_rank(kind) == 8;
+  match kind {
+    KwFn => true,
+    KwConst => true,
+    KwAs => true,
+    KwMeta => true,
+    KwStruct => true,
+    KwExtern => true,
+    KwEnum => true,
+    KwTrait => true,
+    KwDyn => true,
+    KwMatch => true,
+    KwMod => true,
+    KwPub => true,
+    KwUse => true,
+    KwImpl => true,
+    KwFor => true,
+    KwIn => true,
+    KwLet => true,
+    KwVar => true,
+    KwOwn => true,
+    KwRef => true,
+    KwMut => true,
+    KwPtr => true,
+    KwReturn => true,
+    KwIf => true,
+    KwElse => true,
+    KwWhile => true,
+    KwInit => true,
+    KwNext => true,
+    KwContinue => true,
+    KwBreak => true,
+    KwDrop => true,
+    KwForget => true,
+    KwNull => true,
+    KwTrue => true,
+    KwFalse => true,
+    _ => false,
+  }
 }
 
 pub fn kind_bool_value(kind: TokenKind) -> std::Option[bool] {
@@ -503,15 +605,24 @@ pub fn kind_is_null_literal(kind: TokenKind) -> bool {
 }
 
 pub fn kind_is_eof(kind: TokenKind) -> bool {
-  return kind_class_rank(kind) == 6;
+  match kind {
+    EndOfFile => true,
+    _ => false,
+  }
 }
 
 pub fn kind_is_unknown(kind: TokenKind) -> bool {
-  return kind_class_rank(kind) == 7;
+  match kind {
+    Unknown(_) => true,
+    _ => false,
+  }
 }
 
 pub fn kind_is_string_literal(kind: TokenKind) -> bool {
-  return kind_class_rank(kind) == 9;
+  match kind {
+    StringLiteral => true,
+    _ => false,
+  }
 }
 
 pub fn kind_class_name_text(kind: TokenKind) -> std::Slice[u8] {

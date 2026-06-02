@@ -794,6 +794,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   class rank, token name text, and token class name text behind one private
   token-kind metadata mapping instead of maintaining separate full-token
   matches for each query.
+- Re-reviewed the consolidated token query path and changed hot token
+  predicates to direct matches, so lexer/parser classification checks no longer
+  construct `TokenKindInfo` just to answer a boolean query.
 
 ## Small Task Queue
 

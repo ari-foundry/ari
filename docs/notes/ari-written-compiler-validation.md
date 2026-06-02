@@ -163,10 +163,12 @@ instead of decoding class-rank values. This required no hosted compiler fix.
 The token query review removed the duplicated full-token matches for rank,
 class rank, token name text, and class name text. Those public accessors now
 read one private `TokenKindInfo` mapping, so adding a lexer token has one
-metadata synchronization point. The tradeoff is that rank-only and class-only
-queries now flow through a small aggregate return; this is acceptable for the
-current bootstrap surface, but should be revisited if token classification
-shows up on a hot lexer/parser path. This required no hosted compiler fix.
+metadata synchronization point. A follow-up review then removed the remaining
+hot-predicate aggregate path: boolean token-class predicates now use direct
+matches instead of constructing `TokenKindInfo` just to compare a class rank.
+The tradeoff is intentional duplication of class membership in the predicate
+helpers, which is preferable for the current lexer/parser hot checks. This
+required no hosted compiler fix.
 The AST statement-kind query and parser payload-shape smoke checked successful
 statement output without requiring a hosted compiler fix. The AST node
 span-length query and parser payload-span smoke checked successful statement
