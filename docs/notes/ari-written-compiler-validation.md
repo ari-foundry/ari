@@ -645,7 +645,9 @@ Desired stage0 pressure that is not yet classified as a bug:
 - String and byte-character scan loops should keep the byte currently under
   inspection in a local before branching on escape, terminator, and newline
   cases. This avoids repeated slice indexing in hot paths and keeps the scan
-  shape easier to review; it is not a hosted compiler bug.
+  shape easier to review. String scanning and direct byte-character payload
+  scanning now follow this shape; byte-character escape helper loops still need
+  the same review pressure as they grow. This is not a hosted compiler bug.
 - Diagnostic metadata should avoid separate full-kind matches for rank, public
   identity text, and message text. Numeric compatibility codes can stay
   separate where stage0 preserves an older external code while the Ari kind rank

@@ -705,6 +705,16 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   repeated `first && second` chain.
 - String literal scanning now reuses loop-local current and escaped bytes while
   preserving stage0 line-continuation, escape, quote, and newline behavior.
+- Direct byte-character literal scanning now reuses the payload byte and escape
+  tail byte while preserving stage0 empty, non-ASCII, escape, direct-byte, and
+  unterminated behavior; the old fallback scan variant was removed because all
+  newline/empty cases are handled before the direct-byte branch.
+- Numeric base-prefix dispatch now caches the leading digit and marker byte
+  before routing `0x`/`0o`/`0b` forms into the base-prefixed scanner.
+- The token-only non-identifier scanner now caches the optional second byte
+  once for comment, shift, and two-byte token dispatch; the result scanner
+  keeps second-byte reads limited to slash comment diagnostics before
+  delegating the remaining token surface.
 - `compiler/lexer.ari` now uses ranked-width and ranked-position query names
   and no longer exposes public `score` helpers.
 - `compiler/parser.ari` now uses parser kind-rank query names and no longer

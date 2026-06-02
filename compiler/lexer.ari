@@ -65,7 +65,6 @@ enum ByteCharScan {
   ByteCharUnterminatedUnicodeEscape(i64, i64),
   ByteCharTooLong(i64, i64),
   ByteCharNonAscii(i64, i64),
-  ByteCharFallback,
 }
 
 enum NumberScan {
@@ -616,8 +615,13 @@ fn base_prefixed_number_scan_from_text(
 
 fn number_scan_from_text(text: std::Slice[u8], offset: i64) -> NumberScan {
   var end = offset + 1;
-  if offset + 1 < text.len && text[offset] == '0' && is_number_base_marker(text[offset + 1]) {
-    return base_prefixed_number_scan_from_text(text, offset, text[offset + 1]);
+  let first = text[offset];
+  let marker_offset = offset + 1;
+  if marker_offset < text.len && first == '0' {
+    let marker = text[marker_offset];
+    if is_number_base_marker(marker) {
+      return base_prefixed_number_scan_from_text(text, offset, marker);
+    }
   }
   while end < text.len && is_number_continue(text[end]) {
     end = end + 1;
@@ -1581,23 +1585,27 @@ fn byte_char_scan_from_text(text: std::Slice[u8], offset: i64) -> ByteCharScan {
   if offset + 1 >= text.len {
     return ByteCharUnterminated(text.len);
   }
-  if text[offset + 1] == '\n' {
+  let payload_start = offset + 1;
+  let payload = text[payload_start];
+  if payload == '\n' {
     return ByteCharUnterminated(offset + 2);
   }
-  if text[offset + 1] == '\'' {
+  if payload == '\'' {
     return ByteCharEmpty(offset, offset + 2);
   }
-  if is_non_ascii_byte(text[offset + 1]) {
-    return ByteCharNonAscii(offset + 1, offset + 2);
+  if is_non_ascii_byte(payload) {
+    return ByteCharNonAscii(payload_start, offset + 2);
   }
-  if text[offset + 1] == '\\' {
-    if offset + 2 >= text.len {
+  if payload == '\\' {
+    let escape_tail_offset = offset + 2;
+    if escape_tail_offset >= text.len {
       return ByteCharUnterminated(text.len);
     }
-    if text[offset + 2] == '\n' {
+    let escape_tail = text[escape_tail_offset];
+    if escape_tail == '\n' {
       return ByteCharUnterminated(offset + 3);
     }
-    match byte_char_escape_scan_from_text(text, offset + 1) {
+    match byte_char_escape_scan_from_text(text, payload_start) {
       Advanced(byte_char_escaped_end, byte_char_escaped_value) => {
         if byte_char_escaped_end < text.len && text[byte_char_escaped_end] == '\'' {
           return ByteCharClosed(byte_char_escaped_end + 1, byte_char_escaped_value as u64);
@@ -1621,14 +1629,12 @@ fn byte_char_scan_from_text(text: std::Slice[u8], offset: i64) -> ByteCharScan {
       }
     }
   }
-  if offset + 2 >= text.len {
+  let closing_offset = offset + 2;
+  if closing_offset >= text.len {
     return ByteCharTooLong(offset, byte_char_too_long_end_from_text(text, offset));
   }
-  if text[offset + 1] == '\'' || text[offset + 1] == '\n' {
-    return ByteCharFallback;
-  }
-  if text[offset + 2] == '\'' {
-    return ByteCharClosed(offset + 3, text[offset + 1] as u64);
+  if text[closing_offset] == '\'' {
+    return ByteCharClosed(offset + 3, payload as u64);
   }
   return ByteCharTooLong(offset, byte_char_too_long_end_from_text(text, offset));
 }
@@ -1682,14 +1688,21 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
     }
     return token::make_token(token::Whitespace, offset, whitespace_end);
   }
-  if offset + 1 < text.len && first == '/' && text[offset + 1] == '/' {
+  let second_offset = offset + 1;
+  var has_second = false;
+  var second = first;
+  if second_offset < text.len {
+    has_second = true;
+    second = text[second_offset];
+  }
+  if has_second && first == '/' && second == '/' {
     return token::make_token(
       token::Whitespace,
       offset,
       line_comment_end_from_text(text, offset)
     );
   }
-  if offset + 1 < text.len && first == '/' && text[offset + 1] == '*' {
+  if has_second && first == '/' && second == '*' {
     match block_comment_scan_from_text(text, offset) {
       CommentClosed(comment_end) => {
         return token::make_token(token::Whitespace, offset, comment_end);
@@ -1722,20 +1735,19 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
       ByteCharUnterminatedUnicodeEscape(_, _) => {}
       ByteCharTooLong(_, _) => {}
       ByteCharNonAscii(_, _) => {}
-      ByteCharFallback => {}
     }
   }
   if first == '.' {
     return scan_dot_run(text, offset);
   }
-  if offset + 1 < text.len && first == '<' && text[offset + 1] == '<' {
+  if has_second && first == '<' && second == '<' {
     return scan_shift_run(text, offset);
   }
-  if offset + 1 < text.len && first == '>' && text[offset + 1] == '>' {
+  if has_second && first == '>' && second == '>' {
     return scan_shift_run(text, offset);
   }
-  if offset + 1 < text.len {
-    let combined = scan_two(first, offset, text[offset + 1]);
+  if has_second {
+    let combined = scan_two(first, offset, second);
     if token::token_width(combined) == 2 {
       return combined;
     }
@@ -1786,20 +1798,26 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
       }
     }
   }
-  if offset + 1 < text.len && first == '/' && text[offset + 1] == '/' {
-    return Scanned(token::make_token(
-      token::Whitespace,
-      offset,
-      line_comment_end_from_text(text, offset)
-    ));
-  }
-  if offset + 1 < text.len && first == '/' && text[offset + 1] == '*' {
-    match block_comment_scan_from_text(text, offset) {
-      CommentClosed(closed_comment_end) => {
-        return Scanned(token::make_token(token::Whitespace, offset, closed_comment_end));
+  if first == '/' {
+    let second_offset = offset + 1;
+    if second_offset < text.len {
+      let second = text[second_offset];
+      if second == '/' {
+        return Scanned(token::make_token(
+          token::Whitespace,
+          offset,
+          line_comment_end_from_text(text, offset)
+        ));
       }
-      CommentUnterminated(unterminated_comment_end) => {
-        return Failed(unterminated_block_comment(offset, unterminated_comment_end));
+      if second == '*' {
+        match block_comment_scan_from_text(text, offset) {
+          CommentClosed(closed_comment_end) => {
+            return Scanned(token::make_token(token::Whitespace, offset, closed_comment_end));
+          }
+          CommentUnterminated(unterminated_comment_end) => {
+            return Failed(unterminated_block_comment(offset, unterminated_comment_end));
+          }
+        }
       }
     }
   }
@@ -1876,7 +1894,6 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
           byte_char_non_ascii_end
         ));
       }
-      ByteCharFallback => {}
     }
   }
 

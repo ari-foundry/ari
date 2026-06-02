@@ -829,6 +829,19 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   escaped byte into locals inside the scan loop, so quote/newline/escape
   dispatch no longer repeats `text[end]` or `text[end + 1]` reads in the hot
   path.
+- Re-reviewed direct byte-character literal scanning and hoisted the payload
+  byte plus escape-tail byte into locals, so newline/empty/non-ASCII/escape
+  dispatch no longer repeats `text[offset + 1]` reads in the hot path. The
+  same pass removed an unreachable newline/empty fallback that was already
+  handled before the direct-byte branch, then deleted the now-unconstructed
+  `ByteCharFallback` scan variant and dead match arms.
+- Re-reviewed numeric base-prefix dispatch and cached the first digit plus
+  marker byte before the `0x`/`0o`/`0b` check, so the marker is not read once
+  for classification and again for the base-prefixed scanner call.
+- Re-reviewed non-identifier text scanners: the token-only path now caches the
+  optional second byte once for line comments, block comments, shifts, and
+  two-byte token dispatch, while the result path reads it only inside the slash
+  comment-diagnostic branch.
 
 ## Small Task Queue
 
