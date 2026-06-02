@@ -133,6 +133,10 @@ source-text line comment and nested block comment skipping as whitespace spans,
 plus unterminated block comment diagnostics preserved through parser and driver
 source-text paths, including CRLF line comments, without requiring a hosted
 compiler fix.
+The parser string-literal payload smoke checked that source-backed string
+literal spans now survive through parser statement payload accessors, and the
+driver source-text smoke checked string literal success without requiring a
+hosted compiler fix.
 The AST statement-kind query and parser payload-shape smoke checked successful
 statement output without requiring a hosted compiler fix. The AST node
 span-length query and parser payload-span smoke checked successful statement
@@ -594,12 +598,13 @@ Desired stage0 pressure that is not yet classified as a bug:
   while later parser work can still recover source slices from the original
   input. `StringLiteral` tokens now reuse the source-backed literal span fields
   for raw content inside the quotes and a zero-width suffix at the closing
-  quote. That is useful for cursor and parser smokes, but the current
+  quote, and the parser skeleton now preserves that payload for statement
+  nodes. That is useful for cursor and parser smokes, but the current
   `LiteralPayload` shape is still numeric-leaning and does not represent
-  decoded escape text as a string value. It still lacks owned stage0-style
-  token text, textual literal suffix strings for synthetic cases, richer
-  expression/statement AST literal shapes, and narrower suffix-specific range
-  checks such as `f32`/`f128`. Simple byte
+  decoded escape text as a string value or a dedicated string literal AST
+  variant. It still lacks owned stage0-style token text, textual literal suffix
+  strings for synthetic cases, richer expression/statement AST literal shapes,
+  and narrower suffix-specific range checks such as `f32`/`f128`. Simple byte
   character literal spans are modeled as
   `Integer` tokens, matching stage0's byte-character-as-integer token
   treatment; their synthetic byte-character suffix rank remains spanless

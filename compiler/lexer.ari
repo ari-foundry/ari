@@ -2716,6 +2716,10 @@ pub fn handoff_starts_with_keyword(handoff: TokenHandoff) -> bool {
   return cursor_is_keyword(handoff.first);
 }
 
+pub fn handoff_starts_with_string_literal(handoff: TokenHandoff) -> bool {
+  return cursor_is_string_literal(handoff.first);
+}
+
 pub fn cursor_ranked_position(cursor: TokenCursor) -> i64 {
   if cursor.done {
     return token_ranked_width(cursor.current) +

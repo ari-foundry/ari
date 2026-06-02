@@ -141,7 +141,7 @@ fn source_text_leading_comment_operator_driver_score() -> i64 {
 }
 
 fn source_text_leading_comment_string_literal_driver_score() -> i64 {
-  return source_text_line_block_driver_score("// skip\n\"ari\"", "/* skip */\"ari\"", 2006);
+  return source_text_line_block_driver_score("// skip\n\"ari\"", "/* skip */\"ari\"", 0);
 }
 
 fn source_text_leading_comment_missing_base_digit_driver_score() -> i64 {
@@ -269,6 +269,12 @@ fn source_text_number_suffix_driver_score() -> i64 {
 fn source_text_decimal_float_driver_score() -> i64 {
   zone(65536) {
     return driver::result_code(driver::run_source_text(std::string::from("1.5f32")));
+  }
+}
+
+fn source_text_string_literal_driver_score() -> i64 {
+  zone(65536) {
+    return driver::result_code(driver::run_source_text(std::string::from("\"ari\"")));
   }
 }
 
@@ -4952,16 +4958,15 @@ fn parse_leading_comment_operator_failure_score() -> i64 {
   return 0;
 }
 
-fn parse_leading_comment_string_literal_failure_score() -> i64 {
-  var score = parse_unsupported_case_score("// skip\n\"ari\"", 8, 13);
-  if score != 0 {
-    return score;
-  }
-  score = parse_unsupported_case_score("/* skip */\"ari\"", 10, 15);
-  if score != 0 {
-    return 10 + score;
-  }
-  return 0;
+fn parse_leading_comment_string_literal_success_score() -> i64 {
+  return parse_leading_comment_line_block_score(
+    "// skip\n\"ari\"",
+    8,
+    13,
+    "/* skip */\"ari\"",
+    10,
+    15
+  );
 }
 
 fn parse_extra_token_case_score(
@@ -5176,9 +5181,15 @@ fn parse_text_score() -> i64 {
   if parser::parse_statement_span_len(parser::parse_text("12345")) != 5 {
     return 7;
   }
+  if !parser::parse_is_success(parser::parse_text("\"ari\"")) {
+    return 8;
+  }
+  if parser::parse_statement_span_len(parser::parse_text("\"ari\"")) != 5 {
+    return 9;
+  }
   let keyword_score = parser_keyword_failure_keywords_score();
   if keyword_score != 0 {
-    return 8 + keyword_score;
+    return 10 + keyword_score;
   }
   return 0;
 }
@@ -5189,6 +5200,9 @@ fn parse_success_score() -> i64 {
   }
   if !parser::parse_is_success(parser::parse_one('9', 2)) {
     return 3;
+  }
+  if !parser::parse_is_success(parser::parse_text("\"ari\"")) {
+    return 4;
   }
   if parser::parse_is_success(parser::parse_one(' ', 4)) {
     return 2;
@@ -5228,6 +5242,9 @@ fn parse_statement_value_score() -> i64 {
   }
   if parser::parse_statement_value(parser::parse_one('9', 2)) != 3 {
     return 3;
+  }
+  if parser::parse_statement_value(parser::parse_text("\"ari\"")) != 56 {
+    return 4;
   }
   if parser::parse_statement_value(parser::parse_one(' ', 4)) != -1 {
     return 2;
@@ -5309,6 +5326,28 @@ fn parse_statement_literal_payload_score() -> i64 {
   }
   if parser::parse_statement_literal_integer_value(byte_char) != 97u64 {
     return 42;
+  }
+
+  let string_literal = parser::parse_text("\"ari\"");
+  if !parser::parse_statement_has_literal_payload(string_literal) {
+    return 50;
+  }
+  if parser::parse_statement_literal_base(string_literal) != token::literal_base_none_rank() {
+    return 51;
+  }
+  if parser::parse_statement_literal_suffix_rank(string_literal) !=
+      token::literal_suffix_none_rank() {
+    return 52;
+  }
+  if parser::parse_statement_literal_integer_value(string_literal) != 0u64 {
+    return 53;
+  }
+  if parser::parse_statement_literal_float_value(string_literal) != 0.0f64 {
+    return 54;
+  }
+  span_score = parse_statement_literal_span_score(string_literal, 1, 4, 4, 4);
+  if span_score != 0 {
+    return 60 + span_score;
   }
   return 0;
 }
@@ -5627,6 +5666,8 @@ fn main() -> i64 {
     4017 +
     parser::parse_one_kind_rank('9', 2) -
     42 +
+    parser::parse_text_kind_rank("\"ari\"") -
+    46 +
     driver::exit_code(driver::run()) +
     default_driver_result_score() +
     loaded_source_score() -
@@ -5725,6 +5766,7 @@ fn main() -> i64 {
     source_text_base_number_driver_score() +
     source_text_number_suffix_driver_score() +
     source_text_decimal_float_driver_score() +
+    source_text_string_literal_driver_score() +
     source_text_byte_char_driver_score() +
     source_text_byte_char_escape_driver_score() +
     source_text_byte_char_numeric_escape_driver_score() +
@@ -5793,7 +5835,7 @@ fn main() -> i64 {
     lexer_leading_comment_punctuation_handoff_score() +
     parse_leading_comment_operator_failure_score() +
     lexer_leading_comment_operator_handoff_score() +
-    parse_leading_comment_string_literal_failure_score() +
+    parse_leading_comment_string_literal_success_score() +
     lexer_leading_comment_string_literal_handoff_score() +
     parse_leading_comment_lexer_failure_score() +
     lexer_leading_comment_lexer_failure_handoff_score() +

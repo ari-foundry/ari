@@ -8,6 +8,25 @@ pub enum ParseResult {
   Failed(diagnostic::Diagnostic),
 }
 
+fn literal_statement_node_from_cursor(cursor: lexer::TokenCursor) -> ast::Node {
+  return ast::statement_literal_node(
+    0,
+    lexer::cursor_token_start(cursor),
+    lexer::cursor_token_end(cursor),
+    lexer::cursor_token_ranked_width(cursor),
+    ast::literal_payload(
+      lexer::cursor_token_literal_base(cursor),
+      lexer::cursor_token_literal_suffix_rank(cursor),
+      lexer::cursor_token_literal_integer_value(cursor),
+      lexer::cursor_token_literal_float_value(cursor),
+      lexer::cursor_token_literal_text_start(cursor),
+      lexer::cursor_token_literal_text_end(cursor),
+      lexer::cursor_token_literal_suffix_start(cursor),
+      lexer::cursor_token_literal_suffix_end(cursor)
+    )
+  );
+}
+
 pub fn parse_statement(cursor: lexer::TokenCursor) -> ParseResult {
   if lexer::cursor_is_done(cursor) || lexer::cursor_is_eof(cursor) {
     return Failed(diagnostic::parser_expected_statement(
@@ -23,33 +42,21 @@ pub fn parse_statement(cursor: lexer::TokenCursor) -> ParseResult {
     ));
   }
 
-  let statement_value = lexer::cursor_token_ranked_width(cursor);
   if lexer::cursor_is_identifier(cursor) {
     return Parsed(ast::statement_node(
       0,
       lexer::cursor_token_start(cursor),
       lexer::cursor_token_end(cursor),
-      statement_value
+      lexer::cursor_token_ranked_width(cursor)
     ));
   }
 
   if lexer::cursor_is_number(cursor) {
-    return Parsed(ast::statement_literal_node(
-      0,
-      lexer::cursor_token_start(cursor),
-      lexer::cursor_token_end(cursor),
-      statement_value,
-      ast::literal_payload(
-        lexer::cursor_token_literal_base(cursor),
-        lexer::cursor_token_literal_suffix_rank(cursor),
-        lexer::cursor_token_literal_integer_value(cursor),
-        lexer::cursor_token_literal_float_value(cursor),
-        lexer::cursor_token_literal_text_start(cursor),
-        lexer::cursor_token_literal_text_end(cursor),
-        lexer::cursor_token_literal_suffix_start(cursor),
-        lexer::cursor_token_literal_suffix_end(cursor)
-      )
-    ));
+    return Parsed(literal_statement_node_from_cursor(cursor));
+  }
+
+  if lexer::cursor_is_string_literal(cursor) {
+    return Parsed(literal_statement_node_from_cursor(cursor));
   }
 
   if lexer::cursor_is_unknown(cursor) {
@@ -75,6 +82,9 @@ pub fn parse_cursor_kind_rank(cursor: lexer::TokenCursor) -> i64 {
   }
   if lexer::cursor_is_number(cursor) {
     return 2;
+  }
+  if lexer::cursor_is_string_literal(cursor) {
+    return 6;
   }
   if lexer::cursor_is_whitespace(cursor) {
     return 3;
@@ -107,6 +117,9 @@ pub fn parse_handoff_kind_rank(handoff: lexer::TokenHandoff) -> i64 {
   }
   if lexer::handoff_starts_with_keyword(handoff) {
     return 5 + eof_rank * 10;
+  }
+  if lexer::handoff_starts_with_string_literal(handoff) {
+    return 6 + eof_rank * 10;
   }
   return 8 + eof_rank * 10;
 }

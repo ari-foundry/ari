@@ -733,6 +733,11 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   string literals expose content spans inside the quotes and a zero-width
   suffix span at the closing quote, without adding decoded owned string
   payloads yet.
+- Routed Ari `StringLiteral` tokens through the parser statement skeleton as
+  literal payload nodes. The parser and driver source-root smoke now checks
+  string literals succeed, preserve raw content spans through parser accessors,
+  and no longer report string literals as unsupported tokens after leading
+  comments.
 
 ## Small Task Queue
 
