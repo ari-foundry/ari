@@ -711,6 +711,12 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   source-backed literal text and suffix spans for numeric lexer paths, so
   `42i64` can carry token span `0..5`, literal text span `0..2`, and suffix
   span `2..5` without adding owned `String` fields or extra zone plumbing.
+- Added Ari diagnostic kind/name/message identity on top of the existing
+  numeric compatibility codes, preserved lexer diagnostic kind through
+  `LexFailure`, exposed parser and driver failure name/message helpers, and
+  changed driver `Err` payloads from raw `i64` to `diagnostic::Diagnostic` so
+  `1001` can be distinguished as either `lexer.invalid-character` or
+  `driver.input-start-out-of-bounds`.
 
 ## Small Task Queue
 

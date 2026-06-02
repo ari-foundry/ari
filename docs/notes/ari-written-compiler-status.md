@@ -278,6 +278,16 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   `compiler/parser.ari` exposes a parser failure severity-rank helper for
   phase boundaries that need diagnostic severity metadata without rendering
   diagnostics.
+- `compiler/diagnostic.ari` now carries `DiagnosticKind` in addition to the
+  numeric compatibility code, and exposes diagnostic name/message text
+  accessors so bootstrap failures can report names such as
+  `parser.unexpected-whitespace` and `lexer.unterminated-string-literal`
+  instead of only numeric codes such as `2004` and `1004`.
+- `compiler/driver.ari` now returns diagnostic payloads in `Err` results while
+  preserving the old `result_code` helper for focused smokes. Driver result
+  helpers can expose diagnostic name/message text, and driver-local failures
+  such as input bounds have distinct kind ranks even when their compatibility
+  numeric code overlaps older lexer codes.
 - `compiler/parser.ari` exposes a tiny `parse_one_eof` helper so EOF-cursor
   diagnostics can be tested without exporting or passing nested lexer cursor
   types across module paths.

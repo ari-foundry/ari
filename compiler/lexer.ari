@@ -25,6 +25,7 @@ pub struct TokenStream {
 }
 
 pub struct LexFailure {
+  kind_rank: i64,
   code: i64,
   start: i64,
   end: i64,
@@ -1685,83 +1686,88 @@ pub fn scan_text_result(text: std::Slice[u8], offset: i64) -> LexResult {
 }
 
 pub fn invalid_character(offset: i64) -> diagnostic::Diagnostic {
-  return diagnostic::error(1001, offset, offset + 1);
+  return diagnostic::lexer_invalid_character(offset, offset + 1);
 }
 
 pub fn missing_number_base_digits(start: i64, end: i64) -> diagnostic::Diagnostic {
-  return diagnostic::error(1009, start, end);
+  return diagnostic::lexer_missing_number_base_digits(start, end);
 }
 
 pub fn invalid_number_base_digit(start: i64, end: i64) -> diagnostic::Diagnostic {
-  return diagnostic::error(1010, start, end);
+  return diagnostic::lexer_invalid_number_base_digit(start, end);
 }
 
 pub fn unsupported_number_suffix(start: i64, end: i64) -> diagnostic::Diagnostic {
-  return diagnostic::error(1011, start, end);
+  return diagnostic::lexer_unsupported_number_suffix(start, end);
 }
 
 pub fn non_decimal_float_suffix(start: i64, end: i64) -> diagnostic::Diagnostic {
-  return diagnostic::error(1012, start, end);
+  return diagnostic::lexer_non_decimal_float_suffix(start, end);
 }
 
 pub fn non_decimal_float_dot(start: i64, end: i64) -> diagnostic::Diagnostic {
-  return diagnostic::error(1013, start, end);
+  return diagnostic::lexer_non_decimal_float_dot(start, end);
 }
 
 pub fn empty_byte_character_literal(start: i64, end: i64) -> diagnostic::Diagnostic {
-  return diagnostic::error(1014, start, end);
+  return diagnostic::lexer_empty_byte_character_literal(start, end);
 }
 
 pub fn unterminated_byte_character_literal(start: i64, end: i64) -> diagnostic::Diagnostic {
-  return diagnostic::error(1015, start, end);
+  return diagnostic::lexer_unterminated_byte_character_literal(start, end);
 }
 
 pub fn unsupported_byte_character_escape(start: i64, end: i64) -> diagnostic::Diagnostic {
-  return diagnostic::error(1016, start, end);
+  return diagnostic::lexer_unsupported_byte_character_escape(start, end);
 }
 
 pub fn invalid_byte_character_escape_digits(start: i64, end: i64) -> diagnostic::Diagnostic {
-  return diagnostic::error(1017, start, end);
+  return diagnostic::lexer_invalid_byte_character_escape_digits(start, end);
 }
 
 pub fn invalid_byte_character_escape_value(start: i64, end: i64) -> diagnostic::Diagnostic {
-  return diagnostic::error(1018, start, end);
+  return diagnostic::lexer_invalid_byte_character_escape_value(start, end);
 }
 
 pub fn byte_character_literal_too_long(start: i64, end: i64) -> diagnostic::Diagnostic {
-  return diagnostic::error(1019, start, end);
+  return diagnostic::lexer_byte_character_literal_too_long(start, end);
 }
 
 pub fn non_ascii_byte_character_literal(start: i64, end: i64) -> diagnostic::Diagnostic {
-  return diagnostic::error(1020, start, end);
+  return diagnostic::lexer_non_ascii_byte_character_literal(start, end);
 }
 
 pub fn unterminated_string_literal(start: i64, end: i64) -> diagnostic::Diagnostic {
-  return diagnostic::error(1004, start, end);
+  return diagnostic::lexer_unterminated_string_literal(start, end);
 }
 
 pub fn unterminated_block_comment(start: i64, end: i64) -> diagnostic::Diagnostic {
-  return diagnostic::error(1008, start, end);
+  return diagnostic::lexer_unterminated_block_comment(start, end);
 }
 
 pub fn unsupported_string_escape(start: i64, end: i64) -> diagnostic::Diagnostic {
-  return diagnostic::error(1005, start, end);
+  return diagnostic::lexer_unsupported_string_escape(start, end);
 }
 
 pub fn invalid_string_escape_digits(start: i64, end: i64) -> diagnostic::Diagnostic {
-  return diagnostic::error(1006, start, end);
+  return diagnostic::lexer_invalid_string_escape_digits(start, end);
 }
 
 pub fn invalid_string_escape_value(start: i64, end: i64) -> diagnostic::Diagnostic {
-  return diagnostic::error(1007, start, end);
+  return diagnostic::lexer_invalid_string_escape_value(start, end);
 }
 
 fn lex_failure_from_diagnostic(failure: diagnostic::Diagnostic) -> LexFailure {
   return LexFailure {
+    kind_rank: diagnostic::diagnostic_kind_rank(failure),
     code: diagnostic::diagnostic_code(failure),
     start: diagnostic::diagnostic_start_offset(failure),
     end: diagnostic::diagnostic_end_offset(failure),
   };
+}
+
+pub fn lex_failure_kind_rank(failure: LexFailure) -> i64 {
+  return failure.kind_rank;
 }
 
 pub fn lex_failure_code(failure: LexFailure) -> i64 {
@@ -2497,6 +2503,13 @@ pub fn scan_result_failure_code(result: LexResult) -> i64 {
   match result {
     Scanned(_) => 0,
     Failed(failure) => diagnostic::diagnostic_code(failure),
+  }
+}
+
+pub fn scan_result_failure_name_text(result: LexResult) -> std::Slice[u8] {
+  match result {
+    Scanned(_) => "ok",
+    Failed(failure) => diagnostic::diagnostic_name_text(failure),
   }
 }
 

@@ -1,4 +1,5 @@
 mod source;
+mod diagnostic;
 mod parser;
 
 pub struct DriverInput {
@@ -35,31 +36,45 @@ fn input_from_loaded_source(summary: source::LoadedSourceSummary) -> DriverInput
   );
 }
 
-pub fn run_input(input: DriverInput) -> std::Result[i64, i64] {
+fn parse_failure_diagnostic(parsed: parser::ParseResult) -> diagnostic::Diagnostic {
+  return diagnostic::error_kind_rank(
+    parser::parse_failure_kind_rank(parsed),
+    parser::parse_failure_start_offset(parsed),
+    parser::parse_failure_end_offset(parsed)
+  );
+}
+
+pub fn run_input(input: DriverInput) -> std::Result[i64, diagnostic::Diagnostic] {
   let file = source::source_file(input.source_id, input.byte_len);
   if !source::contains(file, input.offset) {
-    return std::Err<i64, i64>(1001);
+    return std::Err<i64, diagnostic::Diagnostic>(
+      diagnostic::driver_input_start_out_of_bounds(input.offset, input.offset)
+    );
   }
   if !source::contains(file, input.offset + 1) {
-    return std::Err<i64, i64>(1002);
+    return std::Err<i64, diagnostic::Diagnostic>(
+      diagnostic::driver_input_end_out_of_bounds(input.offset + 1, input.offset + 1)
+    );
   }
 
   let parsed = parser::parse_one(input.entry, input.offset);
   if parser::parse_is_success(parsed) {
-    return std::Ok<i64, i64>(0);
+    return std::Ok<i64, diagnostic::Diagnostic>(0);
   }
 
   let code = parser::parse_failure_code(parsed);
   if code > 0 {
-    return std::Err<i64, i64>(code);
+    return std::Err<i64, diagnostic::Diagnostic>(parse_failure_diagnostic(parsed));
   }
 
-  return std::Err<i64, i64>(1003);
+  return std::Err<i64, diagnostic::Diagnostic>(diagnostic::driver_unknown_failure(0, 0));
 }
 
-fn run_loaded_source(summary: source::LoadedSourceSummary) -> std::Result[i64, i64] {
+fn run_loaded_source(summary: source::LoadedSourceSummary) -> std::Result[i64, diagnostic::Diagnostic] {
   if !source::loaded_source_has_first(summary) {
-    return std::Err<i64, i64>(1103);
+    return std::Err<i64, diagnostic::Diagnostic>(
+      diagnostic::driver_loaded_source_missing_first(0, 0)
+    );
   }
 
   return run_input(input_from_loaded_source(summary));
@@ -70,46 +85,49 @@ pub fn run_loaded_source_summary(
   byte_len: i64,
   first: char,
   first_offset: i64
-) -> std::Result[i64, i64] {
+) -> std::Result[i64, diagnostic::Diagnostic] {
   return run_loaded_source(source::loaded_source_summary(source_id, byte_len, first, first_offset));
 }
 
-pub fn run_source_text(text: std::string::String) -> std::Result[i64, i64] {
+pub fn run_source_text(text: std::string::String) -> std::Result[i64, diagnostic::Diagnostic] {
   if text.is_empty() {
-    return std::Err<i64, i64>(1101);
+    return std::Err<i64, diagnostic::Diagnostic>(diagnostic::driver_empty_source_text(0, 0));
   }
 
   zone(8192) {
     let parsed = parser::parse_text_with_keywords(text.as_slice());
     if parser::parse_is_success(parsed) {
-      return std::Ok<i64, i64>(0);
+      return std::Ok<i64, diagnostic::Diagnostic>(0);
     }
 
     let code = parser::parse_failure_code(parsed);
     if code > 0 {
-      return std::Err<i64, i64>(code);
+      return std::Err<i64, diagnostic::Diagnostic>(parse_failure_diagnostic(parsed));
     }
   }
 
-  return std::Err<i64, i64>(1003);
+  return std::Err<i64, diagnostic::Diagnostic>(diagnostic::driver_unknown_failure(0, 0));
 }
 
-pub fn run_file(zone: ref mut Zone, path: std::Slice[u8]) -> std::Result[i64, i64] {
+pub fn run_file(
+  zone: ref mut Zone,
+  path: std::Slice[u8]
+) -> std::Result[i64, diagnostic::Diagnostic] {
   match std::fs::read_to_string(zone, path) {
     std::Ok(text) => {
       return run_source_text(text);
     }
     std::Err(_) => {
-      return std::Err<i64, i64>(1102);
+      return std::Err<i64, diagnostic::Diagnostic>(diagnostic::driver_read_file_failed(0, 0));
     }
   }
 }
 
-pub fn run() -> std::Result[i64, i64] {
+pub fn run() -> std::Result[i64, diagnostic::Diagnostic] {
   return run_input(default_input());
 }
 
-pub fn run_from_context() -> std::Result[i64, i64] {
+pub fn run_from_context() -> std::Result[i64, diagnostic::Diagnostic] {
   if std::context::has_arg(1) {
     zone(65536) {
       let path = std::context::arg(1);
@@ -120,18 +138,51 @@ pub fn run_from_context() -> std::Result[i64, i64] {
   return run();
 }
 
-pub fn result_code(result: std::Result[i64, i64]) -> i64 {
+pub fn result_code(result: std::Result[i64, diagnostic::Diagnostic]) -> i64 {
   match result {
     std::Ok(code) => {
       return code;
     }
-    std::Err(error_code) => {
-      return error_code;
+    std::Err(error) => {
+      return diagnostic::diagnostic_code(error);
     }
   }
 }
 
-pub fn exit_code(result: std::Result[i64, i64]) -> i64 {
+pub fn result_name_text(result: std::Result[i64, diagnostic::Diagnostic]) -> std::Slice[u8] {
+  match result {
+    std::Ok(_) => {
+      return "ok";
+    }
+    std::Err(error) => {
+      return diagnostic::diagnostic_name_text(error);
+    }
+  }
+}
+
+pub fn result_message_text(result: std::Result[i64, diagnostic::Diagnostic]) -> std::Slice[u8] {
+  match result {
+    std::Ok(_) => {
+      return "ok";
+    }
+    std::Err(error) => {
+      return diagnostic::diagnostic_message_text(error);
+    }
+  }
+}
+
+pub fn result_kind_rank(result: std::Result[i64, diagnostic::Diagnostic]) -> i64 {
+  match result {
+    std::Ok(_) => {
+      return 0;
+    }
+    std::Err(error) => {
+      return diagnostic::diagnostic_kind_rank(error);
+    }
+  }
+}
+
+pub fn exit_code(result: std::Result[i64, diagnostic::Diagnostic]) -> i64 {
   match result {
     std::Ok(code) => {
       return code;

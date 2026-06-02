@@ -4,7 +4,42 @@ pub enum Severity {
   Error,
 }
 
+pub enum DiagnosticKind {
+  Custom,
+  LexerInvalidCharacter,
+  LexerUnterminatedStringLiteral,
+  LexerUnsupportedStringEscape,
+  LexerInvalidStringEscapeDigits,
+  LexerInvalidStringEscapeValue,
+  LexerUnterminatedBlockComment,
+  LexerMissingNumberBaseDigits,
+  LexerInvalidNumberBaseDigit,
+  LexerUnsupportedNumberSuffix,
+  LexerNonDecimalFloatSuffix,
+  LexerNonDecimalFloatDot,
+  LexerEmptyByteCharacterLiteral,
+  LexerUnterminatedByteCharacterLiteral,
+  LexerUnsupportedByteCharacterEscape,
+  LexerInvalidByteCharacterEscapeDigits,
+  LexerInvalidByteCharacterEscapeValue,
+  LexerByteCharacterLiteralTooLong,
+  LexerNonAsciiByteCharacterLiteral,
+  ParserExpectedStatement,
+  ParserEmptyInput,
+  ParserExpectedEof,
+  ParserUnexpectedWhitespace,
+  ParserUnknownToken,
+  ParserUnsupportedToken,
+  DriverInputStartOutOfBounds,
+  DriverInputEndOutOfBounds,
+  DriverUnknownFailure,
+  DriverEmptySourceText,
+  DriverReadFileFailed,
+  DriverLoadedSourceMissingFirst,
+}
+
 pub struct Diagnostic {
+  kind: DiagnosticKind,
   code: i64,
   start: i64,
   end: i64,
@@ -12,11 +47,35 @@ pub struct Diagnostic {
 }
 
 pub fn diagnostic(code: i64, start: i64, end: i64, severity: Severity) -> Diagnostic {
-  return Diagnostic { code: code, start: start, end: end, severity: severity };
+  return diagnostic_with_kind(kind_from_code(code), code, start, end, severity);
+}
+
+pub fn diagnostic_with_kind(
+  kind: DiagnosticKind,
+  code: i64,
+  start: i64,
+  end: i64,
+  severity: Severity
+) -> Diagnostic {
+  return Diagnostic {
+    kind: kind,
+    code: code,
+    start: start,
+    end: end,
+    severity: severity,
+  };
 }
 
 pub fn error(code: i64, start: i64, end: i64) -> Diagnostic {
   return diagnostic(code, start, end, Error);
+}
+
+pub fn error_kind(kind: DiagnosticKind, start: i64, end: i64) -> Diagnostic {
+  return diagnostic_with_kind(kind, kind_code(kind), start, end, Error);
+}
+
+pub fn error_kind_rank(rank: i64, start: i64, end: i64) -> Diagnostic {
+  return error_kind(kind_from_rank(rank), start, end);
 }
 
 pub fn severity_rank(severity: Severity) -> i64 {
@@ -27,8 +86,263 @@ pub fn severity_rank(severity: Severity) -> i64 {
   }
 }
 
+pub fn kind_rank(kind: DiagnosticKind) -> i64 {
+  match kind {
+    Custom => 0,
+    LexerInvalidCharacter => 1001,
+    LexerUnterminatedStringLiteral => 1004,
+    LexerUnsupportedStringEscape => 1005,
+    LexerInvalidStringEscapeDigits => 1006,
+    LexerInvalidStringEscapeValue => 1007,
+    LexerUnterminatedBlockComment => 1008,
+    LexerMissingNumberBaseDigits => 1009,
+    LexerInvalidNumberBaseDigit => 1010,
+    LexerUnsupportedNumberSuffix => 1011,
+    LexerNonDecimalFloatSuffix => 1012,
+    LexerNonDecimalFloatDot => 1013,
+    LexerEmptyByteCharacterLiteral => 1014,
+    LexerUnterminatedByteCharacterLiteral => 1015,
+    LexerUnsupportedByteCharacterEscape => 1016,
+    LexerInvalidByteCharacterEscapeDigits => 1017,
+    LexerInvalidByteCharacterEscapeValue => 1018,
+    LexerByteCharacterLiteralTooLong => 1019,
+    LexerNonAsciiByteCharacterLiteral => 1020,
+    ParserExpectedStatement => 2001,
+    ParserEmptyInput => 2002,
+    ParserExpectedEof => 2003,
+    ParserUnexpectedWhitespace => 2004,
+    ParserUnknownToken => 2005,
+    ParserUnsupportedToken => 2006,
+    DriverInputStartOutOfBounds => 3001,
+    DriverInputEndOutOfBounds => 3002,
+    DriverUnknownFailure => 3003,
+    DriverEmptySourceText => 3101,
+    DriverReadFileFailed => 3102,
+    DriverLoadedSourceMissingFirst => 3103,
+  }
+}
+
+pub fn kind_code(kind: DiagnosticKind) -> i64 {
+  match kind {
+    DriverInputStartOutOfBounds => 1001,
+    DriverInputEndOutOfBounds => 1002,
+    DriverUnknownFailure => 1003,
+    DriverEmptySourceText => 1101,
+    DriverReadFileFailed => 1102,
+    DriverLoadedSourceMissingFirst => 1103,
+    _ => kind_rank(kind),
+  }
+}
+
+pub fn kind_from_rank(rank: i64) -> DiagnosticKind {
+  if rank == 1001 {
+    return LexerInvalidCharacter;
+  }
+  if rank == 1004 {
+    return LexerUnterminatedStringLiteral;
+  }
+  if rank == 1005 {
+    return LexerUnsupportedStringEscape;
+  }
+  if rank == 1006 {
+    return LexerInvalidStringEscapeDigits;
+  }
+  if rank == 1007 {
+    return LexerInvalidStringEscapeValue;
+  }
+  if rank == 1008 {
+    return LexerUnterminatedBlockComment;
+  }
+  if rank == 1009 {
+    return LexerMissingNumberBaseDigits;
+  }
+  if rank == 1010 {
+    return LexerInvalidNumberBaseDigit;
+  }
+  if rank == 1011 {
+    return LexerUnsupportedNumberSuffix;
+  }
+  if rank == 1012 {
+    return LexerNonDecimalFloatSuffix;
+  }
+  if rank == 1013 {
+    return LexerNonDecimalFloatDot;
+  }
+  if rank == 1014 {
+    return LexerEmptyByteCharacterLiteral;
+  }
+  if rank == 1015 {
+    return LexerUnterminatedByteCharacterLiteral;
+  }
+  if rank == 1016 {
+    return LexerUnsupportedByteCharacterEscape;
+  }
+  if rank == 1017 {
+    return LexerInvalidByteCharacterEscapeDigits;
+  }
+  if rank == 1018 {
+    return LexerInvalidByteCharacterEscapeValue;
+  }
+  if rank == 1019 {
+    return LexerByteCharacterLiteralTooLong;
+  }
+  if rank == 1020 {
+    return LexerNonAsciiByteCharacterLiteral;
+  }
+  if rank == 2001 {
+    return ParserExpectedStatement;
+  }
+  if rank == 2002 {
+    return ParserEmptyInput;
+  }
+  if rank == 2003 {
+    return ParserExpectedEof;
+  }
+  if rank == 2004 {
+    return ParserUnexpectedWhitespace;
+  }
+  if rank == 2005 {
+    return ParserUnknownToken;
+  }
+  if rank == 2006 {
+    return ParserUnsupportedToken;
+  }
+  if rank == 3001 {
+    return DriverInputStartOutOfBounds;
+  }
+  if rank == 3002 {
+    return DriverInputEndOutOfBounds;
+  }
+  if rank == 3003 {
+    return DriverUnknownFailure;
+  }
+  if rank == 3101 {
+    return DriverEmptySourceText;
+  }
+  if rank == 3102 {
+    return DriverReadFileFailed;
+  }
+  if rank == 3103 {
+    return DriverLoadedSourceMissingFirst;
+  }
+  return Custom;
+}
+
+pub fn kind_from_code(code: i64) -> DiagnosticKind {
+  if code == 1002 {
+    return DriverInputEndOutOfBounds;
+  }
+  if code == 1003 {
+    return DriverUnknownFailure;
+  }
+  if code == 1101 {
+    return DriverEmptySourceText;
+  }
+  if code == 1102 {
+    return DriverReadFileFailed;
+  }
+  if code == 1103 {
+    return DriverLoadedSourceMissingFirst;
+  }
+  return kind_from_rank(code);
+}
+
+pub fn kind_name_text(kind: DiagnosticKind) -> std::Slice[u8] {
+  match kind {
+    Custom => { return "diagnostic.custom"; }
+    LexerInvalidCharacter => { return "lexer.invalid-character"; }
+    LexerUnterminatedStringLiteral => { return "lexer.unterminated-string-literal"; }
+    LexerUnsupportedStringEscape => { return "lexer.unsupported-string-escape"; }
+    LexerInvalidStringEscapeDigits => { return "lexer.invalid-string-escape-digits"; }
+    LexerInvalidStringEscapeValue => { return "lexer.invalid-string-escape-value"; }
+    LexerUnterminatedBlockComment => { return "lexer.unterminated-block-comment"; }
+    LexerMissingNumberBaseDigits => { return "lexer.missing-number-base-digits"; }
+    LexerInvalidNumberBaseDigit => { return "lexer.invalid-number-base-digit"; }
+    LexerUnsupportedNumberSuffix => { return "lexer.unsupported-number-suffix"; }
+    LexerNonDecimalFloatSuffix => { return "lexer.non-decimal-float-suffix"; }
+    LexerNonDecimalFloatDot => { return "lexer.non-decimal-float-dot"; }
+    LexerEmptyByteCharacterLiteral => { return "lexer.empty-byte-character-literal"; }
+    LexerUnterminatedByteCharacterLiteral => {
+      return "lexer.unterminated-byte-character-literal";
+    }
+    LexerUnsupportedByteCharacterEscape => { return "lexer.unsupported-byte-character-escape"; }
+    LexerInvalidByteCharacterEscapeDigits => {
+      return "lexer.invalid-byte-character-escape-digits";
+    }
+    LexerInvalidByteCharacterEscapeValue => {
+      return "lexer.invalid-byte-character-escape-value";
+    }
+    LexerByteCharacterLiteralTooLong => { return "lexer.byte-character-literal-too-long"; }
+    LexerNonAsciiByteCharacterLiteral => { return "lexer.non-ascii-byte-character-literal"; }
+    ParserExpectedStatement => { return "parser.expected-statement"; }
+    ParserEmptyInput => { return "parser.empty-input"; }
+    ParserExpectedEof => { return "parser.expected-eof"; }
+    ParserUnexpectedWhitespace => { return "parser.unexpected-whitespace"; }
+    ParserUnknownToken => { return "parser.unknown-token"; }
+    ParserUnsupportedToken => { return "parser.unsupported-token"; }
+    DriverInputStartOutOfBounds => { return "driver.input-start-out-of-bounds"; }
+    DriverInputEndOutOfBounds => { return "driver.input-end-out-of-bounds"; }
+    DriverUnknownFailure => { return "driver.unknown-failure"; }
+    DriverEmptySourceText => { return "driver.empty-source-text"; }
+    DriverReadFileFailed => { return "driver.read-file-failed"; }
+    DriverLoadedSourceMissingFirst => { return "driver.loaded-source-missing-first"; }
+  }
+}
+
+pub fn kind_message_text(kind: DiagnosticKind) -> std::Slice[u8] {
+  match kind {
+    Custom => { return "unknown diagnostic"; }
+    LexerInvalidCharacter => { return "invalid character"; }
+    LexerUnterminatedStringLiteral => { return "unterminated string literal"; }
+    LexerUnsupportedStringEscape => { return "unsupported string escape"; }
+    LexerInvalidStringEscapeDigits => { return "invalid string escape digits"; }
+    LexerInvalidStringEscapeValue => { return "string escape value out of range"; }
+    LexerUnterminatedBlockComment => { return "unterminated block comment"; }
+    LexerMissingNumberBaseDigits => { return "missing digits after number base prefix"; }
+    LexerInvalidNumberBaseDigit => { return "invalid digit for number base"; }
+    LexerUnsupportedNumberSuffix => { return "unsupported number suffix"; }
+    LexerNonDecimalFloatSuffix => { return "float suffix is only valid on decimal numbers"; }
+    LexerNonDecimalFloatDot => { return "base-prefixed numbers cannot use decimal float dots"; }
+    LexerEmptyByteCharacterLiteral => { return "empty byte character literal"; }
+    LexerUnterminatedByteCharacterLiteral => { return "unterminated byte character literal"; }
+    LexerUnsupportedByteCharacterEscape => { return "unsupported byte character escape"; }
+    LexerInvalidByteCharacterEscapeDigits => {
+      return "invalid byte character escape digits";
+    }
+    LexerInvalidByteCharacterEscapeValue => {
+      return "byte character escape value out of range";
+    }
+    LexerByteCharacterLiteralTooLong => { return "byte character literal must contain one byte"; }
+    LexerNonAsciiByteCharacterLiteral => { return "byte character literal must be ASCII"; }
+    ParserExpectedStatement => { return "expected a statement"; }
+    ParserEmptyInput => { return "input is empty"; }
+    ParserExpectedEof => { return "expected end of file after statement"; }
+    ParserUnexpectedWhitespace => { return "unexpected whitespace where a statement was expected"; }
+    ParserUnknownToken => { return "unknown token"; }
+    ParserUnsupportedToken => { return "unsupported token in this parser slice"; }
+    DriverInputStartOutOfBounds => { return "driver input start offset is out of bounds"; }
+    DriverInputEndOutOfBounds => { return "driver input end offset is out of bounds"; }
+    DriverUnknownFailure => { return "driver received a failure without a diagnostic"; }
+    DriverEmptySourceText => { return "source text is empty"; }
+    DriverReadFileFailed => { return "failed to read source file"; }
+    DriverLoadedSourceMissingFirst => { return "loaded source has no first byte"; }
+  }
+}
+
 pub fn diagnostic_code(diagnostic: Diagnostic) -> i64 {
   return diagnostic.code;
+}
+
+pub fn diagnostic_kind_rank(diagnostic: Diagnostic) -> i64 {
+  return kind_rank(diagnostic.kind);
+}
+
+pub fn diagnostic_name_text(diagnostic: Diagnostic) -> std::Slice[u8] {
+  return kind_name_text(diagnostic.kind);
+}
+
+pub fn diagnostic_message_text(diagnostic: Diagnostic) -> std::Slice[u8] {
+  return kind_message_text(diagnostic.kind);
 }
 
 pub fn diagnostic_start_offset(diagnostic: Diagnostic) -> i64 {
@@ -41,4 +355,124 @@ pub fn diagnostic_end_offset(diagnostic: Diagnostic) -> i64 {
 
 pub fn diagnostic_severity_rank(diagnostic: Diagnostic) -> i64 {
   return severity_rank(diagnostic.severity);
+}
+
+pub fn lexer_invalid_character(start: i64, end: i64) -> Diagnostic {
+  return error_kind(LexerInvalidCharacter, start, end);
+}
+
+pub fn lexer_unterminated_string_literal(start: i64, end: i64) -> Diagnostic {
+  return error_kind(LexerUnterminatedStringLiteral, start, end);
+}
+
+pub fn lexer_unsupported_string_escape(start: i64, end: i64) -> Diagnostic {
+  return error_kind(LexerUnsupportedStringEscape, start, end);
+}
+
+pub fn lexer_invalid_string_escape_digits(start: i64, end: i64) -> Diagnostic {
+  return error_kind(LexerInvalidStringEscapeDigits, start, end);
+}
+
+pub fn lexer_invalid_string_escape_value(start: i64, end: i64) -> Diagnostic {
+  return error_kind(LexerInvalidStringEscapeValue, start, end);
+}
+
+pub fn lexer_unterminated_block_comment(start: i64, end: i64) -> Diagnostic {
+  return error_kind(LexerUnterminatedBlockComment, start, end);
+}
+
+pub fn lexer_missing_number_base_digits(start: i64, end: i64) -> Diagnostic {
+  return error_kind(LexerMissingNumberBaseDigits, start, end);
+}
+
+pub fn lexer_invalid_number_base_digit(start: i64, end: i64) -> Diagnostic {
+  return error_kind(LexerInvalidNumberBaseDigit, start, end);
+}
+
+pub fn lexer_unsupported_number_suffix(start: i64, end: i64) -> Diagnostic {
+  return error_kind(LexerUnsupportedNumberSuffix, start, end);
+}
+
+pub fn lexer_non_decimal_float_suffix(start: i64, end: i64) -> Diagnostic {
+  return error_kind(LexerNonDecimalFloatSuffix, start, end);
+}
+
+pub fn lexer_non_decimal_float_dot(start: i64, end: i64) -> Diagnostic {
+  return error_kind(LexerNonDecimalFloatDot, start, end);
+}
+
+pub fn lexer_empty_byte_character_literal(start: i64, end: i64) -> Diagnostic {
+  return error_kind(LexerEmptyByteCharacterLiteral, start, end);
+}
+
+pub fn lexer_unterminated_byte_character_literal(start: i64, end: i64) -> Diagnostic {
+  return error_kind(LexerUnterminatedByteCharacterLiteral, start, end);
+}
+
+pub fn lexer_unsupported_byte_character_escape(start: i64, end: i64) -> Diagnostic {
+  return error_kind(LexerUnsupportedByteCharacterEscape, start, end);
+}
+
+pub fn lexer_invalid_byte_character_escape_digits(start: i64, end: i64) -> Diagnostic {
+  return error_kind(LexerInvalidByteCharacterEscapeDigits, start, end);
+}
+
+pub fn lexer_invalid_byte_character_escape_value(start: i64, end: i64) -> Diagnostic {
+  return error_kind(LexerInvalidByteCharacterEscapeValue, start, end);
+}
+
+pub fn lexer_byte_character_literal_too_long(start: i64, end: i64) -> Diagnostic {
+  return error_kind(LexerByteCharacterLiteralTooLong, start, end);
+}
+
+pub fn lexer_non_ascii_byte_character_literal(start: i64, end: i64) -> Diagnostic {
+  return error_kind(LexerNonAsciiByteCharacterLiteral, start, end);
+}
+
+pub fn parser_expected_statement(start: i64, end: i64) -> Diagnostic {
+  return error_kind(ParserExpectedStatement, start, end);
+}
+
+pub fn parser_empty_input(start: i64, end: i64) -> Diagnostic {
+  return error_kind(ParserEmptyInput, start, end);
+}
+
+pub fn parser_expected_eof(start: i64, end: i64) -> Diagnostic {
+  return error_kind(ParserExpectedEof, start, end);
+}
+
+pub fn parser_unexpected_whitespace(start: i64, end: i64) -> Diagnostic {
+  return error_kind(ParserUnexpectedWhitespace, start, end);
+}
+
+pub fn parser_unknown_token(start: i64, end: i64) -> Diagnostic {
+  return error_kind(ParserUnknownToken, start, end);
+}
+
+pub fn parser_unsupported_token(start: i64, end: i64) -> Diagnostic {
+  return error_kind(ParserUnsupportedToken, start, end);
+}
+
+pub fn driver_input_start_out_of_bounds(start: i64, end: i64) -> Diagnostic {
+  return error_kind(DriverInputStartOutOfBounds, start, end);
+}
+
+pub fn driver_input_end_out_of_bounds(start: i64, end: i64) -> Diagnostic {
+  return error_kind(DriverInputEndOutOfBounds, start, end);
+}
+
+pub fn driver_unknown_failure(start: i64, end: i64) -> Diagnostic {
+  return error_kind(DriverUnknownFailure, start, end);
+}
+
+pub fn driver_empty_source_text(start: i64, end: i64) -> Diagnostic {
+  return error_kind(DriverEmptySourceText, start, end);
+}
+
+pub fn driver_read_file_failed(start: i64, end: i64) -> Diagnostic {
+  return error_kind(DriverReadFileFailed, start, end);
+}
+
+pub fn driver_loaded_source_missing_first(start: i64, end: i64) -> Diagnostic {
+  return error_kind(DriverLoadedSourceMissingFirst, start, end);
 }

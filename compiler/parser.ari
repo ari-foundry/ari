@@ -9,16 +9,14 @@ pub enum ParseResult {
 
 pub fn parse_statement(cursor: lexer::TokenCursor) -> ParseResult {
   if lexer::cursor_is_done(cursor) || lexer::cursor_is_eof(cursor) {
-    return Failed(diagnostic::error(
-      2001,
+    return Failed(diagnostic::parser_expected_statement(
       lexer::cursor_token_start(cursor),
       lexer::cursor_token_end(cursor)
     ));
   }
 
   if lexer::cursor_is_whitespace(cursor) {
-    return Failed(diagnostic::error(
-      2004,
+    return Failed(diagnostic::parser_unexpected_whitespace(
       lexer::cursor_token_start(cursor),
       lexer::cursor_token_end(cursor)
     ));
@@ -35,15 +33,13 @@ pub fn parse_statement(cursor: lexer::TokenCursor) -> ParseResult {
   }
 
   if lexer::cursor_is_unknown(cursor) {
-    return Failed(diagnostic::error(
-      2005,
+    return Failed(diagnostic::parser_unknown_token(
       lexer::cursor_token_start(cursor),
       lexer::cursor_token_end(cursor)
     ));
   }
 
-  return Failed(diagnostic::error(
-    2006,
+  return Failed(diagnostic::parser_unsupported_token(
     lexer::cursor_token_start(cursor),
     lexer::cursor_token_end(cursor)
   ));
@@ -98,8 +94,7 @@ pub fn parse_handoff_kind_rank(handoff: lexer::TokenHandoff) -> i64 {
 pub fn parse_handoff(handoff: lexer::TokenHandoff) -> ParseResult {
   if !lexer::handoff_has_eof(handoff) {
     let extra = lexer::handoff_eof(handoff);
-    return Failed(diagnostic::error(
-      2003,
+    return Failed(diagnostic::parser_expected_eof(
       lexer::cursor_token_start(extra),
       lexer::cursor_token_end(extra)
     ));
@@ -116,8 +111,8 @@ fn parse_handoff_result(
       return parse_handoff(handoff);
     }
     std::Err(lex_failure) => {
-      return Failed(diagnostic::error(
-        lexer::lex_failure_code(lex_failure),
+      return Failed(diagnostic::error_kind_rank(
+        lexer::lex_failure_kind_rank(lex_failure),
         lexer::lex_failure_start_offset(lex_failure),
         lexer::lex_failure_end_offset(lex_failure)
       ));
@@ -177,7 +172,7 @@ pub fn parse_text_kind_rank(text: std::Slice[u8]) -> i64 {
 }
 
 pub fn parse_empty() -> ParseResult {
-  return Failed(diagnostic::error(2002, 0, 0));
+  return Failed(diagnostic::parser_empty_input(0, 0));
 }
 
 pub fn parse_is_success(result: ParseResult) -> bool {
@@ -233,6 +228,27 @@ pub fn parse_failure_code(result: ParseResult) -> i64 {
   match result {
     Parsed(_) => 0,
     Failed(failure) => diagnostic::diagnostic_code(failure),
+  }
+}
+
+pub fn parse_failure_kind_rank(result: ParseResult) -> i64 {
+  match result {
+    Parsed(_) => 0,
+    Failed(failure) => diagnostic::diagnostic_kind_rank(failure),
+  }
+}
+
+pub fn parse_failure_name_text(result: ParseResult) -> std::Slice[u8] {
+  match result {
+    Parsed(_) => "ok",
+    Failed(failure) => diagnostic::diagnostic_name_text(failure),
+  }
+}
+
+pub fn parse_failure_message_text(result: ParseResult) -> std::Slice[u8] {
+  match result {
+    Parsed(_) => "ok",
+    Failed(failure) => diagnostic::diagnostic_message_text(failure),
   }
 }
 

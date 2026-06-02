@@ -326,9 +326,9 @@ smoke uses a parser-local helper so it does not pass nested lexer cursor values
 across module paths.
 The lexer diagnostic handoff also avoids passing `lexer::diagnostic::Diagnostic`
 directly into `parser::diagnostic::Diagnostic`; it uses a lexer-owned
-`LexFailure` code/span payload and lets parser reconstruct its local diagnostic
-value. This is the same cross-module type identity pressure, not a confirmed
-hosted compiler bug.
+`LexFailure` kind-rank/code/span payload and lets parser reconstruct its local
+diagnostic value. This is the same cross-module type identity pressure, not a
+confirmed hosted compiler bug.
 The source-text empty byte character diagnostic for `''` now preserves code
 `1014` through lexer, parser, and driver paths without requiring a hosted
 compiler fix.
@@ -472,6 +472,12 @@ The Ari-written lexer now separates `Integer` and `Float` token kinds while
 keeping the parser-facing number-class predicate, and the source-root smoke
 checks integer, decimal-float, float-suffix, and byte-character token-kind
 distinctions without requiring a hosted compiler fix.
+The Ari-written diagnostic model now carries `DiagnosticKind` plus
+name/message text accessors in addition to numeric compatibility codes. The
+driver now returns diagnostic payloads in `Err` results, and source-root smoke
+coverage checks that the same compatibility code `1001` can be distinguished
+as either `lexer.invalid-character` or `driver.input-start-out-of-bounds`
+without requiring a hosted compiler fix.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
@@ -554,10 +560,12 @@ Desired stage0 pressure that is not yet classified as a bug:
 - Clearer match-arm binding scoping ergonomics; today a helper that matches
   both `std::Ok(code)` and `std::Err(code)`, or sibling enum cases with the
   same payload spelling, must use distinct payload names.
-- Richer Ari-written diagnostic identity is still needed before these
-  diagnostics can carry stage0-style stable string codes such as `L0001`; this
-  slice keeps numeric bootstrap codes and does not classify that as a hosted
-  compiler bug.
+- Ari-written diagnostics now have named kind/message identity, but they still
+  do not carry stage0-style stable string codes such as `L0001`, localized
+  labels, source snippets, or rendered diagnostic output. Numeric codes remain
+  compatibility payloads for focused smokes rather than the primary human
+  identity. The remaining rendering gap is Ari-written compiler model pressure,
+  not a confirmed hosted compiler bug.
 - The Ari-written token model now separates `Integer` and `Float` token kinds
   and carries literal base plus suffix-rank metadata for decimal,
   base-prefixed, typed numeric, and byte-character tokens. It now also carries
