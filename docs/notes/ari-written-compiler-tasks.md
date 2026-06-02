@@ -812,6 +812,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Re-reviewed text scan entrypoints and factored repeated EOF and identifier
   token construction into private helpers shared by token-only and
   result-producing paths.
+- Re-reviewed diagnostic metadata access and consolidated diagnostic kind rank,
+  name text, and message text behind one private diagnostic-kind metadata
+  mapping.
 
 ## Small Task Queue
 

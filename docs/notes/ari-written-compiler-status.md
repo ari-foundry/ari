@@ -690,6 +690,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   every handoff constructor.
 - Text scan entrypoints now share private EOF and identifier token-construction
   helpers between token-only and result-producing paths.
+- Diagnostic kind rank, name text, and message text now share a private
+  diagnostic-kind metadata mapping instead of maintaining separate full-kind
+  matches for each query.
 - `compiler/lexer.ari` now uses ranked-width and ranked-position query names
   and no longer exposes public `score` helpers.
 - `compiler/parser.ari` now uses parser kind-rank query names and no longer
