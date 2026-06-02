@@ -753,6 +753,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   old source-root smoke block; keyword coverage now stays on the reusable
   `KeywordTable`/`get_or_bytes` path instead of maintaining a second keyword
   list.
+- Added source-root value and parser-success smoke coverage for all stage0
+  simple byte-character escape spellings: alert, backspace, escape,
+  form-feed, newline, carriage return, tab, vertical tab, quote, single-quote,
+  question-mark, and backslash.
 
 ## Small Task Queue
 

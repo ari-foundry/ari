@@ -190,8 +190,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   suffix rank, checked values, and source-backed literal/suffix spans without
   passing nested `token` module types across phase boundaries.
 - `compiler/lexer.ari` scans simple byte character escape spellings such as
-  `'\n'` and `'\\'` as `Integer` spans, while leaving broader byte-character
-  diagnostics for later slices.
+  `'\n'` and `'\\'` as `Integer` spans, and source-root smoke coverage now
+  checks stage0 simple escape value payloads for alert, backspace, escape,
+  form-feed, newline, carriage return, tab, vertical tab, quote,
+  single-quote, question-mark, and backslash spellings.
 - `compiler/lexer.ari` scans byte character hex and octal numeric escape
   spellings such as `'\x41'` and `'\101'` as `Integer` spans.
 - `compiler/lexer.ari` scans ASCII-valued fixed-width byte character Unicode
