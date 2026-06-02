@@ -174,6 +174,11 @@ construction match from `scan_one_result`. That function now reuses `scan_one`
 and only turns unknown tokens into `lexer.invalid-character`, keeping the
 token-only and diagnostic paths synchronized without requiring a hosted
 compiler fix.
+The lexer one-character stream and handoff constructor review removed repeated
+construction of identical cursors in `stream_from_one`, `handoff_from_one`,
+and `handoff_without_eof_from_one`. This is Ari-written lexer cleanup only; the
+existing stream and handoff smoke coverage already checks the resulting cursor
+placement without requiring a hosted compiler fix.
 The AST statement-kind query and parser payload-shape smoke checked successful
 statement output without requiring a hosted compiler fix. The AST node
 span-length query and parser payload-span smoke checked successful statement
@@ -583,6 +588,10 @@ Desired stage0 pressure that is not yet classified as a bug:
   only add failure payloads. A second full token-construction `match` beside
   the token-only path is a synchronization hazard and code-quality pressure in
   the Ari-written compiler, not a confirmed hosted compiler bug.
+- Tiny lexer constructors should still reuse already-built cursor values when
+  those values are needed in multiple fields. Rebuilding the same cursor in a
+  struct literal is easy to miss in reviews, and it is Ari-written compiler
+  code-quality pressure rather than a hosted compiler bug.
 - Wrapping a zone-backed `HashMap` in a new Ari struct was awkward in this
   slice: mutating a `HashMap` through a helper/field lost tracked-zone receiver
   information, and returning a wrapper with a raw zone pointer or embedded map

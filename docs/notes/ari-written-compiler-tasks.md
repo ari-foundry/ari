@@ -800,6 +800,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Re-reviewed the lexer one-character result path and removed the duplicated
   full-token construction match from `scan_one_result`; it now reuses
   `scan_one` and only converts unknown tokens into lexer diagnostics.
+- Re-reviewed one-character stream/handoff constructors and removed repeated
+  construction of identical `TokenCursor` and EOF cursors in `stream_from_one`,
+  `handoff_from_one`, and `handoff_without_eof_from_one`.
 
 ## Small Task Queue
 

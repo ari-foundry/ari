@@ -2280,10 +2280,11 @@ pub fn cursor_string_literal_decoded_byte_len(
 }
 
 pub fn stream_from_one(value: char, offset: i64) -> TokenStream {
+  let eof = cursor_eof(offset + 1);
   return TokenStream {
     first: cursor_from_one(value, offset),
-    second: cursor_eof(offset + 1),
-    eof: cursor_eof(offset + 1),
+    second: eof,
+    eof: eof,
     length: 1,
   };
 }
@@ -2323,9 +2324,10 @@ pub fn stream_has_eof(stream: TokenStream) -> bool {
 }
 
 pub fn handoff_from_one(value: char, offset: i64) -> TokenHandoff {
+  let first = cursor_from_one(value, offset);
   return TokenHandoff {
-    first: cursor_from_one(value, offset),
-    eof: cursor_advance(cursor_from_one(value, offset)),
+    first: first,
+    eof: cursor_advance(first),
   };
 }
 
@@ -2448,9 +2450,10 @@ pub fn handoff_from_text_with_keywords_result(
 }
 
 pub fn handoff_without_eof_from_one(value: char, offset: i64) -> TokenHandoff {
+  let first = cursor_from_one(value, offset);
   return TokenHandoff {
-    first: cursor_from_one(value, offset),
-    eof: cursor_from_one(value, offset),
+    first: first,
+    eof: first,
   };
 }
 

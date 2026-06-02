@@ -680,6 +680,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/lexer.ari` now keeps `scan_one_result` as a thin diagnostic wrapper
   around `scan_one`, so one-character token construction has one source of
   truth and the result path only adds the invalid-character failure case.
+- One-character lexer stream and handoff constructors now reuse local cursor
+  values instead of rebuilding the same cursor/EOF cursor more than once.
 - `compiler/lexer.ari` now uses ranked-width and ranked-position query names
   and no longer exposes public `score` helpers.
 - `compiler/parser.ari` now uses parser kind-rank query names and no longer
