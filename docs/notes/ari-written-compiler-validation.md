@@ -281,17 +281,18 @@ The lexer keyword smoke checked exact `as` source-text classification and
 preserved `ask` as an identifier without requiring a hosted compiler fix.
 The lexer keyword smoke checked exact `meta` source-text classification and
 preserved `metadata` as an identifier without requiring a hosted compiler fix.
-The lexer keyword smoke now also checks the stateless `scan_text` fallback for
-`struct`, `extern`, `enum`, `trait`, `dyn`, `match`, `mod`, `pub`, `use`,
-`impl`, `for`, and `in`, matching the existing HashMap-backed keyword table
-path without requiring a hosted compiler fix.
+The old stateless keyword fallback was removed after review: `scan_text` and
+`scan_text_result` now classify identifier spellings as `Identifier`, and
+keyword recognition lives on the HashMap-backed `KeywordTable` path. The
+table-aware scanner, cursor, significant-advance, handoff, parser, and driver
+paths keep keyword coverage without requiring a hosted compiler fix.
 The working-rule update recorded that bootstrap decisions must come from
 inspecting actual repo structure, stdlib APIs, tests, and stage0 behavior
 rather than inference; this required no hosted compiler fix.
 The keyword lookup review now records that `lib/std` is assumed available and
-should be used first, and that std `HashMap` exists, while the compatibility
-stateless lexer path still keeps the allocation-free matcher without requiring
-a hosted compiler fix.
+should be used first, and that std `HashMap[String,V]` has borrowed byte-slice
+lookup helpers. The duplicated stateless keyword matcher was deleted rather
+than maintained beside `KeywordTable`, without requiring a hosted compiler fix.
 The HashMap-backed keyword table checked through `KeywordTable` as a type alias
 over `std::collections::HashMap[String, TokenKind]`, plus table-aware scanner,
 cursor, significant-advance, and handoff helpers, without requiring a hosted
@@ -306,8 +307,9 @@ parser keyword smoke uses a small per-call zone helper because root
 `lexer::KeywordTable` and parser-local `lexer::KeywordTable` are distinct
 module-path types, and `parser::lexer` is intentionally private; this is
 existing module-boundary pressure, not a confirmed hosted compiler bug.
-The keyword matcher helper refactor kept the width-bucket keyword path checked
-through the source-root smoke without requiring a hosted compiler fix.
+The keyword lookup cleanup removed the width-bucket matcher path entirely;
+source-root keyword coverage now stays on `KeywordTable`/`get_or_bytes`,
+without requiring a hosted compiler fix.
 The token-kind class helper refactor checked through the bootstrap source root
 without requiring a hosted compiler fix. The lexer double-quote delimiter smoke
 checked `"` tokenization as punctuation without requiring a hosted compiler
@@ -417,9 +419,10 @@ line and block comments before an unterminated block comment through lexer
 handoff, parser, and driver paths, preserving lexer diagnostic code `1008` and
 failure spans without requiring a hosted compiler fix.
 The source-text leading-comment keyword smoke now checks line and block
-comments before `false` through HashMap-backed keyword-table handoff, parser,
-and driver paths, preserving parser unsupported-token diagnostic code `2006`
-and keyword spans without requiring a hosted compiler fix.
+comments before `false` through HashMap-backed keyword-table handoff,
+keyword-table parser, and driver paths, preserving parser unsupported-token
+diagnostic code `2006` and keyword spans without requiring a hosted compiler
+fix.
 The source-text leading-comment unknown-token smoke now checks line and block
 comments before `$` through lexer handoff, parser, keyword-table parser, and
 driver paths, preserving parser unknown-token diagnostic code `2005` and
@@ -515,12 +518,6 @@ codegen, diagnostics, or another hosted compiler area.
 
 Desired stage0 pressure that is not yet classified as a bug:
 
-- The compatibility keyword lookup still lives in stateless
-  `identifier_kind_from_text`; keep it only for focused legacy smokes while
-  adding future source-text keywords to the reusable `KeywordTable` path.
-  It now mirrors the current `KeywordTable` keyword set, but maintaining two
-  keyword lists remains lexer design pressure until the stateless API is
-  retired or can share table data without forcing ad hoc zone plumbing.
 - Keep the reusable keyword-table source-root smoke data-driven through its
   table-case helper as future keywords are backfilled; new cases should add one
   helper call rather than another copied cursor-check block.

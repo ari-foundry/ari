@@ -693,8 +693,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   then routed source-model helpers through those accessors.
 - Added a source-file span constructor helper in `compiler/source.ari`, then
   routed source-table and loaded-source span constructors through it.
-- Completed the stateless lexer keyword fallback so `scan_text` now recognizes
-  the same exact keyword set as the HashMap-backed `KeywordTable` path.
+- Removed the stateless lexer keyword fallback after review, so `scan_text`
+  keeps identifier spellings as `Identifier` and real keyword recognition uses
+  the HashMap-backed `KeywordTable` path.
 - Split the Ari-written token model's numeric literal family into `Integer`
   and `Float` token kinds, kept the shared number-class predicate for parser
   compatibility, and added source-root smoke coverage for integer, decimal
@@ -748,6 +749,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   starts an unsupported suffix; source-root smoke now checks `42_abc` tokenizes
   as integer `42` followed by identifier `_abc` and reports parser missing-EOF
   on the extra identifier span.
+- Deleted the duplicated `identifier_kind_from_text` keyword matcher and its
+  old source-root smoke block; keyword coverage now stays on the reusable
+  `KeywordTable`/`get_or_bytes` path instead of maintaining a second keyword
+  list.
 
 ## Small Task Queue
 

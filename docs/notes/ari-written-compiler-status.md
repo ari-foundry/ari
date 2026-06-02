@@ -104,7 +104,8 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   `module`, `public`, `user`, `implicit`, `forest`, `inside`, `letter`,
   `variant`, `owner`, `reference`, `mutable`, `ptrace`, `returning`, `iffy`,
   `elsewhere`, `while1`, `initial`, `next1`, `continue1`, `break1`, `drop1`,
-  `forget1`, `null1`, `true1`, and `false1` as identifiers.
+  `forget1`, `null1`, `true1`, and `false1` as identifiers through the
+  HashMap-backed keyword-table path.
 - Ari-written compiler code assumes `lib/std` is available and should use it
   directly. `HashMap` and byte-slice string lookup helpers are available in
   `lib/std/collections.arih`.
@@ -115,14 +116,16 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `compiler/lexer.ari` exposes table-aware source-text scanning, cursor
   advance, significant-token advance, and handoff helpers so later parser and
   driver work can reuse one keyword table instead of rebuilding lookup state
-  per token. The older stateless text helpers remain as compatibility wrappers.
+  per token. The older stateless text helpers remain for focused lexer smokes,
+  but they now classify identifier spellings as `Identifier` instead of keeping
+  a second keyword list.
 - `compiler/parser.ari` exposes a zone-backed `parse_text_with_keywords`
   helper that builds one reusable lexer `KeywordTable` for a source-text parse
   and consumes the lexer table-aware handoff path.
 - `compiler/driver.ari` routes source-text and file-input parsing through the
   parser keyword-table helper, so real compiler text input now uses the
   HashMap-backed keyword path. The older parser `parse_text` helper remains as
-  a stateless compatibility path for focused smokes.
+  a stateless identifier-only compatibility path for focused smokes.
 - `compiler/lexer.ari` classifies `?` and `??` as operators so
   result-propagation and null-coalescing tokens match the stage0 spellings.
 - `compiler/lexer.ari` exposes one `scan_two`/`cursor_from_two` path for all

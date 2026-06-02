@@ -856,27 +856,6 @@ fn is_unicode_escape_value(value: i64) -> bool {
   return std::encoding::is_unicode_scalar(value as u32);
 }
 
-fn identifier_text_matches(
-  text: std::Slice[u8],
-  start: i64,
-  end: i64,
-  spelling: std::Slice[u8]
-) -> bool {
-  let width = end - start;
-  if width != spelling.len {
-    return false;
-  }
-
-  var index = 0;
-  while index < width {
-    if text[start + index] != spelling[index] {
-      return false;
-    }
-    index = index + 1;
-  }
-  return true;
-}
-
 pub fn keyword_table(zone: ref mut Zone) -> KeywordTable {
   var entries = std::collections::string_hash_map<token::TokenKind>(zone, 32);
   entries.insert(std::string::from(zone, "fn"), token::KwFn);
@@ -925,128 +904,6 @@ fn identifier_kind_from_keywords(
 ) -> token::TokenKind {
   let spelling = text.slice(start, end);
   return table.get_or_bytes(spelling, token::Identifier);
-}
-
-fn identifier_kind_from_text(text: std::Slice[u8], start: i64, end: i64) -> token::TokenKind {
-  let width = end - start;
-  if width == 2 {
-    if identifier_text_matches(text, start, end, "fn") {
-      return token::KwFn;
-    }
-    if identifier_text_matches(text, start, end, "as") {
-      return token::KwAs;
-    }
-    if identifier_text_matches(text, start, end, "if") {
-      return token::KwIf;
-    }
-    if identifier_text_matches(text, start, end, "in") {
-      return token::KwIn;
-    }
-  }
-  if width == 3 {
-    if identifier_text_matches(text, start, end, "dyn") {
-      return token::KwDyn;
-    }
-    if identifier_text_matches(text, start, end, "mod") {
-      return token::KwMod;
-    }
-    if identifier_text_matches(text, start, end, "pub") {
-      return token::KwPub;
-    }
-    if identifier_text_matches(text, start, end, "use") {
-      return token::KwUse;
-    }
-    if identifier_text_matches(text, start, end, "for") {
-      return token::KwFor;
-    }
-    if identifier_text_matches(text, start, end, "let") {
-      return token::KwLet;
-    }
-    if identifier_text_matches(text, start, end, "var") {
-      return token::KwVar;
-    }
-    if identifier_text_matches(text, start, end, "own") {
-      return token::KwOwn;
-    }
-    if identifier_text_matches(text, start, end, "ref") {
-      return token::KwRef;
-    }
-    if identifier_text_matches(text, start, end, "mut") {
-      return token::KwMut;
-    }
-    if identifier_text_matches(text, start, end, "ptr") {
-      return token::KwPtr;
-    }
-  }
-  if width == 4 {
-    if identifier_text_matches(text, start, end, "meta") {
-      return token::KwMeta;
-    }
-    if identifier_text_matches(text, start, end, "enum") {
-      return token::KwEnum;
-    }
-    if identifier_text_matches(text, start, end, "impl") {
-      return token::KwImpl;
-    }
-    if identifier_text_matches(text, start, end, "else") {
-      return token::KwElse;
-    }
-    if identifier_text_matches(text, start, end, "init") {
-      return token::KwInit;
-    }
-    if identifier_text_matches(text, start, end, "next") {
-      return token::KwNext;
-    }
-    if identifier_text_matches(text, start, end, "drop") {
-      return token::KwDrop;
-    }
-    if identifier_text_matches(text, start, end, "null") {
-      return token::KwNull;
-    }
-    if identifier_text_matches(text, start, end, "true") {
-      return token::KwTrue;
-    }
-  }
-  if width == 5 {
-    if identifier_text_matches(text, start, end, "const") {
-      return token::KwConst;
-    }
-    if identifier_text_matches(text, start, end, "trait") {
-      return token::KwTrait;
-    }
-    if identifier_text_matches(text, start, end, "match") {
-      return token::KwMatch;
-    }
-    if identifier_text_matches(text, start, end, "while") {
-      return token::KwWhile;
-    }
-    if identifier_text_matches(text, start, end, "break") {
-      return token::KwBreak;
-    }
-    if identifier_text_matches(text, start, end, "false") {
-      return token::KwFalse;
-    }
-  }
-  if width == 6 {
-    if identifier_text_matches(text, start, end, "struct") {
-      return token::KwStruct;
-    }
-    if identifier_text_matches(text, start, end, "extern") {
-      return token::KwExtern;
-    }
-    if identifier_text_matches(text, start, end, "return") {
-      return token::KwReturn;
-    }
-    if identifier_text_matches(text, start, end, "forget") {
-      return token::KwForget;
-    }
-  }
-  if width == 8 {
-    if identifier_text_matches(text, start, end, "continue") {
-      return token::KwContinue;
-    }
-  }
-  return token::Identifier;
 }
 
 pub fn is_whitespace(value: char) -> bool {
@@ -1909,8 +1766,7 @@ pub fn scan_text(text: std::Slice[u8], offset: i64) -> token::Token {
   let first = text[offset];
   if is_identifier_start(first) {
     let identifier_end = identifier_end_from_text(text, offset);
-    let kind = identifier_kind_from_text(text, offset, identifier_end);
-    return token::make_token(kind, offset, identifier_end);
+    return token::make_token(token::Identifier, offset, identifier_end);
   }
 
   return scan_non_identifier_text(text, offset);
@@ -1924,8 +1780,7 @@ pub fn scan_text_result(text: std::Slice[u8], offset: i64) -> LexResult {
   let first = text[offset];
   if is_identifier_start(first) {
     let identifier_end = identifier_end_from_text(text, offset);
-    let kind = identifier_kind_from_text(text, offset, identifier_end);
-    return Scanned(token::make_token(kind, offset, identifier_end));
+    return Scanned(token::make_token(token::Identifier, offset, identifier_end));
   }
 
   return scan_non_identifier_text_result(text, offset);
