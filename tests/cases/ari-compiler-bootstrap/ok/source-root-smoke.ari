@@ -68,15 +68,7 @@ fn source_text_extra_token_driver_score() -> i64 {
 }
 
 fn source_text_comment_only_driver_score() -> i64 {
-  let line_code = source_text_driver_result("// skip");
-  if line_code != 2001 {
-    return 1;
-  }
-  let block_code = source_text_driver_result("/* skip */");
-  if block_code != 2001 {
-    return 2;
-  }
-  return 0;
+  return source_text_line_block_driver_score("// skip", "/* skip */", 2001);
 }
 
 fn source_text_leading_comment_driver_score() -> i64 {
@@ -172,15 +164,7 @@ fn source_text_leading_comment_byte_char_fixed_unicode_escape_driver_score() -> 
 }
 
 fn source_text_trailing_comment_driver_score() -> i64 {
-  let line_code = source_text_driver_result("p// skip");
-  if line_code != 0 {
-    return 1;
-  }
-  let block_code = source_text_driver_result("p/* skip */");
-  if block_code != 0 {
-    return 2;
-  }
-  return 0;
+  return source_text_line_block_driver_score("p// skip", "p/* skip */", 0);
 }
 
 fn source_text_trailing_unterminated_block_driver_score() -> i64 {
@@ -196,27 +180,11 @@ fn source_text_trailing_unterminated_block_driver_score() -> i64 {
 }
 
 fn source_text_post_comment_extra_token_driver_score() -> i64 {
-  let line_code = source_text_driver_result("p// skip\nq");
-  if line_code != 2003 {
-    return 1;
-  }
-  let block_code = source_text_driver_result("p/* skip */q");
-  if block_code != 2003 {
-    return 2;
-  }
-  return 0;
+  return source_text_line_block_driver_score("p// skip\nq", "p/* skip */q", 2003);
 }
 
 fn source_text_post_comment_lexer_failure_driver_score() -> i64 {
-  let line_code = source_text_driver_result("p// skip\n\"open");
-  if line_code != 1004 {
-    return 1;
-  }
-  let block_code = source_text_driver_result("p/* skip */\"open");
-  if block_code != 1004 {
-    return 2;
-  }
-  return 0;
+  return source_text_line_block_driver_score("p// skip\n\"open", "p/* skip */\"open", 1004);
 }
 
 fn source_text_keyword_driver_score() -> i64 {

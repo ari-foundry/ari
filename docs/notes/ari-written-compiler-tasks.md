@@ -550,6 +550,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   copied line/block driver, lexer handoff, and parser checks with explicit
   line/block helpers so future escaped-token coverage adds cases instead of
   another copied check block.
+- Extended that review cleanup to the older comment-only, trailing-comment,
+  and post-comment source-text driver smokes that also compare line and block
+  comment spellings with the same expected result code.
 
 ## Small Task Queue
 

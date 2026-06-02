@@ -442,6 +442,11 @@ The review pass after the recent leading-comment smoke work replaced copied
 line/block driver, lexer handoff, and parser checks with explicit line/block
 helpers. This was test-structure cleanup in the Ari bootstrap fixture, not a
 hosted compiler bug or stage0 behavior change.
+A follow-up review pass moved the older comment-only, trailing-comment, and
+post-comment source-text driver smokes onto the same line/block helper where
+their expected-code shape matched it. The trailing unterminated-block driver
+smoke intentionally stays separate because it compares direct and spaced block
+comment forms instead of line and block comment equivalents.
 
 When Ari-written compiler work exposes behavior that looks wrong in the current
 C++ hosted compiler, keep it separate from the Ari-written compiler task list.
