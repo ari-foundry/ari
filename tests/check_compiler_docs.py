@@ -51,6 +51,7 @@ def main() -> int:
         "## Bundled Tooling Docs",
         "These docs are currently bundled in `ari`",
         "future stable tooling projects may",
+        "[Tooling Split Criteria](notes/tooling-split-criteria.md)",
         "[Developer Overview](dev/README.md)",
         "[Architecture](dev/architecture.md)",
         "[Compiler Pipeline](dev/compiler-pipeline.md)",
@@ -98,6 +99,27 @@ def main() -> int:
         "[Documentation Ownership](documentation-ownership.md)",
         notes_index_path,
     )
+    require(
+        notes_index,
+        "[Tooling Split Criteria](tooling-split-criteria.md)",
+        notes_index_path,
+    )
+
+    tooling_split_path = "docs/notes/tooling-split-criteria.md"
+    tooling_split = read(tooling_split_path)
+    for needle in [
+        "# Tooling Split Criteria",
+        "ari-lint is currently bundled",
+        "ari-lsp is currently bundled",
+        "editor integrations currently live under the ari repository",
+        "stable command-line or protocol boundary",
+        "compatibility with ari releases",
+        "Do not split tools/lint in this step",
+        "Do not split tools/lsp in this step",
+        "Do not create ari-lint, ari-lsp, or ari-vscode repositories in this step",
+        "Do not invent future repository links",
+    ]:
+        require(tooling_split, needle, tooling_split_path)
 
     ownership_path = "docs/notes/documentation-ownership.md"
     ownership = read(ownership_path)
