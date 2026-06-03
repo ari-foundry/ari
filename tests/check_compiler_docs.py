@@ -104,6 +104,11 @@ def main() -> int:
         "[Tooling Split Criteria](tooling-split-criteria.md)",
         notes_index_path,
     )
+    require(
+        notes_index,
+        "[ari-lint Boundary Inventory](ari-lint-boundary-inventory.md)",
+        notes_index_path,
+    )
 
     tooling_split_path = "docs/notes/tooling-split-criteria.md"
     tooling_split = read(tooling_split_path)
@@ -120,6 +125,24 @@ def main() -> int:
         "Do not invent future repository links",
     ]:
         require(tooling_split, needle, tooling_split_path)
+
+    lint_boundary_path = "docs/notes/ari-lint-boundary-inventory.md"
+    lint_boundary = read(lint_boundary_path)
+    for needle in [
+        "# ari-lint Boundary Inventory",
+        "`ari-lint` is currently bundled in the `ari` repository",
+        "## Source Inventory",
+        "## Test Inventory",
+        "## Documentation Inventory",
+        "## Compiler Boundary",
+        "## CLI Boundary",
+        "## Rule / Severity Boundary",
+        "## Split Risks",
+        "Do not move `tools/lint` in this step",
+        "Do not create `ari-foundry/ari-lint` in this step",
+        "Do not invent future repository links",
+    ]:
+        require(lint_boundary, needle, lint_boundary_path)
 
     ownership_path = "docs/notes/documentation-ownership.md"
     ownership = read(ownership_path)
