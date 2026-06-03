@@ -114,6 +114,11 @@ def main() -> int:
         "[ari-lint CLI and Diagnostic Contract](ari-lint-cli-diagnostic-contract.md)",
         notes_index_path,
     )
+    require(
+        notes_index,
+        "[ari-lint Dependency Model](ari-lint-dependency-model.md)",
+        notes_index_path,
+    )
 
     tooling_split_path = "docs/notes/tooling-split-criteria.md"
     tooling_split = read(tooling_split_path)
@@ -166,6 +171,25 @@ def main() -> int:
         "Do not invent future repository links",
     ]:
         require(lint_contract, needle, lint_contract_path)
+
+    lint_dependency_path = "docs/notes/ari-lint-dependency-model.md"
+    lint_dependency = read(lint_dependency_path)
+    for needle in [
+        "# ari-lint Dependency Model",
+        "## Candidate Models",
+        "### Model A: invoke `ari --check`",
+        "### Model B: link compiler libraries directly",
+        "### Model C: shared checker or diagnostics library",
+        "Preferred near-term model: Model A",
+        "## Required Boundary For Model A",
+        "## Compatibility Implications",
+        "## Split Risks",
+        "Do not move `tools/lint` in this step",
+        "Do not create `ari-foundry/ari-lint` in this step",
+        "Do not introduce a shared checker library in this step",
+        "Do not invent future repository links",
+    ]:
+        require(lint_dependency, needle, lint_dependency_path)
 
     ownership_path = "docs/notes/documentation-ownership.md"
     ownership = read(ownership_path)
