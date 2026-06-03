@@ -1455,6 +1455,25 @@ fn block_comment_scan_from_text(text: std::Slice[u8], offset: i64) -> CommentSca
   return CommentUnterminated(text.len);
 }
 
+fn make_whitespace_token(start: i64, end: i64) -> token::Token {
+  return token::make_token(token::Whitespace, start, end);
+}
+
+fn make_line_comment_token(text: std::Slice[u8], offset: i64) -> token::Token {
+  return make_whitespace_token(offset, line_comment_end_from_text(text, offset));
+}
+
+fn lex_result_from_block_comment_scan(scanned: CommentScan, offset: i64) -> LexResult {
+  match scanned {
+    CommentClosed(comment_end) => {
+      return Scanned(make_whitespace_token(offset, comment_end));
+    }
+    CommentUnterminated(unterminated_comment_end) => {
+      return Failed(unterminated_block_comment(offset, unterminated_comment_end));
+    }
+  }
+}
+
 fn hex_escape_scan_from_text(text: std::Slice[u8], escape_start: i64) -> StringEscapeScan {
   let first_digit = escape_start + 1;
   if first_digit >= text.len {
@@ -1831,7 +1850,7 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
     while whitespace_end < text.len && is_whitespace(text[whitespace_end]) {
       whitespace_end = whitespace_end + 1;
     }
-    return token::make_token(token::Whitespace, offset, whitespace_end);
+    return make_whitespace_token(offset, whitespace_end);
   }
   let second_offset = offset + 1;
   var has_second = false;
@@ -1841,16 +1860,12 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
     second = text[second_offset];
   }
   if has_second && first == '/' && second == '/' {
-    return token::make_token(
-      token::Whitespace,
-      offset,
-      line_comment_end_from_text(text, offset)
-    );
+    return make_line_comment_token(text, offset);
   }
   if has_second && first == '/' && second == '*' {
     match block_comment_scan_from_text(text, offset) {
       CommentClosed(comment_end) => {
-        return token::make_token(token::Whitespace, offset, comment_end);
+        return make_whitespace_token(offset, comment_end);
       }
       CommentUnterminated(_) => {}
     }
@@ -1911,21 +1926,13 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
     if second_offset < text.len {
       let second = text[second_offset];
       if second == '/' {
-        return Scanned(token::make_token(
-          token::Whitespace,
-          offset,
-          line_comment_end_from_text(text, offset)
-        ));
+        return Scanned(make_line_comment_token(text, offset));
       }
       if second == '*' {
-        match block_comment_scan_from_text(text, offset) {
-          CommentClosed(closed_comment_end) => {
-            return Scanned(token::make_token(token::Whitespace, offset, closed_comment_end));
-          }
-          CommentUnterminated(unterminated_comment_end) => {
-            return Failed(unterminated_block_comment(offset, unterminated_comment_end));
-          }
-        }
+        return lex_result_from_block_comment_scan(
+          block_comment_scan_from_text(text, offset),
+          offset
+        );
       }
     }
   }

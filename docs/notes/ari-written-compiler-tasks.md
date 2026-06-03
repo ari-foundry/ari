@@ -872,6 +872,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   their scan-enum to `LexResult` conversions into dedicated helpers, keeping
   the non-identifier result scanner as a compact dispatch wrapper instead of a
   long literal diagnostic match body.
+- Re-reviewed comment trivia conversion and factored shared whitespace-token
+  construction plus `CommentScan` to `LexResult` conversion out of the
+  non-identifier scanners, while preserving token-only unterminated block
+  comment recovery as a slash token.
 
 ## Small Task Queue
 

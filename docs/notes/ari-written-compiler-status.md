@@ -737,6 +737,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   enums through dedicated helpers as well, so `scan_non_identifier_text_result`
   only dispatches literal families and no longer owns the long literal
   diagnostic mappings inline.
+- Comment trivia now shares whitespace-token construction between whitespace
+  runs, line comments, closed block comments, and the result-producing comment
+  path; unterminated block-comment diagnostics convert through a dedicated
+  `CommentScan` to `LexResult` helper.
 - Source-root lexer handoff smoke coverage now checks leading-comment
   multi-character punctuation/operator tokens `..=`, `...`, `??`, and `<<=`
   with exact ranked-width expectations, so those handoff cases no longer only

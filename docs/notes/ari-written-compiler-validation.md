@@ -694,7 +694,10 @@ Desired stage0 pressure that is not yet classified as a bug:
   This is stdlib ergonomics pressure, not a confirmed hosted compiler bug.
 - Clearer match-arm binding scoping ergonomics; today a helper that matches
   both `std::Ok(code)` and `std::Err(code)`, or sibling enum cases with the
-  same payload spelling, must use distinct payload names.
+  same payload spelling, must use distinct payload names. The `CommentScan`
+  result-conversion helper hit this again and uses variant-specific payload
+  names; this remains ergonomics/diagnostic pressure, not a confirmed hosted
+  compiler bug.
 - Ari-written diagnostics now have named kind/message identity, and lexer,
   parser, and driver boundary helpers expose that identity instead of forcing
   callers to interpret numeric compatibility codes first. They still do not
@@ -904,5 +907,6 @@ Desired stage0 pressure that is not yet classified as a bug:
   non-identifier scanner. Result-producing numeric recovery now routes
   `NumberScan` diagnostic conversion through one helper as well.
   Result-producing string and byte-character scans now use the same helper
-  conversion shape for their literal diagnostics. These required no hosted
-  compiler fix.
+  conversion shape for their literal diagnostics. Comment trivia now shares
+  whitespace-token construction and block-comment result conversion helpers as
+  well. These required no hosted compiler fix.
