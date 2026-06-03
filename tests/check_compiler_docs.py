@@ -38,7 +38,17 @@ def main() -> int:
     docs_index = read(docs_index_path)
     require(docs_index, "https://ari-foundry.github.io", docs_index_path)
     for needle in [
+        "Detailed Ari language, compiler, standard library, and developer docs remain",
+        "The [Ari Foundry portal](https://ari-foundry.github.io)",
+        "ecosystem entry",
         "New compiler contributor",
+        "## Ecosystem Portal",
+        "## Language Users",
+        "## Standard Library Users",
+        "## Compiler Users",
+        "## Compiler Contributors",
+        "## Bootstrap / Ari-written compiler work",
+        "## Bundled Tooling Docs",
         "[Developer Overview](dev/README.md)",
         "[Architecture](dev/architecture.md)",
         "[Compiler Pipeline](dev/compiler-pipeline.md)",
