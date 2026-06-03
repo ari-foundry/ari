@@ -727,6 +727,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Dot-run and shift-run scanners now reuse computed token end offsets and
   cached second/third bytes for `..`, `..=`, `...`, `<<`, `>>`, `<<=`, and
   `>>=` decisions.
+- Token-only numeric recovery now uses one `NumberScan` to token helper instead
+  of keeping an unused number-end helper plus a long fallback match inside the
+  non-identifier scanner.
 - Source-root lexer handoff smoke coverage now checks leading-comment
   multi-character punctuation/operator tokens `..=`, `...`, `??`, and `<<=`
   with exact ranked-width expectations, so those handoff cases no longer only

@@ -861,6 +861,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   reusing width-local suffix bytes, and the dot/shift scanners reuse computed
   token ends plus cached second/third bytes instead of rebuilding the same
   offsets around every candidate.
+- Re-reviewed token-only numeric recovery and removed the unused
+  `number_end_from_text` helper. The non-identifier scanner now delegates
+  `NumberScan` token recovery to one helper instead of carrying the long
+  fallback match inline.
 
 ## Small Task Queue
 

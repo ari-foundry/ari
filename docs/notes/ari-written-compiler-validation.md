@@ -899,4 +899,6 @@ Desired stage0 pressure that is not yet classified as a bug:
   hosted compiler fix. Leading-comment lexer handoff coverage now checks exact
   ranked widths for `;`, `+`, `..=`, `...`, `??`, and `<<=` after comments,
   so multi-character punctuation/operator handoff no longer passes by class
-  alone. This required no hosted compiler fix.
+  alone. Token-only numeric recovery now removes a dead number-end helper and
+  routes `NumberScan` token recovery through one helper outside the
+  non-identifier scanner. These required no hosted compiler fix.

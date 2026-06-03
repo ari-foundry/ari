@@ -665,38 +665,6 @@ fn number_scan_from_text(text: std::Slice[u8], offset: i64) -> NumberScan {
   return decimal_number_scan_from_text(text, offset, end);
 }
 
-fn number_end_from_text(text: std::Slice[u8], offset: i64) -> i64 {
-  match number_scan_from_text(text, offset) {
-    NumberClosed(_, number_end, _) => {
-      return number_end;
-    }
-    NumberMissingBaseDigits(_, _) => {
-      return offset + 1;
-    }
-    NumberInvalidBaseDigit(invalid_start, _) => {
-      return invalid_start;
-    }
-    NumberUnsupportedSuffix(unsupported_start, _) => {
-      return unsupported_start;
-    }
-    NumberNonDecimalFloatSuffix(float_suffix_start, _) => {
-      return float_suffix_start;
-    }
-    NumberNonDecimalFloatDot(dot_start, _) => {
-      return dot_start;
-    }
-    NumberIntegerOverflow(integer_overflow_start, _) => {
-      return integer_overflow_start;
-    }
-    NumberFloatOverflow(float_overflow_start, _) => {
-      return float_overflow_start;
-    }
-    NumberFloatUnderflow(float_underflow_start, _) => {
-      return float_underflow_start;
-    }
-  }
-}
-
 fn string_escape_error_end(text: std::Slice[u8], end: i64) -> i64 {
   if end > text.len {
     return text.len;
@@ -899,6 +867,47 @@ fn make_number_literal_token(
   literal: token::LiteralPayload
 ) -> token::Token {
   return token::make_literal_token(kind, offset, end, literal);
+}
+
+fn make_number_token_from_scan(scanned: NumberScan, offset: i64) -> token::Token {
+  match scanned {
+    NumberClosed(
+      number_kind,
+      number_end,
+      literal
+    ) => {
+      return make_number_literal_token(
+        number_kind,
+        offset,
+        number_end,
+        literal
+      );
+    }
+    NumberMissingBaseDigits(_, _) => {
+      return token::make_token(token::Integer, offset, offset + 1);
+    }
+    NumberInvalidBaseDigit(invalid_start, _) => {
+      return token::make_token(token::Integer, offset, invalid_start);
+    }
+    NumberUnsupportedSuffix(unsupported_start, _) => {
+      return token::make_token(token::Integer, offset, unsupported_start);
+    }
+    NumberNonDecimalFloatSuffix(float_suffix_start, _) => {
+      return token::make_token(token::Integer, offset, float_suffix_start);
+    }
+    NumberNonDecimalFloatDot(dot_start, _) => {
+      return token::make_token(token::Integer, offset, dot_start);
+    }
+    NumberIntegerOverflow(integer_overflow_start, _) => {
+      return token::make_token(token::Integer, offset, integer_overflow_start);
+    }
+    NumberFloatOverflow(float_overflow_start, _) => {
+      return token::make_token(token::Float, offset, float_overflow_start);
+    }
+    NumberFloatUnderflow(float_underflow_start, _) => {
+      return token::make_token(token::Float, offset, float_underflow_start);
+    }
+  }
 }
 
 fn make_string_literal_token(offset: i64, string_end: i64) -> token::Token {
@@ -1719,44 +1728,7 @@ fn byte_char_scan_from_text(text: std::Slice[u8], offset: i64) -> ByteCharScan {
 fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
   let first = text[offset];
   if is_number_start(first) {
-    match number_scan_from_text(text, offset) {
-      NumberClosed(
-        number_kind,
-        number_end,
-        literal
-      ) => {
-        return make_number_literal_token(
-          number_kind,
-          offset,
-          number_end,
-          literal
-        );
-      }
-      NumberMissingBaseDigits(_, _) => {
-        return token::make_token(token::Integer, offset, offset + 1);
-      }
-      NumberInvalidBaseDigit(base_invalid_start, _) => {
-        return token::make_token(token::Integer, offset, base_invalid_start);
-      }
-      NumberUnsupportedSuffix(unsupported_suffix_start, _) => {
-        return token::make_token(token::Integer, offset, unsupported_suffix_start);
-      }
-      NumberNonDecimalFloatSuffix(non_decimal_suffix_start, _) => {
-        return token::make_token(token::Integer, offset, non_decimal_suffix_start);
-      }
-      NumberNonDecimalFloatDot(non_decimal_dot_start, _) => {
-        return token::make_token(token::Integer, offset, non_decimal_dot_start);
-      }
-      NumberIntegerOverflow(integer_overflow_start, _) => {
-        return token::make_token(token::Integer, offset, integer_overflow_start);
-      }
-      NumberFloatOverflow(float_overflow_start, _) => {
-        return token::make_token(token::Float, offset, float_overflow_start);
-      }
-      NumberFloatUnderflow(float_underflow_start, _) => {
-        return token::make_token(token::Float, offset, float_underflow_start);
-      }
-    }
+    return make_number_token_from_scan(number_scan_from_text(text, offset), offset);
   }
   if is_whitespace(first) {
     var whitespace_end = offset + 1;
