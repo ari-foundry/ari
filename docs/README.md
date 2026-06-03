@@ -159,7 +159,9 @@ Use these when working on the Ari-written compiler source root under
 
 ## Bundled Tooling Docs
 
-Use these bundled Tooling Docs when changing editor and lint tooling:
+Use these bundled Tooling Docs when changing lint, LSP, and editor tooling.
+These docs are currently bundled in `ari`; future stable tooling projects may
+carry their docs with them if they split out.
 
 - [Ari Lint](lint/README.md)
 - [Ari Lint Features](lint/features.md)

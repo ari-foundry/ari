@@ -1,5 +1,8 @@
 # Ari LSP
 
+Status: `ari-lsp` is currently bundled in the `ari` repository. When `ari-lsp`
+becomes a separate project, this documentation should move with that project.
+
 `ari-lsp` is the language-server entry point for editors. The server is
 diagnostic-first: it speaks JSON-RPC over stdio, tracks opened document text,
 and delegates diagnostics to the shared lint checker, which runs `ari --check`
