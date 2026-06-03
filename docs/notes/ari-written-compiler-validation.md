@@ -909,4 +909,7 @@ Desired stage0 pressure that is not yet classified as a bug:
   Result-producing string and byte-character scans now use the same helper
   conversion shape for their literal diagnostics. Comment trivia now shares
   whitespace-token construction and block-comment result conversion helpers as
-  well. These required no hosted compiler fix.
+  well. Token-only block-comment, string-literal, and byte-character recovery
+  paths now use scan-to-token helpers that preserve the old one-byte recovery
+  tokens without adding an extra `Option`-match layer. These required no hosted
+  compiler fix.

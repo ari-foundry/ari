@@ -741,6 +741,11 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   runs, line comments, closed block comments, and the result-producing comment
   path; unterminated block-comment diagnostics convert through a dedicated
   `CommentScan` to `LexResult` helper.
+- Token-only block-comment, string-literal, and byte-character recovery now use
+  scan-to-token helpers that return either the closed token or the same
+  one-byte recovery token as the old fallthrough path, so
+  `scan_non_identifier_text` no longer carries long matches with empty failure
+  arms inline.
 - Source-root lexer handoff smoke coverage now checks leading-comment
   multi-character punctuation/operator tokens `..=`, `...`, `??`, and `<<=`
   with exact ranked-width expectations, so those handoff cases no longer only

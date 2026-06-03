@@ -876,6 +876,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   construction plus `CommentScan` to `LexResult` conversion out of the
   non-identifier scanners, while preserving token-only unterminated block
   comment recovery as a slash token.
+- Re-reviewed token-only non-identifier literal/comment recovery and replaced
+  inline matches full of empty failure arms with scan-to-token helpers that
+  preserve the old one-byte recovery token without adding an extra
+  `Option`-match layer.
 
 ## Small Task Queue
 

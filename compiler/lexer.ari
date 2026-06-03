@@ -973,6 +973,34 @@ fn make_byte_char_literal_token(
   );
 }
 
+fn make_string_token_from_scan(
+  scanned: StringLiteralScan,
+  offset: i64
+) -> token::Token {
+  match scanned {
+    Closed(string_end) => {
+      return make_string_literal_token(offset, string_end);
+    }
+    _ => {
+      return token::make_token(token::DoubleQuote, offset, offset + 1);
+    }
+  }
+}
+
+fn make_byte_char_token_from_scan(
+  scanned: ByteCharScan,
+  offset: i64
+) -> token::Token {
+  match scanned {
+    ByteCharClosed(byte_char_end, byte_char_value) => {
+      return make_byte_char_literal_token(offset, byte_char_end, byte_char_value);
+    }
+    _ => {
+      return token::make_token(token::Unknown('\''), offset, offset + 1);
+    }
+  }
+}
+
 fn lex_result_from_string_literal_scan(scanned: StringLiteralScan, offset: i64) -> LexResult {
   match scanned {
     Closed(string_end) => {
@@ -1463,6 +1491,20 @@ fn make_line_comment_token(text: std::Slice[u8], offset: i64) -> token::Token {
   return make_whitespace_token(offset, line_comment_end_from_text(text, offset));
 }
 
+fn make_block_comment_token_from_scan(
+  scanned: CommentScan,
+  offset: i64
+) -> token::Token {
+  match scanned {
+    CommentClosed(comment_end) => {
+      return make_whitespace_token(offset, comment_end);
+    }
+    _ => {
+      return token::make_token(token::Slash, offset, offset + 1);
+    }
+  }
+}
+
 fn lex_result_from_block_comment_scan(scanned: CommentScan, offset: i64) -> LexResult {
   match scanned {
     CommentClosed(comment_end) => {
@@ -1863,39 +1905,13 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
     return make_line_comment_token(text, offset);
   }
   if has_second && first == '/' && second == '*' {
-    match block_comment_scan_from_text(text, offset) {
-      CommentClosed(comment_end) => {
-        return make_whitespace_token(offset, comment_end);
-      }
-      CommentUnterminated(_) => {}
-    }
+    return make_block_comment_token_from_scan(block_comment_scan_from_text(text, offset), offset);
   }
   if first == '"' {
-    match string_literal_scan_from_text(text, offset) {
-      Closed(string_end) => {
-        return make_string_literal_token(offset, string_end);
-      }
-      Unterminated(_) => {}
-      UnsupportedEscape(_, _) => {}
-      InvalidEscapeDigits(_, _) => {}
-      InvalidEscapeValue(_, _) => {}
-      UnterminatedUnicodeEscape(_, _) => {}
-    }
+    return make_string_token_from_scan(string_literal_scan_from_text(text, offset), offset);
   }
   if first == '\'' {
-    match byte_char_scan_from_text(text, offset) {
-      ByteCharClosed(byte_char_end, byte_char_value) => {
-        return make_byte_char_literal_token(offset, byte_char_end, byte_char_value);
-      }
-      ByteCharEmpty(_, _) => {}
-      ByteCharUnterminated(_) => {}
-      ByteCharUnsupportedEscape(_, _) => {}
-      ByteCharInvalidEscapeDigits(_, _) => {}
-      ByteCharInvalidEscapeValue(_, _) => {}
-      ByteCharUnterminatedUnicodeEscape(_, _) => {}
-      ByteCharTooLong(_, _) => {}
-      ByteCharNonAscii(_, _) => {}
-    }
+    return make_byte_char_token_from_scan(byte_char_scan_from_text(text, offset), offset);
   }
   if first == '.' {
     return scan_dot_run(text, offset);
