@@ -1,18 +1,26 @@
 # Ari Documentation
 
-The docs are split by audience. Start with the smallest path that matches what
-you are doing, then follow links only when you need deeper detail.
+Detailed Ari language, compiler, standard library, and developer docs remain in
+this `ari` repository. Use this index by audience, then follow links only when
+you need deeper detail.
+
+The [Ari Foundry portal](https://ari-foundry.github.io) is the ecosystem entry
+point for discovery, releases, install entry points, and compatibility.
 
 ## Start Here
 
-- Ecosystem portal:
-  [Ari Foundry](https://ari-foundry.github.io) links Ari ecosystem projects,
-  releases, install entry points, and compatibility information.
 - New Ari user: [Getting Started](language/getting-started.md), then
   [Language Tour](language/language-tour.md), then
   [Quick Reference](language/quick-reference.md), then
   [Cookbook](language/cookbook.md), then
   [Feature Crosswalk](language/feature-crosswalk.md).
+- Standard library user: [Standard Library Overview](stdlib/README.md), then
+  [Module Map](stdlib/overview.md), then
+  [API Reference](stdlib/api-reference.md), then
+  [Example Index](stdlib/examples.md).
+- Compiler user: [Getting Started](language/getting-started.md), then the
+  compiler CLI notes there, then [Build And Test](dev/build-test.md), then
+  [Compiler Readiness Inventory](dev/compiler-readiness-inventory.md).
 - New compiler contributor:
   [Developer Overview](dev/README.md), then
   [Architecture](dev/architecture.md), then
@@ -32,10 +40,19 @@ you are doing, then follow links only when you need deeper detail.
   [tasks](notes/ari-written-compiler-tasks.md), and
   [validation/follow-up](notes/ari-written-compiler-validation.md) notes, then
   the source files directly under `compiler/`.
+- Ecosystem discovery, releases, installs, and compatibility:
+  [Ari Foundry](https://ari-foundry.github.io).
 
-## Language Docs
+## Ecosystem Portal
 
-Use these when writing Ari code:
+[Ari Foundry](https://ari-foundry.github.io) links Ari ecosystem projects,
+release information, install entry points, and compatibility information. Keep
+using this `ari` repository for detailed Ari language docs, compiler docs,
+standard library docs, bundled tooling docs, and developer docs.
+
+## Language Users
+
+Use these Language Docs when writing Ari code:
 
 - [Language Overview](language/README.md)
 - [Getting Started](language/getting-started.md)
@@ -63,9 +80,42 @@ Use these when writing Ari code:
 - [Memory Model](language/memory-model.md)
 - [Front-End Only Syntax](language/front-end-only.md)
 
-## Developer Docs
+## Standard Library Users
 
-Use these when changing the current C++ hosted compiler:
+Use these Standard Library Docs when writing or changing Ari libraries. Standard
+library maturity is tracked separately from compiler-writing readiness.
+
+- [Standard Library Overview](stdlib/README.md)
+- [Standard Library Module Map](stdlib/overview.md)
+- [Standard Library API Reference](stdlib/api-reference.md)
+- [Generated Standard Library API Index](stdlib/generated/api-index.md)
+- [Standard Library Example Index](stdlib/examples.md)
+- [Standard Library Completion Status](stdlib/completion-status.md)
+- [Standard Library Stability Policy](stdlib/stability.md)
+- [Standard Library Value Movement Contracts](stdlib/value-contracts.md)
+- [Standard Library Platform Notes](stdlib/platform/README.md)
+- [Standard Library Verification Matrix](stdlib/verification-matrix.md)
+- [Standard Library Development](stdlib/library-development.md)
+- [Standard Library Production Readiness](stdlib/production-readiness.md)
+- [Standard Library Testing](stdlib/testing.md)
+- [Standard Library Roadmap](stdlib/roadmap.md)
+
+## Compiler Users
+
+Use these when building Ari, invoking the compiler, linking C libraries, or
+reading compiler-visible behavior:
+
+- [Getting Started](language/getting-started.md)
+- [Quick Reference](language/quick-reference.md)
+- [Examples And Tests](language/examples-and-tests.md)
+- [C FFI And Libraries](language/ffi.md)
+- [Build And Test](dev/build-test.md)
+- [Compiler Artifact Authoring](dev/compiler-artifact-authoring.md)
+- [Compiler Readiness Inventory](dev/compiler-readiness-inventory.md)
+
+## Compiler Contributors
+
+Use these Developer Docs when changing the current C++ hosted compiler:
 
 - [Developer Overview](dev/README.md)
 - [Architecture](dev/architecture.md)
@@ -96,29 +146,20 @@ Use these when changing the current C++ hosted compiler:
 - [Build And Test](dev/build-test.md)
 - [Roadmap](dev/roadmap.md)
 
-## Standard Library Docs
+## Bootstrap / Ari-written compiler work
 
-Use these when writing or changing Ari libraries. Standard library maturity is
-tracked separately from compiler-writing readiness.
+Use these when working on the Ari-written compiler source root under
+`compiler/`:
 
-- [Standard Library Overview](stdlib/README.md)
-- [Standard Library Module Map](stdlib/overview.md)
-- [Standard Library API Reference](stdlib/api-reference.md)
-- [Generated Standard Library API Index](stdlib/generated/api-index.md)
-- [Standard Library Example Index](stdlib/examples.md)
-- [Standard Library Completion Status](stdlib/completion-status.md)
-- [Standard Library Stability Policy](stdlib/stability.md)
-- [Standard Library Value Movement Contracts](stdlib/value-contracts.md)
-- [Standard Library Platform Notes](stdlib/platform/README.md)
-- [Standard Library Verification Matrix](stdlib/verification-matrix.md)
-- [Standard Library Development](stdlib/library-development.md)
-- [Standard Library Production Readiness](stdlib/production-readiness.md)
-- [Standard Library Testing](stdlib/testing.md)
-- [Standard Library Roadmap](stdlib/roadmap.md)
+- [Ari-Written Compiler](notes/ari-written-compiler.md)
+- [Ari-Written Compiler Status](notes/ari-written-compiler-status.md)
+- [Ari-Written Compiler Roadmap](notes/ari-written-compiler-roadmap.md)
+- [Ari-Written Compiler Tasks](notes/ari-written-compiler-tasks.md)
+- [Ari-Written Compiler Validation And Follow-Ups](notes/ari-written-compiler-validation.md)
 
-## Tooling Docs
+## Bundled Tooling Docs
 
-Use these when changing editor and lint tooling:
+Use these bundled Tooling Docs when changing editor and lint tooling:
 
 - [Ari Lint](lint/README.md)
 - [Ari Lint Features](lint/features.md)
