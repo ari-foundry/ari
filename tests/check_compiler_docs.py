@@ -109,6 +109,11 @@ def main() -> int:
         "[ari-lint Boundary Inventory](ari-lint-boundary-inventory.md)",
         notes_index_path,
     )
+    require(
+        notes_index,
+        "[ari-lint CLI and Diagnostic Contract](ari-lint-cli-diagnostic-contract.md)",
+        notes_index_path,
+    )
 
     tooling_split_path = "docs/notes/tooling-split-criteria.md"
     tooling_split = read(tooling_split_path)
@@ -143,6 +148,24 @@ def main() -> int:
         "Do not invent future repository links",
     ]:
         require(lint_boundary, needle, lint_boundary_path)
+
+    lint_contract_path = "docs/notes/ari-lint-cli-diagnostic-contract.md"
+    lint_contract = read(lint_contract_path)
+    for needle in [
+        "# ari-lint CLI and Diagnostic Contract",
+        "## CLI Surface",
+        "## Config File Contract",
+        "## Rule and Severity Contract",
+        "## Diagnostic Output Contract",
+        "## Exit Status Contract",
+        "## Compiler Boundary",
+        "## JSON Compatibility Risks",
+        "Do not move tools/lint in this step",
+        "Do not create ari-foundry/ari-lint in this step",
+        "Do not change ari-lint behavior in this step",
+        "Do not invent future repository links",
+    ]:
+        require(lint_contract, needle, lint_contract_path)
 
     ownership_path = "docs/notes/documentation-ownership.md"
     ownership = read(ownership_path)
