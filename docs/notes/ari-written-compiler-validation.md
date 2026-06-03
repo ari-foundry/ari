@@ -768,8 +768,11 @@ Desired stage0 pressure that is not yet classified as a bug:
 - Numeric scanner cleanup re-hit the same local-name reuse pressure for block
   locals in one function: a loop-local byte and a later tail byte could not both
   be named `current`, so the implementation uses more specific names such as
-  `base_digit` and `tail`. This is local-binding ergonomics pressure, not a
-  confirmed hosted compiler bug.
+  `base_digit` and `tail`. Numeric suffix matching hit the same pressure again:
+  width-specific byte locals have to use names such as `width3_second` and
+  `width4_second` because reusing `second` across separate width branches is
+  rejected. This is local-binding ergonomics pressure, not a confirmed hosted
+  compiler bug.
 - Parser tests could not pass a root `lexer::TokenCursor` into
   `parser::parse_cursor` because the parser module's nested import names the
   parameter type as `parser::lexer::TokenCursor`. That nominal path distinction

@@ -203,52 +203,68 @@ fn number_suffix_run_end(text: std::Slice[u8], suffix_start: i64) -> i64 {
 
 fn integer_suffix_rank_from_text(text: std::Slice[u8], suffix_start: i64, suffix_end: i64) -> i64 {
   let width = suffix_end - suffix_start;
-  if width == 2 && text[suffix_start] == 'i' && text[suffix_start + 1] == '8' {
-    return token::literal_suffix_i8_rank();
+  let first = text[suffix_start];
+  if width == 2 {
+    let width2_second = text[suffix_start + 1];
+    if first == 'i' && width2_second == '8' {
+      return token::literal_suffix_i8_rank();
+    }
+    if first == 'u' && width2_second == '8' {
+      return token::literal_suffix_u8_rank();
+    }
+    return token::literal_suffix_none_rank();
   }
-  if width == 3 && text[suffix_start] == 'i' && text[suffix_start + 1] == '1' &&
-      text[suffix_start + 2] == '6' {
-    return token::literal_suffix_i16_rank();
-  }
-  if width == 3 && text[suffix_start] == 'i' && text[suffix_start + 1] == '3' &&
-      text[suffix_start + 2] == '2' {
-    return token::literal_suffix_i32_rank();
-  }
-  if width == 3 && text[suffix_start] == 'i' && text[suffix_start + 1] == '6' &&
-      text[suffix_start + 2] == '4' {
-    return token::literal_suffix_i64_rank();
-  }
-  if width == 2 && text[suffix_start] == 'u' && text[suffix_start + 1] == '8' {
-    return token::literal_suffix_u8_rank();
-  }
-  if width == 3 && text[suffix_start] == 'u' && text[suffix_start + 1] == '1' &&
-      text[suffix_start + 2] == '6' {
-    return token::literal_suffix_u16_rank();
-  }
-  if width == 3 && text[suffix_start] == 'u' && text[suffix_start + 1] == '3' &&
-      text[suffix_start + 2] == '2' {
-    return token::literal_suffix_u32_rank();
-  }
-  if width == 3 && text[suffix_start] == 'u' && text[suffix_start + 1] == '6' &&
-      text[suffix_start + 2] == '4' {
-    return token::literal_suffix_u64_rank();
+  if width == 3 {
+    let width3_second = text[suffix_start + 1];
+    let width3_third = text[suffix_start + 2];
+    if first == 'i' {
+      if width3_second == '1' && width3_third == '6' {
+        return token::literal_suffix_i16_rank();
+      }
+      if width3_second == '3' && width3_third == '2' {
+        return token::literal_suffix_i32_rank();
+      }
+      if width3_second == '6' && width3_third == '4' {
+        return token::literal_suffix_i64_rank();
+      }
+    }
+    if first == 'u' {
+      if width3_second == '1' && width3_third == '6' {
+        return token::literal_suffix_u16_rank();
+      }
+      if width3_second == '3' && width3_third == '2' {
+        return token::literal_suffix_u32_rank();
+      }
+      if width3_second == '6' && width3_third == '4' {
+        return token::literal_suffix_u64_rank();
+      }
+    }
   }
   return token::literal_suffix_none_rank();
 }
 
 fn float_suffix_rank_from_text(text: std::Slice[u8], suffix_start: i64, suffix_end: i64) -> i64 {
   let width = suffix_end - suffix_start;
-  if width == 3 && text[suffix_start] == 'f' && text[suffix_start + 1] == '3' &&
-      text[suffix_start + 2] == '2' {
-    return token::literal_suffix_f32_rank();
+  let first = text[suffix_start];
+  if first != 'f' {
+    return token::literal_suffix_none_rank();
   }
-  if width == 3 && text[suffix_start] == 'f' && text[suffix_start + 1] == '6' &&
-      text[suffix_start + 2] == '4' {
-    return token::literal_suffix_f64_rank();
-  }
-  if width == 4 && text[suffix_start] == 'f' && text[suffix_start + 1] == '1' &&
-      text[suffix_start + 2] == '2' && text[suffix_start + 3] == '8' {
-    return token::literal_suffix_f128_rank();
+  if width == 3 {
+    let width3_second = text[suffix_start + 1];
+    let width3_third = text[suffix_start + 2];
+    if width3_second == '3' && width3_third == '2' {
+      return token::literal_suffix_f32_rank();
+    }
+    if width3_second == '6' && width3_third == '4' {
+      return token::literal_suffix_f64_rank();
+    }
+  } else if width == 4 {
+    let width4_second = text[suffix_start + 1];
+    let width4_third = text[suffix_start + 2];
+    let width4_fourth = text[suffix_start + 3];
+    if width4_second == '1' && width4_third == '2' && width4_fourth == '8' {
+      return token::literal_suffix_f128_rank();
+    }
   }
   return token::literal_suffix_none_rank();
 }
@@ -1252,36 +1268,48 @@ pub fn scan_two(first: char, offset: i64, second: char) -> token::Token {
 }
 
 fn scan_dot_run(text: std::Slice[u8], offset: i64) -> token::Token {
-  if offset + 1 >= text.len || text[offset + 1] != '.' {
-    return token::make_token(token::Dot, offset, offset + 1);
+  let one_byte_end = offset + 1;
+  if one_byte_end >= text.len {
+    return token::make_token(token::Dot, offset, one_byte_end);
+  }
+  let second = text[one_byte_end];
+  if second != '.' {
+    return token::make_token(token::Dot, offset, one_byte_end);
   }
 
-  if offset + 2 < text.len {
-    let third = text[offset + 2];
+  let two_byte_end = offset + 2;
+  if two_byte_end < text.len {
+    let third = text[two_byte_end];
+    let three_byte_end = offset + 3;
     if third == '=' {
-      return token::make_token(token::DotDotEqual, offset, offset + 3);
+      return token::make_token(token::DotDotEqual, offset, three_byte_end);
     }
     if third == '.' {
-      return token::make_token(token::Ellipsis, offset, offset + 3);
+      return token::make_token(token::Ellipsis, offset, three_byte_end);
     }
   }
 
-  return token::make_token(token::DotDot, offset, offset + 2);
+  return token::make_token(token::DotDot, offset, two_byte_end);
 }
 
 fn scan_shift_run(text: std::Slice[u8], offset: i64) -> token::Token {
   let first = text[offset];
-  if offset + 2 < text.len && text[offset + 2] == '=' {
-    if first == '<' {
-      return token::make_token(token::LessLessEqual, offset, offset + 3);
+  let two_byte_end = offset + 2;
+  if two_byte_end < text.len {
+    let third = text[two_byte_end];
+    if third == '=' {
+      let three_byte_end = offset + 3;
+      if first == '<' {
+        return token::make_token(token::LessLessEqual, offset, three_byte_end);
+      }
+      return token::make_token(token::GreaterGreaterEqual, offset, three_byte_end);
     }
-    return token::make_token(token::GreaterGreaterEqual, offset, offset + 3);
   }
 
   if first == '<' {
-    return token::make_token(token::LessLess, offset, offset + 2);
+    return token::make_token(token::LessLess, offset, two_byte_end);
   }
-  return token::make_token(token::GreaterGreater, offset, offset + 2);
+  return token::make_token(token::GreaterGreater, offset, two_byte_end);
 }
 
 fn identifier_end_from_text(text: std::Slice[u8], offset: i64) -> i64 {

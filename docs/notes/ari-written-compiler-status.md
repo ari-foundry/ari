@@ -721,6 +721,12 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Numeric exponent and base-prefixed scanner paths now reuse local marker,
   exponent, digit, and tail bytes instead of rereading the same source offsets
   across adjacent checks.
+- Numeric suffix rank matching now groups by suffix width and leading marker,
+  then reuses width-local suffix bytes for `i*/u*/f*` suffix checks instead of
+  rereading the same source offsets across every candidate suffix.
+- Dot-run and shift-run scanners now reuse computed token end offsets and
+  cached second/third bytes for `..`, `..=`, `...`, `<<`, `>>`, `<<=`, and
+  `>>=` decisions.
 - Source-root lexer handoff smoke coverage now checks leading-comment
   multi-character punctuation/operator tokens `..=`, `...`, `??`, and `<<=`
   with exact ranked-width expectations, so those handoff cases no longer only

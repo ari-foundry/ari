@@ -856,6 +856,11 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   helper checks exact ranked widths, then added multi-character handoff
   coverage for `..=`, `...`, `??`, and `<<=` after line and block comments.
   This was a source-root validation gap, not a hosted compiler bug.
+- Re-reviewed numeric suffix, dot-run, and shift-run lexer paths. Numeric
+  suffix rank matching now groups by suffix width and leading marker while
+  reusing width-local suffix bytes, and the dot/shift scanners reuse computed
+  token ends plus cached second/third bytes instead of rebuilding the same
+  offsets around every candidate.
 
 ## Small Task Queue
 
