@@ -17,6 +17,7 @@ the way it does.
 - [ari-lint Boundary Inventory](ari-lint-boundary-inventory.md)
 - [ari-lint CLI and Diagnostic Contract](ari-lint-cli-diagnostic-contract.md)
 - [ari-lint Dependency Model](ari-lint-dependency-model.md)
+- [ari-lint Standalone Test Plan](ari-lint-standalone-test-plan.md)
 - [Codex Project Notes](codex-notes.md)
 - [Documentation Ownership](documentation-ownership.md)
 - [Memory Direction Notes](memory-direction.md)
