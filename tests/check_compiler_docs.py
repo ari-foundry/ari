@@ -30,8 +30,13 @@ def reject(text: str, needle: str, path: str) -> None:
 
 
 def main() -> int:
+    root_readme_path = "README.md"
+    root_readme = read(root_readme_path)
+    require(root_readme, "https://ari-foundry.github.io", root_readme_path)
+
     docs_index_path = "docs/README.md"
     docs_index = read(docs_index_path)
+    require(docs_index, "https://ari-foundry.github.io", docs_index_path)
     for needle in [
         "New compiler contributor",
         "[Developer Overview](dev/README.md)",

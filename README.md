@@ -178,6 +178,9 @@ modules, generics, traits, source stdlib, C FFI, LLVM IR / object /
 shared-library output, lint tooling, and LSP tooling. It is not
 production-stable yet.
 
+The [Ari Foundry portal](https://ari-foundry.github.io) is the ecosystem entry
+point for Ari projects.
+
 - [Language Feature Status](docs/language/feature-status.md)
 - [Compiler Readiness Inventory](docs/dev/compiler-readiness-inventory.md)
 - [Standard Library Completion](docs/stdlib/completion-status.md)

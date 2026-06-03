@@ -5,6 +5,9 @@ you are doing, then follow links only when you need deeper detail.
 
 ## Start Here
 
+- Ecosystem portal:
+  [Ari Foundry](https://ari-foundry.github.io) links Ari ecosystem projects,
+  releases, install entry points, and compatibility information.
 - New Ari user: [Getting Started](language/getting-started.md), then
   [Language Tour](language/language-tour.md), then
   [Quick Reference](language/quick-reference.md), then
