@@ -119,6 +119,11 @@ def main() -> int:
         "[ari-lint Dependency Model](ari-lint-dependency-model.md)",
         notes_index_path,
     )
+    require(
+        notes_index,
+        "[ari-lint Standalone Test Plan](ari-lint-standalone-test-plan.md)",
+        notes_index_path,
+    )
 
     tooling_split_path = "docs/notes/tooling-split-criteria.md"
     tooling_split = read(tooling_split_path)
@@ -190,6 +195,24 @@ def main() -> int:
         "Do not invent future repository links",
     ]:
         require(lint_dependency, needle, lint_dependency_path)
+
+    lint_test_plan_path = "docs/notes/ari-lint-standalone-test-plan.md"
+    lint_test_plan = read(lint_test_plan_path)
+    for needle in [
+        "# ari-lint Standalone Test Plan",
+        "## Current Test Inventory",
+        "## Standalone Fixture Goals",
+        "## Compiler Binary Strategy",
+        "## Test Categories",
+        "## Golden Fixture Policy",
+        "## CI Requirements",
+        "## Split Risks",
+        "Do not move `tools/lint` in this step",
+        "Do not create `ari-foundry/ari-lint` in this step",
+        "Do not add standalone tests in this step",
+        "Do not invent future repository links",
+    ]:
+        require(lint_test_plan, needle, lint_test_plan_path)
 
     ownership_path = "docs/notes/documentation-ownership.md"
     ownership = read(ownership_path)
