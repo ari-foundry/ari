@@ -852,6 +852,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   end scanning reuses a loop-local digit byte, and base-prefixed scanning
   consumes the first valid base digit once before scanning later digits and
   checking the tail byte for invalid binary/octal digits or non-decimal dots.
+- Tightened leading-comment punctuation/operator handoff smokes so the shared
+  helper checks exact ranked widths, then added multi-character handoff
+  coverage for `..=`, `...`, `??`, and `<<=` after line and block comments.
+  This was a source-root validation gap, not a hosted compiler bug.
 
 ## Small Task Queue
 

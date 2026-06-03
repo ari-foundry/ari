@@ -4258,10 +4258,11 @@ fn lexer_leading_comment_unknown_handoff_score() -> i64 {
   return 0;
 }
 
-fn lexer_leading_comment_unsupported_handoff_case_score(
+fn lexer_leading_comment_classed_handoff_case_score(
   text: Slice[u8],
   expected_start: i64,
   expected_end: i64,
+  expected_ranked_width: i64,
   expected_operator: bool
 ) -> i64 {
   let handoff = lexer::handoff_from_text(text);
@@ -4274,9 +4275,13 @@ fn lexer_leading_comment_unsupported_handoff_case_score(
       return 1;
     }
   }
+  let first = lexer::handoff_first(handoff);
+  if lexer::cursor_token_ranked_width(first) != expected_ranked_width {
+    return 2;
+  }
   let span_score = lexer_leading_comment_handoff_span_score(handoff, expected_start, expected_end);
   if span_score != 0 {
-    return 1 + span_score;
+    return 2 + span_score;
   }
   return 0;
 }
@@ -4284,12 +4289,14 @@ fn lexer_leading_comment_unsupported_handoff_case_score(
 fn lexer_leading_comment_punctuation_handoff_case_score(
   text: Slice[u8],
   expected_start: i64,
-  expected_end: i64
+  expected_end: i64,
+  expected_ranked_width: i64
 ) -> i64 {
-  return lexer_leading_comment_unsupported_handoff_case_score(
+  return lexer_leading_comment_classed_handoff_case_score(
     text,
     expected_start,
     expected_end,
+    expected_ranked_width,
     false
   );
 }
@@ -4297,22 +4304,24 @@ fn lexer_leading_comment_punctuation_handoff_case_score(
 fn lexer_leading_comment_operator_handoff_case_score(
   text: Slice[u8],
   expected_start: i64,
-  expected_end: i64
+  expected_end: i64,
+  expected_ranked_width: i64
 ) -> i64 {
-  return lexer_leading_comment_unsupported_handoff_case_score(
+  return lexer_leading_comment_classed_handoff_case_score(
     text,
     expected_start,
     expected_end,
+    expected_ranked_width,
     true
   );
 }
 
 fn lexer_leading_comment_punctuation_handoff_score() -> i64 {
-  var score = lexer_leading_comment_punctuation_handoff_case_score("// skip\n;", 8, 9);
+  var score = lexer_leading_comment_punctuation_handoff_case_score("// skip\n;", 8, 9, 11);
   if score != 0 {
     return score;
   }
-  score = lexer_leading_comment_punctuation_handoff_case_score("/* skip */;", 10, 11);
+  score = lexer_leading_comment_punctuation_handoff_case_score("/* skip */;", 10, 11, 11);
   if score != 0 {
     return 10 + score;
   }
@@ -4320,13 +4329,33 @@ fn lexer_leading_comment_punctuation_handoff_score() -> i64 {
 }
 
 fn lexer_leading_comment_operator_handoff_score() -> i64 {
-  var score = lexer_leading_comment_operator_handoff_case_score("// skip\n+", 8, 9);
+  var score = lexer_leading_comment_operator_handoff_case_score("// skip\n+", 8, 9, 13);
   if score != 0 {
     return score;
   }
-  score = lexer_leading_comment_operator_handoff_case_score("/* skip */+", 10, 11);
+  score = lexer_leading_comment_operator_handoff_case_score("/* skip */+", 10, 11, 13);
   if score != 0 {
     return 10 + score;
+  }
+  return 0;
+}
+
+fn lexer_leading_comment_multichar_punctuation_operator_handoff_score() -> i64 {
+  var score = lexer_leading_comment_punctuation_handoff_case_score("// skip\n..=", 8, 11, 52);
+  if score != 0 {
+    return score;
+  }
+  score = lexer_leading_comment_punctuation_handoff_case_score("/* skip */...", 10, 13, 53);
+  if score != 0 {
+    return 10 + score;
+  }
+  score = lexer_leading_comment_operator_handoff_case_score("// skip\n??", 8, 10, 49);
+  if score != 0 {
+    return 20 + score;
+  }
+  score = lexer_leading_comment_operator_handoff_case_score("/* skip */<<=", 10, 13, 71);
+  if score != 0 {
+    return 30 + score;
   }
   return 0;
 }
@@ -5989,6 +6018,7 @@ fn main() -> i64 {
     lexer_leading_comment_punctuation_handoff_score() +
     parse_leading_comment_operator_failure_score() +
     lexer_leading_comment_operator_handoff_score() +
+    lexer_leading_comment_multichar_punctuation_operator_handoff_score() +
     parse_leading_comment_string_literal_success_score() +
     lexer_leading_comment_string_literal_handoff_score() +
     parse_leading_comment_lexer_failure_score() +

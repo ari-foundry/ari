@@ -893,4 +893,7 @@ Desired stage0 pressure that is not yet classified as a bug:
   span-start location helper without requiring a hosted compiler fix.
   Source-file id and byte-length query helpers now keep source-model code from
   reading `SourceFile` fields outside those accessors, without requiring a
-  hosted compiler fix.
+  hosted compiler fix. Leading-comment lexer handoff coverage now checks exact
+  ranked widths for `;`, `+`, `..=`, `...`, `??`, and `<<=` after comments,
+  so multi-character punctuation/operator handoff no longer passes by class
+  alone. This required no hosted compiler fix.

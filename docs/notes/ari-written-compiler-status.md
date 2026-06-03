@@ -721,6 +721,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Numeric exponent and base-prefixed scanner paths now reuse local marker,
   exponent, digit, and tail bytes instead of rereading the same source offsets
   across adjacent checks.
+- Source-root lexer handoff smoke coverage now checks leading-comment
+  multi-character punctuation/operator tokens `..=`, `...`, `??`, and `<<=`
+  with exact ranked-width expectations, so those handoff cases no longer only
+  prove the broad punctuation/operator class.
 - `compiler/lexer.ari` now uses ranked-width and ranked-position query names
   and no longer exposes public `score` helpers.
 - `compiler/parser.ari` now uses parser kind-rank query names and no longer
