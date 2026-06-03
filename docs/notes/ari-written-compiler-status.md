@@ -730,6 +730,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Token-only numeric recovery now uses one `NumberScan` to token helper instead
   of keeping an unused number-end helper plus a long fallback match inside the
   non-identifier scanner.
+- Result-producing numeric scanning now also converts `NumberScan` through one
+  helper, keeping numeric diagnostic mapping out of the non-identifier scanner
+  body.
 - Source-root lexer handoff smoke coverage now checks leading-comment
   multi-character punctuation/operator tokens `..=`, `...`, `??`, and `<<=`
   with exact ranked-width expectations, so those handoff cases no longer only

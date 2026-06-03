@@ -865,6 +865,9 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   `number_end_from_text` helper. The non-identifier scanner now delegates
   `NumberScan` token recovery to one helper instead of carrying the long
   fallback match inline.
+- Re-reviewed result-producing numeric recovery and moved `NumberScan` to
+  `LexResult` conversion into one helper, so `scan_non_identifier_text_result`
+  no longer owns the full numeric diagnostic mapping inline.
 
 ## Small Task Queue
 

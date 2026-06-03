@@ -901,4 +901,6 @@ Desired stage0 pressure that is not yet classified as a bug:
   so multi-character punctuation/operator handoff no longer passes by class
   alone. Token-only numeric recovery now removes a dead number-end helper and
   routes `NumberScan` token recovery through one helper outside the
-  non-identifier scanner. These required no hosted compiler fix.
+  non-identifier scanner. Result-producing numeric recovery now routes
+  `NumberScan` diagnostic conversion through one helper as well. These required
+  no hosted compiler fix.

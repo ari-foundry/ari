@@ -910,6 +910,47 @@ fn make_number_token_from_scan(scanned: NumberScan, offset: i64) -> token::Token
   }
 }
 
+fn lex_result_from_number_scan(scanned: NumberScan, offset: i64) -> LexResult {
+  match scanned {
+    NumberClosed(
+      number_kind,
+      number_end,
+      literal
+    ) => {
+      return Scanned(make_number_literal_token(
+        number_kind,
+        offset,
+        number_end,
+        literal
+      ));
+    }
+    NumberMissingBaseDigits(missing_start, missing_end) => {
+      return Failed(missing_number_base_digits(missing_start, missing_end));
+    }
+    NumberInvalidBaseDigit(invalid_start, invalid_end) => {
+      return Failed(invalid_number_base_digit(invalid_start, invalid_end));
+    }
+    NumberUnsupportedSuffix(unsupported_suffix_start, unsupported_suffix_end) => {
+      return Failed(unsupported_number_suffix(unsupported_suffix_start, unsupported_suffix_end));
+    }
+    NumberNonDecimalFloatSuffix(non_decimal_suffix_start, non_decimal_suffix_end) => {
+      return Failed(non_decimal_float_suffix(non_decimal_suffix_start, non_decimal_suffix_end));
+    }
+    NumberNonDecimalFloatDot(non_decimal_dot_start, non_decimal_dot_end) => {
+      return Failed(non_decimal_float_dot(non_decimal_dot_start, non_decimal_dot_end));
+    }
+    NumberIntegerOverflow(integer_overflow_start, integer_overflow_end) => {
+      return Failed(integer_literal_overflow(integer_overflow_start, integer_overflow_end));
+    }
+    NumberFloatOverflow(float_overflow_start, float_overflow_end) => {
+      return Failed(float_literal_overflow(float_overflow_start, float_overflow_end));
+    }
+    NumberFloatUnderflow(float_underflow_start, float_underflow_end) => {
+      return Failed(float_literal_underflow(float_underflow_start, float_underflow_end));
+    }
+  }
+}
+
 fn make_string_literal_token(offset: i64, string_end: i64) -> token::Token {
   return token::make_literal_token(
     token::StringLiteral,
@@ -1808,44 +1849,7 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
 fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResult {
   let first = text[offset];
   if is_number_start(first) {
-    match number_scan_from_text(text, offset) {
-      NumberClosed(
-        number_kind,
-        number_end,
-        literal
-      ) => {
-        return Scanned(make_number_literal_token(
-          number_kind,
-          offset,
-          number_end,
-          literal
-        ));
-      }
-      NumberMissingBaseDigits(missing_start, missing_end) => {
-        return Failed(missing_number_base_digits(missing_start, missing_end));
-      }
-      NumberInvalidBaseDigit(invalid_start, invalid_end) => {
-        return Failed(invalid_number_base_digit(invalid_start, invalid_end));
-      }
-      NumberUnsupportedSuffix(unsupported_suffix_start, unsupported_suffix_end) => {
-        return Failed(unsupported_number_suffix(unsupported_suffix_start, unsupported_suffix_end));
-      }
-      NumberNonDecimalFloatSuffix(non_decimal_suffix_start, non_decimal_suffix_end) => {
-        return Failed(non_decimal_float_suffix(non_decimal_suffix_start, non_decimal_suffix_end));
-      }
-      NumberNonDecimalFloatDot(non_decimal_dot_start, non_decimal_dot_end) => {
-        return Failed(non_decimal_float_dot(non_decimal_dot_start, non_decimal_dot_end));
-      }
-      NumberIntegerOverflow(integer_overflow_start, integer_overflow_end) => {
-        return Failed(integer_literal_overflow(integer_overflow_start, integer_overflow_end));
-      }
-      NumberFloatOverflow(float_overflow_start, float_overflow_end) => {
-        return Failed(float_literal_overflow(float_overflow_start, float_overflow_end));
-      }
-      NumberFloatUnderflow(float_underflow_start, float_underflow_end) => {
-        return Failed(float_literal_underflow(float_underflow_start, float_underflow_end));
-      }
-    }
+    return lex_result_from_number_scan(number_scan_from_text(text, offset), offset);
   }
   if first == '/' {
     let second_offset = offset + 1;
