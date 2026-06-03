@@ -880,6 +880,13 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
   inline matches full of empty failure arms with scan-to-token helpers that
   preserve the old one-byte recovery token without adding an extra
   `Option`-match layer.
+- Re-reviewed the two-character token path again. `scan_two` and
+  `scan_non_identifier_text` now share a private token-kind lookup, so the text
+  scanner no longer constructs a fallback one-byte token and checks
+  `token_width` to distinguish a lookup miss. Keyword lookup keeps using the
+  stdlib `HashMap` path; two-character punctuation/operator lookup keeps direct
+  byte dispatch because the scanner already has both bytes and does not need
+  borrowed string lookup.
 
 ## Small Task Queue
 

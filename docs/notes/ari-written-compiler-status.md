@@ -703,6 +703,12 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - `scan_two` now dispatches by the first byte and reuses one computed two-byte
   end offset, so paired operators and punctuation no longer sit in a flat
   repeated `first && second` chain.
+- Two-character token lookup now lives in a private token-kind helper shared by
+  `scan_two` and the token-only text scanner. The hot text scanner no longer
+  builds a fallback one-byte token and then calls `token_width` just to decide
+  that a two-character lookup missed. A `HashMap` was not used for this path:
+  unlike keyword lookup, the scanner already has both bytes loaded and can avoid
+  allocation, slice construction, and hashing.
 - String literal scanning now reuses loop-local current and escaped bytes while
   preserving stage0 line-continuation, escape, quote, and newline behavior.
 - Direct byte-character literal scanning now reuses the payload byte and escape

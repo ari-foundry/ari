@@ -912,4 +912,9 @@ Desired stage0 pressure that is not yet classified as a bug:
   well. Token-only block-comment, string-literal, and byte-character recovery
   paths now use scan-to-token helpers that preserve the old one-byte recovery
   tokens without adding an extra `Option`-match layer. These required no hosted
-  compiler fix.
+  compiler fix. A later two-character token review kept keyword recognition on
+  the `HashMap`/`get_or_bytes` path but did not move punctuation/operator pairs
+  to a map: the text scanner already has both bytes loaded, so direct
+  token-kind dispatch avoids allocation, slice construction, and hashing. The
+  actual cleanup removed fallback token construction plus `token_width` probing
+  from the token-only scanner. This also required no hosted compiler fix.

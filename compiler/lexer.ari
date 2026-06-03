@@ -1315,89 +1315,99 @@ pub fn scan_one(value: char, offset: i64) -> token::Token {
   return token::make_token(classify_one(value), offset, offset + 1);
 }
 
-pub fn scan_two(first: char, offset: i64, second: char) -> token::Token {
-  let end = offset + 2;
+fn two_char_token_kind(first: char, second: char) -> std::Option[token::TokenKind] {
   if first == ':' {
     if second == ':' {
-      return token::make_token(token::ColonColon, offset, end);
+      return std::Some<token::TokenKind>(token::ColonColon);
     }
   } else if first == '.' {
     if second == '.' {
-      return token::make_token(token::DotDot, offset, end);
+      return std::Some<token::TokenKind>(token::DotDot);
     }
   } else if first == '?' {
     if second == '?' {
-      return token::make_token(token::QuestionQuestion, offset, end);
+      return std::Some<token::TokenKind>(token::QuestionQuestion);
     }
   } else if first == '=' {
     if second == '=' {
-      return token::make_token(token::EqualEqual, offset, end);
+      return std::Some<token::TokenKind>(token::EqualEqual);
     }
     if second == '>' {
-      return token::make_token(token::FatArrow, offset, end);
+      return std::Some<token::TokenKind>(token::FatArrow);
     }
   } else if first == '!' {
     if second == '=' {
-      return token::make_token(token::BangEqual, offset, end);
+      return std::Some<token::TokenKind>(token::BangEqual);
     }
   } else if first == '<' {
     if second == '=' {
-      return token::make_token(token::LessEqual, offset, end);
+      return std::Some<token::TokenKind>(token::LessEqual);
     }
     if second == '<' {
-      return token::make_token(token::LessLess, offset, end);
+      return std::Some<token::TokenKind>(token::LessLess);
     }
   } else if first == '>' {
     if second == '=' {
-      return token::make_token(token::GreaterEqual, offset, end);
+      return std::Some<token::TokenKind>(token::GreaterEqual);
     }
     if second == '>' {
-      return token::make_token(token::GreaterGreater, offset, end);
+      return std::Some<token::TokenKind>(token::GreaterGreater);
     }
   } else if first == '&' {
     if second == '&' {
-      return token::make_token(token::AmpAmp, offset, end);
+      return std::Some<token::TokenKind>(token::AmpAmp);
     }
     if second == '=' {
-      return token::make_token(token::AmpEqual, offset, end);
+      return std::Some<token::TokenKind>(token::AmpEqual);
     }
   } else if first == '|' {
     if second == '|' {
-      return token::make_token(token::PipePipe, offset, end);
+      return std::Some<token::TokenKind>(token::PipePipe);
     }
     if second == '=' {
-      return token::make_token(token::PipeEqual, offset, end);
+      return std::Some<token::TokenKind>(token::PipeEqual);
     }
   } else if first == '^' {
     if second == '=' {
-      return token::make_token(token::CaretEqual, offset, end);
+      return std::Some<token::TokenKind>(token::CaretEqual);
     }
   } else if first == '-' {
     if second == '>' {
-      return token::make_token(token::Arrow, offset, end);
+      return std::Some<token::TokenKind>(token::Arrow);
     }
     if second == '=' {
-      return token::make_token(token::MinusEqual, offset, end);
+      return std::Some<token::TokenKind>(token::MinusEqual);
     }
   } else if first == '+' {
     if second == '=' {
-      return token::make_token(token::PlusEqual, offset, end);
+      return std::Some<token::TokenKind>(token::PlusEqual);
     }
   } else if first == '*' {
     if second == '=' {
-      return token::make_token(token::StarEqual, offset, end);
+      return std::Some<token::TokenKind>(token::StarEqual);
     }
   } else if first == '/' {
     if second == '=' {
-      return token::make_token(token::SlashEqual, offset, end);
+      return std::Some<token::TokenKind>(token::SlashEqual);
     }
   } else if first == '%' {
     if second == '=' {
-      return token::make_token(token::PercentEqual, offset, end);
+      return std::Some<token::TokenKind>(token::PercentEqual);
     }
   }
 
-  return scan_one(first, offset);
+  return std::None<token::TokenKind>();
+}
+
+pub fn scan_two(first: char, offset: i64, second: char) -> token::Token {
+  match two_char_token_kind(first, second) {
+    std::Some(kind) => {
+      return token::make_token(kind, offset, offset + 2);
+    }
+    std::None => {
+      return scan_one(first, offset);
+    }
+  }
 }
 
 fn scan_dot_run(text: std::Slice[u8], offset: i64) -> token::Token {
@@ -1923,9 +1933,11 @@ fn scan_non_identifier_text(text: std::Slice[u8], offset: i64) -> token::Token {
     return scan_shift_run(text, offset);
   }
   if has_second {
-    let combined = scan_two(first, offset, second);
-    if token::token_width(combined) == 2 {
-      return combined;
+    match two_char_token_kind(first, second) {
+      std::Some(kind) => {
+        return token::make_token(kind, offset, offset + 2);
+      }
+      std::None => {}
     }
   }
 
