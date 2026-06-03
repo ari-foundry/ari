@@ -14,6 +14,7 @@ the way it does.
 - [Ari-Written Compiler Roadmap](ari-written-compiler-roadmap.md)
 - [Ari-Written Compiler Tasks](ari-written-compiler-tasks.md)
 - [Ari-Written Compiler Validation And Follow-Ups](ari-written-compiler-validation.md)
+- [ari-lint Boundary Inventory](ari-lint-boundary-inventory.md)
 - [Codex Project Notes](codex-notes.md)
 - [Documentation Ownership](documentation-ownership.md)
 - [Memory Direction Notes](memory-direction.md)
