@@ -868,6 +868,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Re-reviewed result-producing numeric recovery and moved `NumberScan` to
   `LexResult` conversion into one helper, so `scan_non_identifier_text_result`
   no longer owns the full numeric diagnostic mapping inline.
+- Re-reviewed result-producing string and byte-character recovery and moved
+  their scan-enum to `LexResult` conversions into dedicated helpers, keeping
+  the non-identifier result scanner as a compact dispatch wrapper instead of a
+  long literal diagnostic match body.
 
 ## Small Task Queue
 

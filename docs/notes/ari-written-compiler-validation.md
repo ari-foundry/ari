@@ -902,5 +902,7 @@ Desired stage0 pressure that is not yet classified as a bug:
   alone. Token-only numeric recovery now removes a dead number-end helper and
   routes `NumberScan` token recovery through one helper outside the
   non-identifier scanner. Result-producing numeric recovery now routes
-  `NumberScan` diagnostic conversion through one helper as well. These required
-  no hosted compiler fix.
+  `NumberScan` diagnostic conversion through one helper as well.
+  Result-producing string and byte-character scans now use the same helper
+  conversion shape for their literal diagnostics. These required no hosted
+  compiler fix.

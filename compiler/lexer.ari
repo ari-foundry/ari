@@ -973,6 +973,61 @@ fn make_byte_char_literal_token(
   );
 }
 
+fn lex_result_from_string_literal_scan(scanned: StringLiteralScan, offset: i64) -> LexResult {
+  match scanned {
+    Closed(string_end) => {
+      return Scanned(make_string_literal_token(offset, string_end));
+    }
+    Unterminated(unterminated_end) => {
+      return Failed(unterminated_string_literal(offset, unterminated_end));
+    }
+    UnsupportedEscape(escape_start, escape_end) => {
+      return Failed(unsupported_string_escape(escape_start, escape_end));
+    }
+    InvalidEscapeDigits(digits_start, digits_end) => {
+      return Failed(invalid_string_escape_digits(digits_start, digits_end));
+    }
+    InvalidEscapeValue(value_start, value_end) => {
+      return Failed(invalid_string_escape_value(value_start, value_end));
+    }
+    UnterminatedUnicodeEscape(unicode_start, unicode_end) => {
+      return Failed(unterminated_unicode_escape(unicode_start, unicode_end));
+    }
+  }
+}
+
+fn lex_result_from_byte_char_scan(scanned: ByteCharScan, offset: i64) -> LexResult {
+  match scanned {
+    ByteCharClosed(byte_char_end, byte_char_value) => {
+      return Scanned(make_byte_char_literal_token(offset, byte_char_end, byte_char_value));
+    }
+    ByteCharEmpty(empty_start, empty_end) => {
+      return Failed(empty_byte_character_literal(empty_start, empty_end));
+    }
+    ByteCharUnterminated(unterminated_end) => {
+      return Failed(unterminated_byte_character_literal(offset, unterminated_end));
+    }
+    ByteCharUnsupportedEscape(escape_start, escape_end) => {
+      return Failed(unsupported_byte_character_escape(escape_start, escape_end));
+    }
+    ByteCharInvalidEscapeDigits(digits_start, digits_end) => {
+      return Failed(invalid_byte_character_escape_digits(digits_start, digits_end));
+    }
+    ByteCharInvalidEscapeValue(value_start, value_end) => {
+      return Failed(invalid_byte_character_escape_value(value_start, value_end));
+    }
+    ByteCharUnterminatedUnicodeEscape(unicode_start, unicode_end) => {
+      return Failed(unterminated_unicode_escape(unicode_start, unicode_end));
+    }
+    ByteCharTooLong(too_long_start, too_long_end) => {
+      return Failed(byte_character_literal_too_long(too_long_start, too_long_end));
+    }
+    ByteCharNonAscii(non_ascii_start, non_ascii_end) => {
+      return Failed(non_ascii_byte_character_literal(non_ascii_start, non_ascii_end));
+    }
+  }
+}
+
 fn utf8_encoded_len_optional(value: i64) -> std::Option[i64] {
   if value < 0 {
     return std::None<i64>();
@@ -1875,79 +1930,16 @@ fn scan_non_identifier_text_result(text: std::Slice[u8], offset: i64) -> LexResu
     }
   }
   if first == '"' {
-    match string_literal_scan_from_text(text, offset) {
-      Closed(string_end) => {
-        return Scanned(make_string_literal_token(offset, string_end));
-      }
-      Unterminated(unterminated_end) => {
-        return Failed(unterminated_string_literal(offset, unterminated_end));
-      }
-      UnsupportedEscape(escape_start, escape_end) => {
-        return Failed(unsupported_string_escape(escape_start, escape_end));
-      }
-      InvalidEscapeDigits(digits_start, digits_end) => {
-        return Failed(invalid_string_escape_digits(digits_start, digits_end));
-      }
-      InvalidEscapeValue(value_start, value_end) => {
-        return Failed(invalid_string_escape_value(value_start, value_end));
-      }
-      UnterminatedUnicodeEscape(unicode_start, unicode_end) => {
-        return Failed(unterminated_unicode_escape(unicode_start, unicode_end));
-      }
-    }
+    return lex_result_from_string_literal_scan(
+      string_literal_scan_from_text(text, offset),
+      offset
+    );
   }
   if first == '\'' {
-    match byte_char_scan_from_text(text, offset) {
-      ByteCharClosed(byte_char_end_result, byte_char_value_result) => {
-        return Scanned(make_byte_char_literal_token(
-          offset,
-          byte_char_end_result,
-          byte_char_value_result
-        ));
-      }
-      ByteCharEmpty(empty_start, empty_end) => {
-        return Failed(empty_byte_character_literal(empty_start, empty_end));
-      }
-      ByteCharUnterminated(byte_char_unterminated_end) => {
-        return Failed(unterminated_byte_character_literal(offset, byte_char_unterminated_end));
-      }
-      ByteCharUnsupportedEscape(byte_char_escape_start, byte_char_escape_end) => {
-        return Failed(unsupported_byte_character_escape(
-          byte_char_escape_start,
-          byte_char_escape_end
-        ));
-      }
-      ByteCharInvalidEscapeDigits(byte_char_digits_start, byte_char_digits_end) => {
-        return Failed(invalid_byte_character_escape_digits(
-          byte_char_digits_start,
-          byte_char_digits_end
-        ));
-      }
-      ByteCharInvalidEscapeValue(byte_char_value_start, byte_char_value_end) => {
-        return Failed(invalid_byte_character_escape_value(
-          byte_char_value_start,
-          byte_char_value_end
-        ));
-      }
-      ByteCharUnterminatedUnicodeEscape(byte_char_unicode_start, byte_char_unicode_end) => {
-        return Failed(unterminated_unicode_escape(
-          byte_char_unicode_start,
-          byte_char_unicode_end
-        ));
-      }
-      ByteCharTooLong(byte_char_too_long_start, byte_char_too_long_end) => {
-        return Failed(byte_character_literal_too_long(
-          byte_char_too_long_start,
-          byte_char_too_long_end
-        ));
-      }
-      ByteCharNonAscii(byte_char_non_ascii_start, byte_char_non_ascii_end) => {
-        return Failed(non_ascii_byte_character_literal(
-          byte_char_non_ascii_start,
-          byte_char_non_ascii_end
-        ));
-      }
-    }
+    return lex_result_from_byte_char_scan(
+      byte_char_scan_from_text(text, offset),
+      offset
+    );
   }
 
   return Scanned(scan_non_identifier_text(text, offset));

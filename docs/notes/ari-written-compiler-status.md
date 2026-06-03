@@ -733,6 +733,10 @@ Back to [Ari-Written Compiler](ari-written-compiler.md).
 - Result-producing numeric scanning now also converts `NumberScan` through one
   helper, keeping numeric diagnostic mapping out of the non-identifier scanner
   body.
+- Result-producing string and byte-character scanning now convert their scan
+  enums through dedicated helpers as well, so `scan_non_identifier_text_result`
+  only dispatches literal families and no longer owns the long literal
+  diagnostic mappings inline.
 - Source-root lexer handoff smoke coverage now checks leading-comment
   multi-character punctuation/operator tokens `..=`, `...`, `??`, and `<<=`
   with exact ranked-width expectations, so those handoff cases no longer only
