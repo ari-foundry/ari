@@ -7,6 +7,10 @@ change it safely, and which narrow check proves the change. Ari-written compiler
 source lives directly under `compiler/`; its bootstrap note is
 [Ari-Written Compiler](../notes/ari-written-compiler.md).
 
+Ownership note: this developer guide belongs to the Ari compiler project. It is
+published as part of the Ari project docs, and `docs/dev` is not being split
+into a separate repository at this stage.
+
 ## First-Hour Path
 
 Read these in order when you are new to compiler work in this repository:

@@ -58,6 +58,10 @@ def main() -> int:
     for needle in [
         "# Ari Compiler Developer Overview",
         "This directory documents the current C++ hosted Ari compiler.",
+        "Ownership note: this developer guide belongs to the Ari compiler project.",
+        "published as part of the Ari project docs",
+        "`docs/dev` is not being split",
+        "into a separate repository at this stage",
         "## First-Hour Path",
         "## Where To Edit",
         "## What To Read By Goal",
@@ -69,6 +73,34 @@ def main() -> int:
         "Do not add `bootstrap/`, `stage1/`, `compiler/src/`",
     ]:
         require(dev_index, needle, dev_index_path)
+
+    notes_index_path = "docs/notes/README.md"
+    notes_index = read(notes_index_path)
+    require(
+        notes_index,
+        "[Documentation Ownership](documentation-ownership.md)",
+        notes_index_path,
+    )
+
+    ownership_path = "docs/notes/documentation-ownership.md"
+    ownership = read(ownership_path)
+    for needle in [
+        "# Documentation Ownership",
+        "The top-level Ari site is a portal only.",
+        "The `ari` repository keeps the Ari language docs, compiler docs, standard",
+        "library docs, developer docs",
+        "`docs/dev` remains Ari project-owned.",
+        "The developer guide belongs to the Ari",
+        "compiler project",
+        "is published as part of the Ari project docs",
+        "is not",
+        "being split into a separate repository at this stage",
+        "`arix` is the Ari package manager project.",
+        "It starts separately",
+        "Lint, LSP, and editor docs stay bundled with `ari` until their projects",
+        "split.",
+    ]:
+        require(ownership, needle, ownership_path)
 
     roadmap_path = "docs/dev/roadmap.md"
     roadmap = read(roadmap_path)
