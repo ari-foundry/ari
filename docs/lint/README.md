@@ -1,5 +1,9 @@
 # Ari Lint
 
+Status: `ari-lint` is currently bundled in the `ari` repository. When
+`ari-lint` becomes a separate project, this documentation should move with that
+project.
+
 `ari-lint` is the standalone lint entry point for Ari tooling. It delegates
 parser, module-loader, and semantic diagnostics to `ari --check`, then runs
 lint-only source rules and normalizes diagnostics into either human-readable

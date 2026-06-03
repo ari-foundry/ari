@@ -49,6 +49,8 @@ def main() -> int:
         "## Compiler Contributors",
         "## Bootstrap / Ari-written compiler work",
         "## Bundled Tooling Docs",
+        "These docs are currently bundled in `ari`",
+        "future stable tooling projects may",
         "[Developer Overview](dev/README.md)",
         "[Architecture](dev/architecture.md)",
         "[Compiler Pipeline](dev/compiler-pipeline.md)",
@@ -116,6 +118,30 @@ def main() -> int:
         "split.",
     ]:
         require(ownership, needle, ownership_path)
+
+    lint_index_path = "docs/lint/README.md"
+    lint_index = read(lint_index_path)
+    for needle in [
+        "`ari-lint` is currently bundled in the `ari` repository",
+        "becomes a separate project",
+    ]:
+        require(lint_index, needle, lint_index_path)
+
+    lsp_index_path = "docs/lsp/README.md"
+    lsp_index = read(lsp_index_path)
+    for needle in [
+        "`ari-lsp` is currently bundled in the `ari` repository",
+        "becomes a separate project",
+    ]:
+        require(lsp_index, needle, lsp_index_path)
+
+    editors_index_path = "editors/README.md"
+    editors_index = read(editors_index_path)
+    for needle in [
+        "editor integrations are currently kept in the `ari` repository",
+        "may move to dedicated repositories and project sites later",
+    ]:
+        require(editors_index, needle, editors_index_path)
 
     roadmap_path = "docs/dev/roadmap.md"
     roadmap = read(roadmap_path)
