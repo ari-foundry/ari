@@ -17,3 +17,4 @@ the way it does.
 - [Codex Project Notes](codex-notes.md)
 - [Documentation Ownership](documentation-ownership.md)
 - [Memory Direction Notes](memory-direction.md)
+- [Tooling Split Criteria](tooling-split-criteria.md)

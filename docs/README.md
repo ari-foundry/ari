@@ -161,7 +161,8 @@ Use these when working on the Ari-written compiler source root under
 
 Use these bundled Tooling Docs when changing lint, LSP, and editor tooling.
 These docs are currently bundled in `ari`; future stable tooling projects may
-carry their docs with them if they split out.
+carry their docs with them if they split out. Split criteria are tracked in
+[Tooling Split Criteria](notes/tooling-split-criteria.md).
 
 - [Ari Lint](lint/README.md)
 - [Ari Lint Features](lint/features.md)
