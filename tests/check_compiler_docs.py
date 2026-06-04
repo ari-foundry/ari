@@ -52,6 +52,8 @@ def main() -> int:
         "These docs are currently bundled in `ari`",
         "future stable tooling projects may",
         "[Tooling Split Criteria](notes/tooling-split-criteria.md)",
+        "https://github.com/ari-foundry/ari-lint",
+        "migration is still in progress",
         "[Developer Overview](dev/README.md)",
         "[Architecture](dev/architecture.md)",
         "[Compiler Pipeline](dev/compiler-pipeline.md)",
@@ -264,6 +266,9 @@ def main() -> int:
     for needle in [
         "`ari-lint` is currently bundled in the `ari` repository",
         "becomes a separate project",
+        "https://github.com/ari-foundry/ari-lint",
+        "source extraction and full documentation migration are not complete yet",
+        "stable standalone `ari-lint` release",
     ]:
         require(lint_index, needle, lint_index_path)
 

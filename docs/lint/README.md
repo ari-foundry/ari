@@ -4,6 +4,13 @@ Status: `ari-lint` is currently bundled in the `ari` repository. When
 `ari-lint` becomes a separate project, this documentation should move with that
 project.
 
+Repository split status: `ari-lint` now has a separate repository at
+https://github.com/ari-foundry/ari-lint. This `ari` repository keeps the
+existing lint documentation during migration. In this handoff, source extraction and full documentation migration are not complete yet. Compiler behavior remains
+owned by `ari-foundry/ari`, and the near-term dependency model is invoking
+`ari --check`.
+Readers should not assume a stable standalone `ari-lint` release exists.
+
 `ari-lint` is the standalone lint entry point for Ari tooling. It delegates
 parser, module-loader, and semantic diagnostics to `ari --check`, then runs
 lint-only source rules and normalizes diagnostics into either human-readable
