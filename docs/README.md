@@ -164,7 +164,8 @@ These docs are currently bundled in `ari`; future stable tooling projects may
 carry their docs with them if they split out. Split criteria are tracked in
 [Tooling Split Criteria](notes/tooling-split-criteria.md).
 
-- [Ari Lint](lint/README.md)
+- [Ari Lint](lint/README.md) - separate repository initialized at
+  https://github.com/ari-foundry/ari-lint; docs handoff and Ari-language reimplementation are still in progress, and migration is still in progress.
 - [Ari Lint Features](lint/features.md)
 - [Ari LSP](lsp/README.md)
 - [Ari LSP Features](lsp/features.md)
