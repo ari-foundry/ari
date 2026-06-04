@@ -43,6 +43,10 @@ The few stdlib polish items that are blocked by compiler features are mapped in
    continued compiler-known format lowering, or both. Current-zone `format!`
    covers the local temporary allocation case; explicit `format_in!` remains
    the long-lived allocation form.
+8. LLVM library integration: evaluate using LLVM library APIs for module
+   construction, verification, diagnostics, and object emission while
+   preserving the current LLVM IR text and driver path until the library-backed
+   flow is stable.
 
 ## Language Ideas Parked For Later
 
