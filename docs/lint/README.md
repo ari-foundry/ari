@@ -8,6 +8,9 @@ Repository split status: `ari-lint` now has a separate repository at
 https://github.com/ari-foundry/ari-lint. This `ari` repository keeps the
 existing lint documentation during migration, and the current bundled
 `tools/lint` reference implementation remains in `ari` during the transition.
+The current standalone split docs status is tracked in the `ari-lint` docs
+index:
+https://github.com/ari-foundry/ari-lint/blob/main/docs/README.md.
 The future direction is an Ari-language implementation in `ari-lint` with
 behavior parity against current `tools/lint`; source is not being moved
 wholesale. The full docs handoff and standalone Ari implementation are not
